@@ -1,0 +1,88 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printfileclass
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given file class(es)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <fileClassName> [...]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+fileClasses = None
+if len(args) != 0:
+    fileClasses = set(args)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sql = 'SELECT name, classId, nbCopies, id FROM FileClass'
+    if fileClasses:
+        sql += " WHERE name IN ('" + "', '".join(fileClasses) + "')"
+    sql += " ORDER BY name ASC"
+    stcur.execute(sql)
+    # get results
+    rows = stcur.fetchall()
+    existingFileClasses = set([row[0] for row in rows])
+    if fileClasses:
+        unknownFileClasses = fileClasses - existingFileClasses
+    # loop over fileclasses and print them
+    if existingFileClasses:
+        titles = ('NAME', 'CLASSID', 'NBCOPIES', 'ID')
+        castor_tools.prettyPrintTable(titles, rows)
+    # check unknown fileclasses
+    if fileClasses and unknownFileClasses:
+        print 'WARNING : the following file classes do not exist : ' + ', '.join(unknownFileClasses)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

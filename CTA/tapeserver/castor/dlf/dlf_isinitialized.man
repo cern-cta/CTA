@@ -1,0 +1,21 @@
+.TH dlf_isinitialized "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_isinitialized \- check to see if the DLF interface has been initialized
+
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "int dlf_isinitialized (void)"
+.SH DESCRIPTION
+.B dlf_isinitialized
+checks to see if the DLF interface has been previsouly initialized via a call to
+.BR dlf_init().
+
+.SH RETURN VALUE
+This routine returns 1 if the interface is initialized, 0 if not.
+
+.SH SEE ALSO
+.BR dlf_init (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

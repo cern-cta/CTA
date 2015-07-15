@@ -1,0 +1,107 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      nslistsegs
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the list of segments in a given CASTOR tape'''
+
+import sys
+import getopt
+import castor_tools
+import math
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] -V|--VID <tapeVID>'
+    sys.exit(exitCode)
+
+verbose = False
+tpvid = ''
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvV:', ['help', 'verbose', 'VID='])
+except Exception, e:
+    print e
+    usage(1)
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-V' or f == '--VID':
+        tpvid = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if tpvid == '':
+    print 'Missing argument'
+    usage(1)
+
+try:
+    # connect to nameserver and prepare statements
+    nsconn = castor_tools.connectToNS()
+    cur = nsconn.cursor()
+    # query the seg_metadata table. Note that for the compression we get it
+    # without converting it in a real compression factor (100/compression).
+    # As a matter of fact, many files in CASTOR have been stored with
+    # an incorrect compression of 100 (i.e. no compression), so here we
+    # expose the raw data as is.
+    # See ns/Cns_oracle_ifce.pc and ns/oracleTrailer.sql for how the compression
+    # shall be used and properly printed.
+    sqlStatement = '''SELECT s_status, s_fileid, copyno, fseq, gid, segsize, decode(compression, 0, 100, compression),
+                             to_char(checksum, \'XXXXXXXX\'), creationTime, lastModificationTime
+                        FROM Cns_seg_metadata WHERE vid = :vid'''
+    cur.execute(sqlStatement, vid=tpvid)
+    # get results
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        print 'No segments found on %s' % tpvid
+        sys.exit(0)
+    # loop over configs and print them
+    titles = ['STATUS', 'FILEID', 'COPYNO', 'FSEQ', 'GID', 'SIZE', 'COMPRESSION', 'CHECKSUM', 'CREATIONTIME', 'LASTMODIFICATIONTIME']
+    data = [(s_status, s_fileid, copyno, fseq, gid, segsize, compression, checksum, \
+             ' '+ castor_tools.secsToDate(creationtime), ' '+ castor_tools.secsToDate(lastmodificationtime))
+            for (s_status, s_fileid, copyno, fseq, gid, segsize, compression, checksum, creationtime, lastmodificationtime) in rows]
+    # compute some statistics
+    if len(rows) > 2:
+        size = tsum = tsumsq = 0
+        for r in rows:
+             size += int(r[5])
+             tsum += int(r[-2])
+             tsumsq += int(r[-2])*int(r[-2])
+        data += [('-', '--SUMMARY--', '-', rows[-1][3], '-', castor_tools.nbToDataAmount(size), '-', '-', \
+                  castor_tools.secsToDate(tsum/len(rows)), \
+                 '+/- ' + castor_tools.nbToAge(math.sqrt(tsumsq/len(rows) - tsum*tsum/(len(rows)*len(rows)))))]
+    castor_tools.prettyPrintTable(titles, data)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(nsconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

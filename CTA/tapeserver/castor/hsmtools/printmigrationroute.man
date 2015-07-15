@@ -1,0 +1,73 @@
+.TH PRINTMIGRATIONROUTE "1castor" "2011" CASTOR "Prints out the given migration route(s)"
+.SH NAME
+printmigrationroute
+.SH SYNOPSIS
+.B printmigrationroute
+[
+.BI -h
+]
+[
+.BI -f
+<fileClassName>
+]
+[
+.BI -t
+<tapePoolName>
+]
+
+.SH DESCRIPTION
+.B printmigrationroute
+prints out definitions of the migration routes matching the given criteria
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-f,\ \-\-fileclass <fileClassName>
+reduces the list of displayed rules to the ones concerning the given file class
+.TP
+.BI \-t,\ \-\-tapepool <tapePoolName>
+reduces the list of displayed rules to the ones going to the given tape pool
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printmigrationroute
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+    filesizedep      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+      largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+          test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+
+# printmigrationroute -f largeuser
+FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------
+largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+
+# printmigrationroute -t stager_dev01
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+      largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+
+.SH NOTES
+This command requires database client access to the stager catalog DB.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entermigrationroute
+.BR modifymigrationroute
+.BR deletemigrationroute
+.BR printfileclass
+.BR printtapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

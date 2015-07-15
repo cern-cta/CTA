@@ -1,0 +1,8 @@
+%attr(0640,root,st) etc/castor/TPCONFIG.example
+%attr(0755,root,root) usr/bin/tapeserverd
+%attr(0644,root,root) etc/sysconfig/tapeserverd.example
+%attr(0755,root,root) etc/init.d/tapeserverd
+%attr(0644,root,root) etc/logrotate.d/castor-tapeserver-server
+%attr(0644,root,root) etc/udev/rules.d/99-tape.rules
+%attr(-,root,root) usr/lib/libcastormessages.so*
+%attr(0755,root,root) usr/bin/castor-tape-label

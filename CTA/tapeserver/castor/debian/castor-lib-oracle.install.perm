@@ -1,0 +1,3 @@
+%attr(0640,root,st) etc/castor/ORASTAGERCONFIG.example
+%attr(-,root,root) usr/lib/libcastorcommonora.so.*
+%attr(-,root,root) usr/lib/libcastorcnvs.so.*

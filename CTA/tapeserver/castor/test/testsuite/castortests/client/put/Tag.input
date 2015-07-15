@@ -1,0 +1,6 @@
+stager_put -M <noTapeFileName> -U <castorTag>
+stager_qry -M <noTapeFileName>
+stager_qry -U <castorTag>
+rfcp <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+stager_qry -U <castorTag>

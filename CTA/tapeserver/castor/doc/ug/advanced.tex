@@ -1,0 +1,347 @@
+\chapter{Advanced usage}
+\section{Using Access Control Lists (ACLs)}
+File access authorization is normally governed by the unix mode bits, e.g.
+\begin{verbatim}
+[lxplus] nsls -l /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+mrw-r--r--   1 linda aa                 16723666 Jan 14  2004  /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+\end{verbatim}
+the modes bits are the 2-9 characters of {\tt mrw-r--r--} (the first character, {\tt 'm'}, means
+that the file has been migrated to tape). In the above example the mode bits allows for read/write
+access by owner (linda:aa) while only granting read access for group and other users.
+
+In addition to the unix mode bits, the CASTOR name server also supports POSIX Access Control
+List (ACL) at both file and directory level. ACLs allows for finegrained control of read and
+write access to files. A file owner can, for instance delegate write access to a list of users.
+
+The CASTOR ACLs can be listed and modified using the {\tt nsgetacl} and {\tt nssetacl} commands,
+documented under \url{http://cern.ch/castor/docs/guides/man/CASTOR2/ns/nsgetacl.man.html} and
+\url{http://cern.ch/castor/docs/guides/man/CASTOR2/ns/nssetacl.man.html}.
+
+In the following example, Linda allows Bill to write to the file
+{\tt /castor/cern.ch/user/l/linda/higgs/higgs-muons.root}
+
+\begin{verbatim}
+[lxplus] nsgetacl /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+# file: /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+# owner: linda
+# group: aa
+user::rw-
+group::r--              #effective:r--
+other::r--
+[lxplus] nssetacl -m u:bill:rwx,m:rwx /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+[lxplus] nsgetacl /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+# file: /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+# owner: linda
+# group: aa
+user::rw-
+user:bill:rwx               #effective:rwx
+group::r--              #effective:r--
+mask::rwx
+other::r--
+[lxplus]
+\end{verbatim}
+
+The syntax of the {\tt nssetacl} command may appear a bit complex. One of the reason for this is
+because the {\em mask} permissions are always required when there are specified user or group
+entries.
+
+Linda can grant write access to other colleagues in an indentical manner. It is also possible
+to grant write access for a directory. Further examples can be found in the {\tt nssetacl}
+man-page.
+
+\section{Service classes, diskpools and tapepools}
+\label{section:svcclass}
+The stager manages the CASTOR2 disk pools and how files are migrated or recalled to/from tape.
+A stager service class (svcclass) ties together disk, tape resources and the policies for how
+those resources should be used. From the client view, the most interesting attribute of a
+service class is usually the disk pool. The available space in a disk pool can be queried using
+the {\tt stager\_qry} command with the {\tt -s} option:
+\small
+\begin{verbatim}
+[lxplus] stager_qry -S wan -s
+POOL default          CAPACITY 32.59T     FREE   6.98T(21%)  RESERVED  16.38G( 0%)
+  DiskServer lxfsra2805       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE   1.14T(24%)  RESERVED 873.36M( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      192.31G(16%)  320.25M( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   1.75T      475.10G(26%)  553.12M( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.75T      500.67G(28%)        0( 0%)   0.20, 0.30
+  DiskServer lxfsra2806       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE   1.10T(23%)  RESERVED   1.44G( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      345.47G(28%)  161.73M( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   1.75T      335.09G(18%)  563.73M( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.75T      450.73G(25%)  748.09M( 0%)   0.20, 0.30
+  DiskServer lxfsra2807       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE   1.05T(22%)  RESERVED   1.88G( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      273.36G(22%)  283.90M( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   1.75T      334.80G(18%)  822.13M( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.75T      466.95G(26%)  816.47M( 0%)   0.20, 0.30
+  DiskServer lxfsra2808       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE 848.55G(17%)  RESERVED 756.42M( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      263.27G(22%)        0( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   1.75T      271.48G(15%)        0( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.75T      313.80G(17%)  756.42M( 0%)   0.20, 0.30
+  DiskServer lxfsrc6401       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE 854.01G(17%)  RESERVED   3.09G( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      181.50G(15%)    1.09G( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   893.91G    192.21G(21%)        0( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.16T      198.96G(16%)    1.07G( 0%)   0.20, 0.30
+     /srv/castor/04/                   FILESYSTEM_PRODUCTION   1.46T      281.35G(18%)  957.46M( 0%)   0.20, 0.30
+  DiskServer lxfsrc6402       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE 929.57G(19%)  RESERVED   3.22G( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      322.73G(27%)  641.35M( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   893.91G    142.87G(15%)    1.55G( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.16T      192.26G(16%)  106.59M( 0%)   0.20, 0.30
+     /srv/castor/04/                   FILESYSTEM_PRODUCTION   1.46T      271.72G(18%)  964.38M( 0%)   0.20, 0.30
+  DiskServer lxfsrc6403       DISKSERVER_PRODUCTION   CAPACITY 4.66T      FREE   1.11T(23%)  RESERVED   5.15G( 0%)
+     FileSystems                       STATUS                  CAPACITY   FREE          RESERVED       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   1.16T      333.36G(27%)    1.78G( 0%)   0.20, 0.30
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   893.91G    143.79G(16%)  182.01M( 0%)   0.20, 0.30
+     /srv/castor/03/                   FILESYSTEM_PRODUCTION   1.16T      347.15G(29%)    1.94G( 0%)   0.20, 0.30
+     /srv/castor/04/                   FILESYSTEM_PRODUCTION   1.46T      313.73G(21%)    1.25G( 0%)   0.20, 0.30
+\end{verbatim}
+\normalsize
+
+The disk pool houskeeping is governed by the garbage collection (GC) policy attribute of the
+service class. Because it potentially needs to check millions of files, the GC policy is
+implemented as an Oracle PL/SQL procedure in the stager database. The default GC policy sorts
+files according to the criteria:
+\begin{verbatim}
+currentTime - lastAccessTime + greatest(0,86400*ln((fileSize+1)/1024))
+\end{verbatim}
+(basically: delete files with the oldest last access timestamp first with some weighting to
+prefer removing large files first).
+In addition to the GC policy, each filesystem in the disk pool is configured with GC limits
+defining the minimum allowed free space at which the GC is triggered, and the maximum free
+space at which the GC should stop deleting files. The default values are 20\% and 30\% respectively
+(GC is triggered when free space goes below 20\% and a running GC will stop deleting files when
+there is 30\% free space).
+
+The tape pools and number of drives used for the tape migration of a particular service class is
+configured in agreement with the experiment. Normally the experiments have dedicated tape pools
+for their production data while user files are mixed in a tape pool shared among the experiments.
+A service class can configured so that different types of data sets are migrated to different
+tape pools. The selection attributes can be any name server attribute of the file, e.g. the
+name (or some part of the name), the fileclass, the size, the owner, etc. The configuration
+is encoded in a {\em migratorPolicy} script
+
+A difference to CASTOR1 is that the tape pool associated with the name server fileclass (see
+next section) is normally not used.
+
+\section{File classes}
+\label{section:fileclasses}
+Each CASTOR file is linked to a {\em file class}. The file class group together files which
+may share some common usage characteristics. The file class provides a hint for the tape
+migration process allowing it to write files associated with a given file class to the same
+set of tapes (tapepool). This association was strict in CASTOR1 where the stager used the
+tapepool provided in the file class attributes while in CASTOR2 the tapepool is part of the
+service class attributes (see previous section). CASTOR2 still respects the file class
+as a hint for grouping files together on tape, even if other attributes (e.g. size) can
+also be used by the migrator policy.
+
+The most important attribute of the file class is the number of tape copies. CASTOR allows
+for zero copies on tape, in which case the file is a scratch file with a limited lifetime.
+Most CASTOR files have one tape copy and some important data files may even have two or more
+copies on different tapes.
+
+The file class of a CASTOR file can be listed using {\tt nsls --class ...}, e.g.
+\begin{verbatim}
+[lxplus] nsls --class /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+2 /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+[lxplus]
+\end{verbatim}
+
+The attribute of the file class can be listed using the {\tt nslistclass} command, e.g.
+\begin{verbatim}
+[lxplus] nslistclass --id 2
+CLASS_ID        2
+CLASS_NAME      user
+CLASS_UID       -
+CLASS_GID       -
+FLAGS           0x0
+MAXDRIVES       2
+MIN FILESIZE    0
+MAX FILESIZE    0
+MAX SEGSIZE     0
+MIGR INTERVAL   3600
+MIN TIME        0
+NBCOPIES        1
+RETENP_ON_DISK  AS_LONG_AS_POSSIBLE
+TAPE POOLS      default
+[lxplus]
+\end{verbatim}
+As can be seen, this is a single tape copy fileclass (NBCOPIES=1). All file
+classes can
+be listed using the {\tt nslistclass} command without arguments.
+
+\section{Scratch files in CASTOR}
+The fileclass feature explained in previous section (\ref{section:fileclasses}) can be used for
+storing temporary (scratch) files in CASTOR. To do so, one can use the {\tt nslistclass} command to find a 
+fileclass without tapecopies (NBCOPIES=0) and the {\tt nschclass} command to link that fileclass to
+a subdirectory in your CASTOR home directory. At CERN there is a fileclass {\bf temp} (fileclass id 58) created for this purpose and that can be used by any user, e.g.
+\small
+\begin{verbatim}
+[lxplus] nsmkdir /castor/cern.ch/user/l/linda/scratch
+[lxplus] nschclass temp /castor/cern.ch/user/l/linda/scratch
+[lxplus] nsls -ld --class /castor/cern.ch/user/l/linda/scratch
+58 drwxr-xr-x   0 linda aa                        0 Oct 25 22:02 /castor/cern.ch/user/l/linda/scratch
+\end{verbatim}
+\normalsize
+
+The lifetime of the temporary files depend on the diskpool size and utilisation.Use the {\tt stager\_qry -s}
+command to find out the size and FREE space of the diskpool you are using.
+
+\section{RFIO and ROOT Transfer URLs (TURL)}
+RFIO and ROOT transfer URLs provide an alternative to using the {\tt STAGE\_HOST} and
+{\tt STAGE\_SVCCLASS} environment variables for specifying the stager host and diskpool
+(see section~\ref{overview:environment}. This is in particular useful for accessing files in
+different stagers or diskpools from the same application. A detailed specification of the
+RFIO and ROOT TURL syntax can be found at
+\url{http://cern.ch/castor/docs/rfioTurl/newTurlAndParameters.htm}, example
+\small
+\begin{verbatim}
+rfio://castorpublic.cern.ch//castor/cern.ch/user/l/linda/thesis.tar?svcClass=default
+\end{verbatim}
+\normalsize
+
+Some shells will expand special characters like '?' and '\&' so the RFIO TURLs would normally need
+to be enclosed by quotes, e.g.
+\small
+\begin{verbatim}
+[lxplus] rfcp 'rfio://castorpublic.cern.ch//castor/cern.ch/user/l/linda/thesis.tar?svcClass=default' /tmp/thesis.tar
+\end{verbatim}
+\normalsize
+
+The word '{\em transfer URL}' originates from the SRM (Storage Resource Manager) specification
+(see \url{http://sdm.lbl.gov/srm-wg/}). Both the CASTOR SRM v1.1 and v2.2 implementations
+support RFIO and ROOT TURLs.
+
+\section{Tape problems}
+\label{sect:tapepbs}
+CASTOR provides managed storage, which means that it automatically manages the tape and disk
+residence of files and all a user normally needs to know about is the name of the file. However,
+hardware may fail or there might be other operational problems causing CASTOR files to be
+inaccessible for long periods of time. In this section we will give some useful commands for
+finding out the tape residence of CASTOR files, get the status of the tapes and the list the tape
+queues. After that we list some frequent tape related problems and their common causes.
+
+\subsection{Tape related commands}
+The {\tt nsls} command with the {\tt -T} option lists the tape residence of a castor file, e.g.
+\small
+\begin{verbatim}
+[lxplus] nsls -T /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+- 1   1 P16116    1663 00353758     16723666  0 /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+\end{verbatim}
+\normalsize
+where the fourth field, P16116, is the tape Visiual IDentifier (VID). If the file has multiple
+copies on tape, there will be one line for each copy. Files written in CASTOR1 may also span
+multiple tapes, in which case there will also be multiple lines - one for each tape segment. This
+feature has been disabled in CASTOR2 because it resulted in an inefficient use of the tape drives.
+
+The Volume Manager (VMGR) is the CASTOR database containing all known tapes and their
+status. The {\tt vmgrlisttape} command with the {\tt -V} option can be used to find out the
+status of a particular tape, e.g.
+\small
+\begin{verbatim}
+[lxplus] vmgrlisttape -V P16116
+P16116   P16116 SL8500_0 200GC    aul largeuser              0B 20070412 FULL
+\end{verbatim}
+\normalsize
+The last field shows the tape status:
+\begin{itemize}
+\item {\bf ' '} (blank): means that the tape is available for reading and writing (migration)
+\item {\bf FULL} or {\bf RDONLY}: means that the tape is available for reading
+\item {\bf BUSY}: the tape is being written to
+\item {\bf DISABLED}, {\bf ARCHIVED} and {\bf EXPORTED}: tape not available for reading or writing
+\end{itemize}
+
+When a tape is {\bf DISABLED} it is usually because of some error. Sometimes CASTOR automatically
+puts tapes in this state to avoid repeated errors and potential damange. The tape may also be
+in process of being copied after a media error.
+
+There is no status showing that a tape is being read but the {\tt showqueues} command can be used
+to check all queued and running tape requests. If called without options or with the {\tt -x}
+option, {\tt showqueues} lists all tape drvies and all queued requests. The tape queues are
+organised per {\em device group} (DGN), which is basically given by the tape library (robot) and
+tape device capabilities (matching the device capabilities with the tape media attributes, in 
+particular the vendor/model and media density). Example:
+\small
+\begin{verbatim}
+[lxplus] showqueues -x
+DN 994BR0 994B061D@tpsrv119 FREE 5899 (No_dedication) None
+DN 994BR0 994B0510@tpsrv118 FREE 2951 (No_dedication) None
+DN 994BR0 994B0514@tpsrv110 FREE 1416 (No_dedication) None
+DA 994BR0 994B0518@tpsrv116 RUNNING 2 (No_dedication) P06230 P06230 R 17094 (cscct,c3)@lxfs6101.cern.ch
+DA 994BR0 994B051C@tpsrv114 RUNNING 2818 (No_dedication) P07432 P07432 R 1420 (cscct,c3)@lxfs6101.cern.ch
+DN 994BR0 994B051D@tpsrv127 FREE 4921 (No_dedication) None
+DN 3592B2 35922002@tpsrv203 FREE 26 (No_dedication) None
+DA 3592B2 35922004@tpsrv205 RUNNING 2571 (No_dedication) I05764 I05764 W 27200 (stage,st)@c2lhcbsrv02.cern.ch
+DN 3592B2 35922014@tpsrv215 FREE 7 (No_dedication) None
+DN 3592B2 35922017@tpsrv222 FREE 0 (No_dedication) None
+DA 3592B2 35922016@tpsrv221 RUNNING 2445 (No_dedication) I06288 I06288 W 11927 (stage,st)@c2atlassrv02.cern.ch
+DN 3592B2 35922019@tpsrv224 RELEASE 116 (No_dedication) I03281
+DN 3592B2 35922001@tpsrv202 FREE 25 (No_dedication) None
+DN 3592B2 35922000@tpsrv201 FREE 2650 (host=tpsrv201) None
+...
+Q 3592B2 I04987 R 4991587 (atlas183,zp)@stage018.cern.ch 163
+Q 3592B2 I05028 W 4991628 (stage,st)@c2atlassrv02.cern.ch 123
+Q 3592B2 I04753 R 4991653 (atlas183,zp)@stage018.cern.ch 100
+Q 3592B2 I04987 R 4991693 (atlas183,zp)@stage018.cern.ch 45
+Q 3592B2 I05540 W 4991698 (stage,st)@c2cmssrv02.cern.ch 42
+Q T10KR1 T00942 R 4991709 (stage,st)@c2lhcbsrv02.cern.ch 14
+
+[lxplus] showqueues -x |grep P16116
+DA 994BR0 994B061D@tpsrv119 RUNNING 1 (No_dedication) None P16116 R 2952 (stage,st)@c2publicsrv02.cern.ch
+\end{verbatim}
+\normalsize
+where the second field is the device group ({\tt 3592B2}, {\tt T10KR1} and {\tt 994BR0} in above
+example). To get a listing for only that device group (queue), one can use the {\tt -g} option:
+\small
+\begin{verbatim}
+[lxplus] showqueues -x -g 994BR0
+DA 994BR0 994B0614@tpsrv121 RUNNING 3 (No_dedication) None P16116 R 14473 (stage,st)@c2publicsrv02.cern.ch
+DN 994BR0 994B0610@tpsrv120 FREE 104 (No_dedication) None
+DA 994BR0 994B0618@tpsrv123 RUNNING 101 (No_dedication) P13106 P13106 R 7532 (chapkin,xx)@stage005.cern.ch
+DN 994BR0 994B061C@tpsrv117 DOWN 10431 (No_dedication) None
+DN 994BR0 994B061D@tpsrv119 DOWN 10709 (host=tpsrv119) None
+DN 994BR0 994B0510@tpsrv118 FREE 1267 (No_dedication) None
+DN 994BR0 994B0514@tpsrv110 FREE 367 (No_dedication) None
+DA 994BR0 994B0518@tpsrv116 RUNNING 2893 (No_dedication) P02940 P02940 R 25772 (cscct,c3)@lxfs6062.cern.ch
+DA 994BR0 994B051C@tpsrv114 RUNNING 6384 (No_dedication) P08266 P08266 R 11089 (cscct,c3)@lxfs6093.cern.ch
+DA 994BR0 994B051D@tpsrv127 RUNNING 866 (No_dedication) P01610 P01610 R 14302 (cscct,c3)@lxfs6101.cern.ch
+\end{verbatim}
+\normalsize
+
+The commands
+\small
+\begin{verbatim}
+showqueues -x -g 994BR0 |grep -c '^Q '
+showqueues -x -g T10K60 | grep '^Q ' | cut -d' ' -f7- | sort -n |tail -1
+\end{verbatim}
+\normalsize
+gives the length of the current queue and the time (in seconds) of the oldest request in queue.
+Please note that the {\tt showqueues} command is contacting a central castor service (VDQM, Volume
+and Drive Queue Manager), which is shared among all castor stagers. Please therefore avoid using
+{\tt showqueues} in a tight loop since this may degrade the performance of that service.
+
+The {\tt showqueues} command gives a flat listing of all running and queued requests. The listing
+of the queued requests (flagged with 'Q'in first column) is ordered with oldest requests first.
+The requests are normally handled in FIFO but with two important exceptions:
+\begin{itemize}
+\item read requests for already mounted tapes are pre-empted
+\item write requests have higher priority than read (all queued write requests will be served
+before any queued read request)
+\end{itemize}
+
+\subsection{Frequent tape related problems}
+\begin{itemize}
+\item A relatively frequent and sometimes misleading CASTOR error that the user may see is
+      ``{\em Required tape segments are not all accessible}''. This usually means that the file
+      is not on disk and the tape currently inaccessible for some reason (see previous section).
+      However, the error can also be reported if the file is new and has not yet been migrated
+      to tape (or it is in a no-tape fileclass) and the diskserver where the file resides is
+      inaccessible.
+\item Very long waiting time for file in STAGEIN. Use the commands described in previous section
+      to find out the tape residence and that there is a queued or running request for that tape.
+\item If the tape request is not found in {\tt showqueues} but the file stays in {\bf STAGEIN}
+      it may help to clear the file with a {\tt stager\_rm -M ...} command followed by a {\tt stager\_get -M ...}
+\end{itemize}

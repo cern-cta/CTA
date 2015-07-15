@@ -1,0 +1,55 @@
+/*
+ * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ */
+
+/*
+ * common.h   - common prototypes
+ */
+
+#pragma once
+
+#include <sys/socket.h>                 /* Socket interface             */
+#include <netinet/in.h>                 /* Internet data types          */
+
+#include <Castor_limits.h>
+#include <osdep.h>
+#include <Cgetopt.h>
+#include <Cglobals.h>
+#include <Cnetdb.h>
+#include <Cpool_api.h>
+#include <Cpwd.h>
+#include <Cthread_api.h>
+#include <getacct.h>
+#include <getacctent.h>
+#include <log.h>
+#include <net.h>
+#include <serrno.h>
+#include <trace.h>
+#include <u64subr.h>
+#include <ypgetacctent.h>
+
+EXTERN_C char *getconfent_r (const char *, const char *, int, char *, int);
+EXTERN_C char *getconfent (const char *, const char *, int);
+EXTERN_C int solveln (char *, char *, int);
+EXTERN_C int seelink (char *, char *, int);
+EXTERN_C int isremote (struct in_addr, char *);
+EXTERN_C int CDoubleDnsLookup (int s, char *);
+EXTERN_C int isadminhost (int s, char *);
+EXTERN_C char *getifnam_r (int, char *, size_t);
+EXTERN_C char *getifnam (int);
+EXTERN_C int get_user (char *, char *, int, int, char *, int *, int *);
+
+/**
+ * Checks whether the given string is a size.
+ * The accepted syntax is :
+ *    [blanks]<digits>[b|k|M|G|T|P]
+ * @return -1 if it is not a size,
+ * 0 if it is a size with no unit,
+ * 1 if it is a size with a unit
+ */
+EXTERN_C int  check_for_strutou64 (char*);
+

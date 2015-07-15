@@ -1,0 +1,144 @@
+/*
+ * CSS file for cockpit-graph JQuery plugin
+ *
+ * /
+
+
+/*****************************************************************************
+/*             METRIC DETAILS 
+/*****************************************************************************/
+div.metric-info { /* used to store metric details */
+    display: none;
+}
+
+div.metric-info-text pre {
+    padding: 0px;
+    margin: 0px;
+    background-color: transparent;
+    border: none;
+    line-height: 16px;
+}
+
+
+/*****************************************************************************
+/*             FILTER AND OPTIONS 
+/*****************************************************************************/
+div.metric-options {
+}
+
+div.metric-options button {
+    margin: 1px;
+}
+
+div.metric-options input[type="text"] {
+    height: 26px;
+}
+
+div.filter-container {
+    min-width: 460px;
+    height: 50px;
+    float: left;
+}
+
+div.plot-options {
+    min-width: 800px;
+    height: 31px;
+    float: left;
+    overflow: hidden;
+}
+
+div.advanced-options {
+    margin: 5px 0 0 0;
+}
+
+div.advanced-filter {
+    display: none;
+}
+
+a.refresh-plot {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+
+a.refresh-plot img:hover {
+    transform:rotate(20deg);
+    -ms-transform:rotate(20deg); /* IE 9 */
+    -moz-transform:rotate(20deg); /* Firefox */
+    -webkit-transform:rotate(20deg); /* Safari and Chrome */
+    -o-transform:rotate(20deg); /* Opera */
+}
+
+.metric-options select {
+    width: 100px;
+    margin-right: 10px;
+}
+
+select.auto-refresh {
+    width: 100px;
+}
+
+select.graph-type {
+    width: 140px;
+}
+
+select.graph-operator {
+    width: 70px;
+}
+
+form.graph-operation {
+    display: inline;
+}
+
+button.stack-lemon-metric img {
+    width: 16px;
+    margin: 0px 10px 0px 10px;
+}
+
+p.lemon-metric img.remove-stacked-lemon-metric {
+    width: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+
+/*****************************************************************************
+/*             METRIC AND PLOT DISPLAY 
+/*****************************************************************************/
+div.metric_container {
+    height: 100%;
+    width: 100%;
+}
+
+div.metric-display {
+    position: absolute;
+    top: 50px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    min-width: 800px;
+}
+
+div.metric-display div.alert {
+    margin: 20px;
+}
+
+div.alert.ajax-error {
+    min-height: 150px;
+    background: #f2dede url('/static/img/alert.png') no-repeat 20px 20px;
+    padding-left: 200px;
+}
+
+
+/*****************************************************************************
+/*             SVG for HighCharts 
+/*****************************************************************************/
+g[title="Reset zoom level 1:1"] rect {
+    cursor: pointer;
+}
+
+g[title="Reset zoom level 1:1"] text tspan {
+    dominant-baseline: central;
+    font-size: 14px;
+    cursor: pointer;
+}

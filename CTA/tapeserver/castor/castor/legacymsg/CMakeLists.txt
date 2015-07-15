@@ -1,0 +1,79 @@
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Castor Dev team, castor-dev@cern.ch
+#
+cmake_minimum_required (VERSION 2.6)
+
+################################################################################
+# Rules to build and install libcastorlegacymsg.so
+################################################################################
+set (CASTOR_LEGACYMSG_LIB_SRC_FILES
+  CommonMarshal.cpp
+  CupvCheckMsgBody.cpp
+  CupvMarshal.cpp
+  CupvProxy.cpp
+  CupvProxyTcpIp.cpp
+  GenericErrorReplyMsgBody.cpp
+  GenericMarshal.cpp
+  GenericReplyMsgBody.cpp
+  GiveOutpMsgBody.cpp
+  legacymsg.cpp
+  MessageHeader.cpp
+  NsProxy.cpp
+  NsProxyFactory.cpp
+  NsProxy_TapeAlwaysEmpty.cpp
+  NsProxy_TapeAlwaysEmptyFactory.cpp
+  RmcMarshal.cpp
+  RmcMountMsgBody.cpp
+  RmcProxy.cpp
+  RmcProxyDummy.cpp
+  RmcProxyTcpIp.cpp
+  RmcUnmountMsgBody.cpp
+  RtcpJobRqstMsgBody.cpp
+  RtcpJobReplyMsgBody.cpp
+  RtcpMarshal.cpp
+  RtcpErrorAppendix.cpp
+  TapeConfigRequestMsgBody.cpp
+  TapeLabelRqstMsgBody.cpp
+  TapeStatDriveEntry.cpp
+  TapeMarshal.cpp
+  TapeStatRequestMsgBody.cpp
+  TapeStatReplyMsgBody.cpp
+  VdqmDrvRqstMsgBody.cpp
+  VdqmMarshal.cpp
+  VdqmProxy.cpp
+  VdqmProxyFactory.cpp
+  VdqmProxyTcpIp.cpp
+  VdqmProxyTcpIpFactory.cpp
+  VmgrPoolInfoMsgBody.cpp
+  VmgrProxy.cpp
+  VmgrProxyFactory.cpp
+  VmgrProxyTcpIp.cpp
+  VmgrProxyTcpIpFactory.cpp
+  VmgrQryPoolMsgBody.cpp
+  VmgrMarshal.cpp
+  VmgrTapeInfoMsgBody.cpp
+  VmgrTapeInfoRqstMsgBody.cpp
+  VmgrTapeMountedMsgBody.cpp)
+add_library (castorlegacymsg SHARED ${CASTOR_LEGACYMSG_LIB_SRC_FILES})
+CastorSetLibraryVersions (castorlegacymsg)
+target_link_libraries (castorlegacymsg
+  castorclient
+  castorcommon)
+install (TARGETS castorlegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)

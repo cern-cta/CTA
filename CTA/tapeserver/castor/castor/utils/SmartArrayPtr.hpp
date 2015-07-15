@@ -1,0 +1,161 @@
+/******************************************************************************
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * 
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+#pragma once
+
+#include "castor/exception/NotAnOwner.hpp"
+
+#include <errno.h>
+#include <stdio.h>
+
+
+namespace castor {
+namespace utils {
+
+/**
+ * A smart pointer that owns a pointer to an array and unlike std::auto_ptr
+ * will call delete[] instead of calling delete.
+ */
+template <typename T> class SmartArrayPtr {
+public:
+
+  /**
+   * Constructor.
+   */
+  SmartArrayPtr() throw(): m_arrayPtr(NULL) {
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param arrayPtr The pointer to an array that is to be owned by the smart
+   * pointer.
+   */
+  SmartArrayPtr(T *const arrayPtr) throw(): m_arrayPtr(arrayPtr) {
+  }
+
+  /**
+   * Takes ownership of the specified pointer to an array.  If this smart
+   * pointer already owns a pointer that is not the same as the one specified
+   * then it will be deleted using delete[].
+   *
+   * @param arrayPtr The pointer to be owned.  If no pointer is specified then
+   * the default value of NULL is used.  In this default case the smart pointer
+   * will not own a pointer after the reset() method returns.
+   */
+  void reset(T *const arrayPtr = NULL) throw() {
+    // If the new pointer is not the one already owned
+    if(arrayPtr != m_arrayPtr) {
+
+      // If this smart pointer still owns a pointer then call delete[] on it
+      if(m_arrayPtr != NULL) {
+        delete[] m_arrayPtr;
+      }
+
+      // Take ownership of the new pointer
+      m_arrayPtr = arrayPtr;
+    }
+  }
+
+  /**
+   * SmartArrayPtr assignment operator.
+   *
+   * This function does the following:
+   * <ul>
+   * <li> Calls release on the previous owner (obj);
+   * <li> Resets this smart pointer to the released pointer of the previous
+   * owner (obj).
+   * </ul>
+   */
+  SmartArrayPtr &operator=(SmartArrayPtr& obj)
+     {
+    reset(obj.release());
+    return *this;
+  }
+
+  /**
+   * Destructor.
+   *
+   * Resets this smart pointer with the default value of NULL.
+   */
+  ~SmartArrayPtr() throw() {
+    reset();
+  }
+
+  /**
+   * Returns the owned pointer or NULL if this smart pointer does not own one.
+   *
+   * @return The owned pointer or NULL if this smart pointer does not own one.
+   */
+  T *get() const throw() {
+    return m_arrayPtr;
+  }
+
+  /**
+   * Releases the owned pointer.
+   *
+   * @return The released pointer.
+   */
+  T *release()  {
+    // If this smart pointer does not own a pointer
+    if(NULL == m_arrayPtr) {
+      castor::exception::NotAnOwner ex;
+      ex.getMessage() << "Smart pointer does not own a pointer";
+      throw(ex);
+    }
+
+    // Assigning NULL to m_arrayPtr indicates this smart pointer does not own a
+    // pointer
+    T *const tmpArrayPtr = m_arrayPtr;
+    m_arrayPtr = NULL;
+    return tmpArrayPtr;
+  }
+
+  /**
+   * Subscript operator.
+   */
+  T &operator[](const int i) const throw() {
+    return m_arrayPtr[i];
+  }
+
+private:
+
+  /**
+   * The owned pointer.  A value of NULL means this smart pointer does not own
+   * a pointer.
+   */ 
+  T *m_arrayPtr;
+
+  /**
+   * Private copy-constructor to prevent users from trying to create a new
+   * copy of an object of this class.
+   *
+   * Not implemented so that it cannot be called
+   */
+  SmartArrayPtr(const SmartArrayPtr &obj) throw();
+
+}; // class SmartArrayPtr
+
+} // namespace utils
+} // namespace castor
+

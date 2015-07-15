@@ -1,0 +1,209 @@
+/* Type2Obj metatable definition */
+CREATE TABLE Type2Obj (type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL, svcHandler VARCHAR2(100), CONSTRAINT UN_Type2Obj_typeObject UNIQUE (type, object));
+
+/* ObjStatus metatable definition */
+CREATE TABLE ObjStatus (object VARCHAR2(100) CONSTRAINT NN_ObjStatus_object NOT NULL, field VARCHAR2(100) CONSTRAINT NN_ObjStatus_field NOT NULL, statusCode INTEGER CONSTRAINT NN_ObjStatus_statusCode NOT NULL, statusName VARCHAR2(100) CONSTRAINT NN_ObjStatus_statusName NOT NULL, CONSTRAINT UN_ObjStatus_objectFieldCode UNIQUE (object, field, statusCode));
+
+/* SQL statements for type BaseAddress */
+CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER CONSTRAINT PK_BaseAddress_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type Client */
+CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT PK_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type FileClass */
+CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, classId INTEGER, id INTEGER CONSTRAINT PK_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type Files2Delete */
+CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER CONSTRAINT PK_Files2Delete_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type FilesDeleted */
+CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_FilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type FilesDeletionFailed */
+CREATE TABLE FilesDeletionFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_FilesDeletionFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type GCFile */
+CREATE TABLE GCFile (diskCopyId INTEGER, id INTEGER CONSTRAINT PK_GCFile_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type QueryParameter */
+CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+BEGIN
+  setObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+  setObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
+  setObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+  setObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
+  setObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
+END;
+/
+
+/* SQL statements for type StagePrepareToGetRequest */
+CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StagePrepareToPutRequest */
+CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToPutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StagePutRequest */
+CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StageRmRequest */
+CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageRmRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StageFileQueryRequest */
+CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type SetFileGCWeight */
+CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type NsFilesDeleted */
+CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StageGetRequest */
+CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StgFilesDeleted */
+CREATE TABLE StgFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StageAbortRequest */
+CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageAbortRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type NsFileId */
+CREATE TABLE NsFileId (fileid INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFileId_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StagePutDoneRequest */
+CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StagePutDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type VersionQuery */
+CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type DiskPoolQuery */
+CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+BEGIN
+  setObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+  setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+  setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
+END;
+/
+
+/* SQL statements for type ChangePrivilege */
+CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isGranted NUMBER, id INTEGER CONSTRAINT PK_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type BWUser */
+CREATE TABLE BWUser (euid NUMBER, egid NUMBER, id INTEGER CONSTRAINT PK_BWUser_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type RequestType */
+CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type ListPrivileges */
+CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* Fill Type2Obj metatable */
+INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
+INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
+INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
+INSERT INTO Type2Obj (type, object) VALUES (4, 'Cuuid');
+INSERT INTO Type2Obj (type, object) VALUES (6, 'DiskFile');
+INSERT INTO Type2Obj (type, object) VALUES (7, 'DiskPool');
+INSERT INTO Type2Obj (type, object) VALUES (10, 'FileClass');
+INSERT INTO Type2Obj (type, object) VALUES (13, 'IClient');
+INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
+INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
+INSERT INTO Type2Obj (type, object) VALUES (27, 'SubRequest');
+INSERT INTO Type2Obj (type, object) VALUES (28, 'SvcClass');
+INSERT INTO Type2Obj (type, object) VALUES (30, 'RecallJob');
+INSERT INTO Type2Obj (type, object) VALUES (31, 'TapePool');
+INSERT INTO Type2Obj (type, object) VALUES (33, 'StageFileQueryRequest');
+INSERT INTO Type2Obj (type, object) VALUES (35, 'StageGetRequest');
+INSERT INTO Type2Obj (type, object) VALUES (36, 'StagePrepareToGetRequest');
+INSERT INTO Type2Obj (type, object) VALUES (37, 'StagePrepareToPutRequest');
+INSERT INTO Type2Obj (type, object) VALUES (39, 'StagePutDoneRequest');
+INSERT INTO Type2Obj (type, object) VALUES (40, 'StagePutRequest');
+INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
+INSERT INTO Type2Obj (type, object) VALUES (45, 'FileRequest');
+INSERT INTO Type2Obj (type, object) VALUES (46, 'QryRequest');
+INSERT INTO Type2Obj (type, object) VALUES (50, 'StageAbortRequest');
+INSERT INTO Type2Obj (type, object) VALUES (58, 'DiskCopyForRecall');
+INSERT INTO Type2Obj (type, object) VALUES (62, 'BaseAddress');
+INSERT INTO Type2Obj (type, object) VALUES (69, 'IObject');
+INSERT INTO Type2Obj (type, object) VALUES (70, 'IAddress');
+INSERT INTO Type2Obj (type, object) VALUES (71, 'QueryParameter');
+INSERT INTO Type2Obj (type, object) VALUES (72, 'DiskCopyInfo');
+INSERT INTO Type2Obj (type, object) VALUES (73, 'Files2Delete');
+INSERT INTO Type2Obj (type, object) VALUES (74, 'FilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (76, 'GCLocalFile');
+INSERT INTO Type2Obj (type, object) VALUES (81, 'GCFile');
+INSERT INTO Type2Obj (type, object) VALUES (82, 'GCFileList');
+INSERT INTO Type2Obj (type, object) VALUES (83, 'FilesDeletionFailed');
+INSERT INTO Type2Obj (type, object) VALUES (95, 'SetFileGCWeight');
+INSERT INTO Type2Obj (type, object) VALUES (101, 'DiskServerDescription');
+INSERT INTO Type2Obj (type, object) VALUES (102, 'FileSystemDescription');
+INSERT INTO Type2Obj (type, object) VALUES (103, 'DiskPoolQueryOld');
+INSERT INTO Type2Obj (type, object) VALUES (104, 'EndResponse');
+INSERT INTO Type2Obj (type, object) VALUES (105, 'FileResponse');
+INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
+INSERT INTO Type2Obj (type, object) VALUES (107, 'Response');
+INSERT INTO Type2Obj (type, object) VALUES (108, 'IOResponse');
+INSERT INTO Type2Obj (type, object) VALUES (109, 'AbortResponse');
+INSERT INTO Type2Obj (type, object) VALUES (114, 'BasicResponse');
+INSERT INTO Type2Obj (type, object) VALUES (116, 'GCFilesResponse');
+INSERT INTO Type2Obj (type, object) VALUES (117, 'FileQryResponse');
+INSERT INTO Type2Obj (type, object) VALUES (118, 'DiskPoolQueryResponse');
+INSERT INTO Type2Obj (type, object) VALUES (119, 'StageRepackRequest');
+INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
+INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
+INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
+INSERT INTO Type2Obj (type, object) VALUES (142, 'NsFilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (143, 'NsFilesDeletedResponse');
+INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
+INSERT INTO Type2Obj (type, object) VALUES (149, 'StgFilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
+INSERT INTO Type2Obj (type, object) VALUES (151, 'VolumePriority');
+INSERT INTO Type2Obj (type, object) VALUES (152, 'ChangePrivilege');
+INSERT INTO Type2Obj (type, object) VALUES (153, 'BWUser');
+INSERT INTO Type2Obj (type, object) VALUES (154, 'RequestType');
+INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
+INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
+INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
+INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
+INSERT INTO Type2Obj (type, object) VALUES (162, 'FileMigratedNotification');
+INSERT INTO Type2Obj (type, object) VALUES (163, 'FileRecalledNotification');
+INSERT INTO Type2Obj (type, object) VALUES (164, 'FileToMigrateRequest');
+INSERT INTO Type2Obj (type, object) VALUES (165, 'FileToMigrate');
+INSERT INTO Type2Obj (type, object) VALUES (166, 'FileToRecallRequest');
+INSERT INTO Type2Obj (type, object) VALUES (167, 'FileToRecall');
+INSERT INTO Type2Obj (type, object) VALUES (168, 'VolumeRequest');
+INSERT INTO Type2Obj (type, object) VALUES (169, 'Volume');
+INSERT INTO Type2Obj (type, object) VALUES (172, 'EndNotification');
+INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
+INSERT INTO Type2Obj (type, object) VALUES (174, 'NotificationAcknowledge');
+INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
+INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (181, 'GatewayMessage');
+INSERT INTO Type2Obj (type, object) VALUES (182, 'DumpNotification');
+INSERT INTO Type2Obj (type, object) VALUES (183, 'PingNotification');
+INSERT INTO Type2Obj (type, object) VALUES (184, 'DumpParameters');
+INSERT INTO Type2Obj (type, object) VALUES (185, 'DumpParametersRequest');
+INSERT INTO Type2Obj (type, object) VALUES (191, 'StageQueryResult');
+INSERT INTO Type2Obj (type, object) VALUES (192, 'NsFileId');
+INSERT INTO Type2Obj (type, object) VALUES (193, 'BulkRequestResult');
+INSERT INTO Type2Obj (type, object) VALUES (194, 'FileResult');
+INSERT INTO Type2Obj (type, object) VALUES (195, 'DiskPoolQuery');
+INSERT INTO Type2Obj (type, object) VALUES (196, 'EndNotificationFileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (197, 'FileMigrationReportList');
+INSERT INTO Type2Obj (type, object) VALUES (198, 'FileRecallReportList');
+INSERT INTO Type2Obj (type, object) VALUES (199, 'FilesToMigrateList');
+INSERT INTO Type2Obj (type, object) VALUES (200, 'FilesToMigrateListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (201, 'FilesToRecallListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (202, 'FileErrorReportStruct');
+INSERT INTO Type2Obj (type, object) VALUES (203, 'FileMigratedNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (204, 'FileRecalledNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (205, 'FilesToRecallList');
+INSERT INTO Type2Obj (type, object) VALUES (206, 'FileToMigrateStruct');
+INSERT INTO Type2Obj (type, object) VALUES (207, 'FileToRecallStruct');
+INSERT INTO Type2Obj (type, object) VALUES (208, 'FilesListRequest');
+COMMIT;
+

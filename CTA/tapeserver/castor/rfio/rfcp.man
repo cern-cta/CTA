@@ -1,0 +1,124 @@
+.\"
+.\" $Id: rfcp.man,v 1.19 2009/01/14 17:39:21 sponcec3 Exp $
+.\"
+.\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFCP "1castor" "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
+.SH NAME
+rfcp \- Remote file copy
+.SH SYNOPSIS
+.B rfcp
+[
+.BI -s " size"
+] [
+.BI -v2
+]
+.IR filename1
+.IR filename2
+.br
+.B rfcp
+[
+.BI -s " size"
+] [
+.BI -v2
+]
+.IR filename
+.IR directory
+.br
+.P
+.BI @ command_file
+.SH DESCRIPTION
+.IX "\fLrfcp\fR"
+The remote file I/O copy program provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) and to CASTOR for transferring files between remote and/or
+local hosts. Each
+.IR filename
+or
+.IR directory
+argument is either a remote file name of the form:
+.IP
+.IB hostname : path
+.LP
+or a local file name (not containing the :/ character combination). The standard input is supported with the
+.BI \-
+character. In this case a directory in output is not supported.
+.LP
+For castor files the new TURL sintax may be used, with the following variants:
+.LP
+ "rfio://[stagehost][:port]/?[svcClass=MySvcClass&]path=/castor/cern.ch/user/n/nobody/Myfile"
+.LP
+.B or
+.LP
+ "rfio://[stagehost][:port]/[/castor/cern.ch/user/n/nobody/file][?[svcClass=MySvcClass]]"
+.LP
+If there is the pamameter "path", it must be the last one. The order of the other options is not taken into account.
+.LP
+The path must be specified as path in the parameters or before the parameters.
+Of course the old RFIO sintax (rfio://[diskserver][:port]/path) is still valid.
+.LP
+
+.SH OPTIONS
+.TP
+.BI \-s " size"
+If specified, only
+.I size
+bytes will be copied
+.TP
+.BI \-v2
+If specified, forces the RFIO V.2 protocol. Otherwise, V.3 is used and rfio3 is passed as protocol to the stager.
+.SH RETURN CODES
+\
+.br
+0	Ok.
+.br
+1	Bad parameter.
+.br
+2	System error.
+.br
+16	Device or resource busy.
+.br
+28	No space left on device.
+.br
+200	Bad checksum.
+.br
+In addition, errors from the
+.B STAGE ERRORS
+section in
+.B serrno(3)
+page may be returned.
+
+.SH ENVIRONMENT VARIABLES
+.TP
+.BI STAGE_SVCCLASS
+If the service class is not specified on the command-line, then
+.B rfcp
+will use the value of the \fBSTAGE_SVCCLASS\fP environment variable if it is
+set. Please note the environment variable name \fBSTAGE_SVCCLASS\fP does not
+contain the letter \fBR\fP, unlike the corresponding configuration parameter
+in the castor configuration file \fB/etc/castor/castor.conf\fP, see below.
+.TP
+.BI RFIO_TRACE
+Setting this environment variable to 3 causes the rfcp command to print a
+debugging trace to standard out.
+
+.SH CASTOR CONFIGURATION FILE PARAMETERS
+.TP
+.BI "STAGER SVCCLASS"
+If the service class is not specified on the command-line or by the environment
+variable \fBSTAGE_SVCCLASS\fP, then \fBrfcp\fP will use the value of the
+configuration parameter \fBSTAGER SVCCLASS\fP specified in the castor
+configuration file \fB/etc/castor/castor.conf\fP. If the service class is not
+specified using any of these three methods, then the default value of
+"\fBdefault\fP" will be used.  Please note the name of the castor configuration
+parameter \fBSTAGER SVCCLASS\fP contains the letter \fBR\fP, unlike the
+corresponding environment variable, see above.
+
+.SH SEE ALSO
+.BR rcp(1), 
+.BR rfiod(1),
+.BR serrno(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

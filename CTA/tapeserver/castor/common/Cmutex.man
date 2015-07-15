@@ -1,0 +1,154 @@
+.\"   $Id: Cmutex.man,v 1.6 2002/01/09 13:25:25 jdurand Exp $
+.\"
+.TH CMUTEX "3castor" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
+.SH SYNOPSIS
+.B #include <Cmutex.h>
+.P
+.BI "void Cmutex_init(int (*" lockroutine ")(void *" addr ", int " timeout "), int (*" unlockroutine ")(void * "addr "));"
+.P
+.BI "int Cmutex_lock(void *" addr ", int " timeout ");"
+.P
+.BI "int Cmutex_unlock(void *" addr ");"
+
+
+.SH DESCRIPTION
+
+\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions, 
+.BI lockfunction
+and
+.BI unlockfunction
+respectively, then all \fBCmutex\fP calls are dummy operations.
+.P
+Otherwise any call to \fBCmutex_lock\fP will raise a call to
+.BI lockfunction
+, and any call to \fBCmutex_unlock\fP will raise a call to
+.BI unlockfunction.
+.P
+Please note that the \fBCmutex\fP package is initially meant to be interfaced with \fBCthread\fP only.
+.P
+\fBCmutex_lock\fP takes as argument the adress
+.BI addr
+of anything that is static in your userspace, such as a 'static int variable;' address (see \fBEXAMPLE\fP section below), and a
+.BI timeout
+expressed in second unit.
+.br
+ If
+.BI timeout
+is lower than zero, the operation will block until the mutex is granted. If it is zero, the operation will try to have the mutex and immediately return, possibly with failure. If it is greater than zero, operation will exit if the timeout is reached. Please refer to \fBCthread_mutex_timedlock\fP description in the \fBCthread\fP man page.
+.br
+Return code of \fBCmutex_lock\fP is 0 if success, -1 on failure. If failure the \fBserrno\fP error code is set appropriately.
+.P
+\fBCmutex_unlock\fP releases a lock that you previously gained using \fBCmutex_lock\fP and the same address value
+.BI addr.
+.br
+ Return code is 0 if success and -1 on failure, error code is then in the \fBserrno\fP variable.
+
+.SH ERRORS
+If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable:
+
+.P
+.B SECTHREADINIT
+.RS
+CASTOR Thread interface initialization error
+.P
+A thread initialisation call failed. In principle, on UNIX this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed, on Windows/NT this might be a call to CreateMutex.
+.RE
+.P
+.B SECTHREADERR
+.RS
+CASTOR Thread interface failure in calling your thread library
+.P
+A thread call to your native system library (like the pthread one on UNIX) failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
+.RE
+.P
+.B SEOPNOTSUP
+.RS
+Operation not supported
+.P
+This can be generated only if you compiled Cthread with a -DCTHREAD_PROTO flag that Cthread do not know about. Check your CASTOR configuration site.def.
+.RE
+.P
+.B SEINTERNAL
+.RS
+Internal error
+.P
+You can have more information by compiling the Cthread package with the flag -DCTHREAD_DEBUG, and catching the printout on your stderr stream. This is any system call that failed (like malloc()), except those to the thread library (for which SECTHREADERR or SECTHREADINIT is to  be found), or any critical internal run-time error (such as a non correct value found in some Cthread internal structures).
+.RE
+.P
+.B SETIMEDOUT
+(routines with a timeout parameter only)
+.RS
+Timed out
+.P
+You called a routine with a timeout value greater than zero that reached the maximum number of timeout seconds in waiting state.
+.RE
+.P
+.B EINVAL
+.RS
+Invalid parameters
+.P
+You called a routine with invalid parameter(s). Please check your code.
+.RE
+.P
+.B EDEADLK
+.RS
+Deadlock
+.P
+Mutex is already locked by the calling thread (\fBPTHREAD_MUTEX_ERRORCHECK\fP mutexes only, this is not the default and should not happen via \fBCmutex\fP)
+.RE
+.P
+.B EBUSY
+.RS
+Device or resource busy
+.P
+Mutex is already locked by another thread.
+.RE
+.P
+.B EPERM
+.RS
+Permission denied
+.P
+Mutex is now owned by the calling thread (\fBPTHREAD_MUTEX_ERRORCHECK\fP mutexes only, this is not the default and should not happen via \fBCmutex\fP)
+.RE
+
+.SH EXAMPLE
+.nf
+/*
+ * Here follows an example. The call to \fBCthread_init\fP routine shows
+ * that multi-threaded mode is explicitely activated by the application
+ * (you will then have to link with the thread library). Neverthless,
+ * you can very well call some other external library, and leave as it is
+ * the \fBCmutex\fP calls.
+ */
+#include <Cmutex.h>
+#include <Cthread_api.h>
+#include <serrno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <log.h>
+
+int this;
+extern int Cthread_debug;
+
+int main() {
+  Cthread_init();        /* Comment this and Cmutex calls will become dummy */
+
+  initlog("testit",LOG_INFO,"");
+
+  if (Cmutex_lock(&this,10) != 0) {
+    fprintf(stderr,"### Cmutex_lock (%s)\\n",sstrerror(serrno));
+  }
+  if (Cmutex_unlock(&this) != 0) {
+    fprintf(stderr,"### Cmutex_unlock (%s)\\n",sstrerror(serrno));
+  }
+}
+.fi
+
+.SH SEE ALSO
+\fBCthread\fP, \fBserrno\fP
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

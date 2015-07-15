@@ -1,0 +1,28 @@
+\documentclass{castordoc}
+%\usepackage{url}
+% For clickable links and good readability using dvipdf
+\usepackage{times}
+\usepackage{color}
+\usepackage[ps2pdf,colorlinks=true,linkcolor=webred]{hyperref}
+\definecolor{webred}{rgb}{0.5,0,0}
+
+\begin{document}
+\doctyp{User Guide}
+\dociss{1}
+\docrev{0}
+\docref{http://www.cern.ch/castor}
+\doccre{August 23, 2006}
+
+\docmod{\today}
+
+\title{User Guide for CASTOR}
+\author{castor development team}
+\maketitle
+\tableofcontents
+
+\input{overview}
+\input{troubleshooting}
+\input{advanced}
+\input{programming}
+
+\end{document}

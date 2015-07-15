@@ -1,0 +1,13 @@
+# recall backlog informations
+
+<metric>
+  name: RecallBacklogStats-ALICE
+  window: 60
+  unit: Nb of files and GB
+  category: ALICE
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2alice" and MSG=="waitTapeRecallStats"
+  groupbykeys: NONE
+  data: AdderGB(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

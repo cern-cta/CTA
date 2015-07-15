@@ -1,0 +1,152 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      diskserver_qry
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * queries the stager for the files residing on a given diskServer
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-i|--fileId] [-d|--diskCopyId] diskServerName'
+  sys.exit(exitCode)
+
+# first parse the options
+printFileId = False
+printDiskCopyId = False
+verbose = False
+try:
+  options, args = getopt.getopt(sys.argv[1:], 'hidv', ['help', 'fileId', 'diskCopyId', 'verbose'])
+except Exception, e:
+  print e
+  usage(1)
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-i' or f == '--fileId':
+    printFileId = True
+  elif f == '-d' or f == '--diskCopyId':
+    printDiskCopyId = True
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
+
+# If no arg, complain and display usage
+if len(args) == 0:
+    print "missing argument"
+    usage(1)
+# If too many arguments, complain and display usage
+if len(args) > 1:
+    print "too many arguments"
+    usage(1)
+# otherwise, the argument is the diskserver name
+diskServerName = args[0]
+
+DiskCopyStatus = ["DISKCOPY_VALID",
+                  "INVALID_STATUS",
+                  "INVALID_STATUS",
+                  "INVALID_STATUS",
+                  "DISKCOPY_FAILED",
+                  "DISKCOPY_WAITFS",
+                  "DISKCOPY_STAGEOUT",
+                  "DISKCOPY_INVALID",
+                  "INVALID_STATUS",
+                  "DISKCOPY_BEINGDELETED",
+                  "DISKCOPY_VALID_TOBEMIGR",
+                  "DISKCOPY_WAITFS_SCHEDULING"]
+
+# connect to the stager and execute the query
+rc = 0
+try:
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    stcur.arraysize = 1000
+    # the status expression reads "if the CastorFile.tapeStatus is NOTONTAPE with the DiskCopy VALID, show VALID_TOBEMIGR instead"
+    if printFileId:
+      stCheckSQL = '''
+        SELECT /*+ INDEX(DC I_DiskCopy_FileSystem) */
+              FileSystem.mountPoint||DC.path, DC.id,
+              decode(DC.status, 0, decode(CF.tapeStatus, 0, 10, 0), DC.status),
+              CF.fileId, CF.lastKnownFileName
+         FROM FileSystem, DiskServer, DiskCopy DC, CastorFile CF
+        WHERE FileSystem.diskServer = DiskServer.id
+          AND DC.fileSystem = FileSystem.id
+          AND DC.castorFile = CF.id
+          AND DiskServer.name = :diskServerName'''
+    else:
+      stCheckSQL = '''
+        SELECT /*+ INDEX(DC I_DiskCopy_FileSystem) */
+              FileSystem.mountPoint||DC.path, DC.id,
+              decode(DC.status, 0, decode(CF.tapeStatus, 0, 10, 0), DC.status)
+         FROM FileSystem, DiskServer, DiskCopy DC, CastorFile CF
+        WHERE FileSystem.diskServer = DiskServer.id
+          AND DC.fileSystem = FileSystem.id
+          AND DC.castorFile = CF.id
+          AND DiskServer.name = :diskServerName'''
+    stcur.execute(stCheckSQL, diskServerName=diskServerName)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+      # check whether diskServer really exists
+      stCheckSQL = 'SELECT id FROM DiskServer WHERE DiskServer.name = :diskServerName'
+      stcur.execute(stCheckSQL, diskServerName=diskServerName)
+      if stcur.fetchone():
+        print 'No files found on ' + diskServerName
+      else:
+        print 'Unknown diskserver ' + diskServerName + '. Did you provide a fully qualified name ?'
+        rc = 1
+      castor_tools.disconnectDB(stconn)
+      sys.exit(rc)
+    else:
+      # print header
+      head = ''
+      if printFileId: head = head + "%-10s " % "FileId"
+      if printDiskCopyId: head = head + "%-12s " % "DiskCopyId"
+      head = head + "%-24s %-50s " % ("Status", "Physical FileName")
+      if printFileId: head = head + "Last known FileName"
+      print head
+      # print rows
+      for row in rows:
+        line = ''
+        if printFileId: line = line + "%-10d " % row[3]
+        if printDiskCopyId: line = line + "%-12d " % row[1]
+        if row[2] <= len(DiskCopyStatus):
+          statusStr = DiskCopyStatus[row[2]]
+        else:
+          statusStr = "Unknown status : " + str(row[2])
+        line = line + "%-24s %-50s " % (statusStr, diskServerName + ':' + row[0])
+        if printFileId:
+          line = line + row[4]
+        print line
+    castor_tools.disconnectDB(stconn)
+except SystemExit:
+    sys.exit(rc)
+except Exception, e:
+    print e
+    if verbose:
+         import traceback
+         traceback.print_exc()
+    sys.exit(1)
+

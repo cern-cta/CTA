@@ -1,0 +1,26 @@
+THE NAME OF TEST
+================
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+
+EXPECTED RESULTS
+================
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================

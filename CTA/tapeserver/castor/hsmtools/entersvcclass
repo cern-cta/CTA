@@ -1,0 +1,222 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      entersvcclass
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new service class into the castor stager'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
+          '[--defaultfilesize <defaultFileSize>] [--replicanb <ReplicaNb>] ' + \
+          '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
+          '[--forcedfileclass <forcedFileClass>] --gcpolicy <gcPolicyName> ' + \
+          '[--pools <poolName>:[...]] <svcClassName>'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv',
+                                  ['help', 'verbose', 'defaultfilesize=', 'replicanb=',
+                                   'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
+                                   'gcpolicy=', 'pools='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+defaultfilesize = 2147483648 # 2GiB
+replicanb = 1
+failjobswhennospace = True
+disk1behavior = False
+forcedfileclass = None
+gcpolicy = None
+pools = []
+try:
+    for f, v in options:
+        if f == '-h' or f == '--help':
+            usage(0)
+        elif f == '-v' or f == '--verbose':
+            verbose = True
+        elif f == '--defaultfilesize':
+            defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
+        elif f == '--replicanb':
+            replicanb = castor_tools.parsePositiveNonNullInt('replicanb', v)
+        elif f == '--failjobswhennospace':
+            failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
+        elif f == '--disk1behavior':
+            disk1behavior = castor_tools.parseBool('disk1behavior', v)
+        elif f == '--forcedfileclass':
+            forcedfileclass = v
+        elif f == '--gcpolicy':
+            gcpolicy = v
+        elif f == '--pools':
+            pools = set(v.split(':'))
+        else:
+            print "unknown option : " + f
+            usage(1)
+except castor_tools.ParsingError, e:
+    print e
+    usage(1)
+
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+else:
+    svcclassname = args[0]
+
+# check some arguments
+if gcpolicy == None:
+    if disk1behavior:
+        gcPolicy = 'default'
+    else:
+        print "gcpolicy argument is mandatory but is missing. Did you mean 'default' ?"
+        usage(1)
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the service class does not exist
+    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'SvcClass %s already exists in the stager DB' % svcclassname
+        print 'Giving up'
+        sys.exit(1)
+    # check that the service class exists
+    stcur.execute('SELECT name FROM GcPolicy WHERE name=:name', name=gcpolicy)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'GcPolicy %s does not exist in the stager DB' % gcpolicy
+        sys.exit(1)
+    # Get pools info (and check existence)
+    diskPoolIds = []
+    dataPoolIds = []
+    if pools:
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(pools) + "')")
+        rows = stcur.fetchall()
+        existingdiskpools = set([row[0] for row in rows])
+        diskPoolIds = [row[1] for row in rows]
+        stcur.execute("SELECT name, id FROM DataPool WHERE name IN ('" + "', '".join(pools) + "')")
+        rows = stcur.fetchall()
+        existingdatapools = set([row[0] for row in rows])
+        dataPoolIds = [row[1] for row in rows]
+        nonexistingpools = pools - existingdiskpools - existingdatapools
+        if nonexistingpools:
+            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingpools))
+            sys.exit(1)
+        # check consistency of the garbage collection policies of the different service classes
+        # that pools are linked with
+        if diskPoolIds:
+            stcur.execute('''SELECT DiskPool.name
+                               FROM SvcClass, DiskPool2SvcClass, DiskPool
+                              WHERE SvcClass.id = DiskPool2SvcClass.child
+                                AND DiskPool2SvcClass.parent = DiskPool.id
+                                AND DiskPool2SvcClass.parent IN (''' + \
+                                    ', '.join([str(k) for k in diskPoolIds]) + ''')
+                                AND SvcClass.gcPolicy != :gcPolicy''',
+                          gcPolicy=gcpolicy)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following diskpool(s) is(are) linked to service class(es) conflicting on the GC Policy : %s' % (', '.join([row[0] for row in rows]))
+                print 'Giving up'
+                sys.exit(1)
+        if dataPoolIds:
+            stcur.execute('''SELECT DataPool.name
+                               FROM SvcClass, DataPool2SvcClass, DataPool
+                              WHERE SvcClass.id = DataPool2SvcClass.child
+                                AND DataPool2SvcClass.parent = DataPool.id
+                                AND DataPool2SvcClass.parent IN (''' + \
+                                    ', '.join([str(k) for k in dataPoolIds]) + ''')
+                                AND SvcClass.gcPolicy != :gcPolicy''',
+                          gcPolicy=gcpolicy)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following datapool(s) is(are) linked to service class conflicting on the GC Policy : %s' % (', '.join([row[0] for row in rows]))
+                print 'Giving up'
+                sys.exit(1)
+    # Oracle needs at least one element...
+    if not diskPoolIds:
+        diskPoolIds = [-1]
+    if not dataPoolIds:
+        dataPoolIds = [-1]
+    # check that the forced file class does exist, and retrieve its id
+    if forcedfileclass:
+        stcur.execute('SELECT id FROM FileClass WHERE name=:name', name=forcedfileclass)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'Invalid or non existent FileClass %s' % forcedfileclass
+            print 'Giving up'
+            sys.exit(1)
+        else:
+            forcedfileclass = rows[0][0]
+    else:
+        forcedfileclass = 0
+    # get info on user running this command
+    lasteditor = castor_tools.getCurrentUsername()
+    # insert new SvcClass
+    insertFCSQL = '''
+    DECLARE
+      scId NUMBER;
+      diskPoolIds castor."cnumList" := :diskPoolIds;
+      dataPoolIds castor."cnumList" := :dataPoolIds;
+    BEGIN
+      INSERT INTO SvcClass (name, defaultFileSize, replicaNb, gcPolicy, disk1Behavior,
+                            failJobsWhenNoSpace, id, forcedFileClass, lastEditor, lastEditionTime)
+             VALUES (:name, :defaultFileSize, :replicaNb, :gcPolicy, :disk1Behavior,
+                     :failJobsWhenNoSpace, ids_seq.nextval, :forcedFileClass, :lastEditor, gettime())
+             RETURNING id INTO scId;
+      IF diskPoolIds.COUNT != 1 OR diskPoolIds(1) != -1 THEN
+        FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+          INSERT INTO DiskPool2SvcClass (parent, child) VALUES (diskPoolIds(i), scId);
+      END IF;
+      IF dataPoolIds.COUNT != 1 OR dataPoolIds(1) != -1 THEN
+        FORALL i IN dataPoolIds.FIRST .. dataPoolIds.LAST
+          INSERT INTO DataPool2SvcClass (parent, child) VALUES (dataPoolIds(i), scId);
+      END IF;
+    END;'''
+    stcur.execute(insertFCSQL, name=svcclassname, defaultFileSize=defaultfilesize,
+                  replicaNb=replicanb, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
+                  failJobsWhenNoSpace=failjobswhennospace, forcedFileClass=forcedfileclass,
+                  diskPoolIds=diskPoolIds, dataPoolIds=dataPoolIds, lastEditor=lasteditor)
+    # commit insertion and tell user
+    stconn.commit()
+    print 'inserted service class %s successfully' % svcclassname
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -1,0 +1,134 @@
+.\"
+.\" $Id: rfio_symlink.man,v 1.6 2007/09/10 13:40:51 obarring Exp $
+.\"
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_SYMLINK "3castor" "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_symlink \- create a symbolic link to a file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_symlink (const char *" oldpath ", const char *" newpath ");"
+.br
+.BI "int rfio_msymlink (const char *" oldpath ", const char *" newpath ");"
+.br
+.BI "int rfio_msymlink_reset ();"
+.br
+.BI "int rfio_symend ();"
+.SH DESCRIPTION
+.B rfio_symlink
+creates a symbolic link 
+.I newpath
+which contains the string
+.IR oldpath .
+.LP
+.I newpath
+may point to a non existing file.
+.br
+If
+.I newpath
+exists already, it will not be overwritten.
+.br
+Write permission is required on 
+.I newpath
+parent.
+.LP
+.B rfio_msymlink
+is identical to
+.B rfio_symlink
+but keeps the connection open to the server unless there are more than MAXMCON
+connections already opened. This is useful when issuing a series of symlink calls.
+The last
+.B rfio_msymlink
+call should be followed by a call to
+.BR rfio_symend .
+.LP
+.B rfio_msymlink_reset
+is to be used when your program is forking. In such a case the permanent connections opened with
+.B rfio_msymlink
+become shared between the parent and the child. Use
+.B rfio_msymlink_reset
+to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon.
+.P
+See NOTES section below.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH NOTES
+Multiple connections using rfio_msymlink are thread-safe but not process-wide, therefore a forked child can share file descriptors opened with rfio_msymlink by its parent. Use
+.B rfio_msymlink_reset
+in such case.
+.P
+Multiple connections behaviour is undefined if you work in a multi-threaded environment and with threads \fBnot\fP created using the CASTOR's \fBCthread\fP interface.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I newpath
+prefix does not exist or
+.I oldpath
+is a null pathname.
+.TP
+.B ENOMEM
+Insufficient memory.
+.TP
+.B EACCES
+Search permission is denied on a component of the 
+.I newpath
+prefix or write permission on the 
+.I newpath
+parent directory is denied.
+.TP
+.B EFAULT
+.I oldpath
+or
+.I newpath
+is a NULL pointer.
+.TP
+.B EEXIST
+.I newpath
+already exists.
+.TP
+.B ENOTDIR
+A component of the 
+.I newpath
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I oldpath
+or
+.I newpath
+exceeds
+.B CA_MAXPATHLEN
+or the length of a path component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B SEOPNOTSUP
+Not supported on Windows.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR rfio_readlink(3) ,
+.BR rfio_unlink(3) ,
+.BR Cthread(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

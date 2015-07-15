@@ -1,0 +1,2 @@
+%attr(0755,stage,st) var/log/castor
+%attr(0755,stage,st) var/spool/castor

@@ -1,0 +1,129 @@
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRMODIFYTAPE "1castor" "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrmodifytape
+[
+.BI -d " density"
+] [
+.BI -l " lbltype"
+] [
+.BI -P " poolname"
+]
+.BI -V " vid"
+[
+.BI -v " vsn"
+] [
+.BI --li " library"
+] [
+.BI --ma " manufacturer"
+] [
+.BI --po " poolname"
+] [
+.BI --sn " sn"
+] [
+.BI --st " status"
+]
+.SH DESCRIPTION
+.B vmgrmodifytape
+modifies an existing tape volume entry in the CASTOR Volume Manager.
+.TP
+.I density
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590E cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
+.TP
+.I lbltype
+may be
+.BR al ,
+.BR aul ,
+.B nl
+or
+.BR sl .
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I vsn
+specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long.
+.TP
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
+.TP
+.I manufacturer
+is an alphanumeric field CA_MAXMANUFLEN bytes long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
+.TP
+.I sn
+The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
+.TP
+.I status
+can be set to 0 or a combination of
+.BR TAPE_FULL ,
+.BR ARCHIVED ,
+.BR DISABLED ,
+.BR EXPORTED
+and
+.BR TAPE_RDONLY .
+This can be either alphanumeric or the corresponding numeric value.
+.LP
+Only
+.I vid
+is mandatory. When an option is not specified, the field is not modified.
+.LP
+This command requires TP_OPER privilege in the Cupv database.
+.SH EXAMPLE
+.nf
+.ft CW
+vmgrmodifytape -V Y31003 -P alicemdc2
+.sp
+vmgrmodifytape -V RT0001 --st "FULL|ARCHIVED"
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
+.B vmgr_modifytape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

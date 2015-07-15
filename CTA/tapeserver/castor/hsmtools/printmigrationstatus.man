@@ -1,0 +1,45 @@
+.TH "PRINTMIGRATIONSTATUS" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printmigrationstatus \- Prints the pending migrations statistics by tape pool
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printmigrationstatus
+[
+.BI \-h
+]
+
+.SH "DESCRIPTION"
+.B printmigrationstatus
+prints out pending migrations statistics by tapepool, and a final line for the stuck migrations,
+i.e. the ones that had reached the configured maximum number of attempts and thus need to be unblocked
+by the operator.
+Once any possible tape issues have been fixed, one has to use the
+.B
+migratenewcopy
+command to reinitiate the migration of all stuck files.
+.LP 
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# printmigrationstatus
+        TAPEPOOL FILES FILES_MIGRATING TOTAL_SIZE SIZE_MIGRATING MIGRATIONS MIGRATIONS_QUEUED MIGRATIONS_RUNNING  MIN_AGE       MAX_AGE
+---------------------------------------------------------------------------------------------------------------------------------------
+    stager_dev01     6               0      4339B             0B          1                 1                  0   31mn9s    9d2h30mn3s
+stuck migrations    13               0      10MiB             0B          0                 0                  0 42d5h47s 156d8h27mn20s
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printrecallstatus
+.BR printrecallfilestatus
+.BR printrecalltapequeue
+.BR printrecalluserqueue
+.BR migratenewcopy
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

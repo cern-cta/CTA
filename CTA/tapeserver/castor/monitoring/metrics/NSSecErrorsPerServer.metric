@@ -1,0 +1,13 @@
+# Number of authentication errors per minute
+
+<metric>
+  name: NSSecErrorsPerServer
+  unit: Count
+  category: Nameserver
+  window: 60
+  conditions: MSG=="Error: Could not establish security context" and DAEMON=="nsd"
+  groupbykeys: HOSTNAME
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

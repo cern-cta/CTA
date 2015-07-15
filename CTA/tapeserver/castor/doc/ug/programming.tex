@@ -1,0 +1,63 @@
+\chapter{Programming using the CASTOR APIs}
+\section{Reading a file with RFIO}
+
+Below a sample code using the RFIO API is provided. To compile it, you need to have installed the
+castor-devel RPM on top of the standard CASTOR client RPMs (at least castor-lib and castor-rfio-client).
+
+\begin{verbatim}
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <shift.h>
+
+int main(int argc, char *argv[]) {
+        int fd, flag=O_RDONLY, rc;
+	char buffer[1024], *filename=NULL;
+
+	filename=argv[1];
+	if ( filename == NULL ) {
+	  fprintf(stderr,"Please provide a filename\n");
+	  exit(1);
+	}
+        fprintf(stdout,"calling rfio_open(%s,0%o)\n",filename,flag);
+        errno = serrno = rfio_errno = 0;
+        fd = rfio_open(filename,flag);
+        if ( fd < 0 ) {
+          fprintf(stderr,"rfio_open(%s,0%o) = %d, errno=%d, serrno=%d, rfio_errno=%d\n",
+	          filename,flag,fd,errno,serrno,rfio_errno);
+          exit(1);
+        }
+	memset(buffer, '\0',sizeof(buffer));
+        rc = rfio_read(fd,buffer,sizeof(buffer)-1);
+	if ( rc == -1 ) {
+          fprintf(stderr,"rfio_read(%d,%p,%d) = %d, %s\n",
+	          fd,buffer,sizeof(buffer)-1,rc,rfio_serror());
+	} else {
+	  fprintf(stdout,"buffer=%s",buffer);
+	}
+        rfio_close(fd);
+        return(0);
+}
+\end{verbatim}
+
+Typical commands to be issued to compile this code:
+
+\begin{verbatim}
+[lxplus] cc -Wall -Wno-long-long -I/usr/include/shift -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT -c test_ug.c
+[lxplus] cc -o test_ug test_ug.o -L /usr/lib64 -lshift -Wl,-rpath-link,/usr/lib64
+\end{verbatim}
+
+\section{Multi-thread considerations}
+The CASTOR client library has its own thread wrapper layer called {\tt Cthread}, see
+{\tt Cthread} man-page (or
+\url{http://cern.ch/castor/docs/guides/man/CASTOR2/common/Cthread.man.html}). The {\tt Cthread}
+library does not only provide wrappers for the native thread libraries but it is also used
+internally by other CASTOR client libraries (for instance RFIO) to assure threadsafeness. Typically
+this consists of moving process global objects like the {\tt serrno} variable (see {\tt serrno}
+man-page or \url{http://cern.ch/castor/docs/guides/man/CASTOR2/h/serrno.man.html})
+into thread specific storage. Therefore, applications using native thread libraries, need to
+initialize initial the {\tt Cthread} library in order for the CASTOR APIs to be thread-safe. This
+is done by a call to {\tt Cthread\_init()} (void argument list), for instance in the main routine ideally before having
+started any thread.

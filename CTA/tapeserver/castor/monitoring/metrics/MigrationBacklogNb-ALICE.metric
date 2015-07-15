@@ -1,0 +1,13 @@
+# migration backlog informations
+
+<metric>
+  name: MigrationBacklogNb-ALICE
+  window: 60
+  unit: Nb of files
+  category: ALICE
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2alice" and MSG=="waitTapeMigrationStats"
+  groupbykeys: TapePool
+  data: Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

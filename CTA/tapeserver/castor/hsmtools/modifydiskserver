@@ -1,0 +1,108 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      modifydiskserver
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to modify an existing DiskServer in the castor stager'''
+
+import sys
+import getopt
+import rpyc
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
+          '(-s|--state <state>) | (-d|--diskpool) <diskpool> | (-p|--pool) <datapool>' + \
+          '[-m|--mountpoints <mountpoint>[:...]] [-R|--recursive] <diskpool>|<diskServerName> [...]]'
+    print '  where state can be "Production", "Draining", "Disabled", "Readonly"'
+    sys.exit(exitCode)
+
+# Possible states
+states = ['Production', 'Draining', 'Disabled', 'Readonly']
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:p:R',
+                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool=', 'datapool=', 'recursive'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+state = None
+mountPoints = None
+diskPool = None
+dataPool = None
+isRecursive = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-s' or f == '--state':
+        if v not in states:
+            print 'Unkown state %s' % v
+            usage(1)
+        state = v
+    elif f == '-m' or f == '--mountpoints':
+        mountPoints = tuple(v.split(':'))
+    elif f == '-d' or f == '--diskpool':
+        diskPool = v
+    elif f == '-p' or f == '--pool':
+        dataPool = v
+    elif f == '-R' or f == '--recursive':
+        isRecursive = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# some consistency checks
+if not state and not diskPool and not dataPool:
+    print 'Nothing to do. Please specify at least one of options -s,--state and -d,--diskpool'
+    usage(1)
+if len(args) == 0:
+    print 'Nothing to do ! Please give a few diskpools/diskservers'
+    usage(1)
+if mountPoints and isRecursive:
+    print '--recursive and --mountPoints options are incompatible. Giving up'
+    usage(1)    
+
+try:
+    if state:
+        state = states.index(state)
+    conf = castor_tools.castorConf()
+    rpycconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
+                            conf.getValue('TransferManager', 'Port', 15011, int))
+    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool, dataPool, isRecursive)
+    print returnMsg
+except ValueError, e:
+    print e
+    sys.exit(-1)
+except Exception, e:
+    print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
+    if verbose:
+        if hasattr(e, "_remote_tb"):
+            print 'Remote trace :'
+            print e._remote_tb[0]
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -1,0 +1,4 @@
+%attr(0644,root,root) etc/simple-log-producer/plugins/castor_base_file_parser.py*
+%attr(0644,root,root) etc/simple-log-producer/plugins/castor_rsyslogfile_header_parser.py*
+%attr(0644,root,root) etc/simple-log-producer/plugins/castor_rsyslogfile_body_parser.py*
+%attr(0644,root,root) etc/simple-log-producer/plugins/castor_rsyslogfile_oldheader_parser.py*

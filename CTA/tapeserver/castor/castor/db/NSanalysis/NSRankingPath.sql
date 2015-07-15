@@ -1,0 +1,74 @@
+COL fileName new_value spoolFile;
+select SUBSTR('&1',INSTR('&1','/',-1)+1)||'.html' fileName from dual;
+
+PROMPT 'writing to &spoolFile'
+SPOOL '&spoolFile'
+PROMPT
+PROMPT
+PROMPT <H1>Statistics for &1</H1>
+PROMPT
+PROMPT <H2>Shortcuts</H2>
+PROMPT <A href='#tape'>Biggest directories in terms of space on tape</A>
+PROMPT <A href='#disk'>Biggest directories in terms of disk only space</A>
+PROMPT <A href='#fileclass'>Usage of fileclasses</A>
+PROMPT
+PROMPT
+
+ALTER SESSION SET statistics_level=all;
+
+PROMPT <A name=tape><H1>Biggest directories in terms of space on tape</H1></A>
+PROMPT
+BEGIN biggestOnTape('&1'); END; -- filling the temporary table
+/
+SELECT * FROM biggestOnTapeTempTable;
+DECLARE
+  nbr INTEGER;
+BEGIN
+ SELECT COUNT(*) INTO nbr FROM biggestOnTapeTempTable;
+ IF nbr = 0 THEN
+   dbms_output.put_line('No activity<br><br>');
+ END IF;
+END;
+/
+DELETE FROM BiggestOnTapeTempTable;
+COMMIT; -- also emptying the temporary table
+PROMPT
+
+PROMPT <A name=disk><H1>Biggest directories in terms of disk only space</H1></A>
+PROMPT
+BEGIN biggestOnDisk('&1'); END; -- filling the temporary table
+/
+SELECT * FROM biggestOnDiskTempTable;
+DECLARE
+  nbr INTEGER;
+BEGIN
+ SELECT COUNT(*) INTO nbr FROM biggestOnDiskTempTable;
+ IF nbr = 0 THEN
+   dbms_output.put_line('No activity<br><br>');
+ END IF;
+END;
+/
+DELETE FROM BiggestOnDiskTempTable;
+COMMIT; -- also emptying the temporary table
+PROMPT
+
+PROMPT <A name=fileclass><H1>Usage of fileclasses</H1></A>
+PROMPT
+SELECT CASE WHEN grouping(cns_class_metadata.name) = 1 THEN getPathForFileId(dirs.fileid) ELSE '' END path,
+       cns_class_metadata.name fileclass,
+       sum(dir2fileclass.nbfiles) nbFiles,
+       size2char(sum(dir2fileclass.amountdata)) amountData
+  FROM dirs, dir2fileclass, cns_class_metadata
+ WHERE dirs.fileid = dir2fileclass.fileid
+   AND cns_class_metadata.classid = dir2fileclass.fileclass
+   AND dirs.depth = &2
+   AND dirs.fullName LIKE '&1'||'%'
+ GROUP BY grouping sets(
+       (dirs.depth, getPathForFileId(dirs.fileid)),
+       (dirs.depth, getPathForFileId(dirs.fileid), cns_class_metadata.name))
+ ORDER BY getPathForFileId(dirs.fileid), grouping(cns_class_metadata.name) desc;
+PROMPT
+
+ALTER SESSION SET statistics_level=basic;
+
+SPOOL OFF

@@ -1,0 +1,3 @@
+stager_put -M <noTapeFileName>
+stager_putdone -M <noTapeFileName>
+stager_qry -M <noTapeFileName>

@@ -1,0 +1,132 @@
+THE NAME OF TEST
+================
+
+Recall 10 files with tape ARCHIVED whilst TAPECOPY_WAITINSTREAMS.
+
+
+THE PURPOSE OF THE TEST
+=======================
+
+The principle responsibility of the tape gateway is to coordinate the transfer
+of files to and from tape.
+
+This test verifies that the tape-gateway will fail the recall of a file 
+if the tape containing them is move to an ARCHIVED state.
+
+The tape-gateway is responsible for retying failed recall based on a
+user-define policy. The tape-gateway does this by executing a Python-script
+which provides the policy user-coded logic for deciding whether or not a failed
+recall should be repeated based on the error code that is being generating
+and the number of prevous retries.
+
+
+THE PREREQUISITES OF THE TEST
+=============================
+
+* A test-stager running the tape-gateway where you can carry out the test.
+* A test service-class with the following properties:
+  - A set of one or more disk-pools that has enough free space to store ten
+    100MB test-files.
+  - Recaller policy set to 'None'.
+* A user account that permits the modification of the service-class within the
+  stager.
+* One free tape-drive which can access the test-tape.
+* A user account that permits the dedication of drives within the VDQM.
+* Set TAPEGATEWAY REC_RETRY_POLICY in castor.conf to point to a Python module
+  which contains a function of the same name which returns 0 in the case of a
+  ENOENT error code.
+
+
+INSTRUCTIONS DESCRIBING HOW TO SET UP THE ENVIRONMENT OF THE TEST
+=================================================================
+
+1. Check that the tapeGateway is up and running.
+
+ps -ef | grep 'tapegatewayd' | grep -v grep
+
+2. Identify a test-directory in CASTOR where contain 10 files.
+
+/castor/cern.ch/dev/m/murrayc3/<folder_name>
+
+3. Check that the ten files has at least one copy on tape.
+
+nsls -l /castor/cern.ch/dev/m/murrayc3/<folder_name> | grep '^m' | wc -l
+[output] 10
+
+4. Chech that the files are not on disk.
+
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
+
+5. If the previous test show that the files are on disk, stager_rm them.
+
+TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_rm -M $TESTDIR/$F; done
+
+6. Make sure the test service-class will use exactly 1 drive for recall.
+
+modifySvcClass --Name default --NbDrives 1
+
+7. Dedicate the test-drive to the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212 -match 'host=lxcastordev04'
+
+
+INSTRUCTIONS DESCRIBING HOW TO CARRY OUT THE TEST
+=================================================
+
+1. Stop the tepegateway daemon.
+
+/etc/init.d/tapegatewayd stop
+
+2. stager_get the 10 files.
+
+TESTDIR="/castor/cern.ch/dev/m/murrayc3/<folder_name>"; for F in `nsls -l $TESTDIR | awk '{print $NF;}'`; do stager_get -M $TESTDIR/$F; done
+
+3. Waiting for all 10 files to be in TAPECOPY_CREATED (tragic number 0).
+
+SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
+       FROM castorfile
+            INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
+      WHERE lastknownfilename like '%/<folder_name>/%';
+
+4. Modify the status of the test_tape(s) to ARCHIVED.
+
+TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
+for I in $TAPES; do vmgrmodifytape -V $I --st ARCHIVED; done;
+
+5. Start the tepegateway daemon.
+
+/etc/init.d/tapegatewayd start
+
+6. Wait for the status of the tapecopy of each test-file to become
+   TAPECOPY_FAILED (tragic number 6).
+
+SQL> SELECT castorfile.lastknownfilename, tapecopy.status AS tapecopy_status
+       FROM castorfile
+            INNER JOIN tapecopy ON (castorfile.ID = tapecopy.castorfile)
+      WHERE lastknownfilename like '%/<folder_name>/%';
+
+
+EXPECTED RESULTS
+================
+
+The tape-gateway should have failed all 10 of the test-files being recalled from
+tape.  In addition to the status output of step 6 of the above test
+instructions, nsls -l should show that none of the 10 test files have been
+recalled.  The following command-line should therefore display 10 as its result.
+
+stager_qry -M /castor/cern.ch/dev/m/murrayc3/<folder_name> | egrep 'INVALID|not on disk cache' | wc -l
+[output] 10
+
+
+INSTRUCTIONS DESCRIBING HOW TO TEAR DOWN THE ENVIRONMENT OF THE TEST
+====================================================================
+
+1. Revoke the dedication the test-drive from the test-stager.
+
+vdqm_admin -dedicate -dgn 359B1B -drive 35921011 -server tpsrv212
+
+2. Set the status the test_tape(s) to the original value.
+
+TAPES=`nsls -lT  /castor/cern.ch/dev/n/nbessone/<folder_name> | awk '{print $4}' | sort | uniq`;
+for I in $TAPES; do vmgrmodifytape -V $I --st ""; done;

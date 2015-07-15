@@ -1,0 +1,83 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      modifydbconfig
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to modify the CASTOR database configuration'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <class> <key> <value>'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) < 3:
+    print 'Not enough arguments'
+    usage(1)
+if len(args) > 3:
+    print 'Too many arguments'
+    usage(1)
+dbclass, dbkey, dbvalue = args
+        
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the entry exists
+    stcur.execute('SELECT value FROM CastorConfig WHERE class=:dbclass AND key=:dbkey',
+                  dbclass=dbclass, dbkey=dbkey)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'No config found for %s/%s' % (dbclass, dbkey)
+        sys.exit(1)
+    # do the update
+    stcur.execute('UPDATE CastorConfig SET value=:dbvalue WHERE class=:dbclass AND key=:dbkey',
+                  dbclass=dbclass, dbkey=dbkey, dbvalue=dbvalue)
+    # commit update and tell user
+    stconn.commit()
+    print 'DB config updated'
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

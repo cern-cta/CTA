@@ -1,0 +1,74 @@
+We consider CASTOR requirements to fall into three categories:
+\begin{itemize}
+\item high level requirements
+\item functional requirements
+\end{itemize}
+This section provides a non-exhaustive outline of these main
+requirement areas. Further details are available in \cite{castor}.
+
+\subsection{High level requirements}
+
+CASTOR's primary requirement is to provide the data storage capacity
+and performance for managing the data produced by the
+experiments which use the new CERN accelerator, the LHC. These data
+will be processed globally using the LHC Computing Grid\cite{LCG}.
+
+There are three principal levels in this grid. The main data source,
+i.e. the ATLAS, ALICE, CMS and LHCb experiments, is named Tier 0. Tier
+0 needs to store all data coming from the experiments and to run the
+initial data reconstruction. Data are then replicated to Tier 1
+centers where further reconstruction and analysis takes place. Finally
+many Tier 2 sites are linked to each Tier 1 and act as data customers
+for the physics analysis data. 
+
+CASTOR is primarily focused on supporting the Tier 0 and Tier 1 requirements.
+Its three main targets are:
+
+\begin{itemize}
+\item to provide the Tier 0 Central Data Recording facility (CDR) for the four 
+primary LHC experiments and in addition to provide the storage for the 
+associated Reconstruction facilities.
+\item to handle the massive data transfers to the Tier 1 sites, concurrently 
+with new data acquisision.
+\item to be used as the storage element of the CERN Tier 1 analysis 
+facility that is used by CERN's analysis computing farms.
+\end{itemize}
+
+Figure \ref{fig:rates} gives a graphical view of the different concurrent activities
+CASTOR is handling.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[scale=.17]{rates.eps}
+\caption{CASTOR data rates}
+\label{fig:rates}
+\end{figure}
+
+In addition to the primary LHC experiments CASTOR must also support
+the storage requirements of additional, albeit smaller, experiments.
+
+\subsection{Functional Requirements}
+
+Functionality requirements can be summarized in one task: provide
+transparent tape storage to the user. In more detail, there are three
+core functional requirements for CASTOR:
+
+\begin{itemize}  
+\item provide a unique global, hierarchical namespace. This should allow
+users to name files in a UNIX like hierarchy and locate them by name afterwards
+\item provide transparent tape media management via a disk cache.
+Users should not have to consider whether their files are on tape or on
+disk
+\item provide automated disk cache management. This should ensure
+performance and reliability, from both the user and the tape system
+point of view.
+\end{itemize}
+
+In addition to these core requirements, CASTOR has to interface with
+the Grid, the global framework which most physics software
+will use to access data. One of the features that characterise a Grid
+service, in its broader sense, is the ability to interface with any
+underlying fabric resource. The current state of the art in the storage
+domain is the Storage Resource Manager interface(SRM) \cite{SRM}.
+This interface has to be implemented for CASTOR.
+

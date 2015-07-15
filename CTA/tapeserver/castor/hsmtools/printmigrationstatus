@@ -1,0 +1,107 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printmigrationstatus
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the summary of stager-queued, vdqm queued and ongoing migrations'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    if f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+      SELECT * FROM (
+        SELECT /*+ USE_NL(tp mj) NO_INDEX_FFS(mj) */ tp.name tapepool, count(*) files,
+               sum((case when mj.status = 1 then 1 else 0 end)) files_migrating,
+               nvl(sum(mj.filesize), 0) total_size,
+               sum((case when mj.status = 1 then mj.filesize else 0 end)) size_migrating,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id) migrations,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 2) migrations_queued,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 3) migrations_running,
+               nvl(min(gettime() - mj.creationtime), 0) min_age,
+               nvl(max(gettime() - mj.creationtime), 0) max_age
+          FROM migrationjob mj
+               LEFT OUTER JOIN tapepool tp on tp.id = mj.tapepool
+         WHERE mj.status in (0, 1)
+         GROUP BY tp.name, tp.id
+         ORDER BY tapepool ASC)
+      UNION ALL
+      SELECT /*+ NO_INDEX_FFS(MigrationJob) NO_USE_HASH(dc cf) */ 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
+             nvl(sum(dc.diskcopysize), 0) total_size, 0 size_migrating,
+             0 migrations, 0 migrations_queued, 0 migrations_running,
+             nvl(min(gettime() - dc.creationtime), 0) min_age,
+             nvl(max(gettime() - dc.creationtime), 0) max_age
+        FROM DiskCopy dc, CastorFile cf
+       WHERE dc.castorFile = cf.id
+         AND tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+         AND NOT EXISTS
+           (SELECT /*+ NO_INDEX_FFS(MigrationJob) */ 1 FROM MigrationJob WHERE castorFile = dc.castorFile)
+        '''
+    stcur.execute(sqlStatement)
+    # get results and print them
+    rows = stcur.fetchall()
+    titles = ['TAPEPOOL', 'FILES', 'FILES_MIGRATING', 'TOTAL_SIZE', 'SIZE_MIGRATING',
+              'MIGRATIONS', 'MIGRATIONS_QUEUED', 'MIGRATIONS_RUNNING',
+              'MIN_AGE', 'MAX_AGE']
+    data = [(tapepool, files, files_migrating, castor_tools.nbToDataAmount(total_size),
+             castor_tools.nbToDataAmount(size_migrating), migrations, migrations_queued, migrations_running,
+             castor_tools.nbToAge(int(min_age)), castor_tools.nbToAge(int(max_age)))
+            for tapepool, files, files_migrating, total_size,
+                size_migrating, migrations, migrations_queued, migrations_running,
+                min_age, max_age in rows]
+    castor_tools.prettyPrintTable(titles, data)
+    # close DB connection
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

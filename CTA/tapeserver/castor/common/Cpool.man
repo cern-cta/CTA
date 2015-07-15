@@ -1,0 +1,160 @@
+.\" $Id: Cpool.man,v 1.7 2001/09/26 09:13:48 jdurand Exp $
+.\"
+.TH CPOOL "3castor" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCpool\fP \- \fBCASTOR\fP \fBPool\fP inferface
+.SH SYNOPSIS
+.B #include <Cpool_api.h>
+.P
+.BI "int Cpool_create(int " nbwanted ", int * " nbget ");"
+.P
+.BI "int Cpool_assign(int " poolid ", void *(*" startroutine ")(void *), void *" arg ", int " timeout ");"
+.P
+.BI "int Cpool_next_index(int " poolid ");"
+.P
+.BI "int Cpool_next_index_timeout(int " poolid ", int " timeout ");"
+
+.SH ERRORS
+
+See \fBCthread\fP corresponding section.
+
+.SH DESCRIPTION
+
+.B (Please read the NOTE section)
+
+\fBCpool\fP is a layer built upon \fBCthread\fP, the \fPCASTOR Thread\fP interface. It allows the user to create dedicated pools, and then to assign to one of them a given routine to execute.
+.P
+The created threads will remain alive, unless the routines assigned to are crashing, or explicitely calling an exit statement, like exit() or pthread_exit().
+.P
+Typical use might be writing a server, with a bunch of pre-created pools, and assign to a given pool a routine with the socket file descriptor as argument address.
+.P
+.BI "int Cpool_create(int " nbwanted ", int * " nbget ");"
+.P
+This method is creating a pool of
+.I nbwanted
+threads. If the second argument, 
+.I nbget
+, is not NULL, its location will contain the number of effectively created threads.
+.P
+Return value is the pool ID, a number greater or equal to zero, or -1 in case of error.
+.P
+.BI "int Cpool_assign(int " poolid ", void *(*" startroutine ")(void *), void *" arg ", int " timeout ");"
+.P
+This method is assigning a routine to
+.I poolid
+as returned by \fBCpool_create\fP, whose address is
+.I startroutine
+, that have the same prototype as every typical routine in multithread programming. This means that it returns a pointer, and it gets as entry a pointer identified by the
+.I arg
+parameter. The last argument is a possible
+.I timeout
+, in seconds, which will apply if it is greater than zero. If it is lower than zero, the assignment will wait forever until a thread is available. If it is equal to zero, the method will return immediately if no thread is available.
+.P
+Return value is 0 if success, or -1 in case of error.
+.P
+.BI "int Cpool_next_index(int " poolid ");"
+.P
+.BI "int Cpool_next_index_timeout(int " poolid ", int " timeout ");"
+.P
+Those methods returns that next available thread number that will be assigned if you ever call
+.B Cpool_assign
+immediately after. If you specify a timeout lower or equal than zero, then this is a blocking method until one thread is available at least. Those methods, so, returns a number greater or equal than zero, and -1 if there is an error.
+
+.SH EXAMPLE
+.nf
+.sp
+#include <Cpool_api.h>
+#include <stdio.h>
+#include <errno.h>
+
+#define NPOOL 2
+#define PROCS_PER_POOL 2
+#define TIMEOUT 2
+void *testit(void *);
+
+int main() {
+  int pid;
+  int i, j;
+  int ipool[NPOOL];
+  int npool[NPOOL];
+  int *arg;
+
+  pid = getpid();
+
+  printf("... Defining %d pools with %d elements each\\n",
+         NPOOL,PROCS_PER_POOL);
+
+  for (i=0; i < NPOOL; i++) {
+    if ((ipool[i] = Cpool_create(PROCS_PER_POOL,&(npool[i]))) < 0) {
+      printf("### Error No %d creating pool (%s)\\n",
+             errno,strerror(errno));
+    } else {
+      printf("... Pool No %d created with %d processes\\n",
+             ipool[i],npool[i]);
+    }
+  }
+
+  for (i=0; i < NPOOL; i++) {
+    /* Loop on the number of processes + 1 ... */
+    for (j=0; j <= npool[i]; j++) {
+      if ((arg = malloc(sizeof(int))) == NULL) {
+        printf("### Malloc error, errno = %d (%s)\\n",
+               errno,strerror(errno));
+        continue;
+      }
+      *arg = i*10+j;
+      printf("... Assign to pool %d (timeout=%d) the %d-th routine 0x%x(%d)\\n",
+             ipool[i],TIMEOUT,j+1,(unsigned int) testit,*arg);
+      if (Cpool_assign(ipool[i], testit, arg, TIMEOUT)) {
+        printf("### Can't assign to pool No %d (errno=%d [%s]) the %d-th routine\\n",
+               ipool[i],errno,strerror(errno),j);
+        free(arg);
+      } else {
+        printf("... Okay for assign to pool No %d of the %d-th routine\\n",
+               ipool[i],j);
+        If (Cthread_environment() != CTHREAD_TRUE_THREAD) {
+          /* Non-thread environment: the child is in principle not allowed */
+          /* to do free himself                                            */
+          free(arg);
+        }
+      }
+    }
+  }
+  
+  /* We wait enough time for our threads to terminate... */
+  sleep(TIMEOUT*NPOOL*PROCS_PER_POOL);
+
+  exit(EXIT_SUCCESS);
+}
+
+void *testit(void *arg) {
+  int caller_pid, my_pid;
+
+  my_pid = getpid();
+
+  caller_pid = (int) * (int *) arg;
+
+  if (Cthread_environment() == CTHREAD_TRUE_THREAD) {
+    /* Thread environment : we free the memory */
+    free(arg);
+  }
+
+  printf("... I am PID=%d called by pool %d, try No %d\\n",
+         my_pid,caller_pid/10,caller_pid - 10*(caller_pid/10));
+
+  /*
+   * Wait up to the timeout + 1
+   */
+  sleep(TIMEOUT*2);
+
+  return(NULL);
+}
+
+
+
+
+.fi
+.SH SEE ALSO
+\fBCthread\fP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

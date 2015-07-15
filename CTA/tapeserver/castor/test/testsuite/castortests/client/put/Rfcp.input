@@ -1,0 +1,3 @@
+stager_put -M <noTapeFileName>
+rfcp <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>

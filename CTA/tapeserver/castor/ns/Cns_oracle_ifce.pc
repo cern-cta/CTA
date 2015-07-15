@@ -1,0 +1,2028 @@
+/*
+ * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#include "Cns.h"
+#include "Cns_server.h"
+#include "Cthread_api.h"
+#include "serrno.h"
+#include "u64subr.h"
+
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <math.h>
+#include <sqlca.h>
+#include <sqlcpr.h>
+
+static sql_context ctx[CNS_MAXNBTHREADS];
+static const char *const CNSSCHEMAVERSION = "2_1_15_0";
+
+int Cns_init_dbpkg()
+{
+  EXEC SQL ENABLE THREADS;
+  return (0);
+}
+
+static void
+Cns_oracle_error(char *func,
+                 char *sql_method,
+                 struct Cns_dbfd *dbfd,
+                 struct sqlca *sqlca)
+{
+  char   err_msg[512];
+  size_t err_size = sizeof(err_msg);
+  size_t err_len;
+
+  sqlglmt(ctx[dbfd->idx], (unsigned char*)err_msg, &err_size, &err_len);
+  if (err_msg[err_len - 1] == '\n') {
+    err_msg[err_len - 1] = '\0';
+  }
+
+  nslogit(LOG_ERR, "MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
+          "Function=\"%s\" Error=\"%.*s\"",
+          sql_method, func, err_len, err_msg);
+
+  /* Connection to the database was lost ? */
+  if (sqlca->sqlcode == -2396  || sqlca->sqlcode == -3113  ||
+      sqlca->sqlcode == -28    || sqlca->sqlcode == -3114  ||
+      sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  ||
+      sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 ||
+      sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  ||
+      sqlca->sqlcode == -12571 || sqlca->sqlcode == -24338 ||
+       (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
+      sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
+    if (dbfd->connected == 1) {
+      Cns_closedb (dbfd);
+    }
+  }
+  serrno = SEINTERNAL;
+}
+
+EXEC SQL CONTEXT USE :ctx[dbfd->idx];
+
+int Cns_abort_tr(struct Cns_dbfd *dbfd)
+{
+  EXEC SQL ROLLBACK WORK;
+  dbfd->tr_mode = 0;
+  dbfd->tr_started = 0;
+  return (0);
+}
+
+int Cns_closedb(struct Cns_dbfd *dbfd)
+{
+  EXEC SQL ROLLBACK WORK RELEASE;
+  EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+  dbfd->connected = 0;
+  return (0);
+}
+
+int Cns_delete_class_entry(struct Cns_dbfd *dbfd,
+                           Cns_dbrec_addr *rec_addr)
+{
+  char func[23];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_class_entry", 23);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_class_metadata WHERE ROWID = :rowid_value;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -2292:
+    serrno = EEXIST;
+    break;
+  default:
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_delete_fmd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr)
+{
+  char func[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_fmd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_file_metadata WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_delete_lnk_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr)
+{
+  char func[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_lnk_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_symlinks WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_delete_smd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr)
+{
+  char func[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_smd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_seg_metadata WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_delete_tppool_entry(struct Cns_dbfd *dbfd,
+                            Cns_dbrec_addr *rec_addr)
+{
+  char func[24];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_tppool_entry", 24);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_tp_pool WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_delete_umd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr)
+{
+  char func[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_delete_umd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL DELETE FROM Cns_user_metadata WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_end_tr(struct Cns_dbfd *dbfd)
+{
+  EXEC SQL COMMIT WORK;
+  dbfd->tr_mode = 0;
+  dbfd->tr_started = 0;
+  return (0);
+}
+
+int Cns_get_class_by_id(struct Cns_dbfd *dbfd,
+                        int classid,
+                        struct Cns_class_metadata *class_entry,
+                        int lock,
+                        Cns_dbrec_addr *rec_addr)
+{
+  char func[20];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE classid_cursor CURSOR FOR
+    SELECT
+    CLASSID, NAME,
+    OWNER_UID, GID,
+    MIN_FILESIZE, MAX_FILESIZE,
+    FLAGS, MAXDRIVES,
+    MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+    MINTIME_BEFOREMIGR, NBCOPIES,
+    RETENP_ON_DISK
+    FROM Cns_class_metadata
+    WHERE classid = :classid;
+  EXEC SQL DECLARE classid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    CLASSID, NAME,
+    OWNER_UID, GID,
+    MIN_FILESIZE, MAX_FILESIZE,
+    FLAGS, MAXDRIVES,
+    MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+    MINTIME_BEFOREMIGR, NBCOPIES,
+    RETENP_ON_DISK
+    FROM Cns_class_metadata
+    WHERE classid = :classid
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_class_by_id", 20);
+  if (lock) {
+    EXEC SQL OPEN classid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH classid_cursor4upd INTO
+      :rowid_value, :class_entry->classid, : class_entry->name,
+      :class_entry->uid, :class_entry->gid,
+      :class_entry->min_filesize, :class_entry->max_filesize,
+      :class_entry->flags, :class_entry->maxdrives,
+      :class_entry->max_segsize, :class_entry->migr_time_interval,
+      :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+      :class_entry->retenp_on_disk;
+  } else {
+    EXEC SQL OPEN classid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH classid_cursor INTO
+      :class_entry->classid, : class_entry->name,
+      :class_entry->uid, :class_entry->gid,
+      :class_entry->min_filesize, :class_entry->max_filesize,
+      :class_entry->flags, :class_entry->maxdrives,
+      :class_entry->max_segsize, :class_entry->migr_time_interval,
+      :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+      :class_entry->retenp_on_disk;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_class_by_name(struct Cns_dbfd *dbfd,
+                          char *class_name,
+                          struct Cns_class_metadata *class_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  char func[22];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE classname_cursor CURSOR FOR
+    SELECT
+    CLASSID,  NAME,
+    OWNER_UID, GID,
+    MIN_FILESIZE, MAX_FILESIZE,
+    FLAGS, MAXDRIVES,
+    MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+    MINTIME_BEFOREMIGR, NBCOPIES,
+    RETENP_ON_DISK
+    FROM Cns_class_metadata
+    WHERE name = :class_name;
+  EXEC SQL DECLARE classname_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    CLASSID,  NAME,
+    OWNER_UID, GID,
+    MIN_FILESIZE, MAX_FILESIZE,
+    FLAGS, MAXDRIVES,
+    MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+    MINTIME_BEFOREMIGR, NBCOPIES,
+    RETENP_ON_DISK
+    FROM Cns_class_metadata
+    WHERE name = :class_name
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_class_by_name", 22);
+  if (lock) {
+    EXEC SQL OPEN classname_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH classname_cursor4upd INTO
+      :rowid_value, :class_entry->classid, : class_entry->name,
+      :class_entry->uid, :class_entry->gid,
+      :class_entry->min_filesize, :class_entry->max_filesize,
+      :class_entry->flags, :class_entry->maxdrives,
+      :class_entry->max_segsize, :class_entry->migr_time_interval,
+      :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+      :class_entry->retenp_on_disk;
+  } else {
+    EXEC SQL OPEN classname_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH classname_cursor INTO
+      :class_entry->classid, : class_entry->name,
+      :class_entry->uid, :class_entry->gid,
+      :class_entry->min_filesize, :class_entry->max_filesize,
+      :class_entry->flags, :class_entry->maxdrives,
+      :class_entry->max_segsize, :class_entry->migr_time_interval,
+      :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+      :class_entry->retenp_on_disk;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
+                          u_signed64 fileid,
+                          struct Cns_file_metadata *fmd_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[22];
+  short guid_ind;        /* indicator variable for guid column */
+  char parent_fileid_str[21];
+  char rowid_value[19];
+  short fileclass_indicator;
+  struct sqlca sqlca;
+  EXEC SQL DECLARE fmd_fileid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE fileid = TO_NUMBER(:fileid_str);
+  EXEC SQL DECLARE fmd_fileid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE fileid = TO_NUMBER(:fileid_str)
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_fmd_by_fileid", 22);
+  (void) u64tostr (fileid, fileid_str, -1);
+  if (lock) {
+    EXEC SQL OPEN fmd_fileid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_fileid_cursor4upd INTO
+      :rowid_value, :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  } else {
+    EXEC SQL OPEN fmd_fileid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_fileid_cursor INTO
+      :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    fmd_entry->fileid = fileid;
+    fmd_entry->parent_fileid = strtou64 (parent_fileid_str);
+    fmd_entry->filesize = strtou64 (filesize_str);
+    /* Deal with NULL value for the fileclass */
+    if (-1 == fileclass_indicator) fmd_entry->fileclass = 0;
+    if (guid_ind == -1)
+      *fmd_entry->guid = '\0';
+    if (ac_ind == -1)
+      *fmd_entry->acl = '\0';
+    if (ct_ind == -1)
+      *fmd_entry->csumtype = '\0';
+    if (cv_ind == -1)
+      *fmd_entry->csumvalue = '\0';
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
+                          u_signed64 parent_fileid,
+                          char *name,
+                          struct Cns_file_metadata *fmd_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[22];
+  short guid_ind;        /* indicator variable for guid column */
+  char parent_fileid_str[21];
+  char rowid_value[19];
+  short fileclass_indicator;
+  struct sqlca sqlca;
+  EXEC SQL DECLARE fmd_fullid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE parent_fileid = TO_NUMBER(:parent_fileid_str)
+    AND name = :name;
+  EXEC SQL DECLARE fmd_fullid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE parent_fileid = TO_NUMBER(:parent_fileid_str)
+    AND name = :name
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_fmd_by_fullid", 22);
+  (void) u64tostr (parent_fileid, parent_fileid_str, -1);
+  if (lock) {
+    EXEC SQL OPEN fmd_fullid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_fullid_cursor4upd INTO
+      :rowid_value, :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  } else {
+    EXEC SQL OPEN fmd_fullid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_fullid_cursor INTO
+      :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    fmd_entry->fileid = strtou64 (fileid_str);
+    fmd_entry->parent_fileid = parent_fileid;
+    fmd_entry->filesize = strtou64 (filesize_str);
+    /* Deal with NULL value for the fileclass */
+    if (-1 == fileclass_indicator)
+      fmd_entry->fileclass = 0;
+    if (guid_ind == -1)
+      *fmd_entry->guid = '\0';
+    if (ac_ind == -1)
+      *fmd_entry->acl = '\0';
+    if (ct_ind == -1)
+      *fmd_entry->csumtype = '\0';
+    if (cv_ind == -1)
+      *fmd_entry->csumvalue = '\0';
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
+                        char *guid,
+                        struct Cns_file_metadata *fmd_entry,
+                        int lock,
+                        Cns_dbrec_addr *rec_addr)
+{
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[20];
+  short guid_ind;        /* indicator variable for guid column */
+  char parent_fileid_str[21];
+  short fileclass_indicator;
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE fmd_guid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE guid = :guid;
+  EXEC SQL DECLARE fmd_guid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE guid = :guid
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_fmd_by_guid", 20);
+  if (lock) {
+    EXEC SQL OPEN fmd_guid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_guid_cursor4upd INTO
+      :rowid_value, :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  } else {
+    EXEC SQL OPEN fmd_guid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH fmd_guid_cursor INTO
+      :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    fmd_entry->fileid = strtou64 (fileid_str);
+    fmd_entry->parent_fileid = strtou64 (parent_fileid_str);
+    fmd_entry->filesize = strtou64 (filesize_str);
+    /* Deal with NULL value for the fileclass */
+    if (-1 == fileclass_indicator)
+      fmd_entry->fileclass = 0;
+    if (guid_ind == -1)
+      *fmd_entry->guid = '\0';
+    if (ac_ind == -1)
+      *fmd_entry->acl = '\0';
+    if (ct_ind == -1)
+      *fmd_entry->csumtype = '\0';
+    if (cv_ind == -1)
+      *fmd_entry->csumvalue = '\0';
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
+                        int bod,
+                        u_signed64 parent_fileid,
+                        struct Cns_file_metadata *fmd_entry,
+                        int getattr,
+                        int endlist)
+{
+  short ac_ind;        /* indicator variable for acl column */
+  short ct_ind;        /* indicator variable for csumtype column */
+  short cv_ind;        /* indicator variable for csumvalue column */
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[20];
+  short guid_ind;      /* indicator variable for guid column */
+  char parent_fileid_str[21];
+  short fileclass_indicator;
+  struct sqlca sqlca;
+  EXEC SQL DECLARE fmd_pfid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
+    GUID, NAME, FILEMODE, NLINK,
+    OWNER_UID, GID, TO_CHAR(FILESIZE),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, MTIME)*100000)*10,
+    FILECLASS, STATUS, CSUMTYPE,
+    CSUMVALUE, ACL
+    FROM Cns_file_metadata
+    WHERE parent_fileid = TO_NUMBER(:parent_fileid_str)
+    ORDER BY name;
+  EXEC SQL DECLARE name_pfid_cursor CURSOR FOR
+    SELECT
+    NAME
+    FROM Cns_file_metadata
+    WHERE parent_fileid = TO_NUMBER(:parent_fileid_str)
+    ORDER BY name;
+
+  strncpy (func, "Cns_get_fmd_by_pfid", 20);
+  if (endlist)
+    return (1);
+  (void) u64tostr (parent_fileid, parent_fileid_str, -1);
+  if (bod) {
+    if (! getattr)
+      EXEC SQL OPEN name_pfid_cursor;
+    else
+      EXEC SQL OPEN fmd_pfid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+  }
+  if (! getattr)
+    EXEC SQL FETCH name_pfid_cursor INTO
+      :fmd_entry->name;
+  else
+    EXEC SQL FETCH fmd_pfid_cursor INTO
+      :fileid_str, :parent_fileid_str,
+      :fmd_entry->guid:guid_ind,
+      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+      :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
+      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime_usec,
+      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+      :fmd_entry->status,
+      :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
+      :fmd_entry->acl:ac_ind;
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (getattr) {
+      fmd_entry->fileid = strtou64 (fileid_str);
+      fmd_entry->parent_fileid = parent_fileid;
+      fmd_entry->filesize = strtou64 (filesize_str);
+      if (-1 == fileclass_indicator) fmd_entry->fileclass = 0;
+      if (guid_ind == -1)
+        *fmd_entry->guid = '\0';
+      if (ac_ind == -1)
+        *fmd_entry->acl = '\0';
+      if (ct_ind == -1)
+        *fmd_entry->csumtype = '\0';
+      if (cv_ind == -1)
+        *fmd_entry->csumvalue = '\0';
+    }
+    return (0);
+  case 1403:
+    return (1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return (-1);
+  }
+}
+
+int Cns_get_lnk_by_fileid(struct Cns_dbfd *dbfd,
+                          u_signed64 fileid,
+                          struct Cns_symlinks *lnk_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  char fileid_str[21];
+  char func[22];
+  short ln_ind;   /* indicator variable for linkname column */
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE lnk_fileid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), LINKNAME
+    FROM Cns_symlinks
+    WHERE fileid = TO_NUMBER(:fileid_str);
+  EXEC SQL DECLARE lnk_fileid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(FILEID), LINKNAME
+    FROM Cns_symlinks
+    WHERE fileid = TO_NUMBER(:fileid_str)
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_lnk_by_fileid", 22);
+  (void) u64tostr (fileid, fileid_str, -1);
+  if (lock) {
+    EXEC SQL OPEN lnk_fileid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH lnk_fileid_cursor4upd INTO
+      :rowid_value, :fileid_str, :lnk_entry->linkname:ln_ind;
+  } else {
+    EXEC SQL OPEN lnk_fileid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH lnk_fileid_cursor INTO
+      :fileid_str, :lnk_entry->linkname:ln_ind;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    lnk_entry->fileid = fileid;
+    if (ln_ind == -1)
+      *lnk_entry->linkname = '\0';
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_getpath_by_fileid (struct Cns_dbfd *dbfd,
+                           u_signed64 fileid,
+                           char **path)
+{
+  char fileid_str[21];
+  char result[CA_MAXPATHLEN+1];
+  char func[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE getpath_cursor CURSOR FOR
+    SELECT getPathForFileid(:fileid_str)
+    FROM Dual;
+
+  strncpy (func, "Cns_getpath", 19);
+  (void) u64tostr (fileid, fileid_str, -1);
+  EXEC SQL OPEN getpath_cursor;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+    return (-1);
+  }
+  EXEC SQL FETCH getpath_cursor INTO :result;
+  switch (sqlca.sqlcode) {
+  case 0:
+    memcpy(*path, result, strlen(result)+1);
+    return (0);
+  case -1405:
+    /* returned value is NULL, we didn't find anything */
+    serrno = ENOENT;
+    break;
+  case -20001:
+    serrno = SENAMETOOLONG;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_max_copyno (struct Cns_dbfd *dbfd,
+                        u_signed64 fileid,
+                        int *copyno)
+{
+  char fileid_str[21];
+  char func[19];
+  int sav_copyno;
+  struct sqlca sqlca;
+  EXEC SQL DECLARE max_copyno_cursor CURSOR FOR
+    SELECT NVL(MAX(COPYNO),-1)
+    FROM Cns_seg_metadata
+    WHERE s_fileid = TO_NUMBER(:fileid_str);
+
+  strncpy (func, "Cns_get_max_copyno", 19);
+  (void) u64tostr (fileid, fileid_str, -1);
+  EXEC SQL OPEN max_copyno_cursor;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+    return (-1);
+  }
+  sav_copyno = *copyno;
+  EXEC SQL FETCH max_copyno_cursor INTO :copyno;
+  switch (sqlca.sqlcode) {
+  case 0:
+    switch (*copyno) {
+    case -1:
+      *copyno = sav_copyno;
+      serrno = ENOENT;
+      break;
+    default:
+      return (0);
+    }
+    break;
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_smd_by_fullid(struct Cns_dbfd *dbfd,
+                          u_signed64 fileid,
+                          int copyno,
+                          int fsec,
+                          struct Cns_seg_metadata *smd_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  char fileid_str[21];
+  char func[22];
+  char rowid_value[19];
+  char segsize_str[21];
+  struct sqlca sqlca;
+  short checksum_name_ind;
+  EXEC SQL VAR smd_entry->blockid IS RAW(4);
+  EXEC SQL DECLARE smd_fullid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE s_fileid = TO_NUMBER(:fileid_str)
+    AND copyno = :copyno AND fsec = :fsec;
+  EXEC SQL DECLARE smd_fullid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE s_fileid = TO_NUMBER(:fileid_str)
+    AND copyno = :copyno AND fsec = :fsec
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_smd_by_fullid", 22);
+  (void) u64tostr (fileid, fileid_str, -1);
+  if (lock) {
+    EXEC SQL OPEN smd_fullid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH smd_fullid_cursor4upd INTO
+      :rowid_value, :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  } else {
+    EXEC SQL OPEN smd_fullid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH smd_fullid_cursor INTO
+      :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    smd_entry->s_fileid = fileid;
+    smd_entry->segsize = strtou64 (segsize_str);
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
+                        int bof,
+                        u_signed64 fileid,
+                        struct Cns_seg_metadata *smd_entry,
+                        int lock,
+                        Cns_dbrec_addr *rec_addr,
+                        int endlist)
+{
+  char fileid_str[21];
+  char func[20];
+  char rowid_value[19];
+  char segsize_str[21];
+  struct sqlca sqlca;
+  short checksum_name_ind;
+  EXEC SQL VAR smd_entry->blockid IS RAW(4);
+  EXEC SQL DECLARE smd_pfid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE s_fileid = TO_NUMBER(:fileid_str)
+    ORDER BY copyno, fsec;
+  EXEC SQL DECLARE smd_pfid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE s_fileid = TO_NUMBER(:fileid_str)
+    ORDER BY copyno, fsec
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_smd_by_pfid", 20);
+  if (endlist)
+    return (1);
+  (void) u64tostr (fileid, fileid_str, -1);
+  if (bof) {
+    if (lock)
+      EXEC SQL OPEN smd_pfid_cursor4upd;
+    else
+      EXEC SQL OPEN smd_pfid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+  }
+  if (lock)
+    EXEC SQL FETCH smd_pfid_cursor4upd INTO
+      :rowid_value,
+      :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  else
+    EXEC SQL FETCH smd_pfid_cursor INTO
+      :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid,:smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    smd_entry->s_fileid = fileid;
+    smd_entry->segsize = strtou64 (segsize_str);
+    return (0);
+  case 1403:
+    return (1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return (-1);
+  }
+}
+
+int Cns_get_smd_copy_count_by_pfid(struct Cns_dbfd *dbfd,
+                                   u_signed64 fileid,
+                                   int *count,
+                                   int filter)
+{
+  char func[31];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_get_smd_copy_count_by_pfid", 31);
+  if (filter == 1) {  /* Enabled only */
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid
+      AND s_status = '-';
+  } else if (filter == 2) {  /* Disabled only */
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid
+      AND s_status = 'D';
+  } else {
+    EXEC SQL SELECT COUNT(DISTINCT(copyno)) INTO :*count
+      FROM Cns_seg_metadata
+      WHERE s_fileid = :fileid;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    return(0);
+  default:
+    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+    return(-1);
+  }
+}
+
+int Cns_get_last_smd_by_vid(struct Cns_dbfd *dbfd,
+                            char *vid,
+                            int side,
+                            struct Cns_seg_metadata *smd_entry)
+{
+  char fileid_str[21];
+  char func[24];
+  char segsize_str[21];
+  struct sqlca sqlca;
+  short checksum_name_ind;
+
+  EXEC SQL VAR smd_entry->blockid IS RAW(4);
+  EXEC SQL DECLARE last_smd_vid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE vid = :vid
+    AND side = :side
+    AND fseq = (
+                SELECT MAX(FSEQ) FROM Cns_seg_metadata
+                WHERE vid = :vid
+                AND side = :side
+               );
+
+  strncpy (func, "Cns_get_last_smd_by_vid", 24);
+  EXEC SQL OPEN last_smd_vid_cursor;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+    return(-1);
+  }
+  EXEC SQL FETCH last_smd_vid_cursor INTO
+    :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+    :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+    :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+    :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+    :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+
+  switch (sqlca.sqlcode) {
+  case 0:
+    smd_entry->s_fileid = strtou64 (fileid_str);
+    smd_entry->segsize  = strtou64 (segsize_str);
+    return(0);
+  case 1403:
+    serrno = ENOENT;
+    return(-1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return(-1);
+  }
+  return(0);
+}
+
+int Cns_count_long_ops(struct Cns_dbfd *dbfd,
+                       int *count,
+                       int backup)
+{
+  char func[20];
+
+  strncpy (func, "Cns_count_long_ops", 20);
+  if (backup) {
+    EXEC SQL SELECT COUNT(*) INTO :*count
+      FROM V$SESSION_LONGOPS
+      WHERE opname NOT LIKE '%aggregate%'
+      AND totalwork <> 0
+      AND time_remaining > 0
+      AND opname LIKE '%RMAN%';
+  } else {
+    EXEC SQL SELECT COUNT(*) INTO :*count
+      FROM V$SESSION_LONGOPS
+      WHERE opname NOT LIKE '%aggregate%'
+      AND totalwork <> 0
+      AND time_remaining > 0;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    return(0);
+  case -942:
+    *count = 0;
+    return(0);
+  default:
+    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+    return(-1);
+  }
+  return(0);
+}
+
+int Cns_check_files_exist(struct Cns_dbfd *dbfd,
+                          u_signed64 *fileIds,
+                          int *nbFileIds)
+{
+  double *dfileIds;
+  int i;
+  char func[22];
+  struct sqlca sqlca;
+
+  /* prepare input */
+  dfileIds = (double*) malloc(*nbFileIds * sizeof(double));
+  for (i = 0; i < *nbFileIds; i++) {
+    dfileIds[i] = fileIds[i];
+  }
+  strncpy (func, "Cns_check_files_exist", 22);
+
+  /* check existence */
+  EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_exist_tmp VALUES (:dfileIds);
+  EXEC SQL DECLARE files_exist_cursor CURSOR FOR
+    SELECT tmpFileId FROM Cns_files_exist_tmp
+    WHERE NOT EXISTS (SELECT 'x' FROM Cns_file_metadata
+                      WHERE fileid = tmpFileId);
+  EXEC SQL OPEN files_exist_cursor;
+  EXEC SQL FOR :*nbFileIds FETCH files_exist_cursor INTO :dfileIds;
+
+  switch (sqlca.sqlcode) {
+  case 0:
+  case 1403:
+    /* extract output */
+    *nbFileIds = sqlca.sqlerrd[2];
+    for (i = 0; i < *nbFileIds; i++) {
+      fileIds[i] = dfileIds[i];
+    }
+    break;
+  default:
+    Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+    EXEC SQL ROLLBACK WORK;
+    free(dfileIds);
+    return(-1);
+  }
+
+  EXEC SQL COMMIT WORK;
+  free(dfileIds);
+  return(0);
+}
+
+int Cns_get_tapesum_by_vid(struct Cns_dbfd *dbfd,
+                           char *vid,
+                           u_signed64 *count,
+                           u_signed64 *size,
+                           u_signed64 *maxfileid,
+                           u_signed64 *avgcompression)
+{
+  char func[23];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_get_tapesum_by_vid", 23);
+
+  /* Extract statistics. The weightedsum is used to compute a weighted average
+     of the segment sizes, using 1/compression as weights, and accounting segments
+     with missing (0) compression factors as their original sizes.
+     This average is then returned in the same 'compression factor' CASTOR format in
+     the range [100, infinite), where 100 = no compression, 200 = 50% compression, etc.
+     The decode() avoids that rounding effects yield infinite, where 10^6 is arbitrarily
+     returned in such a case. */
+  EXEC SQL SELECT c, totsize, maxfid, decode(weightedsum, 0, 1000000, round(totsize/weightedsum))
+             INTO :*count, :*size, :*maxfileid, :*avgcompression
+             FROM (SELECT COUNT(*) c,
+                          NVL(SUM(segsize), 0) totsize,
+                          NVL(MAX(s_fileid), 0) maxfid,
+                          NVL(SUM(decode(compression, 0, segsize/100, segsize/compression)), 0) weightedsum
+             FROM Cns_seg_metadata
+            WHERE vid = :vid);
+  if (sqlca.sqlcode == 0) {
+    if(*count == 0) {
+      /* No segments found or non existing tape => ENOENT */
+      serrno = ENOENT;
+      return(-1);
+    }
+  } else {
+    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+    return(-1);
+  }
+  return(0);
+}
+
+int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
+                       int bov,
+                       char *vid,
+                       int fseq,
+                       struct Cns_seg_metadata *smd_entry,
+                       int endlist)
+{
+  char fileid_str[21];
+  char func[19];
+  char segsize_str[21];
+  struct sqlca sqlca;
+  short checksum_name_ind;
+  EXEC SQL VAR smd_entry->blockid IS RAW(4);
+  EXEC SQL DECLARE smd_vid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE vid = :vid
+    ORDER BY side, fseq;
+  EXEC SQL DECLARE smd_vid_cursor_fseq CURSOR FOR
+    SELECT
+    TO_CHAR(S_FILEID), COPYNO, FSEC,
+    TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
+    FROM Cns_seg_metadata
+    WHERE vid = :vid
+    AND fseq = :fseq
+    ORDER BY side, fseq;
+
+  strncpy (func, "Cns_get_smd_by_vid", 19);
+  if (endlist)
+    return (1);
+  if (bov) {
+    if (fseq > 0) {
+      EXEC SQL OPEN smd_vid_cursor_fseq;
+    } else {
+      EXEC SQL OPEN smd_vid_cursor;
+    }
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+  }
+  if (fseq > 0) {
+    EXEC SQL FETCH smd_vid_cursor_fseq INTO
+      :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  } else {
+    EXEC SQL FETCH smd_vid_cursor INTO
+      :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+      :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+      :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+      :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
+  }
+
+  switch (sqlca.sqlcode) {
+  case 0:
+    smd_entry->s_fileid = strtou64 (fileid_str);
+    smd_entry->segsize = strtou64 (segsize_str);
+    return (0);
+  case 1403:
+    if (*vid && bov) {
+      serrno = ENOENT;
+      return (-1);
+    } else {
+      return (1);
+    }
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return (-1);
+  }
+}
+
+int Cns_get_tppool_by_cid(struct Cns_dbfd *dbfd,
+                          int bol,
+                          int classid,
+                          struct Cns_tp_pool *tppool_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr,
+                          int endlist)
+{
+  char func[22];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE tppool_cid_cursor CURSOR FOR
+    SELECT
+    CLASSID, TAPE_POOL
+    FROM Cns_tp_pool
+    WHERE classid = :classid;
+  EXEC SQL DECLARE tppool_cid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    CLASSID, TAPE_POOL
+    FROM Cns_tp_pool
+    WHERE classid = :classid
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_tppool_by_cid", 22);
+  if (endlist)
+    return (1);
+  if (lock) {
+    if (bol) {
+      EXEC SQL OPEN tppool_cid_cursor4upd;
+      if (sqlca.sqlcode) {
+        Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+        return (-1);
+      }
+    }
+    EXEC SQL FETCH tppool_cid_cursor4upd INTO
+      :rowid_value, :tppool_entry->classid, :tppool_entry->tape_pool;
+  } else {
+    if (bol) {
+      EXEC SQL OPEN tppool_cid_cursor;
+      if (sqlca.sqlcode) {
+        Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+        return (-1);
+      }
+    }
+    EXEC SQL FETCH tppool_cid_cursor INTO
+      :tppool_entry->classid, :tppool_entry->tape_pool;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    return (0);
+  case 1403:
+    return (1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_get_umd_by_fileid(struct Cns_dbfd *dbfd,
+                          u_signed64 fileid,
+                          struct Cns_user_metadata *umd_entry,
+                          int lock,
+                          Cns_dbrec_addr *rec_addr)
+{
+  char fileid_str[21];
+  char func[22];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE umd_fileid_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(U_FILEID), COMMENTS
+    FROM Cns_user_metadata
+    WHERE u_fileid = TO_NUMBER(:fileid_str);
+  EXEC SQL DECLARE umd_fileid_cursor4upd CURSOR FOR
+    SELECT ROWID,
+    TO_CHAR(U_FILEID), COMMENTS
+    FROM Cns_user_metadata
+    WHERE u_fileid = TO_NUMBER(:fileid_str)
+    FOR UPDATE;
+
+  strncpy (func, "Cns_get_umd_by_fileid", 22);
+  (void) u64tostr (fileid, fileid_str, -1);
+  if (lock) {
+    EXEC SQL OPEN umd_fileid_cursor4upd;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH umd_fileid_cursor4upd INTO
+      :rowid_value, :fileid_str, :umd_entry->comments;
+  } else {
+    EXEC SQL OPEN umd_fileid_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+    EXEC SQL FETCH umd_fileid_cursor INTO
+      :fileid_str, :umd_entry->comments;
+  }
+  switch (sqlca.sqlcode) {
+  case 0:
+    if (lock)
+      memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+    umd_entry->u_fileid = fileid;
+    return (0);
+  case 1403:
+    serrno = ENOENT;
+    break;
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_class_entry(struct Cns_dbfd *dbfd,
+                           struct Cns_class_metadata *class_entry)
+{
+  char func[23];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_insert_class_entry", 23);
+  EXEC SQL INSERT INTO Cns_class_metadata
+    (CLASSID, NAME,
+     OWNER_UID, GID,
+     MIN_FILESIZE, MAX_FILESIZE,
+     FLAGS, MAXDRIVES,
+     MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+     MINTIME_BEFOREMIGR, NBCOPIES,
+     RETENP_ON_DISK)
+    VALUES
+    (:class_entry->classid, :class_entry->name,
+     :class_entry->uid, :class_entry->gid,
+     :class_entry->min_filesize, :class_entry->max_filesize,
+     :class_entry->flags, :class_entry->maxdrives,
+     :class_entry->max_segsize, :class_entry->migr_time_interval,
+     :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+     :class_entry->retenp_on_disk);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
+                         struct Cns_file_metadata *fmd_entry)
+{
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[26];
+  char parent_fileid_str[21];
+  struct sqlca sqlca;
+  short fileclass_indicator = 0;
+
+  /* handle the case of NULL fileclasses */
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
+  strncpy (func, "Cns_insert_fmd_entry", 26);
+  (void) u64tostr (fmd_entry->fileid, fileid_str, -1);
+  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
+  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
+  /* insert db entry and get a new stagertime. We truncate it
+     to make it fit on an integer without loss of precision */
+  EXEC SQL INSERT INTO Cns_file_metadata
+    (FILEID, PARENT_FILEID,
+     GUID, NAME, FILEMODE, NLINK,
+     OWNER_UID, GID, FILESIZE,
+     ATIME, MTIME, CTIME, STAGERTIME,
+     FILECLASS, STATUS, CSUMTYPE,
+     CSUMVALUE, ACL)
+    VALUES
+    (TO_NUMBER(:fileid_str), TO_NUMBER(:parent_fileid_str),
+     :fmd_entry->guid,
+     :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+     :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
+     :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+     getTime(),
+     :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+     :fmd_entry->status, :fmd_entry->csumtype,
+     :fmd_entry->csumvalue, :fmd_entry->acl)
+    RETURNING TRUNC(STAGERTIME*100000)*10 INTO :fmd_entry->stagertime_usec;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_lnk_entry(struct Cns_dbfd *dbfd,
+                         struct Cns_symlinks *lnk_entry)
+{
+  char fileid_str[21];
+  char func[21];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_insert_lnk_entry", 21);
+  (void) u64tostr (lnk_entry->fileid, fileid_str, -1);
+  EXEC SQL INSERT INTO Cns_symlinks
+    (FILEID, LINKNAME)
+    VALUES
+    (TO_NUMBER(:fileid_str), :lnk_entry->linkname);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_tppool_entry(struct Cns_dbfd *dbfd,
+                            struct Cns_tp_pool *tppool_entry)
+{
+  char func[24];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_insert_tppool_entry", 24);
+  EXEC SQL INSERT INTO Cns_tp_pool
+    (CLASSID, TAPE_POOL)
+    VALUES
+    (:tppool_entry->classid, :tppool_entry->tape_pool);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_umd_entry(struct Cns_dbfd *dbfd,
+                         struct Cns_user_metadata *umd_entry)
+{
+  char fileid_str[21];
+  char func[21];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_insert_umd_entry", 21);
+  (void) u64tostr (umd_entry->u_fileid, fileid_str, -1);
+  EXEC SQL INSERT INTO Cns_user_metadata
+    (U_FILEID, COMMENTS)
+    VALUES
+    (TO_NUMBER(:fileid_str), :umd_entry->comments);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_list_class_entry(struct Cns_dbfd *dbfd,
+                         int bol,
+                         struct Cns_class_metadata *class_entry,
+                         int endlist)
+{
+  char func[21];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE list_class_cursor CURSOR FOR
+    SELECT
+    CLASSID, NAME,
+    OWNER_UID, GID,
+    MIN_FILESIZE, MAX_FILESIZE,
+    FLAGS, MAXDRIVES,
+    MAX_SEGSIZE, MIGR_TIME_INTERVAL,
+    MINTIME_BEFOREMIGR, NBCOPIES,
+    RETENP_ON_DISK
+    FROM Cns_class_metadata
+    ORDER BY classid;
+
+  strncpy (func, "Cns_list_class_entry", 21);
+  if (endlist)
+    return (1);
+  if (bol) {
+    EXEC SQL OPEN list_class_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+  }
+  EXEC SQL FETCH list_class_cursor INTO
+    :class_entry->classid, : class_entry->name,
+    :class_entry->uid, :class_entry->gid,
+    :class_entry->min_filesize, :class_entry->max_filesize,
+    :class_entry->flags, :class_entry->maxdrives,
+    :class_entry->max_segsize, :class_entry->migr_time_interval,
+    :class_entry->mintime_beforemigr, :class_entry->nbcopies,
+    :class_entry->retenp_on_disk;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case 1403:
+    return (1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return (-1);
+  }
+}
+
+int Cns_list_lnk_entry(struct Cns_dbfd *dbfd,
+                       int bol,
+                       char *linkname,
+                       struct Cns_symlinks *lnk_entry,
+                       int endlist)
+{
+  char fileid_str[21];
+  char func[19];
+  struct sqlca sqlca;
+  EXEC SQL DECLARE list_lnk_cursor CURSOR FOR
+    SELECT
+    TO_CHAR(FILEID), LINKNAME
+    FROM Cns_symlinks
+    WHERE linkname = :linkname;
+
+  strncpy (func, "Cns_list_lnk_entry", 19);
+  if (endlist)
+    return (1);
+  if (bol) {
+    EXEC SQL OPEN list_lnk_cursor;
+    if (sqlca.sqlcode) {
+      Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+      return (-1);
+    }
+  }
+  EXEC SQL FETCH list_lnk_cursor INTO
+    :fileid_str, :lnk_entry->linkname;
+  switch (sqlca.sqlcode) {
+  case 0:
+    lnk_entry->fileid = strtou64 (fileid_str);
+    return (0);
+  case 1403:
+    return (1);
+  default:
+    Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+    return (-1);
+  }
+}
+
+int Cns_opendb(struct Cns_dbfd *dbfd)
+{
+  extern char nsconfigfile[CA_MAXPATHLEN+1];
+  char func[16];
+  struct sqlca sqlca;
+  char db_connect[104];
+  char buf[CA_MAXLINELEN+1];
+  char db_user[CA_MAXLINELEN+1];
+  char db_pwd[CA_MAXLINELEN+1];
+  char db_srv[CA_MAXLINELEN+1];
+  char db_name[CA_MAXLINELEN+1];
+  char *p;
+  FILE *fp;
+  char schema_version[21] = "";
+
+  strncpy (func, "Cns_opendb", 16);
+  EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
+
+  db_user[0] = db_pwd[0] = db_srv[0] = '\0';
+  serrno = 0;
+  if ((fp = fopen(nsconfigfile, "r")) == NULL) {
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to open NSCONFIG\" Path=\"%s\" "
+            "Function=\"%s\" Error=\"%s\"",
+            nsconfigfile, func, strerror(errno));
+    return (-1);
+  }
+  while (fgets(buf, sizeof(buf), fp)) {
+    if (buf[0] == '#') {
+      continue; /* ignore comments */
+    }
+    /* parse content */
+    db_user[0] = db_pwd[0] = db_srv[0] = '\0';
+    if ((p = strtok(buf, "/\n")) != NULL)
+      strcpy (db_user, p);
+    if ((p = strtok(NULL, "@\n")) != NULL)
+      strcpy (db_pwd, p);
+    if ((p = strtok(NULL, "/\n")) != NULL)
+      strcpy (db_srv, p);
+    if ((p = strtok(NULL, "\n")) != NULL)
+      strcpy (db_name, p);
+    else
+      strcpy(db_name, "Cns_db");
+  }
+  fclose(fp);
+
+  if ((db_user[0] == '\0') ||
+      (db_pwd[0]  == '\0') ||
+      (db_srv[0]  == '\0') ||
+      (db_name[0] == '\0')) {
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to extract database connect string\" "
+            "Path=\"%s\" Function=\"%s\"", nsconfigfile, func);
+    return (-1);
+  }
+
+  /* connect */
+  if (strlen(db_srv) > 0) {
+    sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);
+  } else {
+    sprintf(db_connect, "%s/%s", db_user, db_pwd);
+  }
+  nslogit(LOG_INFO, "MSG=\"Attempting to connect to database\" "
+          "ConnectionDetails=\"%s/*******@%s\"", db_user, db_srv);
+
+  EXEC SQL CONNECT :db_connect;
+  if (sqlca.sqlcode == 0) {
+    dbfd->connected = 1;
+  } else {
+    Cns_closedb (dbfd);
+    Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
+    return -1;
+  }
+
+  /* determine the schema version */
+  EXEC SQL SELECT schemaVersion INTO :schema_version
+             FROM CastorVersion;
+  switch (sqlca.sqlcode) {
+  case 0: {
+    if (strcmp(schema_version, CNSSCHEMAVERSION) != 0) {
+      nslogit(LOG_WARNING, "MSG=\"Warning: incorrect schema version detected\" "
+              "SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
+              schema_version, CNSSCHEMAVERSION);
+    }
+    nslogit(LOG_INFO, "MSG=\"Connection successful\" SchemaVersion=\"%s\"",
+            schema_version);
+    return 0;
+  }
+  default:
+    Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
+    return -1;
+  }
+
+  return 0;
+}
+
+int Cns_start_tr(struct Cns_dbfd *dbfd)
+{
+  dbfd->tr_started = 1;
+  return (0);
+}
+
+int Cns_unique_id(struct Cns_dbfd *dbfd,
+                  u_signed64 *unique_id)
+{
+  char func[16];
+  struct sqlca sqlca;
+  char uniqueid_str[21];
+
+  strncpy (func, "Cns_unique_id", 16);
+  EXEC SQL SELECT TO_CHAR(Cns_unique_id.NEXTVAL) INTO :uniqueid_str FROM DUAL;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "NEXTVAL", dbfd, &sqlca);
+    return (-1);
+  }
+  *unique_id = strtou64 (uniqueid_str);
+  return (0);
+}
+
+int Cns_update_class_entry(struct Cns_dbfd *dbfd,
+                           Cns_dbrec_addr *rec_addr,
+                           struct Cns_class_metadata *class_entry)
+{
+  char func[23];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_update_class_entry", 23);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL UPDATE Cns_class_metadata SET
+    NAME               = :class_entry->name,
+    OWNER_UID          = :class_entry->uid,
+    GID                = :class_entry->gid,
+    MIN_FILESIZE       = :class_entry->min_filesize,
+    MAX_FILESIZE       = :class_entry->max_filesize,
+    FLAGS              = :class_entry->flags,
+    MAXDRIVES          = :class_entry->maxdrives,
+    MAX_SEGSIZE        = :class_entry->max_segsize,
+    MIGR_TIME_INTERVAL = :class_entry->migr_time_interval,
+    MINTIME_BEFOREMIGR = :class_entry->mintime_beforemigr,
+    NBCOPIES           = :class_entry->nbcopies,
+    RETENP_ON_DISK     = :class_entry->retenp_on_disk
+    WHERE ROWID        = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_update_fmd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr,
+                         struct Cns_file_metadata *fmd_entry)
+{
+  char filesize_str[21];
+  char func[21];
+  char parent_fileid_str[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  short fileclass_indicator = 0;
+
+  /* handle the case of NULL fileclasses */
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
+  strncpy (func, "Cns_update_fmd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
+  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
+  EXEC SQL UPDATE Cns_file_metadata SET
+    PARENT_FILEID = TO_NUMBER(:parent_fileid_str),
+    GUID          = :fmd_entry->guid,
+    NAME          = :fmd_entry->name,
+    FILEMODE      = :fmd_entry->filemode,
+    NLINK         = :fmd_entry->nlink,
+    OWNER_UID     = :fmd_entry->uid,
+    GID           = :fmd_entry->gid,
+    FILESIZE      = TO_NUMBER(:filesize_str),
+    ATIME         = :fmd_entry->atime,
+    MTIME         = :fmd_entry->mtime,
+    CTIME         = :fmd_entry->ctime,
+    FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+    STATUS        = :fmd_entry->status,
+    CSUMTYPE      = :fmd_entry->csumtype,
+    CSUMVALUE     = :fmd_entry->csumvalue,
+    ACL           = :fmd_entry->acl
+    WHERE ROWID   = :rowid_value;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1438:
+    serrno = EMLINK;
+    break;
+  default:
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_update_fmd_entry_open(struct Cns_dbfd *dbfd,
+                              Cns_dbrec_addr *rec_addr,
+                              struct Cns_file_metadata *fmd_entry)
+{
+  char filesize_str[21];
+  char func[26];
+  char parent_fileid_str[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  short fileclass_indicator = 0;
+
+  /* handle the case of NULL fileclasses */
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
+  strncpy (func, "Cns_update_fmd_entry_open", 26);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
+  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
+  /* update db entry and get a new stagertime */
+  EXEC SQL UPDATE Cns_file_metadata SET
+    PARENT_FILEID = TO_NUMBER(:parent_fileid_str),
+    GUID          = :fmd_entry->guid,
+    NAME          = :fmd_entry->name,
+    FILEMODE      = :fmd_entry->filemode,
+    NLINK         = :fmd_entry->nlink,
+    OWNER_UID     = :fmd_entry->uid,
+    GID           = :fmd_entry->gid,
+    FILESIZE      = TO_NUMBER(:filesize_str),
+    ATIME         = :fmd_entry->atime,
+    MTIME         = :fmd_entry->mtime,
+    CTIME         = :fmd_entry->ctime,
+    STAGERTIME    = getTime(),
+    FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+    STATUS        = :fmd_entry->status,
+    CSUMTYPE      = :fmd_entry->csumtype,
+    CSUMVALUE     = :fmd_entry->csumvalue,
+    ACL           = :fmd_entry->acl
+    WHERE ROWID   = :rowid_value
+    RETURNING TRUNC(STAGERTIME*100000)*10 INTO :fmd_entry->stagertime_usec;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1438:
+    serrno = EMLINK;
+    break;
+  default:
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_update_smd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr,
+                         struct Cns_seg_metadata *smd_entry)
+{
+  char func[21];
+  char rowid_value[19];
+  char segsize_str[21];
+  struct sqlca sqlca;
+  EXEC SQL VAR smd_entry->blockid IS RAW(4);
+
+  strncpy (func, "Cns_update_smd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  (void) u64tostr (smd_entry->segsize, segsize_str, -1);
+  EXEC SQL UPDATE Cns_seg_metadata SET
+    SEGSIZE       = TO_NUMBER(:segsize_str),
+    COMPRESSION   = :smd_entry->compression,
+    S_STATUS      = :smd_entry->s_status,
+    VID           = :smd_entry->vid,
+    SIDE          = :smd_entry->side,
+    FSEQ          = :smd_entry->fseq,
+    BLOCKID       = :smd_entry->blockid,
+    CHECKSUM_NAME = :smd_entry->checksum_name,
+    CHECKSUM      = :smd_entry->checksum,
+    GID           = :smd_entry->gid,
+    LASTMODIFICATIONTIME = GETTIME()
+    WHERE ROWID   = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+    return (-1);
+  }
+  return (0);
+}
+
+int Cns_update_umd_entry(struct Cns_dbfd *dbfd,
+                         Cns_dbrec_addr *rec_addr,
+                         struct Cns_user_metadata *umd_entry)
+{
+  char func[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_update_umd_entry", 21);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  EXEC SQL UPDATE Cns_user_metadata SET
+    COMMENTS = :umd_entry->comments
+    WHERE ROWID = :rowid_value;
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+    return (-1);
+  }    
+  return (0);
+}

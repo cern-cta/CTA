@@ -1,0 +1,359 @@
+.\" ******************************************************************************
+.\"                      draindiskserver
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" man page for the draindiskserver command.
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH draindiskserver "1castor" "June 2013 $" CASTOR "Allows to drain Diskserver/FileSystems"
+.SH NAME
+draindiskserver \- management of draining filesystems and diskservers
+
+.SH SYNOPSIS
+.B draindiskserver
+.BI -h
+.br
+.B draindiskserver
+.BI -a\c
+|\c
+.BI --add
+[
+.BI -S
+<serviceclass>
+]
+[
+.BI --file-mask\c
+=(NOTONTAPE|ALL)
+]
+[
+.BI --comment\c
+=comment
+]
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+.br
+.B draindiskserver
+.BI -q\c
+|\c
+.BI --query
+[
+.BI -x\c
+|\c
+.BI --extra
+]
+[
+.BI -c\c
+|\c
+.BI --config
+]
+[
+.BI -r\c
+|\c
+.BI --running
+]
+[
+.BI --script
+]
+[
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+]
+.br
+.B draindiskserver
+.BI -q\c
+|\c
+.BI --query
+.BI -f\c
+|\c
+.BI --failures
+[
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+]
+.br
+.B draindiskserver
+.BI -d\c
+|\c
+.BI --delete
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+
+.SH DESCRIPTION
+.B draindiskserver
+is an administration command that allows for the draining of filesystems and
+diskservers in an automated way.
+
+.SH OPTIONS
+Supported operations:
+.RS
+.TP
+.B -a, --add
+Add new fileSystem or diskServer to the list of those to be drained.
+Note that that DISABLED fileSystem/diskServer will be refused and that the
+fileSystem status will be set to DRAINING. In case no mountPoint is given,
+the diskServer status will also be set to DRAINING.
+.TP
+.B -q, --query
+Query the filesystems currently being drained. With no option, displays a summary of
+the draining processes. with --config, displays the configuration of draining jobs
+.TP
+.B -d, --delete
+Delete/Cancel the draining process of a given filesystem or diskserver.
+.RE
+
+.TP
+Common options and arguments:
+.RS
+.TP
+.B -h, --help
+Display this help and exit
+.TP
+.B -m, --mountpoints=<MountPoint>[:...]
+The name of the mountpoints to perform the operation on. Note: if the mountpoint
+option is omitted, the operation will apply to all filesystems associated with
+the selected diskservers.
+.TP
+.BI <diskPoolName>|<diskServerName> [...]
+The name of the diskservers/diskpools to perform the operation on.
+Note that at least one argument is expected in case the --mountpoints option is used
+.RE
+
+.TP
+Add options (\fB-a\fR or \fB--add\fR):
+.RS
+.TP
+.B -S,\ \-\-svcclass=<svcClassName>
+The name of the service class that files should be replicated to. This option
+can be omitted if the filesystems to be added all belong to a single unique
+service class.
+.TP
+.B --file-mask=(NOTONTAPE|ALL)
+Mask used to decide which files need to be replicated. (Default: \fBALL\fR)
+Note that when \fBALL\fR is used, files that are not on tape, are still replicated first.
+.TP
+.B --comment=<comment>
+Associates a comment with the draining process.
+.RE
+
+.TP
+Query options (\fB-q\fR or \fB--query\fR):
+.RS
+.TP
+.B -x, \-\-extra
+if given, displays the details about all the mount points being drained rather than the summary per diskserver
+.TP
+.B -c,\ \-\-config
+if given, displays the configuration of draining jobs rather than their status
+.TP
+.B -r,\ \-\-running
+if given, only lists running drainings
+.TP
+.B --script
+if given, output uses a style suitable for parsing by scripts
+.TP
+.B -f,\ \-\-failures
+List the files which failed to be replicated and the reason why.
+.TP
+.RE
+
+.TP
+Meaning of the columns in the output of \fB--query\fR:
+.RS
+.TP 12
+.B DiskServer
+The name of the diskserver.
+.TP
+.B MountPoint
+The name of the mountpoint/filesystem.
+.TP
+.B Created
+The creation time of the request to drain the filesystem
+.TP
+.B TFiles
+The total number of files to be replicated
+.TP
+.B TSize
+The total size of the files to replicated expressed in a human readable format
+(e.g, 1KiB, 234MiB 2GiB) using powers of 2.
+.TP
+.B RFiles
+The remaining number of files to be replicated.
+.TP
+.B RSize
+The remaining size of the files to be replicated expressed in a human readable
+(e.g, 1KiB, 234MiB 2GiB) using powers of 2.
+.TP
+.B Failed
+The number of files which have failed to be replicated. The exact files which
+failed can be listed using the \fB--query --failures\fR options.
+.TP
+.B RunTime
+Total time elapsed since the startof the draining process, in a human readable format.
+.TP
+.B Progress
+The progress of the draining process represented as a percentage of the size of
+the data transferred.
+.TP
+.B ETC
+\fBE\fRstimated \fBT\fRime to \fBC\fRompletion, computed base on the size of
+the data transferred versus data remaining to be transfered.
+.TP
+.B Status
+The status of the draining process. One of: \fBSUBMITTED\fR, \fBSTARTING\fR,
+\fBRUNNING\fR, \fBFAILED\fR and \fBFINISHED\fR
+.RE
+
+.SH EXAMPLES
+.nf
+.ft CW
+# draindiskserver -a -S default --comment="first test" -m /srv/castor/10/ lxc2dev1d2.cern.ch 
+Started draining for lxc2dev1d2.cern.ch:/srv/castor/10/
+
+# draindiskserver -q
+        DiskServer SvcClass              Created TFiles TSize RFiles RSize Done Failed RunTime Progress ETC  Status
+-------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch diskonly 12-Jun-2013 14:03:12      4 2878B      4 2878B    0      0   4.00s     0.0% N/A RUNNING
+
+# draindiskserver -q
+        DiskServer SvcClass              Created TFiles TSize RFiles RSize Done Failed RunTime Progress ETC Status
+------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch diskonly 12-Jun-2013 14:03:12      4 2878B      0    0B    0      4  12.00s   100.0%  0s FAILED
+
+
+# draindiskserver -qf
+        DiskServer      MountPoint     fileId                                                                                                                      Error
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001075208                                                                                                  No destination host found
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001075044                                                                                                  No destination host found
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001068997 lxc2dev1d2.cern.ch:/srv/castor/10/97/5001068997@cnsdev.240687 : No such file or directory (error 2 on lxc2dev1d2.cern.ch)
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001069822 lxc2dev1d2.cern.ch:/srv/castor/10/22/5001069822@cnsdev.268879 : No such file or directory (error 2 on lxc2dev1d2.cern.ch)
+
+# draindiskserver -d -n lxc2dev1d2.cern.ch
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/01/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/02/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/03/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/04/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/05/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/06/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/07/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/08/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/09/. Ignoring it
+Draining activity for lxc2dev1d2.cern.ch:/srv/castor/10/ will be stopped
+Is this ok ? [N/y] y
+Stopping drain for lxc2dev1d2.cern.ch:/srv/castor/10/
+
+# draindiskserver -q
+Nothing found
+
+
+.B More realistic
+
+# draindiskserver -q
+         DiskServer   SvcClass              Created  TFiles   TSize  RFiles   RSize  Done Failed RunTime Progress          ETC  Status
+--------------------------------------------------------------------------------------------------------------------------------------
+lxfsrc48a06.cern.ch largedisk2 02-Aug-2013 17:07:51 6933786   19GiB 6859875   19GiB 73911      0 33mn15s     1.1% 2d10h32mn30s RUNNING
+--------------------------------------------------------------------------------------------------------------------------------------
+                                                    6933786   19GiB 6859875   19GiB 73911      0             1.1%                     
+
+# draindiskserver -qx
+         DiskServer      MountPoint   SvcClass              Created  TFiles   TSize  RFiles   RSize  Done Failed RunTime Progress          ETC  Status
+------------------------------------------------------------------------------------------------------------------------------------------------------
+lxfsrc48a06.cern.ch /srv/castor/01/ largedisk2 02-Aug-2013 17:07:51  550504 1592MiB  543045 1570MiB  7459      0 33mn15s     1.3%  1d16h4mn39s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/02/ largedisk2 02-Aug-2013 17:07:51  679996 1965MiB  672729 1944MiB  7267      0 33mn15s     1.0%  2d3h48mn57s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/03/ largedisk2 02-Aug-2013 17:07:51  686182 1982MiB  677788 1958MiB  8394      0 33mn15s     1.2%   1d21h4mn3s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/04/ largedisk2 02-Aug-2013 17:07:51  697358 2015MiB  688536 1989MiB  8822      0 33mn15s     1.2% 1d19h30mn34s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/05/ largedisk2 02-Aug-2013 17:07:51  702091 2028MiB  695549 2009MiB  6542      0 33mn15s     0.9%  2d11h28mn0s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/06/ largedisk2 02-Aug-2013 17:07:51  709821 2050MiB  702667 2030MiB  7154      0 33mn15s     1.0%  2d6h52mn39s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/07/ largedisk2 02-Aug-2013 17:07:51  716472 2069MiB  708598 2047MiB  7874      0 33mn15s     1.0%  2d2h10mn44s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/08/ largedisk2 02-Aug-2013 17:07:51  725884 2096MiB  718661 2076MiB  7223      0 33mn15s     0.9%  2d7h33mn16s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/09/ largedisk2 02-Aug-2013 17:07:51  728824 2105MiB  721965 2085MiB  6859      0 33mn15s     0.9%  2d10h30mn3s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/10/ largedisk2 02-Aug-2013 17:07:51  736654 2127MiB  730337 2109MiB  6317      0 33mn15s     0.8% 2d16h32mn35s RUNNING
+------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                    6933786   19GiB 6859875   19GiB 73911      0             1.0%                     
+
+# draindiskserver -qx --script
+lxfsrc48a06.cern.ch:/srv/castor/01/:02-Aug-2013 17:07:51:552228:1597MiB:543047:1570MiB:9181:0:39mn15s:1.68 %:1d14h23mn34s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/02/:02-Aug-2013 17:07:51:683343:1974MiB:674451:1949MiB:8892:0:39mn15s:1.29 %:2d2h18s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/03/:02-Aug-2013 17:07:51:691131:1997MiB:681136:1968MiB:9995:0:39mn15s:1.44 %:1d20h49mn5s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/04/:02-Aug-2013 17:07:51:703827:2033MiB:693484:2004MiB:10343:0:39mn15s:1.46 %:1d20h1mn0s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/05/:02-Aug-2013 17:07:51:709910:2051MiB:702017:2028MiB:7893:0:39mn15s:1.10 %:2d10h36mn10s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/06/:02-Aug-2013 17:07:51:719144:2077MiB:710484:2053MiB:8660:0:39mn15s:1.20 %:2d5h59mn43s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/07/:02-Aug-2013 17:07:51:727335:2101MiB:717944:2074MiB:9391:0:39mn15s:1.29 %:2d2h13mn59s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/08/:02-Aug-2013 17:07:51:738129:2132MiB:729529:2107MiB:8600:0:39mn15s:1.16 %:2d7h48mn14s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/09/:02-Aug-2013 17:07:51:742410:2144MiB:734157:2121MiB:8253:0:39mn15s:1.11 %:2d10h12mn29s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/10/:02-Aug-2013 17:07:51:751546:2171MiB:743923:2149MiB:7623:0:39mn15s:1.01 %:2d16h10mn57s:RUNNING
+
+# draindiskserver -qxc
+
+         DiskServer      MountPoint         UserName           Machine   SvcClass FileMask Comment
+--------------------------------------------------------------------------------------------------
+lxfsrc48a06.cern.ch /srv/castor/01/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/02/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/03/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/04/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/05/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/06/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/07/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/08/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/09/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/10/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+
+
+.SH NOTES
+This command requires database client access to the stager catalog DB.
+Configuration for the database access is taken from castor.conf.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,188 @@
+.lf 8 listtransfers.man
+.TH listtransfers "8castor" "2011/03/21" CASTOR "listtransfers"
+.SH NAME
+listtransfers \- lists transfers managed by the transfer manager
+.SH SYNOPSIS
+.B listtransfers
+[
+.BI -h
+]
+[
+.BI -s
+[
+.BI -c
+]
+]
+[
+.BI -p
+]
+[
+.BI -u
+<user>
+]
+[
+.BI -x
+[
+.BI -r
+<transfertype>[:...]
+]
+]
+[
+.BI -t
+<node>[:port] ]
+[
+<pool>
+]
+.SH DESCRIPTION
+.LP
+Lists transfers managed in the transfer manager.
+.P
+With no option, lists all transfers managed by the transfer manager. This list can be restricted to a given user and/or a given pool with the -u option and the pool name as an argument
+.P
+With a -s/-p option, gives a summary of the number of transfers managed per host/pool. This summary can be extended to give details per transfer type via the use of the -x option. The list of detailed transfer types can be restricted via the use of the -r option. This option takes a colon separated list of transfer types as an argument. For the detailed signification of the output of these options, see the
+.SM OUTPUT COLUMNS
+section
+
+.SH OPTIONS
+
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-s,\ \-\-summary
+provides a summary of the managed transfers, on an host base
+.TP
+.BI \-c,\ \-\-clean
+used in conjunction with -s/--summary, provides a 'clean' summary of the managed transfers, that is a summary where idle hosts are not listed
+.TP
+.BI \-p,\ \-\-poolsummary
+provides a summary of the managed transfers, on a pool base
+.TP
+.BI \-u,\ \-\-user
+restricts the listing to transfers belonging to a given user
+.TP
+.BI \-x,\ \-\-extra
+when used for a summary listing (-s and -p options), enables per transfer type extra fields
+.TP
+.BI \-r,\ \-\-restrict
+when used with the -x option, restricts the list of transfer types detailed in the extra fields. The list of transfer types to be displayed must be given in a colon separated list, e.g. rfio3:xroot
+Note that at the time of writing, supported transfer types included : xroot, rfio, rfio3, gsiftp, d2dsrc, d2ddest, recall and migr
+.TP
+.BI \-t,\ \-\-transfermanager
+this option allows to force the connection to a given transfer manager host, on a given port.
+By default, the transfer manager host and port are taken form the castor.conf file.
+.TP
+.BI <pool>
+when given, restricts the listing/summary of transfers to the ones in the given pool
+
+.SH OUTPUT COLUMNS
+
+.TP
+.BI NBSLOTS
+total number of slots available for the diskserver/pool concerned
+
+.TP
+.BI NBTPEND
+number of transfer pending for the diskserver/pool concerned. In case of -x, the total number of pending transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBUTPEND
+number of unique transfers pendind for the pool concerned. Compared to
+.BI NBTPEND
+the transfers pending on multiple hosts are not counted several times
+
+.TP
+.BI NBSPEND
+number of slots that would be taken if all pending transfers would start at once. This is correlated to
+.BI NBTPEND
+modulo the per protocol weights. In case of -x, the total number of pending slots is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBTRUN
+number of transfers running on the diskserver/pool concerned. In case of -x, the total number of running transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.TP
+.BI NBSRUN
+number of slots taken by running transfers on the diskserver/pool concerned. This is correlated to
+.BI NBTRUN
+modulo the per protocol weights. In case of -x, the total number of slots taken by running transfers is given under the 
+.SM TOTAL
+hat, and the detail per protocol is then given under the other hats
+
+.SH EXAMPLE
+.nf
+.ft CW
+
+listtransfers
+                          TRANSFERID     USER STAT  TYPE        POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
+---------------------------------------------------------------------------------------------------------------------------------------------
+9eab0dae-c416-6b2d-e040-8a8949a14534 sponcec3 RUN  rfio3     default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:11 Mar 17 10:37:11   
+9eab0dae-c417-6b2d-e040-8a8949a14534 sponcec3 PEND rfio3     default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:12               -   
+-                                    stage    TAPE migr-user default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
+
+listtransfers -u stage
+                          TRANSFERID     USER STAT TYPE         POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
+---------------------------------------------------------------------------------------------------------------------------------------------
+-                                       stage TAPE migr-user default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
+
+listtransfers -s
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN
+lxc2disk15.cern.ch            60       0       0       0       0
+lxc2disk01.cern.ch            60       0       0       2      13
+lxc2disk02.cern.ch            60       0       0       0       0
+lxc2disk16.cern.ch            60       0       0       0       0
+
+listtransfers -s -c
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN
+lxc2disk01.cern.ch            60       0       0       2      13
+
+listtransfers -s default
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN
+lxc2disk15.cern.ch            60       0       0       0       0
+lxc2disk01.cern.ch            60       0       0       2      13
+
+listtransfers -sx
+                                    ------------ TOTAL ------------  ------------ MIGR -------------  ------------ RFIO3 ------------ 
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN  
+lxc2disk15.cern.ch            60       0       0       0       0        0       0       0       0        0       0       0       0 
+lxc2disk01.cern.ch            60       0       0       2      13        0       0       1      10        0       0       1       3 
+lxc2disk02.cern.ch            60       0       0       0       0        0       0       0       0        0       0       0       0 
+lxc2disk16.cern.ch            60       0       0       0       0        0       0       0       0        0       0       0       0 
+
+listtransfers -sx -r migr
+                                    ------------ TOTAL ------------  ------------ MIGR -------------
+DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN 
+lxc2disk15.cern.ch            60       0       0       0       0        0       0       0       0   
+lxc2disk01.cern.ch            60       0       0       2      13        0       0       1      10   
+lxc2disk02.cern.ch            60       0       0       0       0        0       0       0       0   
+lxc2disk16.cern.ch            60       0       0       0       0        0       0       0       0   
+
+listtransfers -p
+POOL          NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN
+default         120        0        0        0        2       13
+extra           120        0        0        0        0        0
+
+listtransfers -p default
+POOL          NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN
+default         120        0        0        0        2       13
+
+listtransfers -px
+                                    ------------ TOTAL ------------  ------------ MIGR -------------  ------------ RFIO3 ------------ 
+POOL          NBSLOTS  NBUTPEND NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN  
+default         120        0       0       0       2      13        0       0       1      10        0       0       1       3 
+extra           120        0       0       0       0       0        0       0       0       0        0       0       0       0 
+
+listtransfers -px -r rfio3
+                                    ------------ TOTAL ------------  ------------ RFIO3 ------------ 
+POOL          NBSLOTS  NBUTPEND NBTPEND NBSPEND NBTRUN  NBSRUN   NBTPEND NBSPEND NBTRUN  NBSRUN  
+default         120        0       0       0       2      13        0       0       1       3 
+extra           120        0       0       0       0       0        0       0       0       0 
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch

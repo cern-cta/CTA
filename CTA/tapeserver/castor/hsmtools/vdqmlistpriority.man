@@ -1,0 +1,97 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH VDQMLISTPRIORITY "1castor" "$Date: 2008/08/13 15:20:36 $" CASTOR "List volume priorities"
+.SH NAME
+vdqmlistpriority \- list volume priorities
+.SH SYNOPSIS
+.BI "vdqmlistpriority [ -a | -t type | -e ] [ -v ] [ -h ]"
+
+.SH DESCRIPTION
+.B vdqmlistpriority
+lists the volume access priorities within the VDQM database.
+The RecallHandler daemon and the tape operator command-line tools send volume
+access priorities to the VDQM. A volume access priority sent from the
+RecallHandler will exist in the VDQM database for a single-mount of the tape in
+question.  A volume access priority sent from the tape operator command-line
+tools will by default have an unlimited lifespan type within the VDQM database.  
+The priority will stay active until it is explicitly removed by the tape 
+operator command-line tools.
+A volume access priority is a quadruple of:
+.RS
+.P
+*
+.B VID
+.br
+Volume visual identifier
+.P
+*
+.B
+Access mode
+.br
+Either read or write
+.P
+*
+.B
+Type
+.br
+Either single-mount or unlimited
+.P
+*
+.B
+Priority number
+.br
+A positive integer, where 0 is the lowest and default priority
+.RE
+.P
+If there is a single-mount priority and an unlimited priority for the same 
+volume access (VID plus access mode), then the unlimited priority will override 
+the single mount priority.
+.P
+Depending on its command-line options,
+.B vdqmlistpriority
+will display one of the following four types of list:
+
+.RS
+.P
+* All priorities
+.P
+* Only priorities that have a single-mount lifespan
+.P
+* Only priorities that have an unlimited lifespan
+.P
+* The effective priorities
+.RE
+
+.SH OPTIONS
+.TP
+\fB\-a, \-\-all
+List all priorities.  This is the default.
+Options -a, -t and -e are mutually exclusive.
+.TP
+\fB\-t, \-\-type singleMount | unlimited
+List only priorities with the specified lifespan.  Valid values are
+"singleMount" and "unlimited".
+Options -a, -t and -e are mutually exclusive.
+.TP
+\fB\-e, \-\-effective (default)
+List effective priorities.  This is the default type of list to be displayed.
+Options -a, -t and -e are mutually exclusive.
+.TP
+\fB\-v, \-\-verbose
+Verbose.  Display the column headings.
+.TP
+\fB\-h, \-\-help
+Get usage information.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

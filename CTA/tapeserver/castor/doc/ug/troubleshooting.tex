@@ -1,0 +1,137 @@
+\chapter{When things go wrong...}
+When something goes wrong while using the CASTOR commands or libraries please check the CASTOR FAQ
+\url{http://cern.ch/castor/faq.htm} if it is a known problem. If not, can contact
+the local CASTOR support (for CERN users, {\bf Castor.Support@cern.ch}). In this section you
+will find some instruction to help speeding up the problem resolution.
+
+\section{Provide as much as possible all relevant information from the beginning}
+For an efficient and rapid problem diagnosis, it is important to provide a maximum
+of relevant information, which should include at least the following:
+\begin{itemize}
+   \item The client host name where you tried the CASTOR command. Use the
+        {\tt hostname} or {\tt uname} commands
+   \item The approximate date and time for the problem. Use the {\tt date}
+        command
+   \item Your complete environment setting: use the {\tt env} command to list
+        your environment
+   \item The full command line and error text of the failing command
+   \item The CASTOR release installed on the host where you tried the CASTOR command. Attach
+         the output of the {\tt rpm -qa |grep -i castor} or {\tt castor -v} commands to your
+         problem report
+   \item The path of the command that failed: {\tt which <command-name>},
+         e.g. {\tt which rfcp}
+   \item The shared library dependency: {\tt ldd <command-name>}, e.g. {\tt ldd rfcp}
+\end{itemize}
+
+Example (problem with the rfcp command):
+\small
+\begin{verbatim}
+[lxplus] uname -a >castorProblemReport.txt
+[lxplus] date >>castorProblemReport.txt
+[lxplus] env >>castorProblemReport.txt
+[lxplus] rpm -qa| grep castor >>castorProblemReport.txt
+[lxplus] castor -v >>castorProblemReport.txt
+[lxplus] which rfcp >>castorProblemReport.txt
+[lxplus] ldd `which rfcp` >>castorProblemReport.txt
+\end{verbatim}
+\normalsize
+
+\section{CASTOR traces}
+When using RFIO, ROOT or CASTOR stager client commands, it is possible to also get an exhaustive
+debug trace by setting the environment variables {\tt STAGER\_TRACE=3} and {\tt RFIO\_TRACE=3}. Example:
+\small
+\begin{verbatim}
+[lxplus] rfcp newTrigger.root /castor/cern.ch/user/l/linda/higgs/newTrigger.root
+/castor/cern.ch/user/l/linda/higgs/newTrigger.root : Entry not found
+[lxplus] setenv RFIO_TRACE 3
+[lxplus] setenv STAGER_TRACE 3
+[lxplus] rfcp newTrigger.root /castor/cern.ch/user/l/linda/higgs/newTrigger.root
+    **** : trace level set to 3
+  rfio: rfio_stat64(/castor/cern.ch/user/l/linda/higgs/newTrigger.root, bfffd380)
+    rfio: rfioTURLFromString does not recognize TURL
+    rfio: rfio_parseln() check /castor/cern.ch/user/l/linda/higgs/newTrigger.root§ against castor root /castor
+    rfio: rfio_parseln() call Cns_selectsrvr(/castor/cern.ch/user/l/linda/higgs/newTrigger.root,0x9ac4618,0x9ac4200,0xbfff51d8)
+    rfio: rfio_parseln() Cns_selectsrvr() returns host=cnsuser.cern.ch, path=/castor/cern.ch/user/l/linda/higgs/newTrigger.root
+  rfio: rfio_stat64: /castor/cern.ch/user/l/linda/higgs/newTrigger.root is an HSM path
+   rfio: rfioTURLFromString does not recognize TURL
+   rfio: rfio_parseln() check /etc/group against castor root /castor
+   rfio: rfio_parseln() Using site-wide NFS ROOT "/shift"
+   rfio: rfioTURLFromString does not recognize TURL
+   rfio: rfio_parseln() check /castor/cern.ch/user/l/linda/higgs/newTrigger.root against castor root /castor
+   rfio: rfio_parseln() call Cns_selectsrvr(/castor/cern.ch/user/l/linda/higgs/newTrigger.root,0x9ac4618,0x9ac4200,0xbfff5338)
+   rfio: rfio_parseln() Cns_selectsrvr() returns host=cnsuser.cern.ch, path=/castor/cern.ch/user/l/linda/higgs/newTrigger.root
+  rfio: rfio_stat64(newTrigger.root, bfffd3e0)
+    rfio: rfioTURLFromString does not recognize TURL
+    rfio: rfio_parseln() check newTrigger.root against castor root /castor
+    rfio: rfio_parseln() Using site-wide NFS ROOT "/shift"
+  rfio: rfio_stat64: using local stat64(newTrigger.root, bfffd3e0)
+ rfio: rfcp: Setting stager log callback
+  rfio: rfio_open64_ext(newTrigger.root, 00, 0644, 0, 0, 0, )
+    rfio: rfioTURLFromString does not recognize TURL
+    rfio: rfio_parseln() check newTrigger.root against castor root /castor
+    rfio: rfio_parseln() Using site-wide NFS ROOT "/shift"
+  getifnam_r: getifnam_r(3) entered
+   getifnam_r: getsockname returned 88
+  rfio: rfio_open64_ext(/castor/cern.ch/user/l/linda/higgs/newTrigger.root, 01101, 0644, 0, 0, 0, )
+    rfio: rfioTURLFromString does not recognize TURL
+    rfio: rfio_parseln() check /castor/cern.ch/user/l/linda/higgs/newTrigger.root against castor root /castor
+    rfio: rfio_parseln() call Cns_selectsrvr(/castor/cern.ch/user/l/linda/higgs/newTrigger.root,0x9ac4618,0x9ac4200,0xbfff5160)
+    rfio: rfio_parseln() Cns_selectsrvr() returns host=cnsuser.cern.ch, path=/castor/cern.ch/user/l/linda/higgs/newTrigger.root
+  rfio: rfio_open64_ext: /castor/cern.ch/user/l/linda/higgs/newTrigger.root is an HSM path
+   rfio: Calling stage_open with: /castor/cern.ch/user/l/linda/higgs/newTrigger.root 241 1a4
+    **** : trace level set to 3
+    stager: stage_put Usertag=NULL Protocol=rfio File=/castor/cern.ch/user/l/linda/higgs/newTrigger.root mode=420/size=0
+    stager: Opt SVCCLASS=zzzz
+    stager: Setting euid: 12345
+    stager: Setting egid: 1234 
+    stager: Creating socket for stager callback
+    stager: Will wait for stager callback on port 39360
+    stager: Aug 24 22:13:19 (1156450399) Sending request
+    stager: Waiting for acknowledgement
+    stager: 44ee085f-0000-1000-a75f-e37f230a0000 SND 0.02 s to send the request
+    stager: Request sent to RH - Request ID: 44ee085f-0000-1000-a75f-e37f230a0000
+    stager: Waiting for callback from stager
+    stager: 44ee085f-0000-1000-a75f-e37f230a0000 CBK 0.02 s before callback was received
+   rfio: stage_open error: 1014/No such service class "zzzz"
+   rfio: rfio_serror: errno=0, serrno=1014, rfio_errno=0
+/castor/cern.ch/user/l/linda/higgs/newTrigger.root : Entry not found
+[lxplus]
+\end{verbatim} 
+\normalsize
+
+The problem in the above example is a wrong setting of the service class (disk pool).
+
+Always provide the trace output with your problem report if possible. However, as can be seen
+above the trace is rather long and if the error happens after a long execution, it may not always
+be possible to attach the trace. In that case, save it to a file in your AFS public directory
+and provide the filename in your problem report.
+
+\section{Hanging transfers}
+When you launch an application or CASTOR command (e.g. rfcp) and it appears to hang, it can
+be stuck for various reasons. The most frequent causes are:
+\begin{itemize}
+  \item{\bf Waiting on tape recall - } The file is not available on disk and a recall from tape is
+                                necessary. Check with {\tt stager\_qry -M ....} to see if
+                                that is the case and, if so, the request would normally appear
+                                in the tape queue. See Section \ref{sect:tapepbs} for more
+                                details how to check the tape queue and status.
+                                If no tape request is found it can sometimes help clearing 
+                                the file with {\tt stager\_rm -M ...} and retry
+                                the request with {\tt stager\_get -M ...}.
+  \item{\bf Local firewall - } If you run your CASTOR client on a desktop computer it may be that
+                           the transfer hangs because the CASTOR call-back is blocked by the
+                           local firewall (iptables). CASTOR normally needs inbound access in the port
+                           range [30,000 - 30,100] but a different range can be configured in {\tt /etc/castor/castor.conf}, for instance:
+  \begin{itemize}
+    \item CLIENT LOWPORT 50000 
+    \item CLIENT HIGHPORT 50100
+  \end{itemize}
+  \item{\bf Waiting on transfer slot - } If the file resides on disk server that has no more available
+                                transfer slots, new requests for accessing files on that server
+                                may be queued up. For the moment there is no client command to
+                                check if this is the case.
+  \item{\bf Slow data transfer - } The data transfer may actually be ongoing but progressing very
+                            slowly due to network bandwidth limitations. If it is a transfer
+                            into the client machine, you may monitor the timestamp and size of
+                            target file.
+\end{itemize}

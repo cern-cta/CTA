@@ -1,0 +1,47 @@
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPCONFIG "1castor" "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
+.SH NAME
+tpconfig \- configure tape drive up/down
+.SH SYNOPSIS
+.B tpconfig
+.I [drive_name] drive_status
+.SH DESCRIPTION
+.B tpconfig
+configures drive
+.B up
+or
+.B down.
+This tells the tape daemon if the drive
+can be allocated or not. The list of drive names may be found by using
+.BR tpstat .
+The
+.B tpconfig
+command is restricted to privileged users such as root and operator.
+.TP 1.2i
+.I drive_name
+may be either a simple drive name if the program is executed on the tape server
+itself or drivename@hostname. The drive_name can be omitted if there is only
+one tape drive connected to the tape server.
+.TP 1.2i
+.I drive_status
+can be
+.B up
+or
+.BR down .
+
+.SH EXAMPLE
+.nf
+.ft CW
+tpconfig dlt02@shd34 up
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or non-zero if the
+operation failed.
+.SH SEE ALSO
+.BR Ctape_config(3) ,
+.B Ctape_status(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

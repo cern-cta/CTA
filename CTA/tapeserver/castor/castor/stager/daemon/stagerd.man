@@ -1,0 +1,98 @@
+.lf 8 stagerd.man
+.TH stagerd "8castor" "$Date: 2009/07/23 12:18:45 $" CASTOR "stager"
+.SH NAME
+stagerd \- start the CASTOR Stager daemon
+.SH SYNOPSIS
+.B stagerd
+[
+.BI -f
+]
+[
+.BI -h
+]
+[
+.BI -c " <config-file>"
+]
+[
+.BI -m
+]
+[
+.BI -J
+.BI <nb\ threads>
+]
+[
+.BI -S
+.BI <nb\ threads>
+]
+[
+.BI -B
+.BI <nb\ threads>
+]
+[
+.BI -Q
+.BI <nb\ threads>
+]
+[
+.BI -E
+.BI <nb\ threads>
+]
+[
+.BI -G
+.BI <nb\ threads>
+]
+[
+.BI -C
+.BI <nb\ threads>
+]
+.SH DESCRIPTION
+.LP
+The
+.B stagerd
+command starts the CASTOR stager daemon,
+which is the main daemon responsible for user requests processing.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-f,\ \-\-foreground
+runs in foreground mode (no daemonization).
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-c,\ \-\-config\ <config-file>
+specifies the location of the configuration file to use. The default value
+is /etc/castor/castor.conf.
+.TP
+.BI \-m,\ \-\-metrics
+enables internal metrics collection, usually into \fI/var/spool/castor/stagerd.xml\fR.
+.TP
+.BI \-J,\ \-\-Jthreads\ <nb\ threads>
+specifies the number of threads for user job oriented requests. Default is 10.
+.TP
+.BI \-S,\ \-\-Sthreads\ <nb\ threads>
+specifies the number of threads for stager specific requests (putDone, Rm, setGCWeight). Default is 4.
+.TP
+.BI \-B,\ \-\-Bthreads\ <nb\ threads>
+specifies the number of threads for handling bulk requests in bulk (currently only abort). Default is 3.
+.P
+.BI \-Q,\ \-\-Qthreads\ <nb\ threads>
+specifies the number of threads for user query requests. Default is 6.
+.TP
+.BI \-E,\ \-\-Ethreads\ <nb\ threads>
+specifies the number of threads for handling user errors. Default is 2.
+.TP
+.BI \-G,\ \-\-Gthreads\ <nb\ threads>
+specifies the number of threads for internal garbage collection and synchronization. Default is 4.
+.TP
+.BI \-C,\ \-\-Cthreads\ <nb\ threads>
+specifies the number of threads for dumping the logs of the database cleaning jobs. Default is 1. 
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

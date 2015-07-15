@@ -1,0 +1,285 @@
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_QRY "1castor"castor "$Date: 2008/10/21 03:51:07 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_qry \- query the CASTOR stager for files and requests
+.SH SYNOPSIS
+.B stager_qry
+[
+.BI -M
+.BI hsmfile
+[
+{
+.BI -M
+}
+.BI ...
+]]
+[
+.BI -f
+.BI hsmFileList
+]
+[
+.BI -S
+.BI svcClass
+]
+[
+.BI -U
+.BI usertag
+]
+[
+.BI -F
+.BI fileid@nshost
+]
+[
+.BI -r
+.BI requestid
+]
+[
+.BI -n
+]
+[
+.BI -h
+]
+
+.B stager_qry
+.BI -s
+[
+.BI -S
+.BI svcClass
+]
+[
+.BI -d
+.BI diskPool
+]
+[
+.BI -H
+]
+[
+.BI -i
+]
+[
+.BI -h
+]
+[
+.BI -a
+]
+[
+.BI -t
+]
+.SH DESCRIPTION
+The
+.B stager_qry
+command can be used for querying the status and progress of CASTOR files and stager request
+submitted using the
+.BI stager_get(1castor)
+,
+.BI stager_put(1castor)
+or
+.BI rfcp(1castor) 
+commands as well as for getting statistics concerning the diskpools with
+.BI \-s
+option.
+.fi
+
+.BI File\ querying
+
+Default output includes 3 columns: the basename of the HSM name, the fileid in the used castor name server, and the current status of the found record. The latter can be:
+.TP 10
+.BI STAGEIN
+the file is being recalled from tape or being internally disk-to-disk copied from another diskpool.
+.TP
+.BI STAGED
+the file has been successfully staged from tape and it is available on disk, or the file is only available on disk if its associated nbTapeCopies = 0, see the nschclass(1castor) command.
+.TP
+.BI STAGEOUT
+the file is being staged from client.
+.TP
+.BI CANBEMIGR
+the file is on disk and any transfer from client has been completed. The migrator will take it for tape migration.
+.TP
+.BI INVALID
+the file has no valid diskcopy/tapecopy, or a failure happened concerning the file. 
+
+
+.TP 0
+.BI DiskPool\ querying
+
+All disk servers and file systems composing the disk pool are listed. For each filesystem, the mountpoint, status, capacity, free space and garbage collector bounds are given. These bounds are the minimum and maximum amout of free space desired (given as fraction of the total space).
+For each diskserver, the name, status, aggregated capacity and free space are given.
+Finally for each pool, the aggregated capacity and free space are given.
+Note that by default, the capacity given is the total capacity, irrespectively of the availability of the hardware while the free space is the available free space. Use
+.B \-a,\ \-\-available
+and
+.B \-t,\ \-\-total
+options for alternative values.
+
+
+.SH OPTIONS
+
+.TP
+.BI \-M,\ \-\-hsm_filename " hsmfile"
+specifies the CASTOR HSM file to be queried for. The
+.B \-M
+option can be repeated, which allows for querying the status of many files with a single command.
+If the hsmfile ends with '/', or if it's a directory according to the nameserver, the query is performed recursively on the status of all files into it.
+Note that the number of responses for a given file is limited on the server side. In case the limitation
+is reached, nothing is returned and an error message is displayed.
+Also note that you may have more files listed here than in the nameserver in case the stager still has a copy of a file that was manually removed from the nameserver using the nsrm or rfrm command.
+.TP
+.BI \-f,\ \-\-hsm_filelist " hsmFileList"
+specifies a file containing a list of CASTOR HSM file(s) to be queried, one per line.
+This can be used to avoid the command line restrictions when many files should be queried at once.
+Note that lines starting with a '/' will be considered as containing file names while others will
+be considered as containing a fileid[@nshost] expression
+.TP
+.BI \-F,\ \-\-fileid " fileid@nshost"
+query by CASTOR fileid and nshost. The fileid is a unique 64bit number assigned by the CASTOR name server to each file in its namespace. The fileid can be retrieved using the
+.BI nsls(1castor)
+command with the
+.BI \-i
+switch.
+.TP
+.BI \-S,\ \-\-svcClass " svcClass"
+specifies the service class to be used for the query. If \-S is not specified, the query will be ran accross all service classes. Note that in such a case, the STAGE_SVCCLASS environment variable and the stagemap file will be taken into account, possibly restricting the query to a given service class. In order to force querying accross all service classes, the special value '*' can be used.
+.TP
+.BI \-U,\ \-\-usertag " usertag"
+allows for querying the status of a request identified by usertag. An usertag is a user defined string specified with the
+.BI \-U
+option to the
+.B stager_get(1castor)
+and
+.B stager_put(1castor)
+commands. There is no constraint on the uniqueness of the usertag so it is up to the user to make sure that the string is unique enough to not clash with other users' usertags.
+.fi
+Note that if the request has been fully processed (e.g. all requested files are STAGED for a prestage request), it will still be possible to query by usertag for typically a day, after which the request will be dropped from the stager database.
+.TP
+.BI \-r,\ \-\-requestid " requestid"
+allows for querying the status of a request identified by the stager request identifier.
+The stager request identifier is a UUID (see
+.B uuidgen(1)
+) that uniquely identifies the stager request. The stager request identifier is printed when the
+.BI \-r
+option is specified with the
+.B stager_get(1castor)
+and
+.B stager_put(1castor)
+commands.
+.fi
+Note that if the request has been fully processed (i.e. all requested files are STAGED), it will not be possible anymore to query by request id.
+.TP
+.BI \-n,\ \-\-getnext
+switches to getnext mode: allows for querying the list of files which have been recalled so far and not yet retrieved for a given GET request. The request can be identified by the stager request identifier or the user tag (see above).
+Each file is given only once, allowing users to get the latest recalled files since last usage of the command.
+.fi
+This option applies only for
+.B stager_get
+requests and gives no answer for other requests. Moreover, it has to be used in conjunction with
+.BI \-U
+or
+.BI \-r
+options.
+.TP
+.BI \-s,\ \-\-statistic
+display statistics concerning the disk pools. Note: Only users with ADMIN privileges are able to see information concerning individual diskservers and filesystems.
+.TP
+.BI \-d,\ \-\-diskPool " diskPool"
+Specifies the disk pool for which statistics should be displayed. It has to be used in conjunction with
+.BI \-s
+and takes precedence over
+.BI \-S
+.TP
+.BI \-a,\ \-\-available
+Reports available capacity rather than total capacity. Hardware not currently in production will thus not be considered. This has to be used in conjunction with
+.BI \-s
+.TP
+.BI \-t,\ \-\-total
+Reports total free space rather than available free space. Free space on hardware out of production will thus be reported. It has to be used in conjunction with
+.BI \-s
+.TP
+.BI \-H,\ \-\-human\-readable
+Print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024.
+.TP
+.BI \-i,\ \-\-si
+Print sizes in human readable format (e.g., 1K 234M 2G) using SI units, e.g. powers of 1000 not 1024.
+Note that this option takes precedence over
+.B \-H
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLES
+.fi
+$ stager_get -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
+.fi
+/castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
+.fi
+
+$ stager_qry -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGEIN
+.fi
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
+.fi
+
+$ stager_qry -n -U test1
+.fi
+Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
+.fi
+
+$ stager_qry -n -U test1   (after some time)
+.fi
+Received 1 responses
+.fi
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGED
+.fi
+
+$ stager_qry -M /castor/cern.ch/user/t/test/
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 8235742@castorns STAGED
+.fi
+/castor/cern.ch/user/t/test/file2 8235743@castorns STAGED
+.fi
+
+$ nsls -i /castor/cern.ch/user/t/test2/file
+.fi
+    59316770 /castor/cern.ch/user/t/test2/file
+.fi
+$ stager_qry -F 59316770@castorns
+.fi
+Received 1 responses
+.fi
+/castor/cern.ch/user/t/test2/file 59316770@castorns STAGEOUT
+.fi
+
+$ stager_qry -sH
+.fi
+.nf
+POOL default          CAPACITY 893.82Gi    FREE 889.62Gi(99%)
+  DiskServer lxfsrk462.cern.ch DISKSERVER_PRODUCTION   CAPACITY 893.82Gi    FREE 889.62Gi(99%)
+     FileSystems                       STATUS                  CAPACITY      FREE       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   223.45Gi    221.36Gi(99%) 0.10, 0.15
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   670.36Gi    668.26Gi(99%) 0.10, 0.15
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_get(1castor)
+.BR stager_put(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

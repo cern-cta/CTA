@@ -1,0 +1,9 @@
+# Should contain an entry like 
+#
+# 	<username>/<password>@<server>
+#
+# E.g.: 
+#
+#	castor/ABCDEF123456@castor
+#
+#username/password@server

@@ -1,0 +1,51 @@
+# Measure the rate to tapeK
+# experimental
+# Gbytes to tape in the last 5 minutes
+
+<metric>
+  name: GCMigrationCms
+  unit: FileSize in GB
+  category: CMS
+  window: 300
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: NONE
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+<metric>
+  name: GCMigrationbyTpsrvCms
+  unit: FileSize in GB
+  category: CMS
+  window: 300
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: HostName
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+<metric>
+  name: GCMigrationbyFclassCms
+  unit: FileSize in GB
+  category: CMS
+  window: 300
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: fileClass
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+<metric>
+  name: GCMigrationbyTpPoolCms
+  unit: FileSize in GB
+  category: CMS
+  window: 300
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: tapePool
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

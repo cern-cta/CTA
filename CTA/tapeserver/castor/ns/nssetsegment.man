@@ -1,0 +1,64 @@
+.\" Copyright (C) 2004 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH NSSETSEGMENT "1castor" "$Date: 2009/03/26 09:57:53 $" CASTOR "Cns User Commands"
+.SH NAME
+nssetsegment \- utility to change the checksum and status for a tape segment
+.SH SYNOPSIS
+.B nssetchecksum 
+[\fIOPTION\fR]... \fIPATH\fR
+.SH DESCRIPTION
+.B nssetchecksum
+is a utility to change the checksum and status for a tape segment. Requires the ADMIN
+privilege in CUPV when setting the checksum and/or status of a tape segment, unless the
+.B --update
+option is used, in which case tape segments with an empty checksum can be updated without
+special privileges.
+.TP
+.I PATH
+specifies the CASTOR pathname.
+If PATH does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+.TP
+.B -c,\ \-\-copyno=COPYNO
+Specifies which copy of the file should be modified.
+.TP
+.B -s,\ \-\-segmentno=SEGNO
+Specifies which tape segment that should be modified.
+.TP
+.B -n,\ \-\-name=CKSUMNAME
+Name of the checksum to be stored in the name server.
+.TP
+.B -k,\ \-\-checksum=CKSUM
+Value of the checksum to be stored in the name server.
+.TP
+.B -u,\ \-\-update
+Use the Cns_updateseg_checksum call rather than Cns_replaceseg.
+.TP
+.B --clear
+Remove the checksum value. Cannot be used in conjunction with --name and --checksum nor --update options. Requires the ADMIN UPV privileges.
+.TP
+.B -e,\ \-\-enable
+Enable the tape segment
+.TP
+.B -d,\ \-\-disable
+Disable the tape segment. Note: This option sets the status of the segment to 'D' which really means logically deleted. This effectively means that the segment cannot be accessed for any operation and as such is considered disabled.
+.TP
+.B -x,\ \-\-segsize=SEGSIZE
+The size of the segment in bytes
+.TP
+.B \-\-help
+Display this help and exit
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Cns_replaceseg(3) ,
+.BR Cns_updateseg_checksum(3),
+.BR Cns_updateseg_status(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

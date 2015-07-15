@@ -1,0 +1,62 @@
+# Computes the average and minimum processing time over a 5 minutes window 
+# broken down by daemon. The metric is computed every minute.
+
+<metric>
+  name: ProcessingTimeInfoAtlas
+  unit: ProcessingTime in seconds
+  category: ATLAS
+  window: 300
+  conditions: INSTANCE=="c2atlas"
+  groupbykeys: DAEMON
+  data: Avg(ProcessingTime), Min(ProcessingTime), StdDev(ProcessingTime)
+  handle_unordered: time_threshold
+  nbins: 5
+</metric>
+
+<metric>
+  name: ProcessingTimeInfoCms
+  unit: ProcessingTime in seconds
+  category: CMS
+  window: 300
+  conditions: INSTANCE=="c2cms"
+  groupbykeys: DAEMON
+  data: Avg(ProcessingTime), Min(ProcessingTime), StdDev(ProcessingTime)
+  handle_unordered: time_threshold
+  nbins: 5
+</metric>
+
+<metric>
+  name: ProcessingTimeInfoLHCb
+  unit: ProcessingTime in seconds
+  category: LHCb
+  window: 300
+  conditions: INSTANCE=="c2lhcb"
+  groupbykeys: DAEMON
+  data: Avg(ProcessingTime), Min(ProcessingTime), StdDev(ProcessingTime)
+  handle_unordered: time_threshold
+  nbins: 5
+</metric>
+
+<metric>
+  name: ProcessingTimeInfoAlice
+  unit: ProcessingTime in seconds
+  category: ALICE
+  window: 300
+  conditions: INSTANCE=="c2alice"
+  groupbykeys: DAEMON
+  data: Avg(ProcessingTime), Min(ProcessingTime), StdDev(ProcessingTime)
+  handle_unordered: time_threshold
+  nbins: 5
+</metric>
+
+<metric>
+  name: ProcessingTimeInfoPublic
+  unit: ProcessingTime in seconds
+  category: Public
+  window: 300
+  conditions: INSTANCE=="c2public"
+  groupbykeys: DAEMON
+  data: Avg(ProcessingTime), Min(ProcessingTime), StdDev(ProcessingTime)
+  handle_unordered: time_threshold
+  nbins: 5
+</metric>

@@ -1,0 +1,59 @@
+.TH DELETESVCCLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletesvcclass \- deletes an existing svc class from the stager catalogue
+
+.SH SYNOPSIS
+.B deletesvcclass
+[
+.BI -h
+]
+.BI <svcClassName>
+[:...]
+
+.SH DESCRIPTION
+.B deletesvcclass
+deletes existing service classes from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <svcClassName>
+name of service classes to delete. Several names can be given, colon separated
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+#printsvcclass -a
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ default           10MiB                True         2               -         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
+     dev           10MiB                True         1               -         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
+diskonly           10MiB                True         1            temp          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
+
+# deletesvcclass default:dev
+successfully dropped the following service class(es) : default, dev
+
+#printsvcclass -a
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE REPLICANB FORCEDFILECLASS DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+diskonly           10MiB                True         1            temp          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
+
+# deletesvcclass diskonly:dev
+successfully dropped the following service class(es) : diskonly
+WARNING : some service class(es) do(es) not exist : dev
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entersvcclass
+.BR modifysvcclass
+.BR printsvcclass
+.BR deletepool
+.BR deletemigrationroute
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

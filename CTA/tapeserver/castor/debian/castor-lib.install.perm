@@ -1,0 +1,12 @@
+%attr(-,root,root) usr/lib/libshift.so.*
+%attr(-,root,root) usr/lib/libcastorcommon.so.*
+%attr(-,root,root) usr/lib/libcastordlf.so.*
+%attr(-,root,root) usr/lib/libcastorlegacymsg.so.*
+%attr(-,root,root) usr/lib/libcastorupv.so.*
+%attr(-,root,root) usr/lib/libcastorns.so.*
+%attr(-,root,root) usr/lib/libcastorsecurity.so.*
+%attr(-,root,root) usr/lib/libcastorrfio.so.*
+%attr(-,root,root) usr/lib/libcastorclient.so.*
+%attr(-,root,root) usr/lib/libcastorvdqm.so.*
+%attr(-,root,root) usr/lib/libcastorvmgr.so.*
+%attr(-,root,root) usr/lib/libcastorsec_krb5plugin.so*

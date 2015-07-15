@@ -1,0 +1,13 @@
+# migration backlog informations
+
+<metric>
+  name: MigrationBacklogNb-PUBLIC
+  window: 60
+  unit: Nb of files
+  category: Public
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2public" and MSG=="waitTapeMigrationStats"
+  groupbykeys: TapePool
+  data: Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

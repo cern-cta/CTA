@@ -1,0 +1,6 @@
+stager_actualput -M <noTapeFileName> -P gsiftp
+<globus-url-copy> -p 3 -bs 100 file:///<localFileName> <gsiftpURL>
+sleep 3
+stager_actualget -M <noTapeFileName> -P gsiftp
+<globus-url-copy> -p 3 -bs 100 <gsiftpURL1> file:///<tmpLocalFileName2>
+diff <localFileName> <tmpLocalFileName2>

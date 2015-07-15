@@ -1,0 +1,5 @@
+    **** : trace level set to 3
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+Error: Invalid argument
+stage_addPrivilege: Unknown requestType bogusReqType

@@ -1,0 +1,154 @@
+# castor unit tests suppression list
+#
+
+{
+  helgrind-unitTest-slc5-marshaling007
+  Helgrind:Race
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+}
+
+{
+  helgrind-unitTest-slc5-biniostreamclass
+  Helgrind:Race
+  fun:*castor2io11biniostream*
+}
+
+{
+  helgrind-unitTest-slc5-test-itself
+  Helgrind:Race
+  ...
+  fun:_ZN8unitTest15streamMarshaler3runEv
+}
+
+{
+  helgrind-unitTest-stream-marshalers
+  Helgrind:Race
+  ...
+  fun:_ZN6castor2io12StreamCnvSvc15unmarshalObject*
+}
+
+{
+  helgrind-unitTest-stream-biniostream-exact01
+  Helgrind:Race
+  ...
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+}
+
+{
+  helgrind-unitTest-basic-streams-in-getconfent
+  Helgrind:Race
+  ...
+  fun:_ZNSt19basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ERKSsSt13_Ios_Openmode
+}
+
+{
+  helgrind-unitTest-basic-streams01
+  Helgrind:Race
+  ...
+  fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+}
+
+{
+  helgrind-unitTest-string-append-in-getconfent
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  ...
+  fun:getconfent
+}
+
+{
+  helgrind-unitTest-string-append-in-getconfent-from-file
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  ...
+  fun:getconfent_fromfile
+}
+
+{
+  helgrind-unitTest-iostream-getconfent-from-file
+  Helgrind:Race
+  fun:_ZStlsIcSt11char_traitsIcESaIcEERSt13basic_ostreamIT_T0_ES7_RKSbIS4_S5_T1_E
+}
+
+{
+  helgrind-unitTest-castor-tape-server-ClientInterface-fetchVolumeId
+  Helgrind:Race
+  ...
+  fun:_ZN6castor4tape6server15ClientInterface13fetchVolumeIdERNS2_10VolumeInfoERNS2_13RequestReportE
+}
+
+{
+  helgrind-unitTest-castor-stringLoggerCleanString
+  Helgrind:Race
+  ...
+  fun:_ZN6castor3log12StringLogger11cleanStringERKSsb
+}
+
+
+{
+  helgrind-unitTest-castor-basicStringClone
+  Helgrind:Race
+  fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+}
+
+{
+  helgrind-unitTest-castor-basicStringAppend
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  fun:_ZN6castor9exception9BacktraceC1Ev
+}
+
+{
+  helgrind-unitTest-castor-basicStringConstructor
+  Helgrind:Race
+  fun:_ZNSsC1ERKSs
+}
+
+{
+  helgrind-unitTest-castor-basicStringAssign
+  Helgrind:Race
+  fun:_ZNSs6assignEPKcj
+}
+
+{
+  helgrind-unitTest-castor-basicStringSize
+  Helgrind:Race
+  fun:_ZNKSs4sizeEv
+}
+
+{
+  helgrind-unitTest-castor-basicStringsCatchAll1
+  Helgrind:Race
+  fun:_ZNSs6*
+}
+
+{
+  helgrind-unitTest-castor-basicStringsCatchAll2
+  Helgrind:Race
+  fun:_ZNSs7*
+}
+
+{
+  helgrind-unitTest-castor-basicStringsGottaCatchAll
+  Helgrind:Race
+  fun:_ZNSs*
+}
+
+{
+  helgrind-unitTest-castor-basicStringslength
+  Helgrind:Race
+  fun:_ZNKSs6*
+}
+
+{
+  helgrind-unitTest-castor-basicStringsGottaCatchAllTer
+  Helgrind:Race
+  fun:_ZNKSs*
+}
+
+{
+  helgrind-unitTest-castor-zmq
+  Helgrind:Race
+  ...
+  obj:/usr/lib64/libzmq.so.3.0.0
+}
