@@ -2407,7 +2407,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");
-    /*ASSERT_NO_THROW*/(scheduler.queueRetrieveRequest(s_userOnUserHost,
+    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
       archiveFiles, s_remoteFileRawPath1));
   }
 
