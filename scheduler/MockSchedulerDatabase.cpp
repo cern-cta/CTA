@@ -25,7 +25,7 @@
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
@@ -73,7 +73,7 @@ cta::MockSchedulerDatabase::MockSchedulerDatabase() {
 void cta::MockSchedulerDatabase::createSchema() {  
   char *zErrMsg = 0;
   const int rc = sqlite3_exec(m_dbHandle,
-    "CREATE TABLE ARCHIVALROUTE("
+    "CREATE TABLE ARCHIVEROUTE("
       "STORAGECLASS_NAME TEXT,"
       "COPYNB            INTEGER,"
       "TAPEPOOL     TEXT,"
@@ -1187,19 +1187,19 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools() const {
 }
 
 //------------------------------------------------------------------------------
-// createArchivalRoute
+// createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::createArchivalRoute(
+void cta::MockSchedulerDatabase::createArchiveRoute(
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const CreationLog &creationLog) {
-  const std::list<ArchivalRoute> routes = getArchivalRoutesWithoutChecks(
+  const std::list<ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
     storageClassName);
   const StorageClass storageClass = getStorageClass(storageClassName);
   if(routes.size() >= storageClass.nbCopies) {
     std::ostringstream msg;
-    msg << "Too many archival routes for storage class "
+    msg << "Too many archive routes for storage class "
       << storageClassName;
     throw(exception::Exception(msg.str()));
   }
@@ -1208,7 +1208,7 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
 
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "INSERT INTO ARCHIVALROUTE(STORAGECLASS_NAME, COPYNB, TAPEPOOL,"
+  query << "INSERT INTO ARCHIVEROUTE(STORAGECLASS_NAME, COPYNB, TAPEPOOL,"
     " UID, GID, HOST, CREATIONTIME, COMMENT) VALUES('" << storageClassName << "'," <<
     (int)copyNb << ",'" << tapePoolName << "'," << creationLog.user.uid <<
     "," << creationLog.user.gid << ",'" << creationLog.host << 
@@ -1224,7 +1224,7 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream msg;
-    msg << "Archival route for storage class " << storageClassName <<
+    msg << "Archive route for storage class " << storageClassName <<
       " copy number " << copyNb << " already exists";
     throw(exception::Exception(msg.str()));
   }
@@ -1234,12 +1234,12 @@ void cta::MockSchedulerDatabase::createArchivalRoute(
 // assertTapePoolIsNotAlreadyADestination
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
-  const std::list<ArchivalRoute> &routes,
+  const std::list<ArchiveRoute> &routes,
   const std::string &tapePoolName) const {
   for(auto itor = routes.begin(); itor != routes.end(); itor++) {
     if(tapePoolName == itor->tapePoolName) {
       std::ostringstream msg;
-      msg << "Tape pool " << tapePoolName << " is already an archival"
+      msg << "Tape pool " << tapePoolName << " is already an archive"
         " destination for storage class " << itor->storageClassName;
       throw exception::Exception(msg.str());
     }
@@ -1247,15 +1247,15 @@ void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
 }
 
 //------------------------------------------------------------------------------
-// deleteArchivalRoute
+// deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::MockSchedulerDatabase::deleteArchivalRoute(
+void cta::MockSchedulerDatabase::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
   char *zErrMsg = 0;
   std::ostringstream query;
-  query << "DELETE FROM ARCHIVALROUTE WHERE STORAGECLASS_NAME='" <<
+  query << "DELETE FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" <<
     storageClassName << "' AND COPYNB=" << (int)copyNb << ";";
   if(SQLITE_OK != sqlite3_exec(m_dbHandle, query.str().c_str(), 0, 0,
     &zErrMsg)) {
@@ -1268,21 +1268,21 @@ void cta::MockSchedulerDatabase::deleteArchivalRoute(
   const int nbRowsModified = sqlite3_changes(m_dbHandle);
   if(0 >= nbRowsModified) {
     std::ostringstream msg;
-    msg << "Archival route for storage class " << storageClassName << 
+    msg << "Archive route for storage class " << storageClassName << 
       " and copy number " << copyNb << " does not exist";
     throw(exception::Exception(msg.str()));
   }
 }
 
 //------------------------------------------------------------------------------
-// getArchivalRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
+std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes()
   const {
   std::ostringstream query;
-  std::list<cta::ArchivalRoute> routes;
+  std::list<cta::ArchiveRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
-    " CREATIONTIME, COMMENT FROM ARCHIVALROUTE ORDER BY STORAGECLASS_NAME,"
+    " CREATIONTIME, COMMENT FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME,"
     " COPYNB;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -1294,7 +1294,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
   }
   while(SQLITE_ROW == sqlite3_step(statement.get())) {
     SqliteColumnNameToIndex idx(statement.get());
-    routes.push_back(ArchivalRoute(
+    routes.push_back(ArchiveRoute(
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
@@ -1311,18 +1311,18 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes()
 }
 
 //------------------------------------------------------------------------------
-// getArchivalRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
+std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes(
   const std::string &storageClassName) const {
   std::ostringstream query;
-  const std::list<cta::ArchivalRoute> routes = getArchivalRoutesWithoutChecks(
+  const std::list<cta::ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
     storageClassName);
 
   const StorageClass storageClass = getStorageClass(storageClassName);
   if(routes.size() < storageClass.nbCopies) {
     std::ostringstream msg;
-    msg << "Incomplete archival routes for storage class "
+    msg << "Incomplete archive routes for storage class "
       << storageClassName;
     throw(exception::Exception(msg.str()));
   }
@@ -1331,14 +1331,14 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::getArchivalRoutes(
 }
 
 //------------------------------------------------------------------------------
-// getArchivalRoutesWithoutChecks
+// getArchiveRoutesWithoutChecks
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::
-  getArchivalRoutesWithoutChecks(const std::string &storageClassName) const {
+std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::
+  getArchiveRoutesWithoutChecks(const std::string &storageClassName) const {
   std::ostringstream query;
-  std::list<cta::ArchivalRoute> routes;
+  std::list<cta::ArchiveRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
-    " CREATIONTIME, COMMENT FROM ARCHIVALROUTE WHERE STORAGECLASS_NAME='" <<
+    " CREATIONTIME, COMMENT FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" <<
     storageClassName << "' ORDER BY STORAGECLASS_NAME, COPYNB;";
   sqlite3_stmt *s = NULL;
   const int rc = sqlite3_prepare(m_dbHandle, query.str().c_str(), -1, &s, 0 );
@@ -1350,7 +1350,7 @@ std::list<cta::ArchivalRoute> cta::MockSchedulerDatabase::
   }
   while(SQLITE_ROW == sqlite3_step(statement.get())) {
     SqliteColumnNameToIndex idx(statement.get());
-    routes.push_back(ArchivalRoute(
+    routes.push_back(ArchiveRoute(
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),

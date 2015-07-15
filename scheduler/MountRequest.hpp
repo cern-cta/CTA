@@ -30,12 +30,12 @@ struct MountRequest {
 
   /**
    * Enumeration of the possible transfer types for a tape mount, either all
-   * archivals or all retrievals.
+   * archives or all retrieves.
    */
-  enum TransferType {
-    TRANSFERTYPE_NONE,
-    TRANSFERTYPE_ARCHIVAL,
-    TRANSFERTYPE_RETRIEVAL
+  enum TapeJobType {
+    TAPEJOBTYPE_NONE,
+    TAPEJOBTYPE_ARCHIVE,
+    TAPEJOBTYPE_RETRIEVE
   };
 
   /**
@@ -45,7 +45,7 @@ struct MountRequest {
    * @param enumValue The integer value of the type.
    * @return The string representation.
    */
-  static const char *transferTypeToStr(const TransferType enumValue) throw();
+  static const char *TapeJobTypeToStr(const TapeJobType enumValue) throw();
 
   /**
    * Constructor.
@@ -58,12 +58,12 @@ struct MountRequest {
    * @param mountId The identifier of the mount.
    * @param vid The volume identifier of the tape to be mounted.
    * @param transferType The type of transfers to be carried out, either
-   * all archivals or all retrievals.
+   * all archives or all retrieves.
    */
   MountRequest(
     const std::string &mountId,
     const std::string &vid,
-    const TransferType transferType);
+    const TapeJobType transferType);
 
   /**
    * The identifier of the mount.
@@ -76,9 +76,9 @@ struct MountRequest {
   std::string vid;
 
   /**
-   * The type of transfers to be carried out, either archivals or retrievals.
+   * The type of transfers to be carried out, either archives or retrieves.
    */
-  TransferType transferType;
+  TapeJobType transferType;
 
 }; // class MountRequest
 

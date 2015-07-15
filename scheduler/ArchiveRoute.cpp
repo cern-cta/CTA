@@ -16,46 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchivalRouteId.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRouteId::ArchivalRouteId():
-  m_copyNb(0) {
+cta::ArchiveRoute::ArchiveRoute():
+  copyNb(0) {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::ArchiveRoute::~ArchiveRoute() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRouteId::ArchivalRouteId(
+cta::ArchiveRoute::ArchiveRoute(
   const std::string &storageClassName,
-  const uint16_t copyNb):
-  m_storageClassName(storageClassName),
-  m_copyNb(copyNb) {
-}
-
-//------------------------------------------------------------------------------
-// operator<
-//------------------------------------------------------------------------------
-bool cta::ArchivalRouteId::operator<(const ArchivalRouteId &rhs) const {
-  if(m_storageClassName != rhs.m_storageClassName) {
-    return m_storageClassName < rhs.m_storageClassName;
-  } else {
-    return m_copyNb < rhs.m_copyNb;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-const std::string &cta::ArchivalRouteId::getStorageClassName() const throw() {
-  return m_storageClassName;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNb
-//------------------------------------------------------------------------------
-uint16_t cta::ArchivalRouteId::getCopyNb() const throw() {
-  return m_copyNb;
+  const uint16_t copyNb,
+  const std::string &tapePoolName,
+  const CreationLog &creationLog):
+  storageClassName(storageClassName),
+  copyNb(copyNb),
+  tapePoolName(tapePoolName),
+  creationLog(creationLog) {
 }

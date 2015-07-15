@@ -73,7 +73,7 @@ public:
   };
   std::list<AdminUserDump> dumpAdminUsers();
   
-  // Manipulations of Storage Classes and archival routes ======================
+  // Manipulations of Storage Classes and archive routes =======================
   CTA_GENERATE_EXCEPTION_CLASS(MissingEntry);
   CTA_GENERATE_EXCEPTION_CLASS(IncompleteEntry);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchStorageClass);
@@ -91,18 +91,18 @@ public:
   void setStorageClassCopyCount(const std::string & storageClass,
     uint16_t copyCount, const CreationLog & cl);
   uint16_t getStorageClassCopyCount(const std::string & storageClass);
-  CTA_GENERATE_EXCEPTION_CLASS(ArchivalRouteAlreadyExists);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRouteAlreadyExists);
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolUsedInOtherRoute);
-  void addArchivalRoute(const std::string & storageClass, uint16_t copyNb, 
+  void addArchiveRoute(const std::string & storageClass, uint16_t copyNb, 
     const std::string & tapePool, const CreationLog & cl);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchivalRoute);
-  void removeArchivalRoute(const std::string & storageClass, uint16_t copyNb);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRoute);
+  void removeArchiveRoute(const std::string & storageClass, uint16_t copyNb);
 
   /** Ordered vector of archive routes */
-  std::vector<std::string> getArchivalRoutes (const std::string storageClass);
+  std::vector<std::string> getArchiveRoutes (const std::string storageClass);
   class StorageClassDump {
   public:
-    class ArchivalRouteDump {
+    class ArchiveRouteDump {
     public:
       uint16_t copyNumber;
       std::string tapePool;
@@ -110,7 +110,7 @@ public:
     };
     std::string storageClass;
     uint16_t copyCount;
-    std::list<ArchivalRouteDump> routes;
+    std::list<ArchiveRouteDump> routes;
     CreationLog log;
   };
   std::list<StorageClassDump> dumpStorageClasses();

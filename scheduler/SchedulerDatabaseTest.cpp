@@ -19,7 +19,7 @@
 #include "common/UserIdentity.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
 #include "scheduler/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -231,7 +231,7 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
   }
 }
 
-TEST_P(SchedulerDatabaseTest, getArchivalRoutes_incomplete) {
+TEST_P(SchedulerDatabaseTest, getArchiveRoutes_incomplete) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -252,15 +252,15 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_incomplete) {
     time(NULL), comment)));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+  ASSERT_NO_THROW(db.createArchiveRoute(storageClassName,
     copyNb, tapePoolName,
     CreationLog(s_adminOnAdminHost.getUser(), s_adminOnAdminHost.getHost(),
     time(NULL), comment)));
 
-  ASSERT_THROW(db.getArchivalRoutes(storageClassName), std::exception);
+  ASSERT_THROW(db.getArchiveRoutes(storageClassName), std::exception);
 }
 
-TEST_P(SchedulerDatabaseTest, getArchivalRoutes_complete) {
+TEST_P(SchedulerDatabaseTest, getArchiveRoutes_complete) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -294,26 +294,26 @@ TEST_P(SchedulerDatabaseTest, getArchivalRoutes_complete) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_NO_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolNameA, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_NO_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolNameB, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = db.getArchivalRoutes());
-    ASSERT_EQ((std::list<ArchivalRoute>::size_type)2, archivalRoutes.size());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = db.getArchiveRoutes());
+    ASSERT_EQ((std::list<ArchiveRoute>::size_type)2, archiveRoutes.size());
   }
 }
 
-TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
+TEST_P(SchedulerDatabaseTest, createArchiveRoute_same_tape_pool_name) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -338,20 +338,20 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_same_tape_pool_name) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_NO_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolName, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolName, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)), std::exception);
   }
 }
 
-TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
+TEST_P(SchedulerDatabaseTest, createArchiveRoute_two_many_routes) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -383,14 +383,14 @@ TEST_P(SchedulerDatabaseTest, createArchivalRoute_two_many_routes) {
 
   {
     const uint16_t copyNb = 1;
-    ASSERT_NO_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_NO_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolNameA, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)));
   }
 
   {
     const uint16_t copyNb = 2;
-    ASSERT_THROW(db.createArchivalRoute(storageClassName,
+    ASSERT_THROW(db.createArchiveRoute(storageClassName,
       copyNb, tapePoolNameB, CreationLog(s_adminOnAdminHost.getUser(),
       s_adminOnAdminHost.getHost(), time(NULL), comment)), std::exception);
   }

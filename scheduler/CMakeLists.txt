@@ -7,9 +7,9 @@ include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
-  ArchivalFileTransfer.cpp
-  ArchivalRoute.cpp
-  ArchivalRouteId.cpp
+  ArchiveJob.cpp
+  ArchiveRoute.cpp
+  ArchiveRouteId.cpp
   ArchiveRequest.cpp
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
@@ -18,12 +18,12 @@ set (CTA_SCHEDULER_SRC_FILES
   CreationLog.cpp
   DiskException.cpp
   DriveQuota.cpp
-  FileTransfer.cpp
+  TapeJob.cpp
   LogicalLibrary.cpp
   MockSchedulerDatabase.cpp
   MockSchedulerDatabaseFactory.cpp
   MountCriteria.cpp
-  RetrievalFileTransfer.cpp
+  RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
   RetrieveRequest.cpp
   RetrieveToDirRequest.cpp

@@ -64,7 +64,7 @@ public:
   };
   std::list<TapeDump> dumpTapes();
   
-  // Archival jobs management ==================================================
+  // Archive jobs management ===================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,
     const std::string & archiveToFileAddress, const std::string & path,
     uint64_t size);

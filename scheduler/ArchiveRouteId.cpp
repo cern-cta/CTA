@@ -16,59 +16,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/FileTransfer.hpp"
+#include "scheduler/ArchiveRouteId.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileTransfer::FileTransfer():
+cta::ArchiveRouteId::ArchiveRouteId():
   m_copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::FileTransfer::~FileTransfer() throw() {
-}
-
-//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::FileTransfer::FileTransfer(
-  const std::string &id,
-  const std::string &userRequestId,
-  const uint32_t copyNb,
-  const std::string &remoteFile):
-  m_id(id),
-  m_userRequestId(userRequestId),
-  m_copyNb(copyNb),
-  m_remoteFile(remoteFile) {
+cta::ArchiveRouteId::ArchiveRouteId(
+  const std::string &storageClassName,
+  const uint16_t copyNb):
+  m_storageClassName(storageClassName),
+  m_copyNb(copyNb) {
 }
 
 //------------------------------------------------------------------------------
-// getId
+// operator<
 //------------------------------------------------------------------------------
-const std::string &cta::FileTransfer::getId() const throw() {
-  return m_id;
+bool cta::ArchiveRouteId::operator<(const ArchiveRouteId &rhs) const {
+  if(m_storageClassName != rhs.m_storageClassName) {
+    return m_storageClassName < rhs.m_storageClassName;
+  } else {
+    return m_copyNb < rhs.m_copyNb;
+  }
 }
 
 //------------------------------------------------------------------------------
-// getUserRequestId
+// getStorageClassName
 //------------------------------------------------------------------------------
-const std::string &cta::FileTransfer::getUserRequestId() const throw() {
-  return m_userRequestId;
+const std::string &cta::ArchiveRouteId::getStorageClassName() const throw() {
+  return m_storageClassName;
 }
 
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint32_t cta::FileTransfer::getCopyNb() const throw() {
+uint16_t cta::ArchiveRouteId::getCopyNb() const throw() {
   return m_copyNb;
-}
-
-//------------------------------------------------------------------------------
-// getRemoteFile 
-//------------------------------------------------------------------------------
-const std::string &cta::FileTransfer::getRemoteFile() const throw() {
-  return m_remoteFile;
 }

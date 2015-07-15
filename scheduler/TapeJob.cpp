@@ -16,36 +16,59 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchivalFileTransfer.hpp"
+#include "scheduler/TapeJob.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalFileTransfer::ArchivalFileTransfer() {
+cta::TapeJob::TapeJob():
+  m_copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchivalFileTransfer::~ArchivalFileTransfer() throw() {
+cta::TapeJob::~TapeJob() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalFileTransfer::ArchivalFileTransfer(
-  const std::string &tapePoolName,
+cta::TapeJob::TapeJob(
   const std::string &id,
   const std::string &userRequestId,
   const uint32_t copyNb,
   const std::string &remoteFile):
-  FileTransfer(id, userRequestId, copyNb, remoteFile),
-  m_tapePoolName(tapePoolName) {
+  m_id(id),
+  m_userRequestId(userRequestId),
+  m_copyNb(copyNb),
+  m_remoteFile(remoteFile) {
 }
 
 //------------------------------------------------------------------------------
-// getTapePoolName
+// getId
 //------------------------------------------------------------------------------
-const std::string &cta::ArchivalFileTransfer::getTapePoolName() const throw() {
-  return m_tapePoolName;
+const std::string &cta::TapeJob::getId() const throw() {
+  return m_id;
+}
+
+//------------------------------------------------------------------------------
+// getUserRequestId
+//------------------------------------------------------------------------------
+const std::string &cta::TapeJob::getUserRequestId() const throw() {
+  return m_userRequestId;
+}
+
+//------------------------------------------------------------------------------
+// getCopyNb
+//------------------------------------------------------------------------------
+uint32_t cta::TapeJob::getCopyNb() const throw() {
+  return m_copyNb;
+}
+
+//------------------------------------------------------------------------------
+// getRemoteFile 
+//------------------------------------------------------------------------------
+const std::string &cta::TapeJob::getRemoteFile() const throw() {
+  return m_remoteFile;
 }

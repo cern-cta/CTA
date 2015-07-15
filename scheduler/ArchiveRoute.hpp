@@ -18,59 +18,66 @@
 
 #pragma once
 
-#include "scheduler/FileTransfer.hpp"
+#include "common/UserIdentity.hpp"
+#include "scheduler/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>
+#include <time.h>
 
 namespace cta {
 
 /**
- * Class representing the transfer of a single copy of a remote file to tape.
+ * An archive route.
  */
-class ArchivalFileTransfer: public FileTransfer {
-public:
+struct ArchiveRoute {
 
   /**
    * Constructor.
    */
-  ArchivalFileTransfer();
+  ArchiveRoute();
 
   /**
    * Destructor.
    */
-  ~ArchivalFileTransfer() throw();
+  ~ArchiveRoute() throw();
 
   /**
    * Constructor.
    *
+   * @param storageClassName The name of the storage class that identifies the
+   * source disk files.
+   * @param copyNb The tape copy number.  Copy numbers start from 1.
    * @param tapePoolName The name of the destination tape pool.
-   * @param id The identifier of the file transfer.
-   * @param userRequestId The identifier of the associated user request.
-   * @param copyNb The copy number.
-   * @param remoteFile The URL of the remote source file.
+   * @param creationLog The who, where, when an why of this modification.
+   * time is used.
    */
-  ArchivalFileTransfer(
+  ArchiveRoute(
+    const std::string &storageClassName,
+    const uint16_t copyNb,
     const std::string &tapePoolName,
-    const std::string &id,
-    const std::string &userRequestId,
-    const uint32_t copyNb,
-    const std::string &remoteFile);
+    const CreationLog &creationLog);
 
   /**
-   * Returns the name of the destination tape pool.
-   *
-   * @return the name of the destination tape pool.
+   * The name of the storage class that identifies the source disk files.
    */
-  const std::string &getTapePoolName() const throw();
+  std::string storageClassName;
 
-private:
+  /**
+   * The tape copy number.
+   */
+  uint32_t copyNb;
 
   /**
    * The name of the destination tape pool.
    */
-  std::string m_tapePoolName;
+  std::string tapePoolName;
 
-}; // class ArchivalFileTransfer
+  /**
+   * The record of the entry's creation
+   */
+  CreationLog creationLog;
+
+}; // class ArchiveRoute
 
 } // namespace cta

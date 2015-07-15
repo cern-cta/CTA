@@ -23,13 +23,15 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
+#include "common/ArchiveFileStatus.hpp"
+#include "common/RemotePathAndStatus.hpp"
 
 namespace cta {
 
 // Forward declarations for opaque references
 class AdminHost;
 class AdminUser;
-class ArchivalRoute;
+class ArchiveRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
@@ -57,6 +59,24 @@ public:
    */
   virtual ~SchedulerDatabase() throw() = 0;
 
+  /*============ Session management ==========================================*/
+  
+  /**
+   * An umbrella class from which ArchiveSession and RetrieveSession will
+   * inherit. Just allows RTTI.
+   */
+  class TapeSession {};
+  
+  /**
+   * Starts a session, and updates the relevant information in the DB.
+   * The returned object will be the tape server's interface throughout
+   * the session.
+   * @return pointer to a TapeSession
+   */
+  std::unique_ptr<TapeSession> startTapeSession();
+  
+  
+  /*============ Archive management: user side ==============================*/
   /*
    * Subclass allowing the tracking and automated cleanup of a 
    * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close
@@ -141,6 +161,23 @@ public:
     const SecurityIdentity &requester,
     const std::string &archiveFile) = 0;
 
+  /*============ Archive management: tape server side =======================*/
+  
+  class ArchiveSession: public TapeSession {
+    friend class SchedulerDatabase;
+  private:
+    ArchiveSession();
+    
+  };
+  
+  class FileArchive {
+    friend class ArchiveSession;
+  public:
+    cta::RemotePathAndStatus remoteFile;
+    cta::ArchiveFileStatus archiveFile;
+    /* TODO */
+  };
+  
   /**
    * Queues the specified request.
    *
@@ -156,28 +193,28 @@ public:
   virtual void queue(const RetrieveToFileRequest &rqst_) = 0;
 
   /**
-   * Returns all of the existing retrieval jobs grouped by tape and then
+   * Returns all of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @return All of the existing retrieval jobs grouped by tape and then
+   * @return All of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
   virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests()
     const = 0;
 
   /**
-   * Returns the list of retrieval jobs associated with the specified tape
+   * Returns the list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    *
    * @param vid The volume identifier of the tape.
-   * @return The list of retrieval jobs associated with the specified tape
+   * @return The list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
   virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
     const std::string &vid) const = 0;
   
   /**
-   * Deletes the specified retrieval job.
+   * Deletes the specified retrieve job.
    *
    * @param requester The identity of the requester.
    * @param remoteFile The URL of the destination file.
@@ -321,7 +358,7 @@ public:
   virtual std::list<TapePool> getTapePools() const = 0;
 
   /**
-   * Creates the specified archival route.
+   * Creates the specified archive route.
    *
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
@@ -329,44 +366,44 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param creationLog The who, where, when an why of this modification.
    */
-  virtual void createArchivalRoute(
+  virtual void createArchiveRoute(
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
     const CreationLog &creationLog) = 0;
 
   /**
-   * Deletes the specified archival route.
+   * Deletes the specified archive route.
    *
    * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  virtual void deleteArchivalRoute(
+  virtual void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb) = 0;
 
   /**
-   * Returns the current list of archival routes.
+   * Returns the current list of archive routes.
    *
-   * @return The current list of archival routes.
+   * @return The current list of archive routes.
    */
-  virtual std::list<ArchivalRoute> getArchivalRoutes() const = 0;
+  virtual std::list<ArchiveRoute> getArchiveRoutes() const = 0;
 
   /**
-   * Returns the list of archival routes for the specified storage class.
+   * Returns the list of archive routes for the specified storage class.
    *
-   * This method throws an exception if the list of archival routes is
+   * This method throws an exception if the list of archive routes is
    * incomplete.  For example this method will throw an exception if the number
-   * of tape copies in the specified storage class is 2 but only one archival
+   * of tape copies in the specified storage class is 2 but only one archive
    * route has been created in the scheduler database for the storage class.
    *
    * @param storageClassName The name of the storage class.
-   * @return The list of archival routes for the specified storage class.
+   * @return The list of archive routes for the specified storage class.
    */
-  virtual std::list<ArchivalRoute> getArchivalRoutes(
+  virtual std::list<ArchiveRoute> getArchiveRoutes(
     const std::string &storageClassName) const = 0;
 
   /**

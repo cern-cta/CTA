@@ -40,7 +40,7 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   ObjectOps<serializers::TapePool>::initialize();
   // Setup the object so it's valid
   m_payload.set_name(name);
-  // set the archival jobs counter to zero
+  // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
@@ -147,7 +147,7 @@ bool cta::objectstore::TapePool::isEmpty() {
   // Check we have no tapes in pool
   if (m_payload.tapes_size())
     return false;
-  // Check we have no archival jobs pending
+  // Check we have no archive jobs pending
   if (m_payload.pendingarchivejobs_size() 
       || m_payload.orphanedarchivejobsnscreation_size()
       || m_payload.orphanedarchivejobsnsdeletion_size())

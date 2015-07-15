@@ -16,29 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/RetrievalFileTransfer.hpp"
+#include "scheduler/ArchiveJob.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalFileTransfer::RetrievalFileTransfer() {
+cta::ArchiveJob::ArchiveJob() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrievalFileTransfer::~RetrievalFileTransfer() throw() {
+cta::ArchiveJob::~ArchiveJob() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrievalFileTransfer::RetrievalFileTransfer(
-  const TapeCopyLocation &tapeFile,
-  const std::string &id, 
+cta::ArchiveJob::ArchiveJob(
+  const std::string &tapePoolName,
+  const std::string &id,
   const std::string &userRequestId,
   const uint32_t copyNb,
   const std::string &remoteFile):
-  FileTransfer(id, userRequestId, copyNb, remoteFile),
-  tapeFile(tapeFile) {
+  TapeJob(id, userRequestId, copyNb, remoteFile),
+  m_tapePoolName(tapePoolName) {
+}
+
+//------------------------------------------------------------------------------
+// getTapePoolName
+//------------------------------------------------------------------------------
+const std::string &cta::ArchiveJob::getTapePoolName() const throw() {
+  return m_tapePoolName;
 }

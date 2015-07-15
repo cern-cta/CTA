@@ -21,12 +21,12 @@
 //------------------------------------------------------------------------------
 // transferTypeToStr
 //------------------------------------------------------------------------------
-const char *cta::MountRequest::transferTypeToStr(const EntryType enumValue)
+const char *cta::MountRequest::TapeJobTypeToStr(const EntryType enumValue)
   throw() {
   switch(enumValue) {
   case TRANSFERTYPE_NONE     : return "NONE";
-  case TRANSFERTYPE_ARCHIVAL : return "ARCHIVAL";
-  case TRANSFERTYPE_RETRIEVAL: return "RETRIEVAL";
+  case TRANSFERTYPE_ARCHIVE  : return "ARCHIVE";
+  case TRANSFERTYPE_RETRIEVE : return "RETRIEVE";
   default                    : return "UNKNOWN";
 }
 

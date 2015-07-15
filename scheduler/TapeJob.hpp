@@ -26,39 +26,39 @@ namespace cta {
 /**
  * Abstract class representing the transfer of a single copy of file.
  */
-class FileTransfer {
+class TapeJob {
 public:
 
   /**
    * Constructor.
    */
-  FileTransfer();
+  TapeJob();
 
   /**
    * Destructor.
    */
-  virtual ~FileTransfer() throw() = 0;
+  virtual ~TapeJob() throw() = 0;
 
   /**
    * Constructor.
    *
-   * @param id The identifier of the file transfer.
+   * @param id The identifier of the tape job.
    * @param userRequestId The identifier of the associated user request.
    * @param copyNb The copy number.
    * @param remoteFile The URL of the remote file that depending on the
    * direction of the data transfer may be either the source or the
-   * destination of the file transfer.
+   * destination of the tape job.
    */
-  FileTransfer(
+  TapeJob(
     const std::string &id,
     const std::string &userRequestId,
     const uint32_t copyNb,
     const std::string &remoteFile);
 
   /**
-   * Returns the identifier of the file transfer.
+   * Returns the identifier of the tape job.
    *
-   * @return The identifier of the file transfer.
+   * @return The identifier of the tape job.
    */
   const std::string &getId() const throw();
 
@@ -90,7 +90,7 @@ public:
 private:
 
   /**
-   * The identifier of the file transfer.
+   * The identifier of the tape job.
    */
   std::string m_id;
 
@@ -106,10 +106,10 @@ private:
 
   /**
    * The URL of the remote file that depending on the direction of the data
-   * transfer may be either the source or the destination of the file transfer.
+   * transfer may be either the source or the destination of the tape job.
    */
   std::string m_remoteFile;
 
-}; // class FileTransfer
+}; // class TapeJob
 
 } // namespace cta

@@ -35,19 +35,19 @@ cta::UserGroup::~UserGroup() throw() {
 //------------------------------------------------------------------------------
 cta::UserGroup::UserGroup(
   const std::string &name,
-  const DriveQuota &archivalDriveQuota,
-  const DriveQuota &retrievalDriveQuota,
-  const MountCriteria &archivalMountCriteria,
-  const MountCriteria &retrievalMountCriteria,
+  const DriveQuota &archiveDriveQuota,
+  const DriveQuota &retrieveDriveQuota,
+  const MountCriteria &archiveMountCriteria,
+  const MountCriteria &retrieveMountCriteria,
   const UserIdentity &creator,
   const std::string &comment,
   const time_t creationTime):
   ConfigurationItem(creator, comment, creationTime),
   m_name(name),
-  m_archivalDriveQuota(archivalDriveQuota),
-  m_retrievalDriveQuota(retrievalDriveQuota),
-  m_archivalMountCriteria(archivalMountCriteria),
-  m_retrievalMountCriteria(retrievalMountCriteria) {
+  m_archiveDriveQuota(archiveDriveQuota),
+  m_retrieveDriveQuota(retrieveDriveQuota),
+  m_archiveMountCriteria(archiveMountCriteria),
+  m_retrieveMountCriteria(retrieveMountCriteria) {
 }
 
 //------------------------------------------------------------------------------
@@ -58,31 +58,31 @@ const std::string &cta::UserGroup::getName() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// getArchivalQuota
+// getArchiveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getArchivalDriveQuota() const throw() {
-  return m_archivalDriveQuota;
+const cta::DriveQuota &cta::UserGroup::getArchiveDriveQuota() const throw() {
+  return m_archiveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalQuota
+// getRetrieveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getRetrievalDriveQuota() const throw() {
-  return m_retrievalDriveQuota;
+const cta::DriveQuota &cta::UserGroup::getRetrieveDriveQuota() const throw() {
+  return m_retrieveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
-// getArchivalMountCriteria
+// getArchiveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getArchivalMountCriteria() const
+const cta::MountCriteria &cta::UserGroup::getArchiveMountCriteria() const
   throw() {
-  return m_archivalMountCriteria;
+  return m_archiveMountCriteria;
 }
 
 //------------------------------------------------------------------------------
-// getRetrievalMountCriteria
+// getRetrieveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getRetrievalMountCriteria() const
+const cta::MountCriteria &cta::UserGroup::getRetrieveMountCriteria() const
   throw() {
-  return m_retrievalMountCriteria;
+  return m_retrieveMountCriteria;
 }

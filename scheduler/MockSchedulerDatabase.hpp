@@ -159,28 +159,28 @@ public:
   void queue(const RetrieveToFileRequest &rqst);
 
   /**
-   * Returns all of the existing retrieval jobs grouped by tape and then
+   * Returns all of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    *
-   * @return All of the existing retrieval jobs grouped by tape and then
+   * @return All of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
   std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests()
     const;
 
   /**
-   * Returns the list of retrieval jobs associated with the specified tape
+   * Returns the list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    *
    * @param vid The volume identifier of the tape.
-   * @return The list of retrieval jobs associated with the specified tape
+   * @return The list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
   std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
     const std::string &vid) const;
 
   /**
-   * Deletes the specified retrieval job.
+   * Deletes the specified retrieve job.
    *
    * @param requester The identity of the requester.
    * @param remoteFile The URL of the destination file.
@@ -326,53 +326,53 @@ public:
   std::list<TapePool> getTapePools() const;
 
   /**
-   * Creates the specified archival route.
+   * Creates the specified archive route.
    *
    * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archival route.
+   * @param comment The comment describing the archive route.
    */
-  void createArchivalRoute(
+  void createArchiveRoute(
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
     const CreationLog &creationLog);
 
   /**
-   * Deletes the specified archival route.
+   * Deletes the specified archive route.
    *
    * @param requester The identity of the requester.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteArchivalRoute(
+  void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb);
 
   /**
-   * Returns the current list of archival routes.
+   * Returns the current list of archive routes.
    *
-   * @return The current list of archival routes.
+   * @return The current list of archive routes.
    */
-  std::list<ArchivalRoute> getArchivalRoutes() const;
+  std::list<ArchiveRoute> getArchiveRoutes() const;
 
   /**
-   * Returns the list of archival routes for the specified storage class.
+   * Returns the list of archive routes for the specified storage class.
    *
-   * This method throws an exception if the list of archival routes is
+   * This method throws an exception if the list of archive routes is
    * incomplete.  For example this method will throw an exception if the number
-   * of tape copies in the specified storage class is 2 but only one archival
+   * of tape copies in the specified storage class is 2 but only one archive
    * route has been created in the scheduler database for the storage class.
    *
    * @param storageClassName The name of the storage class.
-   * @return The list of archival routes for the specified storage class.
+   * @return The list of archive routes for the specified storage class.
    */
-  std::list<ArchivalRoute> getArchivalRoutes(
+  std::list<ArchiveRoute> getArchiveRoutes(
     const std::string &storageClassName) const;
 
   /**
@@ -482,27 +482,27 @@ private:
   TapePool getTapePool(const std::string &name) const;
 
   /**
-   * Returns the list of archival routes for the specified storage class.
+   * Returns the list of archive routes for the specified storage class.
    *
    * This method does not perfrom any consistency checks.  For example this
-   * method will not throw an exception if the list of archival routes is
+   * method will not throw an exception if the list of archive routes is
    * incomplete.
    *
    * @param storageClassName The name of the storage class.
-   * @return The list of archival routes for the specified storage class.
+   * @return The list of archive routes for the specified storage class.
    */
-  std::list<ArchivalRoute> getArchivalRoutesWithoutChecks(
+  std::list<ArchiveRoute> getArchiveRoutesWithoutChecks(
     const std::string &storageClassName) const;
 
   /**
    * Throws an exception if the specified tape pool is already a destination in
-   * the specified archival routes.
+   * the specified archive routes.
    *
-   * @param routes The archival routes.
+   * @param routes The archive routes.
    * @param tapePoolName The name of the tape pool.
    */
   void assertTapePoolIsNotAlreadyADestination(
-    const std::list<ArchivalRoute> &routes, 
+    const std::list<ArchiveRoute> &routes, 
     const std::string &tapePoolName) const;
 
   /**

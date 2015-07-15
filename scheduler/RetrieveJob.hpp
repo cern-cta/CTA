@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/FileTransfer.hpp"
+#include "scheduler/TapeJob.hpp"
 #include "scheduler/TapeCopyLocation.hpp"
 
 #include <string>
@@ -28,29 +28,29 @@ namespace cta {
 /**
  * The transfer of a single copy of a tape file to a remote file.
  */
-struct RetrievalFileTransfer: public FileTransfer {
+struct RetrieveJob: public TapeJob {
 public:
 
   /**
    * Constructor.
    */
-  RetrievalFileTransfer();
+  RetrieveJob();
 
   /**
    * Destructor.
    */
-  ~RetrievalFileTransfer() throw();
+  ~RetrieveJob() throw();
 
   /**
    * Constructor.
    *
    * @param tapeFile The location of the source tape file.
-   * @param id The identifier of the file transfer.
+   * @param id The identifier of the tape job.
    * @param userRequestId The identifier of the associated user request.
    * @param copyNb The copy number.
    * @param remoteFile The URL of the destination source file.
    */
-  RetrievalFileTransfer(
+  RetrieveJob(
     const TapeCopyLocation &tapeFile,
     const std::string &id,
     const std::string &userRequestId,
@@ -62,6 +62,6 @@ public:
    */
   TapeCopyLocation tapeFile;
 
-}; // struct RetrievalFileTransfer
+}; // struct RetrieveJob
 
 } // namespace cta

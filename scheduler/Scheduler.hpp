@@ -31,9 +31,9 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
-class ArchivalFileTransfer;
+class ArchiveJob;
 class ArchiveFileStatus;
-class ArchivalRoute;
+class ArchiveRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
@@ -43,7 +43,7 @@ class MountRequest;
 class NameServer;
 class RemoteNS;
 class RemotePathAndStatus;
-class RetrievalFileTransfer;
+class RetrieveJob;
 class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
@@ -61,13 +61,13 @@ class Scheduler {
 public:
 
   /**
-   * An enumeration of the different types of file transfer failures.
+   * An enumeration of the different types of tape job failures.
    */
-  enum TransferFailure {
-    TRANSFERFAILURE_NONE,
-    TRANSFERFAILURE_TAPEDRIVE,
-    TRANSFERFAILURE_TAPELIBRARY,
-    TRANSFERFAILURE_REMOTESTORAGE
+  enum TapeJobFailure {
+    JOBFAILURE_NONE,
+    JOBFAILURE_TAPEDRIVE,
+    JOBFAILURE_TAPELIBRARY,
+    JOBFAILURE_REMOTESTORAGE
   };
 
   /**
@@ -77,7 +77,7 @@ public:
    * @param enumValue The integer value of the type.
    * @return The string representation.
    */
-  static const char *TransferFailureToStr(const TransferFailure enumValue)
+  static const char *TransferFailureToStr(const TapeJobFailure enumValue)
     throw();
 
   /**
@@ -352,17 +352,17 @@ public:
     const SecurityIdentity &requester) const;
 
   /**
-   * Creates the specified archival route.
+   * Creates the specified archive route.
    *
    * @param requester The identity of the user requesting the creation of the
-   * archival route.
+   * archive route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
-   * @param comment The comment describing the archival route.
+   * @param comment The comment describing the archive route.
    */
-  void createArchivalRoute(
+  void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
@@ -370,25 +370,25 @@ public:
     const std::string &comment);
 
   /**
-   * Deletes the specified archival route.
+   * Deletes the specified archive route.
    *
    * @param requester The identity of the user requesting the deletion of the
-   * archival route.
+   * archive route.
    * @param storageClassName The name of the storage class that identifies the
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteArchivalRoute(
+  void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb);
 
   /**
-   * Gets the current list of archival routes.
+   * Gets the current list of archive routes.
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<ArchivalRoute> getArchivalRoutes(
+  std::list<ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const;
 
   /**
@@ -603,7 +603,7 @@ public:
    * The storage class of the archived file(s) will be inherited from the
    * destination directory.
    *
-   * @param requester The identity of the user requesting the archival.
+   * @param requester The identity of the user requesting the archive.
    * @param remoteFiles The URLs of one or more remote files.
    * @param archiveFileOrDir The absolute path of the destination file or
    * directory within the archive namespace.
@@ -622,7 +622,7 @@ public:
    * If there is only one archived file then the destination can be either a
    * file or a directory.
    *
-   * @param requester The identity of the user requesting the retrieval.
+   * @param requester The identity of the user requesting the retrieve.
    * @param archiveFiles The full path of each source file in the archive
    * namespace.
    * @param remoteFileOrDir The URL of the destination remote file or directory.
@@ -649,60 +649,60 @@ public:
   void finishedMount(const std::string &mountId);
 
   /**
-   * Returns the next file transfer to be carried out for the specified tape
+   * Returns the next archive job to be carried out for the specified tape
    * mount or NULL if there is no more work to be done.
    *
    * @param mountId The identifier of the tape mount.
-   * @return The next file transfer to be carried out for the specified tape
+   * @return The next tape job to be carried out for the specified tape
    * mount or NULL if there is no more work to be done.
    */
-  ArchivalFileTransfer *getNextArchival(const std::string &mountId);
+  ArchiveJob *getNextArchive(const std::string &mountId);
 
   /**
-   * Notifies the scheduler that the specified file transfer has been completed
+   * Notifies the scheduler that the specified tape job has been completed
    * successfully.
    *
-   * @param transferId The identifier of the file transfer.
+   * @param transferId The identifier of the tape job.
    */
-  void archivalSuccessful(const std::string &transferId);
+  void archiveSuccessful(const std::string &transferId);
 
   /**
-   * Notifies the scheduler that the specified file transfer has failed.
+   * Notifies the scheduler that the specified tape job has failed.
    *
-   * @param transferId The identifier of the file transfer.
+   * @param transferId The identifier of the tape job.
    * @param failureType The type of failure.
    * @param errorMessage Human readable description of the failure.
    */
-  void archivalFailed(const std::string &transferId,
-    const TransferFailure failureType, const std::string &errorMessage);
+  void archiveFailed(const std::string &transferId,
+    const TapeJobFailure failureType, const std::string &errorMessage);
 
   /**
-   * Returns the next file transfer to be carried out for the specified tape
+   * Returns the next tape job to be carried out for the specified tape
    * mount or NULL if there is no more work to be done.
    *
    * @param mountId The identifier of the tape mount.
-   * @return The next file transfer to be carried out for the specified tape
+   * @return The next tape job to be carried out for the specified tape
    * mount or NULL if there is no more work to be done.
    */
-  RetrievalFileTransfer *getNextRetrieval(const std::string &mountId);
+  RetrieveJob *getNextRetrieve(const std::string &mountId);
 
   /**
-   * Notifies the scheduler that the specified file transfer has been completed
+   * Notifies the scheduler that the specified tape job has been completed
    * successfully.
    *
-   * @param transferId The identifier of the file transfer.
+   * @param transferId The identifier of the tape job.
    */
-  void retrievalSucceeded(const std::string &transferId);
+  void retrieveSucceeded(const std::string &transferId);
 
   /**
-   * Notifies the scheduler that the specified file transfer has failed.
+   * Notifies the scheduler that the specified tape job has failed.
    *
-   * @param transferId The identifier of the file transfer.
+   * @param transferId The identifier of the tape job.
    * @param failureType The type of failure.
    * @param errorMessage Human readable description of the failure.
    */
-  void retrievalFailed(const std::string &transferId,
-    const TransferFailure failureType, const std::string &errorMessage);
+  void retrieveFailed(const std::string &transferId,
+    const TapeJobFailure failureType, const std::string &errorMessage);
 
 private:
 
@@ -740,7 +740,7 @@ private:
    * The storage class of the archived file will be inherited from its
    * destination directory.
    *
-   * @param requester The identity of the user requesting the archival.
+   * @param requester The identity of the user requesting the archive.
    * @param remoteFiles The paths and statuses of the files in the  remote
    * storage systems.
    * @param archiveDir The full path of the destination directory within the
@@ -810,14 +810,14 @@ private:
 
   /**
    * Returns the map from tape copy number to tape pool name for the specified
-   * set of archival routes.
+   * set of archive routes.
    *
    * @param routes The archive routes.
    * @return The map from tape copy number to tape pool name for the specified
-   * set of archival routes.
+   * set of archive routes.
    */
   std::map<uint16_t, std::string> createCopyNbToPoolMap(
-    const std::list<ArchivalRoute> &routes) const;
+    const std::list<ArchiveRoute> &routes) const;
 
 }; // class Scheduler
 

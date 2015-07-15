@@ -167,7 +167,7 @@ cta::objectstore::RootEntry::dumpAdminUsers() {
 }
 
 // =============================================================================
-// ========== Storage Class and archival routes manipulations ==================
+// ========== Storage Class and archive routes manipulations ===================
 // =============================================================================
 
 // This operator will be used in the following usage of the templated
@@ -247,39 +247,39 @@ uint16_t cta::objectstore::RootEntry::getStorageClassCopyCount (
 // removeOccurences
 namespace {
   bool operator==(uint16_t copyNb, 
-    const cta::objectstore::serializers::ArchivalRoute & ar) {
+    const cta::objectstore::serializers::ArchiveRoute & ar) {
     return ar.copynb() == copyNb;
   }
 }
 
-void cta::objectstore::RootEntry::addArchivalRoute(const std::string& storageClass,
+void cta::objectstore::RootEntry::addArchiveRoute(const std::string& storageClass,
   uint16_t copyNb, const std::string& tapePool, const CreationLog& cl) {
   checkPayloadWritable();
   // Find the storageClass entry
   if (copyNb > maxCopyCount || copyNb <= 0) {
     std::stringstream ss;
-    ss << "In RootEntry::addArchivalRoute: invalid copy number: "  << 
+    ss << "In RootEntry::addArchiveRoute: invalid copy number: "  << 
         copyNb <<  " > " << maxCopyCount;
     throw InvalidCopyNumber(ss.str());
   }
   auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
   if (copyNb > sc.copycount() || copyNb <= 0) {
     std::stringstream ss;
-    ss << "In RootEntry::addArchivalRoute: copy number out of range: " <<
+    ss << "In RootEntry::addArchiveRoute: copy number out of range: " <<
         copyNb << " >= " << sc.copycount();
     throw InvalidCopyNumber(ss.str());
   }
-  // Find the archival route (if it exists)
+  // Find the archive route (if it exists)
   try {
     // It does: update is not allowed.
     auto &ar = serializers::findElement(sc.mutable_routes(), copyNb);
-    throw ArchivalRouteAlreadyExists("In RootEntry::addArchivalRoute: route already exists");
+    throw ArchiveRouteAlreadyExists("In RootEntry::addArchiveRoute: route already exists");
     // Sanity check: is it the right route?
     if (ar.copynb() != copyNb) {
       throw exception::Exception(
-        "In RootEntry::addArchivalRoute: internal error: extracted wrong route");
+        "In RootEntry::addArchiveRoute: internal error: extracted wrong route");
     }
-    throw ArchivalRouteAlreadyExists("In RootEntry::addArchivalRoute: trying to add an existing route");
+    throw ArchiveRouteAlreadyExists("In RootEntry::addArchiveRoute: trying to add an existing route");
     cl.serialize(*ar.mutable_log());
     ar.set_tapepool(tapePool);
   } catch (serializers::NotFound &) {
@@ -288,7 +288,7 @@ void cta::objectstore::RootEntry::addArchivalRoute(const std::string& storageCla
     auto & routes = sc.routes();
     for (auto r=routes.begin(); r != routes.end(); r++) {
       if (r->tapepool() == tapePool) {
-        throw TapePoolUsedInOtherRoute ("In RootEntry::addArchivalRoute: cannot add a second route to the same tape pool");
+        throw TapePoolUsedInOtherRoute ("In RootEntry::addArchiveRoute: cannot add a second route to the same tape pool");
       }
     }
     auto *ar = sc.mutable_routes()->Add();
@@ -298,19 +298,19 @@ void cta::objectstore::RootEntry::addArchivalRoute(const std::string& storageCla
   }
 }
 
-void cta::objectstore::RootEntry::removeArchivalRoute(
+void cta::objectstore::RootEntry::removeArchiveRoute(
   const std::string& storageClass, uint16_t copyNb) {
   checkPayloadWritable();
   // Find the storageClass entry
   auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
   if (!serializers::isElementPresent(sc.routes(), copyNb))
-    throw NoSuchArchivalRoute(
-      "In RootEntry::removeArchivalRoute: trying to delete non-existing archival route.");
+    throw NoSuchArchiveRoute(
+      "In RootEntry::removeArchiveRoute: trying to delete non-existing archive route.");
   serializers::removeOccurences(sc.mutable_routes(), copyNb);
 }
 
 
-std::vector<std::string> cta::objectstore::RootEntry::getArchivalRoutes(const std::string storageClass) {
+std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std::string storageClass) {
   checkPayloadReadable();
   auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
   std::vector<std::string> ret;
@@ -344,7 +344,7 @@ auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClass
     ret.back().log.deserialize(i->log());
     auto & arl = i->routes();
     for (auto j=arl.begin(); j!= arl.end(); j++) {
-      ret.back().routes.push_back(StorageClassDump::ArchivalRouteDump());
+      ret.back().routes.push_back(StorageClassDump::ArchiveRouteDump());
       auto &r = ret.back().routes.back();
       r.copyNumber = j->copynb();
       r.tapePool = j->tapepool();
@@ -365,7 +365,7 @@ auto cta::objectstore::RootEntry::dumpStorageClass(const std::string& name)
       ret.storageClass = i->name();
       auto & arl = i->routes();
       for (auto j=arl.begin(); j!= arl.end(); j++) {
-        ret.routes.push_back(StorageClassDump::ArchivalRouteDump());
+        ret.routes.push_back(StorageClassDump::ArchiveRouteDump());
         auto &r = ret.routes.back();
         r.copyNumber = j->copynb();
         r.tapePool = j->tapepool();
@@ -498,7 +498,7 @@ void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tap
       for (auto r=rl.begin(); r!=rl.end(); r++) {
         if (r->tapepool() == tapePool)
           throw TapePoolUsedInRoute(
-            "In RootEntry::removeTapePoolAndCommit: trying to remove a tape pool used in archival route");
+            "In RootEntry::removeTapePoolAndCommit: trying to remove a tape pool used in archive route");
       }
     }
     // Open the tape pool object

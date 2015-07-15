@@ -66,8 +66,8 @@ message AdminUser {
   required CreationLog log = 41;
 }
 
-// The Archival route
-message ArchivalRoute {
+// The Archive route
+message ArchiveRoute {
   required uint32 copynb = 50;
   required string tapepool = 51;
   required CreationLog log = 52;
@@ -77,7 +77,7 @@ message ArchivalRoute {
 message StorageClass {
   required string name = 60;
   required uint32 copycount = 61;
-  repeated ArchivalRoute routes = 62;
+  repeated ArchiveRoute routes = 62;
   required CreationLog log = 63;
 }
 
@@ -197,7 +197,7 @@ message Tape {
   required uint64 bytesstored = 4302;
   repeated MountInfo readmounts = 4303;
   repeated MountInfo writemounts = 4304;
-  repeated RetrieveJobPointer retrievaljobs = 4305;
+  repeated RetrieveJobPointer retrievejobs = 4305;
 }
 
 // ------------- Archive Jobs --------------------------------------------------

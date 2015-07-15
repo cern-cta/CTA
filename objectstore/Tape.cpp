@@ -42,13 +42,13 @@ void cta::objectstore::Tape::initialize(const std::string &name) {
 
 bool cta::objectstore::Tape::isEmpty() {
   checkPayloadReadable();
-  return !m_payload.retrievaljobs_size();
+  return !m_payload.retrievejobs_size();
 }
 
 void cta::objectstore::Tape::removeIfEmpty() {
   checkPayloadWritable();
   if (!isEmpty()) {
-    throw NotEmpty("In Tape::removeIfEmpty: trying to remove an tape with retrievals queued");
+    throw NotEmpty("In Tape::removeIfEmpty: trying to remove an tape with retrieves queued");
   }
   remove();
 }
@@ -74,7 +74,7 @@ std::string cta::objectstore::Tape::dump() {
   ret << "<<<< Tape dump start: vid=" << m_payload.vid() << std::endl;
   ret << "  lastFseq=" << m_payload.lastfseq() 
       << " bytesStored=" << m_payload.bytesstored() << std::endl;
-  ret << "  Retrieval jobs queued: " << m_payload.retrievaljobs_size() << std::endl;
+  ret << "  Retrieve jobs queued: " << m_payload.retrievejobs_size() << std::endl;
   if (m_payload.readmounts_size()) {
     auto lrm = m_payload.readmounts(0);
     ret << "  Latest read for mount: " << lrm.host() << " " << lrm.time() << " " 
@@ -94,7 +94,7 @@ std::string cta::objectstore::Tape::dump() {
 void cta::objectstore::Tape::addJob(const RetrieveToFileRequest::JobDump& job,
   const std::string & retrieveToFileAddress, uint64_t size) {
   checkPayloadWritable();
-  auto * j = m_payload.add_retrievaljobs();
+  auto * j = m_payload.add_retrievejobs();
   j->set_address(retrieveToFileAddress);
   j->set_size(size);
 }

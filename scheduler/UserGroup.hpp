@@ -48,14 +48,14 @@ public:
    * Constructor.
    *
    * @param name The name of the user group.
-   * @param archivalDriveQuota The tape drive quota for the user group when
-   * mounting tapes for file archival.
-   * @param retrievalDriveQuota The tape drive quota for the user group when
-   * mounting tapes for file retrieval.
-   * @param archivalMountCriteria The criteria of the user group to be met in
-   * order to justify mounting a tape for file archival.
-   * @param retrievalMountCriteria The criteria of the user group to be met in
-   * order to justify mounting a tape for file retrieval.
+   * @param archiveDriveQuota The tape drive quota for the user group when
+   * mounting tapes for file archive.
+   * @param retrieveDriveQuota The tape drive quota for the user group when
+   * mounting tapes for file retrieve.
+   * @param archiveMountCriteria The criteria of the user group to be met in
+   * order to justify mounting a tape for file archive.
+   * @param retrieveMountCriteria The criteria of the user group to be met in
+   * order to justify mounting a tape for file retrieve.
    * @param creator The identity of the user that created this configuration
    * item.
    * @param comment The comment describing this configuration item.
@@ -65,10 +65,10 @@ public:
    */
   UserGroup(
     const std::string &name,
-    const DriveQuota &archivalDriveQuota,
-    const DriveQuota &retrievalDriveQuota,
-    const MountCriteria &archivalMountCriteria,
-    const MountCriteria &retrievalMountCriteria,
+    const DriveQuota &archiveDriveQuota,
+    const DriveQuota &retrieveDriveQuota,
+    const MountCriteria &archiveMountCriteria,
+    const MountCriteria &retrieveMountCriteria,
     const UserIdentity &creator,
     const std::string &comment,
     const time_t creationTime = time(NULL));
@@ -82,33 +82,33 @@ public:
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
-   * file archival.
+   * file archive.
    *
    * @return The tape drive quota for the user group when mounting tapes for
-   * file archival.
+   * file archive.
    */
-  const DriveQuota &getArchivalDriveQuota() const throw();
+  const DriveQuota &getArchiveDriveQuota() const throw();
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
-   * file retrieval.
+   * file retrieve.
    *
    * @return The tape drive quota for the user group when mounting tapes for
-   * file retrieval.
+   * file retrieve.
    */
-  const DriveQuota &getRetrievalDriveQuota() const throw();
+  const DriveQuota &getRetrieveDriveQuota() const throw();
 
   /**
    * Returns the criteria of the user group to be met in order to justify
-   * mounting a tape for file archival.
+   * mounting a tape for file archive.
    */
-  const MountCriteria &getArchivalMountCriteria() const throw();
+  const MountCriteria &getArchiveMountCriteria() const throw();
 
   /**
    * Returns the criteria of the user group to be met in order to justify
-   * mounting a tape for file retrieval.
+   * mounting a tape for file retrieve.
    */
-  const MountCriteria &getRetrievalMountCriteria() const throw();
+  const MountCriteria &getRetrieveMountCriteria() const throw();
 
 private:
 
@@ -119,27 +119,27 @@ private:
 
   /**
    * The tape drive quota for the user group when mounting tapes for file
-   * archival.
+   * archive.
    */
-  DriveQuota m_archivalDriveQuota;
+  DriveQuota m_archiveDriveQuota;
 
   /**
    * The tape drive quota for the user group when mounting tapes for file
-   * retrieval.
+   * retrieve.
    */
-  DriveQuota m_retrievalDriveQuota;
+  DriveQuota m_retrieveDriveQuota;
 
   /**
    * The criteria of the user group to be met in order to justify mounting a
-   * tape for file archival.
+   * tape for file archive.
    */
-  MountCriteria m_archivalMountCriteria;
+  MountCriteria m_archiveMountCriteria;
 
   /**
    * The criteria of the user group to be met in order to justify mounting a
-   * tape for file retrieval.
+   * tape for file retrieve.
    */
-  MountCriteria m_retrievalMountCriteria;
+  MountCriteria m_retrieveMountCriteria;
 
 }; // class UserGroup
 

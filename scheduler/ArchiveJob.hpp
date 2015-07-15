@@ -18,66 +18,59 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
-#include "scheduler/CreationLog.hpp"
+#include "scheduler/TapeJob.hpp"
 
 #include <stdint.h>
 #include <string>
-#include <time.h>
 
 namespace cta {
 
 /**
- * An archival route.
+ * Class representing the transfer of a single copy of a remote file to tape.
  */
-struct ArchivalRoute {
+class ArchiveJob: public TapeJob {
+public:
 
   /**
    * Constructor.
    */
-  ArchivalRoute();
+  ArchiveJob();
 
   /**
    * Destructor.
    */
-  ~ArchivalRoute() throw();
+  ~ArchiveJob() throw();
 
   /**
    * Constructor.
    *
-   * @param storageClassName The name of the storage class that identifies the
-   * source disk files.
-   * @param copyNb The tape copy number.  Copy numbers start from 1.
    * @param tapePoolName The name of the destination tape pool.
-   * @param creationLog The who, where, when an why of this modification.
-   * time is used.
+   * @param id The identifier of the tape job.
+   * @param userRequestId The identifier of the associated user request.
+   * @param copyNb The copy number.
+   * @param remoteFile The URL of the remote source file.
    */
-  ArchivalRoute(
-    const std::string &storageClassName,
-    const uint16_t copyNb,
+  ArchiveJob(
     const std::string &tapePoolName,
-    const CreationLog &creationLog);
+    const std::string &id,
+    const std::string &userRequestId,
+    const uint32_t copyNb,
+    const std::string &remoteFile);
 
   /**
-   * The name of the storage class that identifies the source disk files.
+   * Returns the name of the destination tape pool.
+   *
+   * @return the name of the destination tape pool.
    */
-  std::string storageClassName;
+  const std::string &getTapePoolName() const throw();
 
-  /**
-   * The tape copy number.
-   */
-  uint32_t copyNb;
+private:
 
   /**
    * The name of the destination tape pool.
    */
-  std::string tapePoolName;
+  std::string m_tapePoolName;
 
-  /**
-   * The record of the entry's creation
-   */
-  CreationLog creationLog;
-
-}; // class ArchivalRoute
+}; // class ArchiveJob
 
 } // namespace cta

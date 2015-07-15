@@ -26,7 +26,7 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -198,57 +198,57 @@ void OStoreDB::deleteStorageClass(const SecurityIdentity& requester,
   re.commit();
 }
 
-void OStoreDB::createArchivalRoute(const std::string& storageClassName,
+void OStoreDB::createArchiveRoute(const std::string& storageClassName,
   const uint16_t copyNb, const std::string& tapePoolName,
   const cta::CreationLog& creationLog) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  re.addArchivalRoute(storageClassName, copyNb, tapePoolName, 
+  re.addArchiveRoute(storageClassName, copyNb, tapePoolName, 
     objectstore::CreationLog(creationLog));
   re.commit();
 }
 
-std::list<ArchivalRoute> 
-  OStoreDB::getArchivalRoutes(const std::string& storageClassName) const {
+std::list<ArchiveRoute> 
+  OStoreDB::getArchiveRoutes(const std::string& storageClassName) const {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
   auto scd = re.dumpStorageClass(storageClassName);
   rel.release();
   if (scd.routes.size() != scd.copyCount) {
-    throw IncompleteRouting("In OStoreDB::getArchivalRoutes: routes are incomplete");
+    throw IncompleteRouting("In OStoreDB::getArchiveRoutes: routes are incomplete");
   }
-  std::list<ArchivalRoute> ret;
+  std::list<ArchiveRoute> ret;
   for (auto r=scd.routes.begin(); r!=scd.routes.end(); r++) {
-    ret.push_back(ArchivalRoute(storageClassName, 
+    ret.push_back(ArchiveRoute(storageClassName, 
       r->copyNumber, r->tapePool, r->log));
   }
   return ret;
 }
 
-std::list<ArchivalRoute> OStoreDB::getArchivalRoutes() const {
+std::list<ArchiveRoute> OStoreDB::getArchiveRoutes() const {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
   auto scd = re.dumpStorageClasses();
   rel.release();
-  std::list<ArchivalRoute> ret;
+  std::list<ArchiveRoute> ret;
   for (auto sc=scd.begin(); sc!=scd.end(); sc++) {
     for (auto r=sc->routes.begin(); r!=sc->routes.end(); r++) {
-      ret.push_back(ArchivalRoute(sc->storageClass, 
+      ret.push_back(ArchiveRoute(sc->storageClass, 
         r->copyNumber, r->tapePool, r->log));
     }
   }
   return ret;
 }
 
-void OStoreDB::deleteArchivalRoute(const SecurityIdentity& requester, 
+void OStoreDB::deleteArchiveRoute(const SecurityIdentity& requester, 
   const std::string& storageClassName, const uint16_t copyNb) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  re.removeArchivalRoute(storageClassName, copyNb);
+  re.removeArchiveRoute(storageClassName, copyNb);
   re.commit();
 }
 

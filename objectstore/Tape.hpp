@@ -39,7 +39,7 @@ public:
   void removeIfEmpty();
   std::string dump();
   
-  // Retrieval jobs management ==================================================
+  // Retrieve jobs management ==================================================
   void addJob(const RetrieveToFileRequest::JobDump & job,
     const std::string & retrieveToFileAddress, uint64_t size);
   

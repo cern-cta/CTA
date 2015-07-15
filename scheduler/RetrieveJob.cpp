@@ -16,31 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/RetrieveJob.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRoute::ArchivalRoute():
-  copyNb(0) {
+cta::RetrieveJob::RetrieveJob() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchivalRoute::~ArchivalRoute() throw() {
+cta::RetrieveJob::~RetrieveJob() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchivalRoute::ArchivalRoute(
-  const std::string &storageClassName,
-  const uint16_t copyNb,
-  const std::string &tapePoolName,
-  const CreationLog &creationLog):
-  storageClassName(storageClassName),
-  copyNb(copyNb),
-  tapePoolName(tapePoolName),
-  creationLog(creationLog) {
+cta::RetrieveJob::RetrieveJob(
+  const TapeCopyLocation &tapeFile,
+  const std::string &id, 
+  const std::string &userRequestId,
+  const uint32_t copyNb,
+  const std::string &remoteFile):
+  TapeJob(id, userRequestId, copyNb, remoteFile),
+  tapeFile(tapeFile) {
 }

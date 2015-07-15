@@ -157,32 +157,32 @@ protected:
   void xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the listongoingarchivals command
+   * Executes the listongoingarchives command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listongoingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_listongoingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the listongoingretrievals command
+   * Executes the listongoingretrieves command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listongoingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_listongoingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the listpendingarchivals command
+   * Executes the listpendingarchives command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listpendingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the listpendingretrievals command
+   * Executes the listpendingretrieves command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listpendingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the listdrivestates command
@@ -262,11 +262,11 @@ protected:
   void xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the cancelretrieval command
+   * Executes the cancelretrieve command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_cancelretrieval(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Returns the help string

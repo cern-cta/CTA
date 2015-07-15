@@ -23,7 +23,7 @@
 #include "remotens/MockRemoteNS.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"

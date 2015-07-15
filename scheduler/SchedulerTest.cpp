@@ -21,7 +21,7 @@
 #include "remotens/MockRemoteNS.hpp"
 #include "scheduler/AdminUser.hpp"
 #include "scheduler/AdminHost.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -503,20 +503,20 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
   }
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 
   ASSERT_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName),
@@ -534,14 +534,14 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
     ASSERT_EQ(nbCopies, storageClass.nbCopies);
   }
 
-  ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.deleteArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   ASSERT_NO_THROW(scheduler.deleteStorageClass(s_adminOnAdminHost, storageClassName));
@@ -582,10 +582,10 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -602,48 +602,48 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 
   ASSERT_THROW(scheduler.deleteTapePool(s_adminOnAdminHost, tapePoolName), std::exception);
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 }
 
-TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
+TEST_P(SchedulerTest, admin_createArchiveRoute_new) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -660,33 +660,33 @@ TEST_P(SchedulerTest, admin_createArchivalRoute_new) {
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 }
 
 TEST_P(SchedulerTest,
-  admin_createArchivalRoute_already_existing) {
+  admin_createArchiveRoute_already_existing) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(s_adminOnAdminHost));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -703,36 +703,36 @@ TEST_P(SchedulerTest,
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 
-  ASSERT_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment), std::exception);
 }
 
-TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
+TEST_P(SchedulerTest, admin_deleteArchiveRoute_existing) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -749,42 +749,42 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_existing) {
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_EQ(1, archivalRoutes.size());
+    ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchivalRoute archivalRoute;
-    ASSERT_NO_THROW(archivalRoute = archivalRoutes.front());
-    ASSERT_EQ(storageClassName, archivalRoute.storageClassName);
-    ASSERT_EQ(copyNb, archivalRoute.copyNb);
-    ASSERT_EQ(tapePoolName, archivalRoute.tapePoolName);
+    ArchiveRoute archiveRoute;
+    ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
+    ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
+    ASSERT_EQ(copyNb, archiveRoute.copyNb);
+    ASSERT_EQ(tapePoolName, archiveRoute.tapePoolName);
   }
 
-  ASSERT_NO_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(scheduler.deleteArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb));
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(s_adminOnAdminHost));
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 }
 
-TEST_P(SchedulerTest, admin_deleteArchivalRoute_non_existing) {
+TEST_P(SchedulerTest, admin_deleteArchiveRoute_non_existing) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchivalRoute> archivalRoutes;
-    ASSERT_NO_THROW(archivalRoutes = scheduler.getArchivalRoutes(
+    std::list<ArchiveRoute> archiveRoutes;
+    ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
-    ASSERT_TRUE(archivalRoutes.empty());
+    ASSERT_TRUE(archiveRoutes.empty());
   }
 
   const std::string storageClassName = "TestStorageClass";
@@ -801,7 +801,7 @@ TEST_P(SchedulerTest, admin_deleteArchivalRoute_non_existing) {
     nbPartialTapes, comment));
 
   const uint16_t copyNb = 1;
-  ASSERT_THROW(scheduler.deleteArchivalRoute(s_adminOnAdminHost, tapePoolName, copyNb),
+  ASSERT_THROW(scheduler.deleteArchiveRoute(s_adminOnAdminHost, tapePoolName, copyNb),
     std::exception);
 }
 
@@ -1508,9 +1508,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -1616,9 +1616,9 @@ TEST_P(SchedulerTest, archive_to_new_user_file_as_admin) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -1680,9 +1680,9 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -1844,9 +1844,9 @@ TEST_P(SchedulerTest, delete_archive_request) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -2036,9 +2036,9 @@ TEST_P(SchedulerTest,
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -2073,9 +2073,9 @@ TEST_P(SchedulerTest, archive_to_directory) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -2248,9 +2248,9 @@ TEST_P(SchedulerTest, archive_to_directory_with_incomplete_routing) {
     nbPartialTapes, tapePoolComment));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -2311,9 +2311,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     tapePoolName, capacityInBytes, log));
 
   const uint16_t copyNb = 1;
-  const std::string archivalRouteComment = "Archival-route comment";
-  ASSERT_NO_THROW(scheduler.createArchivalRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archivalRouteComment));
+  const std::string archiveRouteComment = "Archive-route comment";
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+    copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
   remoteFiles.push_back(s_remoteFileRawPath1);
@@ -2407,7 +2407,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");
-    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
+    /*ASSERT_NO_THROW*/(scheduler.queueRetrieveRequest(s_userOnUserHost,
       archiveFiles, s_remoteFileRawPath1));
   }
 

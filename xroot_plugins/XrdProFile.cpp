@@ -22,7 +22,7 @@
 #include "common/UserIdentity.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MockSchedulerDatabase.hpp"
@@ -107,10 +107,10 @@ void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens, const
   else if("ll"    == command || "logicallibrary"        == command) {xCom_logicallibrary(tokens, requester);}
   else if("ta"    == command || "tape"                  == command) {xCom_tape(tokens, requester);}
   else if("sc"    == command || "storageclass"          == command) {xCom_storageclass(tokens, requester);}
-  else if("loa"   == command || "listongoingarchivals"  == command) {xCom_listongoingarchivals(tokens, requester);}
-  else if("lor"   == command || "listongoingretrievals" == command) {xCom_listongoingretrievals(tokens, requester);}
-  else if("lpa"   == command || "listpendingarchivals"  == command) {xCom_listpendingarchivals(tokens, requester);}
-  else if("lpr"   == command || "listpendingretrievals" == command) {xCom_listpendingretrievals(tokens, requester);}
+  else if("loa"   == command || "listongoingarchives"  == command) {xCom_listongoingarchives(tokens, requester);}
+  else if("lor"   == command || "listongoingretrieves" == command) {xCom_listongoingretrieves(tokens, requester);}
+  else if("lpa"   == command || "listpendingarchives"  == command) {xCom_listpendingarchives(tokens, requester);}
+  else if("lpr"   == command || "listpendingretrieves" == command) {xCom_listpendingretrieves(tokens, requester);}
   else if("lds"   == command || "listdrivestates"       == command) {xCom_listdrivestates(tokens, requester);}
   
   else if("lsc"   == command || "liststorageclass"      == command) {xCom_liststorageclass(tokens, requester);}
@@ -123,7 +123,7 @@ void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens, const
   else if("a"     == command || "archive"               == command) {xCom_archive(tokens, requester);}
   else if("r"     == command || "retrieve"              == command) {xCom_retrieve(tokens, requester);}
   else if("da"    == command || "deletearchive"         == command) {xCom_deletearchive(tokens, requester);}
-  else if("cr"    == command || "cancelretrieval"       == command) {xCom_cancelretrieval(tokens, requester);}
+  else if("cr"    == command || "cancelretrieve"       == command) {xCom_cancelretrieve(tokens, requester);}
   
   else {m_data = getGenericHelp(tokens[0]);}
 }
@@ -685,7 +685,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-    m_scheduler->createArchivalRoute(requester, storageClass, copynb, tapePool, comment);
+    m_scheduler->createArchiveRoute(requester, storageClass, copynb, tapePool, comment);
   }
   else if("ch" == tokens[2]) {
     std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
@@ -699,7 +699,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-//    m_scheduler->modifyArchivalRoute(requester, storageClass, copynb, tapePool, comment);
+//    m_scheduler->modifyArchiveRoute(requester, storageClass, copynb, tapePool, comment);
   }
   else if("rm" == tokens[2]) {
     std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
@@ -711,10 +711,10 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-    m_scheduler->deleteArchivalRoute(requester, storageClass, copynb);
+    m_scheduler->deleteArchiveRoute(requester, storageClass, copynb);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getArchivalRoutes(requester);
+    auto list = m_scheduler->getArchiveRoutes(requester);
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
       responseSS << it->storageClassName
@@ -943,11 +943,11 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 }
   
 //------------------------------------------------------------------------------
-// xCom_listongoingarchivals
+// xCom_listongoingarchives
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listongoingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " loa/listongoingarchivals --tapepool/-t <tapepool_name>" << std::endl;
+  help << tokens[0] << " loa/listongoingarchives --tapepool/-t <tapepool_name>" << std::endl;
   std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
   std::ostringstream responseSS;
   if(tapePool.empty()) {
@@ -986,11 +986,11 @@ void XrdProFile::xCom_listongoingarchivals(const std::vector<std::string> &token
 }
   
 //------------------------------------------------------------------------------
-// xCom_listongoingretrievals
+// xCom_listongoingretrieves
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listongoingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lor/listongoingretrievals --vid/-v <vid>" << std::endl;
+  help << tokens[0] << " lor/listongoingretrieves --vid/-v <vid>" << std::endl;
   std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
   std::ostringstream responseSS;
   if(tapeVid.empty()) {
@@ -1035,20 +1035,20 @@ void XrdProFile::xCom_listongoingretrievals(const std::vector<std::string> &toke
 }
   
 //------------------------------------------------------------------------------
-// xCom_listpendingarchivals
+// xCom_listpendingarchives
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingarchivals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpa/listpendingarchivals --tapepool/-t <tapepool_name>" << std::endl;
+  help << tokens[0] << " lpa/listpendingarchives --tapepool/-t <tapepool_name>" << std::endl;
   m_data = "Not implemented yet!\n";
 }
   
 //------------------------------------------------------------------------------
-// xCom_listpendingretrievals
+// xCom_listpendingretrieves
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingretrievals(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpr/listpendingretrievals --vid/-v <vid>" << std::endl;
+  help << tokens[0] << " lpr/listpendingretrieves --vid/-v <vid>" << std::endl;
   m_data = "Not implemented yet!\n";
 }
   
@@ -1230,11 +1230,11 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 }
   
 //------------------------------------------------------------------------------
-// xCom_cancelretrieval
+// xCom_cancelretrieve
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_cancelretrieval(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieval <destination_path>" << std::endl;
+  help << tokens[0] << " cr/cancelretrieve <destination_path>" << std::endl;
   if(tokens.size()!=3){
     m_data = help.str();
     return;
@@ -1259,10 +1259,10 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " ll/logicallibrary add/rm/ls/ch" << std::endl;
   help << programName << " ta/tape           add/rm/ls/ch/reclaim" << std::endl;
   help << programName << " sc/storageclass   add/rm/ls/ch" << std::endl;
-  help << programName << " loa/listongoingarchivals" << std::endl;
-  help << programName << " lor/listongoingretrievals" << std::endl;
-  help << programName << " lpa/listpendingarchivals" << std::endl;
-  help << programName << " lpr/listpendingretrievals" << std::endl;
+  help << programName << " loa/listongoingarchives" << std::endl;
+  help << programName << " lor/listongoingretrieves" << std::endl;
+  help << programName << " lpa/listpendingarchives" << std::endl;
+  help << programName << " lpr/listpendingretrieves" << std::endl;
   help << programName << " lds/listdrivestates" << std::endl;
   help << "" << std::endl;
   help << "CTA USER commands:" << std::endl;
@@ -1279,6 +1279,6 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " a/archive" << std::endl;
   help << programName << " r/retrieve" << std::endl;
   help << programName << " da/deletearchive" << std::endl;
-  help << programName << " cr/cancelretrieval" << std::endl;
+  help << programName << " cr/cancelretrieve" << std::endl;
   return help.str();
 }

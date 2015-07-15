@@ -86,8 +86,8 @@ public:
     m_OStoreDB.createAdminUser(requester, user, comment);
   }
 
-  virtual void createArchivalRoute(const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const CreationLog& creationLog) {
-    m_OStoreDB.createArchivalRoute(storageClassName, copyNb, tapePoolName, creationLog);
+  virtual void createArchiveRoute(const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const CreationLog& creationLog) {
+    m_OStoreDB.createArchiveRoute(storageClassName, copyNb, tapePoolName, creationLog);
   }
 
   virtual void createLogicalLibrary(const std::string& name, const cta::CreationLog& creationLog) {
@@ -114,8 +114,8 @@ public:
     m_OStoreDB.deleteAdminUser(requester, user);
   }
 
-  virtual void deleteArchivalRoute(const SecurityIdentity& requester, const std::string& storageClassName, const uint16_t copyNb) {
-    m_OStoreDB.deleteArchivalRoute(requester, storageClassName, copyNb);
+  virtual void deleteArchiveRoute(const SecurityIdentity& requester, const std::string& storageClassName, const uint16_t copyNb) {
+    m_OStoreDB.deleteArchiveRoute(requester, storageClassName, copyNb);
   }
 
   virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile) {
@@ -156,12 +156,12 @@ public:
   }
 
 
-  virtual std::list<ArchivalRoute> getArchivalRoutes(const std::string& storageClassName) const {
-    return m_OStoreDB.getArchivalRoutes(storageClassName);
+  virtual std::list<ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {
+    return m_OStoreDB.getArchiveRoutes(storageClassName);
   }
 
-  virtual std::list<ArchivalRoute> getArchivalRoutes() const{ 
-    return m_OStoreDB.getArchivalRoutes();
+  virtual std::list<ArchiveRoute> getArchiveRoutes() const{ 
+    return m_OStoreDB.getArchiveRoutes();
   }
 
   virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const {

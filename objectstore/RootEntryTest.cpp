@@ -212,7 +212,7 @@ TEST(ObjectStore, RootEntryAdminUsers) {
   ASSERT_EQ(false, re.exists());
 }
 
-TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
+TEST(ObjectStore, RootEntryStorageClassesAndArchiveRoutes) {
   cta::objectstore::BackendVFS be;
   { 
     // Try to create the root entry
@@ -285,8 +285,8 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    ASSERT_NO_THROW(re.addArchivalRoute("class1", 1, "pool1_0", cl));
-    ASSERT_NO_THROW(re.addArchivalRoute("class3", 3, "pool3_2", cl));
+    ASSERT_NO_THROW(re.addArchiveRoute("class1", 1, "pool1_0", cl));
+    ASSERT_NO_THROW(re.addArchiveRoute("class3", 3, "pool3_2", cl));
     re.commit();
   }
   {
@@ -297,8 +297,8 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedSharedLock lock(re);
     re.fetch();
-    ASSERT_NO_THROW(re.getArchivalRoutes("class1"));
-    ASSERT_THROW(re.getArchivalRoutes("class3"),
+    ASSERT_NO_THROW(re.getArchiveRoutes("class1"));
+    ASSERT_THROW(re.getArchiveRoutes("class3"),
       cta::objectstore::RootEntry::IncompleteEntry);
   }
   {
@@ -306,12 +306,12 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    ASSERT_NO_THROW(re.addArchivalRoute("class3", 1, "pool3_0", cl));
-    ASSERT_NO_THROW(re.addArchivalRoute("class3", 2, "pool3_1", cl));
-    ASSERT_THROW(re.addArchivalRoute("class3", 3, "pool3_2b", cl), cta::objectstore::RootEntry::ArchivalRouteAlreadyExists);
+    ASSERT_NO_THROW(re.addArchiveRoute("class3", 1, "pool3_0", cl));
+    ASSERT_NO_THROW(re.addArchiveRoute("class3", 2, "pool3_1", cl));
+    ASSERT_THROW(re.addArchiveRoute("class3", 3, "pool3_2b", cl), cta::objectstore::RootEntry::ArchiveRouteAlreadyExists);
     re.commit();
     re.fetch();
-    ASSERT_NO_THROW(re.getArchivalRoutes("class3"));
+    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
   }
   {
     // Check that resizing storage classes down and up work as expected
@@ -323,10 +323,10 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
     ASSERT_NO_THROW(re.setStorageClassCopyCount("class3", 2, cl));
     re.commit();
     re.fetch();
-    ASSERT_THROW(re.getArchivalRoutes("class1"),
+    ASSERT_THROW(re.getArchiveRoutes("class1"),
       cta::objectstore::RootEntry::IncompleteEntry);
-    ASSERT_NO_THROW(re.getArchivalRoutes("class3"));
-    ASSERT_EQ(2,re.getArchivalRoutes("class3").size());
+    ASSERT_NO_THROW(re.getArchiveRoutes("class3"));
+    ASSERT_EQ(2,re.getArchiveRoutes("class3").size());
   }
   {
     // Check that dump works in all circumstances
@@ -347,9 +347,9 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchivalRoutes) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.removeArchivalRoute("class1", 1);
-    re.removeArchivalRoute("class3", 1);
-    re.removeArchivalRoute("class3", 2);
+    re.removeArchiveRoute("class1", 1);
+    re.removeArchiveRoute("class3", 1);
+    re.removeArchiveRoute("class3", 2);
     re.removeStorageClass("class1");
     re.removeStorageClass("class3");
     re.commit();

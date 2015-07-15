@@ -80,17 +80,17 @@ public:
   virtual void deleteStorageClass(const SecurityIdentity& requester, 
     const std::string& name);
 
-  /* === Archival routes handling  ========================================== */
-  virtual void createArchivalRoute(const std::string& storageClassName,
+  /* === Archive routes handling  =========================================== */
+  virtual void createArchiveRoute(const std::string& storageClassName,
     const uint16_t copyNb, const std::string& tapePoolName,
     const CreationLog& creationLog);
 
   CTA_GENERATE_EXCEPTION_CLASS(IncompleteRouting);
-  virtual std::list<ArchivalRoute> getArchivalRoutes(const std::string& storageClassName) const;
+  virtual std::list<ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const;
 
-  virtual std::list<ArchivalRoute> getArchivalRoutes() const;
+  virtual std::list<ArchiveRoute> getArchiveRoutes() const;
 
-  virtual void deleteArchivalRoute(const SecurityIdentity& requester, 
+  virtual void deleteArchiveRoute(const SecurityIdentity& requester, 
     const std::string& storageClassName, const uint16_t copyNb);
 
   /* === Tape pools handling  =============================================== */
@@ -125,7 +125,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(LibraryInUse);
   virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name);
 
-  /* === Archival requests handling  ======================================== */
+  /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   class ArchiveToFileRequestCreation: 

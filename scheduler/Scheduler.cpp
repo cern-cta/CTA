@@ -24,7 +24,7 @@
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchivalRoute.hpp"
+#include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
@@ -49,12 +49,12 @@
 // TransferFailureToStr
 //------------------------------------------------------------------------------
 const char *cta::Scheduler::TransferFailureToStr(
-  const TransferFailure enumValue) throw() {
+  const TapeJobFailure enumValue) throw() {
   switch(enumValue) {
-  case TRANSFERFAILURE_NONE         : return "NONE";
-  case TRANSFERFAILURE_TAPEDRIVE    : return "TAPE DRIVE";
-  case TRANSFERFAILURE_TAPELIBRARY  : return "TAPE LIBRARY";
-  case TRANSFERFAILURE_REMOTESTORAGE: return "REMOTE STORAGE";
+  case JOBFAILURE_NONE         : return "NONE";
+  case JOBFAILURE_TAPEDRIVE    : return "TAPE DRIVE";
+  case JOBFAILURE_TAPELIBRARY  : return "TAPE LIBRARY";
+  case JOBFAILURE_REMOTESTORAGE: return "REMOTE STORAGE";
   default                           : return "UNKNOWN";
   }
 }
@@ -313,37 +313,37 @@ std::list<cta::TapePool> cta::Scheduler::getTapePools(
 }
 
 //------------------------------------------------------------------------------
-// createArchivalRoute
+// createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::Scheduler::createArchivalRoute(
+void cta::Scheduler::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createArchivalRoute(storageClassName, copyNb, tapePoolName,
+  m_db.createArchiveRoute(storageClassName, copyNb, tapePoolName,
     CreationLog(UserIdentity(requester.getUser()), requester.getHost(),
     time(NULL), comment));
 }
 
 //------------------------------------------------------------------------------
-// deleteArchivalRoute
+// deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchivalRoute(
+void cta::Scheduler::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.deleteArchivalRoute(requester, storageClassName, copyNb);
+  m_db.deleteArchiveRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
-// getArchivalRoutes
+// getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchivalRoute> cta::Scheduler::getArchivalRoutes(
+std::list<cta::ArchiveRoute> cta::Scheduler::getArchiveRoutes(
   const SecurityIdentity &requester) const {
-  return m_db.getArchivalRoutes();
+  return m_db.getArchiveRoutes();
 }
 
 //------------------------------------------------------------------------------
@@ -684,7 +684,7 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
      enclosingPath);
   const StorageClass storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
-  const auto routes = m_db.getArchivalRoutes(storageClassName);
+  const auto routes = m_db.getArchiveRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL));
@@ -700,10 +700,10 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
 // createCopyNbToPoolMap
 //------------------------------------------------------------------------------
 std::map<uint16_t, std::string> cta::Scheduler::createCopyNbToPoolMap(
-  const std::list<ArchivalRoute> &routes) const {
+  const std::list<ArchiveRoute> &routes) const {
   std::map<uint16_t, std::string> copyNbToPoolMap;
     for(auto itor = routes.begin(); itor != routes.end(); itor++) {
-    const ArchivalRoute &route = *itor;
+    const ArchiveRoute &route = *itor;
     copyNbToPoolMap[route.copyNb] = route.tapePoolName;
   }
   return copyNbToPoolMap;
@@ -753,43 +753,43 @@ void cta::Scheduler::finishedMount(const std::string &mountId) {
 }
 
 //------------------------------------------------------------------------------
-// getNextArchival
+// getNextArchive
 //------------------------------------------------------------------------------
-cta::ArchivalFileTransfer *cta::Scheduler::getNextArchival(
+cta::ArchiveJob *cta::Scheduler::getNextArchive(
   const std::string &mountId) {
   return NULL;
 }
 
 //------------------------------------------------------------------------------
-// archivalSuccessful
+// archiveSuccessful
 //------------------------------------------------------------------------------
-void cta::Scheduler::archivalSuccessful(const std::string &transferId) {
+void cta::Scheduler::archiveSuccessful(const std::string &transferId) {
 }
 
 //------------------------------------------------------------------------------
-// archivalFailed
+// archiveFailed
 //------------------------------------------------------------------------------
-void cta::Scheduler::archivalFailed(const std::string &transferId,
-  const TransferFailure failureType, const std::string &errorMessage) {
+void cta::Scheduler::archiveFailed(const std::string &transferId,
+  const TapeJobFailure failureType, const std::string &errorMessage) {
 }
 
 //------------------------------------------------------------------------------
-// getNextRetrieval
+// getNextRetrieve
 //------------------------------------------------------------------------------
-cta::RetrievalFileTransfer *cta::Scheduler::getNextRetrieval(
+cta::RetrieveJob *cta::Scheduler::getNextRetrieve(
   const std::string &mountId) {
   return NULL;
 }
 
 //------------------------------------------------------------------------------
-// retrievalSucceeded
+// retrieveSucceeded
 //------------------------------------------------------------------------------
-void cta::Scheduler::retrievalSucceeded(const std::string &transferId) {
+void cta::Scheduler::retrieveSucceeded(const std::string &transferId) {
 }
 
 //------------------------------------------------------------------------------
-// retrievalFailed
+// retrieveFailed
 //------------------------------------------------------------------------------
-void cta::Scheduler::retrievalFailed(const std::string &transferId,
-  const TransferFailure failureType, const std::string &errorMessage) {
+void cta::Scheduler::retrieveFailed(const std::string &transferId,
+  const TapeJobFailure failureType, const std::string &errorMessage) {
 }
