@@ -1,0 +1,57 @@
+
+\subsection{Tape Archive Management}
+
+The CASTOR tape archive provides long term availability
+of data with maximum transparency and flexibility for the end user.
+In other words, users should not realize that their data are
+stored on tape and the data should be automatically migrated to
+newer media when necessary without any impact on their availability.
+CASTOR's tape system addresses these issues via a set
+of components.
+
+The {\bf tape daemon} is the interface to the tape hardware. It interacts
+with the tape robots to transfers data to/from tape.
+The tape daemon supports a number of types of tape drives and related robots.
+The current status of CERN's tape robots and drives is described in
+Table~\ref{tapehardware}.
+
+\begin{table}[htbp]
+  \begin{center}
+  \begin{tabular}{|c|c|c|}
+    \hline
+      Drive type     & Nb drives & Speed \\
+    \hline
+      STK 9940B      & 44        & 30 MB/s \\
+      IBM 3592 E05   & 50        & 100 MB/s \\
+      STK T10000     & 50        & 120 MB/s \\
+    \hline
+    \hline
+      Library        & Nb tapes & Capacity \\
+    \hline
+      STK Powderhorn & 10,000   & 2 PB \\
+      IBM 3584       &  5,500   & 3.85 PB \\
+      STK SL8500     & 13,000   & 6.5 PB \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \caption{Status of the tape hardware at CERN}
+  \label{tapehardware}
+\end{table}
+
+The {\bf Volume Manager} (VMGR) and the Volume and Drive Queue Manager (VDQM)
+respectively handle the status of the tapes and tape drives. They handle
+queues of requests from tapes and drives and act as resource allocators.
+
+The {\bf remote tape copy} (rtcopy) software interacts with the disk layer.
+It manages a set of migrators and recallers respectively writing and reading
+data from/to tape. Both migrations and recalls are user driven actions
+that depend on the disk cache status and are controlled by external policies.
+They use high speed streams and allow for multiplexing of streams from
+different disk servers in order to fill the tape buffers.
+rtcopy also takes care of computing a checksum of the files going to, and
+coming from, tape in order to detect possible tape errors.
+
+Finally, the {\bf repack} component is responsible for moving data from a set of
+tapes to another set. This allows both to migrate data from one generation
+of tapes to another and to recuperate space on tapes where a lot of files
+were deleted.

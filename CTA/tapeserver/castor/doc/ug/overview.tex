@@ -1,0 +1,246 @@
+\chapter{Overview}
+CASTOR is a hierarchical storage management (HSM) system developed at CERN. Files can
+be stored, listed, retrieved and accessed in CASTOR using command line tools or applications built
+on top of the RFIO (Remote File IO) or ROOT libraries.
+
+CASTOR provides a UNIX like directory hierarchy of file names. The directories are always
+rooted {\tt /castor/cern.ch} (the {\tt cern.ch} will be different in other CASTOR sites).
+The CASTOR name space can viewed and manipulated only through CASTOR client commands and library
+calls. OS commands like {\tt ls} or {\tt mkdir} will not work on CASTOR files. The CASTOR
+name space holds permanent tape residence of the CASTOR files, while the more volatile disk
+disk residence is only known to the {\tt stager}, which is the disk cache management component
+in CASTOR. When accessing or modifying a CASTOR file, one must therefore always use a
+{\tt stager}.
+
+\section{Organisation of the CASTOR name space at CERN}
+The CASTOR name space is rooted under {\tt /castor/cern.ch}. All experiment production
+data is normally stored under {\tt /castor/cern.ch/<experiment-name>}, e.g.
+{\tt /castor/cern.ch/cms} . Each user has a CASTOR home directory
+{\tt /castor/cern.ch/user/<first-letter>/<login-name>}, e.g. {\tt /castor/cern.ch/l/linda}.
+
+User directories are for personal rather than experiment or project shared files. When a
+PLUS user account is deleted (e.g. {\tt /castor/cern.ch/l/linda}) the directory is moved to
+{\tt /castor/cern.ch/user/deleted/<login-name>\_<delete\_id>}
+(e.g. {\tt /castor/cern.ch/user/deleted/linda\_41}) and 2 years after the directory and
+all its files will be removed.
+
+\section{CASTOR1 and CASTOR2}
+During 2006 a new major version of CASTOR is being deployed in production. The new version
+is called CASTOR2. There are significant changes to some of the low-level end user commands
+between the old CASTOR (referred to as CASTOR1) and CASTOR2. The CASTOR1 commands are not
+described in this guide but whenever a described command would not work with CASTOR1 it is
+noted in the text and a reference to the corresponding CASTOR1 command is given.
+
+\section{Some basic recommendations}
+CASTOR is an HSM system with a tape backend. In principle all files are written to tape. A
+well-known shortcoming of tape systems is that small files cannot be handled with good efficiency.
+CASTOR should therefore be used for storing relatively large files (>10MB) while shared or cluster
+filesystem solutions (e.g. AFS at CERN) should be used for smaller files.
+
+\section{Getting started}
+In order to access CASTOR at CERN, you must be a registered user with PLUS accounts. The procedure
+for getting a PLUS account is described at \url{http://it-div.web.cern.ch/it-div/comp-usage/default.asp}.
+
+\subsection{environment}
+\label{overview:environment}
+In order to store and retrieve files in CASTOR it is necessary to contact a {\tt stager}.
+At CERN there are more than one stager, and large collaborations (e.g. LHC experiments) have
+their own stager instance. You should not need to select a stager to use since the correct
+environment is normally setup at either group or system level.
+{\bf If this is not the case, contact castor.support@cern.ch.}
+
+The name of the CASTOR stager instances follows the convention {\bf castor<exp-name>}, e.g.
+{\bf castoralice} or {\bf castorlhcb}. An environment variable {\tt STAGE\_HOST} may be set
+to the name of a stager instance.
+A second environment variable {\tt STAGE\_SVCCLASS} can be used to specify the service class (diskpool)
+If {\tt STAGE\_SVCCLASS} is not specified the {\tt 'default'} service class will be used.
+Please see section~\ref{section:svcclass} for further explanation about service classes and diskpools.
+Example (csh/tcsh):
+\small
+\begin{verbatim}
+[lxplus] setenv STAGE_HOST castorcms
+[lxplus] setenv STAGE_SVCCLASS default
+\end{verbatim}
+\normalsize
+Example (sh/zsh/bash):
+\small
+\begin{verbatim}
+lxplus# export STAGE_HOST=castorcms
+lxplus# export STAGE_SVCCLASS=default
+\end{verbatim}
+\normalsize
+
+\subsection{Online help and documentation}
+Most CASTOR commands and library calls are documented in 'man-pages', which are usually installed
+on the public clusters. The full set of installed CASTOR man-pages can be viewed with the
+command 'man -k castor'. The man-pages are also available on the web at
+http://cern.ch/castor/docs/guides/man/CASTOR2/ .
+
+\subsection{Listing files and directories in CASTOR}
+CASTOR name space can be viewed using the {\tt nsls} or {\tt rfdir} commands. Both commands
+use the same mechanism for talking to CASTOR but there are important differences:
+\begin{itemize}
+    \item {\tt nsls} can also list the tape residence ({\tt -T} option) and supports a
+          special mode-bit 'm' flagging that the file has been migrated to tape
+    \item {\tt rfdir} is a RFIO command and can therefore also be used to list local or
+          remote files. {\tt nsls} can {\em only} list CASTOR files
+\end{itemize}
+
+Example:
+\small
+\begin{verbatim}
+[lxplus] nsls -l /castor/cern.ch/user/l/linda
+mrw-r--r--   1 linda aa                 29194240 Mar 08  2004 thesis.tar
+mrw-r--r--   1 linda aa                 16723666 Jan 14  2004 muons.root
+mrw-r--r--   1 linda aa                     2496 Aug 12 10:06 logfile
+drwxr-xr-x 102 linda aa                        0 Jul 20 13:45 higgs
+[lxplus] rfdir /castor/cern.ch/user/l/linda
+-rw-r--r--   1 linda aa                 29194240 Mar 08  2004 thesis.tar
+-rw-r--r--   1 linda aa                 16723666 Jan 14  2004 muons.root
+-rw-r--r--   1 linda aa                     2496 Aug 12 10:06 logfile
+drwxr-xr-x 102 linda aa                        0 Jul 20 13:45 higgs
+[lxplus] rfdir .
+drwxr-xr-x   6 linda root                     4096 Oct 09  2003 private
+drwxr-xr-x  27 linda root                     4096 Aug 19 20:25 public
+-rw-r--r--   1 linda root                      547 Oct 19  2000 .login
+-rw-r--r--   1 linda root                     3905 Dec 10  1996 .profile
+-rw-r--r--   1 linda root                     6228 Sep 28  2004 .tcshrc
+-rw-r--r--   1 linda root                     2151 Dec 10  1996 .zprofile
+-rw-r--r--   1 linda root                     3436 Dec 10  1996 .zshenv
+-rw-r--r--   1 linda root                     4159 Dec 10  1996 .zshrc
+[lxplus] nsls -T /castor/cern.ch/user/l/linda/thesis.tar
+- 1   1 P16116    1663 00353758             29194240  0 /castor/cern.ch/user/l/linda/thesis.tar
+\end{verbatim}
+\normalsize
+
+\subsection{Manipulating files and directory hierarchy in CASTOR}
+CASTOR files can be renamed and/or moved between directories using the {\tt nsrename} or
+{\tt rfrename} commands. Example:
+\small
+\begin{verbatim}
+[lxplus] nsrename /castor/cern.ch/user/l/linda/muons.root /castor/cern.ch/user/l/linda/higgs-muons.root
+[lxplus] rfrename /castor/cern.ch/user/l/linda/higgs-muons.root /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+[lxplus] nsls -l /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+mrw-r--r--   1 linda aa                 16723666 Jan 14  2004  /castor/cern.ch/user/l/linda/higgs/higgs-muons.root
+[lxplus]
+\end{verbatim}
+\normalsize
+
+Removing a CASTOR file can be done using the {\tt nsrm} or {\tt rfrm} commands. Both commands
+support the {\tt -r} flag for recursively removing a whole directory tree. Be careful, it is
+normally very difficult or impossible to restore accidentally removed files. The {\tt nsrm}
+command supports a flag {\tt -i} by which it will ask for acknowledgement before removing a file.
+
+New directories can be created using the {\tt nsmkdir} or {\tt rfmkdir} commands. Both
+commands support the {\tt -p} option for recursive creation of non-existing directories. Example:
+\small
+\begin{verbatim}
+[lxplus] nsmkdir /castor/cern.ch/user/l/linda/higgs/muons/newtrigger
+cannot create /castor/cern.ch/user/l/linda/higgs/muons/newtrigger: No such file or directory
+[lxplus] nsmkdir -p /castor/cern.ch/user/l/linda/higgs/muons/newtrigger
+[lxplus]
+\end{verbatim}
+\normalsize
+
+\subsection{Copying files in and out of CASTOR}
+To store a local file into CASTOR the {\tt rfcp} command can be used. Example:
+\small
+\begin{verbatim}
+[lxplus] rfcp newHiggs.root /castor/cern.ch/user/l/linda/higgs/newHiggs.root
+24962346 bytes in 5 seconds through local (in) and eth0 (out)
+[lxplus]
+\end{verbatim}
+\normalsize
+
+To retrieve a file stored in CASTOR the {\tt rfcp} command or {\tt rfcat} commands
+can be used. Example:
+\small
+\begin{verbatim}
+[lxplus] rfcp /castor/cern.ch/user/l/linda/thesis.tar ./thesis.tar
+29194240 bytes in 7 seconds through eth0 (in) and local (out)
+[lxplus] rfcat /castor/cern.ch/user/l/linda/logfile >log
+[lxplus]
+\end{verbatim}
+\normalsize
+
+\subsection{Querying the stager and pre-staging of files}
+The {\tt stager} manages the CASTOR disk cache and is therefore vital for the access to a
+CASTOR file since it can only be accessed when it is on disk. If the file is not on disk the
+stager will recall the file from tape, which is an operation that can take several minutes up
+to hours. Any RFIO or ROOT command will block until the file is available on disk. For that
+reason it can be useful to know if the file is on disk before trying to access it. 
+The {\tt stager\_qry} command can be used to query the stager for the status of a particular 
+file or set of files. Example:
+\small
+\begin{verbatim}
+[lxplus] stager_qry -M /castor/cern.ch/user/l/linda/higgs/newHiggs.root
+Received 1 responses
+/castor/cern.ch/user/l/linda/higgs/newHiggs.root 1234567@castorns STAGED
+[lxplus] stager_qry -M /castor/cern.ch/user/l/linda/thesis.tar
+Received 1 responses
+Error 2/No such file or directory (File /castor/cern.ch/user/l/linda/thesis.ta not in given svcClass)
+[lxplus]
+\end{verbatim}
+\normalsize
+
+The service class (diskpool) specified with the {\tt STAGE\_SVCCLASS} environment variable is
+taken into account when querying for a file. The file may not be disk resident in the
+specified service class but still on disk in some other service class. To query for
+all service classes, the {\tt STAGE\_SVCCLASS} should be unset or specified to {\tt '*'}
+(make sure to escape or quote '*' since it may otherwise be expanded by the shell).
+
+The {\tt stager\_qry} command only queries the stager catalogue for a disk resident
+copy of the file.
+If the file is not on disk, it can be pre-staged using the {\tt stager\_get} command. The 
+{\tt stager\_get} is asynchronous - it merely sends the request to the stager, which acknowledges
+the reception of the request after which the command exits. The client can monitor the progress
+of the file becoming ready using the {\tt stager\_qry} command, example:
+\small
+\begin{verbatim}
+[lxplus] stager_get -M /castor/cern.ch/user/l/linda/thesis.tar
+Received 1 responses
+/castor/cern.ch/user/l/linda/thesis.tar SUBREQUEST_READY
+[lxplus] stager_qry -M /castor/cern.ch/user/l/linda/thesis.tar
+Received 1 responses
+/castor/cern.ch/user/l/linda/thesis.tar 12345@castorns STAGEIN
+[lxplus] 
+... wait a minute or so ...
+[lxplus] stager_qry -M /castor/cern.ch/user/l/linda/thesis.tar
+Received 1 responses
+/castor/cern.ch/user/l/linda/thesis.tar 12345@castorns STAGED
+[lxplus] rfcp /castor/cern.ch/user/l/linda/thesis.tar thesis.tar
+29194240 bytes in 7 seconds through eth0 (in) and local (out)
+[lxplus]
+\end{verbatim}
+\normalsize
+
+When tape queues are long or there are problems with a tape, the file may stay in {\bf STAGEIN}
+status forever. See \ref{sect:tapepbs} in the Advanced Usage chapter for more information how
+to find out about tape problems and tape queues.
+
+Both the {\tt stager\_qry} and {\tt stager\_get} commands supports multiple files to be specified
+on the command line. This is done by repeating the {\tt -M <castor-file>} option, example:
+\small
+\begin{verbatim}
+[lxplus] stager_get -M /castor/cern.ch/user/l/linda/thesis.tar -M /castor/cern.ch/user/l/linda/higgs/newHiggs.root
+Received 2 responses
+/castor/cern.ch/user/l/linda/higgs/thesis.tar SUBREQUEST_READY
+/castor/cern.ch/user/l/linda/higgs/newHiggs.root SUBREQUEST_READY
+\end{verbatim}
+\normalsize
+
+The {\tt stager\_qry} command also supports listing of directories and regular expressions.
+If the path ends with a slash ('/'), the {\tt stager\_qry} will return all files known to the
+stager in that directory, example:
+\small
+\begin{verbatim}
+[lxplus] stager_qry -M /castor/cern.ch/user/l/linda/
+Received 2 responses
+/castor/cern.ch/user/l/linda/higgs/thesis.tar STAGED
+/castor/cern.ch/user/l/linda/higgs/newHiggs.root STAGED
+\end{verbatim}
+\normalsize
+
+{\em The stager\_qry and stager\_get commands do not work with CASTOR1 stagers.}
+{\em The corresponding CASTOR1 commands are called 'stageqry' and 'stagein'.}
+

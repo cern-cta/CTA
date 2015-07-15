@@ -1,0 +1,82 @@
+\documentclass[a4paper]{jpconf}
+\usepackage{graphicx}
+\begin{document}
+\title{Streamlining CASTOR to manage the LHC data torrent}
+
+\author{G. Lo Presti, X. Espinal Curull, E. Cano, B. Fiorini, A. Ieri, S. Murray, S. Ponce and E. Sindrilaru}
+
+\address{CERN, 1211 Geneva 23, Switzerland}
+
+\ead{giuseppe.lopresti@cern.ch}
+
+
+\begin{abstract}
+This contribution describes the evolution of the main CERN storage system, CASTOR, as it manages the bulk data stream of the LHC and other CERN experiments, achieving over 90 PB of stored data by the end of LHC Run 1.
+This evolution was marked by the introduction of policies to optimize the tape sub-system throughput, going towards a cold storage system where data placement is managed by the experiments' production managers. More efficient tape migrations and recalls have been implemented and deployed where bulk meta-data operations greatly reduce the overhead due to small files. A repack facility is now integrated in the system and it has been enhanced in order to automate the repacking of several tens of petabytes, required in 2014 in order to prepare for the next LHC run. Finally the scheduling system has been evolved to integrate the internal monitoring.
+To efficiently manage the service a solid monitoring infrastructure is required, able to analyze the logs produced by the different components (about 1 kHz of log messages). A new system has been developed and deployed, which uses a transport messaging layer provided by the CERN-IT Agile Infrastructure and exploits technologies including Hadoop and HBase. This enables efficient data mining by making use of MapReduce techniques, and real-time data aggregation and visualization.
+The outlook for the future is also presented. Directions and possible evolution will be discussed in view of the restart of data taking activities.
+\end{abstract}
+
+
+\section{Introduction. The LHC Data Torrent}
+
+With the end of LHC Run 1, the data storage at CERN has marked the milestone of 100 PB. The Physics data represent the vast majority of these data, following an exponential trend that has seen the size of the stored data doubling every 19 months during the past 10 years (Figure \ref{fig:stats}). In this paper the main Physics data storage system, CASTOR (CERN Advanced STORage manager, \cite{castor}) is presented, which holds about 92 PB as of October 2013. The first section illustrates the evolution of the system as it specializes towards a Tape Archive solution. The second section shows the recent developments focused to streamline  service operations. The third section describes the new monitoring infrastructure that has been developed to perform  both real-time analysis of the system and data mining to extract long term trends. Finally, the future evolution is discussed in the last section.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=28pc]{global_statistics.png}
+\caption{\label{fig:stats}CASTOR usage over the past 10 years.}
+\end{center}
+\end{figure}
+
+\section{Specialization}
+
+Over the course of 2011 and 2012, the CASTOR service has addressed the Tier-0 data management requirements, focusing on a tape-backed storage solution, also known as the D0T1 ({\it Disk-0, Tape-1}) storage class. The primary goal has been to ensure smooth operations of the required experiments' work flows (data taking, reconstruction, export to other sites) as the experiments manage their data placement across the Storage Elements at the different sites.
+
+Therefore, the development efforts focused on providing specific features and improvements. The scheduling system now integrates the resource monitoring, for a more dynamic and more reactive usage of the underlying disk resources. This has enabled the support of read-only hardware, where storage nodes that need some level of maintenance (e.g. rebuilding RAIDs) make their data available without being exposed to the extra load of write operations. Strong authentication has been introduced at the namespace level, thus ensuring data protection. Finally, expanding the scope of a Tape Archive solution a prototype for the CERN AFS backup has been put in place with minimal operational efforts: a pool of 17 storage nodes provides 290 TB of disk space, compared to a current backup volume in the order of 10 to 20 TB per day, and on the other side represents less than 3\% of the installed disk capacity for CASTOR. AFS at CERN \cite{dss} \cite{afs} has recently evolved into a much larger general-purpose file system, and its legacy TSM-based backup process shows its limits as the data volume increases. The new solution includes an encryption step at the AFS nodes, which have enough spare CPU cycles to encrypt the data on the fly, and a subsequent streaming to CASTOR, where the provided disk capacity ensures that backup operations terminate in the required time frame with a double copy on tape.
+
+On the other hand, a consolidation effort has led to a significant simplification and reduction of the code base, as shown in Figure \ref{fig:loc}: with a release cycle of approximately one new release every 8 to 10 months, the last years have seen a consistent reduction in the number of C/C++ lines of code, whereas the figures for other languages did not increase significantly. This is justified both by the removal of legacy unused functionalities and by pushing the system business logic closer to the meta-data, or in other words by writing larger fractions of code in PL/SQL, thus fully exploiting the Oracle RDBMS engine CASTOR is based upon.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=23pc]{LoC_plot.png}
+\hspace{1pc}%
+\begin{minipage}[b]{12pc}
+\caption{\label{fig:loc}Lines-of-code counts for the most recent CASTOR releases.}
+\end{minipage}
+\end{center}
+\end{figure}
+
+
+\section{Streamlining Operations}
+
+As the main driver for new features has been the operations team, the CASTOR system has also evolved towards providing more maintainability and ultimately more dependability. The internal metadata processing has been redesigned in order to exploit bulk database interfaces. Now \textit{job} entities represent in the database any internal operation (e.g. replication of a disk copy to a different storage node, migration to tape, recall from tape). This had also the effect of lowering the per-file metadata overhead, which resulted in an increased overall throughput of the system. The system is now capable of sustaining 250 Hz of file write operations and 1 kHz of namespace operations compared to 120 Hz of file write operations of the previous version.
+
+Finally, the system features a repacking facility, which has been improved with the addition of an independent tape queuing system in order to handle several hundreds of tapes in an unattended way. At CERN, repack operations \cite{repack} are run on a dedicated disk staging area, which includes approximately 830 TB of usable disk space. This facility is foreseen to be used in the upcoming months as a large repack campaign will take place, where some 100 PB of data will be migrated to new media, requiring a steady 3.8 GB/s throughput in order to complete the migration prior to the restart of the data taking activities.
+
+
+\input{monitoring.tex}
+
+
+\section{Conclusions and Future Evolution}
+
+In this paper, the CASTOR system and its monitoring infrastructure have been described. Its evolution to being predominantly a tape archive storage solution has been shown, and will clearly identify the role of the CASTOR service during the LHC Run 2.
+
+A further simplification of the CASTOR system is foreseen. Among the currently supported protocols, RFIO, Root, GridFTP, and XRoot, the latter will take the role of the main native protocol instead of RFIO, while Root is about to be deprecated. GridFTP is gradually taken over by XRoot for the WAN transfers. The adoption of XRoot as the main file transfer protocol opens the possibility to exploit its upcoming features, including for instance the support of XRoot federations or the support of the HTTP protocol.
+On the other side, only few disk pools for each experiment would serve as staging areas for the Tier-0 work flow, thus allowing for further streamlining operational procedures.
+
+Finally, with the scaling of the storage nodes managed by the system, where larger and larger nodes providing nearly 100 TB of raw capacity are the building blocks of all storage systems, different hardware configurations are being considered to overcome the known limitations of RAID-0 configurations \cite{dss}. For instance, a foundation object-store-based layer may serve as a raw distributed storage, on top of which different storage services provide their specific features. To this end, \textit{Ceph} \cite{ceph} is being investigated as a possible solution for a disk backend for CASTOR, with the aim of disentangling low level disk operations from the service operations. Other services are expected to follow, with the aim to provide a consistent layered services architecture.
+
+
+\section*{References}
+
+\begin{thebibliography}{5}
+\bibitem{castor} The CASTOR web site, \textit{http://cern.ch/castor}
+\bibitem{dss} Espinal X et al., \textit{Disk storage at CERN: handling LHC data and beyond}, CHEP 2013, Amsterdam
+\bibitem{afs} Van der Ster D et al., \textit{Toward a petabyte-scale AFS service at CERN}, CHEP 2013, Amsterdam
+\bibitem{repack} Kruse D F, \textit{The Repack Challenge}, CHEP 2013, Amsterdam
+\bibitem{ceph} Van der Ster D et al., \textit{Building an organic block storage service at CERN with Ceph}, CHEP 2013, Amsterdam
+\end{thebibliography}
+
+
+\end{document}

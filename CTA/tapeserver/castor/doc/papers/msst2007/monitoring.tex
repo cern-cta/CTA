@@ -1,0 +1,53 @@
+Monitoring is an important component of CASTOR. It is used
+by the operations team, by the user community, and to aid in
+planning future resource allocation. This section presents a
+brief overview of the monitoring system, a detailed explanation is
+available in \cite{chepmon}.
+
+The CASTOR monitoring system queries the state of the system, in terms
+of performance and errors, in a variety of ways. We make use of DLF
+to centrally analyze logs from all machines within the
+system. SQL procedures are used on each instance database to provide
+status information to a variety of presentations systems.
+
+In addition to the CASTOR specific software, we make use of Computer
+Centre monitoring tools such as Lemon \cite{lemon}. For example, we
+make  use of \textit{Lemon actuators} which act as triggers for
+specific monitoring metrics. When specific conditions are met, actions
+are automatically  taken. These can range from restarting a daemon, to
+moving a disk server out of production, to sending a GSM SMS to a
+service manager.
+
+The monitoring of resource utilization provides accounting information
+that is used for planning the allocation of resources. We
+record information about the number of requests per second to the
+stager, the number of files in the system and their status, disk and
+tape space usage and a cornucopia of other information.
+
+To make ensure system consistency, checking mechanisms are used
+for configuration and for data consistency. The
+{\bf castorReconcile} package has been developed to present  information
+from the CASTOR database, the scheduling subsystem, the state
+management system, and others. It provides  a summary of each instance
+so that all information about a problem machine can be seen in a
+single place, and the state of all machines in an instance can be seen
+at a glance. In addition, we have software which periodically scans
+all the file systems and compare the file metadata on the disk servers
+with the status described by the stager database to detect
+deviations. This detects problems, such as orphaned files, missing
+disk copies, size mismatches and misplaced files. It is planned to add
+checksums to this to verify the integrity of files.
+
+\subsection{Monitoring Evolution}
+
+Initially CASTOR monitoring was fully integrated with the monitoring
+system used at CERN. However, to aid deployment at other sites, since
+2006 we have made the software more independent of the monitoring tool
+used for aggregation, transport and display of the information.  To
+achieve this we run as much monitoring as possible at the database
+layer, where SQL procedures aggregate information and make it
+available to various display systems.  This feature has increased the
+monitoring systems flexibility and  efficiency, and has also resulted
+in our sensors becoming  predominantly thin clients. These thin
+clients can easily be  developed for other monitoring systems.
+

@@ -1,0 +1,29 @@
+
+The CASTOR system supports a number of protocols by means of \textit{movers}.
+Movers implement the data transfer protocols used
+to access data on the diskservers as well as on the tertiary storage.
+We classify movers as internal and external. Internal movers are integrated 
+with CASTOR and used as native protocols. In addition, they are able to deal with CASTOR TURLs, 
+i.e. TURLs which refer to files in the CASTOR namespace (for instance,
+\texttt{protocol://diskserver:port//castor/cern.ch/...}). The protocols included in
+this category are RFIO, ROOT, XROOT, and GridFTPv2. On the other hand, external 
+movers contact CASTOR exclusively via the public client API, and they 
+don't handle CASTOR TURLs. GridFTPv1 is included in this category.\\
+
+RFIO is the original native CASTOR protocol, and it provides a POSIX compliant file I/O API interface,
+which includes functions like \textit{rfio\_open(), rfio\_read(), rfio\_lseek(), rfio\_stat()}, etc.
+RFIO, ROOT and GridFTP v2 are scheduled to start on a disk server for each file access. The I/O transfer with
+the client is handled by the mover, which is spawned on demand to connect to the client according
+to the requested protocol. The mover is authorized to deal with the scheduled request only,
+preventing clients from misbehaviours against the disk cache content.
+
+XROOT is able to handle concurrent file accesses using a single access
+from the CASTOR point of view. It also keeps a catalogue with
+the physical file location, so that future accesses to the same file won't need
+another operation on the CASTOR system. Moreover, while RFIO and ROOT are
+provided by all diskservers, XROOT is typically deployed on a dedicated disk pool,
+so that a double disk cache level can be implemented.\\
+
+GridFTP v1 is an external mover and GridFTP v2 can behave as
+an external mover as well. They run on the disk servers independently from CASTOR,
+and they use RFIO as an internal mover to access the data and serve the GridFTP clients.
