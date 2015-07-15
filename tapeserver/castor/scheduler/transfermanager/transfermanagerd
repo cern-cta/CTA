@@ -1,0 +1,785 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   transfermanagerd.py
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * transfer manager of the CASTOR project
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+"""transfer manager daemon of CASTOR."""
+
+import sys, getopt, socket, daemon, Queue
+import rpyc, rpyc.utils.server
+import castor_tools, connectionpool, dispatcher, serverqueue, aborter
+from commonexceptions import TransferCanceled, TransferFailed
+import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
+import dlf
+from transfermanagerdlf import msgs
+from transfer import tupleToTransfer, TransferType
+import cx_Oracle
+
+# usage function
+def usage(exitCode):
+  '''prints usage'''
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground]'
+  sys.exit(exitCode)
+
+# first parse the options
+daemonize = True
+verbose = False
+try:
+  options, arguments = getopt.getopt(sys.argv[1:], 'hfv', ['help', 'foreground', 'verbose'])
+except Exception, parsingException:
+  print parsingException
+  usage(1)
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-f' or f == '--foreground':
+    daemonize = False
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
+# get configuration
+try:
+  configuration = castor_tools.castorConf()
+except ValueError, ex:
+  print ex
+  sys.exit(1)
+
+# If any arg, complain and stop
+if len(arguments) != 0:
+  print "Unknown arguments : " + ' '.join(arguments) + "\n"
+  usage(1)
+
+def extendedSum(t):
+  '''behaves like sum for tuples of numbers but is also able to handle a special case of
+  tuples of tuples where each item has this format :
+    (('key1', value), ...)
+  In such a case, the resulting tuple will contain every key present in any of the original tuples
+  and for each key, the sum of the values for this key in the different tuples'''
+  if len(t) == 0:
+    return 0
+  if isinstance(t[0], int) or t[0] == '-':
+    return sum(t)
+  dt = [dict(item) for item in t]
+  keys = reduce(lambda a, b: a|set(b), [set()] + dt)
+  return tuple((n, sum([d.get(n, 0) for d in dt])) for n in keys)
+
+class TransferManagerService(rpyc.Service):
+  '''This service is responsible for answering all requests made to the scheduler.
+  There are mainly 2 kinds : monitoring requests and callbacks from the diskservers'''
+
+  # prepare a pool of connections to the stager DB
+  _stagerConnectionPool = Queue.Queue()
+  for t_unused in range(configuration.getValue('TransferManager', 'NbDatabaseConnections', 5, int)):
+    c = castor_tools.connectToStager()
+    c.autocommit = True
+    _stagerConnectionPool.put(c)
+
+  def __init__(self, conn):
+    '''constructor'''
+    rpyc.Service.__init__(self, conn)
+
+  def getDbConnection(cls):
+    '''returns a connection to the stager DB out of a pool. If the pool is busy,
+    it waits until a connection is freed. The connection must be released back to the
+    pool by calling releaseDbConnection.'''
+    return cls._stagerConnectionPool.get(True)
+  getDbConnection = classmethod(getDbConnection)
+
+  def releaseDbConnection(cls, conn):
+    '''Release a stager DB connection back to the pool'''
+    cls._stagerConnectionPool.put(conn)
+  releaseDbConnection = classmethod(releaseDbConnection)
+
+  def dispatch(self, func, pool, *args):
+    '''gather the results of the call to func for all diskServers'''
+    res = {}
+    dslist = diskserverlistcache.diskServerList.getlist()
+    if pool != None:
+      if pool in dslist:
+        dslist = {pool : dslist[pool]}
+      else:
+        dslist = {}
+    for pool in dslist:
+      res[pool] = {}
+      for ds in dslist[pool]:
+        try:
+          # call the function on the appropriate diskserver
+          res[pool][ds] = getattr(connectionpool.connections, func)(ds, *args)
+        except Exception, e:
+          # 'Could not contact diskserver' message
+          dlf.writenotice(msgs.COULDNOTCONTACTDS, Function=func, DiskServer=ds,
+                          Type=str(e.__class__), Message=str(e))
+          # fill dictionary with None value
+          res[pool][ds] = None
+    return res
+
+  def exposed_nbTransfersPerPool(self, pool=None, user=None):
+    '''returns the number of unique transfers pending on the pool given (or all pools)
+    for the given user (or all users). Only tansfers handled by this transfer manager
+    are reported'''
+    return tuple(queueingTransfers.nbTransfersPerPool(pool, user).items())
+
+  def exposed_listLocalPendingTransfersCentrally(self, pool=None, user=None):
+    '''lists the pending transfers known by this headnode per pool for a given pool and user'''
+    return tuple(queueingTransfers.listTransfers(pool, user))
+
+  def _computeNbTransfersPerPool(self, pool=None, user=None):
+    '''internal method to compute the number of unique transfers pending per pool
+    accross all transfer managers. For this purpose, it contacts all running transfer
+    managers and sums up the results. Results can be restricted to a given pool and a
+    given user'''
+    nbTransfersPerPool = {}
+    # get the timeout to be used
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # go through all schedulers
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+      try:
+        for pool, n in connectionpool.connections.nbTransfersPerPool(scheduler, pool,
+                                                                     user, timeout=timeout):
+          if pool not in nbTransfersPerPool:
+            nbTransfersPerPool[pool] = 0
+          nbTransfersPerPool[pool] = nbTransfersPerPool[pool] + n
+      except Exception, e:
+        # 'Could not contact transfer manager' message
+        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='_computeNbTransfersPerPool', TransferManager=scheduler,
+                        Type=str(e.__class__), Message=str(e))
+        raise IOError(0, 'Could not contact transfer manager on %s' % scheduler,
+                      'See transfermanagerd\'s log for details')
+    return nbTransfersPerPool
+
+  def exposed_listPendingTransfersCentrally(self, pool=None, user=None):
+    '''lists the pending transfers per pool for a given pool and user, as seen by the
+    transfer managers, without connecting to the diskservers'''
+    transfers = []
+    # get the timeout to be used
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # go through all schedulers
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+      try:
+        transfers += connectionpool.connections.listLocalPendingTransfersCentrally(scheduler, pool,
+                                                                                   user, timeout=timeout)
+      except Exception, e:
+        # 'Could not contact transfer manager' message
+        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
+                        TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
+        transfers.append((None, scheduler))
+    return tuple(transfers)
+
+  def _checkPool(self, pool):
+    '''Checks whether the given pool exists. Raises an exception if not'''
+    conn = self.__class__.getDbConnection()
+    try:
+      stcur = conn.cursor()
+      stcur.execute("SELECT name FROM DiskPool WHERE name = :pool", pool=pool)
+      rows = stcur.fetchall()
+      stcur.close()
+      if not rows:
+        raise ValueError('No pool found with name %s' % pool)
+    except Exception, e:
+      conn.checkForReconnection(e)
+      raise e
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_summarizeTransfersPerPool(self, pool=None, user=None, detailed=False):
+    '''summarizes the number of running and pending transfers per pool for a given pool and user.
+    Returns a pair containing :
+      - a tuple of tuples, with the pool name as first item, then a list of data that depends
+    on the status of the pool and on the value of the the detailed parameter.
+      - a tuple of errors
+    If the pool is unknown or has no hosts in it, then only the pool name is present
+    in each tuple of the first element.
+    Else the number of unique transfers in the pool plus all values returned by each diskmanagerd
+    summed up by pool are added to each tuple after the disk pool name. This last set varies depending
+    on the detailed parameter.
+    The exact format of the returned tuple for each non empty and existing pool if detailed is False is :
+     (poolName, nbUniqueQueueingTransfers, nbslots,
+                nbQueueingTransfers, nbQueueingSlots,
+                nbRunningTransfers, nbRunningSlots, (<list of unreachable machine names>))
+    If detailed is True, then it is :
+     (poolName, nbUniqueQueueingTransfers, nbslots,
+                nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+                nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+                nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+                nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
+                (<list of unreachable machine names>))'''
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, Pool=pool, Username=user, Detailed=detailed)
+    if pool:
+      self._checkPool(pool)
+    # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
+    nbs = self.dispatch('summarizeTransfers', pool, user, detailed)
+    errorMsg = ''
+    # get the number of unique transfers running per pool
+    try:
+      nbtransfersPerPool = self._computeNbTransfersPerPool(pool, user)
+    except IOError, e:
+      nbtransfersPerPool = None
+      errorMsg = str(e)
+    # flatten all data to a list of (pool, (values))
+    res = []
+    for pool in nbs:
+      if len(nbs[pool]) > 0:
+        # deal with special cases for the nbtransfersPerPool
+        if nbtransfersPerPool == None:
+          # case where we have no data for the pool
+          nbtransfers = '-'
+        elif pool not in nbtransfersPerPool:
+          # case where the pool has no diskserver
+          nbtransfers = 0
+        else:
+          # regular case
+          nbtransfers = nbtransfersPerPool[pool]
+        # check whether we have all data we need for the pool
+        unreachableMachines = [m for m in nbs[pool] if nbs[pool][m] == None]
+        # append an item to the result set
+        if len(unreachableMachines) < len(nbs[pool]):
+          data = [extendedSum(item) for item in zip(*[item for item in nbs[pool].values() if item])]
+        else:
+          if detailed:
+            data = [0, 0, (), 0, (), 0, (), 0, ()]
+          else:
+            data = [0, 0, 0, 0, 0]
+        res.append(tuple([pool, nbtransfers] + data + [tuple(unreachableMachines)]))
+      else:
+        res.append((pool,))
+    return (tuple(res), errorMsg)
+
+  def exposed_summarizeTransfersPerHost(self, pool=None, user=None, detailed=False):
+    '''summarizes the number of running and pending transfers per host for a given pool and user.
+    Returns a tuple of tuples, with the host name as first item, then a list of data that depends
+    on the value of the detailed parameter.
+    The exact format of the returned tuple for each host if detailed is False is :
+     (hostName, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+    If detailed is True, then it is :
+     (hostName, nbslots, nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+                         nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+                         nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+                         nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERHOST, Pool=pool, Username=user, Detailed=detailed)
+    if pool:
+      self._checkPool(pool)
+    # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
+    hosts = self.dispatch('summarizeTransfers', pool, user, detailed)
+    # flatten it to a list of (diskserver, (values))
+    if hosts:
+      hostslist = reduce(lambda x, y: x+y, [pool.items() for pool in hosts.values()])
+    else:
+      hostslist = []
+    # return a tuple of (diskserver, value1, value2, ...), or (diskserver, None) in case we got
+    # no list for a given diskserver
+    res = []
+    for host in hostslist:
+      if host[1]:
+        res.append(tuple([host[0]]+list(host[1])))
+      else:
+        res.append((host[0], '-'))
+    return tuple(res)
+
+  def exposed_listRunningTransfers(self, pool=None, user=None):
+    '''lists the running transfers per pool for a given pool and user'''
+    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Pool=pool)
+    if pool:
+        self._checkPool(pool)
+    transfers = self.dispatch('listRunningTransfers', pool, user)
+    res = []
+    for pool in transfers:
+      for ds in transfers[pool]:
+        if transfers[pool][ds] != None:
+          for transferId, fileid, scheduler, user, status, transfertype, arrivalTime, \
+              startTime in transfers[pool][ds]:
+            res.append((transferId, fileid, scheduler, user, status, pool, ds,
+                        transfertype, arrivalTime, startTime))
+        else:
+          res.append((None, ds))
+    return tuple(res)
+
+  def _killtransfers(self, method, arg):
+    '''internal method handling transfer killing. This is called from
+    exposed_killalltransfers/killtransfers with the proper internal method and argument.
+    It calls it on all schedulers and then handles the update of the stager DB'''
+    # get the admin timeout
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # call the internal method on all schedulers (including ourselves)
+    killedtransfers = []
+    killedtransferIds = []
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+      for transferTuple in getattr(connectionpool.connections, method)(scheduler, arg, timeout=timeout):
+        transfer = tupleToTransfer(transferTuple)
+        # for the transfers actually killed (and only once per transfer
+        if transfer.transferId not in killedtransferIds:
+          # Remember to fail the transfer in the stager DB with ESTKILLED error code
+          killedtransferIds.append(transfer.transferId)
+          killedtransfers.append((transfer.transferId, transfer.fileId, 1713,
+                                  'Transfer killed by admin', transfer.reqId))
+    # update stagerDB
+    self.exposed_transfersKilled(killedtransfers)
+
+  def exposed_killalltransfers(self, user=None):
+    '''killalltransfers removes all transfers from all queues on all servers and diskservers'''
+    dlf.writedebug(msgs.INVOKINGKILLALLTRANSFERS, Username=user)
+    # call the internal method
+    self._killtransfers('killalltransfersinternal', user)
+
+  def exposed_killtransfers(self, transferIds):
+    '''killtransfers removes given transfers from all queues on all servers and diskservers'''
+    for transferId in transferIds:
+      dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, subreqId=transferId)
+    # call the internal method
+    self._killtransfers('killtransfersinternal', transferIds)
+
+  def exposed_killalltransfersinternal(self, user):
+    '''killalltransfersinternal removes all transfers from the queues handled by this scheduler.
+    Return a tuple of (transferId, file) tuples for the transfers actually removed'''
+    dlf.writedebug(msgs.INVOKINGKILLALLTRANSFERSINTERNAL, Username=user)
+    return tuple([transfer.asTuple() for transfer in queueingTransfers.removeall(user)])
+
+  def exposed_killtransfersinternal(self, transferIds=None):
+    '''killtransfersinternal removes transfers from the queues handled by this scheduler.
+    Return a tuple of (transferId, file) tuples for the transfers actually removed'''
+    for transferId in transferIds:
+      dlf.writedebug(msgs.INVOKINGKILLTRANSFERSINTERNAL, subreqId=transferId)
+    return tuple([transfer.asTuple() for transfer in queueingTransfers.removeAnyType(transferIds)])
+
+  def exposed_transfersKilled(self, transfers):
+    '''informs the stager that these transfers have been killed'''
+    transferIds, errnos, errmsgs = [], [], []
+    for transferId, fileId, errno, errmsg, reqId in transfers:
+      dlf.writedebug(msgs.INVOKINGTRANSFERSKILLED, subreqId=transferId,
+                     reqId=reqId, fileid=fileId, Errno=errno, ErrorMessage=errmsg)
+      transferIds.append(transferId)
+      errnos.append(errno)
+      errmsgs.append(errmsg)
+    # only inform the stager
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        stcur = conn.cursor()
+        stcur.arraysize = 50
+        stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferIds, errnos, errmsgs])
+        stcur.close()
+      except Exception, e:
+        for transferId, fileId, errno, errmsg, reqId in transfers:
+          # "Exception caught while failing transfer" message
+          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqId=transferId,
+                       reqId=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e), OriginalErrorMsg=errmsg, OriginalErrno=errno)
+        # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_transfersCanceled(self, transfers):
+    '''cancels transfers in the queues and informs the stager in case there is no
+    remaining machines where it could run'''
+    # first cancel transfers in the queue
+    transferskilled = queueingTransfers.transfersCanceled(transfers)
+    # for those that are really over, inform the stager
+    if transferskilled:
+      self.exposed_transfersKilled(transferskilled)
+
+  def exposed_transferBackToQueue(self, transferTuple):
+    '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqId=transfer.transferId,
+                   fileid=transfer.fileId, transferType=TransferType.toStr(transfer.transferType),
+                   diskServer=transfer.diskServer)
+    queueingTransfers.put(transfer, True)
+
+  def exposed_getQueueingTransfers(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
+    dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listQueueingTransfers(diskserver))
+
+  def exposed_getRunningD2dSourceTransfers(self, diskserver):
+    '''called on the (re)start of the diskManager to rebuild the list of running d2dsrc transfers'''
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listRunningD2dSources(diskserver))
+
+  def exposed_getRunningD2dSourceTransferIds(self, diskserver):
+    '''called to synchronize list of running d2dsrc transfers on
+       he diskservers to the one know to the transfermanager'''
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCETRANSFERIDS, DiskServer=diskserver)
+    return tuple(queueingTransfers.listRunningD2dSourcesIds(diskserver))
+
+  def exposed_getAllRunningD2dSourceTransfers(self):
+    '''called by synchronization to list running d2dsrc transfers'''
+    dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)
+    return tuple(queueingTransfers.listAllRunningD2dSources())
+
+  def exposed_d2dendsrc(self, transferId):
+    '''called when a d2dsrc should be informed that transfer is over'''
+    dlf.writedebug(msgs.INVOKINGD2DENDSRC, subreqid=transferId)
+    queueingTransfers.d2dendById(transferId)
+
+  def exposed_transferStarting(self, transferTuple):
+    '''called when a transfer started on a given diskserver'''
+    # first log something
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, diskServer=transfer.diskServer,
+                   mountPoint=transfer.mountPoint, subreqId=transfer.transferId,
+                   reqId=transfer.reqId, transferType=TransferType.toStr(transfer.transferType))
+    # handle the queuing part
+    srcTransfer = queueingTransfers.transferStarting(transfer)
+    if transfer.transferType == TransferType.D2DSRC:
+      # that's it, nothing to do with the db
+      return None
+    # finally (if no exception), call the DB
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        stcur = conn.cursor()
+        if transfer.transferType == TransferType.D2DDST:
+          # deal with disk-to-disk copies
+          srcDcPath = stcur.var(cx_Oracle.STRING)
+          destDcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;",
+                        (transfer.transferId, transfer.fileId[1], transfer.fileId[0],
+                         transfer.diskServer, transfer.mountPoint,
+                         srcTransfer.diskServer, srcTransfer.mountPoint,
+                         destDcPath, srcDcPath))
+          stcur.close()
+          return srcDcPath.getvalue(), destDcPath.getvalue()
+        elif transfer.transferType == TransferType.STD and transfer.flags == 'r':
+          # deal with user read transfers
+          dcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN getStart(:1, :2, :3, :4); END;",
+                        (transfer.transferId, transfer.diskServer, transfer.mountPoint, dcPath))
+          stcur.close()
+          return dcPath.getvalue()
+        elif transfer.transferType == TransferType.STD and transfer.flags == 'w':
+          # deal with user write transfers
+          dcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN putStart(:1, :2, :3, :4); END;",
+                        (transfer.transferId, transfer.diskServer, transfer.mountPoint, dcPath))
+          stcur.close()
+          return dcPath.getvalue()
+        else:
+          # this is not acceptable
+          raise TransferCanceled('Invalid transferType %d for transfer: %s' \
+                                 % (transfer.transferType, transfer.transferId))
+      except Exception, e:
+        # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+        # detect special error where the client can give up
+        if isinstance(e, cx_Oracle.Error):
+          error, = e.args
+          if isinstance(error, cx_Oracle._Error):
+            errorcode = error.code
+            if errorcode == 20110:  # disk2DiskCopyStart DB errors
+              # cleanup source
+              queueingTransfers.d2dendById(transfer.transferId)
+              # raise exception to tell the upper layer to give up
+              raise TransferCanceled(error.message)
+            elif errorcode in (20104, 20114):  # getStart, putStart DB errors
+              # raise exception to tell the upper layer to give up
+              raise TransferFailed(error.message)
+        # otherwise reraise for the upper layer
+        raise e
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_transferEnded(self, transferTuple):
+    '''called when user transfers are over. Responsible for updating the stager and nameserver DB.
+       Note that we don't use the transfer class here.'''
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        stcur = conn.cursor()
+        stcur.arraysize = 1
+        # get the arguments
+        transferId, reqId, fileId, flags, fileSize, mTime, cksumType, cksumValue, errCode, errMsg = transferTuple
+        dlf.writedebug(msgs.INVOKINGTRANSFERENDED, flags=flags, subreqId=transferId, reqId=reqId, fileid=fileId,
+                       fileSize=fileSize, errCode=errCode, errMsg=errMsg)
+        # internal Oracle variables for the INOUT parameters
+        _errMsg = stcur.var(cx_Oracle.STRING)
+        _errMsg.setvalue(0, errMsg)
+        _errCode = stcur.var(cx_Oracle.NUMBER)
+        _errCode.setvalue(0, 0 if errCode == None else errCode)
+        if flags == 'r':
+          stcur.execute("BEGIN getEnded(:1, :2, :3); END;", (transferId, _errCode, _errMsg))
+        elif flags == 'w':
+          stcur.execute("BEGIN putEnded(:1, :2, :3, :4, :5, :6, :7); END;", \
+                        (transferId, fileSize, mTime, cksumType, cksumValue, _errCode, _errMsg))
+        else:
+          # this is not acceptable
+          raise ValueError('Invalid flags %c for transfer %s' % (flags, transferId))
+        # close cursor
+        stcur.close()
+        return _errCode.getvalue(), _errMsg.getvalue()
+      except Exception, e:
+        transferId, reqId, fileId, flags, fileSize, mTime, cksumType, cksumValue, errCode, errMsg = transferTuple
+        # "Exception caught while ending transfer" message
+        dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId, flags=flags,
+                     reqid=reqId, fileid=fileId, originalErrCode=errCode, originalError=errMsg,
+                     Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+        # and raise to the caller
+        raise e
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_d2dEnded(self, transferTuples):
+    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d.
+       Note that we don't use the transfer class here.'''
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        stcur = conn.cursor()
+        stcur.arraysize = 50
+        # loop over the transfers to be ended
+        for transferId, reqId, fileId, diskServerName, localPath, fileSize, checksum, errCode, errMsg in transferTuples:
+          dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
+                         path=localPath, size=fileSize, checksum=checksum, errCode=errCode, errMsg=errMsg)
+          # cleanup source in our queues
+          queueingTransfers.d2dendById(transferId)
+          # then end them in the stager DB, allowing retry (the 1 in 5th place)
+          # the order is important as the synchronizer will remove d2dsrc with no entry in the DB
+          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5, :6, :7); END;",
+                        (transferId, diskServerName, localPath, fileSize, checksum, errCode, errMsg))
+        # close cursor
+        stcur.close()
+      except Exception, e:
+        for transferId, reqId, fileId, diskserverName, localPath, fileSize, checksum, errCode, errMsg in transferTuples:
+          # "Exception caught while ending transfer" message
+          dlf.writeerr(msgs.ENDTRANSFEREXCEPTION, subreqid=transferId,
+                       reqid=reqId, fileid=fileId, diskserver=diskserverName,
+                       path=localPath, originalErrCode=errCode, originalError=errMsg,
+                       Type=str(e.__class__), Message=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_drain(self):
+    '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
+    but no new work is taken'''
+    dlf.writedebug(msgs.INVOKINGDRAIN)
+    # go to drain mode, where only the main service stays up and we do not take any new requests
+    # then wait for the end of ongoing requests and stop the daemon
+    drain()
+
+  def exposed_syncRunningTransfers(self, diskserver, runningTransfers):
+    '''synchronizes the stager database with the reality of jobs running on a given machine.
+    This is called at the restart of the diskserver manager daemon so that the jobs that may
+    have been killed while no daemon was running are properly terminated.'''
+    dlf.writedebug(msgs.INVOKINGSYNCRUN)
+    try:
+      conn = self.__class__.getDbConnection()
+      try:
+        # connect to the DB and call the proper PL/SQL procedure
+        stcur = conn.cursor()
+        stcur.arraysize = 50
+        respcur = conn.cursor()
+        respcur.arraysize = 50
+        stcur.execute("BEGIN syncRunningTransfers(:1, :2, :3); END;", [diskserver, list(runningTransfers), respcur])
+        terminatedtransfers = respcur.fetchall()
+        stcur.close()
+        respcur.close()
+        # log the termination of the terminated transfers
+        for transferId, reqId, fileid, nsHost in terminatedtransfers:
+          # 'Transfer was marked as failed in stager DB after it disappeared from the diskserver' message
+          dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqId=transferId, reqId=reqId, fileid=(nsHost, fileid))
+      except Exception, e:
+        # "Exception caught while synchronizing running transfers, giving up with synchronization" message
+        dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+  def exposed_stateReport(self, report):
+    '''called by diskservers to report their state. Passes the report over to the ReportManager
+       that will handle it and ultimately update the stager database.
+       Returns the status of the diskserver and all its fileSystems'''
+    reportmanager.handleStateReport(report)
+
+  def exposed_modifyDiskServers(self, targets, state, mountPoints, pool, dataPool, isRecursive):
+    '''called by the modifydiskserver CLI to modify a set of diskservers. Returns a user-friendly message .'''
+    dlf.write(msgs.INVOKINGMODIFYDISKSERVERS, Targets=str(targets), State=state, MountPoints=str(mountPoints))
+    try:
+      try:
+        conn = self.__class__.getDbConnection()
+        return modifydiskservers.modifyDiskServers(conn, targets, state, mountPoints, pool, dataPool, isRecursive)
+      except Exception, e:
+        # "Exception caught while modifying diskserver(s), giving up" message
+        dlf.writenotice(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), Pool=pool, DataPool=dataPool)
+        # check whether we should reconnect to DB, and do so if needed
+        conn.checkForReconnection(e)
+        raise e
+    finally:
+      self.__class__.releaseDbConnection(conn)
+
+
+def initQueues():
+  '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''
+  dlf.write(msgs.INITQUEUES)
+  # get the timeout to be used
+  timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+  # loop through diskservers
+  dslist = diskserverlistcache.diskServerList.getlist()
+  for pool in dslist:
+    for ds in dslist[pool]:
+      try:
+        # first list the running d2dsrc transfers
+        dlf.write(msgs.INITQUEUELISTRUNNING, DiskServer=ds, timeout=timeout)
+        for transferTuple in connectionpool.connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
+          queueingTransfers.putRunningD2dSource(tupleToTransfer(transferTuple))
+        # then list queueing transfers
+        dlf.write(msgs.INITQUEUELISTPENDING, DiskServer=ds, timeout=timeout)
+        for transferTuple in connectionpool.connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
+          queueingTransfers.put(tupleToTransfer(transferTuple))
+      except Exception, e:
+        # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
+        # 'No queue could be retrieved' message
+        dlf.writenotice(msgs.NOQUEUERETRIEVED, DiskServer=ds, Type=str(e.__class__), Message=str(e))
+  dlf.write(msgs.INITQUEUESENDED)
+
+def drain(wait=False):
+  '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
+  Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon.
+  In case the wait argument is true, wait for this thread to be over'''
+  # first stop threads handling new requests, aborts, synchronization and reports
+  # note that these threads may not be defined yet. In such a case, a NameError will be raised
+  # and caught by the corresponding except
+  try:
+    reportManagerThread.stop()
+    reportManagerThread.join()
+  except Exception:
+    pass
+  try:
+    userDispatchThread.stop()
+    userDispatchThread.join()
+  except Exception:
+    pass
+  try:
+    d2dDispatchThread.stop()
+    d2dDispatchThread.join()
+  except Exception:
+    pass
+  try:
+    abortThread.stop()
+    abortThread.join()
+  except Exception:
+    pass
+  try:
+    synchroThread.stop()
+    synchroThread.join()
+  except Exception:
+    pass
+  # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
+  # again ignore NameError exceptions in case the transfermanager service was not created
+  try:
+    suicideThread = suicider.SuiciderThread(transfermanager)
+    # wait in the suicide if needed
+    if wait:
+      suicideThread.join()
+  except NameError:
+    pass
+
+import signal
+def handler(signum, _unused_frame):
+  '''signal handler for the transfer manager daemon, only logging and calling sys.exit'''
+  # 'Received signal' message
+  dlf.write(msgs.SIGNALRECEIVED, Signal=signum)
+  sys.exit()
+signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGINT, handler)
+
+# Note that from python 2.5 on, the daemonization should use the "with" statement :
+# with daemon.DaemonContext():
+#   rest of the code
+if daemonize:
+  context = daemon.DaemonContext(working_directory='/var/log/castor/',
+                                 detach_process=True,
+                                 prevent_core=False)
+  context.__enter__()
+drainOnExit = False
+try:
+  try:
+    # setup logging
+    dlf.init('transfermanagerd')
+    # 'TransferManager Daemon started'
+    dlf.write(msgs.TRANSFERMANAGERDSTARTED)
+    # a dictionnary holding the list of transfers submitted by us and still queueing for each diskserver
+    queueingTransfers = serverqueue.ServerQueue()
+    # initialize the queues of pending and running transfers using the knowledge of the diskservers
+    initQueues()
+    # from now on, we want to drain if we exit
+    drainOnExit = True
+    # defines a service listening for monitoring queries and answering them
+    transfermanager = rpyc.utils.server.ThreadPoolServer \
+      (TransferManagerService,
+       port=configuration.getValue('TransferManager', 'Port', 15011, int),
+       auto_register=False,
+       nbThreads=configuration.getValue('TransferManager', 'NbRpycThreads', 20, int))
+    transfermanager.daemon = True
+    # launch a report manager thread, handling reports from diskservers about their state and
+    # updating the stager DB regularly
+    reportManagerThread = reportmanager.ReportManagerThread()
+    # launch processing threads that will regularly check if we need to schedule new transfers
+    # and dispatch them on the relevant diskservers
+    nbWorkers = configuration.getValue('TransferManager', 'NbWorkers', 5, int)
+    userDispatchThread = dispatcher.UserDispatcherThread(queueingTransfers, nbWorkers)
+    d2dDispatchThread = dispatcher.D2DDispatcherThread(queueingTransfers, nbWorkers)
+    # launch a processing thread that will regularly check if there are transfers to abort
+    abortThread = aborter.AborterThread()
+    # launch a processing thread that will regularly synchronize the stager DB with the running
+    # transfers, meaning that it will check that transfers running for already long according to the DB
+    # are effectively still running. If they are not, is will update the DB accordingly
+    synchroThread = synchronizer.SynchronizerThread(queueingTransfers)
+    # starts listening
+    transfermanager.start()
+  except SystemExit:
+    # we are exiting, fine
+    pass
+  except Exception, unexpectedException:
+    # 'Caught unexpected exception, exiting' message
+    print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
+    if verbose:
+      import traceback
+      traceback.print_exc()
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
+    raise
+finally:
+  # clean up all connections and threads that may be running
+  try:
+    connectionpool.connections.closeall()
+  except Exception:
+    pass
+  # drain will stop the dispatch, abort and synchro threads
+  # it will launch a Suicider thread that will end the transfer manager once
+  # all calls have been handled
+  if drainOnExit:
+    drain(True)
+  # if we are a daemon, call __exit__
+  if daemonize:
+    try:
+      context.__exit__(None, None, None)
+    except Exception:
+      pass
+  # 'TransferManager Daemon stopped'
+  dlf.write(msgs.TRANSFERMANAGERDSTOPPED)
+  dlf.shutdown()

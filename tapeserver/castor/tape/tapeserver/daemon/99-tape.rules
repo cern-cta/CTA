@@ -1,0 +1,4 @@
+# Udev rules setting the permissions on the tape device files for CASTOR's 
+# tapeserverd operations.
+
+KERNEL=="nst*", GROUP="st"

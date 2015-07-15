@@ -1,0 +1,23 @@
+/var/log/castor/stagerd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+    postrotate
+        /bin/kill -^CP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -^CP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
+
+/var/log/castor/repackd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+    postrotate
+        /bin/kill -^CP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -^CP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}

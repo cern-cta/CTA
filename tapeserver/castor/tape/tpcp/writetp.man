@@ -1,0 +1,97 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH WRITETP "1castor" "$Date: 2009/08/14 14:04:25 $" CASTOR "CASTOR"
+.SH NAME
+writetp \- write files to the end a tape
+.SH SYNOPSIS
+.BI "writetp VID [OPTIONS] [FILE]..."
+
+.SH DESCRIPTION
+.B writetp
+appends one or more files from a local file system to the end of a tape.
+.P
+This command gives privileged users direct access to the tape system.
+.P
+The tape to be written is specified by the \fBVID\fP argument.
+The file names of the source disk files can be specified using two
+mutually-exclusive methods.  They can be entered on the command-line
+(\fB[FILE]\fP) or in a "file-list" file using the
+.B -f, --filelist
+option.
+All source file-names must be on a locally mounted file system.  The
+writetp command needs to be able to call the system function stat() on each
+file in order to determine the size of the file.  
+
+.SH OPTIONS
+.TP
+\fB\-d, \-\-debug
+Turns on the printing of debug information.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.TP
+\fB\-s, \-\-server server
+Specifies the tape server to be used, therefore overriding the drive scheduling
+of the VDQM.  The name of the server must match exactly the name given by the
+VDQM showqueues command.  For example if showqueues displays the tape server
+name 'tpsrv123' then specifiying '-s tpsrv123.cern.ch' will not work and the
+VDQM request will remain in the VDQM until it is deleted (this command will
+delete the request when it receives Ctrl-C).  If this option is not set then
+the VDQM will allocate the first free compatible drive.
+.TP
+\fB\-f, \-\-filelist file
+File containing the list of source file-names.  There should be one file-name
+per line.  Whitespace is trimmed from the left and right of each filename.
+Blank lines are ignored.  Lines starting with a '#' character are considered
+comments and are therefore ignored.  Whitespace is allowed between the
+beginning of the line and a '#' character.  Please note that this option is
+mutually exclusive with the method of providing filenames on the command-line.
+
+.SH "RETURN CODES"
+.TP
+\fB 0
+Ok.
+.TP
+\fB 1
+Command failed for a reason other than reaching the physical end of tape.
+.TP
+\fB 28
+Command failed because the physical end of tape was reached.
+
+.SH CASTOR CONFIGURATION PARAMETERS
+The \fBwritetp\fP command reads and uses the following CASTOR configuration
+parameters which are specified using environment variables or within the CASTOR
+configuration file (the default location is /etc/castor/castor.conf).
+.TP
+\fBTAPESERVERCLIENT LOWPORT
+The inclusive low port of the tapeserver client callback port number range.
+The default is 30201.
+.TP
+\fBTAPESERVERCLIENT HIGHPORT
+The inclusive high port of the tapeserver client callback port number range.
+The default is 30300.
+.TP
+\fBVDQM HOST
+The name of the host on which the VDQM daemon is running.
+.TP
+\fBVMGR HOST
+The name of the host on which the VMGR daemon is running.
+
+.SH EXAMPLE
+The following example appends the file \fBlxc2disk07:/tmp/test\fP to the
+tape with VID \fBI02024\fP.
+.P
+writetp I02024 /tmp/test
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

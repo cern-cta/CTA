@@ -1,0 +1,96 @@
+/******************************************************************************
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * helper class for accessing VDQM from C++
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+#pragma once
+
+// Include Files
+#include "vdqm.h"
+#include "castor/exception/Exception.hpp"
+
+namespace castor {
+
+  namespace tape {
+    
+    namespace tapegateway {
+
+      /**
+       * helper class for accessing VDQM from C++
+       */
+      class VdqmTapeGatewayHelper {
+
+        public:
+
+        /**
+         * connect to VDQM
+         * @exception throws CASTOR exception if not successful
+         */
+	void connectToVdqm() ;
+
+        /**
+         * create a request in VDQM
+         * @param vid the tape concerned
+         * @param dgn the concerned dgn
+         * @param mode the access mode of the tape (WRITE_DISABLE or WRITE_ENABLE)
+         * @param port the port on which VDQM should be contacted
+         * @param priority the priority to be used for this request
+         * @exception throws CASTOR exception if not successful
+         */
+	int createRequest(const std::string &vid,
+                          const char *dgn,
+                          const int mode,
+                          const int port,
+                          const int priority);
+
+        /**
+         * validate a VDQM request created with createRequest
+         * @exception throws CASTOR exception if not successful
+         */
+	void confirmRequestToVdqm() ;
+
+        /**
+         * check existence of a given request in VDQM
+         * @param mountTransactionId the id of the request to check
+         * @exception throws CASTOR exception if not successful
+         */
+	static void checkVdqmForRequest(const int mountTransactionId)
+          ;
+
+        /**
+         * disconnect to VDQM
+         * @exception throws CASTOR exception if not successful
+         */
+	void disconnectFromVdqm();
+
+      public:
+
+        /// the connection to VDQM, when connected
+	vdqmnw_t* m_connection;
+
+      };
+    
+    } // end of namespace tapegateway
+
+  } // end of namespace tape
+
+}  // end of namespace castor
+
