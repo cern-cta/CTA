@@ -106,7 +106,7 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    g_eosNs.createEntry(cta::RemotePath("mock://file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 12345));
+    g_eosNs.createEntry(cta::RemotePath("eos://eos/kruse/file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 0));
     return new XrdProFilesystem(
       &g_castorNs,
       &g_OStoreDB,

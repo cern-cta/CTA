@@ -97,8 +97,10 @@ void cta::EosNS::createEntry(const RemotePath &path, const RemoteFileStatus &sta
   if(status.mode & S_IROTH) mode|= XrdCl::Access::Mode::OR;
   if(status.mode & S_IWOTH) mode|= XrdCl::Access::Mode::OW;
   if(status.mode & S_IXOTH) mode|= XrdCl::Access::Mode::OX;
-  std::string eosPath(std::string("root://")+m_xrootServerURL+"/"+path.getAfterScheme());
-  XrdCl::XRootDStatus s = newFile.Open(eosPath, XrdCl::OpenFlags::Flags::Delete, mode);
+  XrdCl::OpenFlags::Flags flags;
+  flags |= XrdCl::OpenFlags::Flags::Delete;
+  std::string eosPath(std::string("root://")+m_xrootServerURL+path.getAfterScheme());
+  XrdCl::XRootDStatus s = newFile.Open(eosPath, flags, mode);
   if(!s.IsOK()) {
     throw cta::exception::Exception(std::string("Error creating EOS file/dir ")+eosPath+" Reason: "+s.GetErrorMessage());
   }
