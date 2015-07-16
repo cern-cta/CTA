@@ -20,6 +20,7 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SecurityIdentity.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <sqlite3.h>
 
@@ -41,6 +42,21 @@ public:
    */
   ~MockSchedulerDatabase() throw();
 
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /**
+   * Starts a session, and updates the relevant information in the DB.
+   * The returned object will be the scheduler's interface for the tape server
+   * throughout the session.
+   * @param logicalLibrary name of the logical library, allowing selection
+   * of reachable tapes for this drive
+   * @param driveName name of the drive, allowing enforcement of dedication
+   * policies for tapes and drives.
+   * @return smart pointer to a TapeSession. It can be an ArchiveMount, 
+   * a RetrieveMount or nullptr.
+   */
+  virtual std::unique_ptr<SchedulerDatabase::TapeMount> getNextMount(const std::string &logicalLibrary,
+    const std::string &driveName);
+  
   /*
    * Subclass allowing the tracking and automated cleanup of a 
    * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close

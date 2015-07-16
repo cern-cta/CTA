@@ -19,6 +19,7 @@
 #pragma once
 
 #include "scheduler/SchedulerDatabase.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <list>
 #include <map>
@@ -31,7 +32,6 @@ namespace cta {
 // Forward declarations for opaque references.
 class AdminHost;
 class AdminUser;
-class ArchiveJob;
 class ArchiveFileStatus;
 class ArchiveRoute;
 class ArchiveToDirRequest;
@@ -39,11 +39,9 @@ class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
 class ArchiveDirIterator;
 class LogicalLibrary;
-class MountRequest;
 class NameServer;
 class RemoteNS;
 class RemotePathAndStatus;
-class RetrieveJob;
 class RetrieveFromTapeCopyRequest;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
@@ -51,6 +49,7 @@ class SchedulerDatabase;
 class SecurityIdentity;
 class StorageClass;
 class Tape;
+class TapeMount;
 class TapePool;
 class UserIdentity;
 
@@ -631,78 +630,81 @@ public:
     const SecurityIdentity &requester,
     const std::list<std::string> &archiveFiles,
     const std::string &remoteFileOrDir);
-
+  
+  
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /**
-   * Returns the next tape mount for the specified logical liubrary.
+   * Returns the next tape mount for the specified logical library.
+   * All the functions of the mount will handled via the mount object
+   * itself. This is the entry point to the tape server's interface
    *
    * @param logicalLibraryName The name of the logical library.
-   * @return The next tape mount or NULL if there is currently no work to bei
-   * done.
+   * @param driveName The drive's name.
+   * @return The next tape mount or NULL if there is currently no work to do.
    */
-  MountRequest *getNextMount(const std::string &logicalLibraryName);
+  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
+    const std::string & driveName);
 
-  /**
-   * Notifies the scheduler that the specified tape mount is over.
-   *
-   * @param mountId The identifier of the tape mount.
-   */
-  void finishedMount(const std::string &mountId);
-
-  /**
-   * Returns the next archive job to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   *
-   * @param mountId The identifier of the tape mount.
-   * @return The next tape job to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   */
-  ArchiveJob *getNextArchive(const std::string &mountId);
-
-  /**
-   * Notifies the scheduler that the specified tape job has been completed
-   * successfully.
-   *
-   * @param transferId The identifier of the tape job.
-   */
-  void archiveSuccessful(const std::string &transferId);
-
-  /**
-   * Notifies the scheduler that the specified tape job has failed.
-   *
-   * @param transferId The identifier of the tape job.
-   * @param failureType The type of failure.
-   * @param errorMessage Human readable description of the failure.
-   */
-  void archiveFailed(const std::string &transferId,
-    const TapeJobFailure failureType, const std::string &errorMessage);
-
-  /**
-   * Returns the next tape job to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   *
-   * @param mountId The identifier of the tape mount.
-   * @return The next tape job to be carried out for the specified tape
-   * mount or NULL if there is no more work to be done.
-   */
-  RetrieveJob *getNextRetrieve(const std::string &mountId);
-
-  /**
-   * Notifies the scheduler that the specified tape job has been completed
-   * successfully.
-   *
-   * @param transferId The identifier of the tape job.
-   */
-  void retrieveSucceeded(const std::string &transferId);
-
-  /**
-   * Notifies the scheduler that the specified tape job has failed.
-   *
-   * @param transferId The identifier of the tape job.
-   * @param failureType The type of failure.
-   * @param errorMessage Human readable description of the failure.
-   */
-  void retrieveFailed(const std::string &transferId,
-    const TapeJobFailure failureType, const std::string &errorMessage);
+//  class ArchiveMount:public TapeMount {
+//  public:
+//    class ArchiveJob
+//    std::unique_ptr<ArchiveJob> ArchiveJob
+//  };
+//  /**
+//   * Returns the next archive job to be carried out for the specified tape
+//   * mount or NULL if there is no more work to be done.
+//   *
+//   * @param mountId The identifier of the tape mount.
+//   * @return The next tape job to be carried out for the specified tape
+//   * mount or NULL if there is no more work to be done.
+//   */
+//  ArchiveJob *getNextArchive(const std::string &mountId);
+//
+//  /**
+//   * Notifies the scheduler that the specified tape job has been completed
+//   * successfully.
+//   *
+//   * @param transferId The identifier of the tape job.
+//   */
+//  void archiveSuccessful(const std::string &transferId);
+//
+//  /**
+//   * Notifies the scheduler that the specified tape job has failed.
+//   *
+//   * @param transferId The identifier of the tape job.
+//   * @param failureType The type of failure.
+//   * @param errorMessage Human readable description of the failure.
+//   */
+//  void archiveFailed(const std::string &transferId,
+//    const TapeJobFailure failureType, const std::string &errorMessage);
+//
+//  /**
+//   * Returns the next tape job to be carried out for the specified tape
+//   * mount or NULL if there is no more work to be done.
+//   *
+//   * @param mountId The identifier of the tape mount.
+//   * @return The next tape job to be carried out for the specified tape
+//   * mount or NULL if there is no more work to be done.
+//   */
+//  RetrieveJob *getNextRetrieve(const std::string &mountId);
+//
+//  /**
+//   * Notifies the scheduler that the specified tape job has been completed
+//   * successfully.
+//   *
+//   * @param transferId The identifier of the tape job.
+//   */
+//  void retrieveSucceeded(const std::string &transferId);
+//
+//  /**
+//   * Notifies the scheduler that the specified tape job has failed.
+//   *
+//   * @param transferId The identifier of the tape job.
+//   * @param failureType The type of failure.
+//   * @param errorMessage Human readable description of the failure.
+//   */
+//  void retrieveFailed(const std::string &transferId,
+//    const TapeJobFailure failureType, const std::string &errorMessage);
 
 private:
 

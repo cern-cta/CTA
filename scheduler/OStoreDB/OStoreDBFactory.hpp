@@ -183,6 +183,12 @@ public:
   virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(const std::string& vid) const {
     return m_OStoreDB.getRetrieveRequests(vid);
   }
+  
+
+  virtual std::unique_ptr<TapeMount> getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
+    return m_OStoreDB.getNextMount(logicalLibrary, driveName);
+  }
+
 
   virtual StorageClass getStorageClass(const std::string& name) const {
     return m_OStoreDB.getStorageClass(name);

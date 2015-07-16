@@ -60,7 +60,13 @@ void OStoreDB::setAgent(objectstore::Agent& agent) {
 void OStoreDB::assertAgentSet() {
   if (!m_agent)
     throw AgentNotSet("In OStoreDB::assertAgentSet: Agent pointer not set");
+  }
+
+std::unique_ptr<SchedulerDatabase::TapeMount> 
+  OStoreDB::getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
+  throw NotImplemented("");
 }
+
 
 void OStoreDB::createAdminHost(const SecurityIdentity& requester,
     const std::string& hostName, const std::string& comment) {

@@ -40,6 +40,11 @@ public:
 private:
   void assertAgentSet();
 public:
+  
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /* === Session handling =================================================== */
+  virtual std::unique_ptr<SchedulerDatabase::TapeMount> getNextMount(const std::string &logicalLibrary,
+    const std::string &driveName);
 
   /* === Admin host handling ================================================ */
   virtual void createAdminHost(const SecurityIdentity& requester,

@@ -38,6 +38,7 @@
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/Tape.hpp"
 #include "scheduler/TapePool.hpp"
+#include "scheduler/TapeMount.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -741,55 +742,67 @@ void cta::Scheduler::queueRetrieveRequest(
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-cta::MountRequest *cta::Scheduler::getNextMount(
-  const std::string &logicalLibraryName) {
-  return NULL;
+std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
+  const std::string &logicalLibraryName, const std::string & driveName) {
+  // First try to get the next mount from the database.
+  std::unique_ptr<SchedulerDatabase::TapeMount> 
+    mount(m_db.getNextMount(logicalLibraryName, driveName));
+  if (!mount.get()) {
+    return std::unique_ptr<cta::TapeMount>(NULL);
+  } else if (dynamic_cast<SchedulerDatabase::ArchiveMount *>(mount.get())) {
+    throw NotImplemented("Archive");
+  } else if (dynamic_cast<SchedulerDatabase::RetriveMount *>(mount.get())) {
+    throw NotImplemented("Retrive");
+  } else {
+    throw NotImplemented("Unknown type");
+  }
+  throw NotImplemented("");
 }
-
-//------------------------------------------------------------------------------
-// finishedMount
-//------------------------------------------------------------------------------
-void cta::Scheduler::finishedMount(const std::string &mountId) {
-}
-
-//------------------------------------------------------------------------------
-// getNextArchive
-//------------------------------------------------------------------------------
-cta::ArchiveJob *cta::Scheduler::getNextArchive(
-  const std::string &mountId) {
-  return NULL;
-}
-
-//------------------------------------------------------------------------------
-// archiveSuccessful
-//------------------------------------------------------------------------------
-void cta::Scheduler::archiveSuccessful(const std::string &transferId) {
-}
-
-//------------------------------------------------------------------------------
-// archiveFailed
-//------------------------------------------------------------------------------
-void cta::Scheduler::archiveFailed(const std::string &transferId,
-  const TapeJobFailure failureType, const std::string &errorMessage) {
-}
-
-//------------------------------------------------------------------------------
-// getNextRetrieve
-//------------------------------------------------------------------------------
-cta::RetrieveJob *cta::Scheduler::getNextRetrieve(
-  const std::string &mountId) {
-  return NULL;
-}
-
-//------------------------------------------------------------------------------
-// retrieveSucceeded
-//------------------------------------------------------------------------------
-void cta::Scheduler::retrieveSucceeded(const std::string &transferId) {
-}
-
-//------------------------------------------------------------------------------
-// retrieveFailed
-//------------------------------------------------------------------------------
-void cta::Scheduler::retrieveFailed(const std::string &transferId,
-  const TapeJobFailure failureType, const std::string &errorMessage) {
-}
+//
+////------------------------------------------------------------------------------
+//// finishedMount
+////------------------------------------------------------------------------------
+//void cta::Scheduler::finishedMount(const std::string &mountId) {
+//}
+//
+////------------------------------------------------------------------------------
+//// getNextArchive
+////------------------------------------------------------------------------------
+//cta::ArchiveJob *cta::Scheduler::getNextArchive(
+//  const std::string &mountId) {
+//  return NULL;
+//}
+//
+////------------------------------------------------------------------------------
+//// archiveSuccessful
+////------------------------------------------------------------------------------
+//void cta::Scheduler::archiveSuccessful(const std::string &transferId) {
+//}
+//
+////------------------------------------------------------------------------------
+//// archiveFailed
+////------------------------------------------------------------------------------
+//void cta::Scheduler::archiveFailed(const std::string &transferId,
+//  const TapeJobFailure failureType, const std::string &errorMessage) {
+//}
+//
+////------------------------------------------------------------------------------
+//// getNextRetrieve
+////------------------------------------------------------------------------------
+//cta::RetrieveJob *cta::Scheduler::getNextRetrieve(
+//  const std::string &mountId) {
+//  return NULL;
+//}
+//
+////------------------------------------------------------------------------------
+//// retrieveSucceeded
+////------------------------------------------------------------------------------
+//void cta::Scheduler::retrieveSucceeded(const std::string &transferId) {
+//}
+//
+////------------------------------------------------------------------------------
+//// retrieveFailed
+////------------------------------------------------------------------------------
+//void cta::Scheduler::retrieveFailed(const std::string &transferId,
+//  const TapeJobFailure failureType, const std::string &errorMessage) {
+//}

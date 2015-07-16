@@ -64,16 +64,23 @@ public:
   /**
    * An umbrella class from which ArchiveSession and RetrieveSession will
    * inherit. Just allows RTTI.
+   * Mounts, and jobs from the DB will be subclasses of the SchedulerDB
    */
-  class TapeSession {};
+  class TapeMount {public: virtual ~TapeMount(){}};
   
   /**
    * Starts a session, and updates the relevant information in the DB.
-   * The returned object will be the tape server's interface throughout
-   * the session.
-   * @return pointer to a TapeSession
+   * The returned object will be the scheduler's interface for the tape server
+   * throughout the session.
+   * @param logicalLibrary name of the logical library, allowing selection
+   * of reachable tapes for this drive
+   * @param driveName name of the drive, allowing enforcement of dedication
+   * policies for tapes and drives.
+   * @return smart pointer to a TapeSession. It can be an ArchiveMount, 
+   * a RetrieveMount or nullptr.
    */
-  std::unique_ptr<TapeSession> startTapeSession();
+  virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibrary,
+    const std::string &driveName) = 0;
   
   
   /*============ Archive management: user side ==============================*/
@@ -163,21 +170,22 @@ public:
 
   /*============ Archive management: tape server side =======================*/
   
-  class ArchiveSession: public TapeSession {
+  class ArchiveMount: public TapeMount {
     friend class SchedulerDatabase;
   private:
-    ArchiveSession();
-    
+    ArchiveMount();
+  public:
   };
   
-  class FileArchive {
-    friend class ArchiveSession;
+  class ArchiveJob {
+    friend class ArchiveMount;
   public:
     cta::RemotePathAndStatus remoteFile;
     cta::ArchiveFileStatus archiveFile;
     /* TODO */
   };
   
+  /*============ Retrieve  management: user side ============================*/
   /**
    * Queues the specified request.
    *
@@ -222,7 +230,26 @@ public:
   virtual void deleteRetrieveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile) = 0;
+  
+  /*============ Retrieve management: tape server side ======================*/
 
+  
+  class RetriveMount: public TapeMount {
+    friend class SchedulerDatabase;
+  private:
+    RetriveMount();
+  public:
+  };
+  
+  class RetrieveJob {
+    friend class RetriveMount;
+  public:
+    cta::RemotePathAndStatus remoteFile;
+    cta::ArchiveFileStatus archiveFile;
+    /* TODO */
+  };
+  
+  /*============ Admin user/host management  ================================*/
   /**
    * Creates the specified administrator.
    *
@@ -289,6 +316,8 @@ public:
    */
   virtual void assertIsAdminOnAdminHost(const SecurityIdentity &id) const = 0;
 
+  /*============ StorageClass management ====================================*/
+  
   /**
    * Creates the specified storage class.
    *
@@ -327,6 +356,7 @@ public:
    */
   virtual StorageClass getStorageClass(const std::string &name) const = 0;
 
+  /*============ Tape pools management ======================================*/
   /**
    * Creates a tape pool with the specified name.
    *
@@ -356,7 +386,9 @@ public:
    * @return The current list of tape pools in lexicographical order.
    */
   virtual std::list<TapePool> getTapePools() const = 0;
-
+  
+  /*============ Archive Routes management ==================================*/
+  
   /**
    * Creates the specified archive route.
    *
@@ -405,7 +437,9 @@ public:
    */
   virtual std::list<ArchiveRoute> getArchiveRoutes(
     const std::string &storageClassName) const = 0;
-
+  
+  /*============ Logical libraries management ==============================*/
+  
   /**
    * Creates a logical library with the specified name.
    *
@@ -435,6 +469,8 @@ public:
    */
   virtual std::list<LogicalLibrary> getLogicalLibraries() const = 0;
 
+   /*============ Tape management ===========================================*/
+  
   /**
    * Creates a tape.
    *
