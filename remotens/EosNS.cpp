@@ -27,13 +27,16 @@
 #include "common/Utils.hpp"
 #include "remotens/EosNS.hpp"
 
+#include "XrdCl/XrdClFileSystem.hh"
+#include "XrdCl/XrdClFile.hh"
+
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::EosNS::EosNS(const std::string &XrootServerURL): m_fs(XrdCl::URL(XrootServerURL)) {
+cta::EosNS::EosNS(const std::string &XrootServerURL): m_xrootServerURL(XrootServerURL) {
 }
 
 //------------------------------------------------------------------------------
@@ -45,9 +48,10 @@ cta::EosNS::~EosNS() throw() {
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::RemoteFileStatus> cta::EosNS::statFile(const RemotePath &path) {
+std::unique_ptr<cta::RemoteFileStatus> cta::EosNS::statFile(const RemotePath &path) const {
+  XrdCl::FileSystem fs{XrdCl::URL(m_xrootServerURL)};
   XrdCl::StatInfo *stat_res = NULL;
-  XrdCl::XRootDStatus s = m_fs.Stat(path.getAfterScheme(), stat_res, 0);
+  XrdCl::XRootDStatus s = fs.Stat(path.getAfterScheme(), stat_res, 0);
   if(!s.IsOK()) {
     delete stat_res;
     return std::unique_ptr<RemoteFileStatus>();
@@ -62,6 +66,11 @@ std::unique_ptr<cta::RemoteFileStatus> cta::EosNS::statFile(const RemotePath &pa
 // rename
 //------------------------------------------------------------------------------
 void cta::EosNS::rename(const RemotePath &remoteFile, const RemotePath &newRemoteFile) {
+  XrdCl::FileSystem fs{XrdCl::URL(m_xrootServerURL)};
+  XrdCl::XRootDStatus s = fs.Mv(remoteFile.getAfterScheme(), newRemoteFile.getAfterScheme());
+  if(!s.IsOK()) {
+    throw cta::exception::Exception(std::string("Error renaming ")+remoteFile.getAfterScheme()+" to "+newRemoteFile.getAfterScheme()+" Reason: "+s.GetErrorMessage());
+  }  
 }
 
 //------------------------------------------------------------------------------
@@ -77,12 +86,24 @@ std::string cta::EosNS::getFilename(const RemotePath &remoteFile) const {
 // createEntry
 //------------------------------------------------------------------------------
 void cta::EosNS::createEntry(const RemotePath &path, const RemoteFileStatus &status) {
-}
-
-//------------------------------------------------------------------------------
-// sendCommand
-//------------------------------------------------------------------------------
-int cta::EosNS::sendCommand(const std::string &cmd) const {
-  std::string cmdPath = "root://localhost:1094//";
-  return 0;
+  XrdCl::File newFile;
+  XrdCl::Access::Mode mode;
+  if(status.mode & S_IRUSR) mode|= XrdCl::Access::Mode::UR;
+  if(status.mode & S_IWUSR) mode|= XrdCl::Access::Mode::UW;
+  if(status.mode & S_IXUSR) mode|= XrdCl::Access::Mode::UX;
+  if(status.mode & S_IRGRP) mode|= XrdCl::Access::Mode::GR;
+  if(status.mode & S_IWGRP) mode|= XrdCl::Access::Mode::GW;
+  if(status.mode & S_IXGRP) mode|= XrdCl::Access::Mode::GX;
+  if(status.mode & S_IROTH) mode|= XrdCl::Access::Mode::OR;
+  if(status.mode & S_IWOTH) mode|= XrdCl::Access::Mode::OW;
+  if(status.mode & S_IXOTH) mode|= XrdCl::Access::Mode::OX;
+  std::string eosPath(std::string("root://")+m_xrootServerURL+"/"+path.getAfterScheme());
+  XrdCl::XRootDStatus s = newFile.Open(eosPath, XrdCl::OpenFlags::Flags::Delete, mode);
+  if(!s.IsOK()) {
+    throw cta::exception::Exception(std::string("Error creating EOS file/dir ")+eosPath+" Reason: "+s.GetErrorMessage());
+  }
+  s = newFile.Close();
+  if(!s.IsOK()) {
+    throw cta::exception::Exception(std::string("Error closing EOS file/dir ")+eosPath+" Reason: "+s.GetErrorMessage());
+  }
 }

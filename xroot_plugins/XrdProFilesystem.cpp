@@ -40,6 +40,7 @@
 #include "XrdVersion.hh"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "remotens/EosNS.hpp"
 
 #include <memory>
 #include <iostream>
@@ -98,17 +99,18 @@ public:
 } g_OStoreDB(g_backend, g_backendPopulator.getAgent());
 
 
-cta::MockRemoteNS g_remotens;
+cta::EosNS g_eosNs("localhost:1094");
+cta::CastorNameServer g_castorNs;
 
 extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    g_remotens.createEntry(cta::RemotePath("mock://file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 12345));
+    g_eosNs.createEntry(cta::RemotePath("mock://file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 12345));
     return new XrdProFilesystem(
-      new cta::CastorNameServer(),
+      &g_castorNs,
       &g_OStoreDB,
-      &g_remotens);
+      &g_eosNs);
   }
 }
 

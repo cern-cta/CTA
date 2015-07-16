@@ -21,8 +21,6 @@
 #include "common/RemoteFileStatus.hpp"
 #include "remotens/RemoteNS.hpp"
 
-#include "XrdCl/XrdClFileSystem.hh"
-
 #include <map>
 
 namespace cta {
@@ -51,7 +49,7 @@ public:
    * @return The status of the file or directory or NULL if the file or
    * directory does not exist.
    */
-  std::unique_ptr<RemoteFileStatus> statFile(const RemotePath &path);
+  std::unique_ptr<RemoteFileStatus> statFile(const RemotePath &path) const;
 
   /**
    * Renames the specified remote file to the specified new name.
@@ -80,19 +78,9 @@ public:
 private:
   
   /**
-   * The xroot server of EOS
+   * The xroot server URL
    */
-  XrdCl::FileSystem m_fs;
-  
-  /**
-   * Sends the command and waits for the reply
-   *
-   * @param argc The number of command-line arguments.
-   * @param argv The command-line arguments. 
-   * @return the return code
-   */
-  int sendCommand(const std::string &cmd) const;
-
+  std::string m_xrootServerURL;
 }; // class EosNS
 
 } // namespace cta
