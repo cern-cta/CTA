@@ -1,2 +1,0 @@
-%attr(0755,root,root) usr/bin/showqueues
-%attr(0755,root,root) usr/bin/vdqm_admin

@@ -1,3 +1,0 @@
-/sbin/chkconfig --add xrootd
-/sbin/chkconfig --level 435 xrootd on
-/sbin/service xrootd condrestart > /dev/null 2>&1 

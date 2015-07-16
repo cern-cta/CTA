@@ -1,4 +1,0 @@
-%attr(0755,root,root) usr/bin/acsd
-%attr(0644,root,root) etc/sysconfig/acsd.example
-%attr(0755,root,root) etc/init.d/acsd
-%attr(0644,root,root) etc/logrotate.d/castor-acs-server

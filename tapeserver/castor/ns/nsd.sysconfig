@@ -1,6 +1,0 @@
-# What roles should the nsd run for. For each role you can overwrite
-# the default options using a dedicate sysconfig file
-# e.g. /etc/sysconfig/nsd.<role>. The role based mechanism allows for
-# multiple nsd's running with different options to be controlled via
-# the same initd script
-ROLES="normal secure"

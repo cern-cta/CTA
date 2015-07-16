@@ -1,2 +1,0 @@
-/sbin/chkconfig --add transfermanagerd
-/sbin/service transfermanagerd condrestart > /dev/null 2>&1 || :

@@ -1,2 +1,0 @@
-# Make sure the permission are reset after package uninstall
-/sbin/ldconfig

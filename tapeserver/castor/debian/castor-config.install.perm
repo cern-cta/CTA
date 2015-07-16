@@ -1,3 +1,0 @@
-%attr(0644,root,root) etc/castor/castor.conf.example
-%attr(0644,root,root) etc/castor/rsyslog.conf.client.example
-%attr(0644,root,root) etc/castor/rsyslog.conf.server.example

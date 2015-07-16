@@ -1,7 +1,0 @@
-%attr(0755,root,root) usr/bin/reclaim
-%attr(0755,root,root) usr/bin/c2probe
-%attr(0755,root,root) usr/bin/rfcpupd
-%attr(0755,root,root) usr/bin/stager_actualget
-%attr(0755,root,root) usr/bin/stager_actualput
-%attr(0755,root,root) usr/bin/stager_abort
-%attr(0755,root,root) usr/bin/adler32

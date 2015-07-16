@@ -1,3 +1,0 @@
-# Make sure the permission are reset after package uninstall
-/sbin/ldconfig
-/sbin/udevadm trigger --subsystem-match=scsi_tape
