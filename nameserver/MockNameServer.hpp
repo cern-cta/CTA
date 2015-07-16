@@ -60,7 +60,7 @@ public:
   
   std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const;
   
-  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode);
+  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode, const uint64_t size);
 
   void setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner);
 

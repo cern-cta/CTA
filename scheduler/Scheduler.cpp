@@ -653,7 +653,7 @@ void cta::Scheduler::queueArchiveToFileRequest(
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
     requestCreation (m_db.queue(rqst));
   try {
-    m_ns.createFile(requester, rqst.archiveFile, 0666);
+    m_ns.createFile(requester, rqst.archiveFile, remoteFile.status.mode, remoteFile.status.size);
   } catch(std::exception &nsEx) {
     // Try our best to cleanup the scheduler database.  The garbage collection
     // logic will try again if we fail.

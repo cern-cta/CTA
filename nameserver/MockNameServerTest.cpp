@@ -100,8 +100,8 @@ TEST_F(cta_MockNameServerTest, createFile_functionality) {
   ArchiveDirIterator itor;
 
   ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
-  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666));
-  ASSERT_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666), std::exception);
+  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666, 0));
+  ASSERT_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666, 0), std::exception);
   ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
   ASSERT_EQ(itor.hasMore(), true);
   ASSERT_EQ(itor.next().name, "file1");
@@ -121,7 +121,7 @@ TEST_F(cta_MockNameServerTest, rmdir_functionality) {
   ASSERT_NO_THROW(ns->deleteDir(s_userOnUserHost, "/dir1"));
   ASSERT_THROW(ns->deleteDir(s_userOnUserHost, "/dir1"), std::exception);
   ASSERT_NO_THROW(ns->createDir(s_userOnUserHost, "/dir2", 0777));
-  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/dir2/file1", 0666));
+  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/dir2/file1", 0666, 0));
   ASSERT_THROW(ns->deleteDir(s_userOnUserHost, "/dir2"), std::exception);
   ASSERT_NO_THROW(ns->deleteFile(s_userOnUserHost, "/dir2/file1"));
   ASSERT_NO_THROW(ns->deleteDir(s_userOnUserHost, "/dir2"));

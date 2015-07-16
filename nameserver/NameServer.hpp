@@ -213,7 +213,8 @@ public:
   virtual void createFile(
     const SecurityIdentity &requester,
     const std::string &path,
-    const mode_t mode) = 0;
+    const mode_t mode,
+    const uint64_t size) = 0;
 
   /**
    * Sets the owner of the specified file or directory entry.

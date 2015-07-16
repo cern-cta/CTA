@@ -238,7 +238,8 @@ std::string cta::MockNameServer::getDirStorageClass(
 void cta::MockNameServer::createFile(
   const SecurityIdentity &requester,
   const std::string &path,
-  const mode_t mode) {
+  const mode_t mode,
+  const uint64_t size) {
   Utils::assertAbsolutePathSyntax(path);  
   const std::string dir = Utils::getEnclosingPath(path);
   assertFsDirExists(m_fsDir + dir);
