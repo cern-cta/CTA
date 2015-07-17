@@ -25,7 +25,7 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/MockSchedulerDatabaseFactory.hpp"
+#include "scheduler/MockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"

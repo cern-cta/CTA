@@ -8,6 +8,7 @@ set (CTA_SCHEDULER_SRC_FILES
   AdminHost.cpp
   AdminUser.cpp
   ArchiveJob.cpp
+  ArchiveMount.cpp
   ArchiveRoute.cpp
   ArchiveRouteId.cpp
   ArchiveRequest.cpp
@@ -20,8 +21,8 @@ set (CTA_SCHEDULER_SRC_FILES
   DriveQuota.cpp
   TapeJob.cpp
   LogicalLibrary.cpp
-  MockSchedulerDatabase.cpp
-  MockSchedulerDatabaseFactory.cpp
+  MockDB/MockSchedulerDatabase.cpp
+  MockDB/MockSchedulerDatabaseFactory.cpp
   MountCriteria.cpp
   RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
@@ -50,8 +51,8 @@ add_library (ctascheduler SHARED
 target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE})
 
 add_library (ctaschedulertest SHARED
-  MockSchedulerDatabase.cpp
-  MockSchedulerDatabaseFactory.cpp
+  MockDB/MockSchedulerDatabase.cpp
+  MockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
   SchedulerTest.cpp

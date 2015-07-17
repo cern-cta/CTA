@@ -24,6 +24,9 @@
 #include <string>
 
 namespace cta {
+  // Forward declaration
+  // class ArchivePath; 
+  class RemotePathAndStatus;
 
 /**
  * Class representing the transfer of a single copy of a remote file to tape.

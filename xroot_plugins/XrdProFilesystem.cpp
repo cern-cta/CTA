@@ -27,7 +27,7 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "scheduler/MockSchedulerDatabase.hpp"
+#include "scheduler/MockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/SchedulerDatabase.hpp"

@@ -27,7 +27,7 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/MockSchedulerDatabase.hpp"
+#include "scheduler/MockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/SecurityIdentity.hpp"

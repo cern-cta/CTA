@@ -17,6 +17,7 @@ set (COMMON_LIB_SRC_FILES
   RemotePathAndStatus.cpp
   SmartFd.cpp
   strerror_r_wrapper.cpp
+  TapeCopyLocationAndStatus.cpp
   Timer.cpp
   threading/ChildProcess.cpp
   threading/Mutex.cpp

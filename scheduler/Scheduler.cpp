@@ -24,6 +24,7 @@
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/AdminHost.hpp"
 #include "scheduler/AdminUser.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include "scheduler/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
@@ -750,6 +751,9 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   if (!mount.get()) {
     return std::unique_ptr<cta::TapeMount>(NULL);
   } else if (dynamic_cast<SchedulerDatabase::ArchiveMount *>(mount.get())) {
+    // Create out own ArchiveMount structure, which immediately takes 
+    // ownership of the mount.
+    std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount(mount));
     throw NotImplemented("Archive");
   } else if (dynamic_cast<SchedulerDatabase::RetriveMount *>(mount.get())) {
     throw NotImplemented("Retrive");

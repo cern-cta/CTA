@@ -172,9 +172,8 @@ public:
   
   class ArchiveMount: public TapeMount {
     friend class SchedulerDatabase;
-  private:
-    ArchiveMount();
   public:
+    virtual ~ArchiveMount() {};
   };
   
   class ArchiveJob {

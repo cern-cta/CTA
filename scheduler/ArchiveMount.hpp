@@ -19,6 +19,8 @@
 #pragma once
 
 #include "TapeMount.hpp"
+#include "SchedulerDatabase.hpp"
+#include "common/exception/Exception.hpp"
 #include <memory>
 
 namespace cta {
@@ -30,21 +32,26 @@ namespace cta {
    * the Scheduler class.
    */
   class ArchiveMount: public TapeMount {
+    friend class Scheduler;
   private:
-    
+    ArchiveMount(std::unique_ptr<cta::SchedulerDatabase::TapeMount> &mount);
   public:
+    CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
+    CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
     /**
      * Notifies the scheduler that the session is finished 
      */
     virtual void finish();
     
     /**
-     * Generator 
+     * Job factory
      */
     std::unique_ptr<ArchiveMount> getNextJob();
     
     virtual ~ArchiveMount();
   private:
+    std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> m_dbMount;
+    
     
   };
 }
