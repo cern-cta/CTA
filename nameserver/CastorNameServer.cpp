@@ -29,7 +29,6 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/Serrnum.hpp"
-#include "common/SmartFd.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/CastorNameServer.hpp"
 

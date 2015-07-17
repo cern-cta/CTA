@@ -78,8 +78,8 @@ public:
     m_OStoreDB.assertIsAdminOnAdminHost(id);
   }
 
-  virtual void createAdminHost(const SecurityIdentity& requester, const std::string& hostName, const std::string& comment) {
-    m_OStoreDB.createAdminHost(requester, hostName, comment);
+  virtual void createAdminHost(const std::string& hostName, const cta::CreationLog& creationLog) {
+    m_OStoreDB.createAdminHost(hostName, creationLog);
   }
 
   virtual void createAdminUser(const SecurityIdentity& requester, const UserIdentity& user, const std::string& comment) {

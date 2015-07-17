@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
+#include "common/CreationLog.hpp"
 #include "scheduler/DriveQuota.hpp"
 #include "scheduler/MountCriteria.hpp"
 
@@ -31,7 +31,7 @@ namespace cta {
 /**
  * Class representing a user group.
  */
-class UserGroup: public ConfigurationItem {
+class UserGroup {
 public:
 
   /**
@@ -69,9 +69,7 @@ public:
     const DriveQuota &retrieveDriveQuota,
     const MountCriteria &archiveMountCriteria,
     const MountCriteria &retrieveMountCriteria,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog & creationLog);
 
   /**
    * Returns the name of the user group.
@@ -140,7 +138,12 @@ private:
    * tape for file retrieve.
    */
   MountCriteria m_retrieveMountCriteria;
-
+  
+  /**
+   * The when, who, why of the group's creation
+   */
+  CreationLog m_creationLog;
+  
 }; // class UserGroup
 
 } // namespace cta

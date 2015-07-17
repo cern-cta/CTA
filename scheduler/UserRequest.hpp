@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/CreationLog.hpp"
+#include "common/CreationLog.hpp"
 
 #include <stdint.h>
 #include <string>

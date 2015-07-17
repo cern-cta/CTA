@@ -17,15 +17,15 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/RemotePathAndStatus.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/UserIdentity.hpp"
 #include "common/Utils.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
-#include "scheduler/AdminHost.hpp"
-#include "scheduler/AdminUser.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveRoute.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
@@ -183,7 +183,9 @@ void cta::Scheduler::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
-  m_db.createAdminHost(requester, hostName, comment);
+  CreationLog log(requester.getUser(), requester.getHost(), time(NULL),
+     comment);
+  m_db.createAdminHost(hostName, log);
 }
 
 //------------------------------------------------------------------------------
@@ -193,7 +195,8 @@ void cta::Scheduler::createAdminHostWithoutAuthorizingRequester(
   const SecurityIdentity &requester,
   const std::string &hostName,
   const std::string &comment) {
-  m_db.createAdminHost(requester, hostName, comment);
+  CreationLog log (requester.getUser(), requester.getHost(), time(NULL), comment);
+  m_db.createAdminHost(hostName, log);
 }
 
 //------------------------------------------------------------------------------

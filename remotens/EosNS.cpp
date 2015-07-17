@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 #include "common/exception/Exception.hpp"
-#include "common/RemotePath.hpp"
+#include "common/remoteFS/RemotePath.hpp"
 #include "common/Utils.hpp"
 #include "remotens/EosNS.hpp"
 

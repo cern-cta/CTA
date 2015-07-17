@@ -17,15 +17,15 @@
  */
 
 #include "cmdline/CTACmd.hpp"
-#include "common/ArchiveDirIterator.hpp"
+#include "common/archiveNS/ArchiveDirIterator.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/UserIdentity.hpp"
-#include "scheduler/AdminHost.hpp"
-#include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchiveRoute.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/MockDB/MockSchedulerDatabase.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/StorageClass.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -435,10 +435,11 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
     for(auto it = list.begin(); it != list.end(); it++) {
       responseSS << it->getUser().uid 
                  << " " << it->getUser().gid 
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment() << std::endl;
+                 << " " << it->getCreationLog().user.uid 
+                 << " " << it->getCreationLog().user.gid 
+                 << " " << it->getCreationLog().host
+                 << " " << it->getCreationLog().time 
+                 << " " << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -492,10 +493,11 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
     std::ostringstream responseSS;
     for(auto it = list.begin(); it != list.end(); it++) {
       responseSS << it->name 
-                 << " " << it->getCreator().uid 
-                 << " " << it->getCreator().gid 
-                 << " " << it->getCreationTime() 
-                 << " " << it->getComment() << std::endl;
+                 << " " << it->creationLog.user.uid 
+                 << " " << it->creationLog.user.gid
+                 << " " << it->creationLog.host 
+                 << " " << it->creationLog.time 
+                 << " " << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }

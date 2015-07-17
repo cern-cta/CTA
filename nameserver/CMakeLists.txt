@@ -3,7 +3,8 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(/usr/include/shift)
 
 add_library (ctanameserver SHARED
-  MockNameServer.cpp
+  mockNS/MockNameServer.cpp
+  mockNS/SmartFd.cpp
   CastorNameServer.cpp
   NameServer.cpp)
 
@@ -14,8 +15,9 @@ add_executable(castornstest CastorNameServerTest.cpp)
 target_link_libraries(castornstest ctanameserver ctacommon ctascheduler)
 
 add_library (ctanameservertest SHARED
-  MockNameServerFactory.cpp
-  MockNameServerTest.cpp
+  mockNS/MockNameServerFactory.cpp
+  mockNS/MockNameServerTest.cpp
+  mockNS/SmartFdTest.cpp
   NameServerFactory.cpp)
 
 target_link_libraries(ctanameservertest

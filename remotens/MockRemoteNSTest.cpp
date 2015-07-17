@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/RemotePath.hpp"
+#include "common/remoteFS/RemotePath.hpp"
 #include "remotens/MockRemoteNS.hpp"
 
 #include <gtest/gtest.h>

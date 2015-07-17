@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ConfigurationItem.hpp"
+#include "common/CreationLog.hpp"
 
 #include <string>
 
@@ -27,7 +27,7 @@ namespace cta {
 /**
  * Class representing a virtual organisation.
  */
-class VO: public ConfigurationItem {
+class VO {
 public:
 
   /**
@@ -53,9 +53,7 @@ public:
    */
   VO(
     const std::string &name,
-    const UserIdentity &creator,
-    const std::string &comment,
-    const time_t creationTime = time(NULL));
+    const CreationLog &creationLog);
 
   /**
    * Returns the name of the tape pool.
@@ -70,6 +68,11 @@ private:
    * The name of the tape pool.
    */
   std::string m_name;
+  
+  /**
+   * The who, why, when, where of the creation of the VO
+   */
+  CreationLog m_creationLog;
 
 }; // class VO
 

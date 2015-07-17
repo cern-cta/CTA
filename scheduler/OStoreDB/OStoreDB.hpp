@@ -47,8 +47,8 @@ public:
     const std::string &driveName);
 
   /* === Admin host handling ================================================ */
-  virtual void createAdminHost(const SecurityIdentity& requester,
-    const std::string& hostName, const std::string& comment);
+  virtual void createAdminHost(const std::string& hostName, 
+    const CreationLog& creationLog);
 
 
     virtual std::list<AdminHost> getAdminHosts() const;

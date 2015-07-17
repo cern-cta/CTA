@@ -35,11 +35,8 @@ cta::VO::~VO() throw() {
 //------------------------------------------------------------------------------
 cta::VO::VO(
   const std::string &name,
-  const UserIdentity &creator,
-  const std::string &comment,
-  const time_t creationTime):
-  ConfigurationItem(creator, comment, creationTime),
-  m_name(name) {
+  const CreationLog & creationLog):
+  m_name(name), m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------

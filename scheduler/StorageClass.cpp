@@ -17,7 +17,7 @@
  */
 
 #include "scheduler/StorageClass.hpp"
-#include "scheduler/CreationLog.hpp"
+#include "common/CreationLog.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

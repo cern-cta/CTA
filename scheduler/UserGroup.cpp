@@ -39,15 +39,13 @@ cta::UserGroup::UserGroup(
   const DriveQuota &retrieveDriveQuota,
   const MountCriteria &archiveMountCriteria,
   const MountCriteria &retrieveMountCriteria,
-  const UserIdentity &creator,
-  const std::string &comment,
-  const time_t creationTime):
-  ConfigurationItem(creator, comment, creationTime),
+  const CreationLog &creationLog):
   m_name(name),
   m_archiveDriveQuota(archiveDriveQuota),
   m_retrieveDriveQuota(retrieveDriveQuota),
   m_archiveMountCriteria(archiveMountCriteria),
-  m_retrieveMountCriteria(retrieveMountCriteria) {
+  m_retrieveMountCriteria(retrieveMountCriteria),
+  m_creationLog(creationLog){
 }
 
 //------------------------------------------------------------------------------

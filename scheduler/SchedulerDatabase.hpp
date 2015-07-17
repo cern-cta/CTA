@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
-#include "common/ArchiveFileStatus.hpp"
-#include "common/RemotePathAndStatus.hpp"
+#include "common/archiveNS/ArchiveFileStatus.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
 
 namespace cta {
 
@@ -281,14 +281,12 @@ public:
   /**
    * Creates the specified administration host.
    *
-   * @param requester The identity of the requester.
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
   virtual void createAdminHost(
-    const SecurityIdentity &requester,
     const std::string &hostName,
-    const std::string &comment) = 0;
+    const CreationLog &creationLog) = 0;
 
   /**
    * Deletes the specified administration host.

@@ -17,11 +17,11 @@
  */
 
 #include "common/UserIdentity.hpp"
-#include "scheduler/AdminHost.hpp"
-#include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchiveRoute.hpp"
-#include "scheduler/MockDB/MockSchedulerDatabase.hpp"
-#include "scheduler/MockDB/MockSchedulerDatabaseFactory.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/SecurityIdentity.hpp"
@@ -145,8 +145,8 @@ TEST_P(SchedulerDatabaseTest, create_new_admin) {
     ASSERT_EQ((std::list<AdminUser>::size_type)1, adminUsers.size());
 
     const AdminUser &adminUser = adminUsers.front();
-    ASSERT_EQ(s_system, adminUser.getCreator());
-    ASSERT_EQ(comment, adminUser.getComment());
+    ASSERT_EQ(s_system, adminUser.getCreationLog().user);
+    ASSERT_EQ(comment, adminUser.getCreationLog().comment);
     ASSERT_EQ(s_admin, adminUser.getUser());
   }
 }
@@ -164,16 +164,18 @@ TEST_P(SchedulerDatabaseTest, create_new_admin_host) {
 
   const std::string comment =
     "The initial administration host created by the system";
-  db.createAdminHost(s_systemOnSystemHost, s_adminHost, comment);
+  cta::CreationLog log(s_systemOnSystemHost.getUser(), s_systemOnSystemHost.getHost(),
+    time(NULL), comment);
+  db.createAdminHost(s_adminHost, log);
 
   {
     std::list<AdminHost> adminHosts;
-    ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
+    /*ASSERT_NO_THROW*/(adminHosts = db.getAdminHosts());
     ASSERT_EQ((std::list<AdminHost>::size_type)1, adminHosts.size());
 
     const AdminHost &adminHost = adminHosts.front();
-    ASSERT_EQ(s_system, adminHost.getCreator());
-    ASSERT_EQ(comment, adminHost.getComment());
+    ASSERT_EQ(s_system, adminHost.creationLog.user);
+    ASSERT_EQ(comment, adminHost.creationLog.comment);
     ASSERT_EQ(s_adminHost, adminHost.name);
   }
 }
@@ -204,7 +206,9 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
 
   const std::string hostComment =
     "The initial administration host created by the system";
-  db.createAdminHost(s_systemOnSystemHost, s_adminHost, hostComment);
+  cta::CreationLog log(s_systemOnSystemHost.getUser(), s_systemOnSystemHost.getHost(),
+    time(NULL), hostComment);
+  db.createAdminHost(s_adminHost, log);
 
   ASSERT_NO_THROW(db.assertIsAdminOnAdminHost(s_adminOnAdminHost));
 
@@ -214,8 +218,8 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
     ASSERT_EQ((std::list<AdminUser>::size_type)1, adminUsers.size());
 
     const AdminUser &adminUser = adminUsers.front();
-    ASSERT_EQ(s_system, adminUser.getCreator());
-    ASSERT_EQ(userComment, adminUser.getComment());
+    ASSERT_EQ(s_system, adminUser.getCreationLog().user);
+    ASSERT_EQ(userComment, adminUser.getCreationLog().comment);
     ASSERT_EQ(s_admin, adminUser.getUser());
   }
 
@@ -225,8 +229,8 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
     ASSERT_EQ((std::list<AdminHost>::size_type)1, adminHosts.size());
 
     const AdminHost &adminHost = adminHosts.front();
-    ASSERT_EQ(s_system, adminHost.getCreator());
-    ASSERT_EQ(hostComment, adminHost.getComment());
+    ASSERT_EQ(s_system, adminHost.creationLog.user);
+    ASSERT_EQ(hostComment, adminHost.creationLog.comment);
     ASSERT_EQ(s_adminHost, adminHost.name);
   }
 }

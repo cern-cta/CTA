@@ -22,7 +22,7 @@
 #include "ObjectOps.hpp"
 #include <string>
 #include "objectstore/cta.pb.h"
-#include "scheduler/CreationLog.hpp"
+#include "common/CreationLog.hpp"
 #include "ArchiveToFileRequest.hpp"
 #include "CreationLog.hpp"
 #include "Agent.hpp"

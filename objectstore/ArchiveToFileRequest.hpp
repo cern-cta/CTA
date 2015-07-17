@@ -20,7 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
-#include "common/RemotePathAndStatus.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
 #include <list>
 
 namespace cta { namespace objectstore {

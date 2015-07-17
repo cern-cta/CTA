@@ -20,7 +20,7 @@
 
 #include "common/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
-#include "scheduler/CreationLog.hpp"
+#include "common/CreationLog.hpp"
 
 #include <string>
 #include <stdint.h>

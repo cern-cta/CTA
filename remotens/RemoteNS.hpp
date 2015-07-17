@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "common/RemotePath.hpp"
-#include "common/RemoteFileStatus.hpp"
+#include "common/remoteFS/RemotePath.hpp"
+#include "common/remoteFS/RemoteFileStatus.hpp"
 
 #include <memory>
 

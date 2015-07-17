@@ -16,16 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nameserver/MockNameServerFactory.hpp"
+#include "nameserver/mockNS/MockNameServerFactory.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
-#include "scheduler/AdminUser.hpp"
-#include "scheduler/AdminHost.hpp"
-#include "scheduler/ArchiveRoute.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/MockDB/MockSchedulerDatabaseFactory.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -100,8 +100,9 @@ public:
     SchedulerDatabase &db = *m_db.get();
     db.createAdminUser(s_systemOnSystemHost, s_admin,
       "The initial administrator created by the system");
-    db.createAdminHost(s_systemOnSystemHost, s_adminHost,
-      "The initial administration host created by the system");
+    cta::CreationLog log(s_systemOnSystemHost.getUser(), s_systemOnSystemHost.getHost(),
+      time(NULL), "The initial administration host created by the system");
+    db.createAdminHost(s_adminHost, log);
   }
 
   virtual void TearDown() {

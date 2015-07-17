@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "nameserver/MockNameServer.hpp"
+#include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/Scheduler.hpp"
 

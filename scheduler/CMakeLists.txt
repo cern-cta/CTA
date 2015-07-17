@@ -5,24 +5,18 @@ include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR})
 
 set (CTA_SCHEDULER_SRC_FILES
-  AdminHost.cpp
-  AdminUser.cpp
   ArchiveJob.cpp
   ArchiveMount.cpp
-  ArchiveRoute.cpp
-  ArchiveRouteId.cpp
   ArchiveRequest.cpp
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
-  ConfigurationItem.cpp
-  CreationLog.cpp
   DiskException.cpp
   DriveQuota.cpp
   TapeJob.cpp
   LogicalLibrary.cpp
-  MockDB/MockSchedulerDatabase.cpp
-  MockDB/MockSchedulerDatabaseFactory.cpp
+  mockDB/MockSchedulerDatabase.cpp
+  mockDB/MockSchedulerDatabaseFactory.cpp
   MountCriteria.cpp
   RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
@@ -33,8 +27,8 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   SecurityIdentity.cpp
-  SqliteColumnNameToIndex.cpp
-  SQLiteStatementDeleter.cpp
+  mockDB/SqliteColumnNameToIndex.cpp
+  mockDB/SQLiteStatementDeleter.cpp
   StorageClass.cpp
   Tape.cpp
   TapeCopyLocation.cpp
@@ -48,11 +42,11 @@ set (CTA_SCHEDULER_SRC_FILES
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 
-target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE})
+target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon)
 
 add_library (ctaschedulertest SHARED
-  MockDB/MockSchedulerDatabase.cpp
-  MockDB/MockSchedulerDatabaseFactory.cpp
+  mockDB/MockSchedulerDatabase.cpp
+  mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
   SchedulerTest.cpp

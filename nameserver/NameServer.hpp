@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "common/ArchiveDirIterator.hpp"
-#include "common/ArchiveFileStatus.hpp"
+#include "common/archiveNS/ArchiveDirIterator.hpp"
+#include "common/archiveNS/ArchiveFileStatus.hpp"
 #include "scheduler/SecurityIdentity.hpp"
 
 #include <memory>

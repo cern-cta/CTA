@@ -24,9 +24,9 @@
 #include "objectstore/ArchiveToFileRequest.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
 #include "common/exception/Exception.hpp"
-#include "scheduler/AdminHost.hpp"
-#include "scheduler/AdminUser.hpp"
-#include "scheduler/ArchiveRoute.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -68,14 +68,12 @@ std::unique_ptr<SchedulerDatabase::TapeMount>
 }
 
 
-void OStoreDB::createAdminHost(const SecurityIdentity& requester,
-    const std::string& hostName, const std::string& comment) {
+void OStoreDB::createAdminHost(const std::string& hostName,
+    const cta::CreationLog & creationLog) {
   RootEntry re(m_objectStore);
-  objectstore::CreationLog cl(requester.getUser(), requester.getHost(), 
-    time(NULL), comment);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  re.addAdminHost(hostName, cl);
+  re.addAdminHost(hostName, creationLog);
   re.commit();
 }
 
@@ -88,8 +86,7 @@ std::list<AdminHost> OStoreDB::getAdminHosts() const {
   rel.release();
   for (auto h=hl.begin(); h!=hl.end(); h++) {
     ret.push_back(AdminHost(h->hostname, 
-        cta::UserIdentity(h->log.user.uid, h->log.user.gid),
-        h->log.comment, h->log.time));
+        h->log));
   }
   return ret;
 }
@@ -134,9 +131,7 @@ std::list<AdminUser> OStoreDB::getAdminUsers() const {
     ret.push_back(
       AdminUser(
         cta::UserIdentity(au->user.uid, au->user.gid),
-        cta::UserIdentity(au->log.user.uid, au->log.user.gid),
-        au->log.comment,
-        au->log.time
+        au->log
     ));
   }
   rel.release();

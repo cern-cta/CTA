@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/RemoteFileStatus.hpp"
+#include "common/remoteFS/RemoteFileStatus.hpp"
 #include "remotens/RemoteNS.hpp"
 
 #include <map>

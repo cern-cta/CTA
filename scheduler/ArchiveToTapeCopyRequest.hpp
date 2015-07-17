@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/RemotePathAndStatus.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 
 #include <stdint.h>

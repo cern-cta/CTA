@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/RemotePath.hpp"
+#include "common/remoteFS/RemotePath.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "remotens/RemoteNSDispatcher.hpp"
 
