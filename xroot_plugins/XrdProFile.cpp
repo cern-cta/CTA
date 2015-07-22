@@ -136,7 +136,7 @@ std::string XrdProFile::decode(const std::string msg) const {
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
   try {
-    cta::SecurityIdentity requester = checkClient(client, requester);
+    cta::SecurityIdentity requester = checkClient(client);
 
     if(!strlen(fileName)) { //this should never happen
       m_data = getGenericHelp("");
