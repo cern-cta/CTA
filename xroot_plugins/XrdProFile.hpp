@@ -66,13 +66,12 @@ protected:
   std::string decode(const std::string msg) const;
   
   /**
-   * Checks whether client has correct permissions and fills the SecurityIdentity structure
+   * Checks whether client has correct permissions and returns the corresponding SecurityIdentity structure
    * 
    * @param req     parsed request
-   * @param requester The structure to be filled
-   * @return SFS_OK in case check is passed, SFS_ERROR otherwise
+   * @return The requester structure
    */
-  int checkClient(const XrdSecEntity *client, cta::SecurityIdentity &requester);
+  cta::SecurityIdentity checkClient(const XrdSecEntity *client);
   
   /**
    * Replaces all occurrences in a string "str" of a substring "from" with the string "to"

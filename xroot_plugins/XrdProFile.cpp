@@ -46,12 +46,12 @@
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-int XrdProFile::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &requester) {
+cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
   if(!client || !client->host || strncmp(client->host, "localhost", 9))
   {
-    m_data = "[ERROR] operation possible only from localhost";
-    return SFS_ERROR;
+    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] operation possible only from localhost");
   }
+  cta::SecurityIdentity requester;
   struct passwd pwd;
   struct passwd *result;
   char *buf;
@@ -63,26 +63,20 @@ int XrdProFile::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &r
   buf = (char *)malloc((size_t)bufsize);
   if(buf == NULL)
   {
-    m_data = "[ERROR] malloc of the buffer failed";
-    free(buf);
-    return SFS_ERROR;
+    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] malloc of the buffer failed");
   }
   int rc = getpwnam_r(client->name, &pwd, buf, bufsize, &result);
   if(result == NULL)
   {
     if (rc == 0)
     {
-      m_data = "[ERROR] User ";
-      m_data += client->name;
-      m_data += " not found";
       free(buf);
-      return SFS_ERROR;
+      throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] User "+client->name+" not found");
     }
     else
     {
-      m_data = "[ERROR] getpwnam_r failed";
       free(buf);
-      return SFS_ERROR;
+      throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] getpwnam_r failed");
     }
   }
   std::cout << "Request received from client. Username: " << client->name <<
@@ -90,7 +84,7 @@ int XrdProFile::checkClient(const XrdSecEntity *client, cta::SecurityIdentity &r
   requester = cta::SecurityIdentity(cta::UserIdentity(pwd.pw_uid, pwd.pw_gid),
     client->host);
   free(buf);
-  return SFS_OK;
+  return requester;
 }
 
 //------------------------------------------------------------------------------
@@ -141,43 +135,37 @@ std::string XrdProFile::decode(const std::string msg) const {
 // open
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
-  
-  cta::SecurityIdentity requester;
-  int checkResult = checkClient(client, requester);
-  if(SFS_OK!=checkResult) {
-    return checkResult;
-  }
-  
-  if(!strlen(fileName)) { //this should never happen
-    m_data = getGenericHelp("");
-    return SFS_OK;
-  }
-  
-  fileName++;//let's skip the first slash which is always prepended since we are asking for an absolute path
-  
-  std::vector<std::string> tokens;
-  std::stringstream ss(fileName);
-  std::string item;
-  while (std::getline(ss, item, '&')) {
-    replaceAll(item, "_", "/"); 
-    //need to add this because xroot removes consecutive slashes, and the 
-    //cryptopp base64 algorithm may produce consecutive slashes. This is solved 
-    //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
-    //currently have cryptopp-5.6.2. To be changed in the future...
-    item = decode(item);
-    tokens.push_back(item);
-  }
-  
-  if(tokens.size() == 0) { //this should never happen
-    m_data = getGenericHelp("");
-    return SFS_OK;
-  }
-  if(tokens.size() < 2) {
-    m_data = getGenericHelp(tokens[0]);
-    return SFS_OK;
-  }
-  
   try {
+    cta::SecurityIdentity requester = checkClient(client, requester);
+
+    if(!strlen(fileName)) { //this should never happen
+      m_data = getGenericHelp("");
+      return SFS_OK;
+    }
+
+    fileName++;//let's skip the first slash which is always prepended since we are asking for an absolute path
+
+    std::vector<std::string> tokens;
+    std::stringstream ss(fileName);
+    std::string item;
+    while (std::getline(ss, item, '&')) {
+      replaceAll(item, "_", "/"); 
+      //need to add this because xroot removes consecutive slashes, and the 
+      //cryptopp base64 algorithm may produce consecutive slashes. This is solved 
+      //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
+      //currently have cryptopp-5.6.2. To be changed in the future...
+      item = decode(item);
+      tokens.push_back(item);
+    }
+
+    if(tokens.size() == 0) { //this should never happen
+      m_data = getGenericHelp("");
+      return SFS_OK;
+    }
+    if(tokens.size() < 2) {
+      m_data = getGenericHelp(tokens[0]);
+      return SFS_OK;
+    }  
     commandDispatcher(tokens, requester);
     return SFS_OK;
   } catch (cta::exception::Exception &ex) {
