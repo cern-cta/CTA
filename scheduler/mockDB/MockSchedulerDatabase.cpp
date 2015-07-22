@@ -30,12 +30,12 @@
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 #include "scheduler/mockDB/SqliteColumnNameToIndex.hpp"
 #include "scheduler/mockDB/SQLiteStatementDeleter.hpp"
-#include "scheduler/StorageClass.hpp"
-#include "scheduler/Tape.hpp"
-#include "scheduler/TapePool.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/archiveNS/Tape.hpp"
+#include "common/TapePool.hpp"
 
 #include <iostream>
 #include <memory>

@@ -16,31 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/archiveNS/TapeCopyLocation.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SecurityIdentity::SecurityIdentity() {
+cta::TapeCopyLocation::TapeCopyLocation():
+  fseq(0),
+  blockId(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::SecurityIdentity::SecurityIdentity(const UserIdentity &user,
-  const std::string &host): m_user(user), m_host(host) {
-}
-
-//------------------------------------------------------------------------------
-// getUser
-//------------------------------------------------------------------------------
-const cta::UserIdentity &cta::SecurityIdentity::getUser() const throw() {
-  return m_user;
-}
-
-//------------------------------------------------------------------------------
-// getHost
-//------------------------------------------------------------------------------
-const std::string &cta::SecurityIdentity::getHost() const throw() {
-  return m_host;
+cta::TapeCopyLocation::TapeCopyLocation(const std::string &vid,
+  const uint64_t fseq, const uint64_t blockId):
+  vid(vid),
+  fseq(0),
+  blockId(0) {
 }

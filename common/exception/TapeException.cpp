@@ -16,45 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/Tape.hpp"
+#include "common/exception/TapeException.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Tape::Tape():
-    capacityInBytes(0),
-    dataOnTapeInBytes(0) {
+cta::TapeException::TapeException(const std::string &message):
+  cta::exception::Exception(message) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::Tape::~Tape() throw() {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::Tape::Tape(
-    const std::string &vid,
-    const uint64_t nbFiles,
-    const std::string &logicalLibraryName,
-    const std::string &tapePoolName,
-    const uint64_t capacityInBytes,
-    const uint64_t dataOnTapeInBytes,
-    const CreationLog & creationLog):
-    vid(vid),
-    nbFiles(nbFiles),
-    logicalLibraryName(logicalLibraryName),
-    tapePoolName(tapePoolName),
-    capacityInBytes(capacityInBytes),
-    dataOnTapeInBytes(dataOnTapeInBytes),
-    creationLog(creationLog){
-}
-
-//------------------------------------------------------------------------------
-// operator<
-//------------------------------------------------------------------------------
-bool cta::Tape::operator<(const Tape &rhs) const throw() {
-  return vid < rhs.vid;
+cta::TapeException::~TapeException() throw() {
 }

@@ -19,8 +19,8 @@
 #pragma once
 
 #include "common/CreationLog.hpp"
-#include "scheduler/DriveQuota.hpp"
-#include "scheduler/MountCriteria.hpp"
+#include "common/priorities/DriveQuota.hpp"
+#include "common/priorities/MountCriteria.hpp"
 
 #include <stdint.h>
 #include <string>

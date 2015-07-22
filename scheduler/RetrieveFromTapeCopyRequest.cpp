@@ -17,7 +17,7 @@
  */
 
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
-#include "scheduler/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyLocation.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

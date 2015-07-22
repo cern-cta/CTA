@@ -11,13 +11,10 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
-  DiskException.cpp
-  DriveQuota.cpp
   TapeJob.cpp
   LogicalLibrary.cpp
   mockDB/MockSchedulerDatabase.cpp
   mockDB/MockSchedulerDatabaseFactory.cpp
-  MountCriteria.cpp
   RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
   RetrieveRequest.cpp
@@ -26,18 +23,10 @@ set (CTA_SCHEDULER_SRC_FILES
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
-  SecurityIdentity.cpp
   mockDB/SqliteColumnNameToIndex.cpp
   mockDB/SQLiteStatementDeleter.cpp
-  StorageClass.cpp
-  Tape.cpp
-  TapeCopyLocation.cpp
-  TapeException.cpp
-  TapePool.cpp
   TapeSession.cpp
-  UserGroup.cpp
-  UserRequest.cpp
-  VO.cpp)
+  UserRequest.cpp)
 
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
@@ -49,8 +38,7 @@ add_library (ctaschedulertest SHARED
   mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
-  SchedulerTest.cpp
-  UserIdentityTest.cpp)
+  SchedulerTest.cpp)
 
 target_link_libraries (ctaschedulertest ${SQLITE3_LIBRARY_RELEASE})
 

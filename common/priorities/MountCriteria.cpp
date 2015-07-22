@@ -16,39 +16,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/StorageClass.hpp"
-#include "common/CreationLog.hpp"
+#include "common/priorities/MountCriteria.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::StorageClass::StorageClass():
-  nbCopies(0) {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::StorageClass::~StorageClass() throw() {
+cta::MountCriteria::MountCriteria():
+  m_nbBytes(0),
+  m_nbFiles(0),
+  m_ageInSecs(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::StorageClass::StorageClass(
-  const std::string &name,
-  const uint16_t nbCopies,
-  const CreationLog &creationLog):
-  name(name),
-  nbCopies(nbCopies),
-  creationLog(creationLog) {
+cta::MountCriteria::MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles,
+  const uint64_t ageInSecs):
+  m_nbBytes(nbBytes),
+  m_nbFiles(nbFiles),
+  m_ageInSecs(ageInSecs) {
 }
 
 //------------------------------------------------------------------------------
-// operator<
+// getNbBytes
 //------------------------------------------------------------------------------
-bool cta::StorageClass::operator<(const StorageClass& rhs) const {
-  return name < rhs.name;
+uint64_t cta::MountCriteria::getNbBytes() const throw() {
+  return m_nbBytes;
 }
 
+//------------------------------------------------------------------------------
+// getNbFiles
+//------------------------------------------------------------------------------
+uint64_t cta::MountCriteria::getNbFiles() const throw() {
+  return m_nbFiles;
+}
 
+//------------------------------------------------------------------------------
+// getAgeInSecs
+//------------------------------------------------------------------------------
+uint64_t cta::MountCriteria::getAgeInSecs() const throw() {
+  return m_ageInSecs;
+}

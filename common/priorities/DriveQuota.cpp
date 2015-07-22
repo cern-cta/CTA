@@ -16,32 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/VO.hpp"
+#include "common/priorities/DriveQuota.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::VO::VO() {
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::VO::~VO() throw() {
+cta::DriveQuota::DriveQuota():
+  m_minDrives(0),
+  m_maxDrives(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::VO::VO(
-  const std::string &name,
-  const CreationLog & creationLog):
-  m_name(name), m_creationLog(creationLog) {
+cta::DriveQuota::DriveQuota(const uint32_t minDrives, const uint32_t maxDrives):
+  m_minDrives(minDrives),
+  m_maxDrives(maxDrives) {
 }
 
 //------------------------------------------------------------------------------
-// getName
+// getMinDrives
 //------------------------------------------------------------------------------
-const std::string &cta::VO::getName() const throw() {
-  return m_name;
+uint32_t cta::DriveQuota::getMinDrives() const throw() {
+  return m_minDrives;
+}
+
+//------------------------------------------------------------------------------
+// getMaxDrives
+//------------------------------------------------------------------------------
+uint32_t cta::DriveQuota::getMaxDrives() const throw() {
+  return m_maxDrives;
 }

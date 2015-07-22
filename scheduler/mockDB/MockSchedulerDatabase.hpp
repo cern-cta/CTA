@@ -19,7 +19,7 @@
 #pragma once
 
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <sqlite3.h>

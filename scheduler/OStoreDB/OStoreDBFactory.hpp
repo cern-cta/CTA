@@ -20,9 +20,9 @@
 
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "scheduler/StorageClass.hpp"
-#include "scheduler/TapePool.hpp"
-#include "scheduler/Tape.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/TapePool.hpp"
+#include "common/archiveNS/Tape.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"

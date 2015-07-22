@@ -16,17 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/TapeException.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/CreationLog.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeException::TapeException(const std::string &message):
-  cta::exception::Exception(message) {
+cta::StorageClass::StorageClass():
+  nbCopies(0) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::TapeException::~TapeException() throw() {
+cta::StorageClass::~StorageClass() throw() {
 }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::StorageClass::StorageClass(
+  const std::string &name,
+  const uint16_t nbCopies,
+  const CreationLog &creationLog):
+  name(name),
+  nbCopies(nbCopies),
+  creationLog(creationLog) {
+}
+
+//------------------------------------------------------------------------------
+// operator<
+//------------------------------------------------------------------------------
+bool cta::StorageClass::operator<(const StorageClass& rhs) const {
+  return name < rhs.name;
+}
+
+

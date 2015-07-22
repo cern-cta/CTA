@@ -17,7 +17,7 @@
  */
 
 #include "OStoreDB.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/TapePool.hpp"
 #include "objectstore/Tape.hpp"
@@ -31,12 +31,12 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
-#include "scheduler/StorageClass.hpp"
-#include "scheduler/TapePool.hpp"
-#include "scheduler/Tape.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/TapePool.hpp"
+#include "common/archiveNS/Tape.hpp"
 #include "ArchiveToDirRequest.hpp"
 #include "RetrieveToFileRequest.hpp"
-#include "TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyLocation.hpp"
 #include "RetrieveToDirRequest.hpp"
 #include "ArchiveToTapeCopyRequest.hpp"
 #include <algorithm>

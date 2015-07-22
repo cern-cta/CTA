@@ -19,7 +19,7 @@
 #pragma once
 
 #include "scheduler/RetrieveRequest.hpp"
-#include "scheduler/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyLocation.hpp"
 
 #include <list>
 #include <string>

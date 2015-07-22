@@ -24,7 +24,7 @@
 #include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 
 #include <exception>

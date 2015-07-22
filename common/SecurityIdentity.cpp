@@ -16,34 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/DriveQuota.hpp"
+#include "common/SecurityIdentity.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DriveQuota::DriveQuota():
-  m_minDrives(0),
-  m_maxDrives(0) {
+cta::SecurityIdentity::SecurityIdentity() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DriveQuota::DriveQuota(const uint32_t minDrives, const uint32_t maxDrives):
-  m_minDrives(minDrives),
-  m_maxDrives(maxDrives) {
+cta::SecurityIdentity::SecurityIdentity(const UserIdentity &user,
+  const std::string &host): m_user(user), m_host(host) {
 }
 
 //------------------------------------------------------------------------------
-// getMinDrives
+// getUser
 //------------------------------------------------------------------------------
-uint32_t cta::DriveQuota::getMinDrives() const throw() {
-  return m_minDrives;
+const cta::UserIdentity &cta::SecurityIdentity::getUser() const throw() {
+  return m_user;
 }
 
 //------------------------------------------------------------------------------
-// getMaxDrives
+// getHost
 //------------------------------------------------------------------------------
-uint32_t cta::DriveQuota::getMaxDrives() const throw() {
-  return m_maxDrives;
+const std::string &cta::SecurityIdentity::getHost() const throw() {
+  return m_host;
 }

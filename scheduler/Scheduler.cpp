@@ -35,10 +35,10 @@
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/SecurityIdentity.hpp"
-#include "scheduler/StorageClass.hpp"
-#include "scheduler/Tape.hpp"
-#include "scheduler/TapePool.hpp"
+#include "common/SecurityIdentity.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/archiveNS/Tape.hpp"
+#include "common/TapePool.hpp"
 #include "scheduler/TapeMount.hpp"
 
 #include <iostream>

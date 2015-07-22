@@ -20,7 +20,7 @@
 
 #include "common/archiveNS/ArchiveDirIterator.hpp"
 #include "common/archiveNS/ArchiveFileStatus.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 
 #include <memory>
 #include <string>

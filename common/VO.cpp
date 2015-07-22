@@ -16,44 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/MountCriteria.hpp"
+#include "common/VO.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MountCriteria::MountCriteria():
-  m_nbBytes(0),
-  m_nbFiles(0),
-  m_ageInSecs(0) {
+cta::VO::VO() {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::VO::~VO() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MountCriteria::MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles,
-  const uint64_t ageInSecs):
-  m_nbBytes(nbBytes),
-  m_nbFiles(nbFiles),
-  m_ageInSecs(ageInSecs) {
+cta::VO::VO(
+  const std::string &name,
+  const CreationLog & creationLog):
+  m_name(name), m_creationLog(creationLog) {
 }
 
 //------------------------------------------------------------------------------
-// getNbBytes
+// getName
 //------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getNbBytes() const throw() {
-  return m_nbBytes;
-}
-
-//------------------------------------------------------------------------------
-// getNbFiles
-//------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getNbFiles() const throw() {
-  return m_nbFiles;
-}
-
-//------------------------------------------------------------------------------
-// getAgeInSecs
-//------------------------------------------------------------------------------
-uint64_t cta::MountCriteria::getAgeInSecs() const throw() {
-  return m_ageInSecs;
+const std::string &cta::VO::getName() const throw() {
+  return m_name;
 }

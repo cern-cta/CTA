@@ -21,7 +21,7 @@
 #include "common/archiveNS/ArchiveDirIterator.hpp"
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
-#include "scheduler/SecurityIdentity.hpp"
+#include "common/SecurityIdentity.hpp"
 
 #include <list>
 #include <string>
