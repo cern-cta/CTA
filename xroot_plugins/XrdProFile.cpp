@@ -39,6 +39,7 @@
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 #include <iostream>
+#include <memory>
 #include <pwd.h>
 #include <sstream>
 #include <string>
@@ -54,28 +55,25 @@ cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
   cta::SecurityIdentity requester;
   struct passwd pwd;
   struct passwd *result;
-  char *buf;
   long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
   if (bufsize == -1)
   {
     bufsize = 16384;
   }
-  buf = (char *)malloc((size_t)bufsize);
-  if(buf == NULL)
+  std::unique_ptr<char> buf((char *)malloc((size_t)bufsize));
+  if(buf.get() == NULL)
   {
     throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] malloc of the buffer failed");
   }
-  int rc = getpwnam_r(client->name, &pwd, buf, bufsize, &result);
+  int rc = getpwnam_r(client->name, &pwd, buf.get(), bufsize, &result);
   if(result == NULL)
   {
     if (rc == 0)
     {
-      free(buf);
       throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] User "+client->name+" not found");
     }
     else
     {
-      free(buf);
       throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] getpwnam_r failed");
     }
   }
@@ -83,7 +81,6 @@ cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
     " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   requester = cta::SecurityIdentity(cta::UserIdentity(pwd.pw_uid, pwd.pw_gid),
     client->host);
-  free(buf);
   return requester;
 }
 
@@ -214,15 +211,7 @@ const char* XrdProFile::FName() {
 int XrdProFile::getMmap(void **Addr, off_t &Size) {
   *Addr = const_cast<char *>(m_data.c_str());
   Size = m_data.length();
-  return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted
-}
-
-//------------------------------------------------------------------------------
-// read
-//------------------------------------------------------------------------------
-XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size) {
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return 0;
+  return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
 }
 
 //------------------------------------------------------------------------------
@@ -236,6 +225,14 @@ XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXfe
 //  else {
 //    return 0;
 //  }
+  error.setErrInfo(ENOTSUP, "Not supported.");
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// read
+//------------------------------------------------------------------------------
+XrdSfsXferSize XrdProFile::read(XrdSfsFileOffset offset, XrdSfsXferSize size) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return 0;
 }
