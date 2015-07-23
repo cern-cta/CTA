@@ -574,7 +574,7 @@ int sstrerror_r(const int n, char *const buf, const size_t buflen) {
      */
     tmpstr = sys_secerrlist[n-ESECBASEOFF];
   } else if ((n>0)
-#ifndef linux
+#ifndef __linux__
              && (n<sys_nerr)
 #endif
              ) {

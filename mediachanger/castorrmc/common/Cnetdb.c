@@ -28,7 +28,7 @@ const char *name;
      *       provide thread safe version.
      */
     return(gethostbyname(name));
-#elif defined(linux)
+#elif defined(__linux__)
     static int hostent_key = -1;
     static int hostdata_key = -1;
     int rc;
@@ -69,7 +69,7 @@ int type;
      *       provide thread safe version.
      */
     return(gethostbyaddr(addr,len,type));
-#elif defined(linux)
+#elif defined(__linux__)
     static int hostent_key = -1;
     static int hostdata_key = -1;
     int rc;
@@ -109,7 +109,7 @@ const char *proto;
      *       provide thread safe version.
      */
     return(getservbyname(name,proto));
-#elif defined(linux)
+#elif defined(__linux__)
     static int servent_key = -1;
     static int servdata_key = -1;
     int rc;
