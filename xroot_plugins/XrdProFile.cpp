@@ -87,7 +87,7 @@ cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
 //------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
-void XrdProFile::commandDispatcher(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::string command(tokens[1]);
   
   if     ("ad"    == command || "admin"                 == command) {xCom_admin(tokens, requester);}
@@ -133,17 +133,15 @@ std::string XrdProFile::decode(const std::string msg) const {
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
   try {
-    cta::SecurityIdentity requester = checkClient(client);
+    const cta::SecurityIdentity requester = checkClient(client);
 
     if(!strlen(fileName)) { //this should never happen
       m_data = getGenericHelp("");
       return SFS_OK;
     }
 
-    fileName++;//let's skip the first slash which is always prepended since we are asking for an absolute path
-
     std::vector<std::string> tokens;
-    std::stringstream ss(fileName);
+    std::stringstream ss(fileName+1); //let's skip the first slash which is always prepended since we are asking for an absolute path
     std::string item;
     while (std::getline(ss, item, '&')) {
       replaceAll(item, "_", "/"); 
@@ -163,7 +161,7 @@ int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
       m_data = getGenericHelp(tokens[0]);
       return SFS_OK;
     }  
-    commandDispatcher(tokens, requester);
+    dispatchCommand(tokens, requester);
     return SFS_OK;
   } catch (cta::exception::Exception &ex) {
     m_data = "[ERROR] CTA exception caught: ";

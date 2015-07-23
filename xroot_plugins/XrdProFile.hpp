@@ -87,7 +87,7 @@ protected:
    * 
    * @param tokens The command line tokens
    */
-  void commandDispatcher(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void dispatchCommand(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Given the command line string vector it returns the value of the specified option or an empty string if absent
