@@ -28,11 +28,11 @@
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "rmc_constants.h"
-#include "serrno.h"
+#include "h/rmc_constants.h"
 
-#include <unistd.h>
+#include <shift/serrno.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace castor {
 namespace legacymsg {

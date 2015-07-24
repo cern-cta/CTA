@@ -87,7 +87,7 @@ tapegateway::GatewayMessage *
   report.connectDuration = timer.secs();
   // 2) The actual exchange over the network.
   clientConnection.sendObject(const_cast<tapegateway::GatewayMessage &>(req));
-  std::auto_ptr<castor::IObject> resp (clientConnection.readObject());
+  std::unique_ptr<castor::IObject> resp (clientConnection.readObject());
   report.sendRecvDuration = timer.secs();
   // 3) Check response type
   tapegateway::GatewayMessage * ret = 
@@ -131,7 +131,7 @@ void ClientProxy::fetchVolumeId(
   request.setAggregatorTransactionId(report.transactionId);
   request.setUnit(m_request.driveUnit);
   // 2) get the reply from the client
-  std::auto_ptr<tapegateway::GatewayMessage> 
+  std::unique_ptr<tapegateway::GatewayMessage> 
       response (requestResponseSession(request, report));
   // 3) Process the possible outputs
   tapegateway::Volume * volume;
@@ -172,7 +172,7 @@ RequestReport &transactionReport)
   endReport.setMountTransactionId(m_request.volReqId);
   endReport.setAggregatorTransactionId(transactionReport.transactionId);
   // 2) Send the report
-  std::auto_ptr<tapegateway::GatewayMessage> ack(
+  std::unique_ptr<tapegateway::GatewayMessage> ack(
       requestResponseSession(endReport, transactionReport,
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) If we did not get a ack, complain (not much more we can do)
@@ -207,7 +207,7 @@ const std::string & errorMsg, int errorCode, RequestReport &transactionReport)
   endReport.setErrorMessage(errorMsg);
   endReport.setErrorCode(errorCode);
   // 2) Send the report
-  std::auto_ptr<tapegateway::GatewayMessage> ack(
+  std::unique_ptr<tapegateway::GatewayMessage> ack(
       requestResponseSession(endReport, transactionReport,
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) If we did not get a ack, complain (not much more we can do)
@@ -243,7 +243,7 @@ uint64_t files, uint64_t bytes, RequestReport& report)
   ftmReq.setMaxFiles(files);
   ftmReq.setMaxBytes(bytes);
   // 2) Exchange messages with the server
-  std::auto_ptr<tapegateway::GatewayMessage> resp(
+  std::unique_ptr<tapegateway::GatewayMessage> resp(
       requestResponseSession(ftmReq, report, 
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) We expect either a NoMoreFiles response or FilesToMigrateList
@@ -287,7 +287,7 @@ tapegateway::FileMigrationReportList & migrationReport,
   migrationReport.setFseqSet(false);
   migrationReport.setFseq(0);
   // 2) Exchange messages with the server
-  std::auto_ptr<tapegateway::GatewayMessage> resp(
+  std::unique_ptr<tapegateway::GatewayMessage> resp(
       requestResponseSession(migrationReport, report,
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) We expect 2 types of return messages: NotificationAcknowledge and
@@ -328,7 +328,7 @@ uint64_t files, uint64_t bytes, RequestReport& report)
   ftrReq.setMaxFiles(files);
   ftrReq.setMaxBytes(bytes);
   // 2) Exchange messages with the server
-  std::auto_ptr<tapegateway::GatewayMessage> resp(
+  std::unique_ptr<tapegateway::GatewayMessage> resp(
       requestResponseSession(ftrReq, report,
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) We expect either a NoMoreFiles response or FilesToRecallList
@@ -366,7 +366,7 @@ RequestReport& report) {
   report.transactionId = ++m_transactionId;
   recallReport.setAggregatorTransactionId(report.transactionId);
   // 2) Exchange messages with the server
-  std::auto_ptr<tapegateway::GatewayMessage> resp(
+  std::unique_ptr<tapegateway::GatewayMessage> resp(
       requestResponseSession(recallReport, report,
         castor::tape::tapeserver::daemon::TAPESERVER_DB_TIMEOUT));
   // 3) We expect 2 types of return messages: NotificationAcknowledge and

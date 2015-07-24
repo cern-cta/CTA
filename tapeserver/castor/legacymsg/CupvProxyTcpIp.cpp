@@ -28,7 +28,7 @@
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 
-#include "Cupv.h"
+#include <shift/Cupv.h>
 
 //------------------------------------------------------------------------------
 // constructor

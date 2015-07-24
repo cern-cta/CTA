@@ -159,7 +159,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
            .add("threadID", m_threadID);
   m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
   
-  std::auto_ptr<DiskReadTask> task;
+  std::unique_ptr<DiskReadTask> task;
   castor::utils::Timer localTime;
   castor::utils::Timer totalTime;
   

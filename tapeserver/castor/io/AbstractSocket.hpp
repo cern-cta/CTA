@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "net.h"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 
+#include <shift/net.h>
 #include <string>
 #include <netinet/in.h>
 

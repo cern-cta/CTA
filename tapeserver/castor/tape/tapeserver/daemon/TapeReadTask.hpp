@@ -96,7 +96,7 @@ public:
     MemBlock* mb=NULL;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
-      std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      std::unique_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
 
@@ -218,17 +218,17 @@ private:
    }
   /** 
    * Open the file on the tape. In case of failure, log and throw
-   * Copying the auto_ptr on the calling point will give us the ownership of the 
+   * Copying the unique_ptr on the calling point will give us the ownership of the 
    * object.
-   * @return if successful, return an auto_ptr on the ReadFile we want
+   * @return if successful, return an unique_ptr on the ReadFile we want
    */
-  std::auto_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
+  std::unique_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
   castor::tape::tapeFile::ReadSession & rs, castor::log::LogContext & lc){
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
 
-    std::auto_ptr<castor::tape::tapeFile::ReadFile> rf;
+    std::unique_ptr<castor::tape::tapeFile::ReadFile> rf;
     try {
       rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_fileToRecall));
       lc.log(LOG_DEBUG, "Successfully opened the tape file");
@@ -245,7 +245,7 @@ private:
   /**
    * All we need to know about the file we are recalling
    */
-  std::auto_ptr<castor::tape::tapegateway::FileToRecallStruct> m_fileToRecall;
+  std::unique_ptr<castor::tape::tapegateway::FileToRecallStruct> m_fileToRecall;
   
   /**
    * The task (seen as a Y) that will consume all the blocks we read

@@ -101,7 +101,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   m_log(LOG_DEBUG, "Accepted a possible vdqm connection", params);
 
   // Create a new vdqm connection handler
-  std::auto_ptr<VdqmConnectionHandler> connectionHandler;
+  std::unique_ptr<VdqmConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new VdqmConnectionHandler(connection.get(),
       m_reactor, m_log, m_driveCatalogue, m_tapeDaemonConfig));

@@ -65,9 +65,9 @@ ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid,
 void ClientSimulator::processFirstRequest()
  {
   // Accept the next connection
-  std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+  std::unique_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
   // Read in the message sent by the tapebridge
-  std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+  std::unique_ptr<castor::IObject> obj(clientConnection->readObject());
   // Cast the message to a GatewayMessage or die
   tapegateway::GatewayMessage & msg(
       dynamic_cast<tapegateway::GatewayMessage &> (*obj.get()));
@@ -123,9 +123,9 @@ void ClientSimulator::processFirstRequest()
 bool ClientSimulator::processOneRequest()
  {
   // Accept the next connection
-  std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+  std::unique_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
   // Read in the message sent by the tapebridge
-  std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+  std::unique_ptr<castor::IObject> obj(clientConnection->readObject());
   // Cast the message to a GatewayMessage or die
   tapegateway::GatewayMessage & msg(
       dynamic_cast<tapegateway::GatewayMessage &> (*obj.get()));
@@ -154,7 +154,7 @@ bool ClientSimulator::processOneRequest()
       if (m_filesToRecall.size()) {
         files ++;
         bytes += m_recallSizes.front();
-        std::auto_ptr<tapegateway::FileToRecallStruct> ftr(new tapegateway::FileToRecallStruct);
+        std::unique_ptr<tapegateway::FileToRecallStruct> ftr(new tapegateway::FileToRecallStruct);
         *ftr = m_filesToRecall.front();
         reply.filesToRecall().push_back(ftr.release());
         m_filesToRecall.pop();
@@ -203,7 +203,7 @@ bool ClientSimulator::processOneRequest()
     while (files < req.maxFiles() && bytes < req.maxBytes()) {
       if (m_filesToMigrate.size()) {
         files++;
-        std::auto_ptr<tapegateway::FileToMigrateStruct> ftm(new tapegateway::FileToMigrateStruct);
+        std::unique_ptr<tapegateway::FileToMigrateStruct> ftm(new tapegateway::FileToMigrateStruct);
         *ftm = m_filesToMigrate.front();
         bytes += ftm->fileSize();
         reply.filesToMigrate().push_back(ftm.release());

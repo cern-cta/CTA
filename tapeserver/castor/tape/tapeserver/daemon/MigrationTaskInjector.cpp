@@ -84,10 +84,10 @@ namespace daemon {
       
       const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
-      std::auto_ptr<TapeWriteTask> twt(
+      std::unique_ptr<TapeWriteTask> twt(
         new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager,m_errorFlag)
       );
-      std::auto_ptr<DiskReadTask> drt(
+      std::unique_ptr<DiskReadTask> drt(
         new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock,m_errorFlag)
       );
       
@@ -126,7 +126,7 @@ namespace daemon {
 //------------------------------------------------------------------------------ 
   bool MigrationTaskInjector::synchronousInjection() {
     client::ClientProxy::RequestReport reqReport;
-    std::auto_ptr<tapegateway::FilesToMigrateList>
+    std::unique_ptr<tapegateway::FilesToMigrateList>
       filesToMigrateList;
     try {
       filesToMigrateList.reset(m_client.getFilesToMigrate(m_maxFiles, 
@@ -185,7 +185,7 @@ namespace daemon {
         }
         Request req = m_parent.m_queue.pop();
         client::ClientProxy::RequestReport reqReport;
-        std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(
+        std::unique_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(
           m_parent.m_client.getFilesToMigrate(req.filesRequested, req.bytesRequested,reqReport)
         );
 

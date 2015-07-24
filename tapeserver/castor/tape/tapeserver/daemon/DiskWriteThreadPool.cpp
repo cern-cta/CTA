@@ -154,7 +154,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
            .add("threadID", m_threadID);
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
   
-  std::auto_ptr<DiskWriteTask>  task;
+  std::unique_ptr<DiskWriteTask>  task;
   castor::utils::Timer localTime;
   castor::utils::Timer totalTime(localTime);
   

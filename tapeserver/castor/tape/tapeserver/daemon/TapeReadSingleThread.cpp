@@ -138,10 +138,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::openReadSession()
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::tapeFile::ReadSession>
+std::unique_ptr<castor::tape::tapeFile::ReadSession>
 castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
-    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(
+    std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
     m_logContext.log(LOG_DEBUG, "Created tapeFile::ReadSession with success");
     
@@ -199,7 +199,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
-      std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
+      std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
       // From now on, the tasks will identify problems when executed.
       currentErrorToCount = "";
       m_stats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -213,7 +213,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector
-      std::auto_ptr<TapeReadTask> task;
+      std::unique_ptr<TapeReadTask> task;
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());

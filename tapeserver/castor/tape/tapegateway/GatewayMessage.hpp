@@ -25,8 +25,9 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "osdep.h"
+
 #include <iostream>
+#include <shift/osdep.h>
 #include <string>
 
 namespace castor {

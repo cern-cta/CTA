@@ -96,7 +96,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  std::auto_ptr<tape::tapegateway::FileToMigrateStruct> m_migratedFile;
+  std::unique_ptr<tape::tapegateway::FileToMigrateStruct> m_migratedFile;
   
   /**
    * The number of memory block we will need to read the whole file

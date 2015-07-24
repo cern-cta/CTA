@@ -20,9 +20,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
-#include "serrno.h"
-#include "strerror_r_wrapper.h"
-#include "vmgr_constants.h"
+#include "tapeserver/h/strerror_r_wrapper.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -30,12 +28,14 @@
 #include <iomanip>
 #include <iostream>
 #include <locale>
+#include <shift/serrno.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <shift/vmgr_constants.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 

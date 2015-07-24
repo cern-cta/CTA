@@ -626,7 +626,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor(
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterProcessForkerConnectionHandler(const int reaperSocket)  {
   try {
-    std::auto_ptr<ProcessForkerConnectionHandler> handler;
+    std::unique_ptr<ProcessForkerConnectionHandler> handler;
     try {
       handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
         m_log, *m_catalogue));
@@ -671,7 +671,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
         params);
     }
 
-    std::auto_ptr<VdqmAcceptHandler> handler;
+    std::unique_ptr<VdqmAcceptHandler> handler;
     try {
       handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
         *m_catalogue,m_tapeDaemonConfig));
@@ -717,7 +717,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
         params);
     }
 
-    std::auto_ptr<AdminAcceptHandler> handler;
+    std::unique_ptr<AdminAcceptHandler> handler;
     try {
       handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
         m_vdqm, *m_catalogue, m_hostName));
@@ -764,7 +764,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
         params);
     }
 
-    std::auto_ptr<LabelCmdAcceptHandler> handler;
+    std::unique_ptr<LabelCmdAcceptHandler> handler;
     try {
       handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
         m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr));
@@ -793,7 +793,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 void castor::tape::tapeserver::daemon::TapeDaemon::
   createAndRegisterTapeMessageHandler()  {
   try {
-    std::auto_ptr<TapeMessageHandler> handler;
+    std::unique_ptr<TapeMessageHandler> handler;
     try {
       handler.reset(new TapeMessageHandler(m_tapeDaemonConfig.internalPort,
         m_reactor, m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr,

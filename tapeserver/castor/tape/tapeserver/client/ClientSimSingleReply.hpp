@@ -64,7 +64,7 @@ namespace client {
           uint8_t b;
           uint8_t c;
           uint8_t d;
-        };
+        } parts;
       };
       uint16_t port;
     };
@@ -111,9 +111,9 @@ namespace client {
     // Process the first request which should be getVolume
     void processFirstRequest()  {
       // Accept the next connection
-      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      std::unique_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
       // Read in the message sent by the tapebridge
-      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      std::unique_ptr<castor::IObject> obj(clientConnection->readObject());
       // Convert to a gateway message (for transactionId)
       tapegateway::GatewayMessage & gm = 
               dynamic_cast<tapegateway::GatewayMessage &>(*obj);
@@ -146,9 +146,9 @@ namespace client {
            {
     using namespace castor::tape::tapegateway;
       // Accept the next connection
-      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      std::unique_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
       // Read in the message sent by the tapebridge
-      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      std::unique_ptr<castor::IObject> obj(clientConnection->readObject());
       // Convert to a gateway message (for transactionId)
       GatewayMessage & gm = 
               dynamic_cast<tapegateway::GatewayMessage &>(*obj);
@@ -170,9 +170,9 @@ namespace client {
            {
     using namespace castor::tape::tapegateway;
       // Accept the next connection
-      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      std::unique_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
       // Read in the message sent by the tapebridge
-      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      std::unique_ptr<castor::IObject> obj(clientConnection->readObject());
       // Convert to a gateway message (for transactionId)
       GatewayMessage & gm = 
               dynamic_cast<tapegateway::GatewayMessage &>(*obj);

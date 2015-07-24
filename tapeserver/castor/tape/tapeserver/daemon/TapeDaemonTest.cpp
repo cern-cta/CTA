@@ -91,7 +91,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::tape::reactor::ZMQReactor reactor(log);
   castor::server::ProcessCapDummy capUtils;
   TapeDaemonConfig tapeDaemonConfig;
-  std::auto_ptr<TapeDaemon> daemon;
+  std::unique_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
     netTimeout, driveConfigs, cupv, vdqm, vmgr, reactor, capUtils,
     tapeDaemonConfig)));

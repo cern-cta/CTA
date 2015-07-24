@@ -1,1 +1,0 @@
-.so man3/rfio_symlink.3castor

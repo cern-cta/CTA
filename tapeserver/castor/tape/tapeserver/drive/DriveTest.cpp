@@ -70,7 +70,7 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
       std::string expected_classid (typeid(castor::tape::tapeserver::drive::DriveT10000).name());
-      std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>drive(
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>drive(
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       std::string found_classid (typeid(*drive).name());
       ASSERT_EQ(expected_classid, found_classid);
@@ -102,7 +102,7 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       castor::tape::tapeserver::drive::positionInfo posInfo;
       
@@ -151,7 +151,7 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
@@ -195,7 +195,7 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
@@ -231,7 +231,7 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       
@@ -369,7 +369,7 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
           i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
             castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<std::string> alerts = drive->getTapeAlerts(drive->getTapeAlertCodes());

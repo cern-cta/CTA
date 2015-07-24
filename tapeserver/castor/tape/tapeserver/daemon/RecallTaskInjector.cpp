@@ -148,7 +148,7 @@ bool RecallTaskInjector::synchronousInjection()
 {
   client::ClientProxy::RequestReport reqReport;  
 
-  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
+  std::unique_ptr<castor::tape::tapegateway::FilesToRecallList> 
     filesToRecallList;
   try {
     filesToRecallList.reset(m_client.getFilesToRecall(m_maxFiles,m_maxBytes,reqReport));
@@ -213,7 +213,7 @@ void RecallTaskInjector::WorkerThread::run()
       }
       m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
       client::ClientProxy::RequestReport reqReport;
-      std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.filesRequested, req.bytesRequested,reqReport));
+      std::unique_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.filesRequested, req.bytesRequested,reqReport));
       
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", reqReport.transactionId));
       LogContext::ScopedParam sp02(m_parent.m_lc, Param("connectDuration", reqReport.connectDuration));

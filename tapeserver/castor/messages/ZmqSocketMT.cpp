@@ -24,7 +24,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/messages/MutexLocker.hpp"
 #include "castor/messages/ZmqSocketMT.hpp"
-#include "serrno.h"
+
+#include <shift/serrno.h>
 
 //------------------------------------------------------------------------------
 // constructor

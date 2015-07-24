@@ -183,7 +183,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
-  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
   
   if(!drive.get()) return MARK_DRIVE_AS_DOWN;    
   // We can now start instantiating all the components of the data path
@@ -284,7 +284,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
   if (!drive.get()) return MARK_DRIVE_AS_UP;
   // Once we got hold of the drive, we can run the session
   {
@@ -488,7 +488,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   }
   try {
-    std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
+    std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
     drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
     if (drive.get()) drive->config = driveConfig;
     return drive.release();

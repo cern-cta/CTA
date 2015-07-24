@@ -72,7 +72,7 @@ int main ()
     if (dev.type == castor::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
-        std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
+        std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
           castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
      
         /**

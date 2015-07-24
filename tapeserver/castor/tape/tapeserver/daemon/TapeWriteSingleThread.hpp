@@ -177,12 +177,12 @@ private:
   
   /**
    * Function to open the WriteSession 
-   * If successful, returns a std::auto_ptr on it. A copy of that std::auto_ptr
-   * will give the caller the ownership of the opened session (see auto_ptr 
+   * If successful, returns a std::unique_ptr on it. A copy of that std::unique_ptr
+   * will give the caller the ownership of the opened session (see unique_ptr 
    * copy constructor, which has a move semantic)
    * @return the WriteSession we need to write on tape
    */
-  std::auto_ptr<castor::tape::tapeFile::WriteSession> openWriteSession();
+  std::unique_ptr<castor::tape::tapeFile::WriteSession> openWriteSession();
   /**
    * Execute flush on tape, do some log and report the flush to the client
    * @param message the message the log will register

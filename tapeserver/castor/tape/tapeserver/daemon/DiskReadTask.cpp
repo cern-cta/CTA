@@ -65,7 +65,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     //so dont do the same mistake twice !
     checkMigrationFailing();
     currentErrorToCount = "Error_diskOpenForRead";
-    std::auto_ptr<tape::diskFile::ReadFile> sourceFile(
+    std::unique_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_migratedFile->path()));
     log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_migratedFile->path())

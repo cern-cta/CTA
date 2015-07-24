@@ -94,11 +94,11 @@ private:
     
     /**
      * Try to open an tapeFile::ReadSession, if it fails, we got an exception.
-     * Return an std::auto_ptr will ensure the callee will have the ownershipe 
-     * of the object through auto_ptr's copy constructor
+     * Return an std::unique_ptr will ensure the callee will have the ownershipe 
+     * of the object through unique_ptr's copy constructor
      * @return 
      */
-  std::auto_ptr<castor::tape::tapeFile::ReadSession> openReadSession();
+  std::unique_ptr<castor::tape::tapeFile::ReadSession> openReadSession();
 
   /**
    * This function is from Thread, it is the function that will do all the job

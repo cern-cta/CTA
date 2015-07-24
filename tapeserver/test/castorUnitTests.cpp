@@ -21,10 +21,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/BaseObject.hpp"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "../h/Cthread_api.h"
-#include "castor/BaseObject.hpp"
+#include <shift/Cthread_api.h>
 
 int main(int argc, char** argv) {
   // The call to Cthread_init is necessary at the beginning of any program

@@ -25,8 +25,9 @@
 
 // Include Files
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
-#include "osdep.h"
+
 #include <iostream>
+#include <shift/osdep.h>
 #include <string>
 #include <vector>
 

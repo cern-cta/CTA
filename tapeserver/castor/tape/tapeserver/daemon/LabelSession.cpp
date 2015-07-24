@@ -106,7 +106,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   mountTape();
 
-  std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
+  std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
   waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
@@ -156,13 +156,13 @@ void castor::tape::tapeserver::daemon::LabelSession::setProcessCapabilities(
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
+std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::LabelSession::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);    
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.getDevFilename());
   
   // Instantiate the drive object
-  std::auto_ptr<drive::DriveInterface>
+  std::unique_ptr<drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {

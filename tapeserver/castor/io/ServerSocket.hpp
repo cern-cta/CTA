@@ -28,8 +28,8 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
-#include "net.h"
 
+#include <shift/net.h>
 #include <string>
 #include <netinet/in.h>
 

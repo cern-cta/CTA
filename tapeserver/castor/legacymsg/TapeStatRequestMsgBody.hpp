@@ -24,9 +24,9 @@
 #pragma once
 
 #include "castor/legacymsg/RtcpErrorAppendix.hpp"
-#include "Castor_limits.h"
-#include "Cuuid.h"
 
+#include <shift/Castor_limits.h>
+#include <shift/Cuuid.h>
 #include <stdint.h>
 
 namespace castor {

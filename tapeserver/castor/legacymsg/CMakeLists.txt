@@ -19,6 +19,9 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+include_directories(/usr/include/shift)
+include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
+
 ################################################################################
 # Rules to build and install libcastorlegacymsg.so
 ################################################################################
@@ -71,9 +74,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   VmgrTapeInfoRqstMsgBody.cpp
   VmgrTapeMountedMsgBody.cpp)
 add_library (castorlegacymsg SHARED ${CASTOR_LEGACYMSG_LIB_SRC_FILES})
-CastorSetLibraryVersions (castorlegacymsg)
 target_link_libraries (castorlegacymsg
   castorclient
   castorcommon)
-install (TARGETS castorlegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
-  NAMELINK_SKIP)

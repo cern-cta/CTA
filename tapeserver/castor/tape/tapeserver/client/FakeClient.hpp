@@ -44,7 +44,7 @@ public:
           /*current_succes_migration(init_value),current_failled_migration(init_value),
           current_succes_recall(0),current_failled_recall(0)*/{
     for(int n=0;n<nbCalls;++n) {
-      std::auto_ptr<tapegateway::FilesToRecallList> ptr(new tapegateway::FilesToRecallList());
+      std::unique_ptr<tapegateway::FilesToRecallList> ptr(new tapegateway::FilesToRecallList());
       for(unsigned int i=0;i<nbFile;++i)
       {
         ptr->filesToRecall().push_back(new tapegateway::FileToRecallStruct);

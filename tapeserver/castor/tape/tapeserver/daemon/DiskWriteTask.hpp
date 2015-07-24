@@ -118,7 +118,7 @@ private:
   /** 
    * All we need to know about the file we are currently recalling
    */
-  std::auto_ptr<tape::tapegateway::FileToRecallStruct> m_recallingFile;
+  std::unique_ptr<tape::tapegateway::FileToRecallStruct> m_recallingFile;
     
   /**
    * Reference to the Memory Manager in use

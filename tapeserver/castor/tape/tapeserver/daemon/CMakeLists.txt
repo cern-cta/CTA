@@ -19,6 +19,11 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+include_directories(/usr/include/shift)
+include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
+include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
+include_directories(${PROJECT_BINARY_DIR}/tapeserver)
+
 find_package( ZLIB REQUIRED )
 
 add_library(castorTapeServerDaemon 
@@ -84,6 +89,20 @@ add_library(castorTapeServerDaemonTestDummies
 
 add_executable(tapeserverd TapeDaemon.cpp)
 
+# With the exception of shared-library plugins, the CASTOR rpms only install the
+# /usr/lib64/libcastor*.so symbolic links for libraries used by end-user
+# developers.  Therefore the locations of the internal CASTOR libraries required
+# by tapeserved and not by end-user developers need to be imported into cmake.
+add_library(castorlegacymsg SHARED IMPORTED)
+set_target_properties(castorlegacymsg PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorlegacymsg.so.2.1)
+add_library(castorserver SHARED IMPORTED)
+set_target_properties(castorserver PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorserver.so.2.1)
+add_library(castortapegatewayprotocol SHARED IMPORTED)
+set_target_properties(castortapegatewayprotocol PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastortapegatewayprotocol.so.2.1)
+
 target_link_libraries(tapeserverd
   castorTapeServerDaemon
   SCSI
@@ -101,10 +120,3 @@ target_link_libraries(tapeserverd
   ${ZLIB_LIBRARIES}
   castormessages
   zmq)
-
-install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (tapeserverd)
-CastorInstallLogrotate (castor-tapeserver-server)
-CastorInstallSysconfigExample (tapeserverd)
-CastorInstallInitScript (tapeserverd)
-CastorInstallUdevRule (99-tape.rules)

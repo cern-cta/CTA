@@ -139,7 +139,7 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------  
   void TapeServerReporter::run(){
     while(1){
-      std::auto_ptr<Report> currentReport(m_fifo.pop());
+      std::unique_ptr<Report> currentReport(m_fifo.pop());
       if(NULL==currentReport.get()) {
         break;
       }

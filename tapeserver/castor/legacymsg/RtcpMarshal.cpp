@@ -25,11 +25,11 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
-#include "rtcp_constants.h"
-#include "vdqm_constants.h"
+#include "h/rtcp_constants.h"
 
 #include <errno.h>
 #include <iostream>
+#include <shift/vdqm_constants.h>
 #include <string.h>
 
 

@@ -160,7 +160,7 @@ namespace daemon {
      *
      * @return The tape drive.
      */
-    std::auto_ptr<drive::DriveInterface> createDrive();
+    std::unique_ptr<drive::DriveInterface> createDrive();
 
     /**
      * Waits for the specified drive to be ready.

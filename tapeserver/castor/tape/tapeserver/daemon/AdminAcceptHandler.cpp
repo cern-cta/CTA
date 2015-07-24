@@ -28,14 +28,14 @@
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "common.h"
-#include "Ctape.h"
-#include "serrno.h"
 #include "vdqm_api.h"
 
 #include <errno.h>
 #include <list>
 #include <memory>
+#include <shift/common.h>
+#include <shift/Ctape.h>
+#include <shift/serrno.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -114,7 +114,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   m_log(LOG_DEBUG, "Accepted a possible admin connection", params);
 
   // Create a new admin connection handler
-  std::auto_ptr<AdminConnectionHandler> connectionHandler;
+  std::unique_ptr<AdminConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new AdminConnectionHandler(connection.get(),
       m_reactor, m_log, m_driveCatalogue));

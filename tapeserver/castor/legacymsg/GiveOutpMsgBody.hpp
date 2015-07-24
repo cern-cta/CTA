@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "Castor_limits.h"
+#include <shift/Castor_limits.h>
 
 namespace castor {
 namespace legacymsg {

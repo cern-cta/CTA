@@ -65,7 +65,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     currentErrorToCount = "";
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
-    std::auto_ptr<tape::diskFile::WriteFile> writeFile;
+    std::unique_ptr<tape::diskFile::WriteFile> writeFile;
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();

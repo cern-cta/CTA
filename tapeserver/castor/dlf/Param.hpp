@@ -27,9 +27,8 @@
 #include "castor/dlf/IPAddress.hpp"
 #include "castor/dlf/TimeStamp.hpp"
 #include "castor/IObject.hpp"
-#include "castor/stager/TapeVid.hpp"
-#include "dlf_api.h"
 
+#include <shift/dlf_api.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -167,20 +166,6 @@ namespace castor {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_DOUBLE;
         m_cParam.value.par_double = value;
-      };
-
-      /**
-       * Constructor for Tape VIDS
-       */
-      Param(const char* name, castor::stager::TapeVid value) :
-        m_deallocate(false) {
-        m_cParam.name = (char*) name;
-        m_cParam.type = DLF_MSG_PARAM_TPVID;
-        if (0 != value.vid()) {
-          m_cParam.value.par_string = strdup(value.vid());
-        } else {
-          m_cParam.value.par_string = 0;
-        }
       };
 
       /**

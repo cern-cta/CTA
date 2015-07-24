@@ -62,7 +62,7 @@ namespace client {
           uint8_t b;
           uint8_t c;
           uint8_t d;
-        };
+        } parts;
       };
       uint16_t port;
     };

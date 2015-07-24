@@ -71,7 +71,7 @@ class MemBlock {
     m_failed(false),m_cancelled(true),m_errorMsg(""),m_errorCode(0){}
   };
   
-  std::auto_ptr<AlterationContext> m_context;
+  std::unique_ptr<AlterationContext> m_context;
 public:
   /**
    * COnstrucor 

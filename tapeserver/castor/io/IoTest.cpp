@@ -227,7 +227,7 @@ static void check16BitsWereMarshalledBigEndian(const char *const buf) {
 }
 
 TEST_F(castor_io_IoTest, marshalInt16) {
-  const int16_t v = 0x8765;
+  const uint16_t v = 0x8765;
   char buf[2];
   char *ptr = buf;
 
@@ -380,7 +380,7 @@ TEST_F(castor_io_IoTest, marshall_STRING) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint8) {
-  char buf[] = {0x87};
+  char buf[] = {'\x87'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint8_t v = 0;
@@ -391,7 +391,7 @@ TEST_F(castor_io_IoTest, unmarshalUint8) {
 }
 
 TEST_F(castor_io_IoTest, unmarshall_BYTE) {
-  char buf[] = {0x87};
+  char buf[] = {'\x87'};
   const char *ptr = buf;
   uint8_t v = 0;
   unmarshall_BYTE(ptr, v);
@@ -400,7 +400,7 @@ TEST_F(castor_io_IoTest, unmarshall_BYTE) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalInt16) {
-  char buf[] = {0x87, 0x65};
+  char buf[] = {'\x87', '\x65'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   int16_t v = 0;
@@ -411,7 +411,7 @@ TEST_F(castor_io_IoTest, unmarshalInt16) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint16) {
-  char buf[] = {0x87, 0x65};
+  char buf[] = {'\x87', '\x65'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint16_t v = 0;
@@ -422,7 +422,7 @@ TEST_F(castor_io_IoTest, unmarshalUint16) {
 }
 
 TEST_F(castor_io_IoTest, unmarshall_SHORT) {
-  char buf[] = {0x87, 0x65};
+  char buf[] = {'\x87', '\x65'};
   const char *ptr = buf;
   uint16_t v = 0;
   unmarshall_SHORT(ptr, v);
@@ -431,7 +431,7 @@ TEST_F(castor_io_IoTest, unmarshall_SHORT) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint32) {
-  char buf[] = {0x87, 0x65, 0x43, 0x21};
+  char buf[] = {'\x87', '\x65', '\x43', '\x21'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint32_t v = 0;
@@ -442,7 +442,7 @@ TEST_F(castor_io_IoTest, unmarshalUint32) {
 }
 
 TEST_F(castor_io_IoTest, unmarshall_LONG) {
-  char buf[] = {0x87, 0x65, 0x43, 0x21};
+  char buf[] = {'\x87', '\x65', '\x43', '\x21'};
   const char *ptr = buf;
   uint32_t v = 0;
   unmarshall_LONG(ptr, v);
@@ -451,7 +451,7 @@ TEST_F(castor_io_IoTest, unmarshall_LONG) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalInt32) {
-  char buf[] = {0x87, 0x65, 0x43, 0x21};
+  char buf[] = {'\x87', '\x65', '\x43', '\x21'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   int32_t v = 0;
@@ -462,7 +462,7 @@ TEST_F(castor_io_IoTest, unmarshalInt32) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint64) {
-  char buf[] = {0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11};
+  char buf[] = {'\x88', '\x77', '\x66', '\x55', '\x44', '\x33', '\x22', '\x11'};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint64_t v = 0;
@@ -476,7 +476,7 @@ TEST_F(castor_io_IoTest, unmarshalUint64) {
 // order to prove that the new C++ un-marshalling code of castor::io is
 // compatible with that of the legacy code found in h/mashall.h
 TEST_F(castor_io_IoTest, unmarshall_HYPER) {
-  char buf[] = {0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11};
+  char buf[] = {'\x88', '\x77', '\x66', '\x55', '\x44', '\x33', '\x22', '\x11'};
   const char *ptr = buf;
   uint64_t v = 0;
   unmarshall_HYPER(ptr, v);

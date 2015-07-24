@@ -158,7 +158,7 @@ namespace castor {
       namespace BlockId {
          uint32_t extract(const castor::tape::tapegateway::FileToRecallStruct &);
          void set(castor::tape::tapegateway::FileToRecallStruct &, uint32_t blockId);
-      }; 
+      } 
       /**
        * Class that labels a tape.  This class assumes the tape to be labeled is
        * already mounted and rewound.

@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <fstream>
-#include <rfio_api.h>
+#include <shift/rfio_api.h>
 
 const unsigned short max_unix_hostname_length = 256; //255 + 1 terminating character
 

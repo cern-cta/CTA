@@ -67,7 +67,7 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
 
-  std::auto_ptr<drive::DriveInterface> drivePtr = createDrive();
+  std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
   if(drive.hasTapeInPlace()) {
@@ -82,13 +82,13 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
+std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::EmptyDriveProbe::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.getDevFilename());
   
   // Instantiate the drive object
-  std::auto_ptr<castor::tape::tapeserver::drive::DriveInterface>
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {

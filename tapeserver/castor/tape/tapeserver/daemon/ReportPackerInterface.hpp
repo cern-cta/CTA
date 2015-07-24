@@ -169,7 +169,7 @@ template <class PlaceHolder> class ReportPackerInterface{
   /** 
    * m_listReports is holding all the report waiting to be processed
    */
-  std::auto_ptr<FileReportList> m_listReports;
+  std::unique_ptr<FileReportList> m_listReports;
   /**
    * Define how we should report to the client (by file/in bulk).
    */  

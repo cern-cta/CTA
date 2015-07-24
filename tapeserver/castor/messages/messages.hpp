@@ -31,12 +31,12 @@
 #include "castor/messages/ZmqMsg.hpp"
 #include "castor/messages/ZmqSocket.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "Ctape.h"
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <shift/Ctape.h>
 
 namespace castor {
 namespace messages {

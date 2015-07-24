@@ -17,6 +17,10 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
+cmake_minimum_required (VERSION 2.6)
+
+include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
+
 add_library(TapeDrive DriveGeneric.cpp FakeDrive.cpp)
 set_property(SOURCE DriveGeneric.cpp PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 target_link_libraries(TapeDrive SCSI)

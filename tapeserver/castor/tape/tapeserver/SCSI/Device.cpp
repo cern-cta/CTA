@@ -94,7 +94,7 @@ std::string SCSI::DeviceVector::readfile(std::string path) {
 SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(std::string path) {
   DeviceInfo::DeviceFile ret;
   std::string file = readfile(path);
-  if (!::sscanf(file.c_str(), "%d:%d\n", &ret.major, &ret.minor))
+  if (!::sscanf(file.c_str(), "%u:%u\n", &ret.major, &ret.minor))
     throw castor::exception::Exception(std::string("Could not parse file: ") + path);
   return ret;
 }

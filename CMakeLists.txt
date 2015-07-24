@@ -3,7 +3,14 @@ cmake_minimum_required (VERSION 2.6)
 project(cta)
 
 set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x")
+
+# Please note that the -fms-extensions option should be dropped when this
+# project gets to be compiled on a fully C++ 11 compliant compiler.  The option
+# is being used to support anonymous structs and avoid errors similar to the
+# following:
+#
+#   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x -fms-extensions")
 
 
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
@@ -37,6 +44,6 @@ add_subdirectory(objectstore)
 add_subdirectory(nameserver)
 add_subdirectory(remotens)
 add_subdirectory(scheduler)
-#add_subdirectory(tapeserver)
+add_subdirectory(tapeserver)
 add_subdirectory(tests)
 add_subdirectory(xroot_plugins)

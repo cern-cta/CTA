@@ -19,8 +19,10 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+include_directories(/usr/include/shift)
+include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
+
 set (UTILS_LIB_SRC_FILES
-  DebugBuf.cpp
   SmartFd.cpp
   SmartFILEPtr.cpp
   Timer.cpp

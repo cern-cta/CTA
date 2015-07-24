@@ -64,7 +64,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 void MigrationReportPacker::reportCompletedJob(
 const tapegateway::FileToMigrateStruct& migratedFile,u_int32_t checksum,
     u_int32_t blockId) {
-  std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum,blockId));
+  std::unique_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum,blockId));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -73,7 +73,7 @@ const tapegateway::FileToMigrateStruct& migratedFile,u_int32_t checksum,
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,
         const std::string& msg,int error_code){
-  std::auto_ptr<Report> rep(new ReportError(migratedFile,msg,error_code));
+  std::unique_ptr<Report> rep(new ReportError(migratedFile,msg,error_code));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -112,7 +112,7 @@ void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& reportPacker){
-  std::auto_ptr<tapegateway::FileMigratedNotificationStruct> successMigration(new tapegateway::FileMigratedNotificationStruct);
+  std::unique_ptr<tapegateway::FileMigratedNotificationStruct> successMigration(new tapegateway::FileMigratedNotificationStruct);
   successMigration->setFseq(m_migratedFile.fseq());
   successMigration->setFileTransactionId(m_migratedFile.fileTransactionId());
   successMigration->setId(m_migratedFile.id());
@@ -326,7 +326,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker){
    
-  std::auto_ptr<tapegateway::FileErrorReportStruct> failedMigration(new tapegateway::FileErrorReportStruct);
+  std::unique_ptr<tapegateway::FileErrorReportStruct> failedMigration(new tapegateway::FileErrorReportStruct);
   //failedMigration->setFileMigrationReportList(reportPacker.m_listReports.get());
   failedMigration->setErrorCode(m_error_code);
   failedMigration->setErrorMessage(m_error_msg);
@@ -355,7 +355,7 @@ void MigrationReportPacker::WorkerThread::run(){
   
   try{
     while(m_parent.m_continue) {
-      std::auto_ptr<Report> rep (m_parent.m_fifo.pop());
+      std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
       try{
         rep->execute(m_parent);
       }

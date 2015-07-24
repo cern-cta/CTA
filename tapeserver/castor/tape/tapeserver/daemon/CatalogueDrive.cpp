@@ -581,7 +581,7 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   sessionSucceeded() {
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
 
   switch(m_state) {
@@ -699,7 +699,7 @@ sessionKilled(uint32_t signal) {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   runningSessionFailedAndRequestedDriveDown() {
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionFailed();
   changeState(DRIVE_STATE_DOWN);
@@ -717,7 +717,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
 runningSessionKilled(uint32_t signal) {
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionKilled(signal);
 
@@ -743,7 +743,7 @@ runningSessionKilled(uint32_t signal) {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   sessionKilledByShutdown() {
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionFailed();
 
@@ -759,7 +759,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::
   cleanerOfShutdownFailed() {
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionFailed();
 
@@ -809,7 +809,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     m_log(LOG_INFO, "Failed session has requested cleaner", params);
   }
 
-  std::auto_ptr<CatalogueSession> session(m_session);
+  std::unique_ptr<CatalogueSession> session(m_session);
   m_session = NULL;
   session->sessionFailed();
 

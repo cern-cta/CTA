@@ -442,7 +442,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   castor::io::AbstractTCPSocket callbackConnectionSock(connectionSockFd);
 
   // Read in the object sent by the tape server
-  std::auto_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
+  std::unique_ptr<castor::IObject> firstObj(callbackConnectionSock.readObject());
 
   switch (firstObj->type()) {
   case OBJ_VolumeRequest:
@@ -672,7 +672,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
   castor::io::AbstractTCPSocket sock(connectionSockFd);
 
   // Read in the message sent by the tape server
-  std::auto_ptr<castor::IObject> obj(sock.readObject());
+  std::unique_ptr<castor::IObject> obj(sock.readObject());
 
   // If debug, then display the type of message received from the tape server
   if(m_cmdLine.debugSet) {
@@ -953,7 +953,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
   castor::io::AbstractTCPSocket sock(connectionSockFd);
 
   // Read in the object sent by the tape server
-  std::auto_ptr<castor::IObject> obj(sock.readObject());
+  std::unique_ptr<castor::IObject> obj(sock.readObject());
 
   // Pointer to the received object with the object's type
   tapegateway::EndNotification *endNotification = NULL;

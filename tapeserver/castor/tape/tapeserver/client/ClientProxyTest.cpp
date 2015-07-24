@@ -64,7 +64,7 @@ TEST(tapeServerClientInterface, VolReqVol) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -92,7 +92,7 @@ TEST(tapeServerClientInterface, VolReqNoMore) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -120,7 +120,7 @@ TEST(tapeServerClientInterface, VolReqEndError) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -148,7 +148,7 @@ TEST(tapeServerClientInterface, VolReqVolReq) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -176,7 +176,7 @@ TEST(tapeServerClientInterface, VolReqVolSeqBreak) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -204,7 +204,7 @@ TEST(tapeServerClientInterface, EndSessionNotifAck) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -232,7 +232,7 @@ TEST(tapeServerClientInterface, EndSessionNotifAckSeqBreak) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -260,7 +260,7 @@ TEST(tapeServerClientInterface, EndSessionVolReq) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -288,7 +288,7 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAck) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -316,7 +316,7 @@ TEST(tapeServerClientInterface, EndSessionErrorVolReq) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -345,7 +345,7 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAckSeqBreak) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -374,7 +374,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrate) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -383,8 +383,8 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrate) {
   ClientProxy cInterf(VDQMjob);
   ClientProxy::VolumeInfo volInfo;
   ClientProxy::RequestReport reqRep;
-  // We are responsible for the freeing of the result: chuck it into an auto_ptr.
-  std::auto_ptr<FilesToMigrateList> resp;
+  // We are responsible for the freeing of the result: chuck it into an unique_ptr.
+  std::unique_ptr<FilesToMigrateList> resp;
   ASSERT_NO_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)));
   ASSERT_NE((FilesToMigrateList*)NULL, resp.get());
   // Cleanup
@@ -405,7 +405,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqNoMore) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -414,8 +414,8 @@ TEST(tapeServerClientInterface, FilesToMigrateReqNoMore) {
   ClientProxy cInterf(VDQMjob);
   ClientProxy::VolumeInfo volInfo;
   ClientProxy::RequestReport reqRep;
-  // We are responsible for the freeing of the result: chuck it into an auto_ptr.
-  std::auto_ptr<FilesToMigrateList> resp;
+  // We are responsible for the freeing of the result: chuck it into an unique_ptr.
+  std::unique_ptr<FilesToMigrateList> resp;
   ASSERT_NO_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)));
   ASSERT_EQ((FilesToMigrateList*)NULL, resp.get());
   // Cleanup
@@ -436,7 +436,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrateSeqBreak) {
   // Setup a clientInterface to talk to it
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -445,8 +445,8 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrateSeqBreak) {
   ClientProxy cInterf(VDQMjob);
   ClientProxy::VolumeInfo volInfo;
   ClientProxy::RequestReport reqRep;
-  // We are responsible for the freeing of the result: chuck it into an auto_ptr.
-  std::auto_ptr<FilesToMigrateList> resp;
+  // We are responsible for the freeing of the result: chuck it into an unique_ptr.
+  std::unique_ptr<FilesToMigrateList> resp;
   ASSERT_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)),ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();

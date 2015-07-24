@@ -23,10 +23,10 @@
 
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/utils/utils.hpp"
-#include "Castor_limits.h"
-#include "getconfent.h"
 
 #include <errno.h>
+#include <shift/Castor_limits.h>
+#include <shift/getconfent.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>

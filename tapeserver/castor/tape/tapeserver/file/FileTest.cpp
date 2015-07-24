@@ -219,9 +219,9 @@ namespace UnitTests {
     char data2[block_size];
     castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","",0);
     {
-      std::auto_ptr<castor::tape::diskFile::ReadFile> rf(
+      std::unique_ptr<castor::tape::diskFile::ReadFile> rf(
         fileFactory.createReadFile("localhost:/etc/fstab"));
-      std::auto_ptr<castor::tape::diskFile::WriteFile> wf(
+      std::unique_ptr<castor::tape::diskFile::WriteFile> wf(
         fileFactory.createWriteFile("localhost:/tmp/fstab"));
       size_t res=0;
       do {
@@ -230,9 +230,9 @@ namespace UnitTests {
       } while(res);
       wf->close();
     }
-    std::auto_ptr<castor::tape::diskFile::ReadFile> src(
+    std::unique_ptr<castor::tape::diskFile::ReadFile> src(
         fileFactory.createReadFile("localhost:/tmp/fstab"));
-    std::auto_ptr<castor::tape::diskFile::ReadFile> dst(
+    std::unique_ptr<castor::tape::diskFile::ReadFile> dst(
         fileFactory.createReadFile("localhost:/etc/fstab"));
     size_t res1=0;
     size_t res2=0;

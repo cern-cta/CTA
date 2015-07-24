@@ -40,7 +40,7 @@ protected:
 
 TEST_F(castor_log_ParamTest, testConstructorWithAString) {
   using namespace castor::log;
-  std::auto_ptr<Param> param;
+  std::unique_ptr<Param> param;
 
   ASSERT_NO_THROW(param.reset(new Param("Name", "Value")));
   ASSERT_EQ(std::string("Name"), param->getName());
@@ -49,7 +49,7 @@ TEST_F(castor_log_ParamTest, testConstructorWithAString) {
 
 TEST_F(castor_log_ParamTest, testConstructorWithAnInt) {
   using namespace castor::log;
-  std::auto_ptr<Param> param;
+  std::unique_ptr<Param> param;
 
   ASSERT_NO_THROW(param.reset(new Param("Name", 1234)));
   ASSERT_EQ(std::string("Name"), param->getName());

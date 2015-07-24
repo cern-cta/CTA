@@ -160,7 +160,7 @@ private:
    *
    * @return The drive object.
    */
-  std::auto_ptr<drive::DriveInterface> createDrive();
+  std::unique_ptr<drive::DriveInterface> createDrive();
 
   /**
    * Mounts the tape to be labelled.

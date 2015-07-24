@@ -554,7 +554,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   // This try bloc will allow us to send a failure notification to the client
   // if we fail before the DataTransferSession has an opportunity to do so.
-  std::auto_ptr<DataTransferSession> dataTransferSession;
+  std::unique_ptr<DataTransferSession> dataTransferSession;
   try {
     dataTransferSession.reset(new DataTransferSession (
       m_hostName,

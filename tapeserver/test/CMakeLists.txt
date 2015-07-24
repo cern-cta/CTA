@@ -21,64 +21,13 @@
 #
 
 cmake_minimum_required (VERSION 2.6)
+
+include_directories(/usr/include/shift)
+include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
+include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
+include_directories(${CMAKE_BINARY_DIR}/tapeserver)
+
 find_package( ZLIB REQUIRED )
-# Try to find the four STK client libaries: libaExcpi.so, libutl.so, libipc.so 
-# and libcl.so
-find_library (STK_API_LIB api PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
-if (STK_API_LIB)
-  message(STATUS "Found the STK api library: ${STK_API_LIB}")
-endif (STK_API_LIB)
-find_library (STK_UTL_LIB utl PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
-if (STK_UTL_LIB)
-  message(STATUS "Found the STK utl library: ${STK_UTL_LIB}")
-endif (STK_UTL_LIB)
-find_library (STK_IPC_LIB ipc PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
-if (STK_IPC_LIB)
-  message(STATUS "Found the STK ipc library: ${STK_IPC_LIB}")
-endif (STK_IPC_LIB)
-find_library (STK_CL_LIB cl PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
-if (STK_CL_LIB)
-  message(STATUS "Found the STK cl library: ${STK_CL_LIB}")
-endif (STK_CL_LIB)
-set (STK_UNITTEST_SRC_FILES)
-
-# Add STK related tests if all four STK client libaries
-# (libapi.so, libutl.so, libipc.so and libcl.so) have been found
-if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
-  message(STATUS "Found all four STK libraries - adding STK related unit tests")
-  set (STK_UNITTEST_SRC_FILES
-    ../castor/acs/Acs.cpp
-    ../castor/acs/AcsCmd.cpp
-    ../castor/acs/AcsCmdLine.cpp
-    ../castor/acs/AcsDaemon.cpp
-    ../castor/acs/AcsDaemonConfig.cpp
-    ../castor/acs/AcsDaemonTest.cpp
-    ../castor/acs/AcsDismountCmd.cpp
-    ../castor/acs/AcsDismountCmdLine.cpp
-    ../castor/acs/AcsDismountCmdLineTest.cpp
-    ../castor/acs/AcsDismountTape.cpp
-    ../castor/acs/AcsForceDismountTape.cpp
-    ../castor/acs/AcsImpl.cpp
-    ../castor/acs/AcsLibraryInteraction.cpp
-    ../castor/acs/AcsMessageHandler.cpp
-    ../castor/acs/AcsMountCmd.cpp
-    ../castor/acs/AcsMountCmdLine.cpp
-    ../castor/acs/AcsMountCmdLineTest.cpp
-    ../castor/acs/AcsMountTapeReadOnly.cpp
-    ../castor/acs/AcsMountTapeReadWrite.cpp
-    ../castor/acs/AcsPendingRequests.cpp
-    ../castor/acs/AcsQueryVolumeCmd.cpp
-    ../castor/acs/AcsQueryVolumeCmdLine.cpp
-    ../castor/acs/AcsQueryVolumeCmdLineTest.cpp
-    ../castor/acs/AcsRequest.cpp
-    ../castor/acs/AcsRequestDismountTape.cpp
-    ../castor/acs/CmdLineTool.cpp)
-
-  foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
-    set_property(SOURCE ${SRC_FILE}
-      PROPERTY COMPILE_FLAGS "-DCDK -DLINUX -I/usr/include/CDK")
-  endforeach ()
-endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
@@ -181,12 +130,28 @@ add_executable(castorUnitTests
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
-  ${LIBCAPUNITTEST_SRC_FILES}
-  ${STK_UNITTEST_SRC_FILES})
+  ${LIBCAPUNITTEST_SRC_FILES})
 
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
+
+# With the exception of shared-library plugins, the CASTOR rpms only install the
+# /usr/lib64/libcastor*.so symbolic links for libraries used by end-user
+# developers.  Therefore the locations of the internal CASTOR libraries required
+# by tapeserved and not by end-user developers need to be imported into cmake.
+add_library(castorlegacymsg SHARED IMPORTED)
+set_target_properties(castorlegacymsg PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorlegacymsg.so.2.1)
+add_library(castorserver SHARED IMPORTED)
+set_target_properties(castorserver PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorserver.so.2.1)
+add_library(castortapegatewayprotocol SHARED IMPORTED)
+set_target_properties(castortapegatewayprotocol PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastortapegatewayprotocol.so.2.1)
+add_library(castorvdqm SHARED IMPORTED)
+set_target_properties(castorvdqm PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorvdqm.so.2.1)
 
 target_link_libraries(castorUnitTests
   castorcommon
@@ -209,10 +174,6 @@ target_link_libraries(castorUnitTests
   castorvmgr
   castorvdqm
   ${LIBCAP_LIB}
-  ${STK_API_LIB}
-  ${STK_UTL_LIB}
-  ${STK_IPC_LIB}
-  ${STK_CL_LIB}
   TapeDrive
   SCSI
   System
@@ -272,9 +233,3 @@ target_link_libraries(castorMultiprocessUnitTests
   Utils File 
   castorserver
   gtest gmock pthread castorcommon castorclient)
-
-install(TARGETS
-  castorUnitTests
-  castorThreadedUnitTests
-  castorMultiprocessUnitTests
-  DESTINATION ${CASTOR_DEST_BIN_DIR})

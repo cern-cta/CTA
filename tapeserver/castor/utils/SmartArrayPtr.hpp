@@ -33,7 +33,7 @@ namespace castor {
 namespace utils {
 
 /**
- * A smart pointer that owns a pointer to an array and unlike std::auto_ptr
+ * A smart pointer that owns a pointer to an array and unlike std::unique_ptr
  * will call delete[] instead of calling delete.
  */
 template <typename T> class SmartArrayPtr {

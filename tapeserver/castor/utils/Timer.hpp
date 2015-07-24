@@ -23,8 +23,7 @@
 
 #pragma once
 
-#include "osdep.h"
-
+#include <shift/osdep.h>
 #include <sys/time.h>
 
 namespace castor {

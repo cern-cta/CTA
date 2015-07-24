@@ -64,7 +64,7 @@ RecallReportPacker::~RecallReportPacker(){
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,
   u_int32_t checksum, u_int64_t size){
-  std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum,size));
+  std::unique_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum,size));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -73,7 +73,7 @@ void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,
 //------------------------------------------------------------------------------  
 void RecallReportPacker::reportFailedJob(const FileStruct & recalledFile
 ,const std::string& msg,int error_code){
-  std::auto_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
+  std::unique_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -97,7 +97,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  std::auto_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
+  std::unique_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
   
   successRecall->setFseq(m_recalledFile.fseq());
   successRecall->setFileTransactionId(m_recalledFile.fileTransactionId());
@@ -205,7 +205,7 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
    
-  std::auto_ptr<FileErrorStruct> failed(new FileErrorStruct);
+  std::unique_ptr<FileErrorStruct> failed(new FileErrorStruct);
   //failedMigration->setFileMigrationReportList(parent.m_listReports.get());
   failed->setErrorCode(m_error_code);
   failed->setErrorMessage(m_error_msg);
@@ -232,7 +232,7 @@ void RecallReportPacker::WorkerThread::run(){
   client::ClientInterface::RequestReport chrono;
   try{
       while(1) {    
-        std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
+        std::unique_ptr<Report> rep (m_parent.m_fifo.pop());    
         
         /*
          * this boolean is only true if it is the last turn of the loop
@@ -275,7 +275,7 @@ void RecallReportPacker::WorkerThread::run(){
             }
             // We need to wait until the end of session is signaled from upsteam
             while (!isItTheEnd) {
-              std::auto_ptr<Report> r(m_parent.m_fifo.pop());
+              std::unique_ptr<Report> r(m_parent.m_fifo.pop());
               isItTheEnd = r->goingToEnd();
             }
             break;

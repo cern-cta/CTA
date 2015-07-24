@@ -95,7 +95,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -195,7 +195,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -294,7 +294,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -349,7 +349,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -435,7 +435,7 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -556,7 +556,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -584,7 +584,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   // Prepare the files (in real filesystem as they will be opened by the rfio client)
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
-    std::auto_ptr<TempFileForData> tf(new TempFileForData(1000));
+    std::unique_ptr<TempFileForData> tf(new TempFileForData(1000));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -646,7 +646,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -672,7 +672,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   // Prepare the files, but delete them immediately. The migration will fail.
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
-    std::auto_ptr<TempFileForData> tf(new TempFileForData(1000));
+    std::unique_ptr<TempFileForData> tf(new TempFileForData(1000));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -729,7 +729,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -761,7 +761,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
     const size_t fileSize = 1000;
-    std::auto_ptr<TempFileForData> tf(new TempFileForData(fileSize));
+    std::unique_ptr<TempFileForData> tf(new TempFileForData(fileSize));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);
@@ -830,7 +830,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   // 2) Prepare the VDQM request
   castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
   snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
@@ -864,7 +864,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   for (int fseq=1; fseq<=10; fseq++) {
     // Create the file from which we will recall
     const size_t fileSize = 1000;
-    std::auto_ptr<TempFileForData> tf(new TempFileForData(fileSize));
+    std::unique_ptr<TempFileForData> tf(new TempFileForData(fileSize));
     // Prepare the migrationRequest
     castor::tape::tapegateway::FileToMigrateStruct ftm;
     ftm.setFileSize(tf->m_size);

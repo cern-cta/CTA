@@ -24,11 +24,11 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Param.hpp"
 #include "castor/log/Logger.hpp"
-#include "Ctape_constants.h"
 
 #include <list>
 #include <algorithm>
 #include <bfd.h>
+#include <shift/Ctape_constants.h>
 
 castor::log::LogContext::LogContext(castor::log::Logger& logger) throw():
 m_log(logger) {}

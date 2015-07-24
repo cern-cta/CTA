@@ -52,13 +52,13 @@ setlastFseq(uint64_t lastFseq){
 //------------------------------------------------------------------------------
 //openWriteSession
 //------------------------------------------------------------------------------
-std::auto_ptr<castor::tape::tapeFile::WriteSession> 
+std::unique_ptr<castor::tape::tapeFile::WriteSession> 
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   using castor::log::LogContext;
   using castor::log::Param;
   typedef LogContext::ScopedParam ScopedParam;
   
-  std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession;
+  std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession;
   
   ScopedParam sp[]={
     ScopedParam(m_logContext, Param("TPVID",m_vid)),
@@ -176,7 +176,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       currentErrorToCount = "Error_tapePositionForWrite";
       // Then we have to initialize the tape write session
-      std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
+      std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
       m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
@@ -190,7 +190,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
-      std::auto_ptr<TapeWriteTask> task;    
+      std::unique_ptr<TapeWriteTask> task;    
       while(1) {
         //get a task
         task.reset(m_tasks.pop());
@@ -272,7 +272,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     
     //first empty all the tasks and circulate mem blocks
     while(1) {
-      std::auto_ptr<TapeWriteTask>  task(m_tasks.pop());
+      std::unique_ptr<TapeWriteTask>  task(m_tasks.pop());
       if(task.get()==NULL) {
         break;
       }

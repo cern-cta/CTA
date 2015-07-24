@@ -135,13 +135,13 @@ private:
    * @param lc for logging purpose
    * @return the WriteFile if everything went well
    */
-  std::auto_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
+  std::unique_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
   castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating
    */
-  std::auto_ptr<tapegateway::FileToMigrateStruct> m_fileToMigrate;
+  std::unique_ptr<tapegateway::FileToMigrateStruct> m_fileToMigrate;
   
   /**
    * reference to the memory manager in use   

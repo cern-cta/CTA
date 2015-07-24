@@ -61,7 +61,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
-  std::auto_ptr<castor::log::SyslogLogger> logPtr;
+  std::unique_ptr<castor::log::SyslogLogger> logPtr;
   try {
     logPtr.reset(new castor::log::SyslogLogger("tapeserverd"));
   } catch(castor::exception::Exception &ex) {

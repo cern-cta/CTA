@@ -114,7 +114,7 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, constructor) {
   using namespace castor::tape::reactor;
 
   castor::log::DummyLogger log("unittests");
-  std::auto_ptr<ZMQReactor> reactor;
+  std::unique_ptr<ZMQReactor> reactor;
 
   ASSERT_NO_THROW(reactor.reset(new ZMQReactor(log)));
 }
@@ -134,8 +134,8 @@ TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd) {
   int sv[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_LOCAL, SOCK_STREAM, 0, sv));
 
-  std::auto_ptr<TestEventHandler> handler1;
-  std::auto_ptr<TestEventHandler> handler2;
+  std::unique_ptr<TestEventHandler> handler1;
+  std::unique_ptr<TestEventHandler> handler2;
 
   handler1.reset(new TestEventHandler(sv[0]));
   handler2.reset(new TestEventHandler(sv[1]));

@@ -115,7 +115,7 @@ bool castor::tape::tapeserver::daemon::LabelCmdAcceptHandler::handleEvent(
   m_log(LOG_DEBUG, "Accepted a possible label-command connection", params);
 
   // Create a new label-command connection handler
-  std::auto_ptr<LabelCmdConnectionHandler> connectionHandler;
+  std::unique_ptr<LabelCmdConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new LabelCmdConnectionHandler(connection.get(),
       m_reactor, m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));

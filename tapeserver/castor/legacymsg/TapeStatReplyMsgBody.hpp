@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
-#include "Castor_limits.h"
 
+#include <shift/Castor_limits.h>
 #include <stdint.h>
 #include <string>
 

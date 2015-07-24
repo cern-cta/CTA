@@ -96,7 +96,7 @@ namespace daemon {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
       watchdog.notifyBeginNewJob(*m_fileToMigrate);
-      std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       // We are not error sources here until we actually write.
@@ -263,9 +263,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // openWriteFile
 //------------------------------------------------------------------------------
-   std::auto_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
+   std::unique_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
    tape::tapeFile::WriteSession & session, log::LogContext& lc){
-     std::auto_ptr<tape::tapeFile::WriteFile> output;
+     std::unique_ptr<tape::tapeFile::WriteFile> output;
      try{
        const uint64_t tapeBlockSize = 256*1024;
        output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,tapeBlockSize));
