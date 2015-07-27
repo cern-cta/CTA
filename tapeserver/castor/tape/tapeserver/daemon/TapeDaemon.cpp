@@ -614,7 +614,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor(
   const int reaperSocket) {
   createAndRegisterProcessForkerConnectionHandler(reaperSocket);
-  createAndRegisterVdqmAcceptHandler();
+  // In the CTA project the tapeserverd daemon does not listen for jobs from the
+  // vdqmd daemon, therefore do not create and register the vdqm accept handler
+  //createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
   createAndRegisterLabelCmdAcceptHandler();
   createAndRegisterTapeMessageHandler();
