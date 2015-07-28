@@ -822,6 +822,17 @@ private:
   std::map<uint16_t, std::string> createCopyNbToPoolMap(
     const std::list<ArchiveRoute> &routes) const;
 
+  /**
+   * Returns an instance of a scheduler ArchiveMount ot RetrieveMount object
+   * wrapped around the specified scheduler database mount object.
+   *
+   * @param dbMount The database object.
+   * @return An instance of a scheduler ArchiveMount ot RetrieveMount object
+   * wrapped around the specified scheduler database mount object.
+   */
+  std::unique_ptr<cta::TapeMount> dbMountToSchedulerMount(
+    std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) const;
+
 }; // class Scheduler
 
 } // namespace cta

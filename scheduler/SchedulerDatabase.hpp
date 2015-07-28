@@ -25,6 +25,7 @@
 #include <memory>
 #include "common/archiveNS/ArchiveFileStatus.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "scheduler/MountType.hpp"
 
 namespace cta {
 
@@ -63,10 +64,18 @@ public:
   
   /**
    * An umbrella class from which ArchiveSession and RetrieveSession will
-   * inherit. Just allows RTTI.
-   * Mounts, and jobs from the DB will be subclasses of the SchedulerDB
+   * inherit.
    */
-  class TapeMount {public: virtual ~TapeMount(){}};
+  struct TapeMount {
+    /**    
+     * Returns The type of this tape mount.
+     *   
+     * @return The type of this tape mount.
+     */
+    virtual MountType::Enum getMountType() const throw() = 0;
+
+    virtual ~TapeMount() {}
+  };
   
   /**
    * Starts a session, and updates the relevant information in the DB.
@@ -172,7 +181,18 @@ public:
   
   class ArchiveMount: public TapeMount {
     friend class SchedulerDatabase;
+  private:
+    ArchiveMount() {}
   public:
+    /**
+     * Returns The type of this tape mount.
+     *
+     * @return The type of this tape mount.
+     */
+    MountType::Enum getMountType() const throw() {
+      return MountType::ARCHIVE;
+    }
+
     virtual ~ArchiveMount() {};
   };
   
@@ -233,15 +253,23 @@ public:
   /*============ Retrieve management: tape server side ======================*/
 
   
-  class RetriveMount: public TapeMount {
+  class RetrieveMount: public TapeMount {
     friend class SchedulerDatabase;
   private:
-    RetriveMount();
+    RetrieveMount() {}
   public:
+    /**
+     * Returns The type of this tape mount.
+     *
+     * @return The type of this tape mount.
+     */
+    MountType::Enum getMountType() const throw() {
+      return MountType::RETRIEVE;
+    }
   };
   
   class RetrieveJob {
-    friend class RetriveMount;
+    friend class RetrieveMount;
   public:
     cta::RemotePathAndStatus remoteFile;
     cta::ArchiveFileStatus archiveFile;

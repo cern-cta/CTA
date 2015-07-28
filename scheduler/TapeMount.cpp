@@ -16,35 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "scheduler/TapeMount.hpp"
 
-#include "scheduler/MountType.hpp"
-
-namespace cta {
-  /**
-   * A placeholder class from which will derive ArchiveSession and RetriveSession.
-   * It's just here to allow RTTI.
-   */
-  class TapeMount {
-  public:
-
-    /**
-     * Returns The type of this tape mount.
-     *
-     * @return The type of this tape mount.
-     */
-    virtual MountType::Enum getMountType() const throw() = 0;
-
-    /**
-     * Notifies the scheduler that the session is finished 
-     */
-    virtual void finish() = 0;
-    
-    /**
-     * Destructor.
-     */
-    virtual ~TapeMount() throw() = 0;
-
-  }; // class TapeMount
-  
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+cta::TapeMount::~TapeMount() throw() {
 }

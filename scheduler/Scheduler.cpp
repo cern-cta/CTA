@@ -16,29 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/archiveNS/Tape.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/UserIdentity.hpp"
 #include "common/Utils.hpp"
+#include "common/SecurityIdentity.hpp"
+#include "common/TapePool.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
-#include "common/admin/AdminHost.hpp"
-#include "common/admin/AdminUser.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "common/SecurityIdentity.hpp"
-#include "common/archiveNS/StorageClass.hpp"
-#include "common/archiveNS/Tape.hpp"
-#include "common/TapePool.hpp"
 #include "scheduler/TapeMount.hpp"
 
 #include <iostream>
@@ -749,22 +750,33 @@ void cta::Scheduler::queueRetrieveRequest(
 std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   const std::string &logicalLibraryName, const std::string & driveName) {
   // First try to get the next mount from the database.
-  std::unique_ptr<SchedulerDatabase::TapeMount> 
-    mount(m_db.getNextMount(logicalLibraryName, driveName));
-  if (!mount.get()) {
-    return std::unique_ptr<cta::TapeMount>(NULL);
-  } else if (dynamic_cast<SchedulerDatabase::ArchiveMount *>(mount.get())) {
-    // Create out own ArchiveMount structure, which immediately takes 
-    // ownership of the mount.
-    std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount(mount));
-    throw NotImplemented("Archive");
-  } else if (dynamic_cast<SchedulerDatabase::RetriveMount *>(mount.get())) {
-    throw NotImplemented("Retrive");
-  } else {
-    throw NotImplemented("Unknown type");
-  }
-  throw NotImplemented("");
+  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount;
+
+  dbMount = m_db.getNextMount(logicalLibraryName, driveName);
+
+  return dbMountToSchedulerMount(std::move(dbMount));
 }
+
+//------------------------------------------------------------------------------
+// dbTapeMountToSchedulerTapeMount
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::TapeMount> cta::Scheduler::dbMountToSchedulerMount(
+  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) const {
+  if(!dbMount.get()) {
+    return std::unique_ptr<cta::TapeMount>();
+  }
+
+  switch(dbMount->getMountType()) {
+  case MountType::ARCHIVE:
+    return std::unique_ptr<TapeMount>(new ArchiveMount(std::move(dbMount)));
+  case MountType::RETRIEVE:
+    return std::unique_ptr<TapeMount>(new RetrieveMount(std::move(dbMount)));
+  default:
+    throw exception::Exception(std::string("Unexpected database mount type: ") +
+      MountType::toString(dbMount->getMountType()));
+  }
+}
+
 //
 ////------------------------------------------------------------------------------
 //// finishedMount

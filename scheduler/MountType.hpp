@@ -18,33 +18,30 @@
 
 #pragma once
 
-#include "scheduler/MountType.hpp"
-
 namespace cta {
   /**
-   * A placeholder class from which will derive ArchiveSession and RetriveSession.
-   * It's just here to allow RTTI.
+   * Enumeration class of the possible types of tape mount.
    */
-  class TapeMount {
+  struct MountType {
   public:
 
     /**
-     * Returns The type of this tape mount.
+     * Enumeration of the possible types of tape mount.
+     */
+    enum Enum {
+      NONE,
+      ARCHIVE,
+      RETRIEVE};
+
+    /**
+     * Thread safe method that returns the string representation of the
+     * specified enumeration value.
      *
-     * @return The type of this tape mount.
+     * @param enumValue The enumeration value.
+     * @return The string representation.
      */
-    virtual MountType::Enum getMountType() const throw() = 0;
+    static const char *toString(const MountType::Enum enumValue) throw();
 
-    /**
-     * Notifies the scheduler that the session is finished 
-     */
-    virtual void finish() = 0;
-    
-    /**
-     * Destructor.
-     */
-    virtual ~TapeMount() throw() = 0;
-
-  }; // class TapeMount
+  }; // struct MountType
   
 }

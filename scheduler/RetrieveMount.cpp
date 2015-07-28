@@ -16,37 +16,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/RetrieveMount.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(
+cta::RetrieveMount::RetrieveMount(
   std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) {
   m_dbMount.reset(
-    dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
+    dynamic_cast<SchedulerDatabase::RetrieveMount*>(dbMount.release()));
   if(!m_dbMount.get()) {
     throw WrongMountType(std::string(__FUNCTION__) +
-      ": could not cast mount to SchedulerDatabase::ArchiveMount");
+      ": could not cast mount to SchedulerDatabase::RetrieveMount");
   }
 }
 
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::MountType::Enum cta::ArchiveMount::getMountType() const throw() {
+cta::MountType::Enum cta::RetrieveMount::getMountType() const throw() {
   return MountType::ARCHIVE;
 }
 
 //------------------------------------------------------------------------------
 // finish
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::finish() {
+void cta::RetrieveMount::finish() {
   throw NotImplemented ("");
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::~ArchiveMount() throw() {
+cta::RetrieveMount::~RetrieveMount() throw() {
 }

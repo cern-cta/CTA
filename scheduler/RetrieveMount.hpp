@@ -19,8 +19,8 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "scheduler/ArchiveJob.hpp"
-#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/RetrieveJob.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 
@@ -28,13 +28,13 @@
 
 namespace cta {
   
-  class ArchiveMount;
+  class RetrieveMount;
   /**
    * The class driving a retrieve mount.
    * The class only has private constructors as it is instanciated by
    * the Scheduler class.
    */
-  class ArchiveMount: public TapeMount {
+  class RetrieveMount: public TapeMount {
     friend class Scheduler;
   private:
 
@@ -43,7 +43,7 @@ namespace cta {
      *
      * @param dbMount The database representation of this mount.
      */
-    ArchiveMount(std::unique_ptr<cta::SchedulerDatabase::TapeMount> dbMount);
+    RetrieveMount(std::unique_ptr<cta::SchedulerDatabase::TapeMount> dbMount);
 
   public:
 
@@ -68,20 +68,20 @@ namespace cta {
      * @return A unique_ptr to the next archive job or NULL if there are no more
      * archive jobs left for this tape mount.
      */
-    std::unique_ptr<ArchiveJob> getNextJob();
+    std::unique_ptr<RetrieveJob> getNextJob();
     
     /**
      * Destructor.
      */
-    virtual ~ArchiveMount() throw();
+    virtual ~RetrieveMount() throw();
 
   private:
 
     /**
      * The database representation of this mount.
      */
-    std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> m_dbMount;
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
 
-  }; // class ArchiveMount
+  }; // class RetrieveMount
 
 } // namespace cta
