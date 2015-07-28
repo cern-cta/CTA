@@ -754,13 +754,13 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
 
   dbMount = m_db.getNextMount(logicalLibraryName, driveName);
 
-  return dbMountToSchedulerMount(std::move(dbMount));
+  return wrapDbMountInSchedulerMount(std::move(dbMount));
 }
 
 //------------------------------------------------------------------------------
-// dbTapeMountToSchedulerTapeMount
+// wrapDbMountInSchedulerTapeMount
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::TapeMount> cta::Scheduler::dbMountToSchedulerMount(
+std::unique_ptr<cta::TapeMount> cta::Scheduler::wrapDbMountInSchedulerMount(
   std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) const {
   if(!dbMount.get()) {
     return std::unique_ptr<cta::TapeMount>();
