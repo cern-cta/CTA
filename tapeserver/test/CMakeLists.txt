@@ -35,8 +35,6 @@ add_library(TestDummies
   ../castor/messages/TapeserverProxyDummy.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/legacymsg/VdqmProxyDummy.cpp
-  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrProxyDummy.cpp
   ../castor/legacymsg/VmgrProxyDummyFactory.cpp
   ../castor/log/DummyLogger.cpp
@@ -63,16 +61,11 @@ add_executable(castorUnitTests
   ../castor/legacymsg/NsProxy.cpp
   ../castor/legacymsg/NsProxyDummy.cpp
   ../castor/legacymsg/NsProxyDummyFactory.cpp
-  ../castor/legacymsg/VdqmProxyDummy.cpp
-  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrMarshalTest.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
-  ../castor/legacymsg/VdqmMarshalTest.cpp
-  ../castor/legacymsg/VdqmProxy.cpp
-  ../castor/legacymsg/VdqmProxyTcpIp.cpp
   ../castor/legacymsg/VmgrProxy.cpp
   ../castor/legacymsg/VmgrProxyTcpIp.cpp
   ../castor/log/ParamTest.cpp
@@ -111,9 +104,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/ProcessForkerTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
-  ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
-  ../castor/tape/tapeserver/daemon/VdqmConnectionHandlerTest.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp

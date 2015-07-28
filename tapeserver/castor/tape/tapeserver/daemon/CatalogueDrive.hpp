@@ -27,7 +27,6 @@
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
@@ -38,7 +37,6 @@
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmDriveSynchronizer.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 
 #include <iostream>
@@ -69,7 +67,6 @@ public:
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
@@ -84,7 +81,6 @@ public:
     log::Logger &log,
     ProcessForkerProxy &processForker,
     legacymsg::CupvProxy &cupv,
-    legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const DriveConfig &config,
@@ -150,26 +146,6 @@ public:
    */
   void configureDown();
 
-  /**
-   * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
-   * current session type to SESSION_TYPE_DATATRANSFER.
-   *
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_UP. 
-   *    
-   * The unit name of a tape drive is unique for a given host.  No two drives
-   * on the same host can have the same unit name.
-   *
-   * A tape drive cannot be a member of more than one device group name (DGN).
-   *
-   * This method throws an exception if the DGN field of the specified vdqm job
-   * does not match the value that was entered into the catalogue with the
-   * populateCatalogue() method.
-   *  
-   * @param job The job received from the vdqmd daemon.
-   */   
-  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job);
-      
   /**
    * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
    * current session type to SESSION_TYPE_LABEL.
@@ -356,11 +332,6 @@ private:
   legacymsg::CupvProxy &m_cupv;
 
   /**
-   * Proxy object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
-
-  /**
    * Proxy object representing the vmgrd daemon.
    */
   legacymsg::VmgrProxy &m_vmgr;
@@ -408,12 +379,6 @@ private:
    * The session metadata associated to the drive catalogue entry
    */
   CatalogueSession *m_session;
-
-  /**
-   * Object responsible for sychronizing the vdqmd daemon with the state of
-   * this catalogue tape-drive.
-   */
-  VdqmDriveSynchronizer m_vdqmDriveSynchronizer;
 
   /**
    * Checks that there is a tape session currently associated with the

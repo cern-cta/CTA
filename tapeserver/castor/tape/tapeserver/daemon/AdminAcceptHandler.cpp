@@ -28,7 +28,6 @@
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "vdqm_api.h"
 
 #include <errno.h>
 #include <list>
@@ -48,14 +47,12 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
   reactor::ZMQReactor &reactor,
   log::Logger &log,
-  legacymsg::VdqmProxy &vdqm,
   Catalogue &driveCatalogue,
   const std::string &hostName)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
     m_netTimeout(10) { // Timeout in seconds

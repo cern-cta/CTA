@@ -40,7 +40,6 @@
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
@@ -71,7 +70,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   const int netTimeout,
   const DriveConfigMap &driveConfigs,
   legacymsg::CupvProxy &cupv,
-  legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   reactor::ZMQReactor &reactor,
   castor::server::ProcessCap &capUtils,
@@ -84,7 +82,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_netTimeout(netTimeout),
   m_driveConfigs(driveConfigs),
   m_cupv(cupv),
-  m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_reactor(reactor),
   m_capUtils(capUtils),
@@ -217,7 +214,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_log,
     *m_processForker,
     m_cupv,
-    m_vdqm,
     m_vmgr,
     m_hostName,
     m_tapeDaemonConfig.catalogueConfig,
@@ -234,7 +230,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   blockSignals();
   initZmqContext();
   setUpReactor(reaperPair.tapeDaemon);
-  registerTapeDrivesWithVdqm();
   mainEventLoop();
 }
 
@@ -546,55 +541,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
 }
 
 //------------------------------------------------------------------------------
-// registerTapeDrivesWithVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
-  {
-  const std::list<std::string> unitNames = m_catalogue->getUnitNames();
-
-  for(std::list<std::string>::const_iterator itor = unitNames.begin();
-    itor != unitNames.end(); itor++) {
-    registerTapeDriveWithVdqm(*itor);
-  }
-}
-
-//------------------------------------------------------------------------------
-// registerTapeDriveWithVdqm
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
-  const std::string &unitName)  {
-  const CatalogueDrive &drive = m_catalogue->findDrive(unitName);
-  const DriveConfig &driveConfig = drive.getConfig();
-
-  std::list<log::Param> params;
-  params.push_back(log::Param("server", m_hostName));
-  params.push_back(log::Param("unitName", unitName));
-  params.push_back(log::Param("dgn", driveConfig.getDgn()));
-
-  switch(drive.getState()) {
-  case DRIVE_STATE_DOWN:
-    params.push_back(log::Param("state", "down"));
-    m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.getDgn());
-    break;
-  case DRIVE_STATE_UP:
-    params.push_back(log::Param("state", "up"));
-    m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.getDgn());
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to register tape drive in vdqm"
-        ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
-        driveConfig.getDgn() << ": Invalid drive state: state=" <<
-        catalogueDriveStateToStr(drive.getState());
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // initZmqContext
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
@@ -614,9 +560,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor(
   const int reaperSocket) {
   createAndRegisterProcessForkerConnectionHandler(reaperSocket);
-  // In the CTA project the tapeserverd daemon does not listen for jobs from the
-  // vdqmd daemon, therefore do not create and register the vdqm accept handler
-  //createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
   createAndRegisterLabelCmdAcceptHandler();
   createAndRegisterTapeMessageHandler();
@@ -651,52 +594,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterVdqmAcceptHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  createAndRegisterVdqmAcceptHandler()  {
-  try {
-    castor::utils::SmartFd listenSock;
-    try {
-      listenSock.reset(io::createListenerSock(m_tapeDaemonConfig.jobPort));
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex(ne.code());
-      ex.getMessage() <<
-        "Failed to create socket to listen for vdqm connections: " <<
-        ne.getMessage().str();
-      throw ex;
-    }
-    {
-      log::Param params[] = {
-        log::Param("listeningPort", m_tapeDaemonConfig.jobPort)};
-      m_log(LOG_INFO, "Listening for connections from the vdqmd daemon",
-        params);
-    }
-
-    std::unique_ptr<VdqmAcceptHandler> handler;
-    try {
-      handler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_catalogue,m_tapeDaemonConfig));
-      listenSock.release();
-    } catch(std::bad_alloc &ba) {
-      castor::exception::BadAlloc ex;
-      ex.getMessage() <<
-        "Failed to create event handler for accepting vdqm connections"
-        ": " << ba.what();
-      throw ex;
-    }
-    m_reactor.registerHandler(handler.get());
-    handler.release();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to create and register VdqmAcceptHandler: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // createAndRegisterAdminAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
@@ -722,7 +619,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::unique_ptr<AdminAcceptHandler> handler;
     try {
       handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
-        m_vdqm, *m_catalogue, m_hostName));
+        *m_catalogue, m_hostName));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -769,7 +666,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::unique_ptr<LabelCmdAcceptHandler> handler;
     try {
       handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
-        m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr));
+        m_log, *m_catalogue, m_hostName, m_vmgr));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -798,7 +695,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::unique_ptr<TapeMessageHandler> handler;
     try {
       handler.reset(new TapeMessageHandler(m_tapeDaemonConfig.internalPort,
-        m_reactor, m_log, *m_catalogue, m_hostName, m_vdqm, m_vmgr,
+        m_reactor, m_log, *m_catalogue, m_hostName, m_vmgr,
         m_zmqContext));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -1081,53 +978,4 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logChildProcessTerminated(
   }
 
   m_log(LOG_INFO, "Child process terminated", params);
-}
-
-//------------------------------------------------------------------------------
-// requestVdqmToReleaseDrive
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
-  const DriveConfig &driveConfig, const pid_t pid) {
-  std::list<log::Param> params;
-  try {
-    const bool forceUnmount = true;
-
-    params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
-    params.push_back(log::Param("dgn", driveConfig.getDgn()));
-    params.push_back(log::Param("forceUnmount", forceUnmount));
-
-    m_vdqm.releaseDrive(m_hostName, driveConfig.getUnitName(),
-      driveConfig.getDgn(), forceUnmount, pid);
-    m_log(LOG_INFO, "Requested vdqm to release drive", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to request vdqm to release drive: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// notifyVdqmTapeUnmounted
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
-  const DriveConfig &driveConfig, const std::string &vid,
-  const pid_t pid) {
-  try {
-    std::list<log::Param> params;
-    params.push_back(log::Param("pid", pid));
-    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
-    params.push_back(log::Param("TPVID", vid));
-    params.push_back(log::Param("dgn", driveConfig.getDgn()));
-
-    m_vdqm.tapeUnmounted(m_hostName, driveConfig.getUnitName(),
-      driveConfig.getDgn(), vid);
-    m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed notify vdqm that a tape was unmounted: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
 }

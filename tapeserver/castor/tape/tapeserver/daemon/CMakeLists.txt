@@ -72,10 +72,7 @@ add_library(castorTapeServerDaemon
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
   TpconfigLine.cpp
-  TpconfigLines.cpp
-  VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp
-  VdqmDriveSynchronizer.cpp)
+  TpconfigLines.cpp)
 
 target_link_libraries(castorTapeServerDaemon castormessages castortapereactor)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)

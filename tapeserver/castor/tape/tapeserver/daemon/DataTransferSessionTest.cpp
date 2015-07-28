@@ -29,7 +29,6 @@
 
 #include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
-#include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
@@ -312,7 +311,6 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -603,7 +601,6 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -689,7 +686,6 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -787,7 +783,6 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -890,7 +885,6 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;

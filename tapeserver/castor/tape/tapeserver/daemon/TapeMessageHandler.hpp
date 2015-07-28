@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Header.pb.h"
@@ -60,7 +59,6 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param driveCatalogue The tape-drive catalogue.
    * @param hostName The name of the host.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param zmqContext The ZMQ context.
    */
@@ -70,7 +68,6 @@ public:
     log::Logger &log,
     Catalogue &driveCatalogue,
     const std::string &hostName,
-    castor::legacymsg::VdqmProxy & vdqm,
     castor::legacymsg::VmgrProxy & vmgr,
     void *const zmqContext);
 
@@ -143,12 +140,6 @@ private:
    */
   const std::string m_hostName;
   
-  /** 
-   * Reference to the VdqmProxy, allowing reporting of the drive status. It 
-   * will be used by the StatusReporter 
-   */
-  castor::legacymsg::VdqmProxy & m_vdqm;
-
   /** 
    * Reference to the VmgrProxy, allowing reporting and checking tape status.
    * It is also used by the StatusReporter 

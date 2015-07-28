@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/legacymsg/CupvProxyDummy.hpp"
-#include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
@@ -60,13 +59,12 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   ProcessForkerProxyDummy processForker;
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
-  castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   const int netTimeout = 1;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
+  Catalogue catalogue(netTimeout, log, processForker, cupv, vmgr,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
@@ -136,12 +134,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
   ProcessForkerProxyDummy processForker;
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
-  castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
+  Catalogue catalogue(netTimeout, log, processForker, cupv, vmgr,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
@@ -161,12 +158,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   ProcessForkerProxyDummy processForker;
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
-  castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv, vdqm, vmgr,
+  Catalogue catalogue(netTimeout, log, processForker, cupv, vmgr,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 

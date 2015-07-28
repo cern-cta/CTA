@@ -23,7 +23,6 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/legacymsg/CupvProxyTcpIp.hpp"
-#include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/server/ProcessCap.hpp"
@@ -157,8 +156,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   const int netTimeout = 10; // Timeout in seconds
   legacymsg::CupvProxyTcpIp cupv(log, tapeDaemonConfig.cupvHost, CUPV_PORT,
     netTimeout);
-  legacymsg::VdqmProxyTcpIp vdqm(log, tapeDaemonConfig.vdqmHost, VDQM_PORT,
-    netTimeout);
   legacymsg::VmgrProxyTcpIp vmgr(tapeDaemonConfig.vmgrHost, VMGR_PORT,
     netTimeout);
 
@@ -177,7 +174,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     netTimeout,
     driveConfigs,
     cupv,
-    vdqm,
     vmgr,
     reactor,
     capUtils,

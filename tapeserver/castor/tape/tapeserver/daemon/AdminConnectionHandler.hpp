@@ -27,7 +27,6 @@
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 

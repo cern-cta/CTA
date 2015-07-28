@@ -29,7 +29,6 @@
 #include "Ctape_constants.h"
 #include "rmc_constants.h"
 #include "serrno.h"
-#include "vdqm_constants.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -44,7 +43,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   log::Logger &log,
   ProcessForkerProxy &processForker,
   legacymsg::CupvProxy &cupv,
-  legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
   const DriveConfig &config,
@@ -56,7 +54,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_log(log),
   m_processForker(processForker),
   m_cupv(cupv),
-  m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_hostName(hostName),
   m_config(config),
@@ -65,9 +62,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_waitJobTimeoutSecs(catalogueConfig.waitJobTimeoutSecs),
   m_mountTimeoutSecs(catalogueConfig.mountTimeoutSecs),
   m_blockMoveTimeoutSecs(catalogueConfig.blockMoveTimeoutSecs),
-  m_session(NULL),
-  m_vdqmDriveSynchronizer(log, vdqm, hostName, config,
-    catalogueConfig.vdqmDriveSyncIntervalSecs) {
+  m_session(NULL) {
 }
 
 //------------------------------------------------------------------------------
@@ -87,8 +82,6 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
   if(NULL != m_session && !m_session->handleTick()) {
     return false; // Do no continue the main event loop
   }
-
-  m_vdqmDriveSynchronizer.sync(m_state);
 
   return true; // Continue the main event loop
 }
@@ -392,7 +385,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   transitionFromDownToUp() {
   checkDriveIsEmpty();
   changeState(DRIVE_STATE_UP);
-  m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //-----------------------------------------------------------------------------
@@ -418,14 +410,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     break;
   case DRIVE_STATE_UP:
     changeState(DRIVE_STATE_DOWN);
-
-    {
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      m_log(LOG_INFO, "Putting drive DOWN in vdqm because drive configured"
-        " DOWN in tape server", params);
-    }
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_WAITDOWN);
@@ -440,65 +424,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     }
   }
 }
-
-//-----------------------------------------------------------------------------
-// receivedVdqmJob
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueDrive::receivedVdqmJob(
-  const legacymsg::RtcpJobRqstMsgBody &job)  {
-
-  std::ostringstream task;
-  task << "handle vdqm job for tape drive " << m_config.getUnitName();
-
-  // Sanity check
-  if(job.driveUnit != m_config.getUnitName()) {
-    // Should never happen
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task.str() <<
-      ": unit name mismatch: job.driveUnit=" << job.driveUnit <<
-      " m_config.getUnitName()=" << m_config.getUnitName();
-    throw ex;
-  }
-  
-  switch(m_state) {
-  case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != m_config.getDgn()) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << m_config.getDgn() << " vdqmJobDgn="
-          << job.dgn;
-      throw ex;
-    }
-    changeState(DRIVE_STATE_RUNNING);
-    {
-      CatalogueTransferSession *const transferSession =
-        CatalogueTransferSession::create(
-          m_log,
-          m_netTimeout,
-          m_config,
-          job,
-          m_vmgr,
-          m_cupv,
-          m_hostName,
-          m_waitJobTimeoutSecs,
-          m_mountTimeoutSecs,
-          m_blockMoveTimeoutSecs,
-          m_processForker);
-      m_session = dynamic_cast<CatalogueSession *>(transferSession);
-      m_vdqm.assignDrive(m_hostName, m_config.getUnitName(), job.dgn,
-        job.volReqId, m_session->getPid());
-    }
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" <<
-        catalogueDriveStateToStr(m_state);
-      throw ex;
-    }
-  } 
-} 
 
 //-----------------------------------------------------------------------------
 // receivedLabelJob
@@ -588,46 +513,18 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   case DRIVE_STATE_RUNNING:
     changeState(DRIVE_STATE_UP);
     session->sessionSucceeded();
-    m_vdqm.setDriveUp(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITDOWN:
     changeState(DRIVE_STATE_DOWN);
     session->sessionSucceeded();
-
-    {
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      params.push_back(log::Param("TPVID", session->getVid()));
-      m_log(LOG_INFO, "Putting drive DOWN in vdqm because session succeeded"
-        " and was in the WAITDOWN state", params);
-    }
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITSHUTDOWNKILL:
     changeState(DRIVE_STATE_SHUTDOWN);
     session->sessionSucceeded();
-
-    {
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      params.push_back(log::Param("TPVID", session->getVid()));
-      m_log(LOG_INFO, "Putting drive DOWN in vdqm because session succeeded"
-        " and tape server is shutting down", params);
-    }
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   case DRIVE_STATE_WAITSHUTDOWNCLEANER:
     changeState(DRIVE_STATE_SHUTDOWN);
     session->sessionSucceeded();
-
-    {
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      params.push_back(log::Param("TPVID", session->getVid()));
-      m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner succeeded"
-        " and tape server is shutting down", params);
-    }
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
     break;
   default:
     {
@@ -703,13 +600,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   m_session = NULL;
   session->sessionFailed();
   changeState(DRIVE_STATE_DOWN);
-
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("TPVID", session->getVid()));
-  m_log(LOG_INFO, "Putting drive DOWN in vdqm because running session failed "
-    "and requested drive DOWN", params);
-  m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //------------------------------------------------------------------------------
@@ -728,12 +618,6 @@ runningSessionKilled(uint32_t signal) {
       waitMediaInDrive, waitMediaInDriveTimeout);
   } else {
     changeState(DRIVE_STATE_DOWN);
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", m_config.getUnitName()));
-    params.push_back(log::Param("TPVID", session->getVid()));
-    m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner was killed",
-      params);
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
   }
 }
 
@@ -820,13 +704,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
       waitMediaInDrive, waitMediaInDriveTimeout);
   } else {
     changeState(DRIVE_STATE_DOWN);
-
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", m_config.getUnitName()));
-    params.push_back(log::Param("TPVID", session->getVid()));
-    m_log(LOG_INFO, "Putting drive DOWN in vdqm because cleaner failed",
-      params);
-    m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
   }
 }
 
@@ -1077,10 +954,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   delete m_session;
   m_session = NULL;
   changeState(DRIVE_STATE_DOWN);
-
-  m_log(LOG_INFO, "Putting drive DOWN in vdqm because session was killed",
-    params);
-  m_vdqm.setDriveDown(m_hostName, m_config.getUnitName(), m_config.getDgn());
 }
 
 //------------------------------------------------------------------------------

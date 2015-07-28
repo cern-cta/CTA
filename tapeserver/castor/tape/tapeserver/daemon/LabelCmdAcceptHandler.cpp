@@ -32,7 +32,6 @@
 #include "common.h"
 #include "Ctape.h"
 #include "serrno.h"
-#include "vdqm_api.h"
 #include "vmgr_constants.h"
 
 #include <errno.h>
@@ -50,14 +49,12 @@
 castor::tape::tapeserver::daemon::LabelCmdAcceptHandler::LabelCmdAcceptHandler(
   const int fd, reactor::ZMQReactor &reactor, log::Logger &log,
   Catalogue &driveCatalogue, const std::string &hostName,
-  castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr) throw():
   m_fd(fd),
   m_reactor(reactor),
   m_log(log),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
-  m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_netTimeout(10) {
 }
@@ -118,7 +115,7 @@ bool castor::tape::tapeserver::daemon::LabelCmdAcceptHandler::handleEvent(
   std::unique_ptr<LabelCmdConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(new LabelCmdConnectionHandler(connection.get(),
-      m_reactor, m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+      m_reactor, m_log, m_driveCatalogue, m_hostName, m_vmgr));
     connection.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

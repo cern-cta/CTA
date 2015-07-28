@@ -22,7 +22,6 @@
 #pragma once
 
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
@@ -56,7 +55,6 @@ public:
     log::Logger &log,
     Catalogue &driveCatalogue,
     const std::string &hostName,
-    castor::legacymsg::VdqmProxy & vdqm,
     castor::legacymsg::VmgrProxy & vmgr) throw();
 
   /**
@@ -126,12 +124,6 @@ private:
   const std::string m_hostName;
   
   /** 
-   * Reference to the VdqmProxy, allowing reporting of the drive status. It
-   * will be used by the StatusReporter 
-   */
-  castor::legacymsg::VdqmProxy & m_vdqm;
-
-  /** 
    * Reference to the VmgrProxy, allowing reporting and checking tape status.
    * It is also used by the StatusReporter 
    */
@@ -143,7 +135,7 @@ private:
    */
   const int m_netTimeout;
 
-}; // class VdqmAcceptHandler
+}; // class LabelCmdAcceptHandler
 
 } // namespace daemon
 } // namespace tapeserver

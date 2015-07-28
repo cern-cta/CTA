@@ -27,7 +27,6 @@
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 
@@ -51,7 +50,6 @@ public:
    * @param reactor The reactor to which new Vdqm connection handlers are to
    * be registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
@@ -59,7 +57,6 @@ public:
     const int fd,
     reactor::ZMQReactor &reactor,
     log::Logger &log,
-    legacymsg::VdqmProxy &vdqm,
     Catalogue &driveCatalogue,
     const std::string &hostName) throw();
 
@@ -119,11 +116,6 @@ private:
   log::Logger &m_log;
 
   /**
-   * Proxy object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
-
-  /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   Catalogue &m_driveCatalogue;
@@ -140,7 +132,7 @@ private:
    */
   const int m_netTimeout;
 
-}; // class VdqmAcceptHandler
+}; // class AdminAcceptHandler
 
 } // namespace daemon
 } // namespace tapeserver

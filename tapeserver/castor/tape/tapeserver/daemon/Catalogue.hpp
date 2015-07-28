@@ -27,7 +27,6 @@
 #include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -60,7 +59,6 @@ public:
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
@@ -73,7 +71,6 @@ public:
     log::Logger &log,
     ProcessForkerProxy &processForker,
     legacymsg::CupvProxy &cupv,
-    legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const CatalogueConfig &catalogueConfig,
@@ -166,8 +163,7 @@ public:
 
   /**
    * If there are running sessions (one per tape drive) then this method kills
-   * tem and sets their corresponding drives down in the vdqm and the drive
-   * catalogue.
+   * them and sets their corresponding drives down in the drive catalogue.
    */
   void killSessions();
 
@@ -192,11 +188,6 @@ private:
    * Proxy object representing the cupvd daemon.
    */
   legacymsg::CupvProxy &m_cupv;
-
-  /**
-   * Proxy object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * Proxy object representing the vmgrd daemon.

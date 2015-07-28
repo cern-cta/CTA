@@ -23,7 +23,6 @@
 
 #include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
-#include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
@@ -101,7 +100,6 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
   volume.clientType=castor::tape::tapegateway::READ_TP;
@@ -161,7 +159,6 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm;
   castor::messages::TapeserverProxyDummy initialProcess;  
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
   volume.clientType=castor::tape::tapegateway::READ_TP;

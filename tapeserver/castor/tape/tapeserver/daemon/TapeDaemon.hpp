@@ -27,7 +27,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"
@@ -70,7 +69,6 @@ public:
    * I/O.
    * @param driveConfig The configuration of the tape drives.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
@@ -87,7 +85,6 @@ public:
     const int netTimeout,
     const DriveConfigMap &driveConfigs,
     legacymsg::CupvProxy &cupv,
-    legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     reactor::ZMQReactor &reactor,
     castor::server::ProcessCap &capUtils,
@@ -333,17 +330,6 @@ protected:
   void blockSignals() const;
 
   /**
-   * Registers the tape drives controlled by the tape server daemon with the
-   * vdqmd daemon.
-   */
-  void registerTapeDrivesWithVdqm() ;
-
-  /**
-   * Registers the specified tape drive with ethe vdqmd daemon.
-   */
-  void registerTapeDriveWithVdqm(const std::string &unitName);
-
-  /**
    * Initialises the ZMQ context.
    */
   void initZmqContext();
@@ -364,12 +350,6 @@ protected:
    * ProcessForker  to report the termination of its child processes.
    */
   void createAndRegisterProcessForkerConnectionHandler(const int reaperSocket);
-
-  /**
-   * Creates the handler to accept connections from the vdqmd daemon and
-   * registers it with the reactor.
-   */
-  void createAndRegisterVdqmAcceptHandler() ;
 
   /**
    * Creates the handler to accept connections from the admin commands and
@@ -493,27 +473,6 @@ protected:
     const int rc) ;
   
   /**
-   * Request the vdqmd daemon to release the tape drive associated with the
-   * session child-process with the specified process ID.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @param pid The process ID of the session child-process.
-   */
-  void requestVdqmToReleaseDrive(const DriveConfig &driveConfig,
-    const pid_t pid);
-
-  /**
-   * Notifies the vdqm that the tape associated with the session child-process
-   * with the specified process ID has been unmounted.
-   *
-   * @param driveConfig The configuration of the tape drive.
-   * @param vid The identifier of the unmounted volume.
-   * @param pid The process ID of the session child-process.
-   */
-  void notifyVdqmTapeUnmounted(const DriveConfig &driveConfig,
-    const std::string &vid, const pid_t pid);
-
-  /**
    * The argc of main().
    */
   const int m_argc;
@@ -537,11 +496,6 @@ protected:
    * Proxy object representing the cupvd daemon.
    */
   legacymsg::CupvProxy &m_cupv;
-
-  /**
-   * Proxy object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * Proxy object representing the vmgrd daemon.

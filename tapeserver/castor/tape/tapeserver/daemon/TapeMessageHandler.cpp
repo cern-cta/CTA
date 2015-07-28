@@ -55,7 +55,6 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   reactor::ZMQReactor &reactor,
   log::Logger &log,Catalogue &driveCatalogue,
   const std::string &hostName,
-  castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr,
   void *const zmqContext):
   m_reactor(reactor),
@@ -63,7 +62,6 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   m_socket(zmqContext, ZMQ_ROUTER),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
-  m_vdqm(vdqm),
   m_vmgr(vmgr) { 
 
   std::ostringstream endpoint;
@@ -443,14 +441,10 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
-    const DriveConfig &driveConfig = drive.getConfig();
-    
     const std::string &vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForMigration(vid);
     m_vmgr.tapeMountedForWrite(vid, transferSession.getPid());
-    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.getDgn(),
-      rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
@@ -475,14 +469,10 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
-    const DriveConfig &driveConfig = drive.getConfig();
-    
     const std::string vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForRecall(vid);
     m_vmgr.tapeMountedForRead(vid, transferSession.getPid());
-    m_vdqm.tapeMounted(m_hostName, rqstBody.unitname(), driveConfig.getDgn(),
-      rqstBody.vid(), transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
