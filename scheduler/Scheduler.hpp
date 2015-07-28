@@ -646,18 +646,6 @@ public:
   std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
     const std::string & driveName);
 
-  /**
-   * Returns the next tape session for the specified logical library.
-   * All the functions of the mount will handled via the mount object
-   * itself. This is the entry point to the tape server's interface
-   *
-   * @param logicalLibraryName The name of the logical library.
-   * @param driveName The drive's name.
-   * @return The next tape mount or NULL if there is currently no work to do.
-   */
-  std::unique_ptr<TapeSession> getNextMount(const std::string &logicalLibraryName,
-    const std::string & driveName);
-
 //  class ArchiveMount:public TapeMount {
 //  public:
 //    class ArchiveJob

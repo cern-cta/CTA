@@ -25,7 +25,6 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabaseFactory.cpp
   mockDB/SqliteColumnNameToIndex.cpp
   mockDB/SQLiteStatementDeleter.cpp
-  TapeSession.cpp
   UserRequest.cpp)
 
 add_library (ctascheduler SHARED
