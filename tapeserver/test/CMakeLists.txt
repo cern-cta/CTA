@@ -53,9 +53,6 @@ add_executable(castorUnitTests
   ../castor/messages/TapeserverProxyZmq.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/GenericMarshalTest.cpp
-  ../castor/legacymsg/NsProxy.cpp
-  ../castor/legacymsg/NsProxyDummy.cpp
-  ../castor/legacymsg/NsProxyDummyFactory.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp

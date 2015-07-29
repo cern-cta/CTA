@@ -23,7 +23,6 @@
 
 #include "castor/acs/Constants.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/legacymsg/NsProxy_TapeAlwaysEmpty.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyLog.hpp"
@@ -872,7 +871,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
-    legacymsg::NsProxy_TapeAlwaysEmpty ns;
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(
       capUtils,

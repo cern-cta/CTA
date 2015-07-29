@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/NsProxyDummyFactory.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
