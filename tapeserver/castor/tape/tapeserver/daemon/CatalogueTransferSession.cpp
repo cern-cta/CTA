@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "Ctape_constants.h"
 #include "rmc_constants.h"
-#include "vmgr_constants.h"
 
 #include <sys/types.h>
 #include <signal.h>
@@ -39,23 +38,19 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-    legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
     const time_t blockMoveTimeoutInSecs,
     ProcessForkerProxy &processForker) {
 
-  const pid_t pid = processForker.forkDataTransfer(driveConfig, vdqmJob);
+  const pid_t pid = processForker.forkDataTransfer(driveConfig);
 
   return new CatalogueTransferSession(
     log,
     netTimeout,
     pid,
     driveConfig,
-    vdqmJob,
-    vmgr,
     hostName,
     waitJobTimeoutInSecs,
     mountTimeoutInSecs,
@@ -71,8 +66,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const int netTimeout,
   const pid_t pid,
   const DriveConfig &driveConfig,
-  const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-  legacymsg::VmgrProxy &vmgr,
   const std::string &hostName,
   const time_t waitJobTimeoutInSecs,
   const time_t mountTimeoutInSecs,
@@ -83,24 +76,12 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_assignmentTime(time(0)),
   m_mountStartTime(0),
   m_lastTimeSomeBlocksWereMoved(0),
-  m_vdqmJob(vdqmJob),
-  m_vmgr(vmgr),
   m_hostName(hostName),
   m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
   m_mountTimeoutInSecs(mountTimeoutInSecs),
   m_blockMoveTimeoutInSecs(blockMoveTimeoutInSecs),
   m_sessionLogContext(log)
 {
-  // Record immediately the parameters from the vdqm request for the end of
-  // session logs.
-  typedef castor::log::Param Param;
-  m_sessionLogContext.pushOrReplace(Param("volReqId", m_vdqmJob.volReqId));
-  m_sessionLogContext.pushOrReplace(Param("dgn", m_vdqmJob.dgn));
-  m_sessionLogContext.pushOrReplace(Param("driveUnit", m_vdqmJob.driveUnit));
-  m_sessionLogContext.pushOrReplace(Param("clientHost", m_vdqmJob.clientHost));
-  m_sessionLogContext.pushOrReplace(Param("clientPort", m_vdqmJob.clientPort));
-  m_sessionLogContext.pushOrReplace(Param("clientEuid", m_vdqmJob.clientEuid));
-  m_sessionLogContext.pushOrReplace(Param("clientEgid", m_vdqmJob.clientEgid));
 }
 
 //------------------------------------------------------------------------------
@@ -280,14 +261,6 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 time_t castor::tape::tapeserver::daemon::CatalogueTransferSession::
   getAssignmentTime() const throw() {
   return m_assignmentTime;
-}
-
-//------------------------------------------------------------------------------
-// getVdqmJob
-//------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::
-  CatalogueTransferSession::getVdqmJob() const{
-  return m_vdqmJob;
 }
 
 //-----------------------------------------------------------------------------

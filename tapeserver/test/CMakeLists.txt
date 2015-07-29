@@ -81,7 +81,6 @@ add_executable(castorUnitTests
   ../castor/server/SmartCapTest.cpp
   ../castor/tape/reactor/PollReactorImplTest.cpp
   ../castor/tape/reactor/ZMQReactorTest.cpp
-  ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/Catalogue.cpp

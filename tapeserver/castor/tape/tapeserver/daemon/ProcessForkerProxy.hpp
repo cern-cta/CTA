@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -60,8 +59,7 @@ public:
    * @param vdqmJob The job received from the vdqmd daemon.
    * @return The process identifier of the newly forked session.
    */
-  virtual pid_t forkDataTransfer(const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob) = 0;
+  virtual pid_t forkDataTransfer(const DriveConfig &driveConfig) = 0;
 
   /** 
    * Forks a label-session process for the specified tape drive.

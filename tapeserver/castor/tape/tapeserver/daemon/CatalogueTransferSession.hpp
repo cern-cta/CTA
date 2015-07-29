@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
@@ -50,8 +49,6 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqmJob job received from the vdqmd daemon.
-   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The host name to be used as the target host when
    * communicating with the cupvd daemon.
    * @param waitJobTimeoutInSecs The maximum time in seconds that the
@@ -68,8 +65,6 @@ public:
     log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-    legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -109,13 +104,6 @@ public:
    * @return The assignment time as the number of seconds since the Epoch.
    */
   time_t getAssignmentTime() const throw();
-
-  /**
-   * Get the vdqm job received from the vdqmd daemon.
-   * 
-   * @return vdqm job received from the vdqmd daemon
-   */
-  castor::legacymsg::RtcpJobRqstMsgBody getVdqmJob() const;
 
   /**
    * Notifies the catalogue that a recall job has been received
@@ -222,8 +210,6 @@ protected:
    * I/O.
    * @param pid The process identifier of the session.
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqmJob job received from the vdqmd daemon.
-   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The host name to be used as the target host when
    * @param waitJobTimeoutInSecs The maximum time in seconds that the
    * data-transfer session can take to get the transfer job from the client.
@@ -237,8 +223,6 @@ protected:
     const int netTimeout,
     const pid_t pid,
     const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
-    legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -294,16 +278,6 @@ private:
    * session.
    */
   time_t m_lastTimeSomeBlocksWereMoved;
-
-  /**
-   * The job received from the vdqmd daemon.
-   */
-  const legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
-
-  /**
-   * Proxy object representing the vmgrd daemon.
-   */
-  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * The host name to be used as the target host when communicating with the

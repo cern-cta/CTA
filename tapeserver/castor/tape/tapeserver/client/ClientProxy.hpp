@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
@@ -51,9 +50,8 @@ namespace client {
      * Constructor: contact client, gather initial information about the
      * session and decide get that information ready for th user of the class
      * (read/write session, first file information, etc...)
-     * @param clientRequest the client information as sent by VDQM.
      */
-    ClientProxy(const legacymsg::RtcpJobRqstMsgBody & clientRequest);
+    ClientProxy();
     
     /**
      * Retrieves the volume Id from the client (with transfer direction)
@@ -152,8 +150,6 @@ namespace client {
     };
     
   private:
-    /** The VDQM request that kickstarted the session */
-    legacymsg::RtcpJobRqstMsgBody m_request;
     /**
      * A helper function managing a single request-response session with the
      * client.

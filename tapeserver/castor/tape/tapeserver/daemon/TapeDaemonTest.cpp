@@ -69,15 +69,6 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   std::ostringstream stdErr;
   const std::string programName = "unittests";
   castor::log::DummyLogger log(programName);
-  castor::legacymsg::RtcpJobRqstMsgBody job;
-  job.volReqId = 1111;
-  job.clientPort = 2222;
-  job.clientEuid = 3333;
-  job.clientEgid = 4444;
-  castor::utils::copyString(job.clientHost, "CLIENT_HOST");
-  castor::utils::copyString(job.dgn, "DGN");
-  castor::utils::copyString(job.driveUnit, "UNIT");
-  castor::utils::copyString(job.clientUserName, "USER");
   const int netTimeout = 1;
   DriveConfigMap driveConfigs;
   castor::tape::reactor::ZMQReactor reactor(log);

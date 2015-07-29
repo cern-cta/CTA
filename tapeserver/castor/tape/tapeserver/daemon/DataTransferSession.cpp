@@ -49,7 +49,6 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const std::string & hostname,
-    const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger & log,
     System::virtualWrapper & sysWrapper,
     const DriveConfig & driveConfig,
@@ -57,9 +56,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf): 
-    m_request(clientRequest),
     m_log(log),
-    m_clientProxy(clientRequest),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
     m_castorConf(castorConf), 
@@ -85,12 +82,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(log::Param("thread", "MainThread"));
-  log::LogContext::ScopedParam sp01(lc, log::Param("clientHost", m_request.clientHost));
-  log::LogContext::ScopedParam sp02(lc, log::Param("clientPort", m_request.clientPort));
-  log::LogContext::ScopedParam sp03(lc, log::Param("mountTransactionId", m_request.volReqId));
-  log::LogContext::ScopedParam sp04(lc, log::Param("volReqId", m_request.volReqId));
-  log::LogContext::ScopedParam sp05(lc, log::Param("driveUnit", m_request.driveUnit));
-  log::LogContext::ScopedParam sp06(lc, log::Param("dgn", m_request.dgn));
   // 2a) Get initial information from the client
   client::ClientProxy::RequestReport reqReport;
   try {
@@ -146,8 +137,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
-  params.add("dgn", m_request.dgn)
-        .add("TPVID", m_volInfo.vid);
+  params.add("TPVID", m_volInfo.vid);
   {
     log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", reqReport.transactionId)

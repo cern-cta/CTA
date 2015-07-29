@@ -26,12 +26,4 @@ message ForkDataTransfer {
   required string dgn = 2;
   required string devfilename = 3;
   required string libraryslot = 4;
-
-  // The job from the VDQM
-  required uint32 mounttransactionid = 5;
-  required uint32 clientport = 6;
-  required uint32 clienteuid = 7;
-  required uint32 clientegid = 8;
-  required string clienthost = 9;
-  required string clientusername = 10;
 }

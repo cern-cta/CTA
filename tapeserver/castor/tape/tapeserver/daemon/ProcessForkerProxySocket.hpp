@@ -78,11 +78,9 @@ public:
    * Forks a data-transfer session for the specified tape drive.
    *
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqmJob The job received from the vdqmd daemon.
    * @return The process identifier of the newly forked session.
    */ 
-  pid_t forkDataTransfer(const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob);
+  pid_t forkDataTransfer(const DriveConfig &driveConfig);
 
   /** 
    * Forks a label-session process for the specified tape drive.
@@ -139,12 +137,10 @@ private:
    * configuration, VDQM job and data-transfer session configuration.
    *
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqmJob The job received from the vdqmd daemon.
    * @return The message.
    */
   messages::ForkDataTransfer createForkDataTransferMsg(
-    const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob);
+    const DriveConfig &driveConfig);
 
   /**
    * Fills the appropriate members of the specified message with the information

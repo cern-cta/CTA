@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/log/Logger.hpp"

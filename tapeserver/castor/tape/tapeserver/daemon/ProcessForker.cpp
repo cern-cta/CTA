@@ -525,8 +525,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   params.push_back(log::Param("unitName", driveConfig.getUnitName()));
   m_log(LOG_INFO, "Data-transfer child-process started", params);
 
-  const legacymsg::RtcpJobRqstMsgBody vdqmJob = getVdqmJob(rqst);
-
   server::ProcessCap capUtils;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
@@ -557,7 +555,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   try {
     dataTransferSession.reset(new DataTransferSession (
       m_hostName,
-      vdqmJob,
       m_log,
       sysWrapper,
       driveConfig,
@@ -567,7 +564,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_config.dataTransfer));
   } catch (castor::exception::Exception & ex) {
     try {
-      client::ClientProxy cl(vdqmJob);
+      client::ClientProxy cl;
       client::ClientInterface::RequestReport rep;
       cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
     } catch (...) {
@@ -581,7 +578,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     try {
       m_log(LOG_ERR, "Got non castor exception error while constructing"
         " data-transfer session", params);
-      client::ClientProxy cl(vdqmJob);
+      client::ClientProxy cl;
       client::ClientInterface::RequestReport rep;
       cl.reportEndOfSessionWithError(
        "Non-Castor exception when setting up the data-transfer session",
@@ -608,25 +605,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// getVdqmJob
-//------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody
-  castor::tape::tapeserver::daemon::ProcessForker::getVdqmJob(
-  const messages::ForkDataTransfer &msg) {
-  castor::legacymsg::RtcpJobRqstMsgBody job;
-  job.volReqId = msg.mounttransactionid();
-  job.clientPort = msg.clientport();
-  job.clientEuid = msg.clienteuid();
-  job.clientEgid = msg.clientegid();
-  castor::utils::copyString(job.clientHost, msg.clienthost());
-  castor::utils::copyString(job.dgn, msg.dgn());
-  castor::utils::copyString(job.driveUnit, msg.unitname());
-  castor::utils::copyString(job.clientUserName, msg.clientusername());
-
-  return job;
 }
 
 //------------------------------------------------------------------------------

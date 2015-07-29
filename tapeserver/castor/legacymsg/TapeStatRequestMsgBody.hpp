@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpErrorAppendix.hpp"
-
 #include <shift/Castor_limits.h>
 #include <shift/Cuuid.h>
 #include <stdint.h>

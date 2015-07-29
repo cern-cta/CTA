@@ -96,12 +96,11 @@ castor::messages::StopProcessForker castor::tape::tapeserver::daemon::
 // forkDataTransfer
 //------------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  forkDataTransfer(const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
+  forkDataTransfer(const DriveConfig &driveConfig) {
 
   // Request the process forker to fork a data-transfer session
-  const messages::ForkDataTransfer rqst = createForkDataTransferMsg(driveConfig,
-    vdqmJob);
+  const messages::ForkDataTransfer rqst =
+    createForkDataTransferMsg(driveConfig);
   ProcessForkerUtils::writeFrame(m_socketFd, rqst);
 
   // Read back the reply
@@ -121,20 +120,11 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 //------------------------------------------------------------------------------
 castor::messages::ForkDataTransfer
   castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  createForkDataTransferMsg(const DriveConfig &driveConfig,
-    const legacymsg::RtcpJobRqstMsgBody vdqmJob) {
+  createForkDataTransferMsg(const DriveConfig &driveConfig) {
   messages::ForkDataTransfer msg;
 
   // Description of the tape drive
   fillMsgWithDriveConfig(msg, driveConfig);
-
-  // Description of the client request
-  msg.set_mounttransactionid(vdqmJob.volReqId);
-  msg.set_clientport(vdqmJob.clientPort);
-  msg.set_clienteuid(vdqmJob.clientEuid);
-  msg.set_clientegid(vdqmJob.clientEgid);
-  msg.set_clienthost(vdqmJob.clientHost);
-  msg.set_clientusername(vdqmJob.clientUserName);
 
   return msg;
 }

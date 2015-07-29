@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"

@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
@@ -58,7 +57,6 @@ namespace daemon {
      */
     DataTransferSession(
       const std::string & hostname,
-      const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
       castor::log::Logger & log,
       System::virtualWrapper & sysWrapper,
       const DriveConfig & driveConfig,
@@ -98,8 +96,6 @@ namespace daemon {
     ~DataTransferSession() throw();
 
   private:
-
-    legacymsg::RtcpJobRqstMsgBody m_request;
 
     /**
      * Object representing the API of the CASTOR logging system.

@@ -255,15 +255,6 @@ private:
   }
 
   /**
-   * Gets the VDQM job from the specified ForkDataTransfer message.
-   *
-   * @param msg The ForkDataTransfer message.
-   * @return The VDQM job.
-   */
-  castor::legacymsg::RtcpJobRqstMsgBody getVdqmJob(
-    const messages::ForkDataTransfer &msg);
-
-  /**
    * Instantiates a ZMQ context.
    *
    * @param sizeOfIOThreadPoolForZMQ The size of the IO thread pool to be used

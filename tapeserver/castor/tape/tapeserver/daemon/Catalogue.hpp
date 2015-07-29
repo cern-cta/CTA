@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"

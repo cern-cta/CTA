@@ -90,15 +90,6 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   clientRunner simRun(sim);
   simRun.start();
   
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
-  
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
@@ -163,7 +154,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -189,15 +180,6 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
@@ -264,7 +246,7 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -289,15 +271,6 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   clientRunner simRun(sim);
   simRun.start();
   
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
-  
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
   castor::log::StringLogger logger("tapeServerUnitTest");
@@ -315,7 +288,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -341,15 +314,6 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
@@ -400,7 +364,7 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -428,15 +392,6 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   clientRunner simRun(sim);
   simRun.start();
   
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
-  
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
@@ -460,7 +415,7 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -549,15 +504,6 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   clientRunner simRun(sim);
   simRun.start();
   
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
-  
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
@@ -604,7 +550,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -636,15 +582,6 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
@@ -688,7 +625,7 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -717,15 +654,6 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
@@ -784,7 +712,7 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -816,15 +744,6 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  
-  // 2) Prepare the VDQM request
-  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
-  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
-    clientAddr.parts.a, clientAddr.parts.b, clientAddr.parts.c, clientAddr.parts.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
-  VDQMjob.clientPort = clientAddr.port;
-  VDQMjob.volReqId = volReq;
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
@@ -885,7 +804,7 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  DataTransferSession sess("tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
