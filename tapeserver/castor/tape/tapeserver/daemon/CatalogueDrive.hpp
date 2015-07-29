@@ -27,7 +27,6 @@
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
@@ -67,7 +66,6 @@ public:
    * @param log Object representing the API of the CASTOR logging system.
    * @param processForker Proxy object representing the ProcessForker.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param hostName The name of the host on which the daemon is running.  This
    * name is needed to fill in messages to be sent to the vdqmd daemon.
    * @param config The configuration of the tape drive.
@@ -81,7 +79,6 @@ public:
     log::Logger &log,
     ProcessForkerProxy &processForker,
     legacymsg::CupvProxy &cupv,
-    legacymsg::VmgrProxy &vmgr,
     const std::string &hostName,
     const DriveConfig &config,
     const CatalogueDriveState state,
@@ -330,11 +327,6 @@ private:
    * Proxy object reprsenting the cupvd daemon.
    */
   legacymsg::CupvProxy &m_cupv;
-
-  /**
-   * Proxy object representing the vmgrd daemon.
-   */
-  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * The name of the host on which the daemon is running.  This name is

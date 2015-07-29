@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
@@ -59,7 +58,6 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param driveCatalogue The tape-drive catalogue.
    * @param hostName The name of the host.
-   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param zmqContext The ZMQ context.
    */
   TapeMessageHandler(
@@ -68,7 +66,6 @@ public:
     log::Logger &log,
     Catalogue &driveCatalogue,
     const std::string &hostName,
-    castor::legacymsg::VmgrProxy & vmgr,
     void *const zmqContext);
 
   /**
@@ -139,12 +136,6 @@ private:
    * The name of the host on which tape daemon is running.
    */
   const std::string m_hostName;
-  
-  /** 
-   * Reference to the VmgrProxy, allowing reporting and checking tape status.
-   * It is also used by the StatusReporter 
-   */
-  castor::legacymsg::VmgrProxy & m_vmgr;
   
   /**
    * Make sure the  zmq_pollitem_t's socket is the same as m_socket

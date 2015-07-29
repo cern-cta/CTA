@@ -31,7 +31,6 @@
 #include "common.h"
 #include "Ctape.h"
 #include "serrno.h"
-#include "vmgr_constants.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -47,15 +46,13 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::LabelCmdConnectionHandler(
   const int fd, reactor::ZMQReactor &reactor, log::Logger &log,
-  Catalogue &driveCatalogue, const std::string &hostName,
-  castor::legacymsg::VmgrProxy & vmgr) throw():
+  Catalogue &driveCatalogue, const std::string &hostName) throw():
   m_fd(fd),
   m_thisEventHandlerOwnsFd(true),
   m_reactor(reactor),
   m_log(log),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
-  m_vmgr(vmgr),
   m_netTimeout(10) { // Timeout in seconds
 }
 

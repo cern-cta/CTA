@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
@@ -310,7 +309,6 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -600,7 +598,6 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -685,7 +682,6 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -782,7 +778,6 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
@@ -884,7 +879,6 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;

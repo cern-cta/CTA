@@ -42,7 +42,6 @@
 #include "castor/utils/utils.hpp"
 #include "Ctape.h"
 #include "serrno.h"
-#include "vmgr_constants.h"
 
 #include <sstream>
 #include <iomanip>
@@ -55,14 +54,12 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   reactor::ZMQReactor &reactor,
   log::Logger &log,Catalogue &driveCatalogue,
   const std::string &hostName,
-  castor::legacymsg::VmgrProxy & vmgr,
   void *const zmqContext):
   m_reactor(reactor),
   m_log(log),
   m_socket(zmqContext, ZMQ_ROUTER),
   m_driveCatalogue(driveCatalogue),
-  m_hostName(hostName),
-  m_vmgr(vmgr) { 
+  m_hostName(hostName) {
 
   std::ostringstream endpoint;
   endpoint << "tcp://127.0.0.1:" << internalPort;
@@ -299,26 +296,19 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     castor::messages::MigrationJobFromWriteTp rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
     
-    // Query the vmgrd daemon for information about the tape
-    const legacymsg::VmgrTapeInfoMsgBody tapeInfo =
-      m_vmgr.queryTape(rqstBody.vid());
-
-    // If migrating files to tape and the client is the tapegatewayd daemon then
-    // the tape must be BUSY
-    if(!(tapeInfo.status & TAPE_BUSY)) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Invalid tape mount: Tape is not BUSY"
-        ": The tapegatewayd daemon cannot mount a tape for write access if the"
-        " tape is not BUSY";
-      throw ex;
-    }
-
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
 
-    messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
-    return reply;
+    {
+      std::ostringstream msg;
+      msg << __FUNCTION__ << ": Not fully implemented because the number of"
+        " files on tape is not known because there is no vmgr in the CTA"
+        " project";
+      throw castor::exception::Exception(msg.str());
+    }
+    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
+    //return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -357,16 +347,19 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     messages::MigrationJobFromWriteTp rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
-    // Query the vmgrd daemon for information about the tape
-    const legacymsg::VmgrTapeInfoMsgBody tapeInfo =
-      m_vmgr.queryTape(rqstBody.vid());
-
     CatalogueDrive &drive =
       m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
 
-    messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
-    return reply;
+    {
+      std::ostringstream msg;
+      msg << __FUNCTION__ << ": Not fully implemented because the number of"
+        " files on tape is not known because there is no vmgr in the CTA"
+        " project";
+      throw castor::exception::Exception(msg.str());
+    }
+    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
+    //return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -444,7 +437,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     const std::string &vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForMigration(vid);
-    m_vmgr.tapeMountedForWrite(vid, transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
@@ -472,7 +464,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     const std::string vid = rqstBody.vid();
     CatalogueTransferSession &transferSession = drive.getTransferSession();
     transferSession.tapeMountedForRecall(vid);
-    m_vmgr.tapeMountedForRead(vid, transferSession.getPid());
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;

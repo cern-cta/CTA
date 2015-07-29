@@ -27,7 +27,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
@@ -69,7 +68,6 @@ public:
    * I/O.
    * @param driveConfig The configuration of the tape drives.
    * @param cupv Proxy object representing the cupvd daemon.
-   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    * @param capUtils Object providing utilities for working UNIX capabilities.
@@ -85,7 +83,6 @@ public:
     const int netTimeout,
     const DriveConfigMap &driveConfigs,
     legacymsg::CupvProxy &cupv,
-    legacymsg::VmgrProxy &vmgr,
     reactor::ZMQReactor &reactor,
     castor::server::ProcessCap &capUtils,
     const TapeDaemonConfig &tapeDaemonConfig);
@@ -496,11 +493,6 @@ protected:
    * Proxy object representing the cupvd daemon.
    */
   legacymsg::CupvProxy &m_cupv;
-
-  /**
-   * Proxy object representing the vmgrd daemon.
-   */
-  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

@@ -22,7 +22,6 @@
 #pragma once
 
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
@@ -54,8 +53,7 @@ public:
     reactor::ZMQReactor &reactor,
     log::Logger &log,
     Catalogue &driveCatalogue,
-    const std::string &hostName,
-    castor::legacymsg::VmgrProxy & vmgr) throw();
+    const std::string &hostName) throw();
 
   /**
    * Returns the human-readable name this event handler.
@@ -122,12 +120,6 @@ private:
    * The name of the host on which tape daemon is running.
    */
   const std::string m_hostName;
-  
-  /** 
-   * Reference to the VmgrProxy, allowing reporting and checking tape status.
-   * It is also used by the StatusReporter 
-   */
-  castor::legacymsg::VmgrProxy & m_vmgr;
   
   /**
    * The timeout in seconds to be applied when performing network read and

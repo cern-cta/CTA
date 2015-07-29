@@ -70,7 +70,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   const int netTimeout,
   const DriveConfigMap &driveConfigs,
   legacymsg::CupvProxy &cupv,
-  legacymsg::VmgrProxy &vmgr,
   reactor::ZMQReactor &reactor,
   castor::server::ProcessCap &capUtils,
   const TapeDaemonConfig &tapeDaemonConfig):
@@ -82,7 +81,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_netTimeout(netTimeout),
   m_driveConfigs(driveConfigs),
   m_cupv(cupv),
-  m_vmgr(vmgr),
   m_reactor(reactor),
   m_capUtils(capUtils),
   m_tapeDaemonConfig(tapeDaemonConfig),
@@ -214,7 +212,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_log,
     *m_processForker,
     m_cupv,
-    m_vmgr,
     m_hostName,
     m_tapeDaemonConfig.catalogueConfig,
     sysWrapper
@@ -666,7 +663,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::unique_ptr<LabelCmdAcceptHandler> handler;
     try {
       handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
-        m_log, *m_catalogue, m_hostName, m_vmgr));
+        m_log, *m_catalogue, m_hostName));
       listenSock.release();
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
@@ -695,8 +692,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     std::unique_ptr<TapeMessageHandler> handler;
     try {
       handler.reset(new TapeMessageHandler(m_tapeDaemonConfig.internalPort,
-        m_reactor, m_log, *m_catalogue, m_hostName, m_vmgr,
-        m_zmqContext));
+        m_reactor, m_log, *m_catalogue, m_hostName, m_zmqContext));
     } catch(std::bad_alloc &ba) {
       castor::exception::BadAlloc ex;
       ex.getMessage() <<

@@ -23,7 +23,6 @@
 
 #include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/legacymsg/NsProxyDummyFactory.hpp"
-#include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
@@ -85,14 +84,12 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   DriveConfigMap driveConfigs;
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
-  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::tape::reactor::ZMQReactor reactor(log);
   castor::server::ProcessCapDummy capUtils;
   TapeDaemonConfig tapeDaemonConfig;
   std::unique_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    netTimeout, driveConfigs, cupv, vmgr, reactor, capUtils,
-    tapeDaemonConfig)));
+    netTimeout, driveConfigs, cupv, reactor, capUtils, tapeDaemonConfig)));
 }
 
 } // namespace unitTests

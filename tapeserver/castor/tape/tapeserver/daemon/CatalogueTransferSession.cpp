@@ -24,7 +24,6 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/CupvProxy.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "Ctape_constants.h"
 #include "Cupv_constants.h"
@@ -320,63 +319,10 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   // the VID tape.
   m_vid = vid;
 
-  checkUserCanRecallFromTape(vid);
-
   m_mountStartTime = time(0);
   m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_DISABLE;
-}
-
-//-----------------------------------------------------------------------------
-// checkUserCanRecallFromTape
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::
-  checkUserCanRecallFromTape(const std::string &vid) {
-  std::list<log::Param> params;
-
-  params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
-  params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
-
-  const legacymsg::VmgrTapeInfoMsgBody vmgrTape = m_vmgr.queryTape(vid);
-  params.push_back(log::Param("status",
-    castor::utils::tapeStatusToString(vmgrTape.status)));
-  params.push_back(log::Param("poolName", vmgrTape.poolName));
-  m_log(LOG_INFO, "Queried vmgr for the tape to be recalled", params);
-
-  if(vmgrTape.status & EXPORTED) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Cannot recall from an EXPORTED tape: vid=" << vid;
-    throw ex;
-  }
-
-  if(vmgrTape.status & ARCHIVED) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Cannot recall from an ARCHIVED tape: vid=" << vid;
-    throw ex;
-  }
-
-  // Only tape operators can recall from a DISABLED tape
-  if(vmgrTape.status & DISABLED) {
-    const bool userIsTapeOperator = m_cupv.isGranted(
-      m_vdqmJob.clientEuid,
-      m_vdqmJob.clientEgid,
-      m_vdqmJob.clientHost,
-      m_hostName,
-      P_TAPE_OPERATOR);
-    params.push_back(log::Param("userIsTapeOperator", userIsTapeOperator ?
-      "true" : "false"));
-    m_log(LOG_INFO, "Tape is DISABLED, therefore querying cupv to see if user"
-      " is a tape operator", params);
-
-    if(!userIsTapeOperator) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Only a tape operator can recall from a DISABLED tape"
-        ": vid=" << vid;
-      throw ex;
-    }
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -400,82 +346,10 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   // the VID tape.
   m_vid = vid;
 
-  checkUserCanMigrateToTape(vid);
-
   m_mountStartTime = time(0);
   m_state = WAIT_MOUNTED;
 
   m_mode = WRITE_ENABLE;
-}
-
-//-----------------------------------------------------------------------------
-// checkUserCanMigrateToTape
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CatalogueTransferSession::
-  checkUserCanMigrateToTape(const std::string &vid) {
-  std::list<log::Param> params;
-
-  params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("clientEuid", m_vdqmJob.clientEuid));
-  params.push_back(log::Param("clientEgid", m_vdqmJob.clientEgid));
-
-  const legacymsg::VmgrTapeInfoMsgBody vmgrTape = m_vmgr.queryTape(vid);
-  params.push_back(log::Param("status",
-    castor::utils::tapeStatusToString(vmgrTape.status)));
-  params.push_back(log::Param("poolName", vmgrTape.poolName));
-  m_log(LOG_INFO, "Queried vmgr for the tape for migration", params);
-
-  if(vmgrTape.status & EXPORTED) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Cannot migrate files to an EXPORTED tape"
-      ": vid=" << vid;
-    throw ex;
-  }
-
-  if(vmgrTape.status & ARCHIVED) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Cannot migrate files to an ARCHIVED tape"
-      ": vid=" << vid;
-    throw ex;
-  }
-
-  if(vmgrTape.status & DISABLED) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Cannot migrate files to a DISABLED tape"
-      ": vid=" << vid;
-    throw ex;
-  }
-
-  const legacymsg::VmgrPoolInfoMsgBody vmgrPool =
-    m_vmgr.queryPool(vmgrTape.poolName);
-  params.push_back(log::Param("poolUid", vmgrPool.poolUid));
-  params.push_back(log::Param("poolGid", vmgrPool.poolGid));
-  m_log(LOG_INFO, "Queried vmgr for the pool of the tape for migration",
-    params);
-
-  // A pool has no owner if either its user or group ID is 0
-  //
-  // There is no such concept as a pool owned by the user root or the group root
-  const bool poolHasOwner = 0 != vmgrPool.poolUid && 0 != vmgrPool.poolGid;
-
-  if(!poolHasOwner) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Cannot migrate files to a tape belonging to an owner-less tape-pool"
-      ": vid=" << vid;
-    throw ex;
-  }
-
-  // Only the owner of the pool of a tape can migrate files to that tape
-  const bool userIsPoolOwner = m_vdqmJob.clientEuid == vmgrPool.poolUid &&
-    m_vdqmJob.clientEgid == vmgrPool.poolGid;
-  if(!userIsPoolOwner) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Only the owner of the pool of a tape can migrate files to that tape"
-      ": vid=" << vid;
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

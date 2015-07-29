@@ -35,8 +35,6 @@ add_library(TestDummies
   ../castor/messages/TapeserverProxyDummy.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/legacymsg/VmgrProxyDummy.cpp
-  ../castor/legacymsg/VmgrProxyDummyFactory.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/tape/reactor/DummyPollEventHandler.cpp
   ../castor/tape/reactor/DummyPollReactor.cpp
@@ -61,13 +59,10 @@ add_executable(castorUnitTests
   ../castor/legacymsg/NsProxy.cpp
   ../castor/legacymsg/NsProxyDummy.cpp
   ../castor/legacymsg/NsProxyDummyFactory.cpp
-  ../castor/legacymsg/VmgrMarshalTest.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
-  ../castor/legacymsg/VmgrProxy.cpp
-  ../castor/legacymsg/VmgrProxyTcpIp.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
