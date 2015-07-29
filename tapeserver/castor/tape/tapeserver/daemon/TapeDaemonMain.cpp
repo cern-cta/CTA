@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/legacymsg/CupvProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
@@ -30,7 +29,6 @@
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
-#include "Cupv_constants.h"
 #include "patchlevel.h"
 #include "rmc_constants.h"
 #include "vdqm_constants.h"
@@ -151,10 +149,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   tape::tapeserver::daemon::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(tpconfigLines);
 
-  // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  legacymsg::CupvProxyTcpIp cupv(log, tapeDaemonConfig.cupvHost, CUPV_PORT,
-    netTimeout);
 
   tape::reactor::ZMQReactor reactor(log);
 
@@ -170,7 +165,6 @@ static int exceptionThrowingMain(const int argc, char **const argv,
     log,
     netTimeout,
     driveConfigs,
-    cupv,
     reactor,
     capUtils,
     tapeDaemonConfig);

@@ -25,7 +25,6 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
 #include "Ctape_constants.h"
-#include "Cupv_constants.h"
 #include "serrno.h"
 
 //------------------------------------------------------------------------------
@@ -38,10 +37,9 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
     const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
-    legacymsg::CupvProxy &cupv,
     ProcessForkerProxy &processForker) {
 
-  checkUserCanLabelTape(log, cupv, labelJob, labelCmdConnection);
+  checkUserCanLabelTape(log, labelJob, labelCmdConnection);
 
   const pid_t pid = processForker.forkLabel(driveConfig, labelJob);
 
@@ -58,34 +56,13 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
 // checkUserCanLabelTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
-  checkUserCanLabelTape(log::Logger &log, legacymsg::CupvProxy &cupv,
+  checkUserCanLabelTape(log::Logger &log,
   const legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) {
-  const std::string sourceHost = io::getPeerHostName(labelCmdConnection);
-  const std::string targetHost = io::getSockHostName(labelCmdConnection);
-
-  const bool userIsAdmin = cupv.isGranted(
-    labelJob.uid,
-    labelJob.gid,
-    sourceHost,
-    targetHost,
-    P_ADMIN);
-  log::Param params[] = {
-    log::Param("uid", labelJob.uid),
-    log::Param("gid", labelJob.gid),
-    log::Param("sourceHost", sourceHost),
-    log::Param("targetHost", targetHost),
-    log::Param("privilegeCode", P_ADMIN),
-    log::Param("privilegeStr", "ADMIN"),
-    log::Param("userIsAdmin", userIsAdmin ?  "true" : "false")};
-  log(LOG_INFO, "Queried cupvd for tape to be labelled", params);
-
-  if(!userIsAdmin) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Only an administrator can label a tape: vid=" <<
-      labelJob.vid;
-    throw ex;
-  }
+  std::ostringstream msg;
+  msg << __FUNCTION__ <<
+    ": For now no users are allowed to label tapes in the CTA project";
+  throw castor::exception::Exception(msg.str());
 }
 
 //------------------------------------------------------------------------------

@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
@@ -53,7 +52,6 @@ public:
    * @param driveConfig The configuration of the tape drive.
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
-   * @param cupv Proxy object representing the cupvd daemon.
    * @param hostName The host name to be used as the target host when
    * communicating with the cupvd daemon.
    * @param waitJobTimeoutInSecs The maximum time in seconds that the
@@ -72,7 +70,6 @@ public:
     const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
-    legacymsg::CupvProxy &cupv,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -227,9 +224,7 @@ protected:
    * @param driveConfig The configuration of the tape drive.
    * @param vdqmJob job received from the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
-   * @param cupv Proxy object representing the cupvd daemon.
    * @param hostName The host name to be used as the target host when
-   * communicating with the cupvd daemon.
    * @param waitJobTimeoutInSecs The maximum time in seconds that the
    * data-transfer session can take to get the transfer job from the client.
    * @param mountTimeoutInSecs The maximum time in seconds that the
@@ -244,7 +239,6 @@ protected:
     const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
-    legacymsg::CupvProxy &cupv,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -310,11 +304,6 @@ private:
    * Proxy object representing the vmgrd daemon.
    */
   legacymsg::VmgrProxy &m_vmgr;
-
-  /**
-   * Proxy object representing the cupvd daemon.
-   */
-  legacymsg::CupvProxy &m_cupv;
 
   /**
    * The host name to be used as the target host when communicating with the

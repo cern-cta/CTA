@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
@@ -57,7 +56,6 @@ public:
    * command-line tool.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
    * the tape labeling command-line tool castor-tape-label.
-   * @param cupv Proxy object representing the cupvd daemon.
    * @param processForker Proxy object representing the ProcessForker.
    * @return A newly created CatalogueSession object.
    */
@@ -67,7 +65,6 @@ public:
     const DriveConfig &driveConfig,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection,
-    legacymsg::CupvProxy &cupv,
     ProcessForkerProxy &processForker);
 
   /**
@@ -209,7 +206,6 @@ private:
    * method for determining if they have such rights.
    *
    * @param log Object representing the API of the CASTOR logging system.
-   * @param cupv Proxy object representing the cupvd daemon.
    * @param labelJob The label job received from the castor-tape-label
    * command-line tool.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection with
@@ -217,7 +213,6 @@ private:
    */
   static void checkUserCanLabelTape(
     log::Logger &log,
-    legacymsg::CupvProxy &cupv,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection);
 

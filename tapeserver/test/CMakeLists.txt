@@ -33,7 +33,6 @@ find_package( ZLIB REQUIRED )
 add_library(TestDummies
   ../castor/mediachanger/MmcProxyDummy.cpp
   ../castor/messages/TapeserverProxyDummy.cpp
-  ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/tape/reactor/DummyPollEventHandler.cpp
@@ -53,8 +52,6 @@ add_executable(castorUnitTests
   ../castor/messages/TapeserverProxy.cpp
   ../castor/messages/TapeserverProxyZmq.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
-  ../castor/legacymsg/CupvMarshalTest.cpp
-  ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/GenericMarshalTest.cpp
   ../castor/legacymsg/NsProxy.cpp
   ../castor/legacymsg/NsProxyDummy.cpp

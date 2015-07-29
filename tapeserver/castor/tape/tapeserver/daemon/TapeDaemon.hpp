@@ -67,7 +67,6 @@ public:
    * @param netTimeout Timeout in seconds to be used when performing network
    * I/O.
    * @param driveConfig The configuration of the tape drives.
-   * @param cupv Proxy object representing the cupvd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    * @param capUtils Object providing utilities for working UNIX capabilities.
@@ -82,7 +81,6 @@ public:
     log::Logger &log,
     const int netTimeout,
     const DriveConfigMap &driveConfigs,
-    legacymsg::CupvProxy &cupv,
     reactor::ZMQReactor &reactor,
     castor::server::ProcessCap &capUtils,
     const TapeDaemonConfig &tapeDaemonConfig);
@@ -488,11 +486,6 @@ protected:
    * The configuration of the tape drives.
    */
   const DriveConfigMap m_driveConfigs;
-
-  /**
-   * Proxy object representing the cupvd daemon.
-   */
-  legacymsg::CupvProxy &m_cupv;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

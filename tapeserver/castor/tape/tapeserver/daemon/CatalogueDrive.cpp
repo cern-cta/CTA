@@ -42,7 +42,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   const int netTimeout,
   log::Logger &log,
   ProcessForkerProxy &processForker,
-  legacymsg::CupvProxy &cupv,
   const std::string &hostName,
   const DriveConfig &config,
   const CatalogueDriveState state,
@@ -52,7 +51,6 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_netTimeout(netTimeout),
   m_log(log),
   m_processForker(processForker),
-  m_cupv(cupv),
   m_hostName(hostName),
   m_config(config),
   m_sysWrapper(sysWrapper),
@@ -458,7 +456,6 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
       m_config,
       job,
       labelCmdConnection,
-      m_cupv,
       m_processForker);
     changeState(DRIVE_STATE_RUNNING);
     break;

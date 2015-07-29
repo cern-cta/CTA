@@ -23,10 +23,8 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
 #include "Ctape_constants.h"
-#include "Cupv_constants.h"
 #include "rmc_constants.h"
 #include "vmgr_constants.h"
 
@@ -43,7 +41,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     const DriveConfig &driveConfig,
     const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
     legacymsg::VmgrProxy &vmgr,
-    legacymsg::CupvProxy &cupv,
     const std::string &hostName,
     const time_t waitJobTimeoutInSecs,
     const time_t mountTimeoutInSecs,
@@ -59,7 +56,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
     driveConfig,
     vdqmJob,
     vmgr,
-    cupv,
     hostName,
     waitJobTimeoutInSecs,
     mountTimeoutInSecs,
@@ -77,7 +73,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const DriveConfig &driveConfig,
   const legacymsg::RtcpJobRqstMsgBody &vdqmJob,
   legacymsg::VmgrProxy &vmgr,
-  legacymsg::CupvProxy &cupv,
   const std::string &hostName,
   const time_t waitJobTimeoutInSecs,
   const time_t mountTimeoutInSecs,
@@ -90,7 +85,6 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession::
   m_lastTimeSomeBlocksWereMoved(0),
   m_vdqmJob(vdqmJob),
   m_vmgr(vmgr),
-  m_cupv(cupv),
   m_hostName(hostName),
   m_waitJobTimeoutInSecs(waitJobTimeoutInSecs),
   m_mountTimeoutInSecs(mountTimeoutInSecs),

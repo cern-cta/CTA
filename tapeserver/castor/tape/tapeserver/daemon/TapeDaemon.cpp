@@ -69,7 +69,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   log::Logger &log,
   const int netTimeout,
   const DriveConfigMap &driveConfigs,
-  legacymsg::CupvProxy &cupv,
   reactor::ZMQReactor &reactor,
   castor::server::ProcessCap &capUtils,
   const TapeDaemonConfig &tapeDaemonConfig):
@@ -80,7 +79,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_argv(argv),
   m_netTimeout(netTimeout),
   m_driveConfigs(driveConfigs),
-  m_cupv(cupv),
   m_reactor(reactor),
   m_capUtils(capUtils),
   m_tapeDaemonConfig(tapeDaemonConfig),
@@ -211,7 +209,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
     m_netTimeout,
     m_log,
     *m_processForker,
-    m_cupv,
     m_hostName,
     m_tapeDaemonConfig.catalogueConfig,
     sysWrapper

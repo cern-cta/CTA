@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
@@ -56,13 +55,11 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
 
   castor::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
-  const bool isGrantedReturnValue = true;
-  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   const int netTimeout = 1;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv,
+  Catalogue catalogue(netTimeout, log, processForker,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
   
@@ -130,12 +127,10 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
   const int netTimeout = 1;
   castor::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
-  const bool isGrantedReturnValue = true;
-  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv,
+  Catalogue catalogue(netTimeout, log, processForker,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
@@ -153,12 +148,10 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   const int netTimeout = 1;
   castor::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
-  const bool isGrantedReturnValue = true;
-  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
   castor::tape::System::mockWrapper sysWrapper;
-  Catalogue catalogue(netTimeout, log, processForker, cupv,
+  Catalogue catalogue(netTimeout, log, processForker,
     hostName, catalogueConfig, sysWrapper);
   ASSERT_NO_THROW(catalogue.populate(driveConfigs));
 
