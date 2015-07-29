@@ -1,4 +1,0 @@
-<xrdfs> <stageHost> mkdir <noTapeFileName>
-<xrdfs> <stageHost> stat <noTapeFileName>
-<xrdfs> <stageHost> rmdir <noTapeFileName>
-nsls <noTapeFileName>

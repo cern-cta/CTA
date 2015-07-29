@@ -1,4 +1,0 @@
-rfmkdir <rfioTURL>
-nsls <noTapeFileName>
-rfdir <rfioTURL>
-yes | rfrm -r <rfioTURL>

@@ -1,3 +1,0 @@
-stager_put -M <noTapeFileName> -S <diskOnlyServiceClass>
-nsls --class <noTapeFileName>
-nslistclass --name temp | grep CLASS_ID

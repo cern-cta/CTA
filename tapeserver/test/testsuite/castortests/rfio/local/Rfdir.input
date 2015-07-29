@@ -1,3 +1,0 @@
-rfmkdir <tmpLocalFileName>
-ls <tmpLocalFileName>
-rfdir <tmpLocalFileName> | cut -c1-4

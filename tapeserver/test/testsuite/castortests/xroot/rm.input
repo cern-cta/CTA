@@ -1,5 +1,0 @@
-<xrdcp> <localFileName> <xrdcpURL>
-stager_qry -M <noTapeFileName>
-<xrdfs> <stageHost> rm <noTapeFileName>
-stager_qry -M <noTapeFileName>
-nsls <noTapeFileName>

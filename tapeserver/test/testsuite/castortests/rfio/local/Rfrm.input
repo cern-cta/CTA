@@ -1,4 +1,0 @@
-<rfcp> <localFileName> <tmpLocalFileName>
-ls <tmpLocalFileName>
-rfrm <tmpLocalFileName>
-ls <tmpLocalFileName> 2>&1 | sed 's/cannot access //'

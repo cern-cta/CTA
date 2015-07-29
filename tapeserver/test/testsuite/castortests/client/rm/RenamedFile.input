@@ -1,3 +1,0 @@
-<rfcp> <localFileName> <noTapeFileName>
-nsrename <noTapeFileName> <noTapeFileName1>
-stager_rm -M <noTapeFileName>

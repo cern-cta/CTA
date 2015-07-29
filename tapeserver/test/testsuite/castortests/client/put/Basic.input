@@ -1,2 +1,0 @@
-stager_put -M <noTapeFileName>
-stager_qry -M <noTapeFileName>

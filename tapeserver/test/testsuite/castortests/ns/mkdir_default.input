@@ -1,2 +1,0 @@
-umask 0000; nsmkdir <nsDir>; echo $?
-nsls -ld <nsDir> | sed "s/  */ /g"

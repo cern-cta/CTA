@@ -1,2 +1,0 @@
-nsmkdir --mode=777777777 <nsDir>; echo $?
-nsls -ld <nsDir> | sed "s/  */ /g"

@@ -1,2 +1,0 @@
-nsmkdir <nsDir>; echo $?
-nsmkdir <nsDir>; echo $?

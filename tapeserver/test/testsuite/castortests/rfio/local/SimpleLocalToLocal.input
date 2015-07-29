@@ -1,3 +1,0 @@
-<rfcp> <localFileName> <tmpLocalFileName>
-<rfcp> <tmpLocalFileName> <tmpLocalFileName1>
-diff <localFileName> <tmpLocalFileName1>

@@ -1,6 +1,0 @@
-<corexrdcp> -f <localFileName> <simpleXrdcpTapeURL>
-<xrdfs> <stageHost> stat <tapeFileName>
-status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
-<xrdfs> <stageHost> stat <tapeFileName>
-stager_rm -M <tapeFileName>
-<xrdfs> <stageHost> stat <tapeFileName>

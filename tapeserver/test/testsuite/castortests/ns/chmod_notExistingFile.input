@@ -1,1 +1,0 @@
-nstouch <nsFile>; nsrm <nsFile>; nschmod 777 <nsFile>; echo $?

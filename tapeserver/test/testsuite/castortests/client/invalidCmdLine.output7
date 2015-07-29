@@ -1,1 +1,0 @@
-usage: stager_putdone [-M hsmfile [-M hsmfile ...]] [-f hsmFileList] [-r requestid] [-h]

@@ -1,7 +1,0 @@
-<xrdcp> <localFileName> <xrdcpURL>
-nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
-<xrdfs> <stageHost> chmod <noTapeFileName> rwxrwxrwx | sed '/^$/d'
-nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
-<xrdfs> <stageHost> chmod <noTapeFileName> rw------- | sed '/^$/d'
-nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
-nsrm <noTapeFileName>

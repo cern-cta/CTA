@@ -1,3 +1,0 @@
-<xrdcp> <localFileName> <xrdcpURLparam>mode=444
-nsls -l <noTapeFileName> | awk '{print $(1)" "$(NF)}'
-nsrm <noTapeFileName>

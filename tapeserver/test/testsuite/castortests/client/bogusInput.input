@@ -1,9 +1,0 @@
-stager_qry -S bogusSvcClass -M <noTapeFileName>
-stager_get -S bogusSvcClass -M <noTapeFileName>
-stager_put -S bogusSvcClass -M <noTapeFileName>
-stager_rm -S bogusSvcClass -M <noTapeFileName>
-stager_actualput -S <tapeServiceClass> -M <noTapeFileName> -P bogusProto
-stager_actualget -S <tapeServiceClass> -M <noTapeFileName> -P bogusProto
-stager_addprivilege -U: -R bogusReqType
-stager_addprivilege -S bogusSvcClass -U:
-stager_addprivilege -U bogusUser:bogusGroup

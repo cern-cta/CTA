@@ -1,4 +1,0 @@
-rfcp <localFileName> rfio:///<noTapeFileName>
-rfrename rfio:///<noTapeFileName> <rfioTURL1>
-nsls <noTapeFileName>
-nsls <noTapeFileName1>

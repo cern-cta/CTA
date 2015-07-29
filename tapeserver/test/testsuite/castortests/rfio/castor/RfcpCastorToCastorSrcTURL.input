@@ -1,4 +1,0 @@
-rfcp <localFileName> <rfioTURL>
-rfcp <rfioTURL> rfio:///<noTapeFileName1>
-rfcp rfio:///<noTapeFileName1> <tmpLocalFileName>
-diff <localFileName> <tmpLocalFileName>
