@@ -84,6 +84,7 @@ public:
    * of the tape).
    */
   void retry();
+
 private:
 
   /**

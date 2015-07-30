@@ -1,5 +1,5 @@
 /*
- * The CERN Tape Archive (CTA) project
+ * The CERN Tape Retrieve (CTA) project
  * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,4 +41,22 @@ cta::RetrieveJob::RetrieveJob(
   const std::string &remoteFile):
   TapeJob(id, userRequestId, copyNb, remoteFile),
   tapeFile(tapeFile) {
+}
+
+//------------------------------------------------------------------------------
+// complete
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::complete() {
+}
+  
+//------------------------------------------------------------------------------
+// failed
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::failed() {
+}
+  
+//------------------------------------------------------------------------------
+// retry
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::retry() {
 }

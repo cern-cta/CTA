@@ -58,6 +58,22 @@ public:
     const std::string &remoteFile);
 
   /**
+   * Indicates that the job was successful
+   */
+  void complete();
+  
+  /**
+   * Indicates that the job failed
+   */
+  void failed();
+  
+  /**
+   * Indicates that the job should be tried again (typically reaching the end 
+   * of the tape).
+   */
+  void retry();
+
+  /**
    * The location of the source tape file.
    */
   TapeCopyLocation tapeFile;

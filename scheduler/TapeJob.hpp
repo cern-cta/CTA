@@ -87,6 +87,22 @@ public:
    */
   const std::string &getRemoteFile() const throw();
 
+  /**
+   * Indicates that the job was successful
+   */
+  virtual void complete() = 0;
+  
+  /**
+   * Indicates that the job failed
+   */
+  virtual void failed() = 0;
+  
+  /**
+   * Indicates that the job should be tried again (typically reaching the end 
+   * of the tape).
+   */
+  virtual void retry() = 0;
+
 private:
 
   /**
