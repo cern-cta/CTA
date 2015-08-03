@@ -79,6 +79,8 @@ bool castor::tape::tapeserver::daemon::CatalogueDrive::handleTick() {
     return false; // Do no continue the main event loop
   }
 
+  launchTransferSessionIfNecessary();
+
   return true; // Continue the main event loop
 }
 
@@ -417,6 +419,37 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
         m_config.getUnitName() << " down: Incompatible drive state: state=" <<
         catalogueDriveStateToStr(m_state);
       throw ex;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// launchTransferSessionIfNecessary
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::CatalogueDrive::
+  launchTransferSessionIfNecessary() {
+
+  // Simply return if it's too soon to launch a transfer session
+  if(10.0 > m_launchTransferSessionTimer.secs()) {
+    return;
+  }
+
+  m_launchTransferSessionTimer.reset();
+
+  if(DRIVE_STATE_UP == m_state) {
+    changeState(DRIVE_STATE_RUNNING);
+    {
+      CatalogueTransferSession *const transferSession =
+        CatalogueTransferSession::create(
+          m_log,
+          m_netTimeout,
+          m_config,
+          m_hostName,
+          m_waitJobTimeoutSecs,
+          m_mountTimeoutSecs,
+          m_blockMoveTimeoutSecs,
+          m_processForker);
+      m_session = dynamic_cast<CatalogueSession *>(transferSession);
     }
   }
 }

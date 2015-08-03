@@ -35,6 +35,7 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/utils/Timer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -138,6 +139,13 @@ public:
    * configureDown() is idempotent.
    */
   void configureDown();
+
+  /**
+   * If enough time has elapsed and the tape drive is idle (DRIVE_STATE_UP) then
+   * launch a transfer session which will itself work out if there is some work
+   * to be done.
+   */
+  void launchTransferSessionIfNecessary();
 
   /**
    * Moves the state of tape drive to DRIVE_STATE_SESSIONRUNNING and sets the 
@@ -362,6 +370,12 @@ private:
    * The session metadata associated to the drive catalogue entry
    */
   CatalogueSession *m_session;
+
+  /**
+   * Timer used to decide when to check if another transfer session needs to
+   * be launched.
+   */
+  castor::utils::Timer m_launchTransferSessionTimer;
 
   /**
    * Checks that there is a tape session currently associated with the
