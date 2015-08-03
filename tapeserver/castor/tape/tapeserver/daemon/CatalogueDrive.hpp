@@ -349,23 +349,10 @@ private:
   CatalogueDriveState m_state;
 
   /**
-   * The maximum time in seconds that the data-transfer session can take to get
-   * the transfer job from the client.
+   * The CASTOR configuration parameters to be used by the catalogue.
    */
-  const time_t m_waitJobTimeoutSecs;
+  const CatalogueConfig m_catalogueConfig;
 
-  /**
-   * The maximum time in seconds that the data-transfer session can take to
-   * mount a tape.
-   */
-  const time_t m_mountTimeoutSecs;
-
-  /**
-   * The maximum time in seconds that the data-transfer session can cease to
-   * move data blocks.
-   */
-  const time_t m_blockMoveTimeoutSecs;
-  
   /**
    * The session metadata associated to the drive catalogue entry
    */

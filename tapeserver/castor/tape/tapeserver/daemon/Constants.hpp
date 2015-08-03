@@ -55,6 +55,13 @@ const unsigned short TAPESERVER_LABEL_PORT = 54321;
 const unsigned short TAPESERVER_INTERNAL_PORT = 54322;
 
 /**
+ * The delay in seconds the master process of the tapeserverd daemon should
+ * wait before launching another transfer session whilst the corresponding
+ * drive is idle.
+ */
+const unsigned int TAPESERVER_TRANSFERSESSION_TIMER = 10;
+
+/**
  * The compile-time default value for the maximum time in seconds that the
  * data-transfer session can take to get the transfer job from the client.
  */

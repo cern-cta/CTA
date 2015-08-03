@@ -64,6 +64,12 @@ struct CatalogueConfig {
    */
   time_t vdqmDriveSyncIntervalSecs;
 
+  /** The delay in seconds the master process of the tapeserverd daemon should
+   * wait before launching another transfer session whilst the corresponding
+   * drive is idle.
+   */
+  time_t transferSessionTimerSecs;
+
   /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.

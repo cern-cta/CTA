@@ -55,9 +55,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   m_config(config),
   m_sysWrapper(sysWrapper),
   m_state(state),
-  m_waitJobTimeoutSecs(catalogueConfig.waitJobTimeoutSecs),
-  m_mountTimeoutSecs(catalogueConfig.mountTimeoutSecs),
-  m_blockMoveTimeoutSecs(catalogueConfig.blockMoveTimeoutSecs),
+  m_catalogueConfig(catalogueConfig),
   m_session(NULL) {
 }
 
@@ -430,7 +428,8 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   launchTransferSessionIfNecessary() {
 
   // Simply return if it's too soon to launch a transfer session
-  if(10.0 > m_launchTransferSessionTimer.secs()) {
+  if((double)m_catalogueConfig.transferSessionTimerSecs >
+    m_launchTransferSessionTimer.secs()) {
     return;
   }
 
@@ -445,9 +444,9 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
           m_netTimeout,
           m_config,
           m_hostName,
-          m_waitJobTimeoutSecs,
-          m_mountTimeoutSecs,
-          m_blockMoveTimeoutSecs,
+          m_catalogueConfig.waitJobTimeoutSecs,
+          m_catalogueConfig.mountTimeoutSecs,
+          m_catalogueConfig.blockMoveTimeoutSecs,
           m_processForker);
       m_session = dynamic_cast<CatalogueSession *>(transferSession);
     }

@@ -33,7 +33,8 @@ castor::tape::tapeserver::daemon::CatalogueConfig::CatalogueConfig() throw():
   waitJobTimeoutSecs(0),
   mountTimeoutSecs(0),
   blockMoveTimeoutSecs(0),
-  vdqmDriveSyncIntervalSecs(0) {
+  vdqmDriveSyncIntervalSecs(0),
+  transferSessionTimerSecs(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -54,6 +55,8 @@ castor::tape::tapeserver::daemon::CatalogueConfig
     "BlkMoveTimeout", TAPESERVER_BLKMOVETIMEOUT, log);
   config.vdqmDriveSyncIntervalSecs = castorConf.getConfEntInt("TapeServer",
     "VdqmDriveSyncInterval", TAPESERVER_VDQMDRIVESYNCINTERVAL, log);
+  config.transferSessionTimerSecs = castorConf.getConfEntInt("TapeServer",
+    "TransferSessionTimer", TAPESERVER_TRANSFERSESSION_TIMER, log);
 
   return config;
 }
