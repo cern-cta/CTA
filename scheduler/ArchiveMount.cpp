@@ -46,9 +46,16 @@ std::string cta::ArchiveMount::getVid() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// finish
+// complete
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::finish() {
+void cta::ArchiveMount::complete() {
+  throw NotImplemented ("");
+}
+
+//------------------------------------------------------------------------------
+// failed
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::failed(const std::exception &ex) {
   throw NotImplemented ("");
 }
 

@@ -45,9 +45,21 @@ namespace cta {
     virtual std::string getVid() const throw() = 0;
 
     /**
-     * Notifies the scheduler that the session is finished 
+     * Indicates that the mount was successful.
+     *
+     * @param checksumOfTransfer The adler-32 checksum of the file as calculated
+     * during the execution of the job.
+     * @param fileSizeOfTransfer The size of the file as calculated during the
+     * execution of the job.
      */
-    virtual void finish() = 0;
+    virtual void complete() = 0;
+
+    /**
+     * Indicates that the mount failed.
+     *
+     * @param ex The reason for the failure.
+     */
+    virtual void failed(const std::exception &ex) = 0;
     
     /**
      * Destructor.

@@ -1,5 +1,5 @@
 /*
- * The CERN Tape Archive (CTA) project
+ * The CERN Tape Retrieve (CTA) project
  * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
@@ -46,11 +46,18 @@ std::string cta::RetrieveMount::getVid() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// finish
+// complete
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::finish() {
+void cta::RetrieveMount::complete() {
   throw NotImplemented ("");
 }
+
+//------------------------------------------------------------------------------
+// failed
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::failed(const std::exception &ex) {
+  throw NotImplemented ("");
+} 
 
 //------------------------------------------------------------------------------
 // destructor
