@@ -28,7 +28,6 @@
 
 namespace cta {
   
-  class RetrieveMount;
   /**
    * The class driving a retrieve mount.
    * The class only has private constructors as it is instanciated by
@@ -55,7 +54,14 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    MountType::Enum getMountType() const throw();
+    virtual MountType::Enum getMountType() const throw();
+
+    /**
+     * Returns the volume identifier of the tape to be mounted.
+     *
+     * @return The volume identifier of the tape to be mounted.
+     */
+    virtual std::string getVid() const throw();
 
     /**
      * Notifies the scheduler that the session is finished 

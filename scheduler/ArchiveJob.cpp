@@ -19,12 +19,6 @@
 #include "scheduler/ArchiveJob.hpp"
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob() {
-}
-
-//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::ArchiveJob::~ArchiveJob() throw() {
@@ -34,13 +28,35 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveJob::ArchiveJob(
+// NOT YET DECIDED
+//ArchiveMount &mount,
   const std::string &tapePoolName,
+  const uint64_t fileSize,
   const std::string &id,
   const std::string &userRequestId,
   const uint32_t copyNb,
-  const std::string &remoteFile):
-  TapeJob(id, userRequestId, copyNb, remoteFile),
-  m_tapePoolName(tapePoolName) {
+  const std::string &remoteFile,
+  const uint64_t castorNsFileId):
+  TapeJob(id, userRequestId, copyNb, remoteFile, castorNsFileId),
+// NOT YET DECIDED
+//  m_mount(mount),
+  m_tapePoolName(tapePoolName),
+  m_fileSize(fileSize) {
+}
+
+//------------------------------------------------------------------------------
+// getMount
+//------------------------------------------------------------------------------
+// NOT YET DECIDED
+//cta::ArchiveMount &cta::ArchiveJob::getMount() {
+//  return m_mount;
+//}
+
+//------------------------------------------------------------------------------
+// getMount
+//------------------------------------------------------------------------------
+cta::ArchiveMount &cta::ArchiveJob::getMount() const {
+  return m_mount;
 }
 
 //------------------------------------------------------------------------------
@@ -51,15 +67,23 @@ const std::string &cta::ArchiveJob::getTapePoolName() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getFileSize
+//------------------------------------------------------------------------------
+uint64_t cta::ArchiveJob::getFileSize() const throw() {
+  return m_fileSize;
+}
+
+//------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::complete() {
+void cta::ArchiveJob::complete(const uint32_t checksumOfTransfer,
+    const uint64_t fileSizeOfTransfer) {
 }
   
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed() {
+void cta::ArchiveJob::failed(const std::exception &ex) {
 }
   
 //------------------------------------------------------------------------------

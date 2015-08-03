@@ -48,12 +48,16 @@ public:
    * @param remoteFile The URL of the remote file that depending on the
    * direction of the data transfer may be either the source or the
    * destination of the tape job.
+   * @param castorNsFileId The CASTOR name server identifier of the file in the
+   * archive namespace that depending on the direction of the data transfer may
+   * be either the source or the destination of the tape job.
    */
   TapeJob(
     const std::string &id,
     const std::string &userRequestId,
     const uint32_t copyNb,
-    const std::string &remoteFile);
+    const std::string &remoteFile,
+    const uint64_t castorNsFileId);
 
   /**
    * Returns the identifier of the tape job.
@@ -88,15 +92,34 @@ public:
   const std::string &getRemoteFile() const throw();
 
   /**
-   * Indicates that the job was successful
+   * Returns The CASTOR name server identifier of the file in the archive
+   * namespace that depending on the direction of the data transfer may be
+   * either the source or the destination of the tape job.
+   *
+   * @return The CASTOR name server identifier of the file in the archive
+   * namespace that depending on the direction of the data transfer may be
+   * either the source or the destination of the tape job.
    */
-  virtual void complete() = 0;
-  
+  uint64_t getCastorNsFileId() const throw();
+
+  /**
+   * Indicates that the job was successful
+   *
+   * @param checksumOfTransfer The adler-32 checksum of the file as calculated
+   * during the execution of the job.
+   * @param fileSizeOfTransfer The size of the file as calculated during the
+   * execution of the job.
+   */
+  virtual void complete(const uint32_t checksumOfTransfer,
+    const uint64_t fileSizeOfTransfer) = 0;
+ 
   /**
    * Indicates that the job failed
+   *
+   * @param ex The reason for the failure.
    */
-  virtual void failed() = 0;
-  
+  virtual void failed(const std::exception &ex) = 0;
+
   /**
    * Indicates that the job should be tried again (typically reaching the end 
    * of the tape).
@@ -125,6 +148,13 @@ private:
    * transfer may be either the source or the destination of the tape job.
    */
   std::string m_remoteFile;
+
+  /**
+   * The CASTOR name server identifier of the file in the archive
+   * namespace that depending on the direction of the data transfer may be
+   * either the source or the destination of the tape job.
+   */
+  uint64_t m_castorNsFileId;
 
 }; // class TapeJob
 

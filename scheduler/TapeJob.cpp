@@ -38,11 +38,13 @@ cta::TapeJob::TapeJob(
   const std::string &id,
   const std::string &userRequestId,
   const uint32_t copyNb,
-  const std::string &remoteFile):
+  const std::string &remoteFile,
+  const uint64_t castorNsFileId):
   m_id(id),
   m_userRequestId(userRequestId),
   m_copyNb(copyNb),
-  m_remoteFile(remoteFile) {
+  m_remoteFile(remoteFile),
+  m_castorNsFileId(castorNsFileId) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,4 +73,11 @@ uint32_t cta::TapeJob::getCopyNb() const throw() {
 //------------------------------------------------------------------------------
 const std::string &cta::TapeJob::getRemoteFile() const throw() {
   return m_remoteFile;
+}
+
+//------------------------------------------------------------------------------
+// getCastorNsFileId
+//------------------------------------------------------------------------------
+uint64_t cta::TapeJob::getCastorNsFileId() const throw() {
+  return m_castorNsFileId;
 }

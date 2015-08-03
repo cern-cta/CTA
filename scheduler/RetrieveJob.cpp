@@ -19,12 +19,6 @@
 #include "scheduler/RetrieveJob.hpp"
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob() {
-}
-
-//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::RetrieveJob::~RetrieveJob() throw() {
@@ -34,25 +28,30 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveJob::RetrieveJob(
+// TO BE DECIDED
+//RetrieveMount &mount,
   const TapeCopyLocation &tapeFile,
   const std::string &id, 
   const std::string &userRequestId,
   const uint32_t copyNb,
-  const std::string &remoteFile):
-  TapeJob(id, userRequestId, copyNb, remoteFile),
+  const std::string &remoteFile,
+  const uint64_t castorNsFileId):
+  TapeJob(id, userRequestId, copyNb, remoteFile, castorNsFileId),
+  m_mount(mount),
   tapeFile(tapeFile) {
 }
 
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::complete() {
+void cta::RetrieveJob::complete(const uint32_t checksumOfTransfer, 
+  const uint64_t fileSizeOfTransfer) {
 }
   
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::failed() {
+void cta::RetrieveJob::failed(const std::exception &ex) {
 }
   
 //------------------------------------------------------------------------------

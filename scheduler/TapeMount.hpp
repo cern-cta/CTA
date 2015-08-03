@@ -20,6 +20,8 @@
 
 #include "scheduler/MountType.hpp"
 
+#include <string>
+
 namespace cta {
   /**
    * A placeholder class from which will derive ArchiveSession and RetriveSession.
@@ -34,6 +36,13 @@ namespace cta {
      * @return The type of this tape mount.
      */
     virtual MountType::Enum getMountType() const throw() = 0;
+
+    /**
+     * Returns the volume identifier of the tape to be mounted.
+     *
+     * @return The volume identifier of the tape to be mounted.
+     */
+    virtual std::string getVid() const throw() = 0;
 
     /**
      * Notifies the scheduler that the session is finished 
