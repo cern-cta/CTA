@@ -55,9 +55,10 @@ cta::ArchiveJob::ArchiveJob(
 //------------------------------------------------------------------------------
 // getMount
 //------------------------------------------------------------------------------
-cta::ArchiveMount &cta::ArchiveJob::getMount() const {
-  return m_mount;
-}
+// NOT YET DECIDED
+//cta::ArchiveMount &cta::ArchiveJob::getMount() const {
+//  return m_mount;
+//}
 
 //------------------------------------------------------------------------------
 // getTapePoolName
