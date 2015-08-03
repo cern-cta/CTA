@@ -50,6 +50,7 @@
 
 XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
 
+//BEGIN: boilerplate code to prepare the objectstoreDB object
 cta::objectstore::BackendVFS g_backend;
 
 class BackendPopulator {
@@ -97,7 +98,7 @@ public:
   }
 
 } g_OStoreDB(g_backend, g_backendPopulator.getAgent());
-
+//END: boilerplate code to prepare the objectstoreDB object
 
 cta::EosNS g_eosNs("localhost:1094");
 cta::CastorNameServer g_castorNs;
@@ -106,7 +107,7 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    g_eosNs.createEntry(cta::RemotePath("eos://eos/kruse/file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 0));
+    g_eosNs.createEntry(cta::RemotePath("eos://eos/kruse/file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 0)); //create an empty file to start with for testing purposes
     return new XrdProFilesystem(
       &g_castorNs,
       &g_OStoreDB,

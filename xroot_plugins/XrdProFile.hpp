@@ -25,6 +25,12 @@
 #include <string>
 #include <vector>
 
+/**
+ * This class represents the heart of the xroot server plugin: it inherits from 
+ * XrdSfsFile and it is used by XrdProFilesystem whenever a command is executed 
+ * (that is when a new file path is requested by the user). All function 
+ * documentation can be found in XrdSfs/XrdSfsInterface.hh.
+ */
 class XrdProFile : public XrdSfsFile {
 public:
   XrdOucErrInfo  error;

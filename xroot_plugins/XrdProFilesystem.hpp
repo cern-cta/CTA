@@ -24,6 +24,11 @@
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
+/**
+ * This class is the entry point for the xroot plugin: it is returned by 
+ * XrdSfsGetFileSystem when the latter is called by the xroot server to load the
+ * plugin. All function documentation can be found in XrdSfs/XrdSfsInterface.hh.
+ */
 class XrdProFilesystem : public XrdSfsFileSystem {
 public:
   virtual XrdSfsDirectory *newDir(char *user=0, int MonID=0);
@@ -50,10 +55,19 @@ public:
   
 protected:
   
+  /**
+   * The CTA nameserver
+   */
   cta::NameServer *m_ns;
   
+  /**
+   * The database or object store holding all CTA persistent objects
+   */
   cta::SchedulerDatabase *m_scheddb;
 
+  /**
+   * The remote file storage system (typically EOS)
+   */
   cta::RemoteNS *m_remoteStorage;
 
   /**

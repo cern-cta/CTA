@@ -17,21 +17,21 @@
  */
 
 #include "cmdline/CTACmd.hpp"
-#include "common/archiveNS/ArchiveDirIterator.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/UserIdentity.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
+#include "common/archiveNS/ArchiveDirIterator.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/archiveNS/Tape.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/SecurityIdentity.hpp"
+#include "common/TapePool.hpp"
+#include "common/UserIdentity.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveFromTapeCopyRequest.hpp"
-#include "common/archiveNS/StorageClass.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "common/archiveNS/Tape.hpp"
-#include "common/TapePool.hpp"
-#include "common/SecurityIdentity.hpp"
 #include "xroot_plugins/XrdProFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
@@ -98,10 +98,10 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("ll"    == command || "logicallibrary"        == command) {xCom_logicallibrary(tokens, requester);}
   else if("ta"    == command || "tape"                  == command) {xCom_tape(tokens, requester);}
   else if("sc"    == command || "storageclass"          == command) {xCom_storageclass(tokens, requester);}
-  else if("loa"   == command || "listongoingarchives"  == command) {xCom_listongoingarchives(tokens, requester);}
-  else if("lor"   == command || "listongoingretrieves" == command) {xCom_listongoingretrieves(tokens, requester);}
-  else if("lpa"   == command || "listpendingarchives"  == command) {xCom_listpendingarchives(tokens, requester);}
-  else if("lpr"   == command || "listpendingretrieves" == command) {xCom_listpendingretrieves(tokens, requester);}
+  else if("loa"   == command || "listongoingarchives"   == command) {xCom_listongoingarchives(tokens, requester);}
+  else if("lor"   == command || "listongoingretrieves"  == command) {xCom_listongoingretrieves(tokens, requester);}
+  else if("lpa"   == command || "listpendingarchives"   == command) {xCom_listpendingarchives(tokens, requester);}
+  else if("lpr"   == command || "listpendingretrieves"  == command) {xCom_listpendingretrieves(tokens, requester);}
   else if("lds"   == command || "listdrivestates"       == command) {xCom_listdrivestates(tokens, requester);}
   
   else if("lsc"   == command || "liststorageclass"      == command) {xCom_liststorageclass(tokens, requester);}
@@ -114,7 +114,7 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("a"     == command || "archive"               == command) {xCom_archive(tokens, requester);}
   else if("r"     == command || "retrieve"              == command) {xCom_retrieve(tokens, requester);}
   else if("da"    == command || "deletearchive"         == command) {xCom_deletearchive(tokens, requester);}
-  else if("cr"    == command || "cancelretrieve"       == command) {xCom_cancelretrieve(tokens, requester);}
+  else if("cr"    == command || "cancelretrieve"        == command) {xCom_cancelretrieve(tokens, requester);}
   
   else {m_data = getGenericHelp(tokens[0]);}
 }
