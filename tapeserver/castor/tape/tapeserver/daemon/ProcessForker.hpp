@@ -249,7 +249,7 @@ private:
   template<class T> DriveConfig getDriveConfig(const T &msg) {
     return DriveConfig(
       msg.unitname(),
-      msg.dgn(),
+      msg.logicallibrary(),
       msg.devfilename(),
       msg.libraryslot());
   }

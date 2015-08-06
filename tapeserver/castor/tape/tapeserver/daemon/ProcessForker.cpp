@@ -47,7 +47,15 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
+#include "nameserver/CastorNameServer.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "remotens/EosNS.hpp"
+#include "scheduler/OStoreDB/OStoreDB.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "serrno.h"
+
+
 
 #include <errno.h>
 #include <memory>
@@ -546,6 +554,59 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
     zmqContext.get());
+  
+  /************BEGIN: boilerplate code to prepare the objectstoreDB object**************/
+  cta::objectstore::BackendVFS g_backend;
+
+  class BackendPopulator {
+  public:
+      BackendPopulator(cta::objectstore::Backend & be): m_backend(be),
+        m_agent(m_backend) {
+      // We need to populate the root entry before using.
+      cta::objectstore::RootEntry re(m_backend);
+      cta::objectstore::ScopedExclusiveLock rel(re);
+      re.fetch();
+      m_agent.generateName("OStoreDBFactory");
+      m_agent.initialize();
+      cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
+        time(NULL), "Initial creation of the  object store structures");
+      re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
+      rel.release();
+      m_agent.insertAndRegisterSelf();
+      rel.lock(re);
+      re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+      rel.release();
+    }
+
+    virtual ~BackendPopulator() throw() {
+      cta::objectstore::ScopedExclusiveLock agl(m_agent);
+      m_agent.fetch();
+      m_agent.removeAndUnregisterSelf();
+    }
+
+    cta::objectstore::Agent & getAgent() { return m_agent;  }
+  private:
+    cta::objectstore::Backend & m_backend;
+    cta::objectstore::Agent m_agent;
+  } g_backendPopulator(g_backend);
+
+  class OStoreDBWithAgent: public cta::OStoreDB {
+  public:
+    OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::Agent & ag):
+    cta::OStoreDB(be) {
+      cta::OStoreDB::setAgent(ag);
+    }
+    virtual ~OStoreDBWithAgent() throw () {
+      cta::OStoreDB::setAgent(*((cta::objectstore::Agent *)NULL));
+    }
+
+  } g_OStoreDB(g_backend, g_backendPopulator.getAgent());
+  /************END: boilerplate code to prepare the objectstoreDB object**************/
+  
+  cta::EosNS eosNs("localhost:1094");
+  cta::CastorNameServer castorNs;
+  
+  cta::Scheduler scheduler(castorNs, g_OStoreDB, eosNs);
 
   castor::tape::System::realWrapper sysWrapper;
 
@@ -561,7 +622,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       mediaChangerFacade,
       tapeserver,
       capUtils,
-      m_config.dataTransfer));
+      m_config.dataTransfer,
+      scheduler));
   } catch (castor::exception::Exception & ex) {
     try {
       client::ClientProxy cl;
@@ -885,7 +947,7 @@ castor::legacymsg::TapeLabelRqstMsgBody
   job.gid = msg.gid();
   castor::utils::copyString(job.vid,msg.vid());
   castor::utils::copyString(job.drive, msg.unitname());
-  castor::utils::copyString(job.dgn, msg.dgn());
+  castor::utils::copyString(job.logicalLibrary, msg.logicallibrary());
   return job;
 }
 

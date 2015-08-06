@@ -117,7 +117,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
 
       const TpconfigLine configLine(
         columns[0], // unitName
-        columns[1], // dgn
+        columns[1], // logicalLibrary
         columns[2], // devFilename
         columns[3]  // librarySlot
       );
@@ -135,16 +135,16 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
         throw ex;
       }
 
-      if(CA_MAXDGNLEN < configLine.dgn.length()) {
+      if(CA_MAXDGNLEN < configLine.logicalLibrary.length()) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
-          ": DGN is too long"
+          ": logical library is too long"
           ": filename='" << filename << "'"
           " lineNb=" << lineNb <<
-          " dgn=" << configLine.dgn <<
-          " maxDgnLen=" << CA_MAXDGNLEN <<
-          " actualDgnLen=" << configLine.dgn.length();
+          " logicalLibrary=" << configLine.logicalLibrary <<
+          " maxLogicalLibraryLen=" << CA_MAXDGNLEN <<
+          " actualLogicalLibraryLen=" << configLine.logicalLibrary.length();
         throw ex;
       }
 

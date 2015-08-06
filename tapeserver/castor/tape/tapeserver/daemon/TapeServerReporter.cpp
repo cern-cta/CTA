@@ -45,7 +45,7 @@ TapeServerReporter::TapeServerReporter(
   m_lc(lc),
   m_server(hostname),
   m_unitName(driveConfig.getUnitName()),
-  m_dgn(driveConfig.getDgn()),
+  m_logicalLibrary(driveConfig.getLogicalLibrary()),
   m_volume(volume),
   m_sessionPid(getpid()){
   //change the thread's name in the log

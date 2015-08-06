@@ -246,7 +246,7 @@ static void logTpconfigLine(castor::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLine &line) throw() {
   castor::log::Param params[] = {
     castor::log::Param("unitName", line.unitName),
-    castor::log::Param("dgn", line.dgn),
+    castor::log::Param("logicalLibrary", line.logicalLibrary),
     castor::log::Param("devFilename", line.devFilename),
     castor::log::Param("librarySlot", line.librarySlot)};
   log(LOG_INFO, "TPCONFIG line", params);

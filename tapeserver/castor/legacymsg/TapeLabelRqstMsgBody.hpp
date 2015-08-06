@@ -38,7 +38,7 @@ struct TapeLabelRqstMsgBody {
   uint32_t gid;
   char vid[CA_MAXVIDLEN + 1];
   char drive[CA_MAXUNMLEN + 1];
-  char dgn[CA_MAXDGNLEN + 1];
+  char logicalLibrary[CA_MAXDGNLEN + 1];
 
   /**
    * Constructor.

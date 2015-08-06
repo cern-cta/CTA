@@ -475,11 +475,11 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
 
   switch(m_state) {
   case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != m_config.getDgn()) {
+    if(std::string(job.logicalLibrary) != m_config.getLogicalLibrary()) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << m_config.getDgn() << " labelJobDgn="
-        << job.dgn;
+        ": logicalLibrary mismatch: catalogueLogicalLibrary=" << m_config.getLogicalLibrary() << " labelJobDgn="
+        << job.logicalLibrary;
       throw ex;
     }
     m_session = CatalogueLabelSession::create(
@@ -745,7 +745,7 @@ castor::legacymsg::TapeStatDriveEntry
   try {
     entry.uid = getUidForTapeStatDriveEntry();
     entry.jid = getJidForTapeStatDriveEntry();
-    castor::utils::copyString(entry.dgn, m_config.getDgn());
+    castor::utils::copyString(entry.logicalLibrary, m_config.getLogicalLibrary());
     entry.up = getUpForTapeStatDriveEntry();
     entry.asn = getAsnForTapeStatDriveEntry();
     entry.asn_time = getAsnTimeForTapeStatDriveEntry();

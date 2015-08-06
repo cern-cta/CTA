@@ -85,7 +85,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
   params.push_back(log::Param("message", errorMessage));
   m_log(LOG_ERR, "Label session failed", params);
@@ -145,7 +145,7 @@ void castor::tape::tapeserver::daemon::LabelSession::setProcessCapabilities(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
 
   m_capUtils.setProcText(capabilities);
@@ -185,7 +185,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
   params.push_back(log::Param("librarySlot", librarySlot.str()));
 
@@ -209,7 +209,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
 
   try {
@@ -233,7 +233,7 @@ void castor::tape::tapeserver::daemon::LabelSession::rewindDrive(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
 
   m_log(LOG_INFO, "Label session rewinding tape", params);
@@ -251,7 +251,7 @@ void castor::tape::tapeserver::daemon::LabelSession::
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
   params.push_back(log::Param("message", message));
 
@@ -269,7 +269,7 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
 
   m_log(LOG_INFO, "Label session is writing label to tape", params);
@@ -287,7 +287,7 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
 
   // We implement the same policy as with the tape sessions: 
@@ -322,7 +322,7 @@ void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
   params.push_back(log::Param("librarySlot", librarySlot.str()));
 

@@ -37,11 +37,11 @@ castor::tape::tapeserver::daemon::DriveConfig::DriveConfig() throw():
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
   const std::string &unitName,
-  const std::string &dgn,
+  const std::string &logicalLibrary,
   const std::string &devFilename,
   const std::string &librarySlot):
   m_unitName(unitName),
-  m_dgn(dgn),
+  m_logicalLibrary(logicalLibrary),
   m_devFilename(devFilename),
   m_librarySlot(mediachanger::LibrarySlotParser::parse(librarySlot)) {
 }
@@ -52,7 +52,7 @@ castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
 castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
   const DriveConfig &obj):
   m_unitName(obj.m_unitName),
-  m_dgn(obj.m_dgn),
+  m_logicalLibrary(obj.m_logicalLibrary),
   m_devFilename(obj.m_devFilename),
   m_librarySlot(0 == obj.m_librarySlot ? 0 : obj.m_librarySlot->clone()) {
 }
@@ -75,7 +75,7 @@ castor::tape::tapeserver::daemon::DriveConfig &castor::tape::tapeserver::
     delete(m_librarySlot);
 
     m_unitName    = rhs.m_unitName;
-    m_dgn         = rhs.m_dgn;
+    m_logicalLibrary         = rhs.m_logicalLibrary;
     m_devFilename = rhs.m_devFilename;
     m_librarySlot = 0 == rhs.m_librarySlot ? 0 : rhs.m_librarySlot->clone();
   }
@@ -92,11 +92,11 @@ const std::string &castor::tape::tapeserver::daemon::DriveConfig::getUnitName()
 }
 
 //------------------------------------------------------------------------------
-// getDgn
+// getLogicalLibrary
 //------------------------------------------------------------------------------
-const std::string &castor::tape::tapeserver::daemon::DriveConfig::getDgn()
+const std::string &castor::tape::tapeserver::daemon::DriveConfig::getLogicalLibrary()
   const throw() {
-  return m_dgn;
+  return m_logicalLibrary;
 }
   
 //------------------------------------------------------------------------------

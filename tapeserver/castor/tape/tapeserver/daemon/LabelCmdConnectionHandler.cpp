@@ -245,7 +245,7 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("TPVID", job.vid),
-    log::Param("dgn", job.dgn),
+    log::Param("logicalLibrary", job.logicalLibrary),
     log::Param("uid", job.uid),
     log::Param("gid", job.gid)};
   m_log(LOG_INFO, "Received request to label a tape", params);

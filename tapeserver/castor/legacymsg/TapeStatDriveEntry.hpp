@@ -35,7 +35,7 @@ namespace legacymsg {
 struct TapeStatDriveEntry {
   uint32_t uid;
   uint32_t jid;                        // process group id or session id
-  char     dgn[CA_MAXDGNLEN+1];        // device group name
+  char     logicalLibrary[CA_MAXDGNLEN+1];        // logical Library name
   uint16_t up;                         // drive status: down = 0, up = 1
   uint16_t asn;                        // assign flag: assigned = 1
   uint32_t asn_time;                   // timestamp of drive assignment

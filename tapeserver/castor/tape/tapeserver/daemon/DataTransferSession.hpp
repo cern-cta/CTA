@@ -34,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -63,7 +64,8 @@ namespace daemon {
       castor::mediachanger::MediaChangerFacade & mc,
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
-      const DataTransferConfig & castorConf);
+      const DataTransferConfig & castorConf,
+      cta::Scheduler &scheduler);
 
     /**
      * Execute the session and return the type of action to be performed
@@ -96,7 +98,7 @@ namespace daemon {
     ~DataTransferSession() throw();
 
   private:
-
+    
     /**
      * Object representing the API of the CASTOR logging system.
      */
@@ -131,6 +133,10 @@ namespace daemon {
     castor::server::ProcessCap &m_capUtils;
     /** hostname, used to report status of the drive */
     const std::string m_hostname;
+    /**
+     * The scheduler, i.e. the local interface to the Objectstore DB
+     */
+    cta::Scheduler &m_scheduler;
 
     /**
      * Returns the string representation of the specified tapebridge client type

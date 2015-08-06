@@ -79,7 +79,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   const CatalogueDrive &unit1 = catalogue.findDrive("UNIT1");
   const DriveConfig &unit1Config = unit1.getConfig();
   
-  ASSERT_EQ(std::string("DGN1"), unit1Config.getDgn());
+  ASSERT_EQ(std::string("DGN1"), unit1Config.getLogicalLibrary());
   ASSERT_EQ(std::string("DEV1"), unit1Config.getDevFilename());
   
   ASSERT_EQ(DRIVE_STATE_DOWN, unit1.getState());
@@ -95,7 +95,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   const CatalogueDrive &unit2 = catalogue.findDrive("UNIT2");
   const DriveConfig &unit2Config = unit2.getConfig();
   
-  ASSERT_EQ(std::string("DGN2"), unit2Config.getDgn());
+  ASSERT_EQ(std::string("DGN2"), unit2Config.getLogicalLibrary());
   ASSERT_EQ(std::string("DEV2"), unit2Config.getDevFilename());
 
   ASSERT_EQ(DRIVE_STATE_DOWN, unit2.getState());

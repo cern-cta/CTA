@@ -48,7 +48,11 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "Ctape.h"
+#include "scheduler/Scheduler.hpp"
 #include "smc_struct.h"
+#include "nameserver/mockNS/MockNameServer.hpp"
+#include "remotens/MockRemoteNS.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -154,8 +158,12 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -246,8 +254,12 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -288,8 +300,12 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -364,8 +380,12 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -415,8 +435,12 @@ TEST(tapeServer, DataTransferSessionEmptyOnVolReq) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -550,8 +574,12 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();
@@ -625,8 +653,12 @@ TEST(tapeServer, DataTransferSessionMissingFilesMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
@@ -712,8 +744,12 @@ TEST(tapeServer, DataTransferSessionTapeFullMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();
@@ -804,8 +840,12 @@ TEST(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf);
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();

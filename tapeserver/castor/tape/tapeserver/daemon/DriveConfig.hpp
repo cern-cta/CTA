@@ -49,7 +49,7 @@ public:
    * Constructor.
    *
    * @param unitName The unit name of the tape drive.
-   * @param dgn The device group name of the tape drive as used by the vdqmd
+   * @param logicalLibrary The logical Library of the tape drive as used by the vdqmd
    * and vmgrd daemons.
    * @param devFilename The device file of the tape drive, for example:
    * /dev/nst0.
@@ -58,7 +58,7 @@ public:
    */
   DriveConfig(
     const std::string &unitName,
-    const std::string &dgn,
+    const std::string &logicalLibrary,
     const std::string &devFilename,
     const std::string &librarySlot);
 
@@ -89,13 +89,13 @@ public:
   const std::string &getUnitName() const throw();
 
   /**
-   * Gets the device group name of the tape drive as used by the vdqmd and
+   * Gets the logical Library name of the tape drive as used by the vdqmd and
    * vmgrd daemons.
    *
-   * @return The device group name of the tape drive as used by the vdqmd and
+   * @return The logical Library name of the tape drive as used by the vdqmd and
    * vmgrd daemons.
    */
-  const std::string &getDgn() const throw();
+  const std::string &getLogicalLibrary() const throw();
   
   /**
    * Gets the device file of the tape drive, for example: /dev/nst0
@@ -121,10 +121,10 @@ private:
   std::string m_unitName;
 
   /**
-   * The device group name of the tape drive as used by the vdqmd and vmgrd
+   * The logical Library of the tape drive as used by the vdqmd and vmgrd
    * daemons.
    */
-  std::string m_dgn;
+  std::string m_logicalLibrary;
   
   /**
    * The device file of the tape drive, for example: /dev/nst0

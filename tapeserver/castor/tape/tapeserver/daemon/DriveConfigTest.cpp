@@ -47,7 +47,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, manual_drive_slot) {
     "manual");
 
   ASSERT_EQ("unit", config.getUnitName());
-  ASSERT_EQ("dgn", config.getDgn());
+  ASSERT_EQ("dgn", config.getLogicalLibrary());
   ASSERT_EQ("devFilename", config.getDevFilename());
   ASSERT_NO_THROW(config.getLibrarySlot());
   {
@@ -68,7 +68,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, copy_constructor) {
     "devFilename1",
     "manual1");
   ASSERT_EQ("unit1", config1.getUnitName());
-  ASSERT_EQ("dgn1", config1.getDgn());
+  ASSERT_EQ("dgn1", config1.getLogicalLibrary());
   ASSERT_EQ("devFilename1", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
@@ -81,7 +81,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, copy_constructor) {
 
   DriveConfig config2(config1);
   ASSERT_EQ("unit1", config2.getUnitName());
-  ASSERT_EQ("dgn1", config2.getDgn());
+  ASSERT_EQ("dgn1", config2.getLogicalLibrary());
   ASSERT_EQ("devFilename1", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {
@@ -102,7 +102,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
     "devFilename1",
     "manual1");
   ASSERT_EQ("unit1", config1.getUnitName());
-  ASSERT_EQ("dgn1", config1.getDgn());
+  ASSERT_EQ("dgn1", config1.getLogicalLibrary());
   ASSERT_EQ("devFilename1", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
@@ -119,7 +119,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
     "devFilename2",
     "manual2");
   ASSERT_EQ("unit2", config2.getUnitName());
-  ASSERT_EQ("dgn2", config2.getDgn());
+  ASSERT_EQ("dgn2", config2.getLogicalLibrary());
   ASSERT_EQ("devFilename2", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {
@@ -133,7 +133,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   config1 = config2;
 
   ASSERT_EQ("unit2", config1.getUnitName());
-  ASSERT_EQ("dgn2", config1.getDgn());
+  ASSERT_EQ("dgn2", config1.getLogicalLibrary());
   ASSERT_EQ("devFilename2", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
@@ -145,7 +145,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   }
 
   ASSERT_EQ("unit2", config2.getUnitName());
-  ASSERT_EQ("dgn2", config2.getDgn());
+  ASSERT_EQ("dgn2", config2.getLogicalLibrary());
   ASSERT_EQ("devFilename2", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {

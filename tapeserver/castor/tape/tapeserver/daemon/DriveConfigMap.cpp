@@ -56,7 +56,7 @@ void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLine(
     // Insert the drive
     (*this)[line.unitName] = DriveConfig(
       line.unitName,
-      line.dgn,
+      line.logicalLibrary,
       line.devFilename,
       line.librarySlot);
   } catch(castor::exception::Exception &ne) {

@@ -26,6 +26,7 @@ include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
 include_directories(${CMAKE_BINARY_DIR}/tapeserver)
+include_directories(${CMAKE_BINARY_DIR})
 
 find_package( ZLIB REQUIRED )
 

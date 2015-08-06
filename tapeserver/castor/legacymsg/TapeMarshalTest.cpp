@@ -150,7 +150,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     srcMsgBody.gid = 4;
     castor::utils::copyString(srcMsgBody.vid, "VIDVID");
     castor::utils::copyString(srcMsgBody.drive, "DRIVE001");
-    castor::utils::copyString(srcMsgBody.dgn, "DGNDGN");
+    castor::utils::copyString(srcMsgBody.logicalLibrary, "DGNDGN");
 
     size_t bufLen = sizeof(buf);
     size_t totalLen = 0; // Total length of message (header + body)
@@ -188,7 +188,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     ASSERT_EQ((uint32_t)4, dstMsgBody.gid);
     ASSERT_EQ(std::string("VIDVID"), dstMsgBody.vid);
     ASSERT_EQ(std::string("DRIVE001"), dstMsgBody.drive);
-    ASSERT_EQ(std::string("DGNDGN"), dstMsgBody.dgn);
+    ASSERT_EQ(std::string("DGNDGN"), dstMsgBody.logicalLibrary);
   }
 }
 
@@ -204,7 +204,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatReplyMsgBody) {
     srcMsgBody.drives[0].asn = 1;
     srcMsgBody.drives[0].asn_time = 2;
     srcMsgBody.drives[0].cfseq = 3;
-    castor::utils::copyString(srcMsgBody.drives[0].dgn, "DGN000");
+    castor::utils::copyString(srcMsgBody.drives[0].logicalLibrary, "DGN000");
     castor::utils::copyString(srcMsgBody.drives[0].drive, "DRIVE000");
     srcMsgBody.drives[0].jid = 4;
     castor::utils::copyString(srcMsgBody.drives[0].lblcode, "L00");
@@ -218,7 +218,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatReplyMsgBody) {
     srcMsgBody.drives[1].asn = 11;
     srcMsgBody.drives[1].asn_time = 12;
     srcMsgBody.drives[1].cfseq = 13;
-    castor::utils::copyString(srcMsgBody.drives[1].dgn, "DGN001");
+    castor::utils::copyString(srcMsgBody.drives[1].logicalLibrary, "DGN001");
     castor::utils::copyString(srcMsgBody.drives[1].drive, "DRIVE001");
     srcMsgBody.drives[1].jid = 14;
     castor::utils::copyString(srcMsgBody.drives[1].lblcode, "L01");
@@ -265,7 +265,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatReplyMsgBody) {
     ASSERT_EQ((uint16_t)1, dstMsgBody.drives[0].asn);
     ASSERT_EQ((uint32_t)2, dstMsgBody.drives[0].asn_time);
     ASSERT_EQ((uint32_t)3, dstMsgBody.drives[0].cfseq);
-    ASSERT_EQ(std::string("DGN000"), dstMsgBody.drives[0].dgn);
+    ASSERT_EQ(std::string("DGN000"), dstMsgBody.drives[0].logicalLibrary);
     ASSERT_EQ(std::string("DRIVE000"), dstMsgBody.drives[0].drive);
     ASSERT_EQ((uint32_t)4, dstMsgBody.drives[0].jid);
     ASSERT_EQ(std::string("L00"), dstMsgBody.drives[0].lblcode);
@@ -279,7 +279,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatReplyMsgBody) {
     ASSERT_EQ((uint16_t)11, dstMsgBody.drives[1].asn);
     ASSERT_EQ((uint32_t)12, dstMsgBody.drives[1].asn_time);
     ASSERT_EQ((uint32_t)13, dstMsgBody.drives[1].cfseq);
-    ASSERT_EQ(std::string("DGN001"), dstMsgBody.drives[1].dgn);
+    ASSERT_EQ(std::string("DGN001"), dstMsgBody.drives[1].logicalLibrary);
     ASSERT_EQ(std::string("DRIVE001"), dstMsgBody.drives[1].drive);
     ASSERT_EQ((uint32_t)14, dstMsgBody.drives[1].jid);
     ASSERT_EQ(std::string("L01"), dstMsgBody.drives[1].lblcode);

@@ -38,6 +38,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "log.h"
+#include "scheduler/TapeMount.hpp"
 #include "serrno.h"
 #include "stager_client_commandline.h"
 
@@ -55,14 +56,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     castor::mediachanger::MediaChangerFacade & mc,
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
-    const DataTransferConfig & castorConf): 
+    const DataTransferConfig & castorConf,
+    cta::Scheduler & scheduler): 
     m_log(log),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
     m_castorConf(castorConf), 
     m_mc(mc),
     m_intialProcess(initialProcess),
-    m_capUtils(capUtils) {
+    m_capUtils(capUtils),
+    m_scheduler(scheduler)
+    {
 }
 
 //------------------------------------------------------------------------------
@@ -85,6 +89,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // 2a) Get initial information from the client
   client::ClientProxy::RequestReport reqReport;
   try {
+    std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount("LLname", "DriveName")); //TODO: put right values of logical library and drive name
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
   } catch(client::ClientProxy::EndOfSessionWithError & eoswe) {
     std::stringstream fullError;
@@ -160,7 +165,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     executeDump(lc);
     return MARK_DRIVE_AS_UP;
   default:
-      return MARK_DRIVE_AS_UP;
+    return MARK_DRIVE_AS_UP;
   }
 }
 //------------------------------------------------------------------------------

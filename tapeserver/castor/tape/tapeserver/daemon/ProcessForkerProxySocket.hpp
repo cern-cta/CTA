@@ -153,7 +153,7 @@ private:
   template <typename T> void fillMsgWithDriveConfig(T &msg,
     const DriveConfig &driveConfig) {
     msg.set_unitname(driveConfig.getUnitName());
-    msg.set_dgn(driveConfig.getDgn());
+    msg.set_logicallibrary(driveConfig.getLogicalLibrary());
     msg.set_devfilename(driveConfig.getDevFilename());
     msg.set_libraryslot(driveConfig.getLibrarySlot().str());
   }

@@ -34,5 +34,5 @@ castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() throw():
   gid(0) {
   memset(vid, '\0', sizeof(vid));
   memset(drive, '\0', sizeof(drive));
-  memset(dgn, '\0', sizeof(dgn));
+  memset(logicalLibrary, '\0', sizeof(logicalLibrary));
 }

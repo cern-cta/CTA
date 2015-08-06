@@ -29,11 +29,11 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TpconfigLine::TpconfigLine(
   const std::string &unitName,
-  const std::string &dgn,
+  const std::string &logicalLibrary,
   const std::string &devFilename,
   const std::string &librarySlot) throw():
   unitName(unitName),
-  dgn(dgn),
+  logicalLibrary(logicalLibrary),
   devFilename(devFilename),
   librarySlot(librarySlot) {
 }

@@ -203,7 +203,7 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
 
   log::Param params[] = {
     log::Param("unitName", unitName),
-    log::Param("dgn", driveConfig.getDgn())};
+    log::Param("logicalLibrary", driveConfig.getLogicalLibrary())};
 
   switch(body.status) {
   case CONF_UP:

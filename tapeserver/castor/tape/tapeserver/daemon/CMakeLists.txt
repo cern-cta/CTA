@@ -23,6 +23,8 @@ include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
 find_package( ZLIB REQUIRED )
 
@@ -74,7 +76,7 @@ add_library(castorTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(castorTapeServerDaemon castormessages castortapereactor)
+target_link_libraries(castorTapeServerDaemon castormessages castortapereactor ctascheduler ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_library(castorTapeServerDaemonTestDummies

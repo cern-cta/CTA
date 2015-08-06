@@ -154,7 +154,7 @@ private:
 
   const std::string m_server;
   const std::string m_unitName;
-  const std::string m_dgn;
+  const std::string m_logicalLibrary;
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo m_volume;
   const pid_t m_sessionPid;
 

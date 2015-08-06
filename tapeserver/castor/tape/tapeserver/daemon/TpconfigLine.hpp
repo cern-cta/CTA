@@ -42,9 +42,9 @@ struct TpconfigLine {
   std::string unitName;
 
   /**
-   * The Device Group Name (DGN) of the tape drive.
+   * The logical library of the tape drive.
    */
-  std::string dgn;
+  std::string logicalLibrary;
 
   /**
    * The filename of the device file of the tape drive.
@@ -67,7 +67,7 @@ struct TpconfigLine {
    */
   TpconfigLine(
     const std::string &unitName,
-    const std::string &dgn,
+    const std::string &logicalLibrary,
     const std::string &devFilename,
     const std::string &librarySlot) throw();
 }; // struct TpconfigLine

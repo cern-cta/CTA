@@ -23,7 +23,7 @@ package castor.messages;
 message ForkCleaner {
   // Description of the tape drive
   required string unitname = 1;
-  required string dgn = 2;
+  required string logicallibrary = 2;
   required string devfilename = 3;
   required string libraryslot = 4;
 
