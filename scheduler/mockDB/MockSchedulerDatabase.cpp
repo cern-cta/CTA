@@ -197,6 +197,12 @@ cta::MockSchedulerDatabase::~MockSchedulerDatabase() throw() {
   sqlite3_close(m_dbHandle);
 }
 
+std::unique_ptr<cta::SchedulerDatabase::TapeMountDecisionInfo>
+  cta::MockSchedulerDatabase::getMountInfo() {
+  throw NotImplemented("");
+}
+
+
 std::unique_ptr<cta::SchedulerDatabase::TapeMount> 
   cta::MockSchedulerDatabase::getNextMount(const std::string& logicalLibrary, 
   const std::string& driveName) {

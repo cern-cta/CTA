@@ -400,10 +400,24 @@ TEST_P(SchedulerDatabaseTest, createArchiveRoute_two_many_routes) {
   }
 }
 
+TEST_P(SchedulerDatabaseTest, getMount) {
+  using namespace cta;
+
+  SchedulerDatabase &db = getDb();
+  
+  std::string lib="lib0";
+  std::string drive="drive0";
+  
+  ASSERT_NO_THROW(db.getNextMount(lib, drive));
+}
+
+#undef TEST_MOCK_DB
+#ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
 
 INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(mockDbFactory)));
+#endif
 
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
 

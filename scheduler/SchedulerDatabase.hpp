@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
+#include <vector>
 #include "common/archiveNS/ArchiveFileStatus.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
@@ -63,19 +64,49 @@ public:
   /*============ Session management ==========================================*/
   
   /**
+   * A structure describing a potential mount with all the information allowing
+   * comparison between mounts
+   */
+  struct PotentialMount {
+    cta::MountType type;
+    // TODO: continue
+  };
+  
+  /**
+   * An structure containing all the information needed for mount decision
+   * and whose creation implicitly takes a global lock on the drive register
+   * so that only one mount scheduling happens at a time.
+   */
+  struct TapeMountDecisionInfo {
+    /** All the potential mounts (tape pools and tapes) */
+    std::vector<PotentialMount> potentialMounts;
+    /** information about the existing mounts */
+    /** Destructor: releases the lock */
+    ~TapeMountDecisionInfo() {};
+    // TODO: continue
+  };
+  
+  /**
+   * A function dumping the relevant mount information for deciding which
+   * tape to mount next.
+   */
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+  
+   /**
    * An umbrella class from which ArchiveSession and RetrieveSession will
    * inherit.
-   */
+   * */
+
   struct TapeMount {
-    /**    
+    /**
      * Returns The type of this tape mount.
-     *   
+     *
      * @return The type of this tape mount.
      */
     virtual MountType::Enum getMountType() const throw() = 0;
-
     virtual ~TapeMount() {}
   };
+  
   
   /**
    * Starts a session, and updates the relevant information in the DB.

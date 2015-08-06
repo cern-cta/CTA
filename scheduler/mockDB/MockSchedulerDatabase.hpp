@@ -43,6 +43,13 @@ public:
   ~MockSchedulerDatabase() throw();
 
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  
+  /**
+   * A function dumping the relevant mount information for deciding which
+   * tape to mount next.
+   */
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo();
+
   /**
    * Starts a session, and updates the relevant information in the DB.
    * The returned object will be the scheduler's interface for the tape server

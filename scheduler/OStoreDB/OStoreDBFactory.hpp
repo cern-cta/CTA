@@ -184,6 +184,9 @@ public:
     return m_OStoreDB.getRetrieveRequests(vid);
   }
   
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() {
+    return m_OStoreDB.getMountInfo();
+  }
 
   virtual std::unique_ptr<TapeMount> getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
     return m_OStoreDB.getNextMount(logicalLibrary, driveName);

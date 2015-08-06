@@ -749,12 +749,30 @@ void cta::Scheduler::queueRetrieveRequest(
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   const std::string &logicalLibraryName, const std::string & driveName) {
-  // First try to get the next mount from the database.
-  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount;
+  // In order to decide the next mount to do, we have to take a global lock on 
+  // the scheduling, retrieve a list of all running mounts, queues sizes for 
+  // tapes and tape pools, filter the tapes which are actually accessible to
+  // this drive (by library and dedication), order the candidates by priority
+  // below threshold, and pick one at a time. In addition, for archives, we
+  // might not find a suitable tape (by library and dedication). In such a case,
+  // we should find out if no tape at all is available, and log an error if 
+  // so.
+  // We then skip to the next candidate, until we find a suitable one and
+  // return the mount, or exhaust all of them an 
+  // Many steps for this logic are not specific for the database and are hence
+  // implemented in the scheduler itself.
+  // First, get the mount-related info from the DB
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
+  mountInfo = m_db.getMountInfo();
+  
+  // Prioritize the mounts.
+  
+  throw NotImplemented("");
+  // TODO: finish
 
-  dbMount = m_db.getNextMount(logicalLibraryName, driveName);
-
-  return wrapDbMountInSchedulerMount(std::move(dbMount));
+//  dbMount = m_db.getNextMount(logicalLibraryName, driveName);
+//
+//  return wrapDbMountInSchedulerMount(std::move(dbMount));
 }
 
 //------------------------------------------------------------------------------

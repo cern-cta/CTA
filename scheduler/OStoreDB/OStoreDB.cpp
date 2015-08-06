@@ -62,6 +62,12 @@ void OStoreDB::assertAgentSet() {
     throw AgentNotSet("In OStoreDB::assertAgentSet: Agent pointer not set");
   }
 
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
+  OStoreDB::getMountInfo() {
+  throw NotImplemented("");
+}
+
+
 std::unique_ptr<SchedulerDatabase::TapeMount> 
   OStoreDB::getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
   throw NotImplemented("");
