@@ -87,7 +87,14 @@ public:
   void setTaskInjector(MigrationTaskInjector* injector){
       m_injector = injector;
   }
-private:
+private:  
+  
+  /**
+   * Returns the string representation of the specified mount type
+   */
+  const char *mountTypeToString(const cta::MountType::Enum mountType) const
+    throw();
+  
     class TapeCleaning{
     TapeWriteSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer

@@ -155,6 +155,18 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   }  
 }
 
+//-----------------------------------------------------------------------------
+// volumeModeToString
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
+  mountTypeToString(const cta::MountType::Enum mountType) const throw() {
+  switch(mountType) {
+  case cta::MountType::RETRIEVE: return "RETRIEVE";
+  case cta::MountType::ARCHIVE : return "ARCHIVE";
+  default                      : return "UNKNOWN";
+  }
+}
+
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::run()
 //------------------------------------------------------------------------------
@@ -171,7 +183,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     typedef castor::log::Param Param;
     m_watchdog.addParameter(Param("clientType", castor::tape::tapegateway::ClientTypeStrings[m_volInfo.clientType]));
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
-    m_watchdog.addParameter(Param("volumeMode",tapegateway::VolumeModeStrings[m_volInfo.volumeMode]));
+    m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("density", m_volInfo.density));
     
     // Set the tape thread time in the watchdog for total time estimation in case

@@ -43,6 +43,13 @@ namespace cta {
      * @return The volume identifier of the tape to be mounted.
      */
     virtual std::string getVid() const throw() = 0;
+    
+    /**
+     * Returns the density of the tape to be mounted.
+     *
+     * @return The density of the tape to be mounted.
+     */
+    virtual std::string getDensity() const throw() = 0;
 
     /**
      * Indicates that the mount was successful.

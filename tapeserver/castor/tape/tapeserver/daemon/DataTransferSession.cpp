@@ -89,8 +89,13 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // 2a) Get initial information from the client
   client::ClientProxy::RequestReport reqReport;
   try {
-    std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount("LLname", "DriveName")); //TODO: put right values of logical library and drive name
-    m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
+    std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
+    m_volInfo.vid=tapeMount->getVid();
+    m_volInfo.clientType=tapegateway::ClientType::CTA;
+    m_volInfo.mountType=tapeMount->getMountType();
+    m_volInfo.density=tapeMount->getDensity();
+    m_volInfo.labelObsolete="AUL";
+    //m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
   } catch(client::ClientProxy::EndOfSessionWithError & eoswe) {
     std::stringstream fullError;
     fullError << "Received end of session with error from client when requesting Volume "
@@ -151,19 +156,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
                .add("density", m_volInfo.density)
                .add("label", m_volInfo.labelObsolete)
                .add("clientType", volumeClientTypeToString(m_volInfo.clientType))
-               .add("mode", volumeModeToString(m_volInfo.volumeMode));
+               .add("mountType", mountTypeToString(m_volInfo.mountType));
     lc.log(LOG_INFO, "Got volume from client");
   }
   
   // Depending on the type of session, branch into the right execution
-  switch(m_volInfo.volumeMode) {
-  case tapegateway::READ:
+  switch(m_volInfo.mountType) {
+  case cta::MountType::RETRIEVE:
     return executeRead(lc);
-  case tapegateway::WRITE:
+  case cta::MountType::ARCHIVE:
     return executeWrite(lc);
-  case tapegateway::DUMP:
-    executeDump(lc);
-    return MARK_DRIVE_AS_UP;
   default:
     return MARK_DRIVE_AS_UP;
   }
@@ -556,11 +558,10 @@ const char *castor::tape::tapeserver::daemon::DataTransferSession::
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::DataTransferSession::
-  volumeModeToString(const tapegateway::VolumeMode mode) const throw() {
-  switch(mode) {
-  case tapegateway::READ : return "READ";
-  case tapegateway::WRITE: return "WRITE";
-  case tapegateway::DUMP : return "DUMP";
-  default                : return "UKNOWN";
+  mountTypeToString(const cta::MountType::Enum mountType) const throw() {
+  switch(mountType) {
+  case cta::MountType::RETRIEVE: return "RETRIEVE";
+  case cta::MountType::ARCHIVE : return "ARCHIVE";
+  default                      : return "UNKNOWN";
   }
 }

@@ -104,7 +104,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.density="8000GC";
   volume.labelObsolete="AUL";
   volume.vid="V12345";
-  volume.volumeMode=castor::tape::tapegateway::READ;
+  volume.mountType=cta::MountType::RETRIEVE;
   castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
     DriveConfig(),"0.0.0.0",volume,lc);
   castor::server::ProcessCapDummy cap;
@@ -162,7 +162,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.density="8000GC";
   volume.labelObsolete="AUL";
   volume.vid="V12345";
-  volume.volumeMode=castor::tape::tapegateway::READ;
+  volume.mountType=cta::MountType::RETRIEVE;
   castor::server::ProcessCapDummy cap;
   castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess,  
   DriveConfig(),"0.0.0.0",volume,lc);  

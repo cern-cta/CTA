@@ -37,6 +37,7 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/server/Threading.hpp"
+#include "scheduler/MountType.hpp"
 
 namespace castor {
 namespace tape {
@@ -74,8 +75,8 @@ public :
       std::string density;
       /** The label field seems to be in disuse */
       std::string labelObsolete;
-      /** The read/write mode */
-      tapegateway::VolumeMode volumeMode;
+      /** The mount type: archive or retrieve */
+      cta::MountType::Enum mountType;
     };
     
     /**

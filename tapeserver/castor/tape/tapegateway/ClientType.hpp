@@ -38,7 +38,8 @@ namespace castor {
         TAPE_GATEWAY = 0,
         READ_TP = 1,
         WRITE_TP = 2,
-        DUMP_TP = 3
+        DUMP_TP = 3,
+        CTA = 4
       }; /* end of enum ClientType */
 
       /**

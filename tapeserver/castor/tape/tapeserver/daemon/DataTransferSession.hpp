@@ -146,10 +146,9 @@ namespace daemon {
       const throw();
 
     /**
-     * Returns the string representation of the specified volume mode from a
-     * tapegateay::Volume message (READ, WRITE or DUMP).
+     * Returns the string representation of the specified mount type
      */
-    const char *volumeModeToString(const tapegateway::VolumeMode mode) const
+    const char *mountTypeToString(const cta::MountType::Enum mountType) const
       throw();
   };
 }

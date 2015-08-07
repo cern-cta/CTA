@@ -74,7 +74,14 @@ public:
      m_taskInjector = ti; 
    }
 
-private:
+private:  
+  
+  /**
+   * Returns the string representation of the specified mount type
+   */
+  const char *mountTypeToString(const cta::MountType::Enum mountType) const
+    throw();
+  
   //RAII class for cleaning tape stuff
   class TapeCleaning{
     TapeReadSingleThread& m_this;

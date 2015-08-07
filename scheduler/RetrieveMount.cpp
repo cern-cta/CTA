@@ -46,6 +46,13 @@ std::string cta::RetrieveMount::getVid() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getDensity
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getDensity() const throw() {
+  return "UNKNOWN_DENSITY_FOR_RETRIEVE_MOUNT";
+}
+
+//------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::complete() {
