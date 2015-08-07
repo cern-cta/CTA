@@ -94,6 +94,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   m_volInfo.density=tapeMount->getDensity();
   m_volInfo.labelObsolete="AUL";
   reqReport.transactionId=tapeMount->getMountTransactionId();
+  reqReport.connectDuration=0; //no real client connection was established
+  reqReport.sendRecvDuration=0; //no real client connection was established
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
