@@ -210,6 +210,26 @@ private:
    * Socket connecting this tape server proxy to the tape server daemon.
    */
   ZmqSocketST m_serverSocket;
+  
+  /**
+   * Creates a frame containing a ArchiveJobFromCTA message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createArchiveJobFromCTAFrame(const std::string &vid,
+    const std::string &unitName);
+          
+  /**
+   * Creates a frame containing a RetrieveJobFromCTA message.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param unitName The unit name of the tape drive.
+   * @return The frame.
+   */
+  Frame createRetrieveJobFromCTAFrame(const std::string &vid,
+    const std::string &unitName);
 
   /**
    * Creates a frame containing a RecallJobFromTapeGateway message.

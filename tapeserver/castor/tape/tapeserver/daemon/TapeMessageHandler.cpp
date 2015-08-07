@@ -21,6 +21,7 @@
 
 
 #include "castor/messages/AddLogParams.pb.h"
+#include "castor/messages/ArchiveJobFromCTA.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/messages/Exception.pb.h"
@@ -32,6 +33,7 @@
 #include "castor/messages/NbFilesOnTape.pb.h"
 #include "castor/messages/RecallJobFromReadTp.pb.h"
 #include "castor/messages/RecallJobFromTapeGateway.pb.h"
+#include "castor/messages/RetrieveJobFromCTA.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/TapeMountedForMigration.pb.h"
 #include "castor/messages/TapeMountedForRecall.pb.h"
@@ -190,6 +192,12 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   case messages::MSG_TYPE_HEARTBEAT:
     return handleHeartbeat(rqst);
 
+  case messages::MSG_TYPE_ARCHIVEJOBFROMCTA:
+    return handleArchiveJobFromCTA(rqst);
+
+  case messages::MSG_TYPE_RETRIEVEJOBFROMCTA:
+    return handleRetrieveJobFromCTA(rqst);
+
   case messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY:
     return handleMigrationJobFromTapeGateway(rqst);
 
@@ -319,6 +327,39 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
+// handleArchiveJobFromCTA
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleArchiveJobFromCTA(const messages::Frame &rqst) {
+  m_log(LOG_INFO, "Handling ArchiveJobFromCTA message");
+
+  try {
+    castor::messages::ArchiveJobFromCTA rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+    
+    CatalogueDrive &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
+
+    {
+      std::ostringstream msg;
+      msg << __FUNCTION__ << ": Not fully implemented because the number of"
+        " files on tape is not known because there is no vmgr in the CTA"
+        " project";
+      throw castor::exception::Exception(msg.str());
+    }
+    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
+    //return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to handle ArchiveJobFromCTA message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }   
+}
+
+//------------------------------------------------------------------------------
 // createNbFilesOnTapeFrame
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
@@ -416,6 +457,32 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to handle RecallJobFromTapeGateway message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleRetrieveJobFromCTA
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
+  handleRetrieveJobFromCTA(const messages::Frame &rqst) {
+  m_log(LOG_INFO, "Handling RecallJobFromTapeGateway message");
+
+  try {
+    messages::RetrieveJobFromCTA rqstBody;
+    rqst.parseBodyIntoProtocolBuffer(rqstBody);
+
+    CatalogueDrive &drive =
+      m_driveCatalogue.findDrive(rqstBody.unitname());
+    drive.getTransferSession().receivedRecallJob(rqstBody.vid());
+
+    const messages::Frame reply = createReturnValueFrame(0);
+    return reply;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to handle RetrieveJobFromCTA message: " <<
       ne.getMessage().str();
     throw ex;
   }

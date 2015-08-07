@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "castor/messages/AddLogParams.pb.h"
+#include "castor/messages/ArchiveJobFromCTA.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/DeleteLogParams.pb.h"
 #include "castor/messages/MutexLocker.hpp"
@@ -32,6 +33,7 @@
 #include "castor/messages/NbFilesOnTape.pb.h"
 #include "castor/messages/RecallJobFromReadTp.pb.h"
 #include "castor/messages/RecallJobFromTapeGateway.pb.h"
+#include "castor/messages/RetrieveJobFromCTA.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/TapeMountedForRecall.pb.h"
 #include "castor/messages/TapeMountedForMigration.pb.h"
@@ -55,7 +57,23 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 //------------------------------------------------------------------------------
 uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
   const std::string &vid, const std::string &unitName) {
-  return 0;
+  MutexLocker lock(&m_mutex);
+
+  try {
+    const Frame rqst = createArchiveJobFromCTAFrame(vid, unitName);
+    sendFrame(m_serverSocket, rqst);
+
+    NbFilesOnTape reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    return reply.nbfiles();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of archive job from CTA: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -63,6 +81,29 @@ uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::gotRetrieveJobFromCTA(
   const std::string &vid, const std::string &unitName) {
+  MutexLocker lock(&m_mutex);
+
+  try {
+    const Frame rqst = createRetrieveJobFromCTAFrame(vid, unitName);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      castor::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to notify tapeserver of retrieve job from CTA: " <<
+      "vid=" << vid << " unitName=" << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -122,6 +163,32 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
   }
 }
 
+//------------------------------------------------------------------------------
+// createRetrieveJobFromCTAFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createRetrieveJobFromCTAFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_RETRIEVEJOBFROMCTA);
+    frame.header.set_bodysignature("PIPO");
+
+    RetrieveJobFromCTA body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create RetrieveJobFromCTA frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
 
 //------------------------------------------------------------------------------
 // gotRecallJobFromReadTp
@@ -226,6 +293,33 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create MigrationJobFromTapeGateway frame: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createArchiveJobFromCTAFrame
+//------------------------------------------------------------------------------
+castor::messages::Frame castor::messages::TapeserverProxyZmq::
+  createArchiveJobFromCTAFrame(const std::string &vid,
+  const std::string &unitName) {
+  try {
+    Frame frame;
+
+    frame.header = messages::protoTapePreFillHeader();
+    frame.header.set_msgtype(messages::MSG_TYPE_ARCHIVEJOBFROMCTA);
+    frame.header.set_bodysignature("PIPO");
+
+    ArchiveJobFromCTA body;
+    body.set_vid(vid);
+    body.set_unitname(unitName);
+    frame.serializeProtocolBufferIntoBody(body);
+
+    return frame;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to create ArchiveJobFromCTA frame: " <<
       ne.getMessage().str();
     throw ex;
   }

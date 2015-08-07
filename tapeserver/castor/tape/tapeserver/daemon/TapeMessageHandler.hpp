@@ -177,6 +177,15 @@ private:
    */
   messages::Frame handleMigrationJobFromTapeGateway(
     const messages::Frame &rqst);
+  
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleArchiveJobFromCTA(
+    const messages::Frame &rqst);
 
   /**
    * Creates a message frame containing a NbFilesOnTape message.
@@ -201,6 +210,14 @@ private:
    * @return The reply.
    */
   messages::Frame handleRecallJobFromTapeGateway(const messages::Frame &rqst);
+  
+  /**
+   * Handles the specified request.
+   *
+   * @param rqst The request.
+   * @return The reply.
+   */
+  messages::Frame handleRetrieveJobFromCTA(const messages::Frame &rqst);
 
   /**
    * Handles the specified request.
