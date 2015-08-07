@@ -19,7 +19,8 @@
 #pragma once
 
 #include "scheduler/TapeJob.hpp"
-#include "common/archiveNS/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyInfo.hpp"
+#include "common/remoteFS/RemotePath.hpp"
 
 #include <string>
 
@@ -57,8 +58,8 @@ private:
   RetrieveJob(
 // TO BE DECIDED
 //  RetrieveMount &mount,
-    const TapeCopyLocation &tapeFile,
-    const std::string &id,
+    const TapeCopyInfo &tapeFile,
+    const std::string &id,  
     const std::string &userRequestId,
     const uint32_t copyNb,
     const std::string &remoteFile,
@@ -121,12 +122,17 @@ private:
 //RetrieveMount &m_mount;
 
 public:
-
-  /**
-   * The location of the source tape file.
-   */
-  TapeCopyLocation tapeFile;
-
+  /** Positioning method options  */
+  enum class PositioningMethod: uint8_t {
+    ByBlock = 0,
+    ByFSeq = 1
+  };
+  /** Translation of positioningMethod */
+  std::string toString (PositioningMethod);
+  
+  TapeCopyInfo tapeCopyLocation; /**<The location of the source tape file. */
+  PositioningMethod positioningMethod; /**< The desired positioning method. */
+  RemotePath remoteFilePath; /** <The location of the destination file. */
 }; // struct RetrieveJob
 
 } // namespace cta

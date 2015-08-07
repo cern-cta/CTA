@@ -19,7 +19,7 @@
 #pragma once
 
 #include "scheduler/RetrieveRequest.hpp"
-#include "common/archiveNS/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyInfo.hpp"
 
 #include <list>
 #include <string>
@@ -57,7 +57,7 @@ struct RetrieveFromTapeCopyRequest: public RetrieveRequest {
   RetrieveFromTapeCopyRequest(
     const std::string &archiveFile,
     const uint64_t copyNb,
-    const TapeCopyLocation &tapeCopy,
+    const TapeCopyInfo &tapeCopy,
     const std::string &remoteFile,
     const uint64_t priority,
     const CreationLog &creationLog);
@@ -75,7 +75,7 @@ struct RetrieveFromTapeCopyRequest: public RetrieveRequest {
   /**
    * The location of the copy on tape.
    */
-  TapeCopyLocation tapeCopy;
+  TapeCopyInfo tapeCopy;
 
   /**
    * The URL of the destination remote file.

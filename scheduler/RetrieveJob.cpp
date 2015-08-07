@@ -30,7 +30,7 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 cta::RetrieveJob::RetrieveJob(
 // TO BE DECIDED
 //RetrieveMount &mount,
-  const TapeCopyLocation &tapeFile,
+  const TapeCopyInfo &tapeCopyLocation,
   const std::string &id, 
   const std::string &userRequestId,
   const uint32_t copyNb,
@@ -39,7 +39,7 @@ cta::RetrieveJob::RetrieveJob(
   TapeJob(id, userRequestId, copyNb, remoteFile, castorNsFileId),
 // TO BE DECIDED
 //m_mount(mount),
-  tapeFile(tapeFile) {
+  tapeCopyLocation(tapeCopyLocation) {
 }
 
 //------------------------------------------------------------------------------
@@ -58,5 +58,19 @@ void cta::RetrieveJob::failed(const std::exception &ex) {
 //------------------------------------------------------------------------------
 // retry
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::retry() {
+void cta::RetrieveJob::retry() { }
+
+//------------------------------------------------------------------------------
+// toString(PositioningMethod)
+//------------------------------------------------------------------------------
+std::string cta::RetrieveJob::toString(PositioningMethod pm) {
+  switch(pm) {
+    case PositioningMethod::ByBlock:
+      return "ByBlock";
+    case PositioningMethod::ByFSeq:
+      return "ByFSeq";
+    default:
+      return "Unknown Positioning Method";
+  }
 }
+

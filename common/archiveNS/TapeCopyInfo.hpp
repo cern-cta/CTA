@@ -26,12 +26,12 @@ namespace cta {
 /**
  * The location of a tape copy.
  */
-struct TapeCopyLocation {
+struct TapeCopyInfo {
 
   /**
    * Constructor.
    */
-  TapeCopyLocation();
+  TapeCopyInfo();
 
   /**
    * Constructor.
@@ -40,8 +40,18 @@ struct TapeCopyLocation {
    * @param fseq The sequence number of the file.
    * @param blockId The block identifier of the file.
    */
-  TapeCopyLocation(const std::string &vid, const uint64_t fseq,
+  TapeCopyInfo(const std::string &vid, const uint64_t fseq,
     const uint64_t blockId);
+  
+  /**
+   * The path of the archive file.
+   */
+  std::string filePath;
+  
+  /**
+   * The ID of the file
+   */
+  uint64_t fileId;
 
   /**
    * The volume identifier of the tape.

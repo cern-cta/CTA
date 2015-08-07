@@ -12,7 +12,7 @@ set (COMMON_LIB_SRC_FILES
   archiveNS/ArchiveFileStatus.cpp
   archiveNS/StorageClass.cpp
   archiveNS/Tape.cpp
-  archiveNS/TapeCopyLocation.cpp
+  archiveNS/TapeCopyInfo.cpp
   archiveNS/TapeCopyLocationAndStatus.cpp
   CreationLog.cpp
   checksum/ByteArray.cpp

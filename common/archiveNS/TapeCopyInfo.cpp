@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/archiveNS/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyInfo.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeCopyLocation::TapeCopyLocation():
+cta::TapeCopyInfo::TapeCopyInfo():
   fseq(0),
   blockId(0) {
 }
@@ -29,7 +29,7 @@ cta::TapeCopyLocation::TapeCopyLocation():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeCopyLocation::TapeCopyLocation(const std::string &vid,
+cta::TapeCopyInfo::TapeCopyInfo(const std::string &vid,
   const uint64_t fseq, const uint64_t blockId):
   vid(vid),
   fseq(0),

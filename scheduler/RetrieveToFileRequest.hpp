@@ -26,7 +26,7 @@
 namespace cta {
 
 // Forward declarations
-class TapeCopyLocation;
+class TapeCopyInfo;
 
 /**
  * Class representing a user request to retrieve a single archived file to a
@@ -58,7 +58,7 @@ public:
    */
   RetrieveToFileRequest(
     const std::string &archiveFile,
-    const std::list<TapeCopyLocation> &tapeCopies,
+    const std::list<TapeCopyInfo> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -75,7 +75,7 @@ public:
    *
    * @return The physical location(s) of the archive file on tape.
    */
-  const std::list<TapeCopyLocation> &getTapeCopies() const throw();
+  const std::list<TapeCopyInfo> &getTapeCopies() const throw();
 
   /**
    * Returns the URL of the destination remote file.
@@ -94,7 +94,7 @@ private:
   /**
    * The physical location(s) of the archive file on tape.
    */
-  std::list<TapeCopyLocation> m_tapeCopies;
+  std::list<TapeCopyInfo> m_tapeCopies;
 
   /**
    * The URL of the destination remote file.

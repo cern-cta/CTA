@@ -36,7 +36,7 @@
 #include "common/archiveNS/Tape.hpp"
 #include "ArchiveToDirRequest.hpp"
 #include "RetrieveToFileRequest.hpp"
-#include "common/archiveNS/TapeCopyLocation.hpp"
+#include "common/archiveNS/TapeCopyInfo.hpp"
 #include "RetrieveToDirRequest.hpp"
 #include "ArchiveToTapeCopyRequest.hpp"
 #include <algorithm>
