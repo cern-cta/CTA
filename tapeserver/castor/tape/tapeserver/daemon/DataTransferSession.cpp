@@ -88,61 +88,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   lc.pushOrReplace(log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
   client::ClientProxy::RequestReport reqReport;
-  try {
-    std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
-    m_volInfo.vid=tapeMount->getVid();
-    m_volInfo.mountType=tapeMount->getMountType();
-    m_volInfo.density=tapeMount->getDensity();
-    m_volInfo.labelObsolete="AUL";
-    //m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
-  } catch(client::ClientProxy::EndOfSessionWithError & eoswe) {
-    std::stringstream fullError;
-    fullError << "Received end of session with error from client when requesting Volume "
-      << eoswe.getMessageValue();
-    lc.log(LOG_ERR, fullError.str());
-    m_clientProxy.reportEndOfSession(reqReport);
-    log::ScopedParamContainer params(lc);
-    params.add("tapebridgeTransId", reqReport.transactionId)
-          .add("connectDuration", reqReport.connectDuration)
-          .add("sendRecvDuration", reqReport.sendRecvDuration);
-    lc.log(LOG_INFO, "Acknowledged client of end session with error");
-    return MARK_DRIVE_AS_UP;    
-  } catch(client::ClientProxy::EndOfSession & eos) {
-    lc.log(LOG_INFO, "Received end of session from client when requesting Volume");
-    m_clientProxy.reportEndOfSession(reqReport);
-    log::ScopedParamContainer params(lc);
-    params.add("tapebridgeTransId", reqReport.transactionId)
-          .add("connectDuration", reqReport.connectDuration)
-          .add("sendRecvDuration", reqReport.sendRecvDuration);
-    lc.log(LOG_INFO, "Acknowledged client of end session");
-    return MARK_DRIVE_AS_UP;  
-  } catch (client::ClientProxy::UnexpectedResponse & unexp) {
-    std::stringstream fullError;
-    fullError << "Received unexpected response from client when requesting Volume"
-      << unexp.getMessageValue();
-    lc.log(LOG_ERR, fullError.str());
-    m_clientProxy.reportEndOfSession(reqReport);
-    log::LogContext::ScopedParam sp07(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp08(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp09(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
-    log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
-    return MARK_DRIVE_AS_UP;
-  } catch (castor::exception::Exception & ex) {
-    std::stringstream fullError;
-    fullError << "When requesting Volume, "
-      << ex.getMessageValue();
-    lc.log(LOG_ERR, fullError.str());
-    try {
-      // Attempt to notify the client. This is so hopeless and likely to fail
-      // that is does not deserve a log.
-      m_clientProxy.reportEndOfSession(reqReport);
-    } catch (...) {}
-    log::LogContext::ScopedParam sp07(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp10(lc, log::Param("ErrorMsg", fullError.str()));
-    lc.log(LOG_ERR, "Could not contact client for Volume (client notification was attempted).");
-    return MARK_DRIVE_AS_UP;
-  }
+  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
+  m_volInfo.vid=tapeMount->getVid();
+  m_volInfo.mountType=tapeMount->getMountType();
+  m_volInfo.density=tapeMount->getDensity();
+  m_volInfo.labelObsolete="AUL";
+  reqReport.transactionId=tapeMount->getMountTransactionId();
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);

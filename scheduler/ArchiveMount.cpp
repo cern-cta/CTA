@@ -51,6 +51,14 @@ std::string cta::ArchiveMount::getVid() const throw() {
 std::string cta::ArchiveMount::getDensity() const throw() {
   return "UNKNOWN_DENSITY_FOR_ARCHIVE_MOUNT";
 }
+
+//------------------------------------------------------------------------------
+// getMountTransactionId
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getMountTransactionId() const throw(){
+  return "UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT";
+}
+    
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------

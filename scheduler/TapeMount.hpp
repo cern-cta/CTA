@@ -50,6 +50,13 @@ namespace cta {
      * @return The density of the tape to be mounted.
      */
     virtual std::string getDensity() const throw() = 0;
+    
+    /**
+     * Returns the mount transaction id.
+     *
+     * @return The mount transaction id.
+     */
+    virtual std::string getMountTransactionId() const throw() = 0;
 
     /**
      * Indicates that the mount was successful.

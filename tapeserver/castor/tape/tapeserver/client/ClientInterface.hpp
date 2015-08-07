@@ -56,7 +56,7 @@ public :
   public:
     RequestReport(): transactionId(0),
             connectDuration(0), sendRecvDuration(0) {}
-    uint32_t transactionId;
+    std::string transactionId;
     double connectDuration;
     double sendRecvDuration;
   };

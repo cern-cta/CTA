@@ -53,6 +53,13 @@ std::string cta::RetrieveMount::getDensity() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getMountTransactionId
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getMountTransactionId() const throw(){
+  return "UNKNOWN_MOUNTTRANSACTIONID_FOR_RETRIEVE_MOUNT";
+}
+
+//------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::complete() {

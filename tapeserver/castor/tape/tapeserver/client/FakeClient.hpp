@@ -81,7 +81,7 @@ public:
   uint64_t bytes, RequestReport &report)  
   {
     
-    report.transactionId=666;
+    report.transactionId="666";
     report.connectDuration=42;
     report.sendRecvDuration=21;
     assertion();
