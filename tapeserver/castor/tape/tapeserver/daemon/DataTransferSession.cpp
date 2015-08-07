@@ -91,7 +91,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   try {
     std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
     m_volInfo.vid=tapeMount->getVid();
-    m_volInfo.clientType=tapegateway::ClientType::CTA;
     m_volInfo.mountType=tapeMount->getMountType();
     m_volInfo.density=tapeMount->getDensity();
     m_volInfo.labelObsolete="AUL";
@@ -155,7 +154,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
                .add("sendRecvDuration", reqReport.sendRecvDuration)
                .add("density", m_volInfo.density)
                .add("label", m_volInfo.labelObsolete)
-               .add("clientType", volumeClientTypeToString(m_volInfo.clientType))
                .add("mountType", mountTypeToString(m_volInfo.mountType));
     lc.log(LOG_INFO, "Got volume from client");
   }
@@ -190,11 +188,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.bulkRequestRecallMaxFiles,
         lc);
-
-    // If we talk to a command line client, we do not batch report
-    if (tapegateway::READ_TP == m_volInfo.clientType) {
-      rrp.disableBulk();
-    }
+    rrp.disableBulk(); //no bulk needed anymore
     RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
     
     RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
@@ -220,7 +214,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type
     // of the client
-    rti.setClientType(m_volInfo.clientType);
     trst.setTaskInjector(&rti);
     rrp.setWatchdog(rwd);
     

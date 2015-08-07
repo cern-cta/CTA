@@ -149,7 +149,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     
     // Report the parameters of the session to the main thread
     typedef castor::log::Param Param;
-    m_watchdog.addParameter(Param("clientType", castor::tape::tapegateway::ClientTypeStrings[m_volInfo.clientType]));
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("density", m_volInfo.density));

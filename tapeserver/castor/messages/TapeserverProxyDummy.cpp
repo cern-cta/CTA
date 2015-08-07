@@ -22,6 +22,21 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
+// gotArchiveJobFromCTA
+//------------------------------------------------------------------------------
+uint32_t castor::messages::TapeserverProxyDummy::gotArchiveJobFromCTA(
+  const std::string &vid, const std::string &unitName) {
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// gotRetrieveJobFromCTA
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::gotRetrieveJobFromCTA(
+  const std::string &vid, const std::string &unitName) {
+}
+
+//------------------------------------------------------------------------------
 // gotRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::gotRecallJobFromTapeGateway(

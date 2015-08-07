@@ -100,7 +100,6 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
-  volume.clientType=castor::tape::tapegateway::READ_TP;
   volume.density="8000GC";
   volume.labelObsolete="AUL";
   volume.vid="V12345";
@@ -158,7 +157,6 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;  
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
-  volume.clientType=castor::tape::tapegateway::READ_TP;
   volume.density="8000GC";
   volume.labelObsolete="AUL";
   volume.vid="V12345";

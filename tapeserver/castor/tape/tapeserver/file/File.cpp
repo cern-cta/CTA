@@ -108,9 +108,7 @@ namespace castor {
         const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
         const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo)  {
         const std::string &volId = volInfo.vid;
-        if( volInfo.clientType != tape::tapegateway::READ_TP 
-       && (!checkHeaderNumericalField(hdr1.getFileId(), 
-            filetoRecall.fileid(), hexadecimal))) { 
+        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.fileid(), hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
@@ -446,8 +444,7 @@ namespace castor {
         m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0)
       {
         // Check the sanity of the parameters. fSeq should be >= 1
-        if ( ws->getVolumeInfo().clientType != castor::tape::tapegateway::WRITE_TP &&
-                (0 == ftm.fileid() || ftm.fseq()<1)) {
+        if (0 == ftm.fileid() || ftm.fseq()<1) {
           std::stringstream err;
           err << "Unexpected fileId in WriteFile::WriteFile (expected != 0, got: "
               << ftm.fileid() << ") or fSeq (expected >=1, got: "

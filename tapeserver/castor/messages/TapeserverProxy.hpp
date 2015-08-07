@@ -74,6 +74,27 @@ public:
    */
   virtual uint32_t gotMigrationJobFromTapeGateway(const std::string &vid,
     const std::string &unitName) = 0;
+  
+  /**
+   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * an archive job from CTA
+   *
+   * @param vid The tape to be mounted for recall.
+   * @param unitName The unit name of the tape drive.
+   * @return The number of files currently stored on the tape
+   */
+  virtual uint32_t gotArchiveJobFromCTA(const std::string &vid,
+    const std::string &unitName) = 0;
+  
+  /**
+   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * a retrieve job from CTA
+   *
+   * @param vid The tape to be mounted for recall.
+   * @param unitName The unit name of the tape drive.
+   */
+  virtual void gotRetrieveJobFromCTA(const std::string &vid,
+    const std::string &unitName) = 0;
 
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got

@@ -69,8 +69,6 @@ public :
       VolumeInfo() {};
       /** The VID we will work on */
       std::string vid;
-      /** The type of the session */
-      tapegateway::ClientType clientType;
       /** The density of the volume */
       std::string density;
       /** The label field seems to be in disuse */

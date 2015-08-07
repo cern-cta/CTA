@@ -115,7 +115,6 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
     volInfo.vid="V12345";
-    volInfo.clientType=castor::tape::tapegateway::READ_TP;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
        volInfo , 0, true);
     // Write a few files on the virtual tape
@@ -210,7 +209,6 @@ TEST(tapeServer, DataTransferSessionWrongRecall) {
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
     volInfo.vid="V12345";
-    volInfo.clientType=castor::tape::tapegateway::READ_TP;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
        volInfo , 0, true);
     // Write a few files on the virtual tape
@@ -353,7 +351,6 @@ TEST(tapeServer, DataTransferSessionFailtoMount) {
     // And write to it
     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
     volInfo.vid="V12345";
-    volInfo.clientType=castor::tape::tapegateway::READ_TP;
     // Prepare a non-empty files to recall list to pass the empty session
     // detection
     for (int fseq=1; fseq <= 10 ; fseq ++) {

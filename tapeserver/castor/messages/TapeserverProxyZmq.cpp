@@ -51,6 +51,21 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 }
 
 //------------------------------------------------------------------------------
+// gotArchiveJobFromCTA
+//------------------------------------------------------------------------------
+uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
+  const std::string &vid, const std::string &unitName) {
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// gotRetrieveJobFromCTA
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyZmq::gotRetrieveJobFromCTA(
+  const std::string &vid, const std::string &unitName) {
+}
+
+//------------------------------------------------------------------------------
 // gotRecallJobFromTapeGateway
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::gotRecallJobFromTapeGateway(

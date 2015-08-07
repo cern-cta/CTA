@@ -54,7 +54,6 @@ namespace UnitTests {
       fileToMigrate.setFileSize(500);
       fileToMigrate.setFileid(1);
       fileToMigrate.setFseq(1);
-      volInfo.clientType = castor::tape::tapegateway::READ_TP;
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;
