@@ -46,6 +46,11 @@ struct TapeDaemonConfig {
    * The CASTOR configuration parameters used by the Catalogue.
    */
   CatalogueConfig catalogueConfig;
+  
+  /**
+   * This is the path to the objectstore backend
+   */
+  std::string objectStoreBackendPath;
 
   /**
    * The network name of the host on which the cupv daemon is running.

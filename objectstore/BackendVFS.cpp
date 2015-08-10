@@ -27,7 +27,8 @@
 #include <stdio.h>
 #include <memory>
 #include <unistd.h>
-
+#include <sys/socket.h>
+#include <sys/stat.h>
 
 
 namespace cta { namespace objectstore {
@@ -161,10 +162,9 @@ void BackendVFS::remove(std::string name) {
 
 bool BackendVFS::exists(std::string name) {
   std::string path = m_root + "/" + name;
-  std::string lockPath = m_root + "/." + name + ".lock";
-  if (::access(path.c_str(), F_OK) || ::access(lockPath.c_str(), F_OK))
-    return false;
-  return true;
+  std::string lockPath = m_root + "/." + name + ".lock";  
+  struct stat buffer;   
+  return (stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0);
 }
 
 
@@ -186,7 +186,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
   std::string name, int type) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
-  ret->set(::open(path.c_str(), O_RDONLY, S_IRWXU));
+  ret->set(::open(path.c_str(), O_RDONLY));
   cta::exception::Errnum::throwOnMinusOne(ret->m_fd,
       "In BackendStoreVFS::lockHelper, failed to open the lock file.");
   cta::exception::Errnum::throwOnMinusOne(::flock(ret->m_fd, LOCK_EX),

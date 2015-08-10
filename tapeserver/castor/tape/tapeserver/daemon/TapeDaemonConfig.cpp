@@ -53,6 +53,7 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
   config.cupvHost = castorConf.getConfEntString("UPV" , "HOST", log);
   config.vdqmHost = castorConf.getConfEntString("VDQM", "HOST", log);
   config.vmgrHost = castorConf.getConfEntString("VMGR", "HOST", log);
+  config.objectStoreBackendPath = castorConf.getConfEntString("TapeServer", "ObjectStoreBackendPath", log);
   config.rmcPort = castorConf.getConfEntInt("RMC", "PORT",
     (unsigned short)RMC_PORT, log);
   config.rmcMaxRqstAttempts = castorConf.getConfEntInt("RMC",

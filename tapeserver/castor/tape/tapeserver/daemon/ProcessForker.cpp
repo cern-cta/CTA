@@ -556,7 +556,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     zmqContext.get());
   
   /************BEGIN: boilerplate code to prepare the objectstoreDB object**************/
-  cta::objectstore::BackendVFS g_backend;
+  cta::objectstore::BackendVFS g_backend(m_config.objectStoreBackendPath);
+      // Make sure we will not delete the contents of objectstore when deleting the object
+      g_backend.noDeleteOnExit();
 
   class BackendPopulator {
   public:
