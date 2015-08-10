@@ -766,7 +766,6 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   mountInfo = m_db.getMountInfo();
   
   // Prioritize the mounts.
-  
   throw NotImplemented("");
   // TODO: finish
 

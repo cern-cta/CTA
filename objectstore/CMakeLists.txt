@@ -40,3 +40,7 @@ set(ObjectStoreUnitTests
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
   protobuf rados ctacommon gtest gmock CTAObjectStore)
+
+add_executable(makeMinimalVFS makeMinimalVFS.cpp)
+target_link_libraries(makeMinimalVFS
+  protobuf CTAObjectStore ctacommon)
