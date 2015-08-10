@@ -139,13 +139,6 @@ namespace daemon {
     cta::Scheduler &m_scheduler;
 
     /**
-     * Returns the string representation of the specified tapebridge client type
-     * from a tapegateay::Volume message (READ, WRITE or DUMP).
-     */
-    const char *volumeClientTypeToString(const tapegateway::ClientType mode)
-      const throw();
-
-    /**
      * Returns the string representation of the specified mount type
      */
     const char *mountTypeToString(const cta::MountType::Enum mountType) const

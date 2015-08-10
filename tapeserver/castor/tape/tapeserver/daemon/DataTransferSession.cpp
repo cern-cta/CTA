@@ -487,20 +487,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession()
 }
 
 //-----------------------------------------------------------------------------
-// volumeClientTypeToString
-//-----------------------------------------------------------------------------
-const char *castor::tape::tapeserver::daemon::DataTransferSession::
-  volumeClientTypeToString(const tapegateway::ClientType mode) const throw() {
-  switch(mode) {
-  case tapegateway::TAPE_GATEWAY: return "TAPE_GATEWAY";
-  case tapegateway::READ_TP     : return "READ_TP";
-  case tapegateway::WRITE_TP    : return "WRITE_TP";
-  case tapegateway::DUMP_TP     : return "DUMP_TP";
-  default                       : return "UKNOWN";
-  }
-}   
-
-//-----------------------------------------------------------------------------
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::DataTransferSession::
