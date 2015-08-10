@@ -11,7 +11,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
-  TapeJob.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
   mockDB/MockSchedulerDatabase.cpp

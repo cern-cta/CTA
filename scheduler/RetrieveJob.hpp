@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "scheduler/TapeJob.hpp"
 #include "common/archiveNS/TapeCopyInfo.hpp"
 #include "common/remoteFS/RemotePath.hpp"
 
@@ -31,7 +30,7 @@ class RetrieveMount;
 /**
  * The transfer of a single copy of a tape file to a remote file.
  */
-class RetrieveJob: public TapeJob {
+class RetrieveJob {
   /**
    * The RetrieveMount class is a friend so that it can call the private
    * constructor of RetrieveJob.
@@ -71,23 +70,6 @@ public:
    * Destructor.
    */
   ~RetrieveJob() throw();
-
-
-  /**
-   * Returns the mount to which this job belongs.
-   *
-   * @return the mount to which this job belongs.
-   */
-// TO BE DECIDED
-//RetrieveMount &getMount() const;
-
-  /**
-   * Returns the mount to which this job belongs.
-   *
-   * @return the mount to which this job belongs.
-   */
-// TO BE DECIDED
-//RetrieveMount &getMount();
 
   /**
    * Indicates that the job was successful

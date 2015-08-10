@@ -9,6 +9,7 @@ set (COMMON_LIB_SRC_FILES
   archiveRoutes/ArchiveRouteId.cpp
   archiveNS/ArchiveDirEntry.cpp
   archiveNS/ArchiveDirIterator.cpp
+  archiveNS/ArchiveFileInfo.cpp
   archiveNS/ArchiveFileStatus.cpp
   archiveNS/StorageClass.cpp
   archiveNS/Tape.cpp
