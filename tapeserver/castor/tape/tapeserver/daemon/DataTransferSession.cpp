@@ -88,7 +88,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   lc.pushOrReplace(log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
   client::ClientProxy::RequestReport reqReport;
-  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
+  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName())); //getNextMount throws not implemented exception
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.density=tapeMount->getDensity();
@@ -173,7 +173,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
     castor::utils::Timer timer;
-    if (rti.synchronousInjection()) {
+    if (rti.synchronousInjection()) {  //adapt the recall task injector (starting from synchronousInjection)
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
       rwd.startThread();

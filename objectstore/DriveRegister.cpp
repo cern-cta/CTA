@@ -67,7 +67,7 @@ void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumed
 }
 
 
-void cta::objectstore::DriveRegister::addDrive(std::string driveName) {
+void cta::objectstore::DriveRegister::addDrive(std::string driveName) { //add logical library to the parameters
   checkPayloadWritable();
   // Check that we are not trying to duplicate a drive
   try {

@@ -54,7 +54,7 @@ public :
    */
   class RequestReport {
   public:
-    RequestReport(): transactionId(0),
+    RequestReport(): transactionId(""),
             connectDuration(0), sendRecvDuration(0) {}
     std::string transactionId;
     double connectDuration;

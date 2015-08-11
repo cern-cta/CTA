@@ -57,6 +57,11 @@ struct LogicalLibrary  {
   std::string name;
   
   /**
+   * The state of the library online/offline
+   */  
+  bool online;
+  
+  /**
    * The record of the entry's creation
    */
   CreationLog creationLog;
