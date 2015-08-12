@@ -33,6 +33,8 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
+
 #include "serrno.h"
 
 #include <gtest/gtest.h>
@@ -46,8 +48,8 @@ namespace unitTests{
     MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
-    MockRecallReportPacker(ClientInterface& client,castor::log::LogContext lc):
-     RecallReportPacker(client,1,lc){}
+    MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
+     RecallReportPacker(rm,1,lc){}
   };
   
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailledBlock){
@@ -57,7 +59,8 @@ namespace unitTests{
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailledBlock");
     castor::log::LogContext lc(log);
     
-    MockRecallReportPacker report(client,lc);
+    std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+    MockRecallReportPacker report(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
     EXPECT_CALL(report,reportFailedJob(_,_,_));
     RecallMemoryManager mm(10,100,lc);
     DiskFileFactory fileFactory("RFIO","",0);

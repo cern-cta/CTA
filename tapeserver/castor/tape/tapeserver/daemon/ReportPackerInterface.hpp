@@ -98,8 +98,8 @@ template <class PlaceHolder> class ReportPackerInterface{
 
   protected:
     virtual ~ReportPackerInterface() {}
-    ReportPackerInterface(client::ClientInterface & tg, log::LogContext lc):
-    m_client(tg),m_lc(lc),m_listReports(new FileReportList),
+    ReportPackerInterface(log::LogContext lc):
+    m_lc(lc),m_listReports(new FileReportList),
     m_reportBatching(detail::ReportInBulk),m_watchdog(NULL) {}
   
   /**
@@ -155,11 +155,7 @@ template <class PlaceHolder> class ReportPackerInterface{
           .add("transactionId", chono.transactionId);
     m_lc.log(level,msg);
         
-  } 
-  /**
-   * The client of the session to who; we will report
-   */
-  client::ClientInterface & m_client;
+  }
   
   /**
    * The  log context, copied du to threads

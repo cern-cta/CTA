@@ -47,10 +47,10 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-RecallReportPacker::RecallReportPacker(client::ClientInterface & tg, 
+RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, 
     unsigned int reportFilePeriod,log::LogContext lc):
-ReportPackerInterface<detail::Recall>(tg,lc),
-        m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false){
+ReportPackerInterface<detail::Recall>(lc),
+        m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false), m_retrieveMount(retrieveMount){
 
 }
 //------------------------------------------------------------------------------
@@ -97,21 +97,22 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  std::unique_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
-  
-  successRecall->setFseq(m_recalledFile.fseq());
-  successRecall->setFileTransactionId(m_recalledFile.fileTransactionId());
-  successRecall->setId(m_recalledFile.id());
-  successRecall->setNshost(m_recalledFile.nshost());
-  successRecall->setFileid(m_recalledFile.fileid());
-  successRecall->setPath(m_recalledFile.path());
-  successRecall->setFileSize(m_size);
-
-  //WARNING : ad hoc name of checksum algorithm
-  successRecall->setChecksumName("adler32");
-  successRecall->setChecksum(m_checksum);
-  
-  parent.m_listReports->addSuccessfulRecalls(successRecall.release());
+//  std::unique_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
+//  
+//  successRecall->setFseq(m_recalledFile.fseq());
+//  successRecall->setFileTransactionId(m_recalledFile.fileTransactionId());
+//  successRecall->setId(m_recalledFile.id());
+//  successRecall->setNshost(m_recalledFile.nshost());
+//  successRecall->setFileid(m_recalledFile.fileid());
+//  successRecall->setPath(m_recalledFile.path());
+//  successRecall->setFileSize(m_size);
+//
+//  //WARNING : ad hoc name of checksum algorithm
+//  successRecall->setChecksumName("adler32");
+//  successRecall->setChecksum(m_checksum);
+//  
+//  parent.m_listReports->addSuccessfulRecalls(successRecall.release());
+  parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
 }
 //------------------------------------------------------------------------------
 //flush
@@ -126,7 +127,12 @@ void RecallReportPacker::flush(){
  
   client::ClientInterface::RequestReport chrono;
   try{
-    m_client.reportRecallResults(*m_listReports,chrono);
+//    m_client.reportRecallResults(*m_listReports,chrono);
+    while(m_successfulRetrieveJobs.size()) {
+      std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob = std::move(m_successfulRetrieveJobs.front());
+      m_successfulRetrieveJobs.pop();
+      successfulRetrieveJob->complete(0,0); //TODO: put size and checksum
+    }
     {
       log::ScopedParamContainer params(m_lc);
       params.add("successCount", m_listReports->successfulRecalls().size())
@@ -153,7 +159,8 @@ void RecallReportPacker::flush(){
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
   client::ClientInterface::RequestReport chrono;
     if(!parent.errorHappened()){
-      parent.m_client.reportEndOfSession(chrono);
+//      parent.m_client.reportEndOfSession(chrono);
+      parent.m_retrieveMount->complete();
       parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","success"));
@@ -166,7 +173,8 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
     else {
       const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
       parent.m_lc.log(LOG_ERR,msg);
-      parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
+//      parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
+      parent.m_retrieveMount->failed(cta::exception::Exception(msg));
       parent.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","failure"));
@@ -183,14 +191,16 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   client::ClientInterface::RequestReport chrono;
   if(parent.m_errorHappened) {
-  parent.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+//  parent.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+  parent.m_retrieveMount->failed(cta::exception::Exception(m_message));    
   LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
   parent.m_lc.log(LOG_ERR,m_message);
   }
   else{
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    parent.m_lc.log(LOG_ERR,msg);
-   parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
+//   parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);  
+   parent.m_retrieveMount->failed(cta::exception::Exception(msg));    
   }
   if (parent.m_watchdog) {
     parent.m_watchdog->addParameter(log::Param("status","failure"));
@@ -205,17 +215,18 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
    
-  std::unique_ptr<FileErrorStruct> failed(new FileErrorStruct);
-  //failedMigration->setFileMigrationReportList(parent.m_listReports.get());
-  failed->setErrorCode(m_error_code);
-  failed->setErrorMessage(m_error_msg);
-  failed->setFseq(m_recalledFile.fseq());
-  failed->setFileTransactionId(m_recalledFile.fileTransactionId());
-  failed->setId(m_recalledFile.id());
-  failed->setNshost(m_recalledFile.nshost());
-  
-  parent.m_listReports->addFailedRecalls(failed.release());
+//  std::unique_ptr<FileErrorStruct> failed(new FileErrorStruct);
+//  //failedMigration->setFileMigrationReportList(parent.m_listReports.get());
+//  failed->setErrorCode(m_error_code);
+//  failed->setErrorMessage(m_error_msg);
+//  failed->setFseq(m_recalledFile.fseq());
+//  failed->setFileTransactionId(m_recalledFile.fileTransactionId());
+//  failed->setId(m_recalledFile.id());
+//  failed->setNshost(m_recalledFile.nshost());
+//  
+//  parent.m_listReports->addFailedRecalls(failed.release());
   parent.m_errorHappened=true;
+  m_failedRetrieveJob->failed(cta::exception::Exception(m_error_msg));
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
@@ -267,7 +278,8 @@ void RecallReportPacker::WorkerThread::run(){
             //got there because we failed to report the recall results
             //we have to try to close the connection. 
             //reportEndOfSessionWithError might throw 
-            m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
+//            m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono); 
+            m_parent.m_retrieveMount->failed(e);    
             m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
             if (m_parent.m_watchdog) {
               m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");

@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "serrno.h"
+#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include <gtest/gtest.h>
 
@@ -43,7 +44,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");
   castor::log::LogContext lc(log);
-  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   mrp.startThreads();
   
   tapegateway::FileToMigrateStruct migratedFile;
@@ -67,7 +69,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillure");
   castor::log::LogContext lc(log);
   
-  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  
+  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   mrp.startThreads();
   
   tapegateway::FileToMigrateStruct migratedFile;
@@ -92,7 +96,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillureGoodEnd");
   castor::log::LogContext lc(log);
   
-  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  
+  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   mrp.startThreads();
   
   tapegateway::FileToMigrateStruct migratedFile;
@@ -119,7 +125,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
   castor::log::LogContext lc(log);
  
-  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  
+  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   mrp.startThreads();
   
   tapegateway::FileToMigrateStruct migratedFile;
@@ -161,7 +169,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerOneByteFile) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
   castor::log::LogContext lc(log);
  
-  tapeserver::daemon::MigrationReportPacker mrp(client,lc);
+  
+  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   mrp.startThreads();
   
   tapegateway::FileToMigrateStruct migratedFileSmall;

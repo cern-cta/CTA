@@ -34,7 +34,10 @@
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/TapeMount.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -119,9 +122,9 @@ namespace daemon {
      const DriveConfig &driveConfig,log::LogContext & lc);
         
     /** sub-part of execute for the read sessions */
-    EndOfSessionAction executeRead(log::LogContext & lc);
+    EndOfSessionAction executeRead(log::LogContext & lc, cta::RetrieveMount *retrieveMount);
     /** sub-part of execute for a write session */
-    EndOfSessionAction executeWrite(log::LogContext & lc);
+    EndOfSessionAction executeWrite(log::LogContext & lc, cta::ArchiveMount *archiveMount);
     /** sub-part of execute for a dump session */
     void executeDump(log::LogContext & lc);
     /** Reference to the MediaChangerFacade, allowing the mounting of the tape

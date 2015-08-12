@@ -109,7 +109,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::server::ProcessCapDummy cap;
   FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap,lc);
 
-  tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
+  //tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
   ASSERT_EQ(true,rti.synchronousInjection());
@@ -166,7 +166,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   DriveConfig(),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume,cap, lc);
   
-  tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
+  //tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
   ASSERT_EQ(false,rti.synchronousInjection());

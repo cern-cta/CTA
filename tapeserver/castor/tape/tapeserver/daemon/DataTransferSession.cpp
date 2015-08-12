@@ -38,9 +38,9 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "log.h"
-#include "scheduler/TapeMount.hpp"
 #include "serrno.h"
 #include "stager_client_commandline.h"
+#include "scheduler/RetrieveMount.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>
@@ -114,9 +114,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Depending on the type of session, branch into the right execution
   switch(m_volInfo.mountType) {
   case cta::MountType::RETRIEVE:
-    return executeRead(lc);
+    return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()));
   case cta::MountType::ARCHIVE:
-    return executeWrite(lc);
+    return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()));
   default:
     return MARK_DRIVE_AS_UP;
   }
@@ -125,20 +125,19 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //DataTransferSession::executeRead
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
- castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogContext & lc) {
+ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogContext & lc, cta::RetrieveMount *retrieveMount) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
-  
   if(!drive.get()) return MARK_DRIVE_AS_DOWN;    
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    RecallReportPacker rrp(m_clientProxy,
+    RecallReportPacker rrp(retrieveMount,
         m_castorConf.bulkRequestRecallMaxFiles,
         lc);
     rrp.disableBulk(); //no bulk needed anymore
@@ -222,7 +221,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(
-  log::LogContext & lc) {
+  log::LogContext & lc, cta::ArchiveMount *archiveMount) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
@@ -238,7 +237,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
-    MigrationReportPacker mrp(m_clientProxy, lc);
+    MigrationReportPacker mrp(archiveMount, lc);
     MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_mc,

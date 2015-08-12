@@ -28,6 +28,7 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include <list>
 #include <memory>
 
@@ -42,7 +43,7 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(client::ClientInterface & tg, log::LogContext lc);
+  MigrationReportPacker(cta::ArchiveMount *archiveMount, log::LogContext lc);
   
   ~MigrationReportPacker();
     
@@ -108,12 +109,17 @@ private:
      * recorded, we will transmit it to the client before signaling the
      * end of the session.
      */
-    virtual void reportFileErrors(MigrationReportPacker& reportPacker);
+    //virtual void reportFileErrors(MigrationReportPacker& reportPacker);
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
     const unsigned long m_checksum;
     const uint32_t m_blockId;
+    
+    /**
+     * The successful archive job to be pushed in the report packer queue and reported later
+     */
+    std::unique_ptr<cta::ArchiveJob> m_successfulArchiveJob;
   public:
     ReportSuccessful(const FileStruct& file,unsigned long checksum,
             u_int32_t blockId): 
@@ -151,6 +157,11 @@ private:
     const FileStruct m_migratedFile;
     const std::string m_error_msg;
     const int m_error_code;
+    
+    /**
+     * The failed archive job to be reported immediately
+     */
+    std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
@@ -196,6 +207,16 @@ private:
    * when a end of session (with error) is called
    */
   bool m_continue;
+  
+  /**
+   * The mount object used to send reports
+   */
+  cta::ArchiveMount * m_archiveMount;
+  
+  /**
+   * The successful archive jobs to be reported when flushing
+   */
+  std::queue<std::unique_ptr<cta::ArchiveJob> > m_successfulArchiveJobs;
 };
 
 }}}}

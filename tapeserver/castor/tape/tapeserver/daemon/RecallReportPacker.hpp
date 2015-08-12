@@ -28,6 +28,7 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/BlockingQueue.hpp"
+#include "scheduler/RetrieveMount.hpp"
 
 namespace castor {
 namespace tape {
@@ -42,7 +43,7 @@ public:
    * @param reportFilePeriod how often  do we report to the client
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(client::ClientInterface & tg, unsigned int reportFilePeriod, 
+  RecallReportPacker(cta::RetrieveMount *retrieveMount, unsigned int reportFilePeriod, 
     log::LogContext lc);
   
   virtual ~RecallReportPacker();
@@ -106,6 +107,11 @@ private:
     const FileStruct m_recalledFile;
     u_int32_t m_checksum;
     u_int64_t m_size;
+    
+    /**
+     * The successful retrieve job to be pushed in the report packer queue and reported later
+     */
+    std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
     ReportSuccessful(const FileStruct& file,u_int32_t checksum,
       u_int64_t size): 
@@ -116,6 +122,11 @@ private:
     const FileStruct m_recalledFile;
     const std::string m_error_msg;
     const int m_error_code;
+    
+    /**
+     * The failed retrieve job to be reported immediately
+     */
+    std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     Report(false),m_recalledFile(file),m_error_msg(msg),m_error_code(error_code){}
@@ -168,6 +179,16 @@ private:
    * the right end of the session  
    */
   bool m_errorHappened;
+  
+  /**
+   * The mount object used to send reports
+   */
+  cta::RetrieveMount * m_retrieveMount;
+  
+  /**
+   * The successful retrieve jobs to be reported when flushing
+   */
+  std::queue<std::unique_ptr<cta::RetrieveJob> > m_successfulRetrieveJobs;
 };
 
 }}}}
