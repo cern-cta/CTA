@@ -102,14 +102,6 @@ private:
   public:
     virtual ~Report(){}
     virtual void execute(MigrationReportPacker& packer)=0;
-  protected:
-    /**
-     * Utility function to be shared by both ReportEndofSession and
-     * ReportEndofSessionWithErrors: if an error for a given file is 
-     * recorded, we will transmit it to the client before signaling the
-     * end of the session.
-     */
-    //virtual void reportFileErrors(MigrationReportPacker& reportPacker);
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;

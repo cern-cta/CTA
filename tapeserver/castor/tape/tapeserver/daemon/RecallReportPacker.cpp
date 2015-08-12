@@ -103,11 +103,9 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
-  client::ClientInterface::RequestReport chrono;
     if(!parent.errorHappened()){
-//      parent.m_client.reportEndOfSession(chrono);
       parent.m_retrieveMount->complete();
-      parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
+      parent.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","success"));
         // We have a race condition here between the processing of this message by
@@ -119,9 +117,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
     else {
       const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
       parent.m_lc.log(LOG_ERR,msg);
-//      parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
       parent.m_retrieveMount->failed(cta::exception::Exception(msg));
-      parent.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","failure"));
         // We have a race condition here between the processing of this message by
