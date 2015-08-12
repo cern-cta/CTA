@@ -40,7 +40,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerNominal) {
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal");
   castor::log::LogContext lc(log);
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
@@ -63,7 +63,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerCumulated) {
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerCumulated");
   castor::log::LogContext lc(log);
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
@@ -90,7 +90,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadBadEnd) {
   castor::log::LogContext lc(log);
 
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
 
   tapegateway::FileToRecallStruct recalledFiled;
@@ -120,7 +120,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadGoodEnd) {
   castor::log::LogContext lc(log);
   
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
   
   
@@ -151,7 +151,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
   castor::log::LogContext lc(log);
   
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;
@@ -180,7 +180,7 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerFaillure) {
   castor::log::LogContext lc(log);
   
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),2,lc);
+  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
   rrp.startThreads();
   
   tapegateway::FileToRecallStruct recalledFiled;

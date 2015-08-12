@@ -39,12 +39,10 @@ class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
 public:
   /**
    * Constructor
-   * @param tg the client to whom we report the success/failures 
-   * @param reportFilePeriod how often  do we report to the client
+   * @param tg the client to whom we report the success/failures
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(cta::RetrieveMount *retrieveMount, unsigned int reportFilePeriod, 
-    log::LogContext lc);
+  RecallReportPacker(cta::RetrieveMount *retrieveMount, log::LogContext lc);
   
   virtual ~RecallReportPacker();
   
@@ -109,7 +107,7 @@ private:
     u_int64_t m_size;
     
     /**
-     * The successful retrieve job to be pushed in the report packer queue and reported later
+     * The successful retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
@@ -156,22 +154,12 @@ private:
     virtual void run();
   } m_workerThread;
   
-  /**
-   * Function periodically called to report the results to the client
-   */
-  void flush();
-  
   castor::server::Mutex m_producterProtection;
   
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
   castor::server::BlockingQueue<Report*> m_fifo;
-  
-  /**
-   How often do we report to the client
-   */
-  unsigned int m_reportFilePeriod;
   
   /**
    * Is set as true as soon as we process a reportFailedJob
@@ -184,11 +172,6 @@ private:
    * The mount object used to send reports
    */
   cta::RetrieveMount * m_retrieveMount;
-  
-  /**
-   * The successful retrieve jobs to be reported when flushing
-   */
-  std::queue<std::unique_ptr<cta::RetrieveJob> > m_successfulRetrieveJobs;
 };
 
 }}}}

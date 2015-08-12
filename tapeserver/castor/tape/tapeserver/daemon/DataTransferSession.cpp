@@ -137,9 +137,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    RecallReportPacker rrp(retrieveMount,
-        m_castorConf.bulkRequestRecallMaxFiles,
-        lc);
+    RecallReportPacker rrp(retrieveMount, lc);
     rrp.disableBulk(); //no bulk needed anymore
     RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
     

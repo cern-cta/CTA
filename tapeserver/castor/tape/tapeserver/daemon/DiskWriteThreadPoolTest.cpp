@@ -44,7 +44,7 @@ namespace unitTests{
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
     MockRecallReportPacker(cta::RetrieveMount *rm, castor::log::LogContext lc):
-    RecallReportPacker(rm,1,lc){}
+    RecallReportPacker(rm,lc){}
   };
   
   struct MockTaskInjector : public RecallTaskInjector{
