@@ -408,6 +408,10 @@ TEST_P(SchedulerDatabaseTest, getMount) {
   std::string lib="lib0";
   std::string drive="drive0";
   
+  decltype (db.getMountInfo()) mountCandidates;
+  
+  ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
+  
   ASSERT_NO_THROW(db.getNextMount(lib, drive));
 }
 

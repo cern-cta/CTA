@@ -162,6 +162,19 @@ message RetrieveJobPointer {
   required string address = 3102;
 }
 
+// ------------- Mount criteria and quota  -------------------------------------
+
+message MountCriteria {
+  required uint64 maxFilesBeforeMount = 3200;
+  required uint64 maxBytesBeforeMount = 3201;
+  required uint64 maxSecondsBeforeMount = 3202;
+}
+
+message MountQuota {
+  required uint32 quota = 3300;
+  required uint32 allowedoverhead = 3301;
+}
+
 // ------------- Tape pools  ---------------------------------------------------
 
 message TapePointer {
@@ -179,6 +192,12 @@ message TapePool {
   repeated ArchiveJobPointer orphanedarchivejobsnscreation = 4103;
   repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 4104;
   required uint64 ArchiveJobsTotalSize = 4105;
+  required uint64 oldestJobCreationTime = 4106;
+  required MountCriteria archivemountcriteria = 4107;
+  required MountCriteria retievemountcriteria = 4108;
+  required MountQuota archivemountquota = 4109;
+  required MountQuota retrievemountquota = 4110;
+  required uint64 priority = 4111;
 }
 
 // ------------- Tape ----------------------------------------------------------

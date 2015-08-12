@@ -64,6 +64,55 @@ void OStoreDB::assertAgentSet() {
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
+  //Allocate the structure to return.
+  std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo());
+  TapeMountDecisionInfo & tmdi=*privateRet;
+  // Get all the tape pools and tapes with queues
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    // Get the tape pool object
+    objectstore::TapePool tp(tpp->address, m_objectStore);
+    objectstore::ScopedSharedLock tpl(tp);
+    tp.fetch();
+    // If there are files queued, we create an entry for this tape pool in the
+    // mount candidates list.
+    if (tp.getJobsSummary().files) {
+      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+      tmdi.potentialMounts.back().type = cta::MountType::ARCHIVE;
+      tmdi.potentialMounts.back().bytesQueued = tp.getJobsSummary().bytes;
+      tmdi.potentialMounts.back().filesQueued = tp.getJobsSummary().files;      
+      tmdi.potentialMounts.back().oldestJobStartTime = tp.getJobsSummary().oldestJobStartTime;
+      
+      tmdi.potentialMounts.back().mountCriteria.archive.maxFilesQueued = 
+          tp.getMountCriteria().archive.maxFilesQueued;
+      tmdi.potentialMounts.back().mountCriteria.archive.maxBytesQueued = 
+          tp.getMountCriteria().archive.maxBytesQueued;
+      tmdi.potentialMounts.back().mountCriteria.archive.maxAge = 
+          tp.getMountCriteria().archive.maxAge;
+
+      tmdi.potentialMounts.back().mountCriteria.retrieve.maxFilesQueued = 
+          tp.getMountCriteria().retrieve.maxFilesQueued;
+      tmdi.potentialMounts.back().mountCriteria.retrieve.maxBytesQueued = 
+          tp.getMountCriteria().retrieve.maxBytesQueued;
+      tmdi.potentialMounts.back().mountCriteria.retrieve.maxAge = 
+          tp.getMountCriteria().retrieve.maxAge;
+
+      tmdi.potentialMounts.back().mountQuota.archive.quota = 
+          tp.getMountQuota().archive.quota;
+      tmdi.potentialMounts.back().mountQuota.archive.allowedOverhead = 
+          tp.getMountQuota().archive.allowedOverhead;
+
+      tmdi.potentialMounts.back().mountQuota.retieve.quota = 
+          tp.getMountQuota().retrieve.quota;
+      tmdi.potentialMounts.back().mountQuota.retieve.allowedOverhead = 
+          tp.getMountQuota().retrieve.allowedOverhead;      
+      tmdi.potentialMounts.back().logicalLibrary = "";
+      tmdi.potentialMounts.back().priority = tp.getPriority();
+    }
+  }
   throw NotImplemented("");
 }
 
@@ -284,7 +333,7 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
       tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), 
-        m_request.getRemoteFile().status.size);
+        m_request.getRemoteFile().status.size, m_request.getPriority());
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }
@@ -903,7 +952,10 @@ std::map<cta::Tape, std::list<RetrieveFromTapeCopyRequest> > OStoreDB::getRetrie
 void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
-}
+  }
+
+  OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
+ }
 
 
     

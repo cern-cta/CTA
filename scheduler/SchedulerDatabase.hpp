@@ -65,11 +65,56 @@ public:
   
   /**
    * A structure describing a potential mount with all the information allowing
-   * comparison between mounts
+   * comparison between mounts.
    */
+  struct MountCriteriaPerDirection {
+    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
+                              * before trigerring a mount */
+    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
+                           * a request */
+    uint64_t maxAge; /**< The maximum age for a request before trigerring
+                           * a request (in seconds) */
+  };
+  struct MountCriteria {
+    MountCriteriaPerDirection archive;
+    MountCriteriaPerDirection retrieve;
+  };
+  
+  struct MountQuotaPerDirection {
+    uint16_t quota;
+    uint16_t allowedOverhead;
+  };
+  struct MountQuota {
+    MountQuotaPerDirection archive;
+    MountQuotaPerDirection retieve;
+  };
   struct PotentialMount {
+    cta::MountType::Enum type; /**< Is this an archive or retireve? */
+    std::string vid; /**< The tape VID (for a retieve) */
+    std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
+    uint64_t priority; /**< The priority for the mount */
+    uint64_t filesQueued; /**< The number of files queued for this queue */
+    uint64_t bytesQueued; /**< The amount of data currently queued */
+    time_t oldestJobStartTime; /**< Creation time of oldest request */
+    MountCriteria mountCriteria; /**< The mount criteria collection */
+    MountQuota mountQuota; /**< The mount quota collection */     
+    std::string logicalLibrary; /**< The logical library (for a retrieve) */
+  };
+  
+  /**
+   * Information about the existing mounts.
+   */
+  struct ExistingMount {
     cta::MountType type;
-    // TODO: continue
+    std::string tapePool; 
+  };
+  
+  /**
+   * An entry (to be indexed by drive name (string) in a map) for the dedication
+   * lists of each drive.
+   */
+  struct DedicationEntry {
+    // TODO.
   };
   
   /**
@@ -78,12 +123,11 @@ public:
    * so that only one mount scheduling happens at a time.
    */
   struct TapeMountDecisionInfo {
-    /** All the potential mounts (tape pools and tapes) */
-    std::vector<PotentialMount> potentialMounts;
-    /** information about the existing mounts */
-    /** Destructor: releases the lock */
-    ~TapeMountDecisionInfo() {};
-    // TODO: continue
+    std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
+    std::vector<ExistingMount> existingMounts; /**< Existing mounts */
+    std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
+    /** Destructor: releases the global lock */
+    virtual ~TapeMountDecisionInfo() {};
   };
   
   /**

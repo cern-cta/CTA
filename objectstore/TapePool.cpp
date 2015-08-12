@@ -42,6 +42,24 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   m_payload.set_name(name);
   // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
+  // Set initial value for priority. This value does not matter as long as
+  // no job is queued. First job queueing will reset it. Same goes for oldest
+  // job creation time.
+  m_payload.set_priority(0);
+  m_payload.set_oldestjobcreationtime(0);
+  // Set the default values for the mount quotas and criteria.
+  // The defaults mount criteria are a safely high numbers.
+  m_payload.mutable_archivemountcriteria()->set_maxbytesbeforemount(10L*1000*1000*1000*1000);
+  m_payload.mutable_archivemountcriteria()->set_maxfilesbeforemount(100000);
+  m_payload.mutable_archivemountcriteria()->set_maxsecondsbeforemount(7*24*60*60);
+  m_payload.mutable_retievemountcriteria()->set_maxbytesbeforemount(10L*1000*1000*1000*1000);
+  m_payload.mutable_retievemountcriteria()->set_maxfilesbeforemount(100000);
+  m_payload.mutable_retievemountcriteria()->set_maxsecondsbeforemount(7*24*60*60);
+  // Default quotas are zero.
+  m_payload.mutable_archivemountquota()->set_quota(0);
+  m_payload.mutable_archivemountquota()->set_allowedoverhead(0);
+  m_payload.mutable_retrievemountquota()->set_quota(0);
+  m_payload.mutable_retrievemountquota()->set_allowedoverhead(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -200,8 +218,15 @@ std::string cta::objectstore::TapePool::getName() {
 
 void cta::objectstore::TapePool::addJob(const ArchiveToFileRequest::JobDump& job,
   const std::string & archiveToFileAddress, const std::string & path,
-  uint64_t size) {
+  uint64_t size, uint64_t priority) {
   checkPayloadWritable();
+  // The tape pool gets the highes priority of its jobs
+  if (m_payload.pendingarchivejobs_size()) {
+    if (priority > m_payload.priority())
+      m_payload.set_priority(priority);
+  } else {
+    m_payload.set_priority(priority);
+  }
   auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveToFileAddress);
   j->set_size(size);
@@ -302,3 +327,34 @@ bool cta::objectstore::TapePool::addOrphanedJobPendingNsDeletion(
   j->set_path(path);
   return true;
 }
+
+uint64_t cta::objectstore::TapePool::getPriority() {
+  checkPayloadReadable();
+  return m_payload.priority();
+}
+
+cta::objectstore::TapePool::MountCriteria 
+  cta::objectstore::TapePool::getMountCriteria() {
+  MountCriteria ret;
+  checkPayloadReadable();
+  ret.archive.maxAge = m_payload.archivemountcriteria().maxsecondsbeforemount();
+  ret.archive.maxBytesQueued = m_payload.archivemountcriteria().maxbytesbeforemount();
+  ret.archive.maxFilesQueued = m_payload.archivemountcriteria().maxfilesbeforemount();
+  ret.retrieve.maxAge = m_payload.retievemountcriteria().maxsecondsbeforemount();
+  ret.retrieve.maxBytesQueued = m_payload.retievemountcriteria().maxbytesbeforemount();
+  ret.retrieve.maxFilesQueued = m_payload.retievemountcriteria().maxfilesbeforemount();
+  return ret;
+}
+
+cta::objectstore::TapePool::MountQuota
+  cta::objectstore::TapePool::getMountQuota() {
+  checkPayloadReadable();
+  MountQuota ret;
+  ret.archive.quota = m_payload.archivemountquota().quota();
+  ret.archive.allowedOverhead = m_payload.archivemountquota().allowedoverhead();
+  ret.retrieve.quota = m_payload.retrievemountquota().quota();
+  ret.retrieve.allowedOverhead = m_payload.retrievemountquota().allowedoverhead();
+  return ret;
+}
+
+

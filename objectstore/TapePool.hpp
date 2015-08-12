@@ -67,26 +67,30 @@ public:
   // Archive jobs management ===================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,
     const std::string & archiveToFileAddress, const std::string & path,
-    uint64_t size);
+    uint64_t size, uint64_t priority);
   /// This version will check for existence of the job in the queue before
-  // returns true if a new job was inserted.
+  // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveToFileRequest::JobDump & job,
     const std::string & archiveToFileAddress, 
     const std::string & path, uint64_t size);
-  // This version will check 
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsCreation(const ArchiveToFileRequest::JobDump& job,
     const std::string& archiveToFileAddress, const std::string & path,
     uint64_t size);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsDeletion(const ArchiveToFileRequest::JobDump& job,
     const std::string& archiveToFileAddress,
     const std::string & path, uint64_t size);
   
-  class JobsSummary {
-  public:
+  struct JobsSummary {
     uint64_t files;
     uint64_t bytes;
+    time_t oldestJobStartTime;
   };
   JobsSummary getJobsSummary();
+  
   void removeJob(const std::string &archiveToFileAddress);
   class JobDump {
   public:
@@ -94,6 +98,32 @@ public:
     std::string address;
   };
   std::list<JobDump> dumpJobs();
+  
+  // Mount management ==========================================================
+  struct MountCriteriaPerDirection {
+    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
+                              * before trigerring a mount */
+    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
+                           * a request */
+    uint64_t maxAge; /**< The maximum age for a request before trigerring
+                           * a request (in seconds) */
+  };
+  struct MountCriteria {
+    MountCriteriaPerDirection archive;
+    MountCriteriaPerDirection retrieve;
+  };
+  MountCriteria getMountCriteria();
+  
+  struct MountQuotaPerDirection {
+    uint16_t quota;
+    uint16_t allowedOverhead;
+  };
+  struct MountQuota {
+    MountQuotaPerDirection archive;
+    MountQuotaPerDirection retrieve;
+  };
+  MountQuota getMountQuota();
+  uint64_t getPriority();
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

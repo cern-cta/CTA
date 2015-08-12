@@ -43,7 +43,12 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /* === Session handling =================================================== */
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo();
+  class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
+  public:
+    virtual ~TapeMountDecisionInfo();
+  private:
+  };
+  virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();
  
   virtual std::unique_ptr<SchedulerDatabase::TapeMount> getNextMount(const std::string &logicalLibrary,
     const std::string &driveName);
