@@ -115,6 +115,8 @@ public:
   TapeCopyInfo tapeCopyLocation; /**<The location of the source tape file. */
   PositioningMethod positioningMethod; /**< The desired positioning method. */
   RemotePath remoteFilePath; /** <The location of the destination file. */
+  std::string m_id;
+  uint64_t m_fileSize;
 }; // struct RetrieveJob
 
 } // namespace cta

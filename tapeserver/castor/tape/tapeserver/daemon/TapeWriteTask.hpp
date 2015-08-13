@@ -35,6 +35,7 @@
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/utils/Timer.hpp"
+#include "scheduler/ArchiveJob.hpp"
 
 namespace castor {
 namespace tape {
@@ -58,7 +59,7 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,
+  TapeWriteTask(int blockCount, cta::ArchiveJob *archiveJob,
           MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag);
   
   
@@ -141,7 +142,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  std::unique_ptr<tapegateway::FileToMigrateStruct> m_fileToMigrate;
+  std::unique_ptr<cta::ArchiveJob> m_archiveJob;
   
   /**
    * reference to the memory manager in use   

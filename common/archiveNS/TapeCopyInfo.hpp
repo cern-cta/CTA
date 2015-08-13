@@ -67,6 +67,11 @@ struct TapeCopyInfo {
    * The block identifier of the file.
    */
   uint64_t blockId;
+  
+  /**
+   * The hostname of the nameserver holding the file
+   */
+  std::string nsHostName;
 
 }; // struct TapeCopyLocation
 

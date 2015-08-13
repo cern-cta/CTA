@@ -59,6 +59,12 @@ std::string cta::RetrieveMount::getMountTransactionId() const throw(){
   return "UNKNOWN_MOUNTTRANSACTIONID_FOR_RETRIEVE_MOUNT";
 }
 
+std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
+  cta::exception::Exception ex("Not implemented");
+  throw ex;
+}
+
+
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------

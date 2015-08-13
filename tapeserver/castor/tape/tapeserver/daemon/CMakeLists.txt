@@ -28,7 +28,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 find_package( ZLIB REQUIRED )
 
-add_library(castorTapeServerDaemon 
+add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
@@ -76,7 +76,7 @@ add_library(castorTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(castorTapeServerDaemon castormessages castortapereactor ctascheduler ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore)
+target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore ctascheduler)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_library(castorTapeServerDaemonTestDummies
@@ -87,6 +87,7 @@ add_library(castorTapeServerDaemonTestDummies
   ../../tpcp/TapeFseqRange.cpp)
 
 add_executable(tapeserverd TapeDaemon.cpp)
+target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapegatewayprotocol castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
 
 # With the exception of shared-library plugins, the CASTOR rpms only install the
 # /usr/lib64/libcastor*.so symbolic links for libraries used by end-user
@@ -101,21 +102,3 @@ set_target_properties(castorserver PROPERTIES
 add_library(castortapegatewayprotocol SHARED IMPORTED)
 set_target_properties(castortapegatewayprotocol PROPERTIES
   IMPORTED_LOCATION /usr/lib64/libcastortapegatewayprotocol.so.2.1)
-
-target_link_libraries(tapeserverd
-  castorTapeServerDaemon
-  SCSI
-  System
-  Utils
-  File
-  TapeDrive
-  castorcommon
-  castorclient
-  castorlegacymsg
-  castorserver
-  castortapegatewayprotocol
-  castortapereactor
-  ${LIBCAP_LIB}
-  ${ZLIB_LIBRARIES}
-  castormessages
-  zmq)

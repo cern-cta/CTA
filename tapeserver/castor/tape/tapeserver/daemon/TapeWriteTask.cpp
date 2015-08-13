@@ -44,9 +44,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-  TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,
+  TapeWriteTask::TapeWriteTask(int blockCount, cta::ArchiveJob *archiveJob,
           MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag): 
-  m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),
+  m_archiveJob(archiveJob),m_memManager(mm), m_fifo(blockCount),
           m_blockCount(blockCount),m_errorFlag(errorFlag)
   {
     //register its fifo to the memory manager as a client in order to get mem block
@@ -56,7 +56,7 @@ namespace daemon {
 // fileSize
 //------------------------------------------------------------------------------
   uint64_t TapeWriteTask::fileSize() { 
-    return m_fileToMigrate->fileSize(); 
+    return m_archiveJob->archiveFile.size; 
   }
 //------------------------------------------------------------------------------
 // execute
@@ -69,13 +69,12 @@ namespace daemon {
     using castor::log::ScopedParamContainer;
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_fileToMigrate->nshost())
-          .add("NSFILEID",m_fileToMigrate->fileid())
-          .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
-          .add("fileSize",m_fileToMigrate->fileSize())
-          .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
-          .add("fSeq",m_fileToMigrate->fseq())
-          .add("path",m_fileToMigrate->path());
+    params.add("NSHOSTNAME", m_archiveJob->copyLocation.nsHostName)
+          .add("NSFILEID",m_archiveJob->copyLocation.fileId)
+          .add("lastKnownFilename",m_archiveJob->archiveFile.lastKnownPath)
+          .add("fileSize",m_archiveJob->archiveFile.size)
+          .add("fSeq",m_archiveJob->copyLocation.fSeq)
+          .add("path",m_archiveJob->remoteFile.path.getRaw());
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -91,11 +90,11 @@ namespace daemon {
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-    session.validateNextFSeq(m_fileToMigrate->fseq());
+    session.validateNextFSeq(m_archiveJob->copyLocation.fSeq);
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
-      watchdog.notifyBeginNewJob(*m_fileToMigrate);
+      watchdog.notifyBeginNewJob();
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -129,13 +128,13 @@ namespace daemon {
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
-      reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum,output->getBlockId());
+      // Record the fSeq in the tape session
+      session.reportWrittenFSeq(m_archiveJob->copyLocation.fSeq);
+      reportPacker.reportCompletedJob(std::move(m_archiveJob),ckSum,output->getBlockId());
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",lc);
-      // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_fileToMigrate->fseq());
     } 
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       // We end up there because another task has failed 
@@ -198,7 +197,7 @@ namespace daemon {
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
-      reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),errorCode);
+      reportPacker.reportFailedJob(std::move(m_archiveJob),e.getMessageValue(),errorCode);
   
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.
@@ -217,7 +216,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
     using namespace castor::log;
-    if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
+    if(m_archiveJob->archiveFile.fileId != static_cast<unsigned int>(mb->m_fileid)
             || memBlockId != mb->m_fileBlock
             || mb->isFailed()
             || mb->isCanceled()) {
@@ -268,7 +267,7 @@ namespace daemon {
      std::unique_ptr<tape::tapeFile::WriteFile> output;
      try{
        const uint64_t tapeBlockSize = 256*1024;
-       output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,tapeBlockSize));
+       output.reset(new tape::tapeFile::WriteFile(&session, *m_archiveJob,tapeBlockSize));
        lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
      }
      catch(const castor::exception::Exception & ex){
@@ -314,13 +313,12 @@ namespace daemon {
                 /1000/1000/m_taskStats.totalTime:0.0)
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
-           .add("fileSize",m_fileToMigrate->fileSize())
-           .add("NSHOST",m_fileToMigrate->nshost())
-           .add("NSFILEID",m_fileToMigrate->fileid())
-           .add("fSeq",m_fileToMigrate->fseq())
-           .add("fileTransactionId",m_fileToMigrate->fileTransactionId())
-           .add("lastKnownFilename",m_fileToMigrate->lastKnownFilename())
-           .add("lastModificationTime",m_fileToMigrate->lastModificationTime());
+           .add("fileSize",m_archiveJob->archiveFile.size)
+           .add("NSHOST",m_archiveJob->copyLocation.nsHostName)
+           .add("NSFILEID",m_archiveJob->copyLocation.fileId)
+           .add("fSeq",m_archiveJob->copyLocation.fSeq)
+           .add("lastKnownFilename",m_archiveJob->archiveFile.lastKnownPath)
+           .add("lastModificationTime",m_archiveJob->archiveFile.lastModificationTime);
      
      lc.log(level, msg);
 

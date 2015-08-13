@@ -49,9 +49,9 @@ public:
    * @param destination the task that will consume the memory blocks
    * @param mm The memory manager to get free block
    */
-  TapeReadTask(castor::tape::tapegateway::FileToRecallStruct * ftr,
+  TapeReadTask(cta::RetrieveJob *retrieveJob,
     DataConsumer & destination, RecallMemoryManager & mm): 
-    m_fileToRecall(ftr), m_fifo(destination), m_mm(mm) {}
+    m_retrieveJob(retrieveJob), m_fifo(destination), m_mm(mm) {}
     
     /**
      * @param rs the read session holding all we need to be able to read from the tape
@@ -69,12 +69,12 @@ public:
     
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_fileToRecall->nshost())
-          .add("NSFILEID", m_fileToRecall->fileid())
-          .add("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall))
-          .add("fSeq", m_fileToRecall->fseq())
-          .add("fileTransactionId", m_fileToRecall->fileTransactionId())
-          .add("path", m_fileToRecall->path());
+    params.add("NSHOSTNAME", m_retrieveJob->tapeCopyLocation.nsHostName)
+          .add("NSFILEID", m_retrieveJob->tapeCopyLocation.fileId)
+          .add("BlockId", m_retrieveJob->tapeCopyLocation.blockId)
+          .add("fSeq", m_retrieveJob->tapeCopyLocation.fseq)
+          .add("fileTransactionId", m_retrieveJob->m_id)
+          .add("path", m_retrieveJob->tapeCopyLocation.filePath);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -102,7 +102,7 @@ public:
 
       lc.log(LOG_INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
-      watchdog.notifyBeginNewJob(*m_fileToRecall);
+      watchdog.notifyBeginNewJob();
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       currentErrorToCount = "Error_tapeReadData";
       while (stillReading) {
@@ -110,9 +110,9 @@ public:
         mb=m_mm.getFreeBlock();
         localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
         
-        mb->m_fSeq = m_fileToRecall->fseq();
+        mb->m_fSeq = m_retrieveJob->tapeCopyLocation.fseq;
         mb->m_fileBlock = fileBlock++;
-        mb->m_fileid = m_fileToRecall->fileid();
+        mb->m_fileid = m_retrieveJob->tapeCopyLocation.fileId;
         mb->m_tapeFileBlock = tapeBlock;
         mb->m_tapeBlockSize = rf->getBlockSize();
         try {
@@ -191,8 +191,8 @@ public:
    */
   void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
-    mb->m_fSeq = m_fileToRecall->fseq();
-    mb->m_fileid = m_fileToRecall->fileid();
+    mb->m_fSeq = m_retrieveJob->tapeCopyLocation.fseq;
+    mb->m_fileid = m_retrieveJob->tapeCopyLocation.fileId;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
      m_fifo.pushDataBlock(mb);
@@ -208,8 +208,8 @@ private:
     // fill it up
     if (!mb) {
       mb=m_mm.getFreeBlock();
-      mb->m_fSeq = m_fileToRecall->fseq();
-      mb->m_fileid = m_fileToRecall->fileid();
+      mb->m_fSeq = m_retrieveJob->tapeCopyLocation.fseq;
+      mb->m_fileid = m_retrieveJob->tapeCopyLocation.fileId;
     }
     //mark the block failed and push it (plus signal the end)
      mb->markAsFailed(msg,code);
@@ -230,7 +230,7 @@ private:
 
     std::unique_ptr<castor::tape::tapeFile::ReadFile> rf;
     try {
-      rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_fileToRecall));
+      rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_retrieveJob));
       lc.log(LOG_DEBUG, "Successfully opened the tape file");
     } catch (castor::exception::Exception & ex) {
       // Log the error
@@ -245,7 +245,7 @@ private:
   /**
    * All we need to know about the file we are recalling
    */
-  std::unique_ptr<castor::tape::tapegateway::FileToRecallStruct> m_fileToRecall;
+  std::unique_ptr<cta::RetrieveJob> m_retrieveJob;
   
   /**
    * The task (seen as a Y) that will consume all the blocks we read

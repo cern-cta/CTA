@@ -36,7 +36,7 @@ cta::RetrieveJob::RetrieveJob(
   const uint32_t copyNb,
   const std::string &remoteFile,
   const uint64_t castorNsFileId):
-  tapeCopyLocation(tapeCopyLocation) {
+  tapeCopyLocation(tapeCopyLocation), m_id(id) {
 }
 
 //------------------------------------------------------------------------------

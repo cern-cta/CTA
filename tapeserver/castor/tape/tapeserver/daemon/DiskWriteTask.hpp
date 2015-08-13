@@ -58,7 +58,8 @@ public:
    * @param file: All we need to know about the file we  are recalling
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm);
+  DiskWriteTask(cta::RetrieveJob *retrieveJob, RecallMemoryManager& mm);
+  
   /**
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
@@ -115,10 +116,11 @@ private:
    * The fifo containing the memory blocks holding data to be written to disk
    */
   castor::server::BlockingQueue<MemBlock *> m_fifo;
+  
   /** 
    * All we need to know about the file we are currently recalling
    */
-  std::unique_ptr<tape::tapegateway::FileToRecallStruct> m_recallingFile;
+  std::unique_ptr<cta::RetrieveJob> m_retrieveJob;
     
   /**
    * Reference to the Memory Manager in use

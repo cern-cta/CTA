@@ -61,6 +61,7 @@ private:
   const std::string &tapePoolName,
   const ArchiveFileInfo & archiveFile,
   const RemotePathAndStatus &remoteFile,
+  const TapeCopyLocationAndStatus &copyLocation,
   const uint16_t copyNb);
 
 public:
@@ -136,10 +137,11 @@ public:
                  * are recording this tape copy. */
   const RemotePathAndStatus remoteFile; 
                 /**< The size of the file to be archived in bytes. */
+  
+  TapeCopyLocationAndStatus copyLocation;
   const uint16_t copyNumber; 
                 /**< The copy number for this tape copy */
   CTA_GENERATE_EXCEPTION_CLASS(LocationNotSet);
-  const TapeCopyLocationAndStatus & getTapeCopyLocationAndStatus();
                 /**< Accessor to the tape location status */
 
 }; // class ArchiveJob

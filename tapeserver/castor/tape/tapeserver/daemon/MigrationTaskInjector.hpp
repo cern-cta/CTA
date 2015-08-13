@@ -32,8 +32,9 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
-
 #include "castor/server/AtomicCounter.hpp"
+#include "scheduler/ArchiveMount.hpp"
+
 namespace castor{
 namespace tape{
 namespace tapeserver{
@@ -62,7 +63,7 @@ public:
    */
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskReadThreadPool & diskReader,
-        TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
+        TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,cta::ArchiveMount &archiveMount,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   /**
@@ -126,7 +127,7 @@ private:
    * Create all the tape-read and write-disk tasks for set of files to retrieve
    * @param jobs the list of FileToMigrateStructs we have to transform in a pair of task
    */
-  void injectBulkMigrations(const std::vector<castor::tape::tapegateway::FileToMigrateStruct*>& jobs);
+  void injectBulkMigrations(const std::vector<cta::ArchiveJob *>& jobs);
   
   /*Compute how many blocks are needed for a file of fileSize bytes*/
   size_t howManyBlocksNeeded(size_t fileSize,size_t blockCapacity){
@@ -189,7 +190,7 @@ private:
   DiskReadThreadPool & m_diskReader;
   
   /// the client who is sending us jobs
-  client::ClientInterface& m_client;
+  cta::ArchiveMount &m_archiveMount;
   
   /**
    * utility member to log some pieces of information

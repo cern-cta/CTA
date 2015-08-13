@@ -30,6 +30,8 @@
 //Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
+#include "scheduler/RetrieveJob.hpp"
+#include "scheduler/RetrieveMount.hpp"
 
 namespace castor{
 namespace tape{
@@ -70,7 +72,7 @@ public:
   */
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
+        DiskWriteThreadPool & diskWriter,cta::RetrieveMount &retrieveMount,
         uint64_t filesPerRequest, uint64_t bytesPerRequest,castor::log::LogContext lc);
 
   virtual ~RecallTaskInjector();
@@ -134,7 +136,7 @@ private:
    * Create all the tape-read and write-disk tasks for set of files to retrieve
    * @param jobs
    */
-  void injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs);
+  void injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs);
 
   /**
    * A request of files to recall. We request EITHER
@@ -185,7 +187,7 @@ private:
   DiskWriteThreadPool & m_diskWriter;
   
   /// the client who is sending us jobs
-  client::ClientInterface& m_client;
+  cta::RetrieveMount &m_retrieveMount;
   
   /**
    * utility member to log some pieces of information

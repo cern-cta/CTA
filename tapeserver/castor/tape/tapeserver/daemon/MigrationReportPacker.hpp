@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/ArchiveMount.hpp"
+#include "scheduler/ArchiveJob.hpp"
 #include <list>
 #include <memory>
 
@@ -56,7 +57,7 @@ public:
    * of the file. This is 0 (instead of 1) for the first file on the tape (aka
    * fseq = 1).
    */
-  void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile,
+  void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
   u_int32_t checksum, u_int32_t blockId);
   
   /**
@@ -66,7 +67,7 @@ public:
    * @param msg the error message to the failure 
    * @param error_code the error code related to the failure 
    */
-  void reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,const std::string& msg,int error_code);
+  void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,const std::string& msg,int error_code);
      
    /**
     * Create into the MigrationReportPacker a report for the signaling a flusing on tape
@@ -104,7 +105,6 @@ private:
     virtual void execute(MigrationReportPacker& packer)=0;
   };
   class ReportSuccessful :  public Report {
-    const FileStruct m_migratedFile;
     const unsigned long m_checksum;
     const uint32_t m_blockId;
     
@@ -113,9 +113,8 @@ private:
      */
     std::unique_ptr<cta::ArchiveJob> m_successfulArchiveJob;
   public:
-    ReportSuccessful(const FileStruct& file,unsigned long checksum,
-            u_int32_t blockId): 
-    m_migratedFile(file),m_checksum(checksum),m_blockId(blockId){}
+    ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, unsigned long checksum, u_int32_t blockId): 
+    m_checksum(checksum),m_blockId(blockId), m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
     virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportFlush : public Report {
@@ -146,7 +145,6 @@ private:
       void execute(MigrationReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const FileStruct m_migratedFile;
     const std::string m_error_msg;
     const int m_error_code;
     
@@ -155,8 +153,8 @@ private:
      */
     std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
   public:
-    ReportError(const FileStruct& file,std::string msg,int error_code):
-    m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
+    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string msg,int error_code):
+    m_error_msg(msg), m_error_code(error_code), m_failedArchiveJob(std::move(failedArchiveJob)){}
     
     virtual void execute(MigrationReportPacker& reportPacker);
   };

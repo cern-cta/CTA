@@ -28,6 +28,8 @@
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "scheduler/RetrieveJob.hpp"
 
 #include <string>
 
@@ -106,7 +108,7 @@ namespace castor {
          * @param volId: the volume id of the tape in the drive
          */
         static void checkHDR1(const HDR1 &hdr1,
-        const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
+        const cta::RetrieveJob &filetoRecall,
         const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo) ;
         
         /**
@@ -115,7 +117,7 @@ namespace castor {
          * @param fileToRecall: the Information structure of the current file
          */
         static void checkUHL1(const UHL1 &uhl1, 
-          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          const cta::RetrieveJob &fileToRecall)
           ;
         
         /**
@@ -151,14 +153,6 @@ namespace castor {
           const uint64_t value, const headerBase base = decimal) ;
       };
       
-      /**
-       * namespace containing helper functions that turn block id byte
-       * collections from fileToRecallStruct into uint32_t
-       */
-      namespace BlockId {
-         uint32_t extract(const castor::tape::tapegateway::FileToRecallStruct &);
-         void set(castor::tape::tapegateway::FileToRecallStruct &, uint32_t blockId);
-      } 
       /**
        * Class that labels a tape.  This class assumes the tape to be labeled is
        * already mounted and rewound.
@@ -286,7 +280,7 @@ namespace castor {
          * @param positioningMode: method used when positioning (see the PositioningMode enum)
          */
         ReadFile(ReadSession *rs, 
-          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          const cta::RetrieveJob &fileToRecall)
           ;
         
         /**
@@ -311,8 +305,8 @@ namespace castor {
         size_t read(void *data, const size_t size) ;
       
       private:
-        void positionByFseq(const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) ;
-        void positionByBlockID(const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) ;
+        void positionByFseq(const cta::RetrieveJob &fileToRecall) ;
+        void positionByBlockID(const cta::RetrieveJob &fileToRecall) ;
         /**
          * Positions the tape for reading the file. Depending on the previous activity,
          * it is the duty of this function to determine how to best move to the next
@@ -321,7 +315,7 @@ namespace castor {
          * @param fileInfo: all relevant information passed by the stager about the file.
          */
         void position(
-          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          const cta::RetrieveJob &fileToRecall)
           ;
 
         /**
@@ -344,7 +338,7 @@ namespace castor {
         /**
          * What kind of command we use to position ourself on the tape (fseq or blockid)
          */
-        castor::tape::tapegateway::PositionCommandCode m_positionCommandCode;
+        cta::RetrieveJob::PositioningMethod m_positionCommandCode;
       };
 
       /**
@@ -505,7 +499,7 @@ namespace castor {
          * @param blockSize: size of blocks we want to use in writing
          */
         WriteFile(WriteSession *ws, 
-          const castor::tape::tapegateway::FileToMigrateStruct & fileToMigrate,
+          const cta::ArchiveJob & fileToMigrate,
           const size_t blockSize) ;
         
         /**
@@ -561,7 +555,7 @@ namespace castor {
          * Information that we have about the current file to be written and that
          * will be used to write appropriate headers and trailers
          */
-        const castor::tape::tapegateway::FileToMigrateStruct & m_fileToMigrate;
+        const cta::ArchiveJob & m_fileToMigrate;
         
         /**
          * set to true whenever the constructor is called and to false when close() is called         

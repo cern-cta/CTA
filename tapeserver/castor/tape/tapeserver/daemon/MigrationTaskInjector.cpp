@@ -24,22 +24,6 @@
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
-//#include "log.h"
-
-namespace{
-  /*
-   * function to set a NULL the owning FilesToMigrateList  of a FileToMigrateStruct
-   * Indeed, a clone of a structure will only do a shallow copy (sic).
-   * Otherwise at the second destruction the object will try to remove itself 
-   * from the owning list and then boom !
-   * @param ptr a pointer to an object to change
-   * @return the parameter ptr 
-   */
-  castor::tape::tapegateway::FileToMigrateStruct* removeOwningList(castor::tape::tapegateway::FileToMigrateStruct* ptr){
-    ptr->setFilesToMigrateList(0);
-    return ptr;
-  }
-}
 
 using castor::log::LogContext;
 using castor::log::Param;
@@ -54,10 +38,10 @@ namespace daemon {
 //------------------------------------------------------------------------------
   MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskReadThreadPool & diskReader,
-          TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
+          TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,cta::ArchiveMount &archiveMount,
            uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
-          m_diskReader(diskReader),m_client(client),m_lc(lc),
+          m_diskReader(diskReader),m_archiveMount(archiveMount),m_lc(lc),
           m_maxFiles(maxFiles),  m_maxBytes(byteSizeThreshold)
   {
     
@@ -67,29 +51,23 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //injectBulkMigrations
 //------------------------------------------------------------------------------
-  void MigrationTaskInjector::injectBulkMigrations(
-  const std::vector<tapegateway::FileToMigrateStruct*>& jobs){
+  void MigrationTaskInjector::injectBulkMigrations(const std::vector<cta::ArchiveJob *>& jobs){
 
     const u_signed64 blockCapacity = m_memManager.blockCapacity();
-    for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator it= jobs.begin();it!=jobs.end();++it){
-      const u_signed64 fileSize = (*it)->fileSize();
+    for(auto it= jobs.begin();it!=jobs.end();++it){
+      const u_signed64 fileSize = (*it)->archiveFile.size;
       LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->nshost())),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->fseq())),
-      LogContext::ScopedParam(m_lc, Param("path", (*it)->path()))
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->copyLocation.nsHostName)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->copyLocation.fileId)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->copyLocation.fSeq)),
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->archiveFile.lastKnownPath))
       };
-      tape::utils::suppresUnusedVariable(sp);
-      
+      tape::utils::suppresUnusedVariable(sp);      
       
       const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
-      std::unique_ptr<TapeWriteTask> twt(
-        new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager,m_errorFlag)
-      );
-      std::unique_ptr<DiskReadTask> drt(
-        new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock,m_errorFlag)
-      );
+      std::unique_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock, *it, m_memManager, m_errorFlag));
+      std::unique_ptr<DiskReadTask> drt(new DiskReadTask(*twt, *it, neededBlock, m_errorFlag));
       
       m_tapeWriter.push(twt.release());
       m_diskReader.push(drt.release());
@@ -125,15 +103,20 @@ namespace daemon {
 //synchronousInjection
 //------------------------------------------------------------------------------ 
   bool MigrationTaskInjector::synchronousInjection() {
-    client::ClientProxy::RequestReport reqReport;
-    std::unique_ptr<tapegateway::FilesToMigrateList>
-      filesToMigrateList;
+    std::vector<cta::ArchiveJob *> jobs;
     try {
-      filesToMigrateList.reset(m_client.getFilesToMigrate(m_maxFiles, 
-        m_maxBytes,reqReport));
+      uint64_t files=0;
+      uint64_t bytes=0;
+      while(files<=m_maxFiles && bytes<=m_maxBytes) {
+        std::unique_ptr<cta::ArchiveJob> job=m_archiveMount.getNextJob();
+        if(!job.get()) break;
+        jobs.push_back(job.release());
+        files++;
+        bytes+=job->archiveFile.size;
+      }
     } catch (castor::exception::Exception & ex) {
       castor::log::ScopedParamContainer scoped(m_lc);
-      scoped.add("transactionId", reqReport.transactionId)
+      scoped.add("transactionId", m_archiveMount.getMountTransactionId())
             .add("byteSizeThreshold",m_maxBytes)
             .add("maxFiles", m_maxFiles)
             .add("message", ex.getMessageValue());
@@ -141,16 +124,13 @@ namespace daemon {
       return false;
     }
     castor::log::ScopedParamContainer scoped(m_lc); 
-    scoped.add("sendRecvDuration", reqReport.sendRecvDuration)
-          .add("byteSizeThreshold",m_maxBytes)
-          .add("transactionId", reqReport.transactionId)
+    scoped.add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles);
-    if(NULL == filesToMigrateList.get()) {
+    if(jobs.empty()) {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
     } else {
-      std::vector<tapegateway::FileToMigrateStruct*>& jobs=filesToMigrateList->filesToMigrate();
-      m_firstFseqToWrite = jobs.front()->fseq();
+      m_firstFseqToWrite = jobs.front()->copyLocation.fSeq;
       injectBulkMigrations(jobs);
       return true;
     }
@@ -184,12 +164,19 @@ namespace daemon {
           throw castor::tape::tapeserver::daemon::ErrorFlag();
         }
         Request req = m_parent.m_queue.pop();
-        client::ClientProxy::RequestReport reqReport;
-        std::unique_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(
-          m_parent.m_client.getFilesToMigrate(req.filesRequested, req.bytesRequested,reqReport)
-        );
+        std::vector<cta::ArchiveJob *> jobs;
+        
+        uint64_t files=0;
+        uint64_t bytes=0;
+        while(files<=req.filesRequested && bytes<=req.bytesRequested) {
+          std::unique_ptr<cta::ArchiveJob> job=m_parent.m_archiveMount.getNextJob();
+          if(!job.get()) break;
+          jobs.push_back(job.release());
+          files++;
+          bytes+=job->archiveFile.size;
+        }
 
-        if(NULL==filesToMigrateList.get()){
+        if(jobs.empty()){
           if (req.lastCall) {
             m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.");
             m_parent.signalEndDataMovement();
@@ -198,27 +185,18 @@ namespace daemon {
             m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
           }
         } else {
-          // Accumulate the content of the work to do, so we stop if there is
-          // than half what we asked for.
-          uint64_t totalSize = 0;
-          uint64_t filesCount = 0;
-          for(std::vector<tapegateway::FileToMigrateStruct*>::iterator f = 
-              filesToMigrateList->filesToMigrate().begin();
-              f != filesToMigrateList->filesToMigrate().end(); f++) {
-            totalSize += (*f)->fileSize();
-            filesCount++;
-          }
+          
           // Inject the tasks
-          m_parent.injectBulkMigrations(filesToMigrateList->filesToMigrate());
+          m_parent.injectBulkMigrations(jobs);
           // Decide on continuation
-          if(filesCount < req.filesRequested / 2 && totalSize < req.bytesRequested) {
+          if(files < req.filesRequested / 2 && bytes < req.bytesRequested) {
             // The client starts to dribble files at a low rate. Better finish
             // the session now, so we get a clean batch on a later mount.
             log::ScopedParamContainer params(m_parent.m_lc);
             params.add("filesRequested", req.filesRequested)
                   .add("bytesRequested", req.bytesRequested)
-                  .add("filesReceived", filesCount)
-                  .add("bytesReceived", totalSize);
+                  .add("filesReceived", files)
+                  .add("bytesReceived", bytes);
             m_parent.m_lc.log(LOG_INFO, "Got less than half the requested work to do: triggering the end of session.");
             m_parent.signalEndDataMovement();
             break;

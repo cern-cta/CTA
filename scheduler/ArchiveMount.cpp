@@ -58,6 +58,11 @@ std::string cta::ArchiveMount::getDensity() const throw() {
 std::string cta::ArchiveMount::getMountTransactionId() const throw(){
   return "UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT";
 }
+
+std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob(){
+  cta::exception::Exception ex("Not implemented");
+  throw ex;
+}
     
 //------------------------------------------------------------------------------
 // complete

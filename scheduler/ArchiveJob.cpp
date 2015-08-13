@@ -31,10 +31,12 @@ cta::ArchiveJob::ArchiveJob(
   const std::string &tapePoolName,
   const ArchiveFileInfo & archiveFile,
   const RemotePathAndStatus &remoteFile,
+  const TapeCopyLocationAndStatus &copyLocation,
   const uint16_t copyNb):
   tapePoolName(tapePoolName),
   archiveFile(archiveFile),
   remoteFile(remoteFile),
+  copyLocation(copyLocation),
   copyNumber(copyNb) {}
 
 //------------------------------------------------------------------------------

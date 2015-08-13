@@ -62,18 +62,18 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-const tapegateway::FileToMigrateStruct& migratedFile,u_int32_t checksum,
+std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,u_int32_t checksum,
     u_int32_t blockId) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum,blockId));
+  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob),checksum,blockId));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,
+void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const std::string& msg,int error_code){
-  std::unique_ptr<Report> rep(new ReportError(migratedFile,msg,error_code));
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),msg,error_code));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }

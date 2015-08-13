@@ -21,9 +21,9 @@
 namespace cta {
   ArchiveFileInfo::ArchiveFileInfo(
     const std::string& lastKnownPath, uint64_t fileId, uint64_t size, 
-    const Checksum & checksum):
+    const Checksum & checksum, const time_t lastModificationTime):
     lastKnownPath(lastKnownPath),
     fileId(fileId),
     size(size),
-    checksum(checksum) {}
+    checksum(checksum), lastModificationTime(lastModificationTime) {}
 }

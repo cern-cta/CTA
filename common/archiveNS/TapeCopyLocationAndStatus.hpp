@@ -50,6 +50,11 @@ struct TapeCopyLocationAndStatus {
   uint64_t size;    /**< The tape copy's size */
   uint64_t fileId;  /**< The file ID as recorded in the tape copy's header */
   Checksum checksum;/**< The tape copy's checksum */
+  
+  /**
+   * The hostname of the nameserver holding the file
+   */
+  std::string nsHostName;
 }; // class TapeCopyLocationAndStatus
 
 } // namespace cta

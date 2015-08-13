@@ -28,7 +28,10 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/BlockingQueue.hpp"
+#include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
+
+#include <memory>
 
 namespace castor {
 namespace tape {
@@ -52,8 +55,7 @@ public:
    * @param migratedFile the file successfully migrated
    * @param checksum the checksum the DWT has computed for the file 
    */
-  virtual void reportCompletedJob(const FileStruct& recalledFile,
-  u_int32_t checksum, u_int64_t size);
+  virtual void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, u_int32_t checksum, u_int64_t size);
   
   /**
    * Create into the MigrationReportPacker a report for the failed migration
@@ -62,7 +64,7 @@ public:
    * @param msg the message error with the failure 
    * @param error_code the error code with the failure 
    */
-  virtual void reportFailedJob(const FileStruct & recalledFile,const std::string& msg,int error_code);
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::string& msg,int error_code);
        
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -102,7 +104,6 @@ private:
     bool goingToEnd() const {return m_endNear;};
   };
   class ReportSuccessful :  public Report {
-    const FileStruct m_recalledFile;
     u_int32_t m_checksum;
     u_int64_t m_size;
     
@@ -111,13 +112,12 @@ private:
      */
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
-    ReportSuccessful(const FileStruct& file,u_int32_t checksum,
+    ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,u_int32_t checksum,
       u_int64_t size): 
-    Report(false),m_recalledFile(file),m_checksum(checksum),m_size(size){}
+    Report(false),m_checksum(checksum),m_size(size), m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
     virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const FileStruct m_recalledFile;
     const std::string m_error_msg;
     const int m_error_code;
     
@@ -126,8 +126,8 @@ private:
      */
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
-    ReportError(const FileStruct& file,std::string msg,int error_code):
-    Report(false),m_recalledFile(file),m_error_msg(msg),m_error_code(error_code){}
+    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,std::string msg,int error_code):
+    Report(false),m_error_msg(msg),m_error_code(error_code), m_failedRetrieveJob(std::move(failedRetrieveJob)) {}
 
     virtual void execute(RecallReportPacker& reportPacker);
   };

@@ -46,7 +46,7 @@ public:
    * @param numberOfBlock number of memory block we need read the whole file
    */
   DiskReadTask(DataConsumer & destination, 
-          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
+          cta::ArchiveJob *archiveJob,size_t numberOfBlock,
           castor::server::AtomicFlag& errorFlag);
   
   void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
@@ -96,7 +96,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  std::unique_ptr<tape::tapegateway::FileToMigrateStruct> m_migratedFile;
+  std::unique_ptr<cta::ArchiveJob> m_archiveJob;
   
   /**
    * The number of memory block we will need to read the whole file

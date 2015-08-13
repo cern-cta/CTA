@@ -61,18 +61,18 @@ RecallReportPacker::~RecallReportPacker(){
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,
+void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,
   u_int32_t checksum, u_int64_t size){
-  std::unique_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum,size));
+  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob),checksum,size));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------  
-void RecallReportPacker::reportFailedJob(const FileStruct & recalledFile
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob
 ,const std::string& msg,int error_code){
-  std::unique_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob),msg,error_code));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }

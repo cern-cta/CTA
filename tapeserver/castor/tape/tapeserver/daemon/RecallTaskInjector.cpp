@@ -30,27 +30,14 @@
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "log.h"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "log.h"
+#include "scheduler/RetrieveJob.hpp"
+
 #include <stdint.h>
 
 using castor::log::LogContext;
 using castor::log::Param;
-
-namespace{
-  /**
-   *  function to set a NULL the owning FilesToMigrateList  of a FileToMigrateStruct
-   *   Indeed, a clone of a structure will only do a shallow copy (sic).
-   *   Otherwise at the second destruction the object will try to remove itself 
-   *   from the owning list and then boom !
-   * @param ptr a pointer to an object to change
-   * @return the parameter ptr 
-   */
-  castor::tape::tapegateway::FileToRecallStruct* removeOwningList(castor::tape::tapegateway::FileToRecallStruct* ptr){
-    ptr->setFilesToRecallList(NULL);
-    return ptr;
-  }
-}
 
 namespace castor{
 namespace tape{
@@ -60,11 +47,11 @@ namespace daemon {
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,
-        client::ClientInterface& client,
+        cta::RetrieveMount &retrieveMount,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
+        m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
         m_clientType(tapegateway::READ_TP)
 {}
 //------------------------------------------------------------------------------
@@ -103,36 +90,28 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 //injectBulkRecalls
 //------------------------------------------------------------------------------
-void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs) {
-  for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
+void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs) {
+  for (auto it = jobs.begin(); it != jobs.end(); ++it) {
     
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // When the client is a tape gateway, we should *always* position by block id.
     if (tapegateway::TAPE_GATEWAY == m_clientType) {
-      (*it)->setPositionCommandCode(tapegateway::TPPOSIT_BLKID);
+      (*it)->positioningMethod=cta::RetrieveJob::PositioningMethod::ByBlock;
     }
 
     LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->nshost())),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->fseq())),
-      LogContext::ScopedParam(m_lc, Param("blockID", blockID(**it))),
-      LogContext::ScopedParam(m_lc, Param("path", (*it)->path()))
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopyLocation.nsHostName)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->tapeCopyLocation.fileId)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopyLocation.fseq)),
+      LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeCopyLocation.blockId)),
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->tapeCopyLocation.filePath))
     };
     tape::utils::suppresUnusedVariable(sp);
     
     m_lc.log(LOG_INFO, "Recall task created");
     
-    DiskWriteTask * dwt = 
-      new DiskWriteTask(
-        removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
-        m_memManager);
-    TapeReadTask * trt = 
-      new TapeReadTask(
-        removeOwningList(
-          dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
-          *dwt,
-          m_memManager);
+    DiskWriteTask * dwt = new DiskWriteTask(*it, m_memManager);
+    TapeReadTask * trt = new TapeReadTask(*it, *dwt, m_memManager);
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
@@ -146,15 +125,21 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousInjection()
 {
-  client::ClientProxy::RequestReport reqReport;  
-
-  std::unique_ptr<castor::tape::tapegateway::FilesToRecallList> 
-    filesToRecallList;
+  std::vector<cta::RetrieveJob *> jobs;
+  
   try {
-    filesToRecallList.reset(m_client.getFilesToRecall(m_maxFiles,m_maxBytes,reqReport));
+    uint64_t files=0;
+    uint64_t bytes=0;
+    while(files<=m_maxFiles && bytes<=m_maxBytes) {
+      std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob();
+      if(!job.get()) break;
+      jobs.push_back(job.release());
+      files++;
+      bytes+=job->m_fileSize;
+    }
   } catch (castor::exception::Exception & ex) {
     castor::log::ScopedParamContainer scoped(m_lc);
-    scoped.add("transactionId", reqReport.transactionId)
+    scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
           .add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles)
           .add("message", ex.getMessageValue());
@@ -162,16 +147,13 @@ bool RecallTaskInjector::synchronousInjection()
     return false;
   }
   castor::log::ScopedParamContainer scoped(m_lc); 
-  scoped.add("sendRecvDuration", reqReport.sendRecvDuration)
-        .add("byteSizeThreshold",m_maxBytes)
-        .add("transactionId", reqReport.transactionId)
+  scoped.add("byteSizeThreshold",m_maxBytes)
         .add("maxFiles", m_maxFiles);
-  if(NULL==filesToRecallList.get()) { 
+  if(jobs.empty()) { 
     m_lc.log(LOG_ERR, "No files to recall: empty mount");
     return false;
   }
   else {
-    std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
     injectBulkRecalls(jobs);
     return true;
   }
@@ -212,14 +194,21 @@ void RecallTaskInjector::WorkerThread::run()
         break;
       }
       m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
-      client::ClientProxy::RequestReport reqReport;
-      std::unique_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.filesRequested, req.bytesRequested,reqReport));
+      std::vector<cta::RetrieveJob *> jobs;
       
-      LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", reqReport.transactionId));
-      LogContext::ScopedParam sp02(m_parent.m_lc, Param("connectDuration", reqReport.connectDuration));
-      LogContext::ScopedParam sp03(m_parent.m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+      uint64_t files=0;
+      uint64_t bytes=0;
+      while(files<=req.filesRequested && bytes<=req.bytesRequested) {
+        std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob();
+        if(!job.get()) break;
+        jobs.push_back(job.release());
+        files++;
+        bytes+=job->m_fileSize;
+      }
       
-      if (NULL == filesToRecallList.get()) {
+      LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
+      
+      if (jobs.empty()) {
         if (req.lastCall) {
           m_parent.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.");
           m_parent.signalEndDataMovement();
@@ -228,7 +217,6 @@ void RecallTaskInjector::WorkerThread::run()
           m_parent.m_lc.log(LOG_DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
         }
       } else {
-        std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
         m_parent.injectBulkRecalls(jobs);
       }
     } // end of while(1)

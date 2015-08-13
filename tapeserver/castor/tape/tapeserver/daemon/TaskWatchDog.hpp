@@ -374,9 +374,9 @@ protected:
 class RecallWatchDog: public TaskWatchDog {
 private:
   /** Our file type */
-  typedef castor::tape::tapegateway::FileToRecallStruct FileStruct;
+  //typedef cta::RetrieveJob FileStruct;
   /** The file we are working on */
-  FileStruct m_file;
+  //FileStruct m_file;
   
   virtual void logStuckFile() {
 // This code is commented out pending the implementation of a more complete
@@ -402,9 +402,9 @@ public:
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(const FileStruct& file){
+  void notifyBeginNewJob(/*const FileStruct& file*/){
     castor::server::MutexLocker locker(&m_mutex);
-    m_file=file;
+    //m_file=file;
     m_fileBeingMoved=true;
   }
   
@@ -414,7 +414,7 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-    m_file=FileStruct();
+    //m_file=FileStruct();
   }
 };
 
@@ -423,18 +423,16 @@ public:
  */
 class MigrationWatchDog: public TaskWatchDog {
 private:
-  /** Our file type */
-  typedef castor::tape::tapegateway::FileToMigrateStruct FileStruct;
   /** The file we are working on */
-  FileStruct m_file;
-  
+//  cta::ArchiveJob m_file;
+//  
   virtual void logStuckFile() {
-    castor::log::ScopedParamContainer params(m_lc);
-    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("path",m_file.path())
-          .add("NSFILEID",m_file.fileid())
-          .add("fSeq",m_file.fseq());
-    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+//    castor::log::ScopedParamContainer params(m_lc);
+//    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
+//          .add("path",m_file.path())
+//          .add("NSFILEID",m_file.fileid())
+//          .add("fSeq",m_file.fseq());
+//    m_lc.log(LOG_WARNING, "No tape block movement for too long");
   }
 public:
   /** Pass through constructor */
@@ -448,9 +446,9 @@ public:
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(const FileStruct& file){
+  void notifyBeginNewJob(/*const cta::ArchiveJob file*/){
     castor::server::MutexLocker locker(&m_mutex);
-    m_file=file;
+//    m_file=file;
     m_fileBeingMoved=true;
   }
   
@@ -460,7 +458,7 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-    m_file=FileStruct();
+//    m_file=FileStruct();
   }
 };
 

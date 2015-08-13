@@ -54,19 +54,19 @@ namespace detail{
   template <class> struct HelperTrait;
   
   //full template specialisation
- template <> struct HelperTrait<Migration>{
-    typedef tapegateway::FileMigrationReportList FileReportList;
-    typedef tapegateway::FileToMigrateStruct FileStruct;
-    typedef tapegateway::FileMigratedNotificationStruct FileSuccessStruct;
-    typedef tapegateway::FileErrorReportStruct FileErrorStruct;
-    
-  };
-  template <> struct HelperTrait<Recall>{
-    typedef tapegateway::FileRecallReportList FileReportList;
-    typedef tapegateway::FileToRecallStruct FileStruct;
-    typedef tapegateway::FileRecalledNotificationStruct FileSuccessStruct;
-    typedef tapegateway::FileErrorReportStruct FileErrorStruct;
-  };
+// template <> struct HelperTrait<Migration>{
+//    typedef tapegateway::FileMigrationReportList FileReportList;
+//    typedef tapegateway::FileToMigrateStruct FileStruct;
+//    typedef tapegateway::FileMigratedNotificationStruct FileSuccessStruct;
+//    typedef tapegateway::FileErrorReportStruct FileErrorStruct;
+//    
+//  };
+//  template <> struct HelperTrait<Recall>{
+//    typedef tapegateway::FileRecallReportList FileReportList;
+//    typedef tapegateway::FileToRecallStruct FileStruct;
+//    typedef tapegateway::FileRecalledNotificationStruct FileSuccessStruct;
+//    typedef tapegateway::FileErrorReportStruct FileErrorStruct;
+//  };
   
   // Enum describing the type of client. Some clients need batched reports,
   // some prefer reports file by file
@@ -86,10 +86,10 @@ class TaskWatchDog;
 template <class PlaceHolder> class ReportPackerInterface{
   public :
     //some inner typedef to have shorter (and unified) types inside the class
-  typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
-  typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
-  typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
-  typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
+//  typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
+//  typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
+//  typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
+//  typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
   
   // Pass a reference to the watchdog for initial process reporting.
   void setWatchdog(TaskWatchDog & wd) {
