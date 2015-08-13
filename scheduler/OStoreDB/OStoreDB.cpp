@@ -64,7 +64,7 @@ void OStoreDB::assertAgentSet() {
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
-  //Allocate the structure to return.
+  //Allocate the getMountInfostructure to return.
   std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo());
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues
@@ -74,43 +74,64 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   auto tpl = re.dumpTapePools();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     // Get the tape pool object
-    objectstore::TapePool tp(tpp->address, m_objectStore);
-    objectstore::ScopedSharedLock tpl(tp);
-    tp.fetch();
+    objectstore::TapePool tpool(tpp->address, m_objectStore);
+    objectstore::ScopedSharedLock tpl(tpool);
+    tpool.fetch();
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    if (tp.getJobsSummary().files) {
+    if (tpool.getJobsSummary().files) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
-      tmdi.potentialMounts.back().type = cta::MountType::ARCHIVE;
-      tmdi.potentialMounts.back().bytesQueued = tp.getJobsSummary().bytes;
-      tmdi.potentialMounts.back().filesQueued = tp.getJobsSummary().files;      
-      tmdi.potentialMounts.back().oldestJobStartTime = tp.getJobsSummary().oldestJobStartTime;
+      auto & m = tmdi.potentialMounts.back();
+      m.type = cta::MountType::ARCHIVE;
+      m.bytesQueued = tpool.getJobsSummary().bytes;
+      m.filesQueued = tpool.getJobsSummary().files;      
+      m.oldestJobStartTime = tpool.getJobsSummary().oldestJobStartTime;
+      m.priority = tpool.getJobsSummary().priority;
       
-      tmdi.potentialMounts.back().mountCriteria.archive.maxFilesQueued = 
-          tp.getMountCriteria().archive.maxFilesQueued;
-      tmdi.potentialMounts.back().mountCriteria.archive.maxBytesQueued = 
-          tp.getMountCriteria().archive.maxBytesQueued;
-      tmdi.potentialMounts.back().mountCriteria.archive.maxAge = 
-          tp.getMountCriteria().archive.maxAge;
+      m.mountCriteria.maxFilesQueued = 
+          tpool.getMountCriteria().archive.maxFilesQueued;
+      m.mountCriteria.maxBytesQueued = 
+          tpool.getMountCriteria().archive.maxBytesQueued;
+      m.mountCriteria.maxAge = 
+          tpool.getMountCriteria().archive.maxAge;
 
-      tmdi.potentialMounts.back().mountCriteria.retrieve.maxFilesQueued = 
-          tp.getMountCriteria().retrieve.maxFilesQueued;
-      tmdi.potentialMounts.back().mountCriteria.retrieve.maxBytesQueued = 
-          tp.getMountCriteria().retrieve.maxBytesQueued;
-      tmdi.potentialMounts.back().mountCriteria.retrieve.maxAge = 
-          tp.getMountCriteria().retrieve.maxAge;
+      m.mountQuota.quota = 
+          tpool.getMountQuota().archive.quota;
+      m.mountQuota.allowedOverhead = 
+          tpool.getMountQuota().archive.allowedOverhead;
+    
+      m.logicalLibrary = "";
 
-      tmdi.potentialMounts.back().mountQuota.archive.quota = 
-          tp.getMountQuota().archive.quota;
-      tmdi.potentialMounts.back().mountQuota.archive.allowedOverhead = 
-          tp.getMountQuota().archive.allowedOverhead;
+    }
+    // For each tape in the pool, list the tapes with work
+    auto tl = tpool.dumpTapes();
+    for (auto tp = tl.begin(); tp!= tl.end(); tp++) {
+      objectstore::Tape t(tp->address, m_objectStore);
+      objectstore::ScopedSharedLock tl(t);
+      t.fetch();
+      if (t.getJobsSummary().files) {
+        tmdi.potentialMounts.push_back(PotentialMount());
+        auto & m = tmdi.potentialMounts.back();
+        m.type = cta::MountType::RETRIEVE;
+        m.bytesQueued = t.getJobsSummary().bytes;
+        m.filesQueued = t.getJobsSummary().files;
+        m.oldestJobStartTime = t.getJobsSummary().oldestJobStartTime;
+        m.priority = t.getJobsSummary().priority;
+        
+        m.mountCriteria.maxFilesQueued = 
+            tpool.getMountCriteria().retrieve.maxFilesQueued;
+        m.mountCriteria.maxBytesQueued = 
+            tpool.getMountCriteria().retrieve.maxBytesQueued;
+        m.mountCriteria.maxAge = 
+            tpool.getMountCriteria().retrieve.maxAge;
 
-      tmdi.potentialMounts.back().mountQuota.retieve.quota = 
-          tp.getMountQuota().retrieve.quota;
-      tmdi.potentialMounts.back().mountQuota.retieve.allowedOverhead = 
-          tp.getMountQuota().retrieve.allowedOverhead;      
-      tmdi.potentialMounts.back().logicalLibrary = "";
-      tmdi.potentialMounts.back().priority = tp.getPriority();
+        m.mountQuota.quota = 
+            tpool.getMountQuota().retrieve.quota;
+        m.mountQuota.allowedOverhead = 
+            tpool.getMountQuota().retrieve.allowedOverhead;
+      
+        m.logicalLibrary = t.getLogicalLibrary();
+      }
     }
   }
   throw NotImplemented("");
@@ -919,7 +940,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     objectstore::Tape tp(j->tapeAddress, m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
-    tp.addJob(*j, rtfr.getAddressIfSet(), rtfr.getSize());
+    tp.addJob(*j, rtfr.getAddressIfSet(), rtfr.getSize(), rqst.priority, time(NULL));
     tp.commit();
   }
   // The request is now fully set. As it's multi-owned, we do not set the owner

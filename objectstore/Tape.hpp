@@ -32,16 +32,28 @@ class Tape: public ObjectOps<serializers::Tape> {
 public:
   Tape(const std::string & address, Backend & os);
   Tape(GenericObject & go);
-  void initialize(const std::string & vid);
+  void initialize(const std::string & vid, const std::string &logicalLibrary);
   void garbageCollect();
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();
   std::string dump();
   
+  // Tape location management ==================================================
+  std::string getLogicalLibrary();
+  void setLogicalLibrary(const std::string & library);
+  
   // Retrieve jobs management ==================================================
   void addJob(const RetrieveToFileRequest::JobDump & job,
-    const std::string & retrieveToFileAddress, uint64_t size);
+    const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
+    time_t startTime);
+  struct JobsSummary {
+    uint64_t files;
+    uint64_t bytes;
+    time_t oldestJobStartTime;
+    uint64_t priority;
+  };
+  JobsSummary getJobsSummary();
   
   // -- Stored data counting ---------------------------------------------------
   uint64_t getStoredData();

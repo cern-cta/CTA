@@ -67,27 +67,19 @@ public:
    * A structure describing a potential mount with all the information allowing
    * comparison between mounts.
    */
-  struct MountCriteriaPerDirection {
+  struct MountCriteria {
     uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
                               * before trigerring a mount */
     uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
                            * a request */
     uint64_t maxAge; /**< The maximum age for a request before trigerring
                            * a request (in seconds) */
-  };
-  struct MountCriteria {
-    MountCriteriaPerDirection archive;
-    MountCriteriaPerDirection retrieve;
-  };
-  
-  struct MountQuotaPerDirection {
+  }; 
+  struct MountQuota {
     uint16_t quota;
     uint16_t allowedOverhead;
   };
-  struct MountQuota {
-    MountQuotaPerDirection archive;
-    MountQuotaPerDirection retieve;
-  };
+  
   struct PotentialMount {
     cta::MountType::Enum type; /**< Is this an archive or retireve? */
     std::string vid; /**< The tape VID (for a retieve) */

@@ -30,12 +30,17 @@ cta::objectstore::Tape::Tape(GenericObject& go):
   getPayloadFromHeader();
 }
 
-void cta::objectstore::Tape::initialize(const std::string &name) {
+void cta::objectstore::Tape::initialize(const std::string &name, 
+    const std::string &logicallibrary) {
   ObjectOps<serializers::Tape>::initialize();
   // Set the reguired fields
   m_payload.set_vid(name);
   m_payload.set_bytesstored(0);
   m_payload.set_lastfseq(0);
+  m_payload.set_logicallibrary(logicallibrary);
+  m_payload.set_oldestjobtime(0);
+  m_payload.set_priority(0);
+  m_payload.set_retrievejobstotalsize(0);
   m_payloadInterpreted = true;
 }
 
@@ -92,9 +97,39 @@ std::string cta::objectstore::Tape::dump() {
 }
 
 void cta::objectstore::Tape::addJob(const RetrieveToFileRequest::JobDump& job,
-  const std::string & retrieveToFileAddress, uint64_t size) {
+  const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
+  time_t startTime) {
   checkPayloadWritable();
+  // Manage the cumulative properties
+  if (m_payload.retrievejobs_size()) {
+    if (priority > m_payload.priority()) {
+      m_payload.set_priority(priority);
+    }
+    if (m_payload.oldestjobtime() > (uint64_t)startTime) {
+      m_payload.set_oldestjobtime(startTime);
+    }
+    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
+  } else {
+    m_payload.set_priority(priority);
+    m_payload.set_oldestjobtime(startTime);
+    m_payload.set_retrievejobstotalsize(size);
+  }
   auto * j = m_payload.add_retrievejobs();
   j->set_address(retrieveToFileAddress);
   j->set_size(size);
+}
+
+std::string cta::objectstore::Tape::getLogicalLibrary() {
+  checkPayloadReadable();
+  return m_payload.logicallibrary();
+}
+
+cta::objectstore::Tape::JobsSummary cta::objectstore::Tape::getJobsSummary() {
+  checkPayloadReadable();
+  JobsSummary ret;
+  ret.bytes = m_payload.retrievejobstotalsize();
+  ret.files = m_payload.retrievejobs_size();
+  ret.oldestJobStartTime = m_payload.oldestjobtime();
+  ret.priority = m_payload.priority();
+  return ret;
 }

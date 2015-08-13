@@ -89,7 +89,7 @@ std::string cta::objectstore::TapePool::addOrGetTapeAndCommit(const std::string&
   agent.commit();
   // The create the tape object
   Tape t(tapeAddress, ObjectOps<serializers::TapePool>::m_objectStore);
-  t.initialize(vid);
+  t.initialize(vid, logicalLibraryName);
   t.setOwner(agent.getAddressIfSet());
   t.setBackupOwner(getAddressIfSet());
   t.insert();
@@ -238,6 +238,7 @@ auto cta::objectstore::TapePool::getJobsSummary() -> JobsSummary {
   JobsSummary ret;
   ret.files = m_payload.pendingarchivejobs_size();
   ret.bytes = m_payload.archivejobstotalsize();
+  ret.priority = m_payload.priority();
   return ret;
 }
 
@@ -326,11 +327,6 @@ bool cta::objectstore::TapePool::addOrphanedJobPendingNsDeletion(
   j->set_size(size);
   j->set_path(path);
   return true;
-}
-
-uint64_t cta::objectstore::TapePool::getPriority() {
-  checkPayloadReadable();
-  return m_payload.priority();
 }
 
 cta::objectstore::TapePool::MountCriteria 

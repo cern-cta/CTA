@@ -31,7 +31,7 @@ TEST(ObjectStore, TapeBasicAccess) {
   { 
     // Try to create the tape entry
     cta::objectstore::Tape t(tapeAddress, be);
-    t.initialize("V12345");
+    t.initialize("V12345", "LIB0");
     t.insert();
   }
   {

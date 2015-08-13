@@ -88,6 +88,7 @@ public:
     uint64_t files;
     uint64_t bytes;
     time_t oldestJobStartTime;
+    uint64_t priority;
   };
   JobsSummary getJobsSummary();
   
@@ -123,7 +124,6 @@ public:
     MountQuotaPerDirection retrieve;
   };
   MountQuota getMountQuota();
-  uint64_t getPriority();
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

@@ -212,11 +212,19 @@ message MountInfo {
 
 message Tape {
   required string vid = 4300;
-  required uint64 lastfseq = 4301;
-  required uint64 bytesstored = 4302;
-  repeated MountInfo readmounts = 4303;
-  repeated MountInfo writemounts = 4304;
-  repeated RetrieveJobPointer retrievejobs = 4305;
+  required string logicallibrary = 4301;
+  // Statistics about what is stored in the tape
+  required uint64 lastfseq = 4302;
+  required uint64 bytesstored = 4303;
+  // Tape lifetime statistics
+  repeated MountInfo readmounts = 4304;
+  repeated MountInfo writemounts = 4305;
+  // Information about retrive jobs queued on this tape
+  repeated RetrieveJobPointer retrievejobs = 4306;
+  required uint64 retrievejobstotalsize = 4307;
+  required uint64 oldestjobtime = 4308;
+  required uint64 priority = 4309;
+  // There are no per tape mount criteria/quotas (they are per tape pool).
 }
 
 // ------------- Archive Jobs --------------------------------------------------
