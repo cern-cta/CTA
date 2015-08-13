@@ -99,7 +99,7 @@ template <class PlaceHolder> class ReportPackerInterface{
   protected:
     virtual ~ReportPackerInterface() {}
     ReportPackerInterface(log::LogContext lc):
-    m_lc(lc),m_listReports(new FileReportList),
+    m_lc(lc),
     m_reportBatching(detail::ReportInBulk),m_watchdog(NULL) {}
   
   /**
@@ -162,10 +162,6 @@ template <class PlaceHolder> class ReportPackerInterface{
    */
   castor::log::LogContext m_lc;
   
-  /** 
-   * m_listReports is holding all the report waiting to be processed
-   */
-  std::unique_ptr<FileReportList> m_listReports;
   /**
    * Define how we should report to the client (by file/in bulk).
    */  

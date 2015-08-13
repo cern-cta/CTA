@@ -156,26 +156,17 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // We can receive double flushes when the periodic flush happens
     // right before the end of session (which triggers also a flush)
     // We refrain from sending an empty report to the client in this case.
-    if (0 == reportPacker.m_listReports->successfulMigrations().size() +
-             reportPacker.m_listReports->failedMigrations().size()) {
+    if (reportPacker.m_successfulArchiveJobs.empty()) {
       reportPacker.m_lc.log(LOG_INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
     try{
-
-      computeCompressedSize(reportPacker.m_listReports->successfulMigrations().begin(),
-                            reportPacker.m_listReports->successfulMigrations().end());
       while(!reportPacker.m_successfulArchiveJobs.empty()) {
         std::unique_ptr<cta::ArchiveJob> job(std::move(reportPacker.m_successfulArchiveJobs.front()));
         job->complete();
         reportPacker.m_successfulArchiveJobs.pop();
-      }  
-      reportPacker.logReport(reportPacker.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
-      log::ScopedParamContainer container(reportPacker.m_lc);
-      container.add("batch size",reportPacker.m_listReports->successfulMigrations().size())
-               .add("compressed",m_compressStats.toTape)
-               .add("Non compressed",m_compressStats.fromHost);
-      reportPacker.m_lc.log(LOG_INFO,"Reported to the client that a batch of file was written on tape");
+      }
+      reportPacker.m_lc.log(LOG_INFO,"Reported to the client that a batch of files was written on tape");
     }
     catch(const castor::exception::Exception& e){
       LogContext::ScopedParam sp[]={
@@ -193,9 +184,6 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(LOG_ALERT,"Received a flush after an error: sending file errors to client");
   }
-  //reset (ie delete and replace) the current m_listReports.
-  //Thus all current reports are deleted otherwise they would have been sent again at the next flush
-  reportPacker.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
 
 //------------------------------------------------------------------------------
