@@ -97,8 +97,8 @@ public:
    * Information about the existing mounts.
    */
   struct ExistingMount {
-    cta::MountType type;
-    std::string tapePool; 
+    cta::MountType::Enum type;
+    std::string tapePool;
   };
   
   /**

@@ -37,9 +37,25 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void garbageCollect(const std::string &presumedOwner);
   bool isEmpty();
-  void addDrive (std::string name);
+  
+  // Drives management =========================================================
+  void addDrive (const std::string & name, const std::string & logicalLibrary);
   void removeDrive (const std::string  & name);
-  std::list<std::string> getDrives();
+  enum class MountStatus {
+    NoMount,
+    ArchiveMount,
+    RetrieveMount
+  };
+  struct DriveInfo {
+    std::string name;
+    std::string logicalLibrary;
+    MountStatus mountStatus;
+    std::string currentVid;
+    std::string currentTapePool;
+    time_t mountTime;
+    time_t lastUpdateTime;
+  };
+  std::list<DriveInfo> dumpDrives();
   std::string dump();
 };
 

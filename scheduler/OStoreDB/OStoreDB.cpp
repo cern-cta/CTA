@@ -21,6 +21,7 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/TapePool.hpp"
 #include "objectstore/Tape.hpp"
+#include "objectstore/DriveRegister.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
 #include "common/exception/Exception.hpp"
@@ -67,7 +68,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   //Allocate the getMountInfostructure to return.
   std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo());
   TapeMountDecisionInfo & tmdi=*privateRet;
-  // Get all the tape pools and tapes with queues
+  // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
@@ -134,7 +135,32 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       }
     }
   }
-  throw NotImplemented("");
+  // Dedication information comes here
+  // TODO
+  // 
+  // Collect information about the existing mounts
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedSharedLock drl(dr);
+  dr.fetch();
+  auto dl = dr.dumpDrives();
+  for (auto d=dl.begin(); d!= dl.end(); d++) {
+    if (d->mountStatus != objectstore::DriveRegister::MountStatus::NoMount) {
+      tmdi.existingMounts.push_back(ExistingMount());
+      switch (d->mountStatus) {
+        case objectstore::DriveRegister::MountStatus::ArchiveMount:
+          tmdi.existingMounts.back().type = cta::MountType::ARCHIVE;
+          break;
+        case objectstore::DriveRegister::MountStatus::RetrieveMount:
+          tmdi.existingMounts.back().type = cta::MountType::ARCHIVE;
+          break;
+        default:
+          throw exception::Exception("In OStoreDB::getMountInfo(): got drive with unexpected mount type");
+      }
+      tmdi.existingMounts.back().tapePool = d->currentTapePool;
+    }
+  }
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  return ret;
 }
 
 

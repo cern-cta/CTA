@@ -66,20 +66,64 @@ void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumed
   remove();
 }
 
+// This operator will be used in the following usage of the templated
+// findElement and removeOccurences
+namespace {
+  bool operator==(const std::string & driveName, 
+    const cta::objectstore::serializers::DriveInfo & di) {
+    return di.drivename() == driveName;
+  }
+}
 
-void cta::objectstore::DriveRegister::addDrive(std::string driveName) { //add logical library to the parameters
+void cta::objectstore::DriveRegister::addDrive(const std::string & driveName,
+    const std::string & logicalLibrary) { 
+  //add logical library to the parameters
   checkPayloadWritable();
   // Check that we are not trying to duplicate a drive
   try {
-    serializers::findElement(m_payload.drivenames(), driveName);
+    serializers::findElement(m_payload.drives(), driveName);
     throw DuplicateEntry("In DriveRegister::addDrive: entry already exists");
   } catch (serializers::NotFound &) {}
-  m_payload.add_drivenames(driveName);
+  serializers::DriveInfo * driveInfo = m_payload.add_drives();
+  driveInfo->set_drivename(driveName);
+  driveInfo->set_logicallibrary(logicalLibrary);
+  driveInfo->set_lastupdatetime(0);
+  driveInfo->set_currentmount(serializers::MountType::NoMount_t);
+  driveInfo->set_mounttime(0);
+  driveInfo->set_currentvid("");
 }
+
+auto cta::objectstore::DriveRegister::dumpDrives() -> std::list<DriveInfo> {
+  checkPayloadReadable();
+  auto & dl = m_payload.drives();
+  std::list<DriveInfo> ret;
+  for (auto d=dl.begin(); d!=dl.end(); d++) {
+    ret.push_back(DriveInfo());
+    auto & di = ret.back();
+    di.currentVid = d->currentvid();
+    di.currentTapePool = d->currenttapepool();
+    di.lastUpdateTime = d->lastupdatetime();
+    di.logicalLibrary = d->logicallibrary();
+    switch (d->currentmount()) {
+      case serializers::MountType::Archive_t:
+        di.mountStatus = MountStatus::ArchiveMount;
+        break;
+      case serializers::MountType::Retrieve_t:
+        di.mountStatus = MountStatus::RetrieveMount;
+        break;
+      default:
+        di.mountStatus = MountStatus::NoMount;
+    }
+    di.mountTime = d->mounttime();
+    di.name = d->drivename();
+  }
+  return ret;
+}
+
 
 bool cta::objectstore::DriveRegister::isEmpty() {
   checkPayloadReadable();
-  if (m_payload.drivenames_size())
+  if (m_payload.drives_size())
     return false;
   return true;
 }

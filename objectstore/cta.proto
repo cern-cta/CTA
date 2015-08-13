@@ -318,8 +318,24 @@ message RetrieveToDirRequest {
 
 // ------------- Drives handling  ----------------------------------------------
 
+enum MountType {
+  NoMount_t = 0;
+  Archive_t = 1;
+  Retrieve_t = 2;
+}
+
+message DriveInfo {
+  required string drivename = 5000;
+  required string logicallibrary = 5001;
+  required MountType currentMount = 5002;
+  required string currentvid = 5003;
+  required string currenttapepool = 5004;
+  required uint64 mounttime = 5005;
+  required uint64 lastupdatetime = 5006;
+}
+
 message DriveRegister {
-  repeated string drivenames = 7000;
+  repeated DriveInfo drives = 7000;
 }
 
 
