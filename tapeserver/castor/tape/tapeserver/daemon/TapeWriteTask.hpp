@@ -28,7 +28,6 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicFlag.hpp"

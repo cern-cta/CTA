@@ -79,12 +79,12 @@ add_library(castorTapeServerDaemon
 target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore ctascheduler)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
-add_library(castorTapeServerDaemonTestDummies
-  ../client/ClientSimulator.cpp 
-  ../../tpcp/TpcpCommand.cpp
-  ../../tpcp/StreamOperators.cpp
-  ../../tpcp/Helper.cpp
-  ../../tpcp/TapeFseqRange.cpp)
+#add_library(castorTapeServerDaemonTestDummies
+#  ../client/ClientSimulator.cpp 
+#  ../../tpcp/TpcpCommand.cpp
+#  ../../tpcp/StreamOperators.cpp
+#  ../../tpcp/Helper.cpp
+#  ../../tpcp/TapeFseqRange.cpp)
 
 add_executable(tapeserverd TapeDaemon.cpp)
 target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapegatewayprotocol castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)

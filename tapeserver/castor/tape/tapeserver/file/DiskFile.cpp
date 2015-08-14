@@ -27,7 +27,6 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/SErrnum.hpp"
 #include "castor/server/MutexLocker.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include <rfio_api.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <radosstriper/libradosstriper.hpp>

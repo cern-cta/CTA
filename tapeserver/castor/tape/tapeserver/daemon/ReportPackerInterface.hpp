@@ -28,11 +28,7 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
-#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
-#include "castor/tape/tapegateway/FilesToRecallList.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 
 
 #include <memory>

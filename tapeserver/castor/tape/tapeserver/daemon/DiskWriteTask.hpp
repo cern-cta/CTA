@@ -27,20 +27,12 @@
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+
 #include <memory>
-namespace {
-  
-  // TODO: merge with same function in File.hpp and move to tape/utils
-  uint32_t blockID(const castor::tape::tapegateway::FileToRecallStruct& ftr)
-  {
-    return (ftr.blockId0() << 24) | (ftr.blockId1() << 16) |  (ftr.blockId2() << 8) | ftr.blockId3();
-  }
- 
-}
+
 namespace castor {
 namespace tape {
 namespace tapeserver {

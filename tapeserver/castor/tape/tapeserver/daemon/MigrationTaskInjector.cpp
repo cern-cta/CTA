@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 
 using castor::log::LogContext;

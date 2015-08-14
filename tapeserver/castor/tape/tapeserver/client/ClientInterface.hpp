@@ -31,10 +31,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
-#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
-#include "castor/tape/tapegateway/FilesToRecallList.hpp"
-#include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/server/Threading.hpp"
 #include "scheduler/MountType.hpp"
 
@@ -76,43 +72,6 @@ public :
       cta::MountType::Enum mountType;
     };
     
-    /**
-     * Asks the the client for files to recall, with at least files files, or
-     * bytes bytes of data, whichever limit is passed first.
-     * Detailed interface is still TBD.
-     * @param files files count requested.
-     * @param bytes total bytes count requested
-     * @param report Placeholder to network timing information,
-     * populated during the call and used by the caller to log performance 
-     * and context information
-     */
-    virtual tapegateway::FilesToRecallList* getFilesToRecall(uint64_t files,
-    uint64_t bytes, RequestReport &report)  = 0;
-
-    /**
-     * Asks the the client for files to migrate, with at least files files, or
-     * bytes bytes of data, whichever limit is passed first.
-     * Detailed interface is still TBD.
-     * @param files files count requested.
-     * @param bytes total bytes count requested
-     * @param report Placeholder to network timing information,
-     * populated during the call and used by the caller to log performance 
-     * and context information
-     * @return a pointer (to be deleted by the user) to a 
-     * tapegateway::FilesToMigrateList is non-empty or NULL if not more
-     * files could be retrieved.
-     */
-    virtual tapegateway::FilesToMigrateList * getFilesToMigrate(uint64_t files, 
-    uint64_t bytes, RequestReport &report) =0;
-    
-    /**
-     * Reports the result of migrations to the client.
-     * Detailed interface is still TBD.
-     * @param report Placeholder to network timing information
-     */
-    virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-    RequestReport &report)  =0;
-    
       /**
      * Reports end of session to the client. This should be the last call to
      * the client.
@@ -132,13 +91,6 @@ public :
      */
     virtual void reportEndOfSession(RequestReport &report) = 0;
     
-        /**
-     * Reports the result of recall to the client.
-     * Detailed interface is still TBD.
-     * @param report Placeholder to network timing information
-     */
-    virtual void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
-      RequestReport &report)  =0;
     
     virtual ~ClientInterface(){}
 };

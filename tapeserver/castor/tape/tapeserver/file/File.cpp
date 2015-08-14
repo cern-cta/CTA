@@ -26,7 +26,6 @@
 #include "castor/exception/SErrnum.hpp"
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include <sstream>
 #include <iomanip>
 #include <unistd.h>

@@ -25,8 +25,6 @@
 
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"

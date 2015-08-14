@@ -26,10 +26,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
-#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
-#include "castor/tape/tapegateway/FilesToRecallList.hpp"
-#include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicCounter.hpp"
@@ -78,51 +74,6 @@ namespace client {
      */
     virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
     RequestReport &transactionReport);
-    
-    /**
-     * Asks the the client for files to migrate, with at least files files, or
-     * bytes bytes of data, whichever limit is passed first.
-     * Detailed interface is still TBD.
-     * @param files files count requested.
-     * @param bytes total bytes count requested
-     * @param report Placeholder to network timing information,
-     * populated during the call and used by the caller to log performance 
-     * and context information
-     * @return a pointer (to be deleted by the user) to a 
-     * tapegateway::FilesToMigrateList is non-empty or NULL if not more
-     * files could be retrieved.
-     */
-    tapegateway::FilesToMigrateList * getFilesToMigrate(uint64_t files, 
-    uint64_t bytes, RequestReport &report);
-    
-    /**
-     * Reports the result of migrations to the client.
-     * Detailed interface is still TBD.
-     * @param report Placeholder to network timing information
-     */
-    void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-      RequestReport &report);
-    
-    /**
-     * Asks the the client for files to recall, with at least files files, or
-     * bytes bytes of data, whichever limit is passed first.
-     * Detailed interface is still TBD.
-     * @param files files count requested.
-     * @param bytes total bytes count requested
-     * @param report Placeholder to network timing information,
-     * populated during the call and used by the caller to log performance 
-     * and context information
-     */
-    tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-    uint64_t bytes, RequestReport &report);
-    
-    /**
-     * Reports the result of recall to the client.
-     * Detailed interface is still TBD.
-     * @param report Placeholder to network timing information
-     */
-    void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
-      RequestReport &report) ;
     /**
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.

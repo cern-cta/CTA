@@ -31,15 +31,15 @@ include_directories(${CMAKE_BINARY_DIR})
 find_package( ZLIB REQUIRED )
 
 # Create a shared librbary for the dummies supporting the tests
-add_library(TestDummies
-  ../castor/mediachanger/MmcProxyDummy.cpp
-  ../castor/messages/TapeserverProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/log/DummyLogger.cpp
-  ../castor/tape/reactor/DummyPollEventHandler.cpp
-  ../castor/tape/reactor/DummyPollReactor.cpp
-  ../castor/server/ProcessCapDummy.cpp
-)
+#add_library(TestDummies
+#  ../castor/mediachanger/MmcProxyDummy.cpp
+#  ../castor/messages/TapeserverProxyDummy.cpp
+#  ../castor/legacymsg/RmcProxyDummy.cpp
+#  ../castor/log/DummyLogger.cpp
+#  ../castor/tape/reactor/DummyPollEventHandler.cpp
+#  ../castor/tape/reactor/DummyPollReactor.cpp
+#  ../castor/server/ProcessCapDummy.cpp
+#)
 
 # Those tests are single threaded, functionnal and error tests. They could
 # actually fail in helgrind/drd (but memcheck is recommended)

@@ -28,7 +28,6 @@
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/server/AtomicFlag.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
