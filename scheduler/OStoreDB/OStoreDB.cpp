@@ -76,6 +76,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     // Get the tape pool object
     objectstore::TapePool tpool(tpp->address, m_objectStore);
+    // debug utility variable
+    std::string __attribute__((__unused__)) poolName = tpp->tapePool;
     objectstore::ScopedSharedLock tpl(tpool);
     tpool.fetch();
     // If there are files queued, we create an entry for this tape pool in the
@@ -639,7 +641,7 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
 std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   OStoreDB::queue(const cta::ArchiveToFileRequest& rqst) {
   assertAgentSet();
-  // Construct the return valucta::OStoreDBe immediately
+  // Construct the return value immediately
   std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCreation> 
     internalRet(new cta::OStoreDB::ArchiveToFileRequestCreation(m_agent, m_objectStore));
   cta::objectstore::ArchiveToFileRequest & atfr = internalRet->m_request;

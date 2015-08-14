@@ -20,6 +20,7 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -355,7 +356,7 @@ TEST_P(SchedulerDatabaseTest, createArchiveRoute_same_tape_pool_name) {
   }
 }
 
-TEST_P(SchedulerDatabaseTest, createArchiveRoute_two_many_routes) {
+TEST_P(SchedulerDatabaseTest, createArchiveRoute_too_many_routes) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -400,7 +401,7 @@ TEST_P(SchedulerDatabaseTest, createArchiveRoute_two_many_routes) {
   }
 }
 
-TEST_P(SchedulerDatabaseTest, getMount) {
+TEST_P(SchedulerDatabaseTest, getMountInfo) {
   using namespace cta;
 
   SchedulerDatabase &db = getDb();
@@ -411,10 +412,43 @@ TEST_P(SchedulerDatabaseTest, getMount) {
   decltype (db.getMountInfo()) mountCandidates;
   
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
-  cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
-  ASSERT_EQ(0, tmdi.dedicationInfo.size());
-  ASSERT_EQ(0, tmdi.existingMounts.size());
-  ASSERT_EQ(0, tmdi.potentialMounts.size());
+  {
+    cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+    ASSERT_EQ(0, tmdi.dedicationInfo.size());
+    ASSERT_EQ(0, tmdi.existingMounts.size());
+    ASSERT_EQ(0, tmdi.potentialMounts.size());
+  }
+  cta::CreationLog cl(UserIdentity(789,101112), "client0", time(NULL), "Unit test archive request creation");
+  db.createTapePool("pool0", 5, cl);
+  db.createTapePool("pool1", 5, cl);
+  // Add a valid job to the queue
+  cta::UserIdentity remoteOwner (123,546);
+  cta::RemoteFileStatus remoteStatus(remoteOwner, 0744, 1234);
+  cta::RemotePath remotePath ("root://myeos/myfile");
+  cta::RemotePathAndStatus remoteFile(remotePath, remoteStatus);
+  std::map<uint16_t, std::string> destinationPoolMap;
+  destinationPoolMap[0] = "pool0";
+  destinationPoolMap[1] = "pool1";
+  cta::ArchiveToFileRequest atfr(remoteFile, "cta://cta/myfile", destinationPoolMap,
+    10, cl);
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
+  creation->complete();
+  ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
+  {
+    cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+    ASSERT_EQ(0, tmdi.dedicationInfo.size());
+    ASSERT_EQ(0, tmdi.existingMounts.size());
+    ASSERT_EQ(2, tmdi.potentialMounts.size());
+  }
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation2(db.queue(atfr));
+  creation2->complete();
+  ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
+  {
+    cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+    ASSERT_EQ(0, tmdi.dedicationInfo.size());
+    ASSERT_EQ(0, tmdi.existingMounts.size());
+    ASSERT_EQ(2, tmdi.potentialMounts.size());
+  }
 }
 
 #undef TEST_MOCK_DB
