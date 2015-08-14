@@ -382,7 +382,8 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
       tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), 
-        m_request.getRemoteFile().status.size, m_request.getPriority());
+        m_request.getRemoteFile().status.size, m_request.getPriority(),
+        m_request.getCreationLog().time);
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }

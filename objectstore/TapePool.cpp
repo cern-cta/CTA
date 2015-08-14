@@ -218,14 +218,19 @@ std::string cta::objectstore::TapePool::getName() {
 
 void cta::objectstore::TapePool::addJob(const ArchiveToFileRequest::JobDump& job,
   const std::string & archiveToFileAddress, const std::string & path,
-  uint64_t size, uint64_t priority) {
+  uint64_t size, uint64_t priority, time_t startTime) {
   checkPayloadWritable();
   // The tape pool gets the highes priority of its jobs
   if (m_payload.pendingarchivejobs_size()) {
     if (priority > m_payload.priority())
       m_payload.set_priority(priority);
+    if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
+      m_payload.set_oldestjobcreationtime(startTime);
+    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + size);
   } else {
     m_payload.set_priority(priority);
+    m_payload.set_archivejobstotalsize(size);
+    m_payload.set_oldestjobcreationtime(startTime);
   }
   auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveToFileAddress);
@@ -239,6 +244,7 @@ auto cta::objectstore::TapePool::getJobsSummary() -> JobsSummary {
   ret.files = m_payload.pendingarchivejobs_size();
   ret.bytes = m_payload.archivejobstotalsize();
   ret.priority = m_payload.priority();
+  ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
   return ret;
 }
 

@@ -67,7 +67,7 @@ public:
   // Archive jobs management ===================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,
     const std::string & archiveToFileAddress, const std::string & path,
-    uint64_t size, uint64_t priority);
+    uint64_t size, uint64_t priority, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveToFileRequest::JobDump & job,

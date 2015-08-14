@@ -418,7 +418,9 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(0, tmdi.existingMounts.size());
     ASSERT_EQ(0, tmdi.potentialMounts.size());
   }
+  // Log for following creations
   cta::CreationLog cl(UserIdentity(789,101112), "client0", time(NULL), "Unit test archive request creation");
+  // Create tape pools
   db.createTapePool("pool0", 5, cl);
   db.createTapePool("pool1", 5, cl);
   // Add a valid job to the queue
@@ -439,7 +441,11 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(0, tmdi.dedicationInfo.size());
     ASSERT_EQ(0, tmdi.existingMounts.size());
     ASSERT_EQ(2, tmdi.potentialMounts.size());
+    ASSERT_EQ(1234, tmdi.potentialMounts.front().bytesQueued);
+    ASSERT_EQ(1, tmdi.potentialMounts.front().filesQueued);
+    ASSERT_EQ(cl.time, tmdi.potentialMounts.front().oldestJobStartTime);
   }
+  // Add one more job to the queue: the summary should not change
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation2(db.queue(atfr));
   creation2->complete();
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
@@ -448,7 +454,11 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(0, tmdi.dedicationInfo.size());
     ASSERT_EQ(0, tmdi.existingMounts.size());
     ASSERT_EQ(2, tmdi.potentialMounts.size());
+    ASSERT_EQ(2468, tmdi.potentialMounts.front().bytesQueued);
+    ASSERT_EQ(2, tmdi.potentialMounts.front().filesQueued);
+    ASSERT_EQ(cl.time, tmdi.potentialMounts.front().oldestJobStartTime);
   }
+  
 }
 
 #undef TEST_MOCK_DB
