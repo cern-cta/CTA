@@ -24,12 +24,6 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
-#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
-#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
-#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
-#include "castor/tape/tapegateway/FilesToRecallList.hpp"
-#include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -112,55 +106,6 @@ RequestReport &transactionReport)
 void ClientProxy::reportEndOfSessionWithError(
 const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
 {
-  std::ostringstream msg;
-  msg << __FUNCTION__ << ": Gatway communication is not supported in the CTA"
-    " version of tapeserverd";
-  throw castor::exception::Exception(msg.str());
-}
-
-//------------------------------------------------------------------------------
-//getFilesToMigrate
-//------------------------------------------------------------------------------
-tapegateway::FilesToMigrateList * 
-    ClientProxy::getFilesToMigrate(
-uint64_t files, uint64_t bytes, RequestReport& report) 
-{
-  std::ostringstream msg;
-  msg << __FUNCTION__ << ": Gatway communication is not supported in the CTA"
-    " version of tapeserverd";
-  throw castor::exception::Exception(msg.str());
-}
-
-//------------------------------------------------------------------------------
-//reportMigrationResults
-//------------------------------------------------------------------------------
-void ClientProxy::reportMigrationResults(
-tapegateway::FileMigrationReportList & migrationReport,
-    RequestReport& report) {
-  std::ostringstream msg;
-  msg << __FUNCTION__ << ": Gatway communication is not supported in the CTA"
-    " version of tapeserverd";
-  throw castor::exception::Exception(msg.str());
-}
-
-//------------------------------------------------------------------------------
-//getFilesToRecall
-//------------------------------------------------------------------------------
-tapegateway::FilesToRecallList * 
-    ClientProxy::getFilesToRecall(
-uint64_t files, uint64_t bytes, RequestReport& report) 
-{
-  std::ostringstream msg;
-  msg << __FUNCTION__ << ": Gatway communication is not supported in the CTA"
-    " version of tapeserverd";
-  throw castor::exception::Exception(msg.str());
-}
-//------------------------------------------------------------------------------
-//reportRecallResults
-//------------------------------------------------------------------------------
-void ClientProxy::reportRecallResults(
-tapegateway::FileRecallReportList & recallReport,
-RequestReport& report) {
   std::ostringstream msg;
   msg << __FUNCTION__ << ": Gatway communication is not supported in the CTA"
     " version of tapeserverd";
