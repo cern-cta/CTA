@@ -51,8 +51,7 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
-        m_clientType(tapegateway::READ_TP)
+        m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold)
 {}
 //------------------------------------------------------------------------------
 //destructor
@@ -93,11 +92,7 @@ void RecallTaskInjector::startThreads() {
 void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs) {
   for (auto it = jobs.begin(); it != jobs.end(); ++it) {
     
-    // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
-    // When the client is a tape gateway, we should *always* position by block id.
-    if (tapegateway::TAPE_GATEWAY == m_clientType) {
-      (*it)->positioningMethod=cta::RetrieveJob::PositioningMethod::ByBlock;
-    }
+    (*it)->positioningMethod=cta::RetrieveJob::PositioningMethod::ByBlock;
 
     LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopyLocation.nsHostName)),

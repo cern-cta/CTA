@@ -25,7 +25,6 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
-#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"

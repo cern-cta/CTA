@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/tape/tpcp/TpcpCommand.hpp"
-#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
@@ -48,7 +47,7 @@ namespace client {
       EmptyOnGetMoreWork
     } EmptyMount_t;
     ClientSimulator(uint32_t volReqId, const std::string & vid, 
-            const std::string & density, tapegateway::ClientType clientType,
+            const std::string & density,
             tapegateway::VolumeMode volumeMode, EmptyMount_t emptyMount = NotEmpty);
     
     virtual ~ClientSimulator() throw() {}
@@ -147,7 +146,6 @@ namespace client {
     std::queue<tapegateway::FileToRecallStruct> m_filesToRecall;
     std::queue<uint64_t> m_recallSizes;
     std::queue<tapegateway::FileToMigrateStruct> m_filesToMigrate;
-    const castor::tape::tapegateway::ClientType m_clientType;
     const castor::tape::tapegateway::VolumeMode m_volumeMode;
     EmptyMount_t m_emptyMount;
   };

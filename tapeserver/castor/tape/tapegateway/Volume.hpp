@@ -24,7 +24,6 @@
 #pragma once
 
 // Include Files
-#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "osdep.h"
@@ -177,22 +176,6 @@ namespace castor {
           m_mode = new_var;
         }
 
-        /**
-         * Get the value of m_clientType
-         * @return the value of m_clientType
-         */
-        ClientType clientType() const {
-          return m_clientType;
-        }
-
-        /**
-         * Set the value of m_clientType
-         * @param new_var the new value of m_clientType
-         */
-        void setClientType(ClientType new_var) {
-          m_clientType = new_var;
-        }
-
       private:
 
         std::string m_vid;
@@ -205,8 +188,6 @@ namespace castor {
         u_signed64 m_id;
 
         VolumeMode m_mode;
-
-        ClientType m_clientType;
 
       }; /* end of class Volume */
 
