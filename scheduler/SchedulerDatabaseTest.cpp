@@ -411,8 +411,10 @@ TEST_P(SchedulerDatabaseTest, getMount) {
   decltype (db.getMountInfo()) mountCandidates;
   
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
-  
-  ASSERT_NO_THROW(db.getNextMount(lib, drive));
+  cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+  ASSERT_EQ(0, tmdi.dedicationInfo.size());
+  ASSERT_EQ(0, tmdi.existingMounts.size());
+  ASSERT_EQ(0, tmdi.potentialMounts.size());
 }
 
 #undef TEST_MOCK_DB

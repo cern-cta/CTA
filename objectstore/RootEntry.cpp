@@ -618,7 +618,7 @@ void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
 }
 
 std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
-  checkPayloadWritable();
+  checkPayloadReadable();
   if (m_payload.driveregisterpointer().address().size()) {
     return m_payload.driveregisterpointer().address();
   }
