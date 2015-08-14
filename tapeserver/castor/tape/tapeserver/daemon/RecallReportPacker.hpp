@@ -25,7 +25,6 @@
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "scheduler/RetrieveJob.hpp"

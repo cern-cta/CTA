@@ -36,7 +36,6 @@ set(CTEST_OUTPUT_ON_FAILURE 1)
 #set(TEST_LIBS "")
 
 # Add parts first in dependency order
-add_subdirectory(client)
 add_subdirectory(SCSI)
 add_subdirectory(drive)
 add_subdirectory(system)

@@ -28,8 +28,6 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/server/AtomicCounter.hpp"
 #include "scheduler/ArchiveMount.hpp"

@@ -168,7 +168,6 @@ m_parent(parent) {
 void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(LOG_DEBUG, "Starting RecallReportPacker thread");
-  client::ClientInterface::RequestReport chrono;
   try{
     while(1) {    
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());    
@@ -182,7 +181,7 @@ void RecallReportPacker::WorkerThread::run(){
   catch(const castor::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
+    m_parent.m_lc.log(LOG_ERR,"tried to report endOfSession(WithError) and got an exception, cant do much more");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(log::Param("status","failure"));

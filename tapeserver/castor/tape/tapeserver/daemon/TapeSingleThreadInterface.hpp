@@ -33,9 +33,9 @@
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/server/Threading.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/utils/Timer.hpp"
 
@@ -81,7 +81,7 @@ protected:
   ///log context, for ... logging purpose, copied du to thread mechanism 
   castor::log::LogContext m_logContext;
   
-  client::ClientInterface::VolumeInfo m_volInfo;
+  VolumeInfo m_volInfo;
   
   /**
    * Integer to notify the tapeserver if the drive has to be put down or not.
@@ -264,7 +264,7 @@ public:
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface & drive,
     mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
-    const client::ClientInterface::VolumeInfo& volInfo,
+    const VolumeInfo& volInfo,
     castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}

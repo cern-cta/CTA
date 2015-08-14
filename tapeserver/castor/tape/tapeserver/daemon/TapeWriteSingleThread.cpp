@@ -31,7 +31,7 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         castor::mediachanger::MediaChangerFacade & mc,
         TapeServerReporter & tsr,
         MigrationWatchDog & mwd,
-        const client::ClientInterface::VolumeInfo& volInfo,
+        const VolumeInfo& volInfo,
         castor::log::LogContext & lc, MigrationReportPacker & repPacker,
         castor::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 

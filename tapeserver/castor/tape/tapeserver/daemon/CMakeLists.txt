@@ -31,7 +31,6 @@ find_package( ZLIB REQUIRED )
 add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
-  ../client/ClientProxy.cpp 
   Catalogue.cpp
   CatalogueDrive.cpp
   CatalogueDriveState.cpp

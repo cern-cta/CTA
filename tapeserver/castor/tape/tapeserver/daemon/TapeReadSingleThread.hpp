@@ -31,8 +31,8 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/utils/Timer.hpp"
 
 #include <iostream>
@@ -59,7 +59,7 @@ public:
   TapeReadSingleThread(castor::tape::tapeserver::drive::DriveInterface & drive,
           castor::mediachanger::MediaChangerFacade &mc,
           TapeServerReporter & initialProcess,
-          const client::ClientInterface::VolumeInfo& volInfo, 
+          const VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,
           castor::server::ProcessCap &capUtils,
           RecallWatchDog& watchdog,

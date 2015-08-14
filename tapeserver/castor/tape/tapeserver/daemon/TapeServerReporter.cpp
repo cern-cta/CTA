@@ -38,7 +38,7 @@ TapeServerReporter::TapeServerReporter(
   messages::TapeserverProxy& tapeserverProxy,
   const DriveConfig& driveConfig,
   const std::string &hostname,
-  const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
+  const castor::tape::tapeserver::daemon::VolumeInfo &volume,
   log::LogContext lc):
   m_threadRunnig(false),
   m_tapeserverProxy(tapeserverProxy),

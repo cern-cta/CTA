@@ -51,7 +51,7 @@ namespace castor {
       }
 
       ReadSession::ReadSession(tapeserver::drive::DriveInterface & drive,
-              tapeserver::client::ClientInterface::VolumeInfo volInfo)  : 
+              tapeserver::daemon::VolumeInfo volInfo)  : 
       m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
       m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
 
@@ -106,7 +106,7 @@ namespace castor {
 
       void HeaderChecker::checkHDR1(const HDR1 &hdr1,
         const cta::RetrieveJob &filetoRecall,
-        const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo)  {
+        const tape::tapeserver::daemon::VolumeInfo &volInfo)  {
         const std::string &volId = volInfo.vid;
         if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.tapeCopyLocation.fileId, hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
@@ -340,7 +340,7 @@ namespace castor {
       }
 
       WriteSession::WriteSession(tapeserver::drive::DriveInterface & drive, 
-              const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
+              const tapeserver::daemon::VolumeInfo& volInfo, 
               const uint32_t last_fseq, const bool compression)  
       : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),
               m_corrupted(false), m_locked(false),m_volInfo(volInfo) {

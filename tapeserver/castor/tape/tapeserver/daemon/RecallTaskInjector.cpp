@@ -21,14 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "log.h"
 #include "scheduler/RetrieveJob.hpp"
 

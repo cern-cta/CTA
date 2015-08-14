@@ -26,7 +26,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"

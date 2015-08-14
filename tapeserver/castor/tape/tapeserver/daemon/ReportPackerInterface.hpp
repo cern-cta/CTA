@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
@@ -136,21 +135,6 @@ template <class PlaceHolder> class ReportPackerInterface{
           .add("ErrorCode", (*it)->errorCode());
         m_lc.log(LOG_INFO,msg);
       }
-  }
-  /**
-   * Utility function used to log  a ClientInterface::RequestReport 
-   * @param chono the time report to log 
-   * @param msg the message we want to have in the log 
-   * @param level the log level wanted
-   */
-  void logRequestReport(const client::ClientInterface::RequestReport& chono,
-    const std::string& msg, int level=LOG_INFO){
-    castor::log::ScopedParamContainer params(m_lc);
-    params.add("connectDuration",chono.connectDuration)
-          .add("sendRecvDuration",chono.sendRecvDuration)
-          .add("transactionId", chono.transactionId);
-    m_lc.log(level,msg);
-        
   }
   
   /**

@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
@@ -107,7 +107,7 @@ namespace castor {
          */
         static void checkHDR1(const HDR1 &hdr1,
         const cta::RetrieveJob &filetoRecall,
-        const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo) ;
+        const tape::tapeserver::daemon::VolumeInfo &volInfo) ;
         
         /**
          * Checks the uhl1
@@ -185,7 +185,7 @@ namespace castor {
          * @param vid: volume name of the tape we would like to read from
          */
         ReadSession(tapeserver::drive::DriveInterface & drive, 
-                tapeserver::client::ClientInterface::VolumeInfo volInfo);
+                tapeserver::daemon::VolumeInfo volInfo);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
@@ -229,7 +229,7 @@ namespace castor {
         uint32_t getCurrentFseq() {
           return m_fseq;
         }       
-        const tapeserver::client::ClientInterface::VolumeInfo& getVolumeInfo() {
+        const tapeserver::daemon::VolumeInfo& getVolumeInfo() {
           return m_volInfo;
         }  
         
@@ -263,7 +263,7 @@ namespace castor {
          */
         PartOfFile m_currentFilePart;
         
-        const tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
+        const tapeserver::daemon::VolumeInfo m_volInfo;
       };
       
       class ReadFile{
@@ -360,7 +360,7 @@ namespace castor {
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
         WriteSession(tapeserver::drive::DriveInterface & drive, 
-                const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
+                const tapeserver::daemon::VolumeInfo& volInfo, 
                 const uint32_t last_fseq, const bool compression) ;
         
         /**
@@ -411,7 +411,7 @@ namespace castor {
           m_locked = false;
         }
         
-        const tapeserver::client::ClientInterface::VolumeInfo&
+        const tapeserver::daemon::VolumeInfo&
         getVolumeInfo()  const {
           return m_volInfo;
         }
@@ -483,7 +483,7 @@ namespace castor {
          */
         bool m_locked;
         
-        const tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
+        const tapeserver::daemon::VolumeInfo m_volInfo;
       };
       
       class WriteFile {        

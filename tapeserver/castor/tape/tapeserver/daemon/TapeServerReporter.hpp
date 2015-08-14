@@ -25,8 +25,8 @@
 
 #include "castor/server/Threading.hpp"
 #include "castor/server/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/log/LogContext.hpp"
 #include <memory>
 #include <string>
@@ -55,7 +55,7 @@ public:
     messages::TapeserverProxy& tapeserverProxy,
     const DriveConfig &driveConfig,
     const std::string &hostname,
-    const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
+    const castor::tape::tapeserver::daemon::VolumeInfo &volume,
     log::LogContext lc);
   
   /**
@@ -155,7 +155,7 @@ private:
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_logicalLibrary;
-  const castor::tape::tapeserver::client::ClientInterface::VolumeInfo m_volume;
+  const castor::tape::tapeserver::daemon::VolumeInfo m_volume;
   const pid_t m_sessionPid;
 
 };

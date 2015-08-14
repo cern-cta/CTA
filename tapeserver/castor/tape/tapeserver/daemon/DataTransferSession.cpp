@@ -25,7 +25,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/System.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
@@ -35,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "log.h"
@@ -87,24 +87,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
-  client::ClientProxy::RequestReport reqReport;
   std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName())); //getNextMount throws not implemented exception
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.density=tapeMount->getDensity();
   m_volInfo.labelObsolete="AUL";
-  reqReport.transactionId=tapeMount->getMountTransactionId();
-  reqReport.connectDuration=0; //no real client connection was established
-  reqReport.sendRecvDuration=0; //no real client connection was established
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
   params.add("TPVID", m_volInfo.vid);
   {
     log::ScopedParamContainer localParams(lc);
-    localParams.add("tapebridgeTransId", reqReport.transactionId)
-               .add("connectDuration", reqReport.connectDuration)
-               .add("sendRecvDuration", reqReport.sendRecvDuration)
+    localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
                .add("density", m_volInfo.density)
                .add("label", m_volInfo.labelObsolete)
                .add("mountType", mountTypeToString(m_volInfo.mountType));
@@ -131,7 +125,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc,retrieveMount));
   if(!drive.get()) return MARK_DRIVE_AS_DOWN;    
   // We can now start instantiating all the components of the data path
   {
@@ -197,11 +191,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
-        client::ClientProxy::RequestReport reqReport;
-        m_clientProxy.reportEndOfSessionWithError("Aborted: empty recall mount", SEINTERNAL, reqReport);
-        log::LogContext::ScopedParam sp08(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-        log::LogContext::ScopedParam sp09(lc, log::Param("connectDuration", reqReport.connectDuration));
-        log::LogContext::ScopedParam sp10(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+        retrieveMount->failed(cta::exception::Exception("Aborted: empty recall mount"));
+        log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
         log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
         log::LogContext::ScopedParam sp12(lc, log::Param("errorCode", SEINTERNAL));
         lc.log(LOG_ERR, "Notified client of end session with error");
@@ -224,7 +215,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc));
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc,archiveMount));
   if (!drive.get()) return MARK_DRIVE_AS_UP;
   // Once we got hold of the drive, we can run the session
   {
@@ -325,11 +316,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty migration mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
-        client::ClientProxy::RequestReport reqReport;
-        m_clientProxy.reportEndOfSessionWithError("Aborted: empty migration mount", SEINTERNAL, reqReport);
-        log::LogContext::ScopedParam sp1(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-        log::LogContext::ScopedParam sp2(lc, log::Param("connectDuration", reqReport.connectDuration));
-        log::LogContext::ScopedParam sp3(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+        archiveMount->failed(cta::exception::Exception("Aborted: empty migration mount"));
+        log::LogContext::ScopedParam sp1(lc, log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
         lc.log(LOG_ERR, "Notified client of end session with error");
       } catch(castor::exception::Exception & ex) {
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
@@ -339,15 +327,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       return MARK_DRIVE_AS_UP;
     }
   }
-}
-//------------------------------------------------------------------------------
-//DataTransferSession::executeDump
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DataTransferSession::executeDump(log::LogContext & lc) {
-  // We are ready to start the session. In case of read there is no interest in
-  // creating the machinery before getting the tape mounted, so do it now.
-  // 1) Get hold of the drive and check it.
-  
 }
 
 //------------------------------------------------------------------------------
@@ -368,7 +347,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::executeDump(log::Log
  */
 castor::tape::tapeserver::drive::DriveInterface *
 castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConfig
-  &driveConfig, log::LogContext& lc) {
+  &driveConfig, log::LogContext& lc, cta::TapeMount *mount) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
@@ -380,13 +359,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Drive not found on this path");
     
-    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg;
     errMsg << "Drive not found on this path" << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp11(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp12(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+    mount->failed(cta::exception::Exception("Drive unit not found"));
+    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
@@ -398,13 +374,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
     
-    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg;
     errMsg << "Error looking to path to tape drive: " << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp12(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp13(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+    mount->failed(cta::exception::Exception("Drive unit not found"));
+    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
@@ -415,13 +388,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
-    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg;
     errMsg << "Unexpected exception while looking for drive" << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp11(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp12(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+    mount->failed(cta::exception::Exception("Drive unit not found"));
+    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
@@ -439,13 +409,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error opening tape drive");
     
-    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg;
     errMsg << "Error opening tape drive" << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp12(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp13(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+    mount->failed(cta::exception::Exception("Drive unit not found"));
+    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
@@ -456,13 +423,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     
-    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg;
     errMsg << "Unexpected exception while opening drive" << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", reqReport.transactionId));
-    log::LogContext::ScopedParam sp11(lc, log::Param("connectDuration", reqReport.connectDuration));
-    log::LogContext::ScopedParam sp12(lc, log::Param("sendRecvDuration", reqReport.sendRecvDuration));
+    mount->failed(cta::exception::Exception("Drive unit not found"));
+    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");

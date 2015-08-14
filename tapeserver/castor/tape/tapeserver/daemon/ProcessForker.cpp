@@ -627,32 +627,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_config.dataTransfer,
       scheduler));
   } catch (castor::exception::Exception & ex) {
-    try {
-      client::ClientProxy cl;
-      client::ClientInterface::RequestReport rep;
-      cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
-    } catch (...) {
-      params.push_back(log::Param("errorMessage", ex.getMessageValue()));
-      params.push_back(log::Param("errorCode", ex.code()));
-      m_log(LOG_ERR, "Failed to notify the client of the failed session"
-        " when setting up the data-transfer session", params);
-    }
+    params.push_back(log::Param("errorMessage", ex.getMessageValue()));
+    params.push_back(log::Param("errorCode", ex.code()));
+    m_log(LOG_ERR, "Failed to set up the data-transfer session", params);
     throw;
   } catch (...) {
-    try {
-      m_log(LOG_ERR, "Got non castor exception error while constructing"
-        " data-transfer session", params);
-      client::ClientProxy cl;
-      client::ClientInterface::RequestReport rep;
-      cl.reportEndOfSessionWithError(
-       "Non-Castor exception when setting up the data-transfer session",
-         SEINTERNAL, rep);
-    } catch (...) {
-      params.push_back(log::Param("errorMessage",
-        "Non-Castor exception when setting up the data-transfer session"));
-      m_log(LOG_ERR, "Failed to notify the client of the failed session"
-        " when setting up the data-transfer session", params);
-    }
+    m_log(LOG_ERR, "Got non castor exception error while constructing data-transfer session", params);
     throw;
   }
 

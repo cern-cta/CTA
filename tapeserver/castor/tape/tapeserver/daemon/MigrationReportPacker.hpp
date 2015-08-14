@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/server/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/ArchiveMount.hpp"
