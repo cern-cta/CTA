@@ -25,10 +25,6 @@
 
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
-#include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
-
 
 #include <memory>
 

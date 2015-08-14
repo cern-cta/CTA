@@ -23,8 +23,6 @@
 
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "serrno.h"
 
@@ -117,35 +115,35 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 //------------------------------------------------------------------------------
 //ReportFlush::computeCompressedSize
 //------------------------------------------------------------------------------
-void MigrationReportPacker::ReportFlush::computeCompressedSize(
-std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
-std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end
-)
-{
-  //lets pray for C++11 lamba and std accumulate
-  uint64_t rawSize = 0;
-  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
-          it != end ;++it){
-            rawSize+=(*it)->fileSize();
-  }
-
-  uint64_t nbByteWritenWithCompression = m_compressStats.toTape;  
-  //we dont want compressionRatio to be equal to zero not to have a division by zero
-  double compressionRatio = nbByteWritenWithCompression>0 && rawSize >0 ? 
-    1.0*nbByteWritenWithCompression/rawSize : 1.;
-  
-  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
-          it != end ;++it){
-    const uint64_t compressedFileSize =
-    static_cast<uint64_t>((*it)->fileSize() * compressionRatio);
-
-    // The compressed file size should never be reported as being less than 1
-    // byte
-    uint64_t validCompressedFileSize = 0 < compressedFileSize ? compressedFileSize : 1;
-    
-    (*it)->setCompressedFileSize(validCompressedFileSize);
-  }
-}
+//void MigrationReportPacker::ReportFlush::computeCompressedSize(
+//std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
+//std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end
+//)
+//{
+//  //lets pray for C++11 lamba and std accumulate
+//  uint64_t rawSize = 0;
+//  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
+//          it != end ;++it){
+//            rawSize+=(*it)->fileSize();
+//  }
+//
+//  uint64_t nbByteWritenWithCompression = m_compressStats.toTape;  
+//  //we dont want compressionRatio to be equal to zero not to have a division by zero
+//  double compressionRatio = nbByteWritenWithCompression>0 && rawSize >0 ? 
+//    1.0*nbByteWritenWithCompression/rawSize : 1.;
+//  
+//  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
+//          it != end ;++it){
+//    const uint64_t compressedFileSize =
+//    static_cast<uint64_t>((*it)->fileSize() * compressionRatio);
+//
+//    // The compressed file size should never be reported as being less than 1
+//    // byte
+//    uint64_t validCompressedFileSize = 0 < compressedFileSize ? compressedFileSize : 1;
+//    
+//    (*it)->setCompressedFileSize(validCompressedFileSize);
+//  }
+//}
 
 //------------------------------------------------------------------------------
 //ReportFlush::execute

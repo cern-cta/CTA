@@ -27,8 +27,6 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/server/Threading.hpp"
-//Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
-#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 

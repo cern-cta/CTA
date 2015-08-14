@@ -128,9 +128,9 @@ private:
      * @param beg Beginning of the upper class' successfulMigrations()
      * @param end End of upper class' successfulMigrations()
      */
-    void computeCompressedSize(
-    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
-    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end);
+//    void computeCompressedSize(
+//    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
+//    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end);
     
     public:
     /* We only can compute the compressed size once we have flushed on the drive
