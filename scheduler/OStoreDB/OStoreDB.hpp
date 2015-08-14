@@ -190,6 +190,7 @@ public:
 
   /* === Retrieve requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
+  CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
   virtual void queue(const RetrieveToFileRequest& rqst_);
 
   virtual void queue(const RetrieveToDirRequest& rqst);

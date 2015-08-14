@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include <stdexcept>
 
 namespace cta {
   
@@ -925,6 +926,7 @@ std::list<ArchiveToTapeCopyRequest>
 
 void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   assertAgentSet();
+  // Check at least one potential tape copy is provided.
   // In order to post the job, construct it first.
   objectstore::RetrieveToFileRequest rtfr(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
   rtfr.initialize();
@@ -932,48 +934,80 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   rtfr.setRemoteFile(rqst.getRemoteFile());
   rtfr.setPriority(rqst.priority);
   rtfr.setCreationLog(rqst.creationLog);
-  // We will need to identity tapes is order to construct the request
+  // We will need to identity tapes is order to construct the request.
+  // First load all the tapes information in a memory map
+  std::map<std::string, std::string> vidToAddress;
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  auto & tc = rqst.getTapeCopies();
-  auto numberOfCopies = tc.size();
-  srand (time(NULL));
-  auto chosenCopyNumber = rand() % numberOfCopies;
-  auto it = tc.begin();
-  std::advance(it, chosenCopyNumber);
   auto tapePools = re.dumpTapePools();
-  std::string tapeAddress = "";
   for(auto pool=tapePools.begin(); pool!=tapePools.end(); pool++) {
     objectstore::TapePool tp(pool->address, m_objectStore);
+    objectstore::ScopedSharedLock tpl(tp);
+    tp.fetch();
     auto tapes = tp.dumpTapes();
-    for(auto tape=tapes.begin(); tape!=tapes.end(); tape++) {
-      if(tape->vid==it->vid) {
-        tapeAddress = tape->address;
-        break;
+    for(auto tape=tapes.begin(); tape!=tapes.end(); tape++)
+      vidToAddress[tape->vid] = tape->address;
+  }
+  // Now add all the candidate tape copies to the request. With validation
+  for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
+    // Check the tape copy copynumber (range = [1 - copyCount] )
+    if (tc->copyNumber > rqst.getTapeCopies().size() || tc->copyNumber < 1) {
+      throw TapeCopyNumberOutOfRange("In OStoreDB::queue(RetrieveToFile): copy number out of range");
+    }
+  }
+  // Add all the tape copies to the request
+  try {
+    for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
+      rtfr.addJob(tc->copyNumber, tc->vid, vidToAddress.at(tc->vid));
+    }
+  } catch (std::out_of_range &) {
+    throw NoSuchTape("In OStoreDB::queue(RetrieveToFile): tape not found");
+  }
+  // We now need to select the tape from which we will migrate next. This should
+  // be the tape with the most jobs already queued.
+  // TODO: this will have to look at tape statuses on the long run as well
+  uint16_t selectedCopyNumber;
+  uint64_t bestTapeQueuedBytes;
+  std::string selectedVid;
+  {
+    // First tape copy is always better than nothing. 
+    auto tc=rqst.getTapeCopies().begin();
+    selectedCopyNumber = tc->copyNumber;
+    selectedVid = tc->vid;
+    // Get info for the tape.
+    {
+      objectstore::Tape t(vidToAddress.at(tc->vid), m_objectStore);
+      objectstore::ScopedSharedLock tl(t);
+      t.fetch();
+      bestTapeQueuedBytes = t.getJobsSummary().bytes;
+    }
+    tc++;
+    // Compare with the next ones
+    for (;tc!=rqst.getTapeCopies().end(); tc++) {
+      objectstore::Tape t(vidToAddress.at(tc->vid), m_objectStore);
+      objectstore::ScopedSharedLock tl(t);
+      t.fetch();
+      if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
+        bestTapeQueuedBytes = t.getJobsSummary().bytes;
+        selectedCopyNumber = tc->copyNumber;
       }
     }
   }
-  rtfr.addJob(chosenCopyNumber, it->vid, tapeAddress);
-  auto jl = rtfr.dumpJobs();
-  if (!jl.size()) {
-    throw RetrieveRequestHasNoCopies("In OStoreDB::queue: the retrieve to file request has no copies");
-  }
-  // We successfully prepared the object. Time to create it and plug it to
-  // the tree.
-  rtfr.setOwner(m_agent->getAddressIfSet());
-  rtfr.insert();
-  ScopedExclusiveLock rtfrl(rtfr);
-  // We can now plug the request onto its tape
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    objectstore::Tape tp(j->tapeAddress, m_objectStore);
+  // We now can enqueue the request on this most promising tape.
+  {
+    objectstore::Tape tp(vidToAddress.at(selectedVid), m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
-    tp.addJob(*j, rtfr.getAddressIfSet(), rtfr.getSize(), rqst.priority, time(NULL));
+    objectstore::RetrieveToFileRequest::JobDump jd;
+    jd.copyNb = selectedCopyNumber;
+    jd.tape = selectedVid;
+    jd.tapeAddress = vidToAddress.at(selectedVid);
+    tp.addJob(jd, rtfr.getAddressIfSet(), rqst.getSize(), rqst.priority, rqst.creationLog.time);
     tp.commit();
   }
-  // The request is now fully set. As it's multi-owned, we do not set the owner
-  rtfr.setOwner("");
+  // The request is now fully set. It belongs to the tape.
+  rtfr.setOwner(vidToAddress.at(selectedVid));
   rtfr.commit();
   // And remove reference from the agent
   {

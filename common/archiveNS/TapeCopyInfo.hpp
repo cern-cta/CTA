@@ -46,7 +46,7 @@ struct TapeCopyInfo {
   /**
    * The path of the archive file.
    */
-  std::string filePath;
+  std::string archiveFilePath;
   
   /**
    * The ID of the file
@@ -72,6 +72,11 @@ struct TapeCopyInfo {
    * The hostname of the nameserver holding the file
    */
   std::string nsHostName;
+  
+  /**
+   * The copy number for this tape copy
+   */
+  uint16_t copyNumber;
 
 }; // struct TapeCopyLocation
 

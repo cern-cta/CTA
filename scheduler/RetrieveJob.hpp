@@ -112,7 +112,7 @@ public:
   /** Translation of positioningMethod */
   std::string toString (PositioningMethod);
   
-  TapeCopyInfo tapeCopyLocation; /**<The location of the source tape file. */
+  TapeCopyInfo tapeCopyInfo; /**<The location of the source tape file. */
   PositioningMethod positioningMethod; /**< The desired positioning method. */
   RemotePath remoteFilePath; /** <The location of the destination file. */
   std::string m_id;

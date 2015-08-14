@@ -58,6 +58,7 @@ public:
    */
   RetrieveToFileRequest(
     const std::string &archiveFile,
+    const uint64_t size,
     const std::list<TapeCopyInfo> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
@@ -70,6 +71,13 @@ public:
    */
   const std::string &getArchiveFile() const throw();
 
+  /**
+   * Returns the size of the source archive file.
+   *
+   * @return The size of the source archive file.
+   */
+  uint64_t getSize() const throw();
+  
   /**
    * Returns the physical location(s) of the archive file on tape.
    *
@@ -91,6 +99,10 @@ private:
    */
   std::string m_archiveFile;
 
+  /**
+   * The file size
+   */
+  uint64_t m_size;
   /**
    * The physical location(s) of the archive file on tape.
    */

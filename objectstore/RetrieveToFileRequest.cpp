@@ -64,7 +64,7 @@ std::string cta::objectstore::RetrieveToFileRequest::getArchiveFile() {
 
 void cta::objectstore::RetrieveToFileRequest::setRemoteFile(
   const std::string& remoteFile) {
-  checkHeaderReadable();
+  checkPayloadWritable();
   m_payload.set_remotefile(remoteFile);
 }
 
@@ -80,7 +80,7 @@ void cta::objectstore::RetrieveToFileRequest::setPriority(uint64_t priority) {
 
 void cta::objectstore::RetrieveToFileRequest::setCreationLog(
   const objectstore::CreationLog& creationLog) {
-  checkPayloadReadable();
+  checkPayloadWritable();
   creationLog.serialize(*m_payload.mutable_log());
 }
 

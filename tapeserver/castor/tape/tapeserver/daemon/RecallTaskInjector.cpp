@@ -91,11 +91,11 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>
     (*it)->positioningMethod=cta::RetrieveJob::PositioningMethod::ByBlock;
 
     LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopyLocation.nsHostName)),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->tapeCopyLocation.fileId)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopyLocation.fseq)),
-      LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeCopyLocation.blockId)),
-      LogContext::ScopedParam(m_lc, Param("path", (*it)->tapeCopyLocation.filePath))
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopyInfo.nsHostName)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->tapeCopyInfo.fileId)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopyInfo.fseq)),
+      LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeCopyInfo.blockId)),
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->tapeCopyInfo.archiveFilePath))
     };
     tape::utils::suppresUnusedVariable(sp);
     

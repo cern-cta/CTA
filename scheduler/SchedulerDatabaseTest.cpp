@@ -21,6 +21,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -445,7 +446,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(1, tmdi.potentialMounts.front().filesQueued);
     ASSERT_EQ(cl.time, tmdi.potentialMounts.front().oldestJobStartTime);
   }
-  // Add one more job to the queue: the summary should not change
+  // Add one more job to the queue: the summary should change accordingly
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation2(db.queue(atfr));
   creation2->complete();
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
@@ -458,7 +459,51 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(2, tmdi.potentialMounts.front().filesQueued);
     ASSERT_EQ(cl.time, tmdi.potentialMounts.front().oldestJobStartTime);
   }
-  
+  // Add 2 tapes
+  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl), 
+    cta::exception::Exception);
+  db.createLogicalLibrary("Lib2", cl);
+  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl), 
+    cta::exception::Exception);
+  db.createTapePool("pool2", 5, cl);
+  ASSERT_NO_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl));
+  db.createLogicalLibrary("Lib3", cl);
+  db.createTapePool("pool3", 5, cl);
+  ASSERT_NO_THROW(db.createTape("Tape3", "Lib3", "pool3", 10L*1000*1000*1000*1000*1000, cl));
+  // Add retrieve jobs
+  std::list<TapeCopyInfo> tcl;
+  tcl.push_back(TapeCopyInfo());
+  tcl.back().blockId = 666;
+  tcl.back().fileId = 777;
+  tcl.back().archiveFilePath = "cta:://cta/myfile";
+  tcl.back().fseq = 10;
+  tcl.back().nsHostName = "NSHost";
+  tcl.back().vid = "Tape2";
+  tcl.push_back(TapeCopyInfo());
+  tcl.back().blockId = 111;
+  tcl.back().fileId = 777;
+  tcl.back().archiveFilePath = "cta:://cta/myfile";
+  tcl.back().fseq = 5;
+  tcl.back().nsHostName = "NSHost";
+  tcl.back().vid = "Tape3";
+  ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile", 1234, tcl, "eos://myeos/myeosfile", 10, cl)));
+  // Add retrieve jobs
+  std::list<TapeCopyInfo> tcl2;
+  tcl.push_back(TapeCopyInfo());
+  tcl.back().blockId = 999;
+  tcl.back().fileId = 888;
+  tcl.back().archiveFilePath = "cta:://cta/myfile2";
+  tcl.back().fseq = 11;
+  tcl.back().nsHostName = "NSHost";
+  tcl.back().vid = "Tape2";
+  tcl.push_back(TapeCopyInfo());
+  tcl.back().blockId = 333;
+  tcl.back().fileId = 888;
+  tcl.back().archiveFilePath = "cta:://cta/myfile2";
+  tcl.back().fseq = 3;
+  tcl.back().nsHostName = "NSHost";
+  tcl.back().vid = "Tape3";
+  db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile2", 1234, tcl2, "eos://myeos/myeosfile2", 10, cl));
 }
 
 #undef TEST_MOCK_DB
