@@ -121,6 +121,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
         m.filesQueued = t.getJobsSummary().files;
         m.oldestJobStartTime = t.getJobsSummary().oldestJobStartTime;
         m.priority = t.getJobsSummary().priority;
+        m.vid = t.getVid();
+        m.logicalLibrary = t.getLogicalLibrary();
         
         m.mountCriteria.maxFilesQueued = 
             tpool.getMountCriteria().retrieve.maxFilesQueued;
@@ -934,6 +936,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   rtfr.setRemoteFile(rqst.getRemoteFile());
   rtfr.setPriority(rqst.priority);
   rtfr.setCreationLog(rqst.creationLog);
+  rtfr.setSize(rqst.getSize());
   // We will need to identity tapes is order to construct the request.
   // First load all the tapes information in a memory map
   std::map<std::string, std::string> vidToAddress;
@@ -991,6 +994,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
       if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
         bestTapeQueuedBytes = t.getJobsSummary().bytes;
         selectedCopyNumber = tc->copyNumber;
+        selectedVid = tc->vid;
       }
     }
   }
@@ -1008,7 +1012,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   }
   // The request is now fully set. It belongs to the tape.
   rtfr.setOwner(vidToAddress.at(selectedVid));
-  rtfr.commit();
+  rtfr.insert();
   // And remove reference from the agent
   {
     objectstore::ScopedExclusiveLock al(*m_agent);

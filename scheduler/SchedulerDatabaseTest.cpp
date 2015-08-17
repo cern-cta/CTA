@@ -31,6 +31,7 @@
 
 #include <exception>
 #include <gtest/gtest.h>
+#include <algorithm>
 
 namespace unitTests {
 
@@ -479,6 +480,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().fseq = 10;
   tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape2";
+  tcl.back().copyNumber = 1;
   tcl.push_back(TapeCopyInfo());
   tcl.back().blockId = 111;
   tcl.back().fileId = 777;
@@ -486,24 +488,85 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().fseq = 5;
   tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape3";
+  tcl.back().copyNumber = 2;
   ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile", 1234, tcl, "eos://myeos/myeosfile", 10, cl)));
+  ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
+  {
+    cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+    ASSERT_EQ(0, tmdi.dedicationInfo.size());
+    ASSERT_EQ(0, tmdi.existingMounts.size());
+    ASSERT_EQ(3, tmdi.potentialMounts.size());
+    // Check we have 3 potential mounts (2 archive, 1 retrieve)
+    int retrieveCount = 0;
+    for (auto pm = tmdi.potentialMounts.begin(); pm !=tmdi.potentialMounts.end(); pm++) {
+      if (pm->type == cta::MountType::RETRIEVE)
+        retrieveCount++;
+    }
+    // We expect only one potential tape to be mounted as the queueing does a
+    // select on enqueue
+    ASSERT_EQ(1, retrieveCount);
+    // Find the first retrieve mount
+    cta::SchedulerDatabase::PotentialMount *firstPotentialRetrieve = NULL;
+    for (auto pm = tmdi.potentialMounts.begin(); pm !=tmdi.potentialMounts.end(); pm++) {
+      if (pm->type == cta::MountType::RETRIEVE) {
+        firstPotentialRetrieve = &(*pm);
+        break;
+      }
+    }
+    ASSERT_NE(NULL, (int64_t) firstPotentialRetrieve);
+    ASSERT_EQ(1234, firstPotentialRetrieve->bytesQueued);
+    ASSERT_EQ(1, firstPotentialRetrieve->filesQueued);
+    ASSERT_EQ(cl.time, firstPotentialRetrieve->oldestJobStartTime);
+  }
   // Add retrieve jobs
+  // We flip the tape order here to make sure the algorithm will not select just
+  // the first tape
   std::list<TapeCopyInfo> tcl2;
-  tcl.push_back(TapeCopyInfo());
-  tcl.back().blockId = 999;
-  tcl.back().fileId = 888;
-  tcl.back().archiveFilePath = "cta:://cta/myfile2";
-  tcl.back().fseq = 11;
-  tcl.back().nsHostName = "NSHost";
-  tcl.back().vid = "Tape2";
-  tcl.push_back(TapeCopyInfo());
-  tcl.back().blockId = 333;
-  tcl.back().fileId = 888;
-  tcl.back().archiveFilePath = "cta:://cta/myfile2";
-  tcl.back().fseq = 3;
-  tcl.back().nsHostName = "NSHost";
-  tcl.back().vid = "Tape3";
+  tcl2.push_back(TapeCopyInfo());
+  tcl2.back().blockId = 999;
+  tcl2.back().fileId = 888;
+  tcl2.back().archiveFilePath = "cta:://cta/myfile2";
+  tcl2.back().fseq = 11;
+  tcl2.back().nsHostName = "NSHost";
+  tcl2.back().vid = "Tape3";
+  tcl2.back().copyNumber = 1;
+  tcl2.push_back(TapeCopyInfo());
+  tcl2.back().blockId = 333;
+  tcl2.back().fileId = 888;
+  tcl2.back().archiveFilePath = "cta:://cta/myfile2";
+  tcl2.back().fseq = 3;
+  tcl2.back().nsHostName = "NSHost";
+  tcl2.back().vid = "Tape2";
+  tcl2.back().copyNumber = 2;
   db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile2", 1234, tcl2, "eos://myeos/myeosfile2", 10, cl));
+  ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
+  {
+    cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
+    ASSERT_EQ(0, tmdi.dedicationInfo.size());
+    ASSERT_EQ(0, tmdi.existingMounts.size());
+    ASSERT_EQ(3, tmdi.potentialMounts.size());
+    // Check we have 3 potential mounts (2 archive, 1 retrieve)
+    int retrieveCount = 0;
+    for (auto pm = tmdi.potentialMounts.begin(); pm !=tmdi.potentialMounts.end(); pm++) {
+      if (pm->type == cta::MountType::RETRIEVE)
+        retrieveCount++;
+    }
+    // We expect only one potential tape to be mounted as the queueing does a
+    // select on enqueue
+    ASSERT_EQ(1, retrieveCount);
+    // Find the first retrieve mount
+    cta::SchedulerDatabase::PotentialMount *firstPotentialRetrieve = NULL;
+    for (auto pm = tmdi.potentialMounts.begin(); pm !=tmdi.potentialMounts.end(); pm++) {
+      if (pm->type == cta::MountType::RETRIEVE) {
+        firstPotentialRetrieve = &(*pm);
+        break;
+      }
+    }
+    ASSERT_NE(NULL, (int64_t) firstPotentialRetrieve);
+    ASSERT_EQ(2468, firstPotentialRetrieve->bytesQueued);
+    ASSERT_EQ(2, firstPotentialRetrieve->filesQueued);
+    ASSERT_EQ(cl.time, firstPotentialRetrieve->oldestJobStartTime);
+  }
 }
 
 #undef TEST_MOCK_DB

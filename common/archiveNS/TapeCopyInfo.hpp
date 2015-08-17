@@ -39,9 +39,10 @@ struct TapeCopyInfo {
    * @param vid The volume identifier of the tape.
    * @param fseq The sequence number of the file.
    * @param blockId The block identifier of the file.
+   * @param copyNumber The copy number for this tape copy.
    */
   TapeCopyInfo(const std::string &vid, const uint64_t fseq,
-    const uint64_t blockId);
+    const uint64_t blockId, uint16_t copyNumber);
   
   /**
    * The path of the archive file.
