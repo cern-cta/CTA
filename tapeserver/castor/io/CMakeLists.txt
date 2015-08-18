@@ -5,3 +5,5 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 add_library (castoriounittests SHARED
   IoTest.cpp)
+target_link_libraries (castoriounittests
+  castorclient)
