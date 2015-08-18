@@ -6,6 +6,7 @@ add_executable(unittests
 target_link_libraries(unittests
   castorexceptionunittests
   castoriounittests
+  castorlegacymsgunittests
   ctacommon
   ctacommonunittests
   CTAObjectStore

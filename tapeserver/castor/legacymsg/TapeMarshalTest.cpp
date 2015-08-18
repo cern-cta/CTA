@@ -24,9 +24,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/utils/utils.hpp"
-#include "vdqm_constants.h"
 #include "Ctape.h"
-#include "serrno.h"
 
 #include <gtest/gtest.h>
 

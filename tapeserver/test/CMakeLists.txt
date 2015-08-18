@@ -48,31 +48,13 @@ set_property(SOURCE
 APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 #add_executable(castorUnitTests
 #  castorUnitTests.cpp
-#  ../castor/messages/TapeserverProxy.cpp
-#  ../castor/messages/TapeserverProxyZmq.cpp
 #  ../castor/legacymsg/CommonMarshalTest.cpp
 #  ../castor/legacymsg/GenericMarshalTest.cpp
-#  ../castor/legacymsg/RmcMarshalTest.cpp
-#  ../castor/legacymsg/RmcProxy.cpp
-#  ../castor/legacymsg/RmcProxyTcpIp.cpp
 #  ../castor/legacymsg/TapeMarshalTest.cpp
 #  ../castor/log/ParamTest.cpp
 #  ../castor/log/LogContextTest.cpp
 #  ../castor/log/StringLoggerTest.cpp
 #  ../castor/log/SyslogLoggerTest.cpp
-#  ../castor/mediachanger/AcsLibrarySlot.cpp
-#  ../castor/mediachanger/AcsLibrarySlotTest.cpp
-#  ../castor/mediachanger/CmdLine.cpp
-#  ../castor/mediachanger/DismountCmdLine.cpp
-#  ../castor/mediachanger/DismountCmdLineTest.cpp
-#  ../castor/mediachanger/LibrarySlotParserTest.cpp
-#  ../castor/mediachanger/ManualLibrarySlotTest.cpp
-#  ../castor/mediachanger/MediaChangerFacade.cpp
-#  ../castor/mediachanger/MediaChangerFacadeTest.cpp
-#  ../castor/mediachanger/MountCmdLine.cpp
-#  ../castor/mediachanger/MountCmdLineTest.cpp
-#  ../castor/mediachanger/ScsiLibrarySlot.cpp
-#  ../castor/mediachanger/ScsiLibrarySlotTest.cpp
 #  ../castor/messages/MessagesTest.cpp
 #  ../castor/messages/MutexLockerTest.cpp
 #  ../castor/messages/MutexTest.cpp
@@ -112,23 +94,6 @@ APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
-
-# With the exception of shared-library plugins, the CASTOR rpms only install the
-# /usr/lib64/libcastor*.so symbolic links for libraries used by end-user
-# developers.  Therefore the locations of the internal CASTOR libraries required
-# by tapeserved and not by end-user developers need to be imported into cmake.
-add_library(castorlegacymsg SHARED IMPORTED)
-set_target_properties(castorlegacymsg PROPERTIES
-  IMPORTED_LOCATION /usr/lib64/libcastorlegacymsg.so.2.1)
-add_library(castorserver SHARED IMPORTED)
-set_target_properties(castorserver PROPERTIES
-  IMPORTED_LOCATION /usr/lib64/libcastorserver.so.2.1)
-add_library(castortapegatewayprotocol SHARED IMPORTED)
-set_target_properties(castortapegatewayprotocol PROPERTIES
-  IMPORTED_LOCATION /usr/lib64/libcastortapegatewayprotocol.so.2.1)
-add_library(castorvdqm SHARED IMPORTED)
-set_target_properties(castorvdqm PROPERTIES
-  IMPORTED_LOCATION /usr/lib64/libcastorvdqm.so.2.1)
 
 #target_link_libraries(castorUnitTests
 #  castorcommon

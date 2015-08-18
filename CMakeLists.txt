@@ -18,6 +18,20 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
 
+# With the exception of shared-library plugins, the CASTOR rpms only install the
+# /usr/lib64/libcastor*.so symbolic links for libraries used by end-user
+# developers.  Therefore the locations of the internal CASTOR libraries required
+# by tapeserved and not by end-user developers need to be imported into cmake.
+add_library(castorlegacymsg SHARED IMPORTED)
+set_target_properties(castorlegacymsg PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorlegacymsg.so.2.1)
+add_library(castorserver SHARED IMPORTED)
+set_target_properties(castorserver PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastorserver.so.2.1)
+add_library(castortapegatewayprotocol SHARED IMPORTED)
+set_target_properties(castortapegatewayprotocol PROPERTIES
+  IMPORTED_LOCATION /usr/lib64/libcastortapegatewayprotocol.so.2.1)
+
 IF(NOT CMAKE_BUILD_TYPE STREQUAL "")
   # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
   message(STATUS "Setting build type to ${CMAKE_BUILD_TYPE} as requested.")
