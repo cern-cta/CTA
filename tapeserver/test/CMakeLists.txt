@@ -48,8 +48,6 @@ set_property(SOURCE
 APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 #add_executable(castorUnitTests
 #  castorUnitTests.cpp
-#  ../castor/tape/reactor/PollReactorImplTest.cpp
-#  ../castor/tape/reactor/ZMQReactorTest.cpp
 #  ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
 #  ../castor/tape/tapeserver/daemon/Catalogue.cpp
