@@ -48,9 +48,6 @@ set_property(SOURCE
 APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 #add_executable(castorUnitTests
 #  castorUnitTests.cpp
-#  ../castor/messages/MessagesTest.cpp
-#  ../castor/messages/MutexLockerTest.cpp
-#  ../castor/messages/MutexTest.cpp
 #  ../castor/server/DaemonTest.cpp
 #  ../castor/server/SmartCapTest.cpp
 #  ../castor/tape/reactor/PollReactorImplTest.cpp

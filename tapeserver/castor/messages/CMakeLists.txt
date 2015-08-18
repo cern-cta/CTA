@@ -62,3 +62,8 @@ target_link_libraries(castormessages
   protobuf
   ssl
   zmq)
+
+add_library(castormessagesunittests SHARED
+  MessagesTest.cpp
+  MutexLockerTest.cpp
+  MutexTest.cpp)
