@@ -28,3 +28,8 @@ set (UTILS_LIB_SRC_FILES
   Timer.cpp
   utils.cpp)
 add_library (castorutils ${UTILS_LIB_SRC_FILES})
+
+add_library (castorutilsunittests SHARED
+  SmartArrayPtrTest.cpp
+  SmartFdTest.cpp
+  UtilsTest.cpp)
