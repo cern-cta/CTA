@@ -10,6 +10,7 @@ target_link_libraries(unittests
   castorlogunittests
   castormessagesunittests
   castorserverunittests
+  castortapereactorunittests
   ctacommon
   ctacommonunittests
   CTAObjectStore
