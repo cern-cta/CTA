@@ -28,7 +28,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/InvalidConfiguration.hpp"
-#include "castor/io/ServerSocket.hpp"
 
 #include <ostream>
 #include <string>
