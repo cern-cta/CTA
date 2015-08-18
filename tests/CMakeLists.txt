@@ -9,6 +9,7 @@ target_link_libraries(unittests
   castorlegacymsgunittests
   castorlogunittests
   castormessagesunittests
+  castorserverunittests
   ctacommon
   ctacommonunittests
   CTAObjectStore
