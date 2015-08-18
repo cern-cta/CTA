@@ -45,13 +45,14 @@ public:
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
   public:
+    virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const std::string & vid,
+      const std::string driveName);
+    virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
+      const std::string driveName);
     virtual ~TapeMountDecisionInfo();
-  private:
   };
+
   virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();
- 
-  virtual std::unique_ptr<SchedulerDatabase::TapeMount> getNextMount(const std::string &logicalLibrary,
-    const std::string &driveName);
 
   /* === Admin host handling ================================================ */
   virtual void createAdminHost(const std::string& hostName, 

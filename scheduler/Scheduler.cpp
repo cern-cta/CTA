@@ -774,26 +774,6 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
 //  return wrapDbMountInSchedulerMount(std::move(dbMount));
 }
 
-//------------------------------------------------------------------------------
-// wrapDbMountInSchedulerTapeMount
-//------------------------------------------------------------------------------
-std::unique_ptr<cta::TapeMount> cta::Scheduler::wrapDbMountInSchedulerMount(
-  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) const {
-  if(!dbMount.get()) {
-    return std::unique_ptr<cta::TapeMount>();
-  }
-
-  switch(dbMount->getMountType()) {
-  case MountType::ARCHIVE:
-    return std::unique_ptr<TapeMount>(new ArchiveMount(std::move(dbMount)));
-  case MountType::RETRIEVE:
-    return std::unique_ptr<TapeMount>(new RetrieveMount(std::move(dbMount)));
-  default:
-    throw exception::Exception(std::string("Unexpected database mount type: ") +
-      MountType::toString(dbMount->getMountType()));
-  }
-}
-
 //
 ////------------------------------------------------------------------------------
 //// finishedMount

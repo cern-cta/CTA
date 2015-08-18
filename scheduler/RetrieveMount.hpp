@@ -42,7 +42,7 @@ namespace cta {
      *
      * @param dbMount The database representation of this mount.
      */
-    RetrieveMount(std::unique_ptr<cta::SchedulerDatabase::TapeMount> dbMount);
+    RetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
 
   public:
 

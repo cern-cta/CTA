@@ -22,7 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveMount::ArchiveMount(
-  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) {
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount) {
   m_dbMount.reset(
     dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
   if(!m_dbMount.get()) {

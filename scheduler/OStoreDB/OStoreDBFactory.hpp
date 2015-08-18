@@ -188,11 +188,6 @@ public:
     return m_OStoreDB.getMountInfo();
   }
 
-  virtual std::unique_ptr<TapeMount> getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
-    return m_OStoreDB.getNextMount(logicalLibrary, driveName);
-  }
-
-
   virtual StorageClass getStorageClass(const std::string& name) const {
     return m_OStoreDB.getStorageClass(name);
   }

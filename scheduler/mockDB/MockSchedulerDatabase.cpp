@@ -203,13 +203,6 @@ std::unique_ptr<cta::SchedulerDatabase::TapeMountDecisionInfo>
 }
 
 
-std::unique_ptr<cta::SchedulerDatabase::TapeMount> 
-  cta::MockSchedulerDatabase::getNextMount(const std::string& logicalLibrary, 
-  const std::string& driveName) {
-  throw NotImplemented("");
-}
-
-
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------

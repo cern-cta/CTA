@@ -22,13 +22,8 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(
-  std::unique_ptr<SchedulerDatabase::TapeMount> dbMount) {
-  m_dbMount.reset(
-    dynamic_cast<SchedulerDatabase::RetrieveMount*>(dbMount.release()));
-  if(!m_dbMount.get()) {
-    throw WrongMountType(std::string(__FUNCTION__) +
-      ": could not cast mount to SchedulerDatabase::RetrieveMount");
-  }
+  std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount) {
+  m_dbMount.reset(dbMount.release());
 }
 
 //------------------------------------------------------------------------------

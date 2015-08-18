@@ -168,13 +168,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   return ret;
 }
 
-
-std::unique_ptr<SchedulerDatabase::TapeMount> 
-  OStoreDB::getNextMount(const std::string& logicalLibrary, const std::string& driveName) {
-  throw NotImplemented("");
-}
-
-
 void OStoreDB::createAdminHost(const std::string& hostName,
     const cta::CreationLog & creationLog) {
   RootEntry re(m_objectStore);
@@ -1042,9 +1035,21 @@ void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
   }
 
-  OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
- }
+std::unique_ptr<SchedulerDatabase::ArchiveMount> 
+  OStoreDB::TapeMountDecisionInfo::createArchiveMount(
+    const std::string& vid, const std::string driveName) {
+  throw NotImplemented("Not Implemented");
+}
 
+std::unique_ptr<SchedulerDatabase::RetrieveMount> 
+  OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
+    const std::string& vid, const std::string driveName) {
+  throw NotImplemented("Not Implemented");
+}
+ 
+OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
+  // TODO: manage the locking of the scheduling
+}
 
     
 }

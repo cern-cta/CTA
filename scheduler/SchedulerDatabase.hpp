@@ -60,104 +60,6 @@ public:
    * Destructor.
    */
   virtual ~SchedulerDatabase() throw() = 0;
-
-  /*============ Session management ==========================================*/
-  
-  /**
-   * A structure describing a potential mount with all the information allowing
-   * comparison between mounts.
-   */
-  struct MountCriteria {
-    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
-                              * before trigerring a mount */
-    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
-                           * a request */
-    uint64_t maxAge; /**< The maximum age for a request before trigerring
-                           * a request (in seconds) */
-  }; 
-  struct MountQuota {
-    uint16_t quota;
-    uint16_t allowedOverhead;
-  };
-  
-  struct PotentialMount {
-    cta::MountType::Enum type; /**< Is this an archive or retireve? */
-    std::string vid; /**< The tape VID (for a retieve) */
-    std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
-    uint64_t priority; /**< The priority for the mount */
-    uint64_t filesQueued; /**< The number of files queued for this queue */
-    uint64_t bytesQueued; /**< The amount of data currently queued */
-    time_t oldestJobStartTime; /**< Creation time of oldest request */
-    MountCriteria mountCriteria; /**< The mount criteria collection */
-    MountQuota mountQuota; /**< The mount quota collection */     
-    std::string logicalLibrary; /**< The logical library (for a retrieve) */
-  };
-  
-  /**
-   * Information about the existing mounts.
-   */
-  struct ExistingMount {
-    cta::MountType::Enum type;
-    std::string tapePool;
-  };
-  
-  /**
-   * An entry (to be indexed by drive name (string) in a map) for the dedication
-   * lists of each drive.
-   */
-  struct DedicationEntry {
-    // TODO.
-  };
-  
-  /**
-   * An structure containing all the information needed for mount decision
-   * and whose creation implicitly takes a global lock on the drive register
-   * so that only one mount scheduling happens at a time.
-   */
-  struct TapeMountDecisionInfo {
-    std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
-    std::vector<ExistingMount> existingMounts; /**< Existing mounts */
-    std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
-    /** Destructor: releases the global lock */
-    virtual ~TapeMountDecisionInfo() {};
-  };
-  
-  /**
-   * A function dumping the relevant mount information for deciding which
-   * tape to mount next.
-   */
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
-  
-   /**
-   * An umbrella class from which ArchiveSession and RetrieveSession will
-   * inherit.
-   * */
-
-  struct TapeMount {
-    /**
-     * Returns The type of this tape mount.
-     *
-     * @return The type of this tape mount.
-     */
-    virtual MountType::Enum getMountType() const throw() = 0;
-    virtual ~TapeMount() {}
-  };
-  
-  
-  /**
-   * Starts a session, and updates the relevant information in the DB.
-   * The returned object will be the scheduler's interface for the tape server
-   * throughout the session.
-   * @param logicalLibrary name of the logical library, allowing selection
-   * of reachable tapes for this drive
-   * @param driveName name of the drive, allowing enforcement of dedication
-   * policies for tapes and drives.
-   * @return smart pointer to a TapeSession. It can be an ArchiveMount, 
-   * a RetrieveMount or nullptr.
-   */
-  virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibrary,
-    const std::string &driveName) = 0;
-  
   
   /*============ Archive management: user side ==============================*/
   /*
@@ -245,23 +147,10 @@ public:
     const std::string &archiveFile) = 0;
 
   /*============ Archive management: tape server side =======================*/
-  
-  class ArchiveMount: public TapeMount {
-    friend class SchedulerDatabase;
-  private:
-    ArchiveMount() {}
-  public:
-    /**
-     * Returns The type of this tape mount.
-     *
-     * @return The type of this tape mount.
-     */
-    MountType::Enum getMountType() const throw() {
-      return MountType::ARCHIVE;
-    }
-
-    virtual ~ArchiveMount() {};
-  };
+  /**
+   * The class used by the scheduler database to track the archive mounts
+   */
+  class ArchiveMount {};
   
   class ArchiveJob {
     friend class ArchiveMount;
@@ -320,20 +209,7 @@ public:
   /*============ Retrieve management: tape server side ======================*/
 
   
-  class RetrieveMount: public TapeMount {
-    friend class SchedulerDatabase;
-  private:
-    RetrieveMount() {}
-  public:
-    /**
-     * Returns The type of this tape mount.
-     *
-     * @return The type of this tape mount.
-     */
-    MountType::Enum getMountType() const throw() {
-      return MountType::RETRIEVE;
-    }
-  };
+  class RetrieveMount {};
   
   class RetrieveJob {
     friend class RetrieveMount;
@@ -342,6 +218,90 @@ public:
     cta::ArchiveFileStatus archiveFile;
     /* TODO */
   };
+  
+  /*============ Session management ==========================================*/
+  
+  /**
+   * A structure describing a potential mount with all the information allowing
+   * comparison between mounts.
+   */
+  struct MountCriteria {
+    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
+                              * before trigerring a mount */
+    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
+                           * a request */
+    uint64_t maxAge; /**< The maximum age for a request before trigerring
+                           * a request (in seconds) */
+  }; 
+  
+  struct MountQuota {
+    uint16_t quota;
+    uint16_t allowedOverhead;
+  };
+  
+  struct PotentialMount {
+    cta::MountType::Enum type; /**< Is this an archive or retireve? */
+    std::string vid; /**< The tape VID (for a retieve) */
+    std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
+    uint64_t priority; /**< The priority for the mount */
+    uint64_t filesQueued; /**< The number of files queued for this queue */
+    uint64_t bytesQueued; /**< The amount of data currently queued */
+    time_t oldestJobStartTime; /**< Creation time of oldest request */
+    MountCriteria mountCriteria; /**< The mount criteria collection */
+    MountQuota mountQuota; /**< The mount quota collection */     
+    std::string logicalLibrary; /**< The logical library (for a retrieve) */
+  };
+  
+  /**
+   * Information about the existing mounts.
+   */
+  struct ExistingMount {
+    cta::MountType::Enum type;
+    std::string tapePool;
+  };
+  
+  /**
+   * An entry (to be indexed by drive name (string) in a map) for the dedication
+   * lists of each drive.
+   */
+  struct DedicationEntry {
+    // TODO.
+  };
+  
+  /**
+   * A class containing all the information needed for mount decision
+   * and whose creation implicitly takes a global lock on the drive register
+   * so that only one mount scheduling happens at a time. Two member functions
+   * then allow the 
+   */
+  class TapeMountDecisionInfo {
+  public:
+    std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
+    std::vector<ExistingMount> existingMounts; /**< Existing mounts */
+    std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
+    /**
+     * Create a new archive mount. This implicitly releases the global scheduling
+     * lock.
+     */
+    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const std::string & vid,
+      const std::string driveName) = 0;
+    /**
+     * Create a new retrieve mount. This implicitly releases the global scheduling
+     * lock.
+     */
+    virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
+      const std::string driveName) = 0;
+    /** Destructor: releases the global lock if not already done */
+    virtual ~TapeMountDecisionInfo() {};
+  };
+  
+  /**
+   * A function dumping the relevant mount information for deciding which
+   * tape to mount next. This also starts the mount decision process (and takes
+   * a global lock on for scheduling).
+   */
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+
   
   /*============ Admin user/host management  ================================*/
   /**
