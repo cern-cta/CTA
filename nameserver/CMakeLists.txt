@@ -14,11 +14,11 @@ add_executable(castornstest CastorNameServerTest.cpp)
 
 target_link_libraries(castornstest ctanameserver ctacommon ctascheduler)
 
-add_library (ctanameservertest SHARED
+add_library (ctanameserverunittests SHARED
   mockNS/MockNameServerFactory.cpp
   mockNS/MockNameServerTest.cpp
   mockNS/SmartFdTest.cpp
   NameServerFactory.cpp)
 
-target_link_libraries(ctanameservertest
+target_link_libraries(ctanameserverunittests
   ctanameserver)

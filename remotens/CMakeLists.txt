@@ -14,12 +14,12 @@ include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE
 
 target_link_libraries (ctaremotens ${XROOTD_XRDCL_LIB} ctacommon cryptopp)
 
-add_library (ctaremotenstest SHARED
+add_library (ctaremotensunittests SHARED
   MockRemoteNS.cpp
   MockRemoteNSFactory.cpp 
   MockRemoteNSTest.cpp
   RemoteNSDispatcherTest.cpp 
   RemoteNSFactory.cpp)
 
-target_link_libraries(ctaremotenstest
+target_link_libraries(ctaremotensunittests
   ctaremotens)
