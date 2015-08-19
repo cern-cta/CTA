@@ -477,7 +477,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().blockId = 666;
   tcl.back().fileId = 777;
   tcl.back().archiveFilePath = "cta:://cta/myfile";
-  tcl.back().fseq = 10;
+  tcl.back().fSeq = 10;
   tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape2";
   tcl.back().copyNumber = 1;
@@ -485,7 +485,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().blockId = 111;
   tcl.back().fileId = 777;
   tcl.back().archiveFilePath = "cta:://cta/myfile";
-  tcl.back().fseq = 5;
+  tcl.back().fSeq = 5;
   tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape3";
   tcl.back().copyNumber = 2;
@@ -526,7 +526,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().blockId = 999;
   tcl2.back().fileId = 888;
   tcl2.back().archiveFilePath = "cta:://cta/myfile2";
-  tcl2.back().fseq = 11;
+  tcl2.back().fSeq = 11;
   tcl2.back().nsHostName = "NSHost";
   tcl2.back().vid = "Tape3";
   tcl2.back().copyNumber = 1;
@@ -534,7 +534,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().blockId = 333;
   tcl2.back().fileId = 888;
   tcl2.back().archiveFilePath = "cta:://cta/myfile2";
-  tcl2.back().fseq = 3;
+  tcl2.back().fSeq = 3;
   tcl2.back().nsHostName = "NSHost";
   tcl2.back().vid = "Tape2";
   tcl2.back().copyNumber = 2;

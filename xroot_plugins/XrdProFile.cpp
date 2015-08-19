@@ -988,7 +988,7 @@ void XrdProFile::xCom_listongoingretrieves(const std::vector<std::string> &token
                    << " " << request->copyNb
                    << " " << request->tapeCopy.vid
                    << " " << request->tapeCopy.blockId
-                   << " " << request->tapeCopy.fseq
+                   << " " << request->tapeCopy.fSeq
                    << " " << request->priority
                    << " " << request->creationLog.user.uid
                    << " " << request->creationLog.user.gid
@@ -1007,7 +1007,7 @@ void XrdProFile::xCom_listongoingretrieves(const std::vector<std::string> &token
                  << " " << request->copyNb
                  << " " << request->tapeCopy.vid
                  << " " << request->tapeCopy.blockId
-                 << " " << request->tapeCopy.fseq
+                 << " " << request->tapeCopy.fSeq
                  << " " << request->priority
                  << " " << request->creationLog.user.uid
                  << " " << request->creationLog.user.gid

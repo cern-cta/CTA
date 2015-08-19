@@ -37,11 +37,11 @@ struct TapeCopyInfo {
    * Constructor.
    *
    * @param vid The volume identifier of the tape.
-   * @param fseq The sequence number of the file.
+   * @param fSeq The sequence number of the file.
    * @param blockId The block identifier of the file.
    * @param copyNumber The copy number for this tape copy.
    */
-  TapeCopyInfo(const std::string &vid, const uint64_t fseq,
+  TapeCopyInfo(const std::string &vid, const uint64_t fSeq,
     const uint64_t blockId, uint16_t copyNumber);
   
   /**
@@ -62,7 +62,7 @@ struct TapeCopyInfo {
   /**
    * The sequence number of the file.
    */
-  uint64_t fseq;
+  uint64_t fSeq;
 
   /**
    * The block identifier of the file.

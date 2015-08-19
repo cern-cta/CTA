@@ -22,7 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::TapeCopyInfo::TapeCopyInfo():
-  fseq(0),
+  fSeq(0),
   blockId(0) {
 }
 
@@ -30,9 +30,9 @@ cta::TapeCopyInfo::TapeCopyInfo():
 // constructor
 //------------------------------------------------------------------------------
 cta::TapeCopyInfo::TapeCopyInfo(const std::string &vid,
-  const uint64_t fseq, const uint64_t blockId, uint16_t copyNumber):
+  const uint64_t fSeq, const uint64_t blockId, uint16_t copyNumber):
   vid(vid),
-  fseq(fseq),
+  fSeq(fSeq),
   blockId(blockId),
   copyNumber(copyNumber) {
 }

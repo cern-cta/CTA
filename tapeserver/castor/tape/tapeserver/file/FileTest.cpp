@@ -29,31 +29,42 @@
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "scheduler/RetrieveJob.hpp"
+
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace UnitTests {
+
+  class TestingRetrieveJob: public cta::RetrieveJob {
+  public:
+    TestingRetrieveJob() {
+    }
+  }; // class TestingRetrieveJob
+
+  class TestingArchiveJob: public cta::ArchiveJob {
+  public:
+    TestingArchiveJob() {
+    }
+  }; // class TestingRetrieveJob
   
   class castorTapeFileTest : public ::testing::Test {
   protected:
     virtual void SetUp() {
       block_size = 262144;
       label = "K00001";
-      fileToRecall.setBlockId0(0);
-      fileToRecall.setBlockId1(0);
-      fileToRecall.setBlockId2(0);
-      fileToRecall.setBlockId3(0);
-      fileToRecall.setFseq(1);
-      fileToRecall.setFileid(1);
+      fileToRecall.tapeCopy.blockId = 0;
+      fileToRecall.tapeCopy.fSeq = 1;
+      fileToRecall.tapeCopy.fileId = 1;
 //      fileInfo.blockId=0;
 //      fileInfo.checksum=43567;
-//      fileInfo.fseq=1;
+//      fileInfo.fSeq=1;
 //      fileInfo.nsFileId=1;
 //      fileInfo.size=500;
-      fileToMigrate.setFileSize(500);
-      fileToMigrate.setFileid(1);
-      fileToMigrate.setFseq(1);
+      fileToMigrate.archiveFile.size = 500;
+      fileToMigrate.tapeCopy.fileId = 1;
+      fileToMigrate.tapeCopy.fSeq = 1;
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;
@@ -66,16 +77,16 @@ namespace UnitTests {
     castor::tape::tapeserver::drive::FakeDrive d;
     uint32_t block_size;
     std::string label;
-    castor::tape::tapegateway::FileToRecallStruct fileToRecall;
-    castor::tape::tapegateway::FileToMigrateStruct fileToMigrate;
-    castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+    TestingRetrieveJob fileToRecall;
+    TestingArchiveJob fileToMigrate;
+    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
   };
   
   TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {    
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);    
     ASSERT_NE((long int)rs, 0);
-    fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+    fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
     ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
     delete rs;
   }
@@ -88,15 +99,16 @@ namespace UnitTests {
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
-      wf.write(testString.c_str(),testString.size());      
-      wf.close();
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
+      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      wf->write(testString.c_str(),testString.size());      
+      wf->close();
     }
     delete ws;
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
-      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);
       ASSERT_THROW({castor::tape::tapeFile::ReadFile rf2(rs, fileToRecall);},castor::tape::tapeFile::SessionAlreadyInUse); //cannot have two ReadFile's on the same session
     }
@@ -108,8 +120,9 @@ namespace UnitTests {
     ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
-      ASSERT_THROW(wf.close(), castor::tape::tapeFile::ZeroFileWritten);
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
+      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      ASSERT_THROW(wf->close(), castor::tape::tapeFile::ZeroFileWritten);
     }
     ASSERT_EQ(ws->isCorrupted(), true);
     {
@@ -123,10 +136,11 @@ namespace UnitTests {
     castor::tape::tapeFile::WriteSession *ws;
     ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
-      wf.write(testString.c_str(),testString.size());
-      wf.close();
-      ASSERT_THROW(wf.close(), castor::tape::tapeFile::FileClosedTwice);
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
+      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      wf->write(testString.c_str(),testString.size());
+      wf->close();
+      ASSERT_THROW(wf->close(), castor::tape::tapeFile::FileClosedTwice);
     }
     delete ws;
   }
@@ -136,16 +150,17 @@ namespace UnitTests {
     castor::tape::tapeFile::WriteSession *ws;
     ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
-      wf.write(testString.c_str(),testString.size());
-      wf.close();
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
+      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      wf->write(testString.c_str(),testString.size());
+      wf->close();
     }
     delete ws;
     
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
-      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       char *data = new char[bs+1];
@@ -175,9 +190,10 @@ namespace UnitTests {
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
-      wf.write(testString.c_str(),testString.size());      
-      wf.close();
+      std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
+      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
+      wf->write(testString.c_str(),testString.size());      
+      wf->close();
     }
     delete ws;
     
@@ -189,7 +205,7 @@ namespace UnitTests {
     ASSERT_EQ(rs->isCorrupted(), false);
     ASSERT_EQ(rs->m_vid.compare(label), 0);
     {
-      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       ASSERT_EQ(bs, block_size);

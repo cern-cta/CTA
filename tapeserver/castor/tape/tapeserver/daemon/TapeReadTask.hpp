@@ -69,12 +69,12 @@ public:
     
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_retrieveJob->tapeCopyInfo.nsHostName)
-          .add("NSFILEID", m_retrieveJob->tapeCopyInfo.fileId)
-          .add("BlockId", m_retrieveJob->tapeCopyInfo.blockId)
-          .add("fSeq", m_retrieveJob->tapeCopyInfo.fseq)
+    params.add("NSHOSTNAME", m_retrieveJob->tapeCopy.nsHostName)
+          .add("NSFILEID", m_retrieveJob->tapeCopy.fileId)
+          .add("BlockId", m_retrieveJob->tapeCopy.blockId)
+          .add("fSeq", m_retrieveJob->tapeCopy.fSeq)
           .add("fileTransactionId", m_retrieveJob->m_id)
-          .add("path", m_retrieveJob->tapeCopyInfo.archiveFilePath);
+          .add("path", m_retrieveJob->tapeCopy.archiveFilePath);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -110,9 +110,9 @@ public:
         mb=m_mm.getFreeBlock();
         localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
         
-        mb->m_fSeq = m_retrieveJob->tapeCopyInfo.fseq;
+        mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
         mb->m_fileBlock = fileBlock++;
-        mb->m_fileid = m_retrieveJob->tapeCopyInfo.fileId;
+        mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
         mb->m_tapeFileBlock = tapeBlock;
         mb->m_tapeBlockSize = rf->getBlockSize();
         try {
@@ -191,8 +191,8 @@ public:
    */
   void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
-    mb->m_fSeq = m_retrieveJob->tapeCopyInfo.fseq;
-    mb->m_fileid = m_retrieveJob->tapeCopyInfo.fileId;
+    mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
+    mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
      m_fifo.pushDataBlock(mb);
@@ -208,8 +208,8 @@ private:
     // fill it up
     if (!mb) {
       mb=m_mm.getFreeBlock();
-      mb->m_fSeq = m_retrieveJob->tapeCopyInfo.fseq;
-      mb->m_fileid = m_retrieveJob->tapeCopyInfo.fileId;
+      mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
+      mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
     }
     //mark the block failed and push it (plus signal the end)
      mb->markAsFailed(msg,code);

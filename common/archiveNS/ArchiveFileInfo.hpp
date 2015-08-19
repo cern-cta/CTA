@@ -27,12 +27,20 @@ namespace cta {
  */
 class ArchiveFileInfo {
 public:
+  /**
+   * Constructor.
+   */
+  ArchiveFileInfo();
+
+  /**
+   * Constructor.
+   */
   ArchiveFileInfo(const std::string & lastKnownPath, uint64_t fileId, 
     uint64_t size, const Checksum & checksum, const time_t lastModificationTime);
-  const std::string lastKnownPath; /**< The location of the file at NS lookup time */
-  const uint64_t fileId; /**< The file ID (to be used in the tape copy header, among other */
-  const uint64_t size; /**< The file's size */
-  const Checksum checksum;
-  const time_t lastModificationTime;
+  std::string lastKnownPath; /**< The location of the file at NS lookup time */
+  uint64_t fileId; /**< The file ID (to be used in the tape copy header, among other */
+  uint64_t size; /**< The file's size */
+  Checksum checksum;
+  time_t lastModificationTime;
 };
 }

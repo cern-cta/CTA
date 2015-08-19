@@ -12,6 +12,7 @@ target_link_libraries(unittests
   castorserverunittests
   castortapereactorunittests
   castortapeserverdriveunittests
+  castortapeserverfileunittests
   castortapeserverutilsunittests
   castorutilsunittests
   ctacommon

@@ -32,3 +32,9 @@ add_library(File
   ../exception/XrootCl.cpp)
 target_link_libraries (File castorrfio XrdCl cryptopp)
 
+add_library(castortapeserverfileunittests SHARED
+  StructuresTest.cpp
+  FileTest.cpp)
+
+target_link_libraries(castortapeserverfileunittests
+  File)

@@ -56,9 +56,9 @@ namespace daemon {
     for(auto it= jobs.begin();it!=jobs.end();++it){
       const u_signed64 fileSize = (*it)->archiveFile.size;
       LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->copyLocation.nsHostName)),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->copyLocation.fileId)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->copyLocation.fSeq)),
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopy.nsHostName)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->tapeCopy.fileId)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopy.fSeq)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->archiveFile.lastKnownPath))
       };
       tape::utils::suppresUnusedVariable(sp);      
@@ -129,7 +129,7 @@ namespace daemon {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
     } else {
-      m_firstFseqToWrite = jobs.front()->copyLocation.fSeq;
+      m_firstFseqToWrite = jobs.front()->tapeCopy.fSeq;
       injectBulkMigrations(jobs);
       return true;
     }

@@ -27,16 +27,22 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+cta::ArchiveJob::ArchiveJob() {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 cta::ArchiveJob::ArchiveJob(
   const std::string &tapePoolName,
   const ArchiveFileInfo & archiveFile,
   const RemotePathAndStatus &remoteFile,
-  const TapeCopyLocationAndStatus &copyLocation,
+  const TapeCopyLocationAndStatus &tapeCopy,
   const uint16_t copyNb):
   tapePoolName(tapePoolName),
   archiveFile(archiveFile),
   remoteFile(remoteFile),
-  copyLocation(copyLocation),
+  tapeCopy(tapeCopy),
   copyNumber(copyNb) {}
 
 //------------------------------------------------------------------------------

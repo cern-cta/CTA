@@ -90,7 +90,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       m_stats.waitFreeMemoryTime+=localTime.secs(castor::utils::Timer::resetCounter);
       
       //set metadata and read the data
-      mb->m_fileid = m_archiveJob->copyLocation.fileId;
+      mb->m_fileid = m_archiveJob->tapeCopy.fileId;
       mb->m_fileBlock = blockId++;
       
       currentErrorToCount = "Error_diskRead";
@@ -180,7 +180,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
       mb = m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->m_fileid = m_archiveJob->copyLocation.fileId;
+    mb->m_fileid = m_archiveJob->tapeCopy.fileId;
     mb->markAsCancelled();
     m_nextTask.pushDataBlock(mb);
     mb=NULL;
@@ -208,7 +208,7 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_archiveJob->copyLocation.fileId)
+           .add("FILEID",m_archiveJob->tapeCopy.fileId)
            .add("path",m_archiveJob->archiveFile.lastKnownPath);
     lc.log(level,msg);
 }

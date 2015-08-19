@@ -27,16 +27,22 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+cta::RetrieveJob::RetrieveJob() {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 cta::RetrieveJob::RetrieveJob(
 // TO BE DECIDED
 //RetrieveMount &mount,
-  const TapeCopyInfo &tapeCopyLocation,
+  const TapeCopyInfo &tapeCopy,
   const std::string &id, 
   const std::string &userRequestId,
   const uint32_t copyNb,
   const std::string &remoteFile,
   const uint64_t castorNsFileId):
-  tapeCopyInfo(tapeCopyLocation), m_id(id) {
+  tapeCopy(tapeCopy), m_id(id) {
 }
 
 //------------------------------------------------------------------------------

@@ -19,11 +19,19 @@
 #include "ArchiveFileInfo.hpp"
 
 namespace cta {
+
+  ArchiveFileInfo::ArchiveFileInfo():
+  fileId(0),
+  size(0),
+  lastModificationTime(0) {
+  }
+
   ArchiveFileInfo::ArchiveFileInfo(
     const std::string& lastKnownPath, uint64_t fileId, uint64_t size, 
     const Checksum & checksum, const time_t lastModificationTime):
     lastKnownPath(lastKnownPath),
     fileId(fileId),
     size(size),
-    checksum(checksum), lastModificationTime(lastModificationTime) {}
+    checksum(checksum),
+    lastModificationTime(lastModificationTime) {}
 }
