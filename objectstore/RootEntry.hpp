@@ -168,6 +168,11 @@ public:
     const CreationLog & log);
   void removeAgentRegisterAndCommit();
 
+  // Agent register manipulations ==============================================
+  std::string getSchedulerGlobalLock();
+  std::string addOrGetSchedulerGlobalLockAndCommit(Agent & agent, const CreationLog & log);
+  void removeSchedulerGlobalLockAndCommit();
+  
 private:
   void addIntendedAgentRegistry(const std::string & address);
   

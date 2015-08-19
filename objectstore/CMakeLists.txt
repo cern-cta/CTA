@@ -27,7 +27,8 @@ add_library (CTAObjectStore
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
-  GarbageCollector.cpp)
+  GarbageCollector.cpp
+  SchedulerGlobalLock.cpp)
 
 set(ObjectStoreUnitTests
   BackendTest.cpp

@@ -587,4 +587,58 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   ASSERT_EQ(false, re.exists());
 }
 
+TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
+  cta::objectstore::BackendVFS be;
+  { 
+    // Try to create the root entry
+    cta::objectstore::RootEntry re(be);
+    re.initialize();
+    re.insert();
+  }
+    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
+      "unittesthost", time(NULL), "Creation of unit test scheduler global lock");
+  cta::objectstore::Agent ag(be);
+  ag.initialize();
+  ag.generateName("UnitTests");
+  { 
+    // Try to create the root entry and allocate the agent register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    re.addOrGetAgentRegisterPointerAndCommit(ag, cl);
+  }
+  ag.insertAndRegisterSelf();
+  std::string schedulerGlobalLockAddress;
+  {
+    // create the drive register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    ASSERT_THROW(re.getDriveRegisterAddress(),
+      cta::objectstore::RootEntry::NotAllocated);
+    /*ASSERT_NO_THROW*/(
+      schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(ag, cl));
+    ASSERT_TRUE(be.exists(schedulerGlobalLockAddress));
+  }
+  {
+    // delete the drive register
+    // create the drive register
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    re.removeSchedulerGlobalLockAndCommit();
+    ASSERT_FALSE(be.exists(schedulerGlobalLockAddress));
+  }
+  // Unregister the agent
+  cta::objectstore::ScopedExclusiveLock agl(ag);
+  ag.removeAndUnregisterSelf();
+  // Delete the root entry
+  cta::objectstore::RootEntry re(be);
+  cta::objectstore::ScopedExclusiveLock lock(re);
+  re.fetch();
+  re.removeAgentRegisterAndCommit();
+  re.removeIfEmpty();
+  ASSERT_EQ(false, re.exists());
+}
+
 }

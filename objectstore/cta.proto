@@ -11,6 +11,7 @@ enum ObjectType {
   Tape_t = 5;
   ArchiveToFileRequest_t = 6;
   RetrieveToFileRequest_t = 7;
+  SchedulerGlobalLock_t = 8;
   GenericObject_t = 1000;
 }
 
@@ -107,6 +108,12 @@ message AgentRegisterPointer {
   required CreationLog log = 101;
 }
 
+// Pointer to the scheduler global lock
+message SchedulerGlobalLockPointer {
+  required string address = 110;
+  required CreationLog log = 111;
+}
+
 // The root entry. This entry contains all the most static information, i.e.
 // the admin handled configuration information
 message RootEntry {
@@ -118,6 +125,7 @@ message RootEntry {
   optional DriveRegisterPointer driveregisterpointer = 1005;
   optional AgentRegisterPointer agentregisterpointer = 1006;
   optional string agentregisterintent = 1007;
+  optional SchedulerGlobalLockPointer schedulerlockpointer = 1008;
 }
 
 //=========== Sub-objects ======================================================
@@ -338,5 +346,10 @@ message DriveRegister {
   repeated DriveInfo drives = 7000;
 }
 
+// ------------- Scheduler global lock handling  -------------------------------
+
+message SchedulerGlobalLock {
+  required uint64 nextmountid = 8000;
+}
 
 

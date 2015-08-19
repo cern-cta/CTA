@@ -45,8 +45,9 @@ void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumed
   if (presumedOwner != m_header.owner())
     return;
   // If the owner is still the agent, we have 2 possibilities:
-  // 1) The register is referenced by the root entry. We just need to officialize
-  // the ownership on the reguster
+  // 1) The register is referenced by the root entry. We just need to officialise
+  // the ownership on the register (if not, we will either get the NotAllocated 
+  // exception) or the address will be different.
   {
     RootEntry re(m_objectStore);
     ScopedSharedLock rel (re);

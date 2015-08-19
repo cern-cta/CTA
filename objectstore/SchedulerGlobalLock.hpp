@@ -16,24 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
   
-#define MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(A) \
-  template <> const serializers::ObjectType ObjectOps<serializers::A>::typeId = serializers::A##_t
+class Backend;
+class Agent;
+class GenericObject;
 
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(GenericObject);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(RootEntry);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(AgentRegister);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(Agent);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(TapePool);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(DriveRegister);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(Tape);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(ArchiveToFileRequest);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(RetrieveToFileRequest);
-  MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID(SchedulerGlobalLock);
+class SchedulerGlobalLock: public ObjectOps<serializers::SchedulerGlobalLock> {
+public:
+  SchedulerGlobalLock(const std::string & address, Backend & os);
+  SchedulerGlobalLock(GenericObject & go);
+  void initialize();
+  CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  void garbageCollect(const std::string &presumedOwner);
+  bool isEmpty();
   
-#undef MAKE_CTA_OBJECTSTORE_OBJECTOPS_TYPEID
+  // Mount id management =======================================================
+  void setNextMountId(uint64_t nextId);
+  uint64_t getIncreaseCommitMountId();
+};
+
 }}

@@ -21,6 +21,7 @@
 #include "Agent.hpp"
 #include "TapePool.hpp"
 #include "DriveRegister.hpp"
+#include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
 
@@ -48,6 +49,8 @@ bool cta::objectstore::RootEntry::isEmpty() {
   if (m_payload.agentregisterintent().size())
     return false;
   if (m_payload.agentregisterpointer().address().size())
+    return false;
+  if (m_payload.schedulerlockpointer().address().size())
     return false;
   return true;
 }
@@ -748,6 +751,80 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
   }
   m_payload.set_agentregisterintent(address);
 }
+
+// =============================================================================
+// ================ Scheduler global lock manipulation =========================
+// =============================================================================
+
+std::string cta::objectstore::RootEntry::getSchedulerGlobalLock() {
+  checkPayloadReadable();
+  // If the scheduler lock is defined, return it, job done.
+  if (m_payload.schedulerlockpointer().address().size())
+    return m_payload.schedulerlockpointer().address();
+  throw NotAllocated("In RootEntry::getAgentRegister: scheduler global lock not yet allocated");
+}
+
+// Get the name of a (possibly freshly created) scheduler global lock
+std::string cta::objectstore::RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
+  const CreationLog & log) {
+  checkPayloadWritable();
+  // Check if the drive register exists
+  try {
+    return getSchedulerGlobalLock();
+  } catch (NotAllocated &) {
+    // decide on the object's name and add to agent's intent. We expect the
+    // agent to be passed locked.
+    std::string sglAddress (agent.nextId("schedulerGlobalLock"));
+    ScopedExclusiveLock agl(agent);
+    agent.fetch();
+    agent.addToOwnership(sglAddress);
+    agent.commit();
+    // Then create the drive register object
+    SchedulerGlobalLock sgl(sglAddress, m_objectStore);
+    sgl.initialize();
+    sgl.setOwner(agent.getAddressIfSet());
+    sgl.setBackupOwner(getAddressIfSet());
+    sgl.insert();
+    // Take a lock on scheduler global lock
+    ScopedExclusiveLock sglLock(sgl);
+    // Move drive registry ownership to the root entry
+    auto * msgl = m_payload.mutable_schedulerlockpointer();
+    msgl->set_address(sglAddress);
+    log.serialize(*msgl->mutable_log());
+    commit();
+    // Record completion in scheduler global lock
+    sgl.setOwner(getAddressIfSet());
+    sgl.setBackupOwner(getAddressIfSet());
+    sgl.commit();
+    //... and clean up the agent
+    agent.removeFromOwnership(sglAddress);
+    agent.commit();
+    return sglAddress;
+  }
+}
+
+void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
+  checkPayloadWritable();
+  // Get the address of the scheduler lock (nothing to do if there is none)
+  if (!m_payload.schedulerlockpointer().address().size())
+    return;
+  std::string sglAddress = m_payload.schedulerlockpointer().address();
+  SchedulerGlobalLock sgl(sglAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
+  ScopedExclusiveLock sgll(sgl);
+  sgl.fetch();
+  // Check the drive register is empty
+  if (!sgl.isEmpty()) {
+    throw DriveRegisterNotEmpty("In RootEntry::removeSchedulerGlobalLockAndCommit: "
+      "trying to remove a non-empty scheduler global lock");
+  }
+  // we can delete the drive register
+  sgl.remove();
+  // And update the root entry
+  m_payload.mutable_schedulerlockpointer()->set_address("");
+  // We commit for safety and symmetry with the add operation
+  commit();
+}
+
 
 // Dump the root entry
 std::string cta::objectstore::RootEntry::dump () {
