@@ -18,6 +18,12 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
+include_directories (${CMAKE_SOURCE_DIR}/tapeserver)
 
-add_library(Utils Regex.cpp)
+add_library (Utils Regex.cpp)
+
+add_library (castortapeserverutilsunittests SHARED
+  RegexTest.cpp)
+
+target_link_libraries (castortapeserverutilsunittests
+  Utils)

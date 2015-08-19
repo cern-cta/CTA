@@ -69,12 +69,6 @@ APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 #  ../castor/tape/tapeserver/file/FileTest.cpp
 #  ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
 #  ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
-#  ../castor/tape/tapeserver/utils/RegexTest.cpp
-#  ../castor/server/ThreadingTests.cpp
-#  ../castor/server/AtomicCounterTest.cpp
-#  ../castor/utils/SmartArrayPtrTest.cpp
-#  ../castor/utils/SmartFdTest.cpp
-#  ../castor/utils/UtilsTest.cpp
 #  ${LIBCAPUNITTEST_SRC_FILES})
 
 set_property(SOURCE ../SCSI/StructuresTest.cpp

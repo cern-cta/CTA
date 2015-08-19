@@ -8,7 +8,10 @@ add_library (castorserverunittests SHARED
   DaemonTest.cpp
   SmartCapTest.cpp
   ThreadingBlockingQTests.cpp
-  ThreadingMPTests.cpp
+
+# ThreadingMPTests.cpp is commented out because of errors caused by libust
+# ThreadingMPTests.cpp
+
   ThreadingMTTests.cpp
   ThreadingTests.cpp)
 
