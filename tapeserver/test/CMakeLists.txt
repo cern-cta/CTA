@@ -64,7 +64,6 @@ APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 #  ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp
 #  ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
 #  ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
-#  ../castor/tape/tapeserver/drive/DriveTest.cpp
 #  ../castor/tape/tapeserver/file/StructuresTest.cpp
 #  ../castor/tape/tapeserver/file/FileTest.cpp
 #  ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
@@ -74,33 +73,6 @@ APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
-
-#target_link_libraries(castorUnitTests
-#  castorcommon
-#  castorclient
-#  castorlegacymsg
-#  SCSI
-#  System
-#  Utils
-#  File
-#  TestDummies
-#  castorserver
-#  castortapegatewayprotocol
-#  castorTapeServerDaemonTestDummies
-#  castorTapeServerDaemon
-#  gtest
-#  gmock
-#  pthread
-#  castorcommon
-#  castorclient
-#  castorvmgr
-#  castorvdqm
-#  ${LIBCAP_LIB}
-#  TapeDrive
-#  SCSI
-#  System
-#  Utils
-#  ${ZLIB_LIBRARIES})
 
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR})
@@ -117,41 +89,3 @@ include_directories (${XROOTD_INCLUDE_DIR})
  # ../castor/tape/tapeserver/daemon/TaskWatchDogTest.cpp
 #  ../castor/tape/tapeserver/file/CryptoPPTest.cpp
 #)
-
-#target_link_libraries(castorThreadedUnitTests
-#  castorclient
-#  castorcommon
-#  castorlegacymsg
-#  castorserver
-#  castortapegatewayprotocol
-#  castorTapeServerDaemonTestDummies
-#  castorTapeServerDaemon
-#  TestDummies
-#  castortapegatewayprotocol
-#  castorvdqm
-#  castorvmgr
-#  castorrfio
-#  gmock
-#  gtest
-#  pthread
-#  TapeDrive
-#  SCSI
-#  System 
-#  File 
-#  ${ZLIB_LIBRARIES}
-#  Utils
-#  cryptopp)
-
-# Those tests are multi threaded. They could should also be run in 
-# helgrind/drd (but not memcheck)
-add_executable(castorMultiprocessUnitTests
-  castorUnitTests.cpp
-  ../castor/server/ThreadingMPTests.cpp
-)
-target_link_libraries(castorMultiprocessUnitTests
-  TapeDrive
-  SCSI
-  System 
-  Utils File 
-  castorserver
-  gtest gmock pthread castorcommon castorclient)

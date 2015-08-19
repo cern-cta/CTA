@@ -39,3 +39,11 @@ target_link_libraries(TapeDriveReadWriteTest
   gtest
   gmock
   pthread)
+
+add_library(castortapeserverdriveunittests SHARED
+  DriveTest.cpp)
+
+target_link_libraries(castortapeserverdriveunittests
+  castorTapeServerDaemon
+  System
+  TapeDrive)
