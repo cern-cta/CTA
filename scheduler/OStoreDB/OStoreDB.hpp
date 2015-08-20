@@ -21,6 +21,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/SchedulerGlobalLock.hpp"
 
 namespace cta {
   
@@ -44,12 +45,17 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
+    friend class OStoreDB;
   public:
     virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const std::string & vid,
       const std::string driveName);
     virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
       const std::string driveName);
     virtual ~TapeMountDecisionInfo();
+  private:
+    bool m_lockTaken;
+    objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
+    std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
   };
 
   virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();

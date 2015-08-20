@@ -29,7 +29,10 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-
+#undef DEBUG_PRINT_LOGS
+#ifdef DEBUG_PRINT_LOGS
+#include <iostream>
+#endif
 
 namespace cta { namespace objectstore {
 
@@ -179,14 +182,16 @@ void BackendVFS::ScopedLock::release() {
   ::flock(m_fd, LOCK_UN);
   ::close(m_fd);
   m_fdSet = false;
-  //std::cout << "Unlocked " << name << " with fd=" << fd << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+#ifdef DEBUG_PRINT_LOGS
+  std::cout << "Unlocked " << m_path << " with fd=" << m_fd  << " tid=" << syscall(SYS_gettid) << std::endl;
+#endif
 }
 
 BackendVFS::ScopedLock * BackendVFS::lockHelper(
   std::string name, int type) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
-  ret->set(::open(path.c_str(), O_RDONLY));
+  ret->set(::open(path.c_str(), O_RDONLY), path);
   cta::exception::Errnum::throwOnMinusOne(ret->m_fd,
       "In BackendStoreVFS::lockHelper, failed to open the lock file.");
   cta::exception::Errnum::throwOnMinusOne(::flock(ret->m_fd, LOCK_EX),
@@ -195,13 +200,21 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
 }
 
 BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name) {
-  return lockHelper(name, LOCK_EX);
-  //std::cout << "LockedExclusive " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX));
+#ifdef DEBUG_PRINT_LOGS
+  std::cout << "LockedExclusive " << name << " with fd=" << ret->m_fd 
+      << " path=" << ret->m_path << " tid=" << syscall(SYS_gettid) << std::endl;
+#endif
+  return ret.release();
 }
 
 BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name) {
-  return lockHelper(name, LOCK_SH);
-  //std::cout << "LockedShared " << name << " with fd=" << context.get(0) << " @" << where << " tid=" << syscall(SYS_gettid) << std::endl;
+  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_SH));
+#ifdef DEBUG_PRINT_LOGS
+  std::cout << "LockedShared " << name << " with fd=" << ret->m_fd 
+      << " path=" << ret->m_path << " tid=" << syscall(SYS_gettid) << std::endl;
+#endif
+  return ret.release();
 }
 
 std::string BackendVFS::Parameters::toStr() {

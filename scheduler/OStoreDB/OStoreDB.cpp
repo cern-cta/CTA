@@ -73,6 +73,11 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
+  // Take an exclusive lock on the scheduling
+  tmdi.m_schedulerGlobalLock.reset(
+    new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
+  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
+  tmdi.m_lockTaken = true;
   auto tpl = re.dumpTapePools();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     // Get the tape pool object
@@ -1048,7 +1053,12 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
 }
  
 OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
-  // TODO: manage the locking of the scheduling
+  // The lock should be released before the objectstore object 
+  // m_schedulerGlobalLock gets destroyed. We explicitely release the lock,
+  // and then destroy the object
+  if (m_lockTaken)
+    m_lockOnSchedulerGlobalLock.release();
+  m_schedulerGlobalLock.reset(NULL);
 }
 
     

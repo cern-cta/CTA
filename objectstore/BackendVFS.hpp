@@ -76,8 +76,9 @@ public:
     virtual ~ScopedLock() { release(); }
   private:
     ScopedLock(): m_fdSet(false) {}
-    void set(int fd) { m_fd=fd; m_fdSet=true; }
+    void set(int fd, const std::string & path) { m_fd=fd; m_fdSet=true; m_path=path; }
     bool m_fdSet;
+    std::string m_path;
     int m_fd;
   };
   

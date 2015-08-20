@@ -437,6 +437,10 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     10, cl);
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
   creation->complete();
+  // Make sure we clear and reset mountCandidate before evaluating getMountInfo
+  // again (which would block otherwise), as it gets called before the operator=,
+  // which would implicitly destroy the TapeMountDecision
+  mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {
     cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
@@ -450,6 +454,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   // Add one more job to the queue: the summary should change accordingly
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation2(db.queue(atfr));
   creation2->complete();
+  mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {
     cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
@@ -488,6 +493,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().vid = "Tape3";
   tcl.back().copyNumber = 2;
   ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile", 1234, tcl, "eos://myeos/myeosfile", 10, cl)));
+  mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {
     cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;
@@ -535,6 +541,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().vid = "Tape2";
   tcl2.back().copyNumber = 2;
   db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile2", 1234, tcl2, "eos://myeos/myeosfile2", 10, cl));
+  mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {
     cta::SchedulerDatabase::TapeMountDecisionInfo & tmdi = *mountCandidates;

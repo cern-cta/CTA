@@ -63,6 +63,7 @@ public:
     m_agent.insertAndRegisterSelf();
     rel.lock(re);
     re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+    re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
     rel.release();
     m_OStoreDB.setAgent(m_agent);
   }
