@@ -24,7 +24,6 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "serrno.h"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 

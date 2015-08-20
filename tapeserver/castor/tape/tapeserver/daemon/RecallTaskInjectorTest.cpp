@@ -28,8 +28,6 @@
 #include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/server/ProcessCapDummy.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"

@@ -41,13 +41,13 @@ namespace UnitTests {
   public:
     TestingRetrieveJob() {
     }
-  }; // class TestingRetrieveJob
+  };
 
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
     TestingArchiveJob() {
     }
-  }; // class TestingRetrieveJob
+  };
   
   class castorTapeFileTest : public ::testing::Test {
   protected:

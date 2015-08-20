@@ -41,35 +41,6 @@ find_package( ZLIB REQUIRED )
 #  ../castor/server/ProcessCapDummy.cpp
 #)
 
-# Those tests are single threaded, functionnal and error tests. They could
-# actually fail in helgrind/drd (but memcheck is recommended)
-set_property(SOURCE
-  ../castor/io/IoTest.cpp
-APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
-#add_executable(castorUnitTests
-#  castorUnitTests.cpp
-#  ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
-#  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
-#  ../castor/tape/tapeserver/daemon/Catalogue.cpp
-#  ../castor/tape/tapeserver/daemon/CatalogueDrive.cpp
-#  ../castor/tape/tapeserver/daemon/CatalogueDriveStateTest.cpp
-#  ../castor/tape/tapeserver/daemon/CatalogueTest.cpp
-#  ../castor/tape/tapeserver/daemon/DriveConfigTest.cpp
-#  ../castor/tape/tapeserver/daemon/ProcessForker.cpp
-#  ../castor/tape/tapeserver/daemon/ProcessForkerTest.cpp
-#  ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
-#  ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
-#  ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
-#  ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
-#  ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp
-#  ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
-#  ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
-#  ${LIBCAPUNITTEST_SRC_FILES})
-
-set_property(SOURCE ../SCSI/StructuresTest.cpp
-  PROPERTY COMPILE_FLAGS -fno-strict-aliasing
-)
-
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR})
 

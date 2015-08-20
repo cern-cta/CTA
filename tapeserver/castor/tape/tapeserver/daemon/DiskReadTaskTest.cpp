@@ -22,7 +22,7 @@
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
@@ -33,6 +33,13 @@
 
 namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
+
+  class TestingArchiveJob: public cta::ArchiveJob {
+  public:
+    TestingArchiveJob() {
+    }
+  }; 
+
   class FakeTapeWriteTask : public  DataConsumer{
     castor::server::BlockingQueue<MemBlock*> fifo;
     unsigned long m_checksum;
@@ -63,35 +70,50 @@ namespace unitTests{
 //    out.seekg(0, std::ios::beg);
     return checksum;
   }
-  TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
-    char path[]="/tmp/testDRT-XXXXXX";
-    mkstemp(path);
-    std::ofstream out(path,std::ios::out | std::ios::binary);
-    castor::server::AtomicFlag flag;
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
-    castor::log::LogContext lc(log);
-    
-    const int blockSize=1500;    
-    const int fileSize(1024*2000);
-    
-    const unsigned long original_checksum = mycopy(out,fileSize);
-    castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1,blockSize,lc);
-    
-    castor::tape::tapegateway::FileToMigrateStruct* file=new castor::tape::tapegateway::FileToMigrateStruct();
-    
-    file->setPath(path);
-    file->setFileSize(fileSize);
-    
-    const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
-    int value=std::ceil(1024*2000./blockSize);
-    ASSERT_EQ(value,blockNeeded);
-    
-    FakeTapeWriteTask ftwt;
-    ftwt.pushDataBlock(new MemBlock(1,blockSize));
-    castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,file,blockNeeded,flag);
-    drt.execute(lc);
-    
-    ASSERT_EQ(original_checksum,ftwt.getChecksum());
-    delete ftwt.getFreeBlock();
-  }
+
+// This test was commented out in the CMakeLists.txt file that would have
+// compiled it.  There was no comment explaining why it was commented out.
+// The following commit message was associated with the commenting out of the
+// CMakeLists.txt line:
+//
+//   commit 165117042951769b7d0023933cc6e705b04fad54
+//   Author: David COME <david.come@cern.ch>
+//   Date:   Tue Apr 22 11:35:11 2014 +0200
+//
+//      Commented out DiskReadTaskTest
+//
+// This test is commented and left here in the hope that somebody in the future
+// will have the time to make this test compile again.
+//
+//TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
+//  char path[]="/tmp/testDRT-XXXXXX";
+//  mkstemp(path);
+//  std::ofstream out(path,std::ios::out | std::ios::binary);
+//  castor::server::AtomicFlag flag;
+//  castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
+//  castor::log::LogContext lc(log);
+//  
+//  const int blockSize=1500;    
+//  const int fileSize(1024*2000);
+//  
+//  const unsigned long original_checksum = mycopy(out,fileSize);
+//  castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1,blockSize,lc);
+//  
+//  TestingArchiveJob file;
+//  
+//  file.archiveFile.lastKnownPath = path;
+//  file.archiveFile.size = fileSize;
+//  
+//  const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
+//  int value=std::ceil(1024*2000./blockSize);
+//  ASSERT_EQ(value,blockNeeded);
+//  
+//  FakeTapeWriteTask ftwt;
+//  ftwt.pushDataBlock(new MemBlock(1,blockSize));
+//  castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
+//  drt.execute(lc);
+//  
+//  ASSERT_EQ(original_checksum,ftwt.getChecksum());
+//  delete ftwt.getFreeBlock();
+//}
 }
