@@ -25,8 +25,6 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 # Rules to build the reactor code that is common to both rmcd and tapeserverd
 ################################################################################
 set (REACTOR_SRC_FILES
-  DummyPollEventHandler.cpp
-  DummyZMQReactor.cpp
   PollEventHandler.cpp
   PollReactor.cpp
   PollReactorImpl.cpp
@@ -35,9 +33,15 @@ set (REACTOR_SRC_FILES
 add_library (castortapereactor ${REACTOR_SRC_FILES})
 target_link_libraries (castortapereactor)
 
+add_library (castortapereactordummies SHARED
+  DummyPollEventHandler.cpp
+  DummyPollReactor.cpp
+  DummyZMQReactor.cpp)
+
 add_library (castortapereactorunittests SHARED
   PollReactorImplTest.cpp
   ZMQReactorTest.cpp)
 
 target_link_libraries (castortapereactorunittests
-  castortapereactor)
+  castortapereactor
+  castortapereactordummies)

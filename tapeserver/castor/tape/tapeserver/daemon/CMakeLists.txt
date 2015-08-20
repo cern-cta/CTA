@@ -59,7 +59,6 @@ add_library(castorTapeServerDaemon
   ProcessForker.cpp
   ProcessForkerConnectionHandler.cpp
   ProcessForkerProxy.cpp
-  ProcessForkerProxyDummy.cpp
   ProcessForkerProxySocket.cpp
   ProcessForkerUtils.cpp
   RecallMemoryManager.cpp
@@ -87,6 +86,9 @@ add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_executable(tapeserverd TapeDaemon.cpp)
 target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapegatewayprotocol castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
+
+add_library(castortapeserverdaemondummies SHARED
+  ProcessForkerProxyDummy.cpp)
 
 # The 
 add_library(castortapeserverdaemonunittests SHARED
@@ -134,4 +136,5 @@ add_library(castortapeserverdaemonunittests SHARED
 )
 
 target_link_libraries(castortapeserverdaemonunittests
-  castorserverdummies)
+  castorserverdummies
+  castortapeserverdaemondummies)

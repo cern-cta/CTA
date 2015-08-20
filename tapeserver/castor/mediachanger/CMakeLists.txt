@@ -28,9 +28,11 @@ set (MEDIA_CHANGER_LIB_SRC_FILES
   ManualLibrarySlot.cpp
   MediaChangerFacade.cpp
   MmcProxy.cpp
-  MmcProxyDummy.cpp
   MmcProxyLog.cpp
   MmcProxyNotSupported.cpp
   ScsiLibrarySlot.cpp
   TapeLibraryType.cpp)
 add_library(castormediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
+
+add_library(castormediachangerdummies SHARED
+  MmcProxyDummy.cpp)

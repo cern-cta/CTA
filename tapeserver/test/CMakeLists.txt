@@ -28,19 +28,6 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver/h)
 include_directories(${CMAKE_BINARY_DIR}/tapeserver)
 include_directories(${CMAKE_BINARY_DIR})
 
-find_package( ZLIB REQUIRED )
-
-# Create a shared librbary for the dummies supporting the tests
-#add_library(TestDummies
-#  ../castor/mediachanger/MmcProxyDummy.cpp
-#  ../castor/messages/TapeserverProxyDummy.cpp
-#  ../castor/legacymsg/RmcProxyDummy.cpp
-#  ../castor/log/DummyLogger.cpp
-#  ../castor/tape/reactor/DummyPollEventHandler.cpp
-#  ../castor/tape/reactor/DummyPollReactor.cpp
-#  ../castor/server/ProcessCapDummy.cpp
-#)
-
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR})
 

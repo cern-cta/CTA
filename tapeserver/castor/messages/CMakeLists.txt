@@ -31,9 +31,12 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 add_library(castormessagesprotobuf
   ${ProtoSources})
 
+add_library(castormessagesdummies
+  AcsProxyDummy.cpp
+  TapeserverProxyDummy.cpp)
+
 set(CastorMessageSrcs
   AcsProxy.cpp
-  AcsProxyDummy.cpp
   AcsProxyZmq.cpp
   Constants.cpp
   Frame.cpp
@@ -41,7 +44,6 @@ set(CastorMessageSrcs
   Mutex.cpp
   SmartZmqContext.cpp
   TapeserverProxy.cpp
-  TapeserverProxyDummy.cpp
   TapeserverProxyZmq.cpp
   ZmqMsg.cpp
   ZmqSocket.cpp
