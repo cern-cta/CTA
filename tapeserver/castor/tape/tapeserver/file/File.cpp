@@ -108,13 +108,13 @@ namespace castor {
         const cta::RetrieveJob &filetoRecall,
         const tape::tapeserver::daemon::VolumeInfo &volInfo)  {
         const std::string &volId = volInfo.vid;
-        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.tapeCopy.fileId, hexadecimal)) { 
+        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.archiveFile.fileId, hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkHDR1] - Invalid fileid detected: (0x)\"" 
               << hdr1.getFileId() << "\". Wanted: 0x" << std::hex 
-              << filetoRecall.tapeCopy.fileId << std::endl;
+              << filetoRecall.archiveFile.fileId << std::endl;
           throw TapeFormatError(ex_str.str());
         }
 

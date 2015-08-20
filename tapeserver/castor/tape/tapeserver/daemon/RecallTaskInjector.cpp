@@ -92,7 +92,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>
 
     LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->tapeCopy.nsHostName)),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->tapeCopy.fileId)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
       LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopy.fSeq)),
       LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeCopy.blockId)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->tapeCopy.archiveFilePath))
@@ -126,7 +126,7 @@ bool RecallTaskInjector::synchronousInjection()
       if(!job.get()) break;
       jobs.push_back(job.release());
       files++;
-      bytes+=job->m_fileSize;
+      bytes+=job->archiveFile.size;
     }
   } catch (castor::exception::Exception & ex) {
     castor::log::ScopedParamContainer scoped(m_lc);
@@ -194,7 +194,7 @@ void RecallTaskInjector::WorkerThread::run()
         if(!job.get()) break;
         jobs.push_back(job.release());
         files++;
-        bytes+=job->m_fileSize;
+        bytes+=job->archiveFile.size;
       }
       
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/archiveNS/ArchiveFileInfo.hpp"
 #include "common/archiveNS/TapeCopyInfo.hpp"
 #include "common/remoteFS/RemotePath.hpp"
 
@@ -122,7 +123,7 @@ public:
   PositioningMethod positioningMethod; /**< The desired positioning method. */
   RemotePath remoteFilePath; /** <The location of the destination file. */
   std::string m_id;
-  uint64_t m_fileSize;
+  ArchiveFileInfo archiveFile;
 }; // struct RetrieveJob
 
 } // namespace cta

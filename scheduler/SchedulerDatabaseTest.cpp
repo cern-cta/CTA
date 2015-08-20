@@ -475,7 +475,6 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   std::list<TapeCopyInfo> tcl;
   tcl.push_back(TapeCopyInfo());
   tcl.back().blockId = 666;
-  tcl.back().fileId = 777;
   tcl.back().archiveFilePath = "cta:://cta/myfile";
   tcl.back().fSeq = 10;
   tcl.back().nsHostName = "NSHost";
@@ -483,7 +482,6 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().copyNumber = 1;
   tcl.push_back(TapeCopyInfo());
   tcl.back().blockId = 111;
-  tcl.back().fileId = 777;
   tcl.back().archiveFilePath = "cta:://cta/myfile";
   tcl.back().fSeq = 5;
   tcl.back().nsHostName = "NSHost";
@@ -524,7 +522,6 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   std::list<TapeCopyInfo> tcl2;
   tcl2.push_back(TapeCopyInfo());
   tcl2.back().blockId = 999;
-  tcl2.back().fileId = 888;
   tcl2.back().archiveFilePath = "cta:://cta/myfile2";
   tcl2.back().fSeq = 11;
   tcl2.back().nsHostName = "NSHost";
@@ -532,7 +529,6 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().copyNumber = 1;
   tcl2.push_back(TapeCopyInfo());
   tcl2.back().blockId = 333;
-  tcl2.back().fileId = 888;
   tcl2.back().archiveFilePath = "cta:://cta/myfile2";
   tcl2.back().fSeq = 3;
   tcl2.back().nsHostName = "NSHost";

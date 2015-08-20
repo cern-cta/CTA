@@ -52,7 +52,7 @@ struct TapeCopyInfo {
   /**
    * The ID of the file
    */
-  uint64_t fileId;
+  //uint64_t fileId;
 
   /**
    * The volume identifier of the tape.

@@ -56,14 +56,9 @@ namespace UnitTests {
       label = "K00001";
       fileToRecall.tapeCopy.blockId = 0;
       fileToRecall.tapeCopy.fSeq = 1;
-      fileToRecall.tapeCopy.fileId = 1;
-//      fileInfo.blockId=0;
-//      fileInfo.checksum=43567;
-//      fileInfo.fSeq=1;
-//      fileInfo.nsFileId=1;
-//      fileInfo.size=500;
+      fileToRecall.archiveFile.fileId = 1;
       fileToMigrate.archiveFile.size = 500;
-      fileToMigrate.tapeCopy.fileId = 1;
+      fileToMigrate.archiveFile.fileId = 1;
       fileToMigrate.tapeCopy.fSeq = 1;
       volInfo.vid= label;
       //Label
@@ -94,13 +89,13 @@ namespace UnitTests {
   TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
+    ASSERT_NO_THROW(ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true));
     ASSERT_EQ(ws->m_compressionEnabled, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
-      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
       wf->write(testString.c_str(),testString.size());      
       wf->close();
     }
@@ -121,7 +116,7 @@ namespace UnitTests {
     ASSERT_EQ(ws->isCorrupted(), false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
-      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
       ASSERT_THROW(wf->close(), castor::tape::tapeFile::ZeroFileWritten);
     }
     ASSERT_EQ(ws->isCorrupted(), true);
@@ -137,7 +132,7 @@ namespace UnitTests {
     ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
-      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
       wf->write(testString.c_str(),testString.size());
       wf->close();
       ASSERT_THROW(wf->close(), castor::tape::tapeFile::FileClosedTwice);
@@ -151,7 +146,7 @@ namespace UnitTests {
     ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
-      ASSERT_NO_THROW(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size));
+      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
       wf->write(testString.c_str(),testString.size());
       wf->close();
     }

@@ -70,7 +70,7 @@ public:
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
     params.add("NSHOSTNAME", m_retrieveJob->tapeCopy.nsHostName)
-          .add("NSFILEID", m_retrieveJob->tapeCopy.fileId)
+          .add("NSFILEID", m_retrieveJob->archiveFile.fileId)
           .add("BlockId", m_retrieveJob->tapeCopy.blockId)
           .add("fSeq", m_retrieveJob->tapeCopy.fSeq)
           .add("fileTransactionId", m_retrieveJob->m_id)
@@ -112,7 +112,7 @@ public:
         
         mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
         mb->m_fileBlock = fileBlock++;
-        mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
+        mb->m_fileid = m_retrieveJob->archiveFile.fileId;
         mb->m_tapeFileBlock = tapeBlock;
         mb->m_tapeBlockSize = rf->getBlockSize();
         try {
@@ -192,7 +192,7 @@ public:
   void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
     mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
-    mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
+    mb->m_fileid = m_retrieveJob->archiveFile.fileId;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
      m_fifo.pushDataBlock(mb);
@@ -209,7 +209,7 @@ private:
     if (!mb) {
       mb=m_mm.getFreeBlock();
       mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
-      mb->m_fileid = m_retrieveJob->tapeCopy.fileId;
+      mb->m_fileid = m_retrieveJob->archiveFile.fileId;
     }
     //mark the block failed and push it (plus signal the end)
      mb->markAsFailed(msg,code);

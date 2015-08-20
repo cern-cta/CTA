@@ -52,7 +52,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   castor::utils::Timer totalTime(localTime);
   castor::utils::Timer transferTime(localTime);
   log::ScopedParamContainer URLcontext(lc);
-  URLcontext.add("NSFILEID",m_retrieveJob->tapeCopy.fileId)
+  URLcontext.add("NSFILEID",m_retrieveJob->archiveFile.fileId)
             .add("path", m_retrieveJob->tapeCopy.archiveFilePath)
             .add("fileTransactionId",m_retrieveJob->m_id)
             .add("fSeq",m_retrieveJob->tapeCopy.fSeq);
@@ -200,7 +200,7 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------  
   void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
     using namespace castor::log;
-    if(m_retrieveJob->tapeCopy.fileId != static_cast<unsigned int>(mb->m_fileid)
+    if(m_retrieveJob->archiveFile.fileId != static_cast<unsigned int>(mb->m_fileid)
             || blockId != mb->m_fileBlock  || mb->isFailed() ){
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
@@ -253,7 +253,7 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_retrieveJob->tapeCopy.fileId)
+           .add("FILEID",m_retrieveJob->archiveFile.fileId)
            .add("path",m_retrieveJob->tapeCopy.archiveFilePath);
     lc.log(level,msg);
 }
