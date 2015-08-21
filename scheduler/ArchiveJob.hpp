@@ -75,7 +75,7 @@ public:
   /**
    * Destructor.
    */
-  ~ArchiveJob() throw();
+  virtual ~ArchiveJob() throw() = 0;
 
   /**
    * Returns the name of the destination tape pool.

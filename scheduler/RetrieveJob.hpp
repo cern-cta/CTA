@@ -76,7 +76,7 @@ public:
   /**
    * Destructor.
    */
-  ~RetrieveJob() throw();
+  virtual ~RetrieveJob() throw() = 0;
 
   /**
    * Indicates that the job was successful
