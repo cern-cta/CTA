@@ -74,7 +74,7 @@ public:
           .add("BlockId", m_retrieveJob->tapeCopy.blockId)
           .add("fSeq", m_retrieveJob->tapeCopy.fSeq)
           .add("fileTransactionId", m_retrieveJob->m_id)
-          .add("path", m_retrieveJob->tapeCopy.archiveFilePath);
+          .add("path", m_retrieveJob->archiveFile.lastKnownPath);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.

@@ -47,7 +47,7 @@ struct TapeCopyInfo {
   /**
    * The path of the archive file.
    */
-  std::string archiveFilePath;
+  //std::string archiveFilePath;
   
   /**
    * The ID of the file

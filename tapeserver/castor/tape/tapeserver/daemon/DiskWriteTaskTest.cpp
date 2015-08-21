@@ -32,39 +32,63 @@
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include "serrno.h"
+#include "scheduler/Scheduler.hpp"
+#include "nameserver/mockNS/MockNameServer.hpp"
+#include "remotens/MockRemoteNS.hpp"
 
+#include <memory>
 #include <gtest/gtest.h>
 
 namespace unitTests{
+  
+  class TestingRetrieveMount: public cta::RetrieveMount {
+  public:
+    TestingRetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(std::move(dbrm)) {
+    }
+  };
+  
+  class TestingRetrieveJob: public cta::RetrieveJob {
+  public:
+    TestingRetrieveJob() {
+    }
+  };
+  
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   using namespace castor::tape::diskFile;
   struct MockRecallReportPacker : public RecallReportPacker {
-    MOCK_METHOD3(reportCompletedJob,void(const FileStruct&,u_int32_t,u_int64_t));
-    MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, u_int32_t checksum, u_int64_t size) {
+      reportCompletedJob_(successfulRetrieveJob, checksum, size);
+    }
+    
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::string& msg,int error_code) {
+      reportFailedJob_(failedRetrieveJob, msg, error_code);
+    }
+    MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::RetrieveJob> &successfulRetrieveJob, u_int32_t checksum, u_int64_t size));
+    MOCK_METHOD3(reportFailedJob_, void(std::unique_ptr<cta::RetrieveJob> &failedRetrieveJob, const std::string& msg,int error_code));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
     MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
      RecallReportPacker(rm,lc){}
   };
   
-  TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailledBlock){
+  TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
     using ::testing::_;
     
-    MockClient client;
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailledBlock");
+    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock");
     castor::log::LogContext lc(log);
     
-    std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-    MockRecallReportPacker report(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
-    EXPECT_CALL(report,reportFailedJob(_,_,_));
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
+    TestingRetrieveMount trm(std::move(dbrm));
+    MockRecallReportPacker report(&trm,lc);
+    EXPECT_CALL(report,reportFailedJob_(_,_,_));
     RecallMemoryManager mm(10,100,lc);
     DiskFileFactory fileFactory("RFIO","",0);
-        
-    castor::tape::tapegateway::FileToRecallStruct file;
-    file.setPath("/dev/null");
-    file.setFileid(0);
-    DiskWriteTask t(dynamic_cast<tapegateway::FileToRecallStruct*>(file.clone()),mm);
+    
+    std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
+    fileToRecall->archiveFile.lastKnownPath = "/dev/null";
+    fileToRecall->archiveFile.fileId = 0;
+    DiskWriteTask t(fileToRecall.release(),mm);
     for(int i=0;i<6;++i){
       MemBlock* mb=mm.getFreeBlock();
       mb->m_fileid=0;
@@ -73,7 +97,7 @@ namespace unitTests{
         mb->markAsFailed("Test error",SEINTERNAL);
       }
       t.pushDataBlock(mb);
-    }    
+    }
     MemBlock* mb=mm.getFreeBlock();
 
     t.pushDataBlock(mb);

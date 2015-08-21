@@ -35,7 +35,7 @@ namespace cta {
    */
   class ArchiveMount: public TapeMount {
     friend class Scheduler;
-  private:
+  protected:
 
     /**
      * Constructor.

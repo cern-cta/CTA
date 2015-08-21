@@ -95,7 +95,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>
       LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
       LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeCopy.fSeq)),
       LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeCopy.blockId)),
-      LogContext::ScopedParam(m_lc, Param("path", (*it)->tapeCopy.archiveFilePath))
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->archiveFile.lastKnownPath))
     };
     tape::utils::suppresUnusedVariable(sp);
     
