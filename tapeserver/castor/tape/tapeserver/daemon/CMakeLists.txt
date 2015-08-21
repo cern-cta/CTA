@@ -100,7 +100,7 @@ add_library(castortapeserverdaemonunittests SHARED
   DriveConfigTest.cpp
 # MigrationReportPackerTest.cpp
   ProcessForkerTest.cpp
-# RecallReportPackerTest.cpp
+  RecallReportPackerTest.cpp
 # RecallTaskInjectorTest.cpp
 
 # We dot know why but the TapeDaemonTest causes the following segmentation
