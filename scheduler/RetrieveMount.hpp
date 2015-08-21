@@ -39,6 +39,11 @@ namespace cta {
 
     /**
      * Constructor.
+     */
+    RetrieveMount();
+
+    /**
+     * Constructor.
      *
      * @param dbMount The database representation of this mount.
      */
