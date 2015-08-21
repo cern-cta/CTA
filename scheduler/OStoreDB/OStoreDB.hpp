@@ -47,18 +47,37 @@ public:
   class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
     friend class OStoreDB;
   public:
-    virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const std::string & vid,
-      const std::string driveName);
+    CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
+    CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
+    CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
+    virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+      const std::string & vid, const std::string & tapePool,
+      const std::string driveName, const std::string & hostName, time_t startTime);
     virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
       const std::string driveName);
     virtual ~TapeMountDecisionInfo();
   private:
+    TapeMountDecisionInfo (objectstore::Backend &, objectstore::Agent &);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent & m_agent;
   };
 
   virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();
+  
+  /* === Mount handling ===================================================== */
+  class ArchiveMount: public SchedulerDatabase::ArchiveMount {
+    friend class TapeMountDecisionInfo;
+  private:
+    ArchiveMount(objectstore::Backend &, objectstore::Agent &);
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent & m_agent;
+    MountInfo m_mountInfo;
+  public:
+    virtual const MountInfo & getMountInfo();
+};
 
   /* === Admin host handling ================================================ */
   virtual void createAdminHost(const std::string& hostName, 

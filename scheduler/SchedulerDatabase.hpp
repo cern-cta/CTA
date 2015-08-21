@@ -150,7 +150,16 @@ public:
   /**
    * The class used by the scheduler database to track the archive mounts
    */
-  class ArchiveMount {};
+  class ArchiveMount {
+  public:
+    struct MountInfo {
+      std::string vid;
+      std::string tapePool;
+      std::string drive;
+      uint64_t mountId;
+    };
+    virtual const MountInfo & getMountInfo() = 0;
+  };
   
   class ArchiveJob {
     friend class ArchiveMount;
@@ -284,7 +293,8 @@ public:
      * lock.
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(const std::string & vid,
-      const std::string driveName) = 0;
+      const std::string & tapePool, const std::string driveName, 
+      const std::string & hostName, time_t startTime) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
      * lock.

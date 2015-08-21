@@ -41,6 +41,19 @@ void cta::objectstore::Tape::initialize(const std::string &name,
   m_payload.set_oldestjobtime(0);
   m_payload.set_priority(0);
   m_payload.set_retrievejobstotalsize(0);
+  m_payload.set_busy(false);
+  m_payload.set_archived(false);
+  m_payload.set_disabled(false);
+  m_payload.set_readonly(false);
+  m_payload.set_full(false);
+  auto cm = m_payload.mutable_currentmount();
+  cm->set_drivemodel("");
+  cm->set_drivename("");
+  cm->set_driveserial("");
+  cm->set_drivevendor("");
+  cm->set_host("");
+  cm->set_time(0);
+  m_payload.set_currentmounttype(serializers::MountType::Archive_t);
   m_payloadInterpreted = true;
 }
 
@@ -133,3 +146,75 @@ cta::objectstore::Tape::JobsSummary cta::objectstore::Tape::getJobsSummary() {
   ret.priority = m_payload.priority();
   return ret;
 }
+
+bool cta::objectstore::Tape::isArchived() {
+  checkPayloadReadable();
+  return m_payload.archived();
+}
+
+void cta::objectstore::Tape::setArchived(bool archived) {
+  checkPayloadWritable();
+  m_payload.set_archived(archived);
+}
+
+bool cta::objectstore::Tape::isDisabled() {
+  checkPayloadReadable();
+  return m_payload.disabled();
+}
+
+void cta::objectstore::Tape::setDisabled(bool disabled) {
+  checkPayloadWritable();
+  m_payload.set_disabled(disabled);
+}
+
+bool cta::objectstore::Tape::isReadOnly() {
+  checkPayloadReadable();
+  return m_payload.readonly();
+}
+
+void cta::objectstore::Tape::setReadOnly(bool readOnly) {
+  checkPayloadWritable();
+  m_payload.set_readonly(readOnly);
+}
+
+bool cta::objectstore::Tape::isFull() {
+  checkPayloadReadable();
+  return m_payload.full();
+}
+
+void cta::objectstore::Tape::setFull(bool full) {
+  checkPayloadWritable();
+  m_payload.set_full(full);
+}
+
+bool cta::objectstore::Tape::isBusy() {
+  checkPayloadReadable();
+  return m_payload.busy();
+}
+
+void cta::objectstore::Tape::setBusy(const std::string& drive, MountType mountType, 
+  const std::string & host, time_t startTime, const std::string& agentAddress) {
+  checkPayloadWritable();
+  m_payload.set_busy(true);
+  auto * cm = m_payload.mutable_currentmount();
+  cm->set_drivemodel("");
+  cm->set_driveserial("");
+  cm->set_drivename(drive);
+  cm->set_host(host);
+  cm->set_time((uint64_t)time);
+  switch (mountType) {
+    case MountType::Archive:
+      m_payload.set_currentmounttype(objectstore::serializers::MountType::Archive_t);
+      break;
+    case MountType::Retrieve:
+      m_payload.set_currentmounttype(objectstore::serializers::MountType::Retrieve_t);
+      break;
+  }
+}
+
+void cta::objectstore::Tape::releaseBusy() {
+  checkPayloadWritable();
+  m_payload.set_busy(false);
+}
+
+

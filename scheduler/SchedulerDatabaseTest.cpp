@@ -568,6 +568,40 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   }
 }
 
+
+TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
+  using namespace cta;
+
+  SchedulerDatabase &db = getDb();
+  // Populate the database with an archive mount
+  {
+    // Log for following creations
+    cta::CreationLog cl(UserIdentity(789,101112), "client0", time(NULL), "Unit test archive request creation");
+    // Create tape pools
+    db.createTapePool("pool0", 5, cl);
+    db.createTapePool("pool1", 5, cl);
+    // Add a valid job to the queue
+    cta::UserIdentity remoteOwner (123,546);
+    cta::RemoteFileStatus remoteStatus(remoteOwner, 0744, 1234);
+    cta::RemotePath remotePath ("root://myeos/myfile");
+    cta::RemotePathAndStatus remoteFile(remotePath, remoteStatus);
+    std::map<uint16_t, std::string> destinationPoolMap;
+    destinationPoolMap[0] = "pool0";
+    destinationPoolMap[1] = "pool1";
+    cta::ArchiveToFileRequest atfr(remoteFile, "cta://cta/myfile", destinationPoolMap,
+      10, cl);
+    std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
+    creation->complete();
+  }
+  // The archive mount's unique_ptr
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> archiveMount;
+  {
+    auto mountInfo = db.getMountInfo();
+    ASSERT_NO_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1",  "drive1",
+        "host1", time(NULL)));
+  }
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

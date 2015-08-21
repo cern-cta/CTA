@@ -67,7 +67,9 @@ void OStoreDB::assertAgentSet() {
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
   //Allocate the getMountInfostructure to return.
-  std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo());
+  assertAgentSet();
+  std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo(
+    m_objectStore, *m_agent));
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
@@ -1042,9 +1044,81 @@ void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester,
 
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
-    const std::string& vid, const std::string driveName) {
+    const std::string& vid, const std::string & tapePool, const std::string driveName,
+    const std::string& hostName, time_t startTime) {
+  // In order to create the mount, we have to:
+  // Check we actually hold the scheduling lock
+  // Check the tape exists, add it to ownership and set its activity status to 
+  // busy, with the current agent as the current tape user
+  // Check the drive exists, add the drive to ownership and set its activity 
+  // status to mount starting with the current agent as the drive user
+  
+  // Prepare the return value
+  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
+    new OStoreDB::ArchiveMount(m_objectStore, m_agent));
+  auto &am = *privateRet;
+  // Check we hold the scheduling lock
+  if (!m_lockTaken)
+    throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createArchiveMount: "
+      "cannot create mount without holding scheduling lock");
+  // Find the tape
+  am.m_mountInfo.vid = vid;
+  am.m_mountInfo.drive = driveName;
+  am.m_mountInfo.tapePool = tapePool;
+  {
+    objectstore::RootEntry re(m_objectStore);
+    objectstore::ScopedSharedLock rel(re);
+    re.fetch();
+    auto tplist = re.dumpTapePools();
+    std::string tpAdress;
+    for (auto tpp=tplist.begin(); tpp!=tplist.end(); tpp++)
+      if (tpp->tapePool == tapePool)
+        tpAdress = tpp->address;
+    if (!tpAdress.size())
+      throw NoSuchTapePool("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " tape pool not found");
+    objectstore::TapePool tp(tpAdress, m_objectStore);
+    objectstore::ScopedSharedLock tpl(tp);
+    tp.fetch();
+    auto tlist = tp.dumpTapes();
+    std::string tAddress;
+    for (auto tptr = tlist.begin(); tptr!=tlist.end(); tptr++) {
+      if (tptr->vid == vid)
+        tAddress = tptr->address;
+    }
+    if (!tAddress.size())
+      throw NoSuchTape("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " tape not found");
+    objectstore::Tape t(tAddress, m_objectStore);
+    objectstore::ScopedExclusiveLock tlock(t);
+    t.fetch();
+    if (t.isFull())
+      throw TapeNotWritable("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " the tape is not writable (full)");
+    if (t.isArchived())
+      throw TapeNotWritable("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " the tape is not writable (archived)");
+    if (t.isReadOnly())
+      throw TapeNotWritable("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " the tape is not writable (readonly)");
+    if (t.isDisabled())
+      throw TapeNotWritable("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " the tape is not writable (disabled)");
+    if (t.isBusy())
+      throw TapeIsBusy("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
+        " the tape is busy");
+    // This tape seems fine for our purposes. We will set it as an owned object
+    // so that garbage collection can release the tape in case of a session crash
+    t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
+      m_agent.getAddressIfSet());
+  }
   throw NotImplemented("Not Implemented");
-}
+  }
+
+OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
+  objectstore::Backend& os, objectstore::Agent& a):
+    m_objectStore(os), m_agent(a) {}
+
 
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
@@ -1061,5 +1135,13 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   m_schedulerGlobalLock.reset(NULL);
 }
 
-    
+OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::Agent& a):
+  m_objectStore(os), m_agent(a) {}
+
+const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
+  return m_mountInfo;
+}
+
+
+
 }

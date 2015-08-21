@@ -43,6 +43,24 @@ public:
   std::string getLogicalLibrary();
   void setLogicalLibrary(const std::string & library);
   
+  // Tape status management ====================================================
+  void setFull(bool full);
+  bool isFull();
+  void setArchived(bool archived);
+  bool isArchived();
+  void setReadOnly(bool readOnly);
+  bool isReadOnly();
+  void setDisabled(bool disabled);
+  bool isDisabled();
+  
+  enum class MountType {
+    Archive, Retrieve
+  };
+  void setBusy(const std::string & drive, MountType mountType, 
+    const std::string & host, time_t time, const std::string &agentAddress);
+  void releaseBusy();
+  bool isBusy();
+  
   // Retrieve jobs management ==================================================
   void addJob(const RetrieveToFileRequest::JobDump & job,
     const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,

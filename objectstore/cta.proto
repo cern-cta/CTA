@@ -15,6 +15,13 @@ enum ObjectType {
   GenericObject_t = 1000;
 }
 
+// The types of mounts
+enum MountType {
+  NoMount_t = 0;
+  Archive_t = 1;
+  Retrieve_t = 2;
+}
+
 // The base object header. This will allow introspection and automatic
 // "garbage collection", i.e. returning an unprocessed object belonging
 // to a dead agent to the right queue or container.
@@ -215,7 +222,8 @@ message MountInfo {
   required string drivevendor = 4201;
   required string drivemodel = 4202;
   required string driveserial = 4203;
-  required uint64 time = 4204;
+  required string drivename = 4204;
+  required uint64 time = 4205;
 }
 
 message Tape {
@@ -233,6 +241,14 @@ message Tape {
   required uint64 oldestjobtime = 4308;
   required uint64 priority = 4309;
   // There are no per tape mount criteria/quotas (they are per tape pool).
+  // Tape status
+  required bool busy = 4310;
+  required MountType currentmounttype = 4311;
+  required MountInfo currentmount = 4312;
+  required bool archived = 4313;
+  required bool disabled = 4314;
+  required bool readonly = 4315;
+  required bool full = 4316;
 }
 
 // ------------- Archive Jobs --------------------------------------------------
@@ -326,11 +342,7 @@ message RetrieveToDirRequest {
 
 // ------------- Drives handling  ----------------------------------------------
 
-enum MountType {
-  NoMount_t = 0;
-  Archive_t = 1;
-  Retrieve_t = 2;
-}
+
 
 message DriveInfo {
   required string drivename = 5000;
