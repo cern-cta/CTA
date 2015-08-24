@@ -53,7 +53,7 @@ protected:
     
 
     MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));
-    MOCK_METHOD1(fail, void(const std::exception &ex));
+    MOCK_METHOD1(failed, void(const std::exception &ex));
   }; // class MockRetrieveJob
 
   class MockRetrieveMount: public cta::RetrieveMount {
@@ -147,7 +147,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   std::unique_ptr<cta::RetrieveJob> job3;
   {
     std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, fail(_)).Times(1);
+    EXPECT_CALL(*mockJob, failed(_)).Times(1);
     job3.reset(mockJob.release());
   }
   EXPECT_CALL(retrieveMount, complete()).Times(1);
