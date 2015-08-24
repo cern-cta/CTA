@@ -73,23 +73,18 @@ std::string cta::ArchiveMount::getMountTransactionId() const throw(){
   return "UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT";
 }
 
-std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob(){
-  cta::exception::Exception ex("Not implemented");
-  throw ex;
+//------------------------------------------------------------------------------
+// getNextJob
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
+  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
 }
     
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::complete() {
-  throw NotImplemented ("");
-}
-
-//------------------------------------------------------------------------------
-// failed
-//------------------------------------------------------------------------------
-void cta::ArchiveMount::failed(const std::exception &ex) {
-  throw NotImplemented ("");
+  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
 }
 
 //------------------------------------------------------------------------------

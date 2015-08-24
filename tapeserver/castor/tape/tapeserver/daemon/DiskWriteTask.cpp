@@ -152,7 +152,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
           .add("errorCode", e.code());
     logWithStat(LOG_ERR, "File writing to disk failed.", lc);
     lc.logBacktrace(LOG_ERR, e.backtrace());
-    reporter.reportFailedJob(std::move(m_retrieveJob),e.getMessageValue(),e.code());
+    reporter.reportFailedJob(std::move(m_retrieveJob),e);
 
     
     //got an exception, return false

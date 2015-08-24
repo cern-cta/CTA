@@ -59,7 +59,7 @@ namespace cta {
     virtual std::string getMountTransactionId() const throw() = 0;
 
     /**
-     * Indicates that the mount was successful.
+     * Indicates that the mount was completed.
      *
      * @param checksumOfTransfer The adler-32 checksum of the file as calculated
      * during the execution of the job.
@@ -68,13 +68,6 @@ namespace cta {
      */
     virtual void complete() = 0;
 
-    /**
-     * Indicates that the mount failed.
-     *
-     * @param ex The reason for the failure.
-     */
-    virtual void failed(const std::exception &ex) = 0;
-    
     /**
      * Destructor.
      */

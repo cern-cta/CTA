@@ -191,7 +191,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
-        retrieveMount->failed(cta::exception::Exception("Aborted: empty recall mount"));
+        retrieveMount->complete();
         log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
         log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
         log::LogContext::ScopedParam sp12(lc, log::Param("errorCode", SEINTERNAL));
@@ -316,7 +316,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty migration mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
-        archiveMount->failed(cta::exception::Exception("Aborted: empty migration mount"));
+        archiveMount->complete();
         log::LogContext::ScopedParam sp1(lc, log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
         lc.log(LOG_ERR, "Notified client of end session with error");
       } catch(castor::exception::Exception & ex) {
@@ -361,7 +361,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Drive not found on this path" << lc;
-    mount->failed(cta::exception::Exception("Drive unit not found"));
+    mount->complete();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
@@ -376,7 +376,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Error looking to path to tape drive: " << lc;
-    mount->failed(cta::exception::Exception("Drive unit not found"));
+    mount->complete();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
@@ -390,7 +390,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while looking for drive" << lc;
-    mount->failed(cta::exception::Exception("Drive unit not found"));
+    mount->complete();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
@@ -411,7 +411,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Error opening tape drive" << lc;
-    mount->failed(cta::exception::Exception("Drive unit not found"));
+    mount->complete();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
@@ -425,7 +425,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while opening drive" << lc;
-    mount->failed(cta::exception::Exception("Drive unit not found"));
+    mount->complete();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));

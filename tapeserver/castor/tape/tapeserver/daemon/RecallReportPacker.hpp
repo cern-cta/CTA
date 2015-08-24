@@ -60,10 +60,9 @@ public:
    * Create into the MigrationReportPacker a report for the failed migration
    * of migratedFile
    * @param migratedFile the file which failed 
-   * @param msg the message error with the failure 
-   * @param error_code the error code with the failure 
+   * @param ex the reason for the failure
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::string& msg,int error_code);
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::exception& ex);
        
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -117,16 +116,18 @@ private:
     virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const std::string m_error_msg;
-    const int m_error_code;
+    const std::exception m_ex;
     
     /**
      * The failed retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
-    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,std::string msg,int error_code):
-    Report(false),m_error_msg(msg),m_error_code(error_code), m_failedRetrieveJob(std::move(failedRetrieveJob)) {}
+    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::exception &ex):
+    Report(false),
+    m_ex(ex),
+    m_failedRetrieveJob(std::move(failedRetrieveJob)) {
+    }
 
     virtual void execute(RecallReportPacker& reportPacker);
   };

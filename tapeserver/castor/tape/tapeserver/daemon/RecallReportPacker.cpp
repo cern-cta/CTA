@@ -69,8 +69,8 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //reportFailedJob
 //------------------------------------------------------------------------------  
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob
-,const std::string& msg,int error_code){
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob),msg,error_code));
+, const std::exception &ex){
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob),ex));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -115,7 +115,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
     else {
       const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
       parent.m_lc.log(LOG_ERR,msg);
-      parent.m_retrieveMount->failed(cta::exception::Exception(msg));
+      parent.m_retrieveMount->complete();
       if (parent.m_watchdog) {
         parent.m_watchdog->addParameter(log::Param("status","failure"));
         // We have a race condition here between the processing of this message by
@@ -130,14 +130,14 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   if(parent.m_errorHappened) {
-    parent.m_retrieveMount->failed(cta::exception::Exception(m_message));    
+    parent.m_retrieveMount->complete();
     LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
     parent.m_lc.log(LOG_ERR,m_message);
   }
   else{
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    parent.m_lc.log(LOG_ERR,msg);  
-   parent.m_retrieveMount->failed(cta::exception::Exception(msg));    
+   parent.m_retrieveMount->complete();
   }
   if (parent.m_watchdog) {
     parent.m_watchdog->addParameter(log::Param("status","failure"));
@@ -152,7 +152,7 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
-  m_failedRetrieveJob->failed(cta::exception::Exception(m_error_msg));
+  m_failedRetrieveJob->failed(m_ex);
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
