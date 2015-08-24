@@ -16,22 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ArchiveFileInfo.hpp"
+#include "common/archiveNS/TapeFileLocation.hpp"
 
-namespace cta {
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::TapeFileLocation::TapeFileLocation():
+  fSeq(0),
+  blockId(0),
+  vid(""),
+  copyNumber(0) {
+}
 
-  ArchiveFileInfo::ArchiveFileInfo():
-  fileId(0),
-  size(0),
-  lastModificationTime(0) {
-  }
-
-  ArchiveFileInfo::ArchiveFileInfo(
-    const std::string& lastKnownPath, uint64_t fileId, uint64_t size, 
-    const Checksum & checksum, const time_t lastModificationTime):
-    lastKnownPath(lastKnownPath),
-    fileId(fileId),
-    size(size),
-    checksum(checksum),
-    lastModificationTime(lastModificationTime) {}
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::TapeFileLocation::TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNumber):
+  fSeq(fSeq),
+  blockId(blockId),
+  vid(vid),
+  copyNumber(copyNumber) {
 }

@@ -16,23 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/archiveNS/TapeCopyInfo.hpp"
+#include "ArchiveFile.hpp"
 
+namespace cta {
+  
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeCopyInfo::TapeCopyInfo():
-  fSeq(0),
-  blockId(0) {
+ArchiveFile::ArchiveFile():
+  fileId(0),
+  size(0),
+  lastModificationTime(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeCopyInfo::TapeCopyInfo(const std::string &vid,
-  const uint64_t fSeq, const uint64_t blockId, uint16_t copyNumber):
-  vid(vid),
-  fSeq(fSeq),
-  blockId(blockId),
-  copyNumber(copyNumber) {
+ArchiveFile::ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
+  uint64_t size, const Checksum & checksum, const time_t lastModificationTime):
+  path(path),
+  nsHostName(nsHostName),          
+  fileId(fileId),
+  size(size),
+  checksum(checksum),
+  lastModificationTime(lastModificationTime) {}
 }

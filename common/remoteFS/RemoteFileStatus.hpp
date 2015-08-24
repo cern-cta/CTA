@@ -59,9 +59,7 @@ struct RemoteFileStatus {
   mode_t mode;
 
   /**
-   * Returns the size of the file in bytes.
-   *
-   * @return The size of the file in bytes.
+   * The size of the file in bytes.
    */
   uint64_t size;
 

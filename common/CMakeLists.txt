@@ -9,12 +9,11 @@ set (COMMON_LIB_SRC_FILES
   archiveRoutes/ArchiveRouteId.cpp
   archiveNS/ArchiveDirEntry.cpp
   archiveNS/ArchiveDirIterator.cpp
-  archiveNS/ArchiveFileInfo.cpp
+  archiveNS/ArchiveFile.cpp
   archiveNS/ArchiveFileStatus.cpp
   archiveNS/StorageClass.cpp
   archiveNS/Tape.cpp
-  archiveNS/TapeCopyInfo.cpp
-  archiveNS/TapeCopyLocationAndStatus.cpp
+  archiveNS/TapeFileLocation.cpp
   CreationLog.cpp
   checksum/ByteArray.cpp
   checksum/Checksum.cpp

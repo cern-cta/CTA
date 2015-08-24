@@ -53,9 +53,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   castor::utils::Timer transferTime(localTime);
   log::ScopedParamContainer URLcontext(lc);
   URLcontext.add("NSFILEID",m_retrieveJob->archiveFile.fileId)
-            .add("path", m_retrieveJob->archiveFile.lastKnownPath)
-            .add("fileTransactionId",m_retrieveJob->m_id)
-            .add("fSeq",m_retrieveJob->tapeCopy.fSeq);
+            .add("path", m_retrieveJob->archiveFile.path)
+            .add("fSeq",m_retrieveJob->tapeFileLocation.fSeq);
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -90,7 +89,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
           // Synchronise the counter with the open time counter.
           currentErrorToCount = "Error_diskOpenForWrite";
           transferTime = localTime;
-          writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->archiveFile.lastKnownPath));
+          writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->archiveFile.path));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(LOG_INFO, "Opened disk file for writing");
           m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
@@ -254,7 +253,7 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
            .add("FILEID",m_retrieveJob->archiveFile.fileId)
-           .add("path",m_retrieveJob->archiveFile.lastKnownPath);
+           .add("path",m_retrieveJob->archiveFile.path);
     lc.log(level,msg);
 }
 }}}}

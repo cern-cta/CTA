@@ -27,23 +27,16 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob() {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob(
-// TO BE DECIDED
-//RetrieveMount &mount,
-  const TapeCopyInfo &tapeCopy,
-  const std::string &id, 
-  const std::string &userRequestId,
-  const uint32_t copyNb,
-  const std::string &remoteFile,
-  const uint64_t castorNsFileId):
-  tapeCopy(tapeCopy), m_id(id) {
-}
+cta::RetrieveJob::RetrieveJob(/*RetrieveMount &mount,*/
+  const ArchiveFile &archiveFile,
+  const RemotePathAndStatus &remotePathAndStatus,
+  const TapeFileLocation &tapeFileLocation,
+  const PositioningMethod positioningMethod):
+  /*mount(mount),*/
+  archiveFile(archiveFile),
+  remotePathAndStatus(remotePathAndStatus),
+  tapeFileLocation(tapeFileLocation),
+  positioningMethod(positioningMethod) {}
 
 //------------------------------------------------------------------------------
 // complete
@@ -64,9 +57,9 @@ void cta::RetrieveJob::failed(const std::exception &ex) {
 void cta::RetrieveJob::retry() { }
 
 //------------------------------------------------------------------------------
-// toString(PositioningMethod)
+// positioningMethodtoString(PositioningMethod)
 //------------------------------------------------------------------------------
-std::string cta::RetrieveJob::toString(PositioningMethod pm) {
+std::string cta::RetrieveJob::positioningMethodtoString(PositioningMethod pm) {
   switch(pm) {
     case PositioningMethod::ByBlock:
       return "ByBlock";

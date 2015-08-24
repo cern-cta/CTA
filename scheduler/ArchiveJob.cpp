@@ -27,23 +27,14 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob() {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(
-  const std::string &tapePoolName,
-  const ArchiveFileInfo & archiveFile,
-  const RemotePathAndStatus &remoteFile,
-  const TapeCopyLocationAndStatus &tapeCopy,
-  const uint16_t copyNb):
-  tapePoolName(tapePoolName),
+cta::ArchiveJob::ArchiveJob(/*ArchiveMount &mount,*/
+  const ArchiveFile &archiveFile,
+  const RemotePathAndStatus &remotePathAndStatus,
+  const TapeFileLocation &tapeFileLocation):
+  /*mount(mount),*/
   archiveFile(archiveFile),
-  remoteFile(remoteFile),
-  tapeCopy(tapeCopy),
-  copyNumber(copyNb) {}
+  remotePathAndStatus(remotePathAndStatus),
+  tapeFileLocation(tapeFileLocation) {}
 
 //------------------------------------------------------------------------------
 // complete
@@ -55,7 +46,7 @@ void cta::ArchiveJob::complete() {
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed() {
+void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
   throw NotImplemented("");
 }
   

@@ -477,17 +477,15 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   db.createTapePool("pool3", 5, cl);
   ASSERT_NO_THROW(db.createTape("Tape3", "Lib3", "pool3", 10L*1000*1000*1000*1000*1000, cl));
   // Add retrieve jobs
-  std::list<TapeCopyInfo> tcl;
-  tcl.push_back(TapeCopyInfo());
+  std::list<TapeFileLocation> tcl;
+  tcl.push_back(TapeFileLocation());
   tcl.back().blockId = 666;
   tcl.back().fSeq = 10;
-  tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape2";
   tcl.back().copyNumber = 1;
-  tcl.push_back(TapeCopyInfo());
+  tcl.push_back(TapeFileLocation());
   tcl.back().blockId = 111;
   tcl.back().fSeq = 5;
-  tcl.back().nsHostName = "NSHost";
   tcl.back().vid = "Tape3";
   tcl.back().copyNumber = 2;
   ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile", 1234, tcl, "eos://myeos/myeosfile", 10, cl)));
@@ -523,17 +521,15 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   // Add retrieve jobs
   // We flip the tape order here to make sure the algorithm will not select just
   // the first tape
-  std::list<TapeCopyInfo> tcl2;
-  tcl2.push_back(TapeCopyInfo());
+  std::list<TapeFileLocation> tcl2;
+  tcl2.push_back(TapeFileLocation());
   tcl2.back().blockId = 999;
   tcl2.back().fSeq = 11;
-  tcl2.back().nsHostName = "NSHost";
   tcl2.back().vid = "Tape3";
   tcl2.back().copyNumber = 1;
-  tcl2.push_back(TapeCopyInfo());
+  tcl2.push_back(TapeFileLocation());
   tcl2.back().blockId = 333;
   tcl2.back().fSeq = 3;
-  tcl2.back().nsHostName = "NSHost";
   tcl2.back().vid = "Tape2";
   tcl2.back().copyNumber = 2;
   db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile2", 1234, tcl2, "eos://myeos/myeosfile2", 10, cl));

@@ -69,12 +69,12 @@ namespace daemon {
     using castor::log::ScopedParamContainer;
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_archiveJob->tapeCopy.nsHostName)
-          .add("NSFILEID",m_archiveJob->tapeCopy.fileId)
-          .add("lastKnownFilename",m_archiveJob->archiveFile.lastKnownPath)
+    params.add("NSHOSTNAME", m_archiveJob->archiveFile.nsHostName)
+          .add("NSFILEID",m_archiveJob->archiveFile.fileId)
+          .add("lastKnownFilename",m_archiveJob->archiveFile.path)
           .add("fileSize",m_archiveJob->archiveFile.size)
-          .add("fSeq",m_archiveJob->tapeCopy.fSeq)
-          .add("path",m_archiveJob->remoteFile.path.getRaw());
+          .add("fSeq",m_archiveJob->tapeFileLocation.fSeq)
+          .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -90,7 +90,7 @@ namespace daemon {
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-    session.validateNextFSeq(m_archiveJob->tapeCopy.fSeq);
+    session.validateNextFSeq(m_archiveJob->tapeFileLocation.fSeq);
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
@@ -129,7 +129,7 @@ namespace daemon {
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_archiveJob->tapeCopy.fSeq);
+      session.reportWrittenFSeq(m_archiveJob->tapeFileLocation.fSeq);
       reportPacker.reportCompletedJob(std::move(m_archiveJob),ckSum,output->getBlockId());
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
@@ -314,10 +314,10 @@ namespace daemon {
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_archiveJob->archiveFile.size)
-           .add("NSHOST",m_archiveJob->tapeCopy.nsHostName)
-           .add("NSFILEID",m_archiveJob->tapeCopy.fileId)
-           .add("fSeq",m_archiveJob->tapeCopy.fSeq)
-           .add("lastKnownFilename",m_archiveJob->archiveFile.lastKnownPath)
+           .add("NSHOST",m_archiveJob->archiveFile.nsHostName)
+           .add("NSFILEID",m_archiveJob->archiveFile.fileId)
+           .add("fSeq",m_archiveJob->tapeFileLocation.fSeq)
+           .add("lastKnownFilename",m_archiveJob->archiveFile.path)
            .add("lastModificationTime",m_archiveJob->archiveFile.lastModificationTime);
      
      lc.log(level, msg);

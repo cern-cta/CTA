@@ -26,38 +26,22 @@ namespace cta {
 /**
  * The location of a tape copy.
  */
-struct TapeCopyInfo {
+struct TapeFileLocation {
 
   /**
    * Constructor.
    */
-  TapeCopyInfo();
+  TapeFileLocation();
 
   /**
    * Constructor.
    *
-   * @param vid The volume identifier of the tape.
    * @param fSeq The sequence number of the file.
    * @param blockId The block identifier of the file.
-   * @param copyNumber The copy number for this tape copy.
+   * @param vid The vid of the tape containing the file. TODO: to be put in the mount object in the future
+   * @param copyNumber The copy number of the tape file. TODO: to be put in the mount object in the future
    */
-  TapeCopyInfo(const std::string &vid, const uint64_t fSeq,
-    const uint64_t blockId, uint16_t copyNumber);
-  
-  /**
-   * The path of the archive file.
-   */
-  //std::string archiveFilePath;
-  
-  /**
-   * The ID of the file
-   */
-  //uint64_t fileId;
-
-  /**
-   * The volume identifier of the tape.
-   */
-  std::string vid;
+  TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNumber);
 
   /**
    * The sequence number of the file.
@@ -70,15 +54,15 @@ struct TapeCopyInfo {
   uint64_t blockId;
   
   /**
-   * The hostname of the nameserver holding the file
+   * The vid of the tape containing the file. TODO: to be put in the mount object in the future
    */
-  std::string nsHostName;
+  std::string vid;
   
   /**
-   * The copy number for this tape copy
+   * The copy number of the tape file. TODO: to be put in the mount object in the future
    */
-  uint16_t copyNumber;
+  uint8_t copyNumber;
 
-}; // struct TapeCopyLocation
+}; // struct TapeFileLocation
 
 } // namepsace cta

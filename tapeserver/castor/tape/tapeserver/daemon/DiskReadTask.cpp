@@ -66,9 +66,9 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     checkMigrationFailing();
     currentErrorToCount = "Error_diskOpenForRead";
     std::unique_ptr<tape::diskFile::ReadFile> sourceFile(
-      fileFactory.createReadFile(m_archiveJob->archiveFile.lastKnownPath));
+      fileFactory.createReadFile(m_archiveJob->archiveFile.path));
     log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("path", m_archiveJob->archiveFile.lastKnownPath)
+    URLcontext.add("path", m_archiveJob->archiveFile.path)
               .add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
     if(migratingFileSize != sourceFile->size()){
@@ -79,7 +79,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     
     m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
      
-    LogContext::ScopedParam sp(lc, Param("filePath",m_archiveJob->archiveFile.lastKnownPath));
+    LogContext::ScopedParam sp(lc, Param("filePath",m_archiveJob->archiveFile.path));
     lc.log(LOG_INFO,"Opened disk file for read");
     
     while(migratingFileSize>0){
@@ -90,7 +90,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       m_stats.waitFreeMemoryTime+=localTime.secs(castor::utils::Timer::resetCounter);
       
       //set metadata and read the data
-      mb->m_fileid = m_archiveJob->tapeCopy.fileId;
+      mb->m_fileid = m_archiveJob->archiveFile.fileId;
       mb->m_fileBlock = blockId++;
       
       currentErrorToCount = "Error_diskRead";
@@ -180,7 +180,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
       mb = m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->m_fileid = m_archiveJob->tapeCopy.fileId;
+    mb->m_fileid = m_archiveJob->archiveFile.fileId;
     mb->markAsCancelled();
     m_nextTask.pushDataBlock(mb);
     mb=NULL;
@@ -208,8 +208,8 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_archiveJob->tapeCopy.fileId)
-           .add("path",m_archiveJob->archiveFile.lastKnownPath);
+           .add("FILEID",m_archiveJob->archiveFile.fileId)
+           .add("path",m_archiveJob->archiveFile.path);
     lc.log(level,msg);
 }
 

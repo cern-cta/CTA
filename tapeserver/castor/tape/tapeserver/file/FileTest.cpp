@@ -54,12 +54,12 @@ namespace UnitTests {
     virtual void SetUp() {
       block_size = 262144;
       label = "K00001";
-      fileToRecall.tapeCopy.blockId = 0;
-      fileToRecall.tapeCopy.fSeq = 1;
+      fileToRecall.tapeFileLocation.blockId = 0;
+      fileToRecall.tapeFileLocation.fSeq = 1;
       fileToRecall.archiveFile.fileId = 1;
       fileToMigrate.archiveFile.size = 500;
       fileToMigrate.archiveFile.fileId = 1;
-      fileToMigrate.tapeCopy.fSeq = 1;
+      fileToMigrate.tapeFileLocation.fSeq = 1;
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;

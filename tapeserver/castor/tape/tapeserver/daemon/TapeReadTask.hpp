@@ -69,12 +69,11 @@ public:
     
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_retrieveJob->tapeCopy.nsHostName)
+    params.add("NSHOSTNAME", m_retrieveJob->archiveFile.nsHostName)
           .add("NSFILEID", m_retrieveJob->archiveFile.fileId)
-          .add("BlockId", m_retrieveJob->tapeCopy.blockId)
-          .add("fSeq", m_retrieveJob->tapeCopy.fSeq)
-          .add("fileTransactionId", m_retrieveJob->m_id)
-          .add("path", m_retrieveJob->archiveFile.lastKnownPath);
+          .add("BlockId", m_retrieveJob->tapeFileLocation.blockId)
+          .add("fSeq", m_retrieveJob->tapeFileLocation.fSeq)
+          .add("path", m_retrieveJob->archiveFile.path);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -110,7 +109,7 @@ public:
         mb=m_mm.getFreeBlock();
         localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
         
-        mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
+        mb->m_fSeq = m_retrieveJob->tapeFileLocation.fSeq;
         mb->m_fileBlock = fileBlock++;
         mb->m_fileid = m_retrieveJob->archiveFile.fileId;
         mb->m_tapeFileBlock = tapeBlock;
@@ -191,7 +190,7 @@ public:
    */
   void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
-    mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
+    mb->m_fSeq = m_retrieveJob->tapeFileLocation.fSeq;
     mb->m_fileid = m_retrieveJob->archiveFile.fileId;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
@@ -208,7 +207,7 @@ private:
     // fill it up
     if (!mb) {
       mb=m_mm.getFreeBlock();
-      mb->m_fSeq = m_retrieveJob->tapeCopy.fSeq;
+      mb->m_fSeq = m_retrieveJob->tapeFileLocation.fSeq;
       mb->m_fileid = m_retrieveJob->archiveFile.fileId;
     }
     //mark the block failed and push it (plus signal the end)

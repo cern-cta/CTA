@@ -25,22 +25,55 @@ namespace cta {
 /**
  * A class containing the location and properties of an archive file. 
  */
-class ArchiveFileInfo {
+class ArchiveFile {
 public:
+  
   /**
    * Constructor.
    */
-  ArchiveFileInfo();
+  ArchiveFile();
 
   /**
    * Constructor.
+   *
+   * @param path The location of the file at NS lookup time
+   * @param nsHostName The NS host name
+   * @param fileId The file ID (to be used in the tape copy header)
+   * @param size The file size
+   * @param checksum The file checksum
+   * @param lastModificationTime The last modification time of the file
    */
-  ArchiveFileInfo(const std::string & lastKnownPath, uint64_t fileId, 
+  ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
     uint64_t size, const Checksum & checksum, const time_t lastModificationTime);
-  std::string lastKnownPath; /**< The location of the file at NS lookup time */
-  uint64_t fileId; /**< The file ID (to be used in the tape copy header, among other */
-  uint64_t size; /**< The file's size */
+  
+  /**
+   * The location of the file at NS lookup time
+   */
+  std::string path;
+  
+  /**
+   * The NS host name
+   */
+  std::string nsHostName;
+  
+  /**
+   * The file ID (to be used in the tape copy header)
+   */
+  uint64_t fileId;
+  
+  /**
+   * The file size
+   */
+  uint64_t size;
+  
+  /**
+   * The file checksum
+   */
   Checksum checksum;
+  
+  /**
+   * The last modification time of the file
+   */
   time_t lastModificationTime;
 };
 }

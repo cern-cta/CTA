@@ -103,6 +103,20 @@ namespace cta {
     std::unique_ptr<ArchiveJob> getNextJob();
     
     /**
+     * Returns the tape pool of the tape to be mounted.
+     *
+     * @return The tape pool of the tape to be mounted.
+     */
+    virtual std::string getPoolName() const throw();
+    
+    /**
+     * Returns the copy number of the tape to be mounted.
+     *
+     * @return The copy number of the tape to be mounted.
+     */
+    virtual int getCopyNumber() const throw();
+    
+    /**
      * Destructor.
      */
     virtual ~ArchiveMount() throw();

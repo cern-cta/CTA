@@ -53,6 +53,20 @@ std::string cta::ArchiveMount::getDensity() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getPoolName
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getPoolName() const throw() {
+  return "UNKNOWN_POOL_FOR_ARCHIVE_MOUNT";
+}
+
+//------------------------------------------------------------------------------
+// getCopyNumber
+//------------------------------------------------------------------------------
+int cta::ArchiveMount::getCopyNumber() const throw() {
+  return 1;
+}
+
+//------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getMountTransactionId() const throw(){

@@ -253,7 +253,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_errorHappened=true;
-  m_failedArchiveJob->failed();
+  m_failedArchiveJob->failed(cta::exception::Exception("Error happened somewhere during the migration process"));
 }
 
 //------------------------------------------------------------------------------
