@@ -84,10 +84,8 @@ protected:
 
     void createRetrieveJobs(const unsigned int nbJobs) {
       for(unsigned int i = 0; i < nbJobs; i++) {
-        std::unique_ptr<MockRetrieveJob> job(new MockRetrieveJob());
-        EXPECT_CALL(*job, complete(_,_)).Times(1);
         m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
-          job.release()));
+          new MockRetrieveJob()));
       }
     }
   }; // class MockRetrieveMount
@@ -98,22 +96,28 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
   MockRetrieveMount retrieveMount;
 
   ::testing::InSequence dummy;
-  EXPECT_CALL(retrieveMount, internalGetNextJob()).Times(3);
+  std::unique_ptr<cta::RetrieveJob> job1;
+  {
+    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
+    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    job1.reset(mockJob.release());
+  }
+  std::unique_ptr<cta::RetrieveJob> job2;
+  {
+    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
+    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    job2.reset(mockJob.release());
+  }
   EXPECT_CALL(retrieveMount, complete()).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal");
   castor::log::LogContext lc(log);
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>(&retrieveMount),lc);
   rrp.startThreads();
-  
-  std::unique_ptr<cta::RetrieveJob> job1 = retrieveMount.getNextJob();
-  std::unique_ptr<cta::RetrieveJob> job2 = retrieveMount.getNextJob();
-  std::unique_ptr<cta::RetrieveJob> job3 = retrieveMount.getNextJob();
-
-  ASSERT_EQ(NULL, job3.get());
 
   rrp.reportCompletedJob(std::move(job1),0,0);
   rrp.reportCompletedJob(std::move(job2),0,0);
+
   rrp.reportEndOfSession();
   rrp.waitThread();
   
@@ -123,10 +127,15 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
 
 /*
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
+  MockRetrieveMount retrieveMount;
+
+  ::testing::InSequence dummy;
+  EXPECT_CALL(retrieveMount, internalGetNextJob()).Times(4);
+  EXPECT_CALL(retrieveMount, complete()).Times(1);
+
   std::string error_msg="ERROR_TEST_MSG";
   int error_code=std::numeric_limits<int>::max();
-  //FakeClient client;
-  MockClient client;
+
   ::testing::InSequence dummy;
   EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
   EXPECT_CALL(client, reportEndOfSessionWithError(error_msg,error_code,_)).Times(1);
@@ -149,7 +158,9 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
 }
+*/
 
+/*
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadGoodEnd) {
 
   std::string error_msg="ERROR_TEST_MSG";  
