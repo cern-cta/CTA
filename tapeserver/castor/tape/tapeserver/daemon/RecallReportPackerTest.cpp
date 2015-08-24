@@ -122,29 +122,6 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
 }
 
 /*
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerCumulated) {
-  MockClient client;
-  ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
-  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
-  
-  castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerCumulated");
-  castor::log::LogContext lc(log);
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
-  rrp.startThreads();
-  
-  tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportEndOfSession();
-  rrp.waitThread();
-
-  std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
-}
-
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   std::string error_msg="ERROR_TEST_MSG";
   int error_code=std::numeric_limits<int>::max();
