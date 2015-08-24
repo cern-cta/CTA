@@ -68,8 +68,8 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------  
-void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob
-, const std::exception &ex){
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
+  const castor::exception::Exception &ex){
   std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob),ex));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
@@ -152,7 +152,8 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
-  m_failedRetrieveJob->failed(m_ex);
+  parent.m_lc.log(LOG_ERR,m_ex.getMessageValue());
+  m_failedRetrieveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread

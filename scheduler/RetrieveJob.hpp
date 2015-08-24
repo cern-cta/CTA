@@ -95,7 +95,7 @@ public:
    *
    * @param ex The reason for the failure.
    */
-  virtual void failed(const std::exception &ex);
+  virtual void failed(const exception::Exception &ex);
   
   /**
    * Indicates that the job should be tried again (typically reaching the end 

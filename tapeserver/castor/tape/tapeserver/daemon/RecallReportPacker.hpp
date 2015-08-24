@@ -62,7 +62,7 @@ public:
    * @param migratedFile the file which failed 
    * @param ex the reason for the failure
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::exception& ex);
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception& ex);
        
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -116,14 +116,14 @@ private:
     virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const std::exception m_ex;
+    const castor::exception::Exception m_ex;
     
     /**
      * The failed retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
-    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::exception &ex):
+    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception &ex):
     Report(false),
     m_ex(ex),
     m_failedRetrieveJob(std::move(failedRetrieveJob)) {

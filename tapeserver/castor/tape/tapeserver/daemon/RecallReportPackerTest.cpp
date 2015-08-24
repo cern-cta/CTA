@@ -53,7 +53,7 @@ protected:
     
 
     MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));
-    MOCK_METHOD1(failed, void(const std::exception &ex));
+    MOCK_METHOD1(failed, void(const cta::exception::Exception &ex));
   }; // class MockRetrieveJob
 
   class MockRetrieveMount: public cta::RetrieveMount {
@@ -164,7 +164,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   rrp.reportCompletedJob(std::move(job2),0,0);
 
   const std::string error_msg = "ERROR_TEST_MSG";
-  const cta::exception::Exception ex(error_msg);
+  const castor::exception::Exception ex(error_msg);
   rrp.reportFailedJob(std::move(job3),ex);
 
   rrp.reportEndOfSession();

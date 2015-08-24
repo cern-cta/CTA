@@ -48,7 +48,7 @@ void cta::RetrieveJob::complete(const uint32_t checksumOfTransfer,
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::failed(const std::exception &ex) {
+void cta::RetrieveJob::failed(const exception::Exception &ex) {
 }
   
 //------------------------------------------------------------------------------
