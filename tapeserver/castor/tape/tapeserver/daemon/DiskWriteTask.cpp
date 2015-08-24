@@ -119,11 +119,11 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         currentErrorToCount = "";
       }
     } //end of while(1)
+    logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     reporter.reportCompletedJob(std::move(m_retrieveJob),checksum,m_stats.dataVolume);
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
-    logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     
     //everything went well, return true
     return true;
@@ -217,7 +217,7 @@ void DiskWriteTask::releaseAllBlock(){
         //errCode=mb->errorCode();
       }
       else{
-        errorMsg="Mistmatch between expected and received filed or blockid";
+        errorMsg="Mismatch between expected and received filed or blockid";
         errCode=SEINTERNAL;
       }
       lc.log(LOG_ERR,errorMsg);

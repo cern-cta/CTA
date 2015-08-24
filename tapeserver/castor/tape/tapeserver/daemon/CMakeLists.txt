@@ -96,7 +96,7 @@ add_library(castortapeserverdaemonunittests SHARED
   CatalogueTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
-# DiskWriteThreadPoolTest.cpp
+  DiskWriteThreadPoolTest.cpp
   DriveConfigTest.cpp
 # MigrationReportPackerTest.cpp
   ProcessForkerTest.cpp

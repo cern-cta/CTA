@@ -23,11 +23,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/tapeserver/client/FakeClient.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
@@ -36,11 +32,31 @@
 #include <gtest/gtest.h>
 
 namespace unitTests{
+  
+  class TestingRetrieveMount: public cta::RetrieveMount {
+  public:
+    TestingRetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(std::move(dbrm)) {
+    }
+  };
+  
+  class TestingRetrieveJob: public cta::RetrieveJob {
+  public:
+    TestingRetrieveJob() {
+    }
+  };
+  
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   struct MockRecallReportPacker : public RecallReportPacker {
-    MOCK_METHOD3(reportCompletedJob,void(const FileStruct&,u_int32_t,u_int64_t));
-    MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, u_int32_t checksum, u_int64_t size) {
+      reportCompletedJob_(successfulRetrieveJob, checksum, size);
+    }
+    
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::string& msg,int error_code) {
+      reportFailedJob_(failedRetrieveJob, msg, error_code);
+    }
+    MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::RetrieveJob> &successfulRetrieveJob, u_int32_t checksum, u_int64_t size));
+    MOCK_METHOD3(reportFailedJob_, void(std::unique_ptr<cta::RetrieveJob> &failedRetrieveJob, const std::string& msg,int error_code));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
     MockRecallReportPacker(cta::RetrieveMount *rm, castor::log::LogContext lc):
@@ -53,34 +69,35 @@ namespace unitTests{
   
   TEST(castor_tape_tapeserver_daemon, DiskWriteThreadPoolTest){
     using ::testing::_;
-    MockClient client;
+    
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteThreadPoolTest");
     castor::log::LogContext lc(log);
     
-    std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-    MockRecallReportPacker report(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
-    EXPECT_CALL(report,reportCompletedJob(_,_,_)).Times(5);
-    //EXPECT_CALL(tskInjectorl,requestInjection(_,_,_)).Times(2);
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
+    TestingRetrieveMount trm(std::move(dbrm));
+    MockRecallReportPacker report(&trm,lc);
+    
+    EXPECT_CALL(report,reportCompletedJob_(_,_,_)).Times(5);
     EXPECT_CALL(report,reportEndOfSession()).Times(1);     
     
     RecallMemoryManager mm(10,100,lc);
     
     DiskWriteThreadPool dwtp(2,report,*((RecallWatchDog*)NULL),lc,"RFIO","/dev/null",0);
     dwtp.startThreads();
-    
-    castor::tape::tapegateway::FileToRecallStruct file;
-    file.setPath("/dev/null");
-    file.setBlockId3(1);
        
-     for(int i=0;i<5;++i){
-       DiskWriteTask* t=new DiskWriteTask(dynamic_cast<tapegateway::FileToRecallStruct*>(file.clone()),mm);
-       MemBlock* mb=mm.getFreeBlock();
-       mb->m_fileid=0;
-       mb->m_fileBlock=0;
-       t->pushDataBlock(mb);
-       t->pushDataBlock(NULL);
-       dwtp.push(t);
-     }
+    for(int i=0;i<5;++i){
+      std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
+      fileToRecall->archiveFile.path = "/dev/null";
+      fileToRecall->archiveFile.fileId = i+1;
+      fileToRecall->tapeFileLocation.blockId = 1;
+      DiskWriteTask* t=new DiskWriteTask(fileToRecall.release(),mm);
+      MemBlock* mb=mm.getFreeBlock();
+      mb->m_fileid=i+1;
+      mb->m_fileBlock=0;
+      t->pushDataBlock(mb);
+      t->pushDataBlock(NULL);
+      dwtp.push(t);
+    }
      
     dwtp.finish();
     dwtp.waitThreads(); 
