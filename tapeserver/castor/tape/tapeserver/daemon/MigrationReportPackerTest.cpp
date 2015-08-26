@@ -98,7 +98,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFailure) {
   std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
   TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(tam, failed_(_)).Times(1);
+  EXPECT_CALL(tam, complete_()).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure");
   castor::log::LogContext lc(log);  
@@ -122,7 +122,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFailureGoodEnd) {
   std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
   TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(tam, failed_(_)).Times(1);
+  EXPECT_CALL(tam, complete_()).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailureGoodEnd");
   castor::log::LogContext lc(log);  
@@ -146,7 +146,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
   TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(tam, failed_(_)).Times(1);
+  EXPECT_CALL(tam, complete_()).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
   castor::log::LogContext lc(log);  
