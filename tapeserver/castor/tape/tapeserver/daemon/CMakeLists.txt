@@ -94,7 +94,7 @@ add_library(castortapeserverdaemondummies SHARED
 add_library(castortapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
   CatalogueTest.cpp
-# DataTransferSessionTest.cpp
+  DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
@@ -139,5 +139,7 @@ add_library(castortapeserverdaemonunittests SHARED
 )
 
 target_link_libraries(castortapeserverdaemonunittests
+  castormediachangerdummies
+  castormessagesdummies
   castorserverdummies
   castortapeserverdaemondummies)

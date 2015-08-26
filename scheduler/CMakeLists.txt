@@ -34,6 +34,13 @@ add_library (ctascheduler SHARED
 
 target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon)
 
+include_directories(${CMAKE_BINARY_DIR})
+add_library(ctaOStoreSchedulerDB SHARED
+  OStoreDB/OStoreDB.cpp)
+
+target_link_libraries(ctaOStoreSchedulerDB
+  CTAObjectStore)
+
 add_library (ctaschedulerunittests SHARED
   mockDB/MockSchedulerDatabase.cpp
   mockDB/MockSchedulerDatabaseFactory.cpp
@@ -42,13 +49,6 @@ add_library (ctaschedulerunittests SHARED
   SchedulerTest.cpp)
 
 target_link_libraries (ctaschedulerunittests ${SQLITE3_LIBRARY_RELEASE})
-
-include_directories(${CMAKE_BINARY_DIR})
-add_library(ctaOStoreSchedulerDB SHARED
-  OStoreDB/OStoreDB.cpp)
-
-target_link_libraries(ctaOStoreSchedulerDB
-  CTAObjectStore)
 
 target_link_libraries(ctaschedulerunittests
   ctascheduler

@@ -31,7 +31,7 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 add_library(castormessagesprotobuf
   ${ProtoSources})
 
-add_library(castormessagesdummies
+add_library(castormessagesdummies SHARED
   AcsProxyDummy.cpp
   TapeserverProxyDummy.cpp)
 
