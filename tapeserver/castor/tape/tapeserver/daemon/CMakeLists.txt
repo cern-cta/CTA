@@ -94,6 +94,7 @@ add_library(castortapeserverdaemondummies SHARED
 add_library(castortapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
   CatalogueTest.cpp
+# DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
@@ -133,6 +134,8 @@ add_library(castortapeserverdaemonunittests SHARED
 # (gdb) 
 # TapeDaemon.cpp
 # TapeDaemonTest.cpp
+
+# TaskWatchDogTest.cpp
 )
 
 target_link_libraries(castortapeserverdaemonunittests
