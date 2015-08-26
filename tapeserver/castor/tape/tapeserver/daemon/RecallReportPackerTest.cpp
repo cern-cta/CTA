@@ -114,8 +114,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal");
   castor::log::LogContext lc(log);
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(
-    dynamic_cast<cta::RetrieveMount *>(&retrieveMount),lc);
+  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1),0,0);
@@ -156,8 +155,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   castor::log::LogContext lc(log);
 
   std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(
-    dynamic_cast<cta::RetrieveMount *>(&retrieveMount),lc);
+  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1),0,0);
@@ -175,36 +173,6 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
 }
 
 /*
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadGoodEnd) {
-
-  std::string error_msg="ERROR_TEST_MSG";  
-
-  MockClient client;
-  ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
-  EXPECT_CALL(client, 
-    reportEndOfSessionWithError("RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process",SEINTERNAL,_)
-          ).Times(1);
-
-  castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
-  castor::log::LogContext lc(log);
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
-  rrp.startThreads();
-  
-  
-  tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportFailedJob(recalledFiled,error_msg,-1);
-  rrp.reportEndOfSession();
-  rrp.waitThread();
-
-  std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("EndofSession has been reported  but an error happened somewhere in the process"));
-}
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerGoodBadEnd) {
   
   std::string error_msg="ERROR_TEST_MSG";
