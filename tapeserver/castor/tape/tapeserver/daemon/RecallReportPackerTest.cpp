@@ -173,35 +173,6 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
 }
 
 /*
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerGoodBadEnd) {
-  
-  std::string error_msg="ERROR_TEST_MSG";
-  int error_code=std::numeric_limits<int>::max();
-  
-  MockClient client;
-  ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportRecallResults(_,_)).Times(1);
-  EXPECT_CALL(client, 
-          reportEndOfSessionWithError("RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process",SEINTERNAL,_)
-          ).Times(1);
-
-  castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
-  castor::log::LogContext lc(log);
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::RecallReportPacker rrp(dynamic_cast<cta::RetrieveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
-  rrp.startThreads();
-  
-  tapegateway::FileToRecallStruct recalledFiled;
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportCompletedJob(recalledFiled,0,0);
-  rrp.reportEndOfSessionWithErrors(error_msg,error_code);
-  rrp.waitThread();
-
-  std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO error was detected during the process"));
-}
-
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerFaillure) {
   
   std::string error_msg="ERROR_TEST_MSG";
