@@ -17,10 +17,23 @@ enum ObjectType {
 
 // The types of mounts
 enum MountType {
-  NoMount_t = 0;
-  Archive_t = 1;
-  Retrieve_t = 2;
+  NoMount = 0;
+  Archive = 1;
+  Retrieve = 2;
 }
+
+// The drive statuses
+enum DriveStatus {
+    Down = 0;
+    Idle = 1;
+    Starting = 2;
+    Mounting = 3;
+    Transfering = 4;
+    Unloading = 5;
+    Unmounting = 6;
+    DrainingToDisk = 7;
+    CleaningUp = 8;
+};
 
 // The base object header. This will allow introspection and automatic
 // "garbage collection", i.e. returning an unprocessed object belonging
@@ -344,18 +357,31 @@ message RetrieveToDirRequest {
 
 
 
-message DriveInfo {
+message DriveState {
   required string drivename = 5000;
   required string logicallibrary = 5001;
-  required MountType currentMount = 5002;
-  required string currentvid = 5003;
-  required string currenttapepool = 5004;
-  required uint64 mounttime = 5005;
-  required uint64 lastupdatetime = 5006;
+  optional uint64 sessionid = 5002;
+  optional uint64 bytestransferedinsession = 5003;
+  optional uint64 filestransferedinsession = 5004;
+  optional double latestbandwidth = 5005;
+  optional uint64 sessionstarttime = 5006;
+  optional uint64 mountstarttime = 5007;
+  optional uint64 transferstarttime = 5008;
+  optional uint64 unloadstarttime = 5009;
+  optional uint64 unmountstarttime = 5010;
+  optional uint64 drainingstarttime = 5011;
+  optional uint64 downoridlestarttime = 5012;
+  optional uint64 cleanupstarttime = 5013;
+  optional uint64 lastupdatetime = 5014;
+  required MountType mounttype = 5015;
+  required DriveStatus drivestatus = 5016;
+  optional string currentvid = 5017;
+  optional string currenttapepool = 5018;
+  required CreationLog creationlog = 5019;
 }
 
 message DriveRegister {
-  repeated DriveInfo drives = 7000;
+  repeated DriveState drives = 7000;
 }
 
 // ------------- Scheduler global lock handling  -------------------------------

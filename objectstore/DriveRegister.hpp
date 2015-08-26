@@ -21,12 +21,14 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
+#include <limits>
 
 namespace cta { namespace objectstore {
   
 class Backend;
 class Agent;
 class GenericObject;
+class CreationLog;
 
 class DriveRegister: public ObjectOps<serializers::DriveRegister> {
   CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
@@ -39,23 +41,61 @@ public:
   bool isEmpty();
   
   // Drives management =========================================================
-  void addDrive (const std::string & name, const std::string & logicalLibrary);
+  void addDrive (const std::string & driveName, const std::string & logicalLibrary,
+    const CreationLog & creationLog);
   void removeDrive (const std::string  & name);
-  enum class MountStatus {
+  enum class MountType {
     NoMount,
-    ArchiveMount,
-    RetrieveMount
+    Archive,
+    Retrieve
   };
-  struct DriveInfo {
+  enum class DriveStatus {
+    Down,
+    Idle,
+    Starting,
+    Mounting,
+    Transfering,
+    Unloading,
+    Unmounting,
+    DrainingToDisk,
+    CleaningUp
+  };
+  struct DriveState {
     std::string name;
     std::string logicalLibrary;
-    MountStatus mountStatus;
+    uint64_t sessionId;
+    uint64_t bytesTransferedInSession;
+    uint64_t filesTransferedInSession;
+    double latestBandwidth; /** < Byte per seconds */
+    time_t sessionStartTime;
+    time_t mountStartTime;
+    time_t transferStartTime;
+    time_t unloadStartTime;
+    time_t unmountStartTime;
+    time_t drainingStartTime;
+    time_t downOrIdleStartTime;
+    time_t cleanupStartTime;
+    time_t lastUpdateTime;
+    MountType mountType;
+    DriveStatus status;
     std::string currentVid;
     std::string currentTapePool;
-    time_t mountTime;
-    time_t lastUpdateTime;
   };
-  std::list<DriveInfo> dumpDrives();
+private:
+  MountType deserializeMountType(serializers::MountType);
+  serializers::MountType serializeMountType(MountType);
+  DriveStatus deserializeDriveStatus(serializers::DriveStatus);
+  serializers::DriveStatus serializeDriveStatus(DriveStatus);
+public:
+  CTA_GENERATE_EXCEPTION_CLASS(MissingStatistics);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
+  void reportDriveStatus (const std::string & drive, const std::string & logicalLibary,
+    DriveStatus status, time_t reportTime, 
+    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
+    uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(), 
+    uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
+    double latestBandwidth = std::numeric_limits<double>::max());
+  std::list<DriveState> dumpDrives();
   std::string dump();
 };
 

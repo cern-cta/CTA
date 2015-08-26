@@ -570,9 +570,9 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
 
   SchedulerDatabase &db = getDb();
   // Populate the database with an archive mount
+  // Log for following creations
+  cta::CreationLog cl(UserIdentity(789,101112), "client0", time(NULL), "Unit test archive request creation");
   {
-    // Log for following creations
-    cta::CreationLog cl(UserIdentity(789,101112), "client0", time(NULL), "Unit test archive request creation");
     // Create tape pools
     db.createTapePool("pool0", 5, cl);
     db.createTapePool("pool1", 5, cl);
@@ -591,10 +591,21 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
   }
   // The archive mount's unique_ptr
   std::unique_ptr<SchedulerDatabase::ArchiveMount> archiveMount;
+  // We should fail as the tape is not declared
   {
     auto mountInfo = db.getMountInfo();
-    ASSERT_NO_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1",  "drive1",
-        "host1", time(NULL)));
+    ASSERT_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1",  
+        "drive1", "lib1", "host1", time(NULL)), cta::OStoreDB::NoSuchTape);
+  }
+  // Add the tape (and library)
+  ASSERT_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, cl), cta::OStoreDB::NoSuchLibrary);
+  db.createLogicalLibrary("lib1", cl);
+  ASSERT_NO_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, cl));
+  // This should go through
+  {
+    auto mountInfo = db.getMountInfo();
+    ASSERT_NO_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1", 
+        "drive1", "lib1", "host1", time(NULL)));
   }
 }
 

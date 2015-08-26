@@ -53,7 +53,7 @@ void cta::objectstore::Tape::initialize(const std::string &name,
   cm->set_drivevendor("");
   cm->set_host("");
   cm->set_time(0);
-  m_payload.set_currentmounttype(serializers::MountType::Archive_t);
+  m_payload.set_currentmounttype(serializers::MountType::Archive);
   m_payloadInterpreted = true;
 }
 
@@ -204,10 +204,10 @@ void cta::objectstore::Tape::setBusy(const std::string& drive, MountType mountTy
   cm->set_time((uint64_t)time);
   switch (mountType) {
     case MountType::Archive:
-      m_payload.set_currentmounttype(objectstore::serializers::MountType::Archive_t);
+      m_payload.set_currentmounttype(objectstore::serializers::MountType::Archive);
       break;
     case MountType::Retrieve:
-      m_payload.set_currentmounttype(objectstore::serializers::MountType::Retrieve_t);
+      m_payload.set_currentmounttype(objectstore::serializers::MountType::Retrieve);
       break;
   }
 }

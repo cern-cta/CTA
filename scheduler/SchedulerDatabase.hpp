@@ -294,7 +294,8 @@ public:
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(const std::string & vid,
       const std::string & tapePool, const std::string driveName, 
-      const std::string & hostName, time_t startTime) = 0;
+      const std::string & logicalLibrary, const std::string & hostName, 
+      time_t startTime) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
      * lock.

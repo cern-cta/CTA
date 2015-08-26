@@ -44,6 +44,7 @@
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include <stdexcept>
+#include <set>
 
 namespace cta {
   
@@ -155,15 +156,22 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::ScopedSharedLock drl(dr);
   dr.fetch();
   auto dl = dr.dumpDrives();
+  std::set<int> activeDriveStatuses =
+    { (int)objectstore::DriveRegister::DriveStatus::Starting,
+    (int)objectstore::DriveRegister::DriveStatus::Mounting,
+    (int)objectstore::DriveRegister::DriveStatus::Transfering,
+    (int)objectstore::DriveRegister::DriveStatus::Unloading,
+    (int)objectstore::DriveRegister::DriveStatus::Unmounting,
+    (int)objectstore::DriveRegister::DriveStatus::DrainingToDisk };
   for (auto d=dl.begin(); d!= dl.end(); d++) {
-    if (d->mountStatus != objectstore::DriveRegister::MountStatus::NoMount) {
+    if (activeDriveStatuses.count((int)d->status)) {
       tmdi.existingMounts.push_back(ExistingMount());
-      switch (d->mountStatus) {
-        case objectstore::DriveRegister::MountStatus::ArchiveMount:
+      switch (d->mountType) {
+        case objectstore::DriveRegister::MountType::Archive:
           tmdi.existingMounts.back().type = cta::MountType::ARCHIVE;
           break;
-        case objectstore::DriveRegister::MountStatus::RetrieveMount:
-          tmdi.existingMounts.back().type = cta::MountType::ARCHIVE;
+        case objectstore::DriveRegister::MountType::Retrieve:
+          tmdi.existingMounts.back().type = cta::MountType::RETRIEVE;
           break;
         default:
           throw exception::Exception("In OStoreDB::getMountInfo(): got drive with unexpected mount type");
@@ -1045,11 +1053,11 @@ void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester,
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName,
-    const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
-  // busy, with the current agent as the current tape user
+  // busy, with the current agent pointing to it for unbusying
   // Check the drive exists, add the drive to ownership and set its activity 
   // status to mount starting with the current agent as the drive user
   
@@ -1061,15 +1069,17 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   if (!m_lockTaken)
     throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createArchiveMount: "
       "cannot create mount without holding scheduling lock");
-  // Find the tape
+  // Find the tape and update it
   am.m_mountInfo.vid = vid;
   am.m_mountInfo.drive = driveName;
   am.m_mountInfo.tapePool = tapePool;
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tplist = re.dumpTapePools();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  rel.release();
   {
-    objectstore::RootEntry re(m_objectStore);
-    objectstore::ScopedSharedLock rel(re);
-    re.fetch();
-    auto tplist = re.dumpTapePools();
     std::string tpAdress;
     for (auto tpp=tplist.begin(); tpp!=tplist.end(); tpp++)
       if (tpp->tapePool == tapePool)
@@ -1108,9 +1118,25 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
       throw TapeIsBusy("In OStoreDB::TapeMountDecisionInfo::createArchiveMount:"
         " the tape is busy");
     // This tape seems fine for our purposes. We will set it as an owned object
-    // so that garbage collection can release the tape in case of a session crash
+    // so that garbage collection can unbusy the tape in case of a session crash
+    {
+      objectstore::ScopedExclusiveLock al(m_agent);
+      m_agent.fetch();
+      m_agent.addToOwnership(t.getAddressIfSet());
+      m_agent.commit();
+    }
     t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
       m_agent.getAddressIfSet());
+  }
+  // Find the drive in the registry and update it. It should have been added 
+  // beforehand
+  {
+    // Get hold of the drive registry
+    objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+    objectstore::ScopedExclusiveLock drl(dr);
+    dr.fetch();
+    dr.reportDriveStatus(driveName, logicalLibrary, 
+      objectstore::DriveRegister::DriveStatus::Starting, startTime);
   }
   throw NotImplemented("Not Implemented");
   }

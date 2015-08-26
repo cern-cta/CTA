@@ -52,7 +52,8 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const std::string & vid, const std::string & tapePool,
-      const std::string driveName, const std::string & hostName, time_t startTime);
+      const std::string driveName, const std::string& logicalLibrary, 
+      const std::string & hostName, time_t startTime);
     virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
       const std::string driveName);
     virtual ~TapeMountDecisionInfo();
