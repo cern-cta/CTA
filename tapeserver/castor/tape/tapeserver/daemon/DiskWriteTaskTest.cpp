@@ -61,11 +61,11 @@ namespace unitTests{
       reportCompletedJob_(successfulRetrieveJob, checksum, size);
     }
     
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const std::string& msg,int error_code) {
-      reportFailedJob_(failedRetrieveJob, msg, error_code);
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception &ex) {
+      reportFailedJob_(failedRetrieveJob, ex);
     }
     MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::RetrieveJob> &successfulRetrieveJob, u_int32_t checksum, u_int64_t size));
-    MOCK_METHOD3(reportFailedJob_, void(std::unique_ptr<cta::RetrieveJob> &failedRetrieveJob, const std::string& msg,int error_code));
+    MOCK_METHOD2(reportFailedJob_, void(std::unique_ptr<cta::RetrieveJob> &failedRetrieveJob, const castor::exception::Exception &ex));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
     MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
@@ -81,7 +81,7 @@ namespace unitTests{
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
-    EXPECT_CALL(report,reportFailedJob_(_,_,_));
+    EXPECT_CALL(report,reportFailedJob_(_,_));
     RecallMemoryManager mm(10,100,lc);
     DiskFileFactory fileFactory("RFIO","",0);
     
