@@ -30,160 +30,161 @@
 #include <gtest/gtest.h>
 
 namespace unitTests {
+  
+  class TestingArchiveMount: public cta::ArchiveMount {
+  public:
+    TestingArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam): ArchiveMount(std::move(dbam)) {
+    }
+    ~TestingArchiveMount() throw() {}
+    void complete() {
+      complete_();
+    }
+    void failed(const std::exception &ex) {
+      failed_(ex);
+    }
+    MOCK_METHOD0(complete_, void());
+    MOCK_METHOD1(failed_, void(const std::exception &ex));
+  };
+  
+  class TestingArchiveJob: public cta::ArchiveJob {
+  public:
+    TestingArchiveJob() {
+    }
+    ~TestingArchiveJob() throw() {}
+    void complete() {
+      complete_();
+    }
+    void failed(const cta::exception::Exception &ex) {
+      failed_(ex);
+    }
+    MOCK_METHOD0(complete_, void());
+    MOCK_METHOD1(failed_, void(const cta::exception::Exception &ex));
+  };
+  
+  class TestingDBArchiveJob: public cta::SchedulerDatabase::ArchiveMount {
+    virtual const MountInfo & getMountInfo() {
+      return mountInfo;
+    }
+  };
+  
   const std::string error="ERROR_TEST";
   using namespace castor::tape;
   const tapeserver::drive::compressionStats statsCompress;
   using ::testing::_;
   
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
-  MockClient client;
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
+  TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
-  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  EXPECT_CALL(tam, complete_()).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");
   castor::log::LogContext lc(log);
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
+  tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
   mrp.startThreads();
   
-  tapegateway::FileToMigrateStruct migratedFile;
+  std::unique_ptr<TestingArchiveJob> migratedFile(new TestingArchiveJob());
   
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportCompletedJob(migratedFile,0,0);
+  mrp.reportCompletedJob(std::move(migratedFile),0,0);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
-  mrp.waitThread();
+  mrp.waitThread(); //here
   
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("A file was successfully written on the tape"));
+  ASSERT_NE(std::string::npos, temp.find("Reported to the client that a batch of files was written on tape"));
 }
 
-TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
-  testing::StrictMock<MockClient> client;
+TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFailure) {
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
+  TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
-  EXPECT_CALL(client, reportEndOfSessionWithError(error,-1,_)).Times(1);
+  EXPECT_CALL(tam, failed_(_)).Times(1);
   
-  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillure");
-  castor::log::LogContext lc(log);
-  
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
+  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure");
+  castor::log::LogContext lc(log);  
+  tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
   mrp.startThreads();
   
-  tapegateway::FileToMigrateStruct migratedFile;
-  tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportCompletedJob(migratedFile,0,0);  
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportFailedJob(failed,error,-1);
+  std::unique_ptr<TestingArchiveJob> migratedFile(new TestingArchiveJob());
+  std::unique_ptr<TestingArchiveJob> failed(new TestingArchiveJob());
+  
+  mrp.reportCompletedJob(std::move(migratedFile),0,0);
+  mrp.reportFailedJob(std::move(failed),error,-1);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("Reported failed file(s) to the client before end of session"));
+  ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client after sending file errors"));
 } 
 
-TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
-  testing::StrictMock<MockClient> client;
+TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFailureGoodEnd) {  
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
+  TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
-  EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
-  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillureGoodEnd");
-  castor::log::LogContext lc(log);
+  EXPECT_CALL(tam, failed_(_)).Times(1);
   
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
+  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailureGoodEnd");
+  castor::log::LogContext lc(log);  
+  tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
   mrp.startThreads();
   
-  tapegateway::FileToMigrateStruct migratedFile;
-  tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportCompletedJob(migratedFile,0,0);  
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportFailedJob(failed,error,-1);
+  std::unique_ptr<TestingArchiveJob> migratedFile(new TestingArchiveJob());
+  std::unique_ptr<TestingArchiveJob> failed(new TestingArchiveJob());
+  
+  mrp.reportCompletedJob(std::move(migratedFile),0,0);
+  mrp.reportFailedJob(std::move(failed),error,-1);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSession();
   mrp.waitThread();
    
   std::string temp = log.getLog();
-  ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client due to previous file errors"));
- 
+  ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client due to previous file errors")); 
 } 
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
-  testing::StrictMock<MockClient> client;
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
+  TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
-  EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
+  EXPECT_CALL(tam, failed_(_)).Times(1);
   
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
-  castor::log::LogContext lc(log);
- 
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
+  castor::log::LogContext lc(log);  
+  tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
   mrp.startThreads();
   
-  tapegateway::FileToMigrateStruct migratedFile;
-  tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile,0,0);
-  mrp.reportCompletedJob(migratedFile,0,0);  
-  mrp.reportCompletedJob(migratedFile,0,0);
-
+  std::unique_ptr<TestingArchiveJob> migratedFile(new TestingArchiveJob());
+  
+  mrp.reportCompletedJob(std::move(migratedFile),0,0);
   mrp.reportFlush(statsCompress);
   mrp.reportEndOfSessionWithErrors(error,-1);
   mrp.waitThread();
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Reported end of session with error to client"));
-} 
-
-MATCHER(checkCompressFileSize,"compressedFileSize is zero"){ 
-  bool b=true;
-  typedef std::vector<
-                      castor::tape::tapegateway::FileMigratedNotificationStruct*
-                      >::iterator iterator;
-  iterator e = arg.successfulMigrations().end();
-  iterator it = arg.successfulMigrations().begin();
-
-  for(;it!=e;++it){
-    b = b && ((*it)->compressedFileSize() > 0);
-  }
-  return b;
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerOneByteFile) {
-  
-  //using ::testing::Each;
-  testing::StrictMock<MockClient> client;
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbam(new TestingDBArchiveJob);
+  TestingArchiveMount tam(std::move(dbam));
   ::testing::InSequence dummy;
-  EXPECT_CALL(client, reportMigrationResults(checkCompressFileSize(),_)).Times(1);
-  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  EXPECT_CALL(tam, complete_()).Times(1);
   
-  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
-  castor::log::LogContext lc(log);
- 
-  
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
-  tapeserver::daemon::MigrationReportPacker mrp(dynamic_cast<cta::ArchiveMount *>((mdb->getNextMount("ll","drive")).get()),lc);
+  castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile");
+  castor::log::LogContext lc(log);  
+  tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
   mrp.startThreads();
   
-  tapegateway::FileToMigrateStruct migratedFileSmall;
-  migratedFileSmall.setFileSize(1);
-  tapegateway::FileToMigrateStruct migratedBigFile;
-  migratedBigFile.setFileSize(100000);
-  tapegateway::FileToMigrateStruct migrateNullFile;
-  migratedBigFile.setFileSize(0);
+  std::unique_ptr<TestingArchiveJob> migratedBigFile(new TestingArchiveJob());
+  std::unique_ptr<TestingArchiveJob> migratedFileSmall(new TestingArchiveJob());
+  std::unique_ptr<TestingArchiveJob> migrateNullFile(new TestingArchiveJob());
+  migratedBigFile->archiveFile.size=100000;
+  migratedFileSmall->archiveFile.size=1;
+  migrateNullFile->archiveFile.size=0;
   
-  mrp.reportCompletedJob(migratedBigFile,0,0);
-  mrp.reportCompletedJob(migratedFileSmall,0,0);
-  mrp.reportCompletedJob(migrateNullFile,0,0);
-  
+  mrp.reportCompletedJob(std::move(migratedBigFile),0,0);
+  mrp.reportCompletedJob(std::move(migratedFileSmall),0,0);
+  mrp.reportCompletedJob(std::move(migrateNullFile),0,0);
   tapeserver::drive::compressionStats stats;
   stats.toTape=(100000+1)/3;
   mrp.reportFlush(stats);

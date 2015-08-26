@@ -157,7 +157,7 @@ public:
       std::string tapePool;
       std::string drive;
       uint64_t mountId;
-    };
+    } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
   };
   
