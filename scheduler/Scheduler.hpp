@@ -95,7 +95,7 @@ public:
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
+  virtual ~Scheduler() throw();
 
   /**
    * Returns all of the queued archive requests.  The returned requests are
@@ -104,8 +104,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The queued requests.
    */
-  std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests(
-    const SecurityIdentity &requester) const;
+  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> >
+    getArchiveRequests(const SecurityIdentity &requester) const;
 
   /**
    * Returns the list of queued archive requests for the specified tape pool.
@@ -115,7 +115,7 @@ public:
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
+  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
     const SecurityIdentity &requester,
     const std::string &tapePoolName) const;
 
@@ -126,7 +126,7 @@ public:
    * @param archiveFile The absolute path of the destination file within the
    * archive namespace.
    */
-  void deleteArchiveRequest(
+  virtual void deleteArchiveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile);
 
@@ -138,8 +138,8 @@ public:
    * @return all of the queued retrieve requests.  The returned requsts are
    * grouped by tape and then sorted by creation time, oldest first.
    */
-  std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests(
-    const SecurityIdentity &requester) const;
+  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> >
+    getRetrieveRequests(const SecurityIdentity &requester) const;
 
   /**
    * Returns the queued retrieve requests for the specified tape.  The
@@ -150,7 +150,7 @@ public:
    * @return The queued retrieve requests for the specified tape.  The
    * returned requests are sorted by creation time, oldest first.
    */
-  std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
     const SecurityIdentity &requester,
     const std::string &vid) const;
   
@@ -160,7 +160,7 @@ public:
    * @param requester The identity of the requester.
    * @param remoteFile The URL of the remote file.
    */
-  void deleteRetrieveRequest(
+  virtual void deleteRetrieveRequest(
     const SecurityIdentity &requester,
     const std::string &remoteFile);
 
@@ -171,7 +171,7 @@ public:
    * @param user The identity of the administrator.
    * @param comment The comment describing the sministrator.
    */
-  void createAdminUser(
+  virtual void createAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user,
     const std::string &comment);
@@ -189,7 +189,7 @@ public:
    * @param user The identity of the administrator.
    * @param comment The comment describing the sministrator.
    */
-  void createAdminUserWithoutAuthorizingRequester(
+  virtual void createAdminUserWithoutAuthorizingRequester(
     const SecurityIdentity &requester,
     const UserIdentity &user,
     const std::string &comment);
@@ -201,7 +201,7 @@ public:
    * administrator.
    * @param user The identity of the administrator.
    */
-  void deleteAdminUser(
+  virtual void deleteAdminUser(
     const SecurityIdentity &requester,
     const UserIdentity &user);
 
@@ -211,7 +211,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
+  virtual std::list<AdminUser> getAdminUsers(
+    const SecurityIdentity &requester) const;
 
   /**
    * Creates the specified administration host.
@@ -220,7 +221,7 @@ public:
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
-  void createAdminHost(
+  virtual void createAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName,
     const std::string &comment);
@@ -237,7 +238,7 @@ public:
    * @param hostName The network name of the administration host.
    * @param comment The comment describing the administration host.
    */
-  void createAdminHostWithoutAuthorizingRequester(
+  virtual void createAdminHostWithoutAuthorizingRequester(
     const SecurityIdentity &requester,
     const std::string &hostName,
     const std::string &comment);
@@ -249,7 +250,7 @@ public:
    * administration host.
    * @param hostName The network name of the administration host.
    */
-  void deleteAdminHost(
+  virtual void deleteAdminHost(
     const SecurityIdentity &requester,
     const std::string &hostName);
 
@@ -259,7 +260,8 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administration hosts in lexicographical order.
    */
-  std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
+  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
+    const;
 
   /**
    * Creates the specified storage class.
@@ -271,7 +273,7 @@ public:
    * class should have on tape.
    * @param comment The comment describing the storage class.
    */
-  void createStorageClass(
+  virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
@@ -288,7 +290,7 @@ public:
    * @param id The numeric identifer of the storage class.
    * @param comment The comment describing the storage class.
    */
-  void createStorageClass(
+  virtual void createStorageClass(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint16_t nbCopies,
@@ -302,7 +304,7 @@ public:
    * storage class.
    * @param name The name of the storage class.
    */
-  void deleteStorageClass(
+  virtual void deleteStorageClass(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -312,7 +314,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of storage classes in lexicographical order.
    */
-  std::list<StorageClass> getStorageClasses(
+  virtual std::list<StorageClass> getStorageClasses(
     const SecurityIdentity &requester) const;
 
   /**
@@ -325,7 +327,7 @@ public:
    * full at any moment in time.
    * @param comment The comment describing the tape pool.
    */
-  void createTapePool(
+  virtual void createTapePool(
     const SecurityIdentity &requester,
     const std::string &name,
     const uint32_t nbPartialTapes,
@@ -338,7 +340,7 @@ public:
    * tape pool.
    * @param name The name of the tape pool.
    */
-  void deleteTapePool(
+  virtual void deleteTapePool(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -348,7 +350,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of tape pools in lexicographical order.
    */
-  std::list<TapePool> getTapePools(
+  virtual std::list<TapePool> getTapePools(
     const SecurityIdentity &requester) const;
 
   /**
@@ -362,7 +364,7 @@ public:
    * @param tapePoolName The name of the destination tape pool.
    * @param comment The comment describing the archive route.
    */
-  void createArchiveRoute(
+  virtual void createArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb,
@@ -378,7 +380,7 @@ public:
    * source disk files.
    * @param copyNb The tape copy number.
    */
-  void deleteArchiveRoute(
+  virtual void deleteArchiveRoute(
     const SecurityIdentity &requester,
     const std::string &storageClassName,
     const uint16_t copyNb);
@@ -388,7 +390,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<ArchiveRoute> getArchiveRoutes(
+  virtual std::list<ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const;
 
   /**
@@ -399,7 +401,7 @@ public:
    * @param name The name of the logical library.
    * @param comment The comment describing the logical library.
    */
-  void createLogicalLibrary(
+  virtual void createLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name,
     const std::string &comment);
@@ -411,7 +413,7 @@ public:
    * logical library.
    * @param name The name of the logical library.
    */
-  void deleteLogicalLibrary(
+  virtual void deleteLogicalLibrary(
     const SecurityIdentity &requester,
     const std::string &name);
 
@@ -421,7 +423,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of libraries in lexicographical order.
    */
-  std::list<LogicalLibrary> getLogicalLibraries(
+  virtual std::list<LogicalLibrary> getLogicalLibraries(
     const SecurityIdentity &requester) const;
 
   /**
@@ -435,7 +437,7 @@ public:
    * @param capacityInBytes The capacity of the tape.
    * @param creationLog The who, where, when an why of this modification.
    */
-  void createTape(
+  virtual void createTape(
     const SecurityIdentity &requester,
     const std::string &vid,
     const std::string &logicalLibraryName,
@@ -449,7 +451,7 @@ public:
    * @param requester The identity of the requester.
    * @param vid The volume identifier of the tape.
    */
-  void deleteTape(
+  virtual void deleteTape(
     const SecurityIdentity &requester,
     const std::string &vid);
 
@@ -460,7 +462,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @return The tape with the specified volume identifier.
    */
-  Tape getTape(
+  virtual Tape getTape(
     const SecurityIdentity &requester,
     const std::string &vid) const;
 
@@ -472,7 +474,7 @@ public:
    * @return The current list of tapes in the lexicographical order of their
    * volume identifiers.
    */
-  std::list<Tape> getTapes(
+  virtual std::list<Tape> getTapes(
     const SecurityIdentity &requester) const;
 
   /**
@@ -482,7 +484,7 @@ public:
    * @param path The absolute path of the directory.
    * @param mode The mode bits of the directory entry.
    */
-  void createDir(
+  virtual void createDir(
     const SecurityIdentity &requester,
     const std::string &path,
     const mode_t mode);
@@ -494,7 +496,7 @@ public:
    * @param path The absolute path of the file or directory.
    * @param owner The owner.
    */
-  void setOwner(
+  virtual void setOwner(
     const SecurityIdentity &requester,
     const std::string &path,
     const UserIdentity &owner);
@@ -516,7 +518,7 @@ public:
    * @param requester The identity of the requester.
    * @param path The absolute path of the directory.
    */
-  void deleteDir(
+  virtual void deleteDir(
    const SecurityIdentity &requester,
    const std::string &path);
 
@@ -528,7 +530,7 @@ public:
    * @param path The absolute path of the file.
    * @param copyNb The copy number of the file.
    */
-  std::string getVidOfFile(
+  virtual std::string getVidOfFile(
     const SecurityIdentity &requester,
     const std::string &path,
     const uint16_t copyNb) const;
@@ -540,7 +542,7 @@ public:
    * @param path The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  ArchiveDirIterator getDirContents(
+  virtual ArchiveDirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &path) const;
 
@@ -554,7 +556,7 @@ public:
    * @return The status of the file or directory or NULL the the file or
    * directory does not exist.
    */
-  std::unique_ptr<ArchiveFileStatus> statArchiveFile(
+  virtual std::unique_ptr<ArchiveFileStatus> statArchiveFile(
     const SecurityIdentity &requester,
     const std::string &path) const;
 
@@ -565,7 +567,7 @@ public:
    * @param path The absolute path of the directory.
    * @param storageClassName The name of the storage class.
    */
-  void setDirStorageClass(
+  virtual void setDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &path,
     const std::string &storageClassName);
@@ -576,7 +578,7 @@ public:
    * @param requester The identity of the requester.
    * @param path The absolute path of the directory.
    */ 
-  void clearDirStorageClass(
+  virtual void clearDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &path);
 
@@ -587,7 +589,7 @@ public:
    * @param path The absolute path of the directory.
    * @return The name of the storage class of the specified directory.
    */
-  std::string getDirStorageClass(
+  virtual std::string getDirStorageClass(
     const SecurityIdentity &requester,
     const std::string &path) const;
 
@@ -608,7 +610,7 @@ public:
    * @param archiveFileOrDir The absolute path of the destination file or
    * directory within the archive namespace.
    */
-  void queueArchiveRequest(
+  virtual void queueArchiveRequest(
     const SecurityIdentity &requester,
     const std::list<std::string> &remoteFiles,
     const std::string &archiveFileOrDir);
@@ -627,13 +629,13 @@ public:
    * namespace.
    * @param remoteFileOrDir The URL of the destination remote file or directory.
    */
-  void queueRetrieveRequest(
+  virtual void queueRetrieveRequest(
     const SecurityIdentity &requester,
     const std::list<std::string> &archiveFiles,
     const std::string &remoteFileOrDir);
   
-  
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+
   /**
    * Returns the next tape mount for the specified logical library.
    * All the functions of the mount will handled via the mount object
@@ -643,69 +645,8 @@ public:
    * @param driveName The drive's name.
    * @return The next tape mount or NULL if there is currently no work to do.
    */
-  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
+  virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
     const std::string & driveName);
-
-//  class ArchiveMount:public TapeMount {
-//  public:
-//    class ArchiveJob
-//    std::unique_ptr<ArchiveJob> ArchiveJob
-//  };
-//  /**
-//   * Returns the next archive job to be carried out for the specified tape
-//   * mount or NULL if there is no more work to be done.
-//   *
-//   * @param mountId The identifier of the tape mount.
-//   * @return The next tape job to be carried out for the specified tape
-//   * mount or NULL if there is no more work to be done.
-//   */
-//  ArchiveJob *getNextArchive(const std::string &mountId);
-//
-//  /**
-//   * Notifies the scheduler that the specified tape job has been completed
-//   * successfully.
-//   *
-//   * @param transferId The identifier of the tape job.
-//   */
-//  void archiveSuccessful(const std::string &transferId);
-//
-//  /**
-//   * Notifies the scheduler that the specified tape job has failed.
-//   *
-//   * @param transferId The identifier of the tape job.
-//   * @param failureType The type of failure.
-//   * @param errorMessage Human readable description of the failure.
-//   */
-//  void archiveFailed(const std::string &transferId,
-//    const TapeJobFailure failureType, const std::string &errorMessage);
-//
-//  /**
-//   * Returns the next tape job to be carried out for the specified tape
-//   * mount or NULL if there is no more work to be done.
-//   *
-//   * @param mountId The identifier of the tape mount.
-//   * @return The next tape job to be carried out for the specified tape
-//   * mount or NULL if there is no more work to be done.
-//   */
-//  RetrieveJob *getNextRetrieve(const std::string &mountId);
-//
-//  /**
-//   * Notifies the scheduler that the specified tape job has been completed
-//   * successfully.
-//   *
-//   * @param transferId The identifier of the tape job.
-//   */
-//  void retrieveSucceeded(const std::string &transferId);
-//
-//  /**
-//   * Notifies the scheduler that the specified tape job has failed.
-//   *
-//   * @param transferId The identifier of the tape job.
-//   * @param failureType The type of failure.
-//   * @param errorMessage Human readable description of the failure.
-//   */
-//  void retrieveFailed(const std::string &transferId,
-//    const TapeJobFailure failureType, const std::string &errorMessage);
 
 private:
 
