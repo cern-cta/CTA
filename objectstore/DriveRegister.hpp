@@ -51,7 +51,7 @@ public:
   };
   enum class DriveStatus {
     Down,
-    Idle,
+    Up,
     Starting,
     Mounting,
     Transfering,
@@ -73,7 +73,7 @@ public:
     time_t unloadStartTime;
     time_t unmountStartTime;
     time_t drainingStartTime;
-    time_t downOrIdleStartTime;
+    time_t downOrUpStartTime;
     time_t cleanupStartTime;
     time_t lastUpdateTime;
     MountType mountType;
@@ -88,13 +88,50 @@ private:
   serializers::DriveStatus serializeDriveStatus(DriveStatus);
 public:
   CTA_GENERATE_EXCEPTION_CLASS(MissingStatistics);
+  CTA_GENERATE_EXCEPTION_CLASS(MissingTapeInfo);
+  CTA_GENERATE_EXCEPTION_CLASS(MissingSessionInfo);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
+  CTA_GENERATE_EXCEPTION_CLASS(WrongStateTransition);
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /**
+   * Report the status of the drive to the DB.
+   */
   void reportDriveStatus (const std::string & drive, const std::string & logicalLibary,
     DriveStatus status, time_t reportTime, 
+    MountType mountType = MountType::NoMount,
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(), 
     uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
-    double latestBandwidth = std::numeric_limits<double>::max());
+    double latestBandwidth = std::numeric_limits<double>::max(),
+    const std::string & vid = "", 
+    const std::string & tapepool = "");
+private:
+  /* Collection of smaller scale parts of reportDriveStatus */
+  struct ReportDriveStatusInputs {
+    const std::string & drive;
+    const std::string & logicalLibary;
+    DriveStatus status;
+    MountType mountType;
+    time_t reportTime; 
+    uint64_t mountSessionId;
+    uint64_t byteTransfered;
+    uint64_t filesTransfered;
+    double latestBandwidth;
+    std::string vid;
+    std::string tapepool;
+    ReportDriveStatusInputs(const std::string & d, const std::string & ll):
+      drive(d), logicalLibary(ll) {}
+  };
+  void checkReportDriveStatusInputs(ReportDriveStatusInputs & inputs);
+  void setDriveDown(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveMounting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveTransfering(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveUnloading(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveUnmounting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveDrainingToDisk(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveCleaningUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+public:
   std::list<DriveState> dumpDrives();
   std::string dump();
 };
