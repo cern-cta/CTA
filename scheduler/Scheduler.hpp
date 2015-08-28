@@ -18,67 +18,15 @@
 
 #pragma once
 
-#include "scheduler/SchedulerDatabase.hpp"
-#include "common/exception/Exception.hpp"
-
-#include <list>
-#include <map>
-#include <memory>
-#include <stdint.h>
-#include <string>
+#include "scheduler/IScheduler.hpp"
 
 namespace cta {
-
-// Forward declarations for opaque references.
-class AdminHost;
-class AdminUser;
-class ArchiveFileStatus;
-class ArchiveRoute;
-class ArchiveToDirRequest;
-class ArchiveToFileRequest;
-class ArchiveToTapeCopyRequest;
-class ArchiveDirIterator;
-class LogicalLibrary;
-class NameServer;
-class RemoteNS;
-class RemotePathAndStatus;
-class RetrieveFromTapeCopyRequest;
-class RetrieveToDirRequest;
-class RetrieveToFileRequest;
-class SchedulerDatabase;
-class SecurityIdentity;
-class StorageClass;
-class Tape;
-class TapeMount;
-class TapeSession;
-class TapePool;
-class UserIdentity;
 
 /**
  * Class implementimg a tape resource scheduler.
  */
-class Scheduler {
+class Scheduler: public IScheduler {
 public:
-
-  /**
-   * An enumeration of the different types of tape job failures.
-   */
-  enum TapeJobFailure {
-    JOBFAILURE_NONE,
-    JOBFAILURE_TAPEDRIVE,
-    JOBFAILURE_TAPELIBRARY,
-    JOBFAILURE_REMOTESTORAGE
-  };
-
-  /**
-   * Thread safe method that returns the string representation of the specified
-   * enumeration value.
-   *
-   * @param enumValue The integer value of the type.
-   * @return The string representation.
-   */
-  static const char *TransferFailureToStr(const TapeJobFailure enumValue)
-    throw();
 
   /**
    * Constructor.

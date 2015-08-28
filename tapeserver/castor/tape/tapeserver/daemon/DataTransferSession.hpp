@@ -34,8 +34,8 @@
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "scheduler/ArchiveMount.hpp"
+#include "scheduler/IScheduler.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 
 namespace castor {
@@ -67,7 +67,7 @@ namespace daemon {
       castor::messages::TapeserverProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
-      cta::Scheduler &scheduler);
+      cta::IScheduler &scheduler);
 
     /**
      * Execute the session and return the type of action to be performed
@@ -134,7 +134,7 @@ namespace daemon {
     /**
      * The scheduler, i.e. the local interface to the Objectstore DB
      */
-    cta::Scheduler &m_scheduler;
+    cta::IScheduler &m_scheduler;
 
     /**
      * Returns the string representation of the specified mount type

@@ -11,10 +11,13 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
-  TapeMount.cpp
+  IScheduler.cpp
   LogicalLibrary.cpp
   mockDB/MockSchedulerDatabase.cpp
   mockDB/MockSchedulerDatabaseFactory.cpp
+  mockDB/SqliteColumnNameToIndex.cpp
+  mockDB/SQLiteStatementDeleter.cpp
+  MountType.cpp
   RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
   RetrieveMount.cpp
@@ -24,9 +27,8 @@ set (CTA_SCHEDULER_SRC_FILES
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
-  mockDB/SqliteColumnNameToIndex.cpp
-  mockDB/SQLiteStatementDeleter.cpp
-  MountType.cpp
+  TapeJobFailure.cpp
+  TapeMount.cpp
   UserRequest.cpp)
 
 add_library (ctascheduler SHARED
