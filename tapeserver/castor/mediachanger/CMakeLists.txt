@@ -34,5 +34,5 @@ set (MEDIA_CHANGER_LIB_SRC_FILES
   TapeLibraryType.cpp)
 add_library(castormediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
 
-add_library(castormediachangerdummies SHARED
+add_library(castormediachangerutils SHARED
   MmcProxyDummy.cpp)

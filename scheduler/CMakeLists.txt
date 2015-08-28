@@ -44,7 +44,7 @@ add_library(ctaOStoreSchedulerDB SHARED
 target_link_libraries(ctaOStoreSchedulerDB
   CTAObjectStore)
 
-add_library (ctaschedulerdummies SHARED
+add_library (ctaschedulerutils SHARED
   DummyScheduler.cpp)
 
 add_library (ctaschedulerunittests SHARED

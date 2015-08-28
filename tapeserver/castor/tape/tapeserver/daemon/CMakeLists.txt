@@ -77,17 +77,10 @@ add_library(castorTapeServerDaemon
 target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore ctascheduler)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
-#add_library(castorTapeServerDaemonTestDummies
-#  ../client/ClientSimulator.cpp 
-#  ../../tpcp/TpcpCommand.cpp
-#  ../../tpcp/StreamOperators.cpp
-#  ../../tpcp/Helper.cpp
-#  ../../tpcp/TapeFseqRange.cpp)
-
 add_executable(tapeserverd TapeDaemon.cpp)
 target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapegatewayprotocol castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
 
-add_library(castortapeserverdaemondummies SHARED
+add_library(castortapeserverdaemonutils SHARED
   ProcessForkerProxyDummy.cpp)
 
 # The 
@@ -139,8 +132,8 @@ add_library(castortapeserverdaemonunittests SHARED
 )
 
 target_link_libraries(castortapeserverdaemonunittests
-  castormediachangerdummies
-  castormessagesdummies
-  castorserverdummies
-  castortapeserverdaemondummies
-  ctaschedulerdummies)
+  castormediachangerutils
+  castormessagesutils
+  castorserverutils
+  castortapeserverdaemonutils
+  ctaschedulerutils)

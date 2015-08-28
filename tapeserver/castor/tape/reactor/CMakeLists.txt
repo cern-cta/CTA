@@ -33,7 +33,7 @@ set (REACTOR_SRC_FILES
 add_library (castortapereactor ${REACTOR_SRC_FILES})
 target_link_libraries (castortapereactor)
 
-add_library (castortapereactordummies SHARED
+add_library (castortapereactorutils SHARED
   DummyPollEventHandler.cpp
   DummyPollReactor.cpp
   DummyZMQReactor.cpp)
@@ -44,4 +44,4 @@ add_library (castortapereactorunittests SHARED
 
 target_link_libraries (castortapereactorunittests
   castortapereactor
-  castortapereactordummies)
+  castortapereactorutils)
