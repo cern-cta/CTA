@@ -16,219 +16,428 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/admin/AdminHost.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/archiveNS/StorageClass.hpp"
+#include "common/archiveNS/Tape.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "common/UserIdentity.hpp"
+#include "common/Utils.hpp"
+#include "common/SecurityIdentity.hpp"
+#include "common/TapePool.hpp"
+#include "nameserver/NameServer.hpp"
+#include "remotens/RemoteNS.hpp"
+#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/ArchiveToDirRequest.hpp"
+#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/DummyScheduler.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveMount.hpp"
+#include "scheduler/RetrieveToDirRequest.hpp"
+#include "scheduler/RetrieveToFileRequest.hpp"
+#include "scheduler/Scheduler.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/TapeMount.hpp"
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // constructor
-//-----------------------------------------------------------------------------
-Scheduler() {
+//------------------------------------------------------------------------------
+cta::DummyScheduler::DummyScheduler(NameServer &ns,
+  SchedulerDatabase &db,
+  RemoteNS &remoteNS): Scheduler(ns, db, remoteNS) {
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // destructor
-//-----------------------------------------------------------------------------
-~Scheduler() throw() {
+//------------------------------------------------------------------------------
+cta::DummyScheduler::~DummyScheduler() throw() {
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getArchiveRequests
-//-----------------------------------------------------------------------------
-std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
+  cta::DummyScheduler::getArchiveRequests(const SecurityIdentity &requester) const {
+  return std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >();
+}
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getArchiveRequests
-//-----------------------------------------------------------------------------
-std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
+//------------------------------------------------------------------------------
+std::list<cta::ArchiveToTapeCopyRequest> cta::DummyScheduler::getArchiveRequests(
   const SecurityIdentity &requester,
-  const std::string &tapePoolName) const;
+  const std::string &tapePoolName) const {
+  return std::list<cta::ArchiveToTapeCopyRequest>();
+}
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // deleteArchiveRequest
-//-----------------------------------------------------------------------------
-void deleteArchiveRequest(
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteArchiveRequest(
   const SecurityIdentity &requester,
-  const std::string &remoteFile);
+  const std::string &archiveFile) {
+}
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getRetrieveRequests
-//-----------------------------------------------------------------------------
-std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > cta::
+  DummyScheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
+  return std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> >();
+}
 
+//------------------------------------------------------------------------------
 // getRetrieveRequests
-std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+//------------------------------------------------------------------------------
+std::list<cta::RetrieveFromTapeCopyRequest> cta::DummyScheduler::getRetrieveRequests(
   const SecurityIdentity &requester,
-  const std::string &vid) const;
-
-void deleteRetrieveRequest(
+  const std::string &vid) const {
+  return std::list<cta::RetrieveFromTapeCopyRequest>();
+}
+  
+//------------------------------------------------------------------------------
+// deleteRetrieveRequest
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteRetrieveRequest(
   const SecurityIdentity &requester,
-  const std::string &remoteFile);
+  const std::string &remoteFile) {
+}
 
-void createAdminUser(
+//------------------------------------------------------------------------------
+// createAdminUser
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createAdminUser(
   const SecurityIdentity &requester,
   const UserIdentity &user,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void createAdminUserWithoutAuthorizingRequester(
+//------------------------------------------------------------------------------
+// createAdminUserWithoutAuthorizingRequester
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createAdminUserWithoutAuthorizingRequester(
   const SecurityIdentity &requester,
   const UserIdentity &user,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteAdminUser(
+//------------------------------------------------------------------------------
+// deleteAdminUser
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteAdminUser(
   const SecurityIdentity &requester,
-  const UserIdentity &user);
+  const UserIdentity &user) {
+}
 
-std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getAdminUsers
+//------------------------------------------------------------------------------
+std::list<cta::AdminUser> cta::DummyScheduler::getAdminUsers(const SecurityIdentity
+  &requester) const {
+  return std::list<cta::AdminUser>();
+}
 
-void createAdminHost(
+//------------------------------------------------------------------------------
+// createAdminHost
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createAdminHost(
   const SecurityIdentity &requester,
   const std::string &hostName,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void createAdminHostWithoutAuthorizingRequester(
+//------------------------------------------------------------------------------
+// createAdminHostWithoutAuthorizingRequester
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createAdminHostWithoutAuthorizingRequester(
   const SecurityIdentity &requester,
   const std::string &hostName,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteAdminHost(
+//------------------------------------------------------------------------------
+// deleteAdminHost
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteAdminHost(
   const SecurityIdentity &requester,
-  const std::string &hostName);
+  const std::string &hostName) {
+}
 
-std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getAdminHosts
+//------------------------------------------------------------------------------
+std::list<cta::AdminHost> cta::DummyScheduler::getAdminHosts(const SecurityIdentity
+  &requester) const {
+  return std::list<cta::AdminHost>();
+}
 
-void createStorageClass(
+//------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createStorageClass(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint16_t nbCopies,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void createStorageClass(
+//------------------------------------------------------------------------------
+// createStorageClass
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createStorageClass(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint16_t nbCopies,
   const uint32_t id,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteStorageClass(
+//------------------------------------------------------------------------------
+// deleteStorageClass
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteStorageClass(
   const SecurityIdentity &requester,
-  const std::string &name);
+  const std::string &name) {
+}
 
-std::list<StorageClass> getStorageClasses(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getStorageClasses
+//------------------------------------------------------------------------------
+std::list<cta::StorageClass> cta::DummyScheduler::getStorageClasses(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::StorageClass>();
+}
 
-void createTapePool(
+//------------------------------------------------------------------------------
+// createTapePool
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createTapePool(
   const SecurityIdentity &requester,
   const std::string &name,
   const uint32_t nbPartialTapes,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteTapePool(
+//------------------------------------------------------------------------------
+// deleteTapePool
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteTapePool(
   const SecurityIdentity &requester,
-  const std::string &name);
+  const std::string &name) {
+}
 
-std::list<TapePool> getTapePools(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getTapePools
+//------------------------------------------------------------------------------
+std::list<cta::TapePool> cta::DummyScheduler::getTapePools(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::TapePool>();
+}
 
-void createArchiveRoute(
+//------------------------------------------------------------------------------
+// createArchiveRoute
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteArchiveRoute(
+//------------------------------------------------------------------------------
+// deleteArchiveRoute
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteArchiveRoute(
   const SecurityIdentity &requester,
   const std::string &storageClassName,
-  const uint16_t copyNb);
+  const uint16_t copyNb) {
+}
 
-std::list<ArchiveRoute> getArchiveRoutes(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getArchiveRoutes
+//------------------------------------------------------------------------------
+std::list<cta::ArchiveRoute> cta::DummyScheduler::getArchiveRoutes(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::ArchiveRoute>();
+}
 
-void createLogicalLibrary(
+//------------------------------------------------------------------------------
+// createLogicalLibrary
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createLogicalLibrary(
   const SecurityIdentity &requester,
   const std::string &name,
-  const std::string &comment);
+  const std::string &comment) {
+}
 
-void deleteLogicalLibrary(
+//------------------------------------------------------------------------------
+// deleteLogicalLibrary
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteLogicalLibrary(
   const SecurityIdentity &requester,
-  const std::string &name);
+  const std::string &name) {
+}
 
-std::list<LogicalLibrary> getLogicalLibraries(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getLogicalLibraries
+//------------------------------------------------------------------------------
+std::list<cta::LogicalLibrary> cta::DummyScheduler::getLogicalLibraries(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::LogicalLibrary>();
+}
 
-void createTape(
+//------------------------------------------------------------------------------
+// createTape
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createTape(
   const SecurityIdentity &requester,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
-  const CreationLog &creationLog);
+  const CreationLog &creationLog) {
+}
 
-void deleteTape(
+//------------------------------------------------------------------------------
+// deleteTape
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteTape(
   const SecurityIdentity &requester,
-  const std::string &vid);
+  const std::string &vid) {
+}
 
-Tape getTape(
-  const SecurityIdentity &requester,
-  const std::string &vid) const;
+//------------------------------------------------------------------------------
+// getTape
+//------------------------------------------------------------------------------
+cta::Tape cta::DummyScheduler::getTape(const SecurityIdentity &requester,
+  const std::string &vid) const {
+  return Tape();
+}
 
-std::list<Tape> getTapes(
-  const SecurityIdentity &requester) const;
+//------------------------------------------------------------------------------
+// getTapes
+//------------------------------------------------------------------------------
+std::list<cta::Tape> cta::DummyScheduler::getTapes(
+  const SecurityIdentity &requester) const {
+  return std::list<cta::Tape>();
+}
 
-void createDir(
-  const SecurityIdentity &requester,
-  const std::string &path,
-  const mode_t mode);
-
-void setOwner(
-  const SecurityIdentity &requester,
-  const std::string &path,
-  const UserIdentity &owner);
-    
-UserIdentity getOwner(
-  const SecurityIdentity &requester,
-  const std::string &path) const;
-
-void deleteDir(
- const SecurityIdentity &requester,
- const std::string &path);
-
-std::string getVidOfFile(
-  const SecurityIdentity &requester,
-  const std::string &path,
-  const uint16_t copyNb) const;
-
-ArchiveDirIterator getDirContents(
-  const SecurityIdentity &requester,
-  const std::string &path) const;
-
-std::unique_ptr<ArchiveFileStatus> statArchiveFile(
-  const SecurityIdentity &requester,
-  const std::string &path) const;
-
-void setDirStorageClass(
+//------------------------------------------------------------------------------
+// createDir
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::createDir(
   const SecurityIdentity &requester,
   const std::string &path,
-  const std::string &storageClassName);
+  const mode_t mode) {
+}
 
-void clearDirStorageClass(
+//------------------------------------------------------------------------------
+// setOwner
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::setOwner(
   const SecurityIdentity &requester,
-  const std::string &path);
+  const std::string &path,
+  const UserIdentity &owner) {
+}
 
-std::string getDirStorageClass(
+//------------------------------------------------------------------------------
+// getOwner
+//------------------------------------------------------------------------------
+cta::UserIdentity cta::DummyScheduler::getOwner(
   const SecurityIdentity &requester,
-  const std::string &path) const;
+  const std::string &path) const {
+  return cta::UserIdentity();
+}
 
-void queueArchiveRequest(
+//------------------------------------------------------------------------------
+// deleteDir
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::deleteDir(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+}
+
+//------------------------------------------------------------------------------
+// getVidOfFile
+//------------------------------------------------------------------------------
+std::string cta::DummyScheduler::getVidOfFile(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const uint16_t copyNb) const {
+  return std::string();
+}
+
+//------------------------------------------------------------------------------
+// getDirContents
+//------------------------------------------------------------------------------
+cta::ArchiveDirIterator cta::DummyScheduler::getDirContents(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return cta::ArchiveDirIterator();
+}
+
+//------------------------------------------------------------------------------
+// statArchiveFile
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::ArchiveFileStatus> cta::DummyScheduler::statArchiveFile(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return std::unique_ptr<cta::ArchiveFileStatus>();
+}
+
+//------------------------------------------------------------------------------
+// setDirStorageClass
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::setDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const std::string &storageClassName) {
+}
+
+//------------------------------------------------------------------------------
+// clearDirStorageClass
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::clearDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+}
+  
+//------------------------------------------------------------------------------
+// getDirStorageClass
+//------------------------------------------------------------------------------
+std::string cta::DummyScheduler::getDirStorageClass(
+  const SecurityIdentity &requester,
+  const std::string &path) const {
+  return std::string();
+}
+
+//------------------------------------------------------------------------------
+// queueArchiveRequest
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::queueArchiveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &remoteFiles,
-  const std::string &archiveFileOrDir);
+  const std::string &archiveFileOrDir) {
+}
 
-void queueRetrieveRequest(
+//------------------------------------------------------------------------------
+// queueRetrieveRequest
+//------------------------------------------------------------------------------
+void cta::DummyScheduler::queueRetrieveRequest(
   const SecurityIdentity &requester,
   const std::list<std::string> &archiveFiles,
-  const std::string &remoteFileOrDir);
+  const std::string &remoteFileOrDir) {
+}
 
-std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
-  const std::string & driveName);
+//------------------------------------------------------------------------------
+// getNextMount
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::TapeMount> cta::DummyScheduler::getNextMount(
+  const std::string &logicalLibraryName, const std::string & driveName) {
+  return std::unique_ptr<cta::TapeMount>();
+}

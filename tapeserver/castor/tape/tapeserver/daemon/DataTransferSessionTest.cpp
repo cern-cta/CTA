@@ -45,6 +45,7 @@
 #include "smc_struct.h"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
+#include "scheduler/DummyScheduler.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/MountType.hpp"
 
@@ -86,9 +87,6 @@ protected:
     ~MockRetrieveJob() throw() {
     } 
   };
-
-  std::list<std::unique_ptr<cta::RetrieveJob>> m_retrieveJobs;
-
 };
 
 TEST_F(tapeServer, DataTransferSessionGooddayRecall) {

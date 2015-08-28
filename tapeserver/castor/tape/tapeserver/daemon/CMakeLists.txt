@@ -142,4 +142,5 @@ target_link_libraries(castortapeserverdaemonunittests
   castormediachangerdummies
   castormessagesdummies
   castorserverdummies
-  castortapeserverdaemondummies)
+  castortapeserverdaemondummies
+  ctaschedulerdummies)

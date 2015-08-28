@@ -20,6 +20,8 @@
 
 #include "scheduler/Scheduler.hpp"
 
+#include <memory>
+
 namespace cta {
 
 /**
@@ -30,13 +32,20 @@ public:
 
   /**
    * Constructor.
+   *
+   * @param ns The name server containing the namespace of the archive.
+   * @param db The scheduler database.
+   * @param remoteNS The name space of the remote storage system.
    */
-  Scheduler();
+  DummyScheduler(
+    NameServer &ns,
+    SchedulerDatabase &db,
+    RemoteNS &remoteNS);
 
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
+  ~DummyScheduler() throw();
 
   /**
    * Returns all of the queued archive requests.  The returned requests are

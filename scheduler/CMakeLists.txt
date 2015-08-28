@@ -41,6 +41,9 @@ add_library(ctaOStoreSchedulerDB SHARED
 target_link_libraries(ctaOStoreSchedulerDB
   CTAObjectStore)
 
+add_library (ctaschedulerdummies SHARED
+  DummyScheduler.cpp)
+
 add_library (ctaschedulerunittests SHARED
   mockDB/MockSchedulerDatabase.cpp
   mockDB/MockSchedulerDatabaseFactory.cpp
