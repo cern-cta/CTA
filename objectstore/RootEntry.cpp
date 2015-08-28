@@ -44,13 +44,16 @@ bool cta::objectstore::RootEntry::isEmpty() {
     return false;
   if (m_payload.tapepoolpointers_size())
     return false;
-  if (m_payload.driveregisterpointer().address().size())
+  if (m_payload.has_driveregisterpointer() &&
+      m_payload.driveregisterpointer().address().size())
     return false;
   if (m_payload.agentregisterintent().size())
     return false;
-  if (m_payload.agentregisterpointer().address().size())
+  if (m_payload.has_agentregisterpointer() &&
+      m_payload.agentregisterpointer().address().size())
     return false;
-  if (m_payload.schedulerlockpointer().address().size())
+  if (m_payload.has_schedulerlockpointer() &&
+      m_payload.schedulerlockpointer().address().size())
     return false;
   return true;
 }
@@ -601,7 +604,8 @@ std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
 void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
   checkPayloadWritable();
   // Get the address of the drive register (nothing to do if there is none)
-  if (!m_payload.driveregisterpointer().address().size())
+  if (!m_payload.has_driveregisterpointer() || 
+      !m_payload.driveregisterpointer().address().size())
     return;
   std::string drAddr = m_payload.driveregisterpointer().address();
   DriveRegister dr(drAddr, ObjectOps<serializers::RootEntry>::m_objectStore);
@@ -622,7 +626,8 @@ void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
 
 std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
   checkPayloadReadable();
-  if (m_payload.driveregisterpointer().address().size()) {
+  if (m_payload.has_driveregisterpointer() && 
+      m_payload.driveregisterpointer().address().size()) {
     return m_payload.driveregisterpointer().address();
   }
   throw NotAllocated("In RootEntry::getDriveRegisterAddress: drive register not allocated");
@@ -636,7 +641,8 @@ std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
 std::string cta::objectstore::RootEntry::getAgentRegisterAddress() {
   checkPayloadReadable();
   // If the registry is defined, return it, job done.
-  if (m_payload.agentregisterpointer().address().size())
+  if (m_payload.has_agentregisterpointer() &&
+      m_payload.agentregisterpointer().address().size())
     return m_payload.agentregisterpointer().address();
   throw NotAllocated("In RootEntry::getAgentRegister: agentRegister not yet allocated");
 }
@@ -653,7 +659,8 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(A
     // This will make an autonomous transaction
     checkPayloadWritable();
     fetch();
-    if (m_payload.agentregisterpointer().address().size()) {
+    if (m_payload.has_agentregisterpointer() &&
+        m_payload.agentregisterpointer().address().size()) {
       return m_payload.agentregisterpointer().address();
     }
     // decide on the object's name
@@ -706,7 +713,8 @@ void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
     m_payload.set_agentregisterintent("");
     commit();
   }
-  if (m_payload.agentregisterpointer().address().size()) {
+  if (m_payload.has_agentregisterpointer() &&
+      m_payload.agentregisterpointer().address().size()) {
     AgentRegister ar(m_payload.agentregisterpointer().address(),
       ObjectOps<serializers::RootEntry>::m_objectStore);
     ScopedExclusiveLock arl(ar);
@@ -727,7 +735,8 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
   // If we got the lock and there is one entry, this means the previous
   // attempt to create one did not succeed.
   // When getting here, having a set pointer to the registry is an error.
-  if (m_payload.agentregisterpointer().address().size()) {
+  if (m_payload.has_agentregisterpointer() &&
+      m_payload.agentregisterpointer().address().size()) {
     throw exception::Exception("In cta::objectstore::RootEntry::addIntendedAgentRegistry:"
         " pointer to registry already set");
   }
@@ -759,7 +768,8 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
 std::string cta::objectstore::RootEntry::getSchedulerGlobalLock() {
   checkPayloadReadable();
   // If the scheduler lock is defined, return it, job done.
-  if (m_payload.schedulerlockpointer().address().size())
+  if (m_payload.has_schedulerlockpointer() &&
+      m_payload.schedulerlockpointer().address().size())
     return m_payload.schedulerlockpointer().address();
   throw NotAllocated("In RootEntry::getAgentRegister: scheduler global lock not yet allocated");
 }
@@ -806,7 +816,8 @@ std::string cta::objectstore::RootEntry::addOrGetSchedulerGlobalLockAndCommit(Ag
 void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
   checkPayloadWritable();
   // Get the address of the scheduler lock (nothing to do if there is none)
-  if (!m_payload.schedulerlockpointer().address().size())
+  if (!m_payload.has_schedulerlockpointer() ||
+      !m_payload.schedulerlockpointer().address().size())
     return;
   std::string sglAddress = m_payload.schedulerlockpointer().address();
   SchedulerGlobalLock sgl(sglAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
@@ -831,7 +842,8 @@ std::string cta::objectstore::RootEntry::dump () {
   checkPayloadReadable();
   std::stringstream ret;
   ret << "<<<< Root entry dump start" << std::endl;
-  if (m_payload.agentregisterpointer().address().size())
+  if (m_payload.has_agentregisterpointer() &&
+      m_payload.agentregisterpointer().address().size())
     ret << "agentRegister=" << m_payload.agentregisterpointer().address() << std::endl;
   if (m_payload.agentregisterintent().size())
     ret << "agentRegister Intent=" << m_payload.agentregisterintent() << std::endl;
