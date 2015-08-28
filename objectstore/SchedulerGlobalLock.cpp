@@ -71,6 +71,18 @@ void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner) {
   remove();
 }
 
+uint64_t SchedulerGlobalLock::getIncreaseCommitMountId() {
+  checkPayloadWritable();
+  uint64_t ret = m_payload.nextmountid();
+  m_payload.set_nextmountid(ret+1);
+  return ret;
+}
+
+void SchedulerGlobalLock::setNextMountId(uint64_t nextId) {
+  checkPayloadWritable();
+  m_payload.set_nextmountid(nextId);
+}
+
 bool SchedulerGlobalLock::isEmpty() {
   checkPayloadReadable();
   // There is no content in the global lock.

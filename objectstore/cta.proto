@@ -26,12 +26,13 @@ enum MountType {
 enum DriveStatus {
     Down = 0;
     Up = 1;
-    Mounting = 2;
-    Transfering = 3;
-    Unloading = 4;
-    Unmounting = 5;
-    DrainingToDisk = 6;
-    CleaningUp = 7;
+    Starting = 2;
+    Mounting = 3;
+    Transfering = 4;
+    Unloading = 5;
+    Unmounting = 6;
+    DrainingToDisk = 7;
+    CleaningUp = 8;
 };
 
 // The base object header. This will allow introspection and automatic

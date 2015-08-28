@@ -75,7 +75,6 @@ public:
     ArchiveMount(objectstore::Backend &, objectstore::Agent &);
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
-    MountInfo m_mountInfo;
   public:
     virtual const MountInfo & getMountInfo();
 };

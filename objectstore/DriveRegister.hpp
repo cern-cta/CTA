@@ -52,7 +52,9 @@ public:
   enum class DriveStatus {
     Down,
     Up,
-    Starting,
+    Starting, // This status allows drive register to represent drives committed
+    // to mounting a tape before the mounting is confirmed. It is necessary to
+    // allow race-free scheduling
     Mounting,
     Transfering,
     Unloading,
@@ -125,6 +127,7 @@ private:
   void checkReportDriveStatusInputs(ReportDriveStatusInputs & inputs);
   void setDriveDown(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
   void setDriveUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
+  void setDriveStarting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
   void setDriveMounting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
   void setDriveTransfering(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
   void setDriveUnloading(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);

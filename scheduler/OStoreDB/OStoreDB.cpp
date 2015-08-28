@@ -76,11 +76,12 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
-  // Take an exclusive lock on the scheduling
+  // Take an exclusive lock on the scheduling and fetch it.
   tmdi.m_schedulerGlobalLock.reset(
     new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
   tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
   tmdi.m_lockTaken = true;
+  tmdi.m_schedulerGlobalLock->fetch();
   auto tpl = re.dumpTapePools();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     // Get the tape pool object
@@ -156,8 +157,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::ScopedSharedLock drl(dr);
   dr.fetch();
   auto dl = dr.dumpDrives();
-  std::set<int> activeDriveStatuses =
-    { (int)objectstore::DriveRegister::DriveStatus::Starting,
+  std::set<int> activeDriveStatuses = {
+    (int)objectstore::DriveRegister::DriveStatus::Starting,
     (int)objectstore::DriveRegister::DriveStatus::Mounting,
     (int)objectstore::DriveRegister::DriveStatus::Transfering,
     (int)objectstore::DriveRegister::DriveStatus::Unloading,
@@ -1058,9 +1059,9 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
   // busy, with the current agent pointing to it for unbusying
-  // Check the drive exists, add the drive to ownership and set its activity 
-  // status to mount starting with the current agent as the drive user
-  
+  // Set the drive status to up, but do not commit anything to the drive register
+  // the drive register does not need garbage collection as it should reflect the
+  // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
   std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
     new OStoreDB::ArchiveMount(m_objectStore, m_agent));
@@ -1070,9 +1071,9 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createArchiveMount: "
       "cannot create mount without holding scheduling lock");
   // Find the tape and update it
-  am.m_mountInfo.vid = vid;
-  am.m_mountInfo.drive = driveName;
-  am.m_mountInfo.tapePool = tapePool;
+  am.mountInfo.vid = vid;
+  am.mountInfo.drive = driveName;
+  am.mountInfo.tapePool = tapePool;
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
@@ -1128,18 +1129,34 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
       m_agent.getAddressIfSet());
   }
-  // Find the drive in the registry and update it. It should have been added 
-  // beforehand
+  // Fill up the mount info
+  privateRet->mountInfo.drive = driveName;
+  privateRet->mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
+  m_schedulerGlobalLock->commit();
+  privateRet->mountInfo.tapePool = tapePool;
+  privateRet->mountInfo.vid = vid;
+  // Update the status of the drive in the registry
   {
     // Get hold of the drive registry
     objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
     objectstore::ScopedExclusiveLock drl(dr);
     dr.fetch();
+    // The drive is already in-session, to prevent double scheduling before it 
+    // goes to mount state. If the work to be done gets depleted in the mean time,
+    // we will switch back to up.
     dr.reportDriveStatus(driveName, logicalLibrary, 
-      objectstore::DriveRegister::DriveStatus::Starting, startTime);
+      objectstore::DriveRegister::DriveStatus::Starting, startTime, 
+      objectstore::DriveRegister::MountType::Archive, privateRet->mountInfo.mountId,
+      0, 0, 0, vid, tapePool);
+    dr.commit();
   }
-  throw NotImplemented("Not Implemented");
-  }
+  // We committed the scheduling decision. We can now release the scheduling lock.
+  m_lockOnSchedulerGlobalLock.release();
+  m_lockTaken = false;
+  // We can now return the mount session object to the user.
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
+  return ret;
+}
 
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
   objectstore::Backend& os, objectstore::Agent& a):
@@ -1165,7 +1182,7 @@ OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::Agen
   m_objectStore(os), m_agent(a) {}
 
 const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
-  return m_mountInfo;
+  return mountInfo;
 }
 
 
