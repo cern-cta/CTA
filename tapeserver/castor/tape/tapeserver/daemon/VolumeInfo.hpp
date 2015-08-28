@@ -43,8 +43,6 @@ namespace daemon {
       std::string vid;
       /** The density of the volume */
       std::string density;
-      /** The label field seems to be in disuse */
-      std::string labelObsolete;
       /** The mount type: archive or retrieve */
       cta::MountType::Enum mountType;
     };

@@ -108,7 +108,6 @@ namespace unitTests
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.density="8000GC";
-    volume.labelObsolete="AUL";
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
     castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
@@ -163,7 +162,6 @@ namespace unitTests
     castor::messages::TapeserverProxyDummy initialProcess;  
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.density="8000GC";
-    volume.labelObsolete="AUL";
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
     castor::server::ProcessCapDummy cap;

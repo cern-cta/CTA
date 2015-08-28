@@ -91,7 +91,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.density=tapeMount->getDensity();
-  m_volInfo.labelObsolete="AUL";
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
@@ -100,7 +99,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
                .add("density", m_volInfo.density)
-               .add("label", m_volInfo.labelObsolete)
                .add("mountType", mountTypeToString(m_volInfo.mountType));
     lc.log(LOG_INFO, "Got volume from client");
   }
