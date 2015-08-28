@@ -18,6 +18,7 @@ set (CTA_SCHEDULER_SRC_FILES
   mockDB/SqliteColumnNameToIndex.cpp
   mockDB/SQLiteStatementDeleter.cpp
   MountType.cpp
+  PositioningMethod.cpp
   RetrieveJob.cpp
   RetrieveFromTapeCopyRequest.cpp
   RetrieveMount.cpp

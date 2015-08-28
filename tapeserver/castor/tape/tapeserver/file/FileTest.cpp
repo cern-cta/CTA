@@ -81,7 +81,7 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);    
     ASSERT_NE((long int)rs, 0);
-    fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
+    fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
     delete rs;
   }
@@ -103,7 +103,7 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
-      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
+      fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);
       ASSERT_THROW({castor::tape::tapeFile::ReadFile rf2(rs, fileToRecall);},castor::tape::tapeFile::SessionAlreadyInUse); //cannot have two ReadFile's on the same session
     }
@@ -155,7 +155,7 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
-      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
+      fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       char *data = new char[bs+1];
@@ -200,7 +200,7 @@ namespace UnitTests {
     ASSERT_EQ(rs->isCorrupted(), false);
     ASSERT_EQ(rs->m_vid.compare(label), 0);
     {
-      fileToRecall.positioningMethod = cta::RetrieveJob::PositioningMethod::ByBlock;
+      fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       ASSERT_EQ(bs, block_size);

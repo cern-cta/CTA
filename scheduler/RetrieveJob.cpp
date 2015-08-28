@@ -55,18 +55,3 @@ void cta::RetrieveJob::failed(const exception::Exception &ex) {
 // retry
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::retry() { }
-
-//------------------------------------------------------------------------------
-// positioningMethodtoString(PositioningMethod)
-//------------------------------------------------------------------------------
-std::string cta::RetrieveJob::positioningMethodtoString(PositioningMethod pm) {
-  switch(pm) {
-    case PositioningMethod::ByBlock:
-      return "ByBlock";
-    case PositioningMethod::ByFSeq:
-      return "ByFSeq";
-    default:
-      return "Unknown Positioning Method";
-  }
-}
-

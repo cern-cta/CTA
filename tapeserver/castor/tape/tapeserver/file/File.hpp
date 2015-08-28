@@ -336,7 +336,7 @@ namespace castor {
         /**
          * What kind of command we use to position ourself on the tape (fseq or blockid)
          */
-        cta::RetrieveJob::PositioningMethod m_positionCommandCode;
+        cta::PositioningMethod m_positionCommandCode;
       };
 
       /**

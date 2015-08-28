@@ -157,7 +157,7 @@ namespace castor {
         try{
           position(fileToRecall);
         } catch(...){
-          if(cta::RetrieveJob::PositioningMethod::ByFSeq==m_positionCommandCode && 
+          if(cta::PositioningMethod::ByFSeq==m_positionCommandCode && 
                   m_session->getCurrentFilePart() != Header){
             m_session->setCorrupted();
           }
@@ -167,7 +167,7 @@ namespace castor {
       }
 
       ReadFile::~ReadFile() throw() {
-        if(cta::RetrieveJob::PositioningMethod::ByFSeq==m_positionCommandCode && 
+        if(cta::PositioningMethod::ByFSeq==m_positionCommandCode && 
                 m_session->getCurrentFilePart() != Header){
           m_session->setCorrupted();
         }
@@ -243,7 +243,7 @@ namespace castor {
       void ReadFile::position(
         const cta::RetrieveJob &fileToRecall)  {  
         
-        if(m_session->getCurrentFilePart() != Header && fileToRecall.positioningMethod!=cta::RetrieveJob::PositioningMethod::ByBlock) {
+        if(m_session->getCurrentFilePart() != Header && fileToRecall.positioningMethod!=cta::PositioningMethod::ByBlock) {
           m_session->setCorrupted();
           throw SessionCorrupted();
         }
@@ -252,10 +252,10 @@ namespace castor {
         // and allow next call to position to discover we failed half way
         m_session->setCurrentFilePart(HeaderProcessing);
                 
-        if(cta::RetrieveJob::PositioningMethod::ByBlock==m_positionCommandCode) {
+        if(cta::PositioningMethod::ByBlock==m_positionCommandCode) {
           positionByBlockID(fileToRecall);
         }
-        else if(cta::RetrieveJob::PositioningMethod::ByFSeq==m_positionCommandCode) {    
+        else if(cta::PositioningMethod::ByFSeq==m_positionCommandCode) {    
           positionByFseq(fileToRecall);
         }
         else {

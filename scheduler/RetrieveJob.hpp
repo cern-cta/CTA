@@ -22,6 +22,7 @@
 #include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "scheduler/PositioningMethod.hpp"
 
 #include <string>
 
@@ -39,16 +40,6 @@ class RetrieveJob {
    * constructor of RetrieveJob.
    */
   friend class RetrieveMount;
-
-public:
-  
-  /**
-   * Positioning methods
-   */
-  enum class PositioningMethod: uint8_t {
-    ByBlock = 0,
-    ByFSeq = 1
-  };
 
 protected:
   
@@ -103,16 +94,6 @@ public:
    */
   void retry();
   
-  /**
-   * Converts the positioning method into string
-   * 
-   * @param pm the positioning method
-   * @return the method in string format
-   */
-  std::string positioningMethodtoString(PositioningMethod pm);
-
-public:
-
   /**
    * The mount to which the job belongs.
    */

@@ -88,7 +88,7 @@ void RecallTaskInjector::startThreads() {
 void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs) {
   for (auto it = jobs.begin(); it != jobs.end(); ++it) {
     
-    (*it)->positioningMethod=cta::RetrieveJob::PositioningMethod::ByBlock;
+    (*it)->positioningMethod=cta::PositioningMethod::ByBlock;
 
     LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->archiveFile.nsHostName)),
