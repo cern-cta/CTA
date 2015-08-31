@@ -320,8 +320,8 @@ cta::UserIdentity cta::MockNameServer::getOwner(
     throw exception::Exception(msg.str());
   }
 
-  const uint16_t uid = Utils::toUint16(uidStr);
-  const uint16_t gid = Utils::toUint16(gidStr);
+  const uid_t uid = Utils::toUid(uidStr);
+  const gid_t gid = Utils::toGid(gidStr);
 
   return UserIdentity(uid, gid);
 }

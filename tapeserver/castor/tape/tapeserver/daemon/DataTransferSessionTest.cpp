@@ -40,6 +40,8 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/Utils.hpp"
 #include "Ctape.h"
 #include "scheduler/Scheduler.hpp"
 #include "smc_struct.h"
@@ -49,26 +51,88 @@
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/MountType.hpp"
 
+#include <dirent.h>
 #include <fcntl.h>
+#include <stdexcept>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <zlib.h>
 
-
 using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
 namespace unitTest {
 
-class tapeServer: public ::testing::Test {
+class castor_tape_tapeserver_daemon_DataTransferSessionTest: public
+  ::testing::Test {
 protected:
 
   void SetUp() {
+    strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
+    if(!mkdtemp(m_tmpDir)) {
+      const std::string errMsg = cta::Utils::errnoToString(errno);
+      std::ostringstream msg;
+      msg << "Failed to create directory with template"
+        " /tmp/DataTransferSessionTestXXXXXX: " << errMsg;
+      bzero(m_tmpDir, sizeof(m_tmpDir));
+      throw cta::exception::Exception(msg.str());
+    }
+
+    struct stat statBuf;
+    bzero(&statBuf, sizeof(statBuf));
+    if(stat(m_tmpDir, &statBuf)) {
+      const std::string errMsg = cta::Utils::errnoToString(errno);
+      std::ostringstream msg;
+      msg << "Failed to stat directory " << m_tmpDir << ": " << errMsg;
+      throw cta::exception::Exception(msg.str());
+    }
+
+    std::ostringstream cmd;
+    cmd << "touch " << m_tmpDir << "/hello";
+    system(cmd.str().c_str());
   }
 
   void TearDown() {
+    // If Setup() created a temporary directory
+    if(m_tmpDir) {
+
+      // Openn the directory
+      std::unique_ptr<DIR, std::function<int(DIR*)>>
+        dir(opendir(m_tmpDir), closedir);
+      if(NULL == dir.get()) {
+        const std::string errMsg = cta::Utils::errnoToString(errno);
+        std::ostringstream msg;
+        msg << "Failed to open directory " << m_tmpDir << ": " << errMsg;
+        throw cta::exception::Exception(msg.str());
+      }
+
+      // Delete each of the files within the directory
+      struct dirent *entry = NULL;
+      while((entry = readdir(dir.get()))) {
+        const std::string entryName(entry->d_name);
+        if(entryName != "." && entryName != "..") {
+          const std::string entryPath = std::string(m_tmpDir) + "/" + entryName;
+          if(unlink(entryPath.c_str())) {
+            const std::string errMsg = cta::Utils::errnoToString(errno);
+            std::ostringstream msg;
+            msg << "Failed to unlink " << entryPath;
+            throw cta::exception::Exception(msg.str());
+          }
+        }
+      }
+
+      // Delete the now empty directory
+      if(rmdir(m_tmpDir)) {
+        const std::string errMsg = cta::Utils::errnoToString(errno);
+        std::ostringstream msg;
+        msg << "Failed to delete directory " << m_tmpDir << ": " << errMsg;
+        throw cta::exception::Exception(msg.str());
+      }
+    }
   }
+
+  char m_tmpDir[100];
 
   class MockArchiveJob: public cta::ArchiveJob {
   public:
@@ -89,7 +153,7 @@ protected:
   };
 };
 
-TEST_F(tapeServer, DataTransferSessionGooddayRecall) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -103,18 +167,29 @@ TEST_F(tapeServer, DataTransferSessionGooddayRecall) {
   std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
+
+  // List to remember the path of each remote file so that the existance of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
   
-  // We can prepare files for reading on the drive
+  // 5) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
@@ -125,29 +200,54 @@ TEST_F(tapeServer, DataTransferSessionGooddayRecall) {
     volInfo.vid="V12345";
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
        volInfo , 0, true);
-    // Write a few files on the virtual tape
-    // Prepare the data
+
+    // Write a few files on the virtual tape and modify the archive name space
+    // so that it is in sync
     uint8_t data[1000];
     castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq=1; fseq <= 10 ; fseq ++) {
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "scheme:" << m_tmpDir << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+
+      // Create an entry in the archive namespace
+      std::ostringstream archiveFilePath;
+      archiveFilePath << "/test" << fseq;
+      const mode_t archiveFileMode = 0655;
+      const uint64_t archiveFileSize = 256*1024;
+      ns.createFile(
+        requester,
+        archiveFilePath.str(),
+        archiveFileMode,
+        archiveFileSize);
+
+      // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
       ftr->tapeFileLocation.fSeq = fseq;
       ftm_temp->tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm_temp->archiveFile.fileId = 1000 + fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, 256*1024);
+      castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
       ftr->tapeFileLocation.blockId = wf.getPosition();
-      // Set the recall destination (/dev/null)
-      ftr->archiveFile.path = "/dev/null";
+      ftr->remotePathAndStatus.path = remoteFilePath.str();
       // Write the data (one block)
       wf.write(data, sizeof(data));
       // Close the file
       wf.close();
-      // Record the file for recall
-      // TODO sim.addFileToRecall(ftr, sizeof(data));
+
+      // Schedule the retrieval of the file
+      std::list<std::string> archiveFilePaths;
+      archiveFilePaths.push_back(archiveFilePath.str());
+      scheduler. queueRetrieveRequest(
+        requester,
+        archiveFilePaths,
+        remoteFilePath.str());
     }
   }
+
+  // 6) Create the data transfer session
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
@@ -161,22 +261,28 @@ TEST_F(tapeServer, DataTransferSessionGooddayRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
-  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+
+  // 7) Run the data transfer session
   ASSERT_NO_THROW(sess.execute());
-  std::string temp = logger.getLog();
-  temp += "";
+
+  // 8) Check the session git the correct VID
   ASSERT_EQ("V12345", sess.getVid());
-// TODO  ASSERT(The state of the session is NOT error);
-// ASSERT_EQ(0, sim.m_sessionErrorCode);
+
+  // Check the remote files exist and have the correct size
+  for(auto pathItor = remoteFilePaths.cbegin(); pathItor !=
+    remoteFilePaths.cend(); pathItor++) {
+    struct stat statBuf;
+    bzero(&statBuf, sizeof(statBuf));
+    const int statRc = stat(pathItor->c_str(), &statBuf);
+    ASSERT_EQ(0, statRc);
+    ASSERT_EQ(256*1024, statBuf.st_size);
+  }
 }
 
 /*
-TEST_F(tapeServer, DataTransferSessionWrongRecall) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // This test is the same as the previous one, with 
   // wrong parameters set for the recall, so that we fail 
   // to recall the first file and cancel the second.
@@ -267,7 +373,7 @@ TEST_F(tapeServer, DataTransferSessionWrongRecall) {
   ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
-TEST_F(tapeServer, DataTransferSessionNoSuchDrive) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -313,7 +419,7 @@ TEST_F(tapeServer, DataTransferSessionNoSuchDrive) {
   ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
-TEST_F(tapeServer, DataTransferSessionFailtoMount) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // This test is the same as the previous one, with 
   // wrong parameters set for the recall, so that we fail 
   // to recall the first file and cancel the second.
@@ -393,7 +499,7 @@ TEST_F(tapeServer, DataTransferSessionFailtoMount) {
   ASSERT_EQ(1015, sim.m_sessionErrorCode);
 }
 
-TEST_F(tapeServer, DataTransferSessionEmptyOnVolReq) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
   // This test is the same as the previous one, with 
   // wrong parameters set for the recall, so that we fail 
   // to recall the first file and cancel the second.
@@ -508,7 +614,7 @@ struct expectedResult {
   int errorCode;
 };
 
-TEST_F(tapeServer, DataTransferSessionGooddayMigration) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -591,7 +697,7 @@ TEST_F(tapeServer, DataTransferSessionGooddayMigration) {
 // This test is the same as the previous one, except that the files are deleted
 // from filesystem immediately. The disk tasks will then fail on open.
 ///
-TEST_F(tapeServer, DataTransferSessionMissingFilesMigration) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -667,7 +773,7 @@ TEST_F(tapeServer, DataTransferSessionMissingFilesMigration) {
 // only a finite number of bytes and hence we will report a full tape skip the
 // last migrations
 //
-TEST_F(tapeServer, DataTransferSessionTapeFullMigration) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -761,7 +867,7 @@ TEST_F(tapeServer, DataTransferSessionTapeFullMigration) {
   ASSERT_EQ(ENOSPC, sim.m_sessionErrorCode);
 }
 
-TEST_F(tapeServer, DataTransferSessionTapeFullOnFlushMigration) {
+TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
