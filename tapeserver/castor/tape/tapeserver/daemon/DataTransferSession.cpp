@@ -57,7 +57,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     castor::messages::TapeserverProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf,
-    cta::IScheduler & scheduler): 
+    cta::Scheduler & scheduler): 
     m_log(log),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),

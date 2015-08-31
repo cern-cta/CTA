@@ -44,6 +44,14 @@
 #include "scheduler/TapeMount.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::DummyScheduler::DummyScheduler(NameServer &ns,
+  SchedulerDatabase &db,
+  RemoteNS &remoteNS): Scheduler(ns, db, remoteNS) {
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::DummyScheduler::~DummyScheduler() throw() {

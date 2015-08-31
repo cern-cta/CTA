@@ -49,6 +49,20 @@
 #include <unistd.h>
 
 //------------------------------------------------------------------------------
+// TransferFailureToStr
+//------------------------------------------------------------------------------
+const char *cta::Scheduler::TransferFailureToStr(
+  const TapeJobFailure enumValue) throw() {
+  switch(enumValue) {
+  case JOBFAILURE_NONE         : return "NONE";
+  case JOBFAILURE_TAPEDRIVE    : return "TAPE DRIVE";
+  case JOBFAILURE_TAPELIBRARY  : return "TAPE LIBRARY";
+  case JOBFAILURE_REMOTESTORAGE: return "REMOTE STORAGE";
+  default                           : return "UNKNOWN";
+  }
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(NameServer &ns,

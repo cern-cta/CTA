@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/IScheduler.hpp"
+#include "scheduler/Scheduler.hpp"
 
 #include <memory>
 
@@ -27,8 +27,20 @@ namespace cta {
 /**
  * Class implementimg a dummy tape resource scheduler.
  */
-class DummyScheduler: public IScheduler {
+class DummyScheduler: public Scheduler {
 public:
+
+  /**
+   * Constructor.
+   *
+   * @param ns The name server containing the namespace of the archive.
+   * @param db The scheduler database.
+   * @param remoteNS The name space of the remote storage system.
+   */
+  DummyScheduler(
+    NameServer &ns,
+    SchedulerDatabase &db,
+    RemoteNS &remoteNS);
 
   /**
    * Destructor.
