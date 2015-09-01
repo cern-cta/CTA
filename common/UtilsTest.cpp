@@ -275,7 +275,7 @@ TEST_F(cta_UtilsTest, errnoToString_EACCESS) {
   ASSERT_EQ(std::string("Permission denied"), str);
 }
 
-TEST_F(cta_UtilsTest, toUint16_uint16_t) {
+TEST_F(cta_UtilsTest, toUint16_12345) {
   using namespace cta;
 
   uint16_t i = 0;
@@ -318,6 +318,114 @@ TEST_F(cta_UtilsTest, toUint16_too_big) {
   using namespace cta;
 
   ASSERT_THROW(Utils::toUint16("65536"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUid_12345) {
+  using namespace cta;
+
+  uid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUid("12345"));
+  ASSERT_EQ((uid_t)12345, i);
+}
+
+TEST_F(cta_UtilsTest, toUid_zero) {
+  using namespace cta;
+
+  uid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUid("0"));
+  ASSERT_EQ((uid_t)0, i);
+}
+
+TEST_F(cta_UtilsTest, toUid_max) {
+  using namespace cta;
+
+  std::ostringstream oss;
+  oss << std::numeric_limits<uid_t>::max();
+
+  uid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toUid(oss.str()));
+  ASSERT_EQ(std::numeric_limits<uid_t>::max(), i);
+}
+
+TEST_F(cta_UtilsTest, toUid_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toUid(""), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUid_negative) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toUid("-12345"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUid_too_big) {
+  using namespace cta;
+
+  const uint64_t tooBig = (uint64_t)(std::numeric_limits<uid_t>::max()) +
+    (uint64_t)1;
+
+  std::ostringstream oss;
+  oss << tooBig;
+
+  ASSERT_THROW(Utils::toUid(oss.str()), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toGid_12345) {
+  using namespace cta;
+
+  gid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toGid("12345"));
+  ASSERT_EQ((gid_t)12345, i);
+}
+
+TEST_F(cta_UtilsTest, toGid_zero) {
+  using namespace cta;
+
+  gid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toGid("0"));
+  ASSERT_EQ((gid_t)0, i);
+}
+
+TEST_F(cta_UtilsTest, toGid_max) {
+  using namespace cta;
+
+  std::ostringstream oss;
+  oss << std::numeric_limits<gid_t>::max();
+
+  gid_t i = 0;
+
+  ASSERT_NO_THROW(i = Utils::toGid(oss.str()));
+  ASSERT_EQ(std::numeric_limits<gid_t>::max(), i);
+}
+
+TEST_F(cta_UtilsTest, toGid_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toGid(""), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toGid_negative) {
+  using namespace cta;
+
+  ASSERT_THROW(Utils::toGid("-12345"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toGid_too_big) {
+  using namespace cta;
+
+  const uint64_t tooBig = (uint64_t)(std::numeric_limits<gid_t>::max()) +
+    (uint64_t)1;
+
+  std::ostringstream oss;
+  oss << tooBig;
+
+  ASSERT_THROW(Utils::toGid(oss.str()), std::exception);
 }
 
 TEST_F(cta_UtilsTest, isValidUInt_unsigned_int) {

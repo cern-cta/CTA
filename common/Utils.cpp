@@ -21,6 +21,7 @@
 #include "common/Utils.hpp"
 
 #include <attr/xattr.h>
+#include <limits>
 #include <memory>
 #include <shift/serrno.h>
 #include <sstream>
@@ -376,6 +377,78 @@ uint16_t cta::Utils::toUint16(const std::string &str) {
 
   return value;
 }
+
+//------------------------------------------------------------------------------
+// toUid
+//------------------------------------------------------------------------------
+uid_t cta::Utils::toUid(const std::string &str) {
+  if(str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uid_t: An empty string is not"
+      " a valid uid_t value";
+    throw exception::Exception(msg.str());
+  }
+
+  errno = 0;
+  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const int savedErrno = errno;
+  if(savedErrno) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uid_t: " <<
+      errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 > value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uid_t: Negative number";
+    throw exception::Exception(msg.str());
+  }
+
+  if(std::numeric_limits<uid_t>::max() < value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uid_t: Number too big";
+    throw exception::Exception(msg.str());
+  }
+
+  return value;
+}
+
+//------------------------------------------------------------------------------
+// toGid
+//------------------------------------------------------------------------------
+gid_t cta::Utils::toGid(const std::string &str) {
+  if(str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to gid_t: An empty string is not"
+      " a valid gid_t value";
+    throw exception::Exception(msg.str());
+  }
+  
+  errno = 0;
+  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const int savedErrno = errno;
+  if(savedErrno) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to gid_t: " <<
+      errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 > value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to gid_t: Negative number";
+    throw exception::Exception(msg.str());
+  }
+  
+  if(std::numeric_limits<gid_t>::max() < value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to gid_t: Number too big";
+    throw exception::Exception(msg.str());
+  }
+  
+  return value;
+} 
 
 //------------------------------------------------------------------------------
 // isValidUInt

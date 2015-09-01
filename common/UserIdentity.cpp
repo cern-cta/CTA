@@ -19,14 +19,15 @@
 #include "common/UserIdentity.hpp"
 
 #include <limits>
+#include <unistd.h>
 #include <ostream>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::UserIdentity::UserIdentity() throw():
-  uid(std::numeric_limits<decltype(uid)>::max()),
-  gid(std::numeric_limits<decltype(gid)>::max()) {}
+  uid(std::numeric_limits<uid_t>::max()),
+  gid(std::numeric_limits<gid_t>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor

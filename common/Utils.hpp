@@ -21,6 +21,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace cta {
@@ -181,6 +182,22 @@ public:
    * @return The unisgned integer.
    */
   static uint16_t toUint16(const std::string &str);
+
+  /**
+   * Converts the specified string to a uid.
+   *
+   * @param str The string.
+   * @return The uid.
+   */
+  static uid_t toUid(const std::string &str);
+
+  /**
+   * Converts the specified string to a gid.
+   *
+   * @param str The string.
+   * @return The gid.
+   */
+  static gid_t toGid(const std::string &str);
 
   /**
    * Checks if the specified string is a valid unsigned integer.
