@@ -208,7 +208,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     for (int fseq=1; fseq <= 10 ; fseq ++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
-      remoteFilePath << "scheme:" << m_tmpDir << "/test" << fseq;
+      remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an entry in the archive namespace
