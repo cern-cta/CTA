@@ -62,10 +62,9 @@ public:
    * Create into the MigrationReportPacker a report for the failled migration
    * of migratedFile
    * @param migratedFile the file which failled 
-   * @param msg the error message to the failure 
-   * @param error_code the error code related to the failure 
+   * @param ex the reason for the failure 
    */
-  void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,const std::string& msg,int error_code);
+  void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex);
      
    /**
     * Create into the MigrationReportPacker a report for the signaling a flusing on tape
@@ -118,20 +117,6 @@ private:
   class ReportFlush : public Report {
     drive::compressionStats m_compressStats;
     
-    /**
-     * This function will approximate the compressed size of the files which 
-     * have been migrated. The idea is to compute the average ration 
-     * logicalSize/nbByteWritenWithCompression for the whole batch 
-     * and apply that ratio to the whole set of files
-     * We currently computing it only to the file that have been successfully 
-     * migrated
-     * @param beg Beginning of the upper class' successfulMigrations()
-     * @param end End of upper class' successfulMigrations()
-     */
-//    void computeCompressedSize(
-//    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
-//    std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end);
-    
     public:
     /* We only can compute the compressed size once we have flushed on the drive
      * We can get from the drive the number of byte it really wrote to tape
@@ -143,16 +128,15 @@ private:
       void execute(MigrationReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const std::string m_error_msg;
-    const int m_error_code;
+    const castor::exception::Exception m_ex;
     
     /**
      * The failed archive job to be reported immediately
      */
     std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
   public:
-    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string msg,int error_code):
-    m_error_msg(msg), m_error_code(error_code), m_failedArchiveJob(std::move(failedArchiveJob)){}
+    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception &ex):
+    m_ex(ex), m_failedArchiveJob(std::move(failedArchiveJob)){}
     
     virtual void execute(MigrationReportPacker& reportPacker);
   };

@@ -197,7 +197,7 @@ namespace daemon {
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
-      reportPacker.reportFailedJob(std::move(m_archiveJob),e.getMessageValue(),errorCode);
+      reportPacker.reportFailedJob(std::move(m_archiveJob),e);
   
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.

@@ -70,8 +70,8 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,u_int32_t checksum,
 //reportFailedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
-        const std::string& msg,int error_code){
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),msg,error_code));
+        const castor::exception::Exception &ex){
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),ex));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -254,7 +254,8 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_errorHappened=true;
-  m_failedArchiveJob->failed(cta::exception::Exception("Error happened somewhere during the migration process"));
+  reportPacker.m_lc.log(LOG_ERR,m_ex.getMessageValue());
+  m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
 }
 
 //------------------------------------------------------------------------------

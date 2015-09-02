@@ -39,6 +39,11 @@ namespace cta {
 
     /**
      * Constructor.
+     */
+    ArchiveMount();
+
+    /**
+     * Constructor.
      *
      * @param dbMount The database representation of this mount.
      */
