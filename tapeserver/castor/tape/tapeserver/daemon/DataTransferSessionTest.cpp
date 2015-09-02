@@ -132,6 +132,13 @@ protected:
     }
   }
 
+  /**
+   * Temporary directory created with mkdtemp that will be used to contain the
+   * destination remote files of the tests that need to create them.
+   *
+   * Please note that a new temporary directory is created and deleted for each
+   * test by the Setup() and TearDown() methods.
+   */
   char m_tmpDir[100];
 
   class MockArchiveJob: public cta::ArchiveJob {
