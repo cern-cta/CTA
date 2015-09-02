@@ -183,6 +183,7 @@ message ArchiveJobPointer {
   required string path = 3000;
   required uint64 size = 3001;
   required string address = 3002;
+  required uint32 copynb = 3003;
 }
 
 message RetrieveJobPointer {

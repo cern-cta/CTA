@@ -97,6 +97,7 @@ public:
   public:
     uint64_t size;
     std::string address;
+    uint16_t copyNb;
   };
   std::list<JobDump> dumpJobs();
   

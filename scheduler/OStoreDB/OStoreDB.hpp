@@ -68,7 +68,7 @@ public:
 
   virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();
   
-  /* === Mount handling ===================================================== */
+  /* === Archive Mount handling ============================================= */
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
@@ -77,7 +77,23 @@ public:
     objectstore::Agent & m_agent;
   public:
     virtual const MountInfo & getMountInfo();
-};
+    virtual std::unique_ptr<ArchiveJob> getNextJob();
+  };
+  
+  /* === Archive Job Handling =============================================== */
+  class ArchiveJob: public SchedulerDatabase::ArchiveJob {
+    friend class ArchiveMount;
+  public:
+    virtual void succeed();
+    virtual void fail();
+    virtual ~ArchiveJob();
+  private:
+    ArchiveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
+    bool m_jobOwned;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent & m_agent;
+    objectstore::ArchiveToFileRequest m_atfr;
+  };
 
   /* === Admin host handling ================================================ */
   virtual void createAdminHost(const std::string& hostName, 

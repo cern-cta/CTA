@@ -40,6 +40,7 @@
 #include "common/archiveNS/TapeFileLocation.hpp"
 #include "RetrieveToDirRequest.hpp"
 #include "ArchiveToTapeCopyRequest.hpp"
+#include "common/archiveNS/ArchiveFile.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -1183,8 +1184,98 @@ OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::Agen
 
 const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
   return mountInfo;
+  }
+
+auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::ArchiveJob> {
+  // Find the next file to archive
+  // Get the tape pool
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  std::string tpAddress;
+  for (auto tpp = tpl.begin(); tpp != tpl.end(); tpp++) {
+    if (tpp->tapePool == mountInfo.tapePool)
+      tpAddress = tpp->address;
+  }
+  if (!tpAddress.size())
+    throw NoSuchTapePool("In OStoreDB::ArchiveMount::getNextJob(): tape pool not found");
+  objectstore::TapePool tp(tpAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock tplock(tp);
+  tp.fetch();
+  // Loop until we find a job which is actually belonging to the tape pool
+  while (tp.dumpJobs().size()) {
+    // Get the tape pool's jobs list, and pop the first
+    auto jl = tp.dumpJobs();
+    // First take a lock on a download the job
+    uint16_t copyNb = jl.front().copyNb;
+    // If the request is not around anymore, we will just move the the next
+    // prepare the return value
+    std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
+      jl.front().address, m_objectStore, m_agent));
+    objectstore::ScopedExclusiveLock atfrl;
+    try {
+      atfrl.lock(privateRet->m_atfr);
+      privateRet->m_atfr.fetch();
+    } catch (cta::exception::Exception &) {
+      // we failed to access the object. It might be missing.
+      // Just pop this job from the pool and move to the next.
+      tp.removeJob(privateRet->m_atfr.getAddressIfSet());
+      // Commit in case we do not pass by again.
+      tp.commit();
+      continue;
+    }
+    // Take ownership of the job
+    // Add to ownership
+    objectstore::ScopedExclusiveLock al(m_agent);
+    m_agent.fetch();
+    m_agent.addToOwnership(privateRet->m_atfr.getAddressIfSet());
+    m_agent.commit();
+    al.release();
+    // Make the ownership official (for this job within the request)
+    privateRet->m_atfr.setJobOwner(copyNb, m_agent.getAddressIfSet());
+    privateRet->m_atfr.commit();
+    // Remove the job from the tape pool queue
+    tp.removeJob(privateRet->m_atfr.getAddressIfSet());
+    // We can commit and release the tape pool lock, we will only fill up
+    // memory structure from here on.
+    tp.commit();
+    privateRet->archiveFile.path = privateRet->m_atfr.getArchiveFile();
+    privateRet->remoteFile = privateRet->m_atfr.getRemoteFile();
+    privateRet->m_jobOwned = true;
+    return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
+  }
+  return std::unique_ptr<SchedulerDatabase::ArchiveJob> (NULL);
 }
 
+OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
+  objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),
+  m_objectStore(os), m_agent(ag), m_atfr(jobAddress, os) {}
+
+
+void OStoreDB::ArchiveJob::fail() {
+  throw NotImplemented("");
+}
+
+void OStoreDB::ArchiveJob::succeed() {
+  throw NotImplemented("");
+}
+
+OStoreDB::ArchiveJob::~ArchiveJob() {
+  if (m_jobOwned) {
+    // Return the job to the pot if we failed to handle it.
+    objectstore::ScopedExclusiveLock atfrl(m_atfr);
+    m_atfr.fetch();
+    m_atfr.garbageCollect(m_agent.getAddressIfSet());
+    atfrl.release();
+    // Remove ownership from agent
+    objectstore::ScopedExclusiveLock al(m_agent);
+    m_agent.fetch();
+    m_agent.removeFromOwnership(m_atfr.getAddressIfSet());
+    m_agent.commit();
+  }
+}
 
 
 }

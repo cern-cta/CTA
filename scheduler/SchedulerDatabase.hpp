@@ -24,7 +24,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "common/archiveNS/ArchiveFileStatus.hpp"
+#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
 
@@ -150,6 +150,7 @@ public:
   /**
    * The class used by the scheduler database to track the archive mounts
    */
+  class ArchiveJob;
   class ArchiveMount {
   public:
     struct MountInfo {
@@ -159,14 +160,20 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
+    virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
+    virtual ~ArchiveMount() {}
   };
   
+  /**
+   * The class to handle the DB-side of a tape job.
+   */
   class ArchiveJob {
-    friend class ArchiveMount;
   public:
     cta::RemotePathAndStatus remoteFile;
-    cta::ArchiveFileStatus archiveFile;
-    /* TODO */
+    cta::ArchiveFile archiveFile;
+    virtual void succeed() = 0;
+    virtual void fail() = 0;
+    virtual ~ArchiveJob() {}
   };
   
   /*============ Retrieve  management: user side ============================*/
@@ -224,7 +231,7 @@ public:
     friend class RetrieveMount;
   public:
     cta::RemotePathAndStatus remoteFile;
-    cta::ArchiveFileStatus archiveFile;
+    cta::ArchiveFile archiveFile;
     /* TODO */
   };
   

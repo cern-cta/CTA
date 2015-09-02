@@ -251,6 +251,21 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
   }
 }
 
+void cta::objectstore::ArchiveToFileRequest::setJobOwner(
+  uint16_t copyNumber, const std::string& owner) {
+  checkPayloadWritable();
+  // Find the right job
+  auto mutJobs = m_payload.mutable_jobs();
+  for (auto job=mutJobs->begin(); job!=mutJobs->end(); job++) {
+    if (job->copynb() == copyNumber) {
+      job->set_owner(owner);
+      return;
+    }
+  }
+  throw NoSuchJob("In ArchiveToFileRequest::setJobOwner: no such job");
+}
+
+
 bool cta::objectstore::ArchiveToFileRequest::finishIfNecessary() {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job

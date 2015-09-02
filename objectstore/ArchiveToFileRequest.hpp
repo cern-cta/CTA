@@ -44,14 +44,14 @@ public:
   void jobSetSuccessful(uint16_t copyNumber);
   void jobSetFailed(uint16_t copyNumber);
   // Duplication of the protbuff statuses
-  enum jobStatus {
+  enum class JobStatus {
     AJS_LinkingToTapePool = 0,
     AJS_Pending = 1,
     AJS_Selected = 2,
     AJS_Complete = 3,
     AJS_Failed = 99
   };
-  enum jobStatus getJobStatus(uint16_t copyNumber);
+  JobStatus getJobStatus(uint16_t copyNumber);
   // Handling of the consequences of a job status change for the entire request.
   // This function returns true if the request got finished.
   bool finishIfNecessary();
@@ -61,6 +61,9 @@ public:
   void setJobsFailed();
   // Mark all the jobs as pending deletion from NS.
   void setJobsPendingNSdeletion();
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
+  // Set a job ownership
+  void setJobOwner(uint16_t copyNumber, const std::string & owner);
   // Request management ========================================================
   void setSuccessful();
   void setFailed();

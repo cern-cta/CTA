@@ -604,8 +604,13 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
   // This should go through
   {
     auto mountInfo = db.getMountInfo();
-    /*ASSERT_NO_THROW*/(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1", 
+    ASSERT_NO_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1", 
         "drive1", "lib1", "host1", time(NULL)));
+  }
+  // Try to get the archive job.
+  {
+    decltype(archiveMount->getNextJob()) archiveJob;
+    ASSERT_NO_THROW(archiveJob = archiveMount->getNextJob());
   }
 }
 
