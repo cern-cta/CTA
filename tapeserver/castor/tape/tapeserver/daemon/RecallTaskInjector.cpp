@@ -124,9 +124,9 @@ bool RecallTaskInjector::synchronousInjection()
     while(files<=m_maxFiles && bytes<=m_maxBytes) {
       std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob();
       if(!job.get()) break;
-      jobs.push_back(job.release());
       files++;
       bytes+=job->archiveFile.size;
+      jobs.push_back(job.release());
     }
   } catch (castor::exception::Exception & ex) {
     castor::log::ScopedParamContainer scoped(m_lc);
@@ -192,9 +192,9 @@ void RecallTaskInjector::WorkerThread::run()
       while(files<=req.filesRequested && bytes<=req.bytesRequested) {
         std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob();
         if(!job.get()) break;
-        jobs.push_back(job.release());
         files++;
         bytes+=job->archiveFile.size;
+        jobs.push_back(job.release());
       }
       
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));

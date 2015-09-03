@@ -38,17 +38,71 @@
 
 #include <gtest/gtest.h>
 
+using namespace castor::tape::tapeserver::daemon;
+using namespace castor::tape;
+const int blockSize=4096;
+
 namespace unitTests
 {
-  class TestingRetrieveMount: public cta::RetrieveMount {
-  public:
-    TestingRetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(std::move(dbrm)) {
-    }
-  };
   
-  using namespace castor::tape::tapeserver::daemon;
-  using namespace castor::tape;
-  const int blockSize=4096;
+  class castor_tape_tapeserver_daemonTest: public ::testing::Test {
+  protected:
+
+    void SetUp() {
+    }
+
+    void TearDown() {
+    }
+
+    class MockRetrieveJob: public cta::RetrieveJob {
+    public:
+      MockRetrieveJob() {
+      }
+
+      ~MockRetrieveJob() throw() {
+      }
+
+
+      MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));
+      MOCK_METHOD1(failed, void(const cta::exception::Exception &ex));
+    }; // class MockRetrieveJob
+
+    class MockRetrieveMount: public cta::RetrieveMount {
+    public:
+      MockRetrieveMount(int nbRecallJobs) {
+        createRetrieveJobs(nbRecallJobs);
+      }
+
+      ~MockRetrieveMount() throw() {
+      }
+
+      std::unique_ptr<cta::RetrieveJob> getNextJob() {
+        internalGetNextJob();
+        if(m_jobs.empty()) {
+          return std::unique_ptr<cta::RetrieveJob>();
+        } else {
+          std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
+          m_jobs.pop_front();
+          return job;
+        }
+      }
+
+      MOCK_METHOD0(internalGetNextJob, cta::RetrieveJob*());
+      MOCK_METHOD0(complete, void());
+
+    private:
+
+      std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
+
+      void createRetrieveJobs(const unsigned int nbJobs) {
+        for(unsigned int i = 0; i < nbJobs; i++) {
+          m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
+            new MockRetrieveJob()));
+        }
+      }
+    }; // class MockRetrieveMount
+
+  }; // class castor_tape_tapeserver_daemonTest
 
   class FakeDiskWriteThreadPool: public DiskWriteThreadPool
   {
@@ -65,11 +119,11 @@ namespace unitTests
   public:
     using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
 
-    FakeSingleTapeReadThread(castor::tape::tapeserver::drive::DriveInterface& drive,
+    FakeSingleTapeReadThread(tapeserver::drive::DriveInterface& drive,
       castor::mediachanger::MediaChangerFacade & mc,
-      castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
-      const castor::tape::tapeserver::daemon::VolumeInfo& volInfo, 
-       castor::server::ProcessCap& cap,
+      tapeserver::daemon::TapeServerReporter & tsr,
+      const tapeserver::daemon::VolumeInfo& volInfo, 
+      castor::server::ProcessCap& cap,
       castor::log::LogContext & lc):
     TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc){}
 
@@ -79,10 +133,12 @@ namespace unitTests
         delete m_tasks.pop();
       }
     }
-     virtual void run () 
+    
+    virtual void run () 
     {
-       m_tasks.push(NULL);
+      m_tasks.push(NULL);
     }
+    
     virtual void push(TapeReadTask* t){
       m_tasks.push(t);
     }
@@ -90,15 +146,15 @@ namespace unitTests
     virtual void countTapeLogError(const std::string & error) {};
   };
 
-  TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
-    const int nbCalls=2;
+  TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
+    const int nbJobs=5;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
     castor::log::LogContext lc(log);
-    RecallMemoryManager mm(50U,50U,lc);
+    RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
-    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
-    TestingRetrieveMount trm(std::move(dbrm));
+    MockRetrieveMount trm(nbJobs);
+    EXPECT_CALL(trm, internalGetNextJob()).Times(8);
     
     FakeDiskWriteThreadPool diskWrite(lc);
     castor::messages::AcsProxyDummy acs;
@@ -110,15 +166,14 @@ namespace unitTests
     volume.density="8000GC";
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
-    castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
-      DriveConfig(),"0.0.0.0",volume,lc);
+    castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);
     castor::server::ProcessCapDummy cap;
-    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap,lc);
-    tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,trm,6,blockSize,lc);
+    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
+    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
-    ASSERT_EQ(true,rti.synchronousInjection());
-    ASSERT_EQ(nbFile,diskWrite.m_tasks.size());
-    ASSERT_EQ(nbFile,tapeRead.m_tasks.size());
+    ASSERT_EQ(true, rti.synchronousInjection());
+    ASSERT_EQ(nbJobs, diskWrite.m_tasks.size());
+    ASSERT_EQ(nbJobs, tapeRead.m_tasks.size());
 
     rti.startThreads();
     rti.requestInjection(false);
@@ -127,33 +182,37 @@ namespace unitTests
     rti.waitThreads();
 
     //pushed nbFile*2 files + 1 end of work
-    ASSERT_EQ(nbFile*nbCalls+1,diskWrite.m_tasks.size());
-    ASSERT_EQ(nbFile*nbCalls+1,tapeRead.m_tasks.size());
+    ASSERT_EQ(nbJobs+1, diskWrite.m_tasks.size());
+    ASSERT_EQ(nbJobs+1, tapeRead.m_tasks.size());
 
-    for(unsigned int i=0;i<nbFile*nbCalls;++i)
+    for(int i=0; i<nbJobs; ++i)
     {
       delete diskWrite.m_tasks.pop();
       delete tapeRead.m_tasks.pop();
     }
 
-    for(int i=0;i<1;++i)
+    for(int i=0; i<1; ++i)
     {
       DiskWriteTask* diskWriteTask=diskWrite.m_tasks.pop();
       TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
 
       //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
-      ASSERT_EQ(static_cast<DiskWriteTask*>(NULL),diskWriteTask);
-      ASSERT_EQ(static_cast<TapeReadTask*>(NULL),tapeReadTask);
+      ASSERT_EQ(static_cast<DiskWriteTask*>(NULL), diskWriteTask);
+      ASSERT_EQ(static_cast<TapeReadTask*>(NULL), tapeReadTask);
       delete diskWriteTask;
       delete tapeReadTask;
     }
   }
-  TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
+  
+  TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
     castor::log::LogContext lc(log);
-    RecallMemoryManager mm(50U,50U,lc);
+    RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
-    FakeClient client(0);
+    
+    MockRetrieveMount trm(0);
+    EXPECT_CALL(trm, internalGetNextJob()).Times(1);
+    
     FakeDiskWriteThreadPool diskWrite(lc);
     castor::messages::AcsProxyDummy acs;
     castor::mediachanger::MmcProxyDummy mmc;
@@ -165,15 +224,13 @@ namespace unitTests
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
     castor::server::ProcessCapDummy cap;
-    castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess,  
-    DriveConfig(),"0.0.0.0",volume,lc);  
-    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume,cap, lc);
+    castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);  
+    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, lc);
 
-    //tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
-    tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
+    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
-    ASSERT_EQ(false,rti.synchronousInjection());
-    ASSERT_EQ(0U,diskWrite.m_tasks.size());
-    ASSERT_EQ(0U,tapeRead.m_tasks.size());
+    ASSERT_EQ(false, rti.synchronousInjection());
+    ASSERT_EQ(0U, diskWrite.m_tasks.size());
+    ASSERT_EQ(0U, tapeRead.m_tasks.size());
   }
 }

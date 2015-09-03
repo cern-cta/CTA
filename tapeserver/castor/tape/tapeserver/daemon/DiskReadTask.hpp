@@ -95,7 +95,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  std::unique_ptr<cta::ArchiveJob> m_archiveJob;
+  cta::ArchiveJob *m_archiveJob;
   
   /**
    * The number of memory block we will need to read the whole file

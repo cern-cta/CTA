@@ -109,9 +109,9 @@ namespace daemon {
       while(files<=m_maxFiles && bytes<=m_maxBytes) {
         std::unique_ptr<cta::ArchiveJob> job=m_archiveMount.getNextJob();
         if(!job.get()) break;
-        jobs.push_back(job.release());
         files++;
         bytes+=job->archiveFile.size;
+        jobs.push_back(job.release());
       }
     } catch (castor::exception::Exception & ex) {
       castor::log::ScopedParamContainer scoped(m_lc);
@@ -170,9 +170,9 @@ namespace daemon {
         while(files<=req.filesRequested && bytes<=req.bytesRequested) {
           std::unique_ptr<cta::ArchiveJob> job=m_parent.m_archiveMount.getNextJob();
           if(!job.get()) break;
-          jobs.push_back(job.release());
           files++;
           bytes+=job->archiveFile.size;
+          jobs.push_back(job.release());
         }
 
         if(jobs.empty()){

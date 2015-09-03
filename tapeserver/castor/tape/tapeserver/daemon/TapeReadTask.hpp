@@ -244,7 +244,7 @@ private:
   /**
    * All we need to know about the file we are recalling
    */
-  std::unique_ptr<cta::RetrieveJob> m_retrieveJob;
+  cta::RetrieveJob *m_retrieveJob;
   
   /**
    * The task (seen as a Y) that will consume all the blocks we read
