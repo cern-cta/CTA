@@ -607,10 +607,18 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
     ASSERT_NO_THROW(archiveMount = mountInfo->createArchiveMount("Tape1", "pool1", 
         "drive1", "lib1", "host1", time(NULL)));
   }
-  // Try to get the archive job.
+  // Try to get the archive job, make it as fail, make sure it comes back,
+  // make it succeed, and check there are no more jobs (for this tape pool)
+  // after that.
   {
     decltype(archiveMount->getNextJob()) archiveJob;
     ASSERT_NO_THROW(archiveJob = archiveMount->getNextJob());
+    ASSERT_NO_THROW(archiveJob->fail());
+    ASSERT_NO_THROW(archiveJob = archiveMount->getNextJob());
+    ASSERT_NE((cta::SchedulerDatabase::ArchiveJob*)NULL, archiveJob.get());
+    ASSERT_NO_THROW(archiveJob->succeed());
+    ASSERT_NO_THROW(archiveJob = archiveMount->getNextJob());
+    ASSERT_EQ(NULL, archiveJob.get());
   }
 }
 

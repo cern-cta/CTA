@@ -39,10 +39,16 @@ public:
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
     const std::string & tapepooladdress);
-  void jobSelect(uint16_t copyNumber, const std::string & owner);
-  void jobSetPending(uint16_t copyNumber);
-  void jobSetSuccessful(uint16_t copyNumber);
-  void jobSetFailed(uint16_t copyNumber);
+  void setJobFailureLimits(uint16_t copyNumber,
+    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+  void setJobSelected(uint16_t copyNumber, const std::string & owner);
+  void setJobPending(uint16_t copyNumber);
+  bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
+  struct FailuresCount {
+    uint16_t failuresWithinMount;
+    uint16_t totalFailures;
+  };
+  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
   // Duplication of the protbuff statuses
   enum class JobStatus {
     AJS_LinkingToTapePool = 0,
@@ -56,11 +62,11 @@ public:
   // This function returns true if the request got finished.
   bool finishIfNecessary();
   // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setJobsLinkingToTapePool();
+  void setAllJobsLinkingToTapePool();
   // Mark all the jobs as being deleted, in case of a cancellation
-  void setJobsFailed();
+  void setAllJobsFailed();
   // Mark all the jobs as pending deletion from NS.
-  void setJobsPendingNSdeletion();
+  void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);

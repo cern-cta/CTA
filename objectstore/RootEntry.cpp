@@ -453,7 +453,8 @@ namespace {
 }
 
 std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::string& tapePool,
-  uint32_t nbPartialTapes, Agent& agent, const CreationLog& log) {
+  uint32_t nbPartialTapes, uint16_t maxRetriesPerMount, uint16_t maxTotalRetries,
+  Agent& agent, const CreationLog& log) {
   checkPayloadWritable();
   // Check the tape pool does not already exist
   try {
@@ -471,6 +472,8 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
   tp.initialize(tapePool);
   tp.setOwner(agent.getAddressIfSet());
+  tp.setMaxRetriesWithinMount(maxRetriesPerMount);
+  tp.setMaxTotalRetries(maxTotalRetries);
   tp.setBackupOwner("root");
   tp.insert();
   ScopedExclusiveLock tpl(tp);

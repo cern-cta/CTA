@@ -60,6 +60,9 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   m_payload.mutable_archivemountquota()->set_allowedoverhead(0);
   m_payload.mutable_retrievemountquota()->set_quota(0);
   m_payload.mutable_retrievemountquota()->set_allowedoverhead(0);
+  // default the retries to 0.
+  m_payload.set_maxretriespermount(0);
+  m_payload.set_maxtotalretries(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -363,4 +366,24 @@ cta::objectstore::TapePool::MountQuota
   return ret;
 }
 
+
+void cta::objectstore::TapePool::setMaxRetriesWithinMount(uint16_t maxRetriesPerMount) {
+  checkPayloadWritable();
+  m_payload.set_maxretriespermount(maxRetriesPerMount);
+}
+
+uint16_t cta::objectstore::TapePool::getMaxRetriesWithinMount() {
+  checkPayloadReadable();
+  return m_payload.maxretriespermount();
+}
+
+void  cta::objectstore::TapePool::setMaxTotalRetries(uint16_t maxTotalRetries) {
+  checkPayloadWritable();
+  m_payload.set_maxtotalretries(maxTotalRetries);
+}
+
+uint16_t cta::objectstore::TapePool::getMaxTotalRetries() {
+  checkPayloadWritable();
+  return m_payload.maxtotalretries();
+}
 

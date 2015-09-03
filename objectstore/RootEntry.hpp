@@ -134,8 +134,8 @@ public:
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it. It needs to implicitly commit the object to the store. */
   std::string addOrGetTapePoolAndCommit(const std::string & tapePool,
-    uint32_t nbPartialTapes, Agent & agent,
-    const CreationLog & log);
+    uint32_t nbPartialTapes, uint16_t maxRetriesPerMount, uint16_t maxTotalRetries,
+    Agent & agent, const CreationLog & log);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePool);

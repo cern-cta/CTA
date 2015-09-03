@@ -374,7 +374,7 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
   // We inherited all the objects from the creation.
   // Lock is still here at that point.
   // First, record that we are fine for next step.
-  m_request.setJobsLinkingToTapePool();
+  m_request.setAllJobsLinkingToTapePool();
   m_request.commit();
   objectstore::RootEntry re(m_objectStore);
   // We can now plug the request onto its tape pools.
@@ -397,6 +397,10 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
       tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), 
         m_request.getRemoteFile().status.size, m_request.getPriority(),
         m_request.getCreationLog().time);
+      // Now that we have the tape pool handy, get the retry limits from it and 
+      // assign them to the job
+      m_request.setJobFailureLimits(j->copyNb, tp.getMaxRetriesWithinMount(), 
+        tp.getMaxTotalRetries());
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }
@@ -475,7 +479,7 @@ void OStoreDB::createTapePool(const std::string& name,
   ScopedExclusiveLock rel(re);
   re.fetch();
   assertAgentSet();
-  re.addOrGetTapePoolAndCommit(name, nbPartialTapes, *m_agent, creationLog);
+  re.addOrGetTapePoolAndCommit(name, nbPartialTapes, 5, 5, *m_agent, creationLog);
   re.commit();
 }
 
@@ -738,7 +742,7 @@ void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester,
         m_agent->commit();
         ScopedExclusiveLock atfrxl(atfr);
         atfr.fetch();
-        atfr.setJobsFailed();
+        atfr.setAllJobsFailed();
         atfr.setOwner(m_agent->getAddressIfSet());
         atfr.commit();
         auto jl = atfr.dumpJobs();
@@ -798,7 +802,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
           atfr.setAddress(arp->address);
           atfrl.lock(atfr);
           atfr.fetch();
-          atfr.setJobsPendingNSdeletion();
+          atfr.setAllJobsPendingNSdeletion();
           atfr.commit();
           // Unlink the jobs from the tape pools (it is safely referenced in the agent)
           auto atpl=atfr.dumpJobs();
@@ -1184,7 +1188,7 @@ OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::Agen
 
 const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
   return mountInfo;
-  }
+}
 
 auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::ArchiveJob> {
   // Find the next file to archive
@@ -1209,11 +1213,11 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     // Get the tape pool's jobs list, and pop the first
     auto jl = tp.dumpJobs();
     // First take a lock on a download the job
-    uint16_t copyNb = jl.front().copyNb;
     // If the request is not around anymore, we will just move the the next
     // prepare the return value
     std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
       jl.front().address, m_objectStore, m_agent));
+    privateRet->m_copyNb = jl.front().copyNb;
     objectstore::ScopedExclusiveLock atfrl;
     try {
       atfrl.lock(privateRet->m_atfr);
@@ -1234,7 +1238,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     m_agent.commit();
     al.release();
     // Make the ownership official (for this job within the request)
-    privateRet->m_atfr.setJobOwner(copyNb, m_agent.getAddressIfSet());
+    privateRet->m_atfr.setJobOwner(privateRet->m_copyNb, m_agent.getAddressIfSet());
     privateRet->m_atfr.commit();
     // Remove the job from the tape pool queue
     tp.removeJob(privateRet->m_atfr.getAddressIfSet());
@@ -1244,6 +1248,8 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     privateRet->archiveFile.path = privateRet->m_atfr.getArchiveFile();
     privateRet->remoteFile = privateRet->m_atfr.getRemoteFile();
     privateRet->m_jobOwned = true;
+    privateRet->m_mountId = mountInfo.mountId;
+    privateRet->m_tapePool = mountInfo.tapePool;
     return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
   }
   return std::unique_ptr<SchedulerDatabase::ArchiveJob> (NULL);
@@ -1255,11 +1261,57 @@ OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress,
 
 
 void OStoreDB::ArchiveJob::fail() {
-  throw NotImplemented("");
+  if (!m_jobOwned)
+    throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
+  // Lock the archive request. Fail the job.
+  objectstore::ScopedExclusiveLock atfrl(m_atfr);
+  m_atfr.fetch();
+  m_atfr.addJobFailure(m_copyNb, m_mountId);
+  // Return the job to its original tape pool's queue
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    if (tpp->tapePool == m_tapePool) {
+      objectstore::TapePool tp(tpp->address, m_objectStore);
+      objectstore::ScopedExclusiveLock tplock(tp);
+      tp.fetch();
+      // Find the right job
+      auto jl = m_atfr.dumpJobs();
+      for (auto j=jl.begin(); j!=jl.end(); j++) {
+        if (j->copyNb == m_copyNb) {
+          tp.addJobIfNecessary(*j, m_atfr.getAddressIfSet(), m_atfr.getArchiveFile(), m_atfr.getRemoteFile().status.size);
+          tp.commit();
+          tplock.release();
+          // We have a pointer to the job, we can change the job ownership
+          m_atfr.setJobOwner(m_copyNb, tpp->address);
+          m_atfr.commit();
+          atfrl.release();
+          // We just have to remove the ownership from the agent and we're done.
+          objectstore::ScopedExclusiveLock al(m_agent);
+          m_agent.fetch();
+          m_agent.removeFromOwnership(m_atfr.getAddressIfSet());
+          m_agent.commit();
+          return;
+        }
+      }
+      throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");
+    }
+  }
+  throw NoSuchTapePool("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
 }
 
 void OStoreDB::ArchiveJob::succeed() {
-  throw NotImplemented("");
+  // Lock the request and set the job as successful.
+  objectstore::ScopedExclusiveLock atfrl(m_atfr);
+  m_atfr.fetch();
+  if (m_atfr.setJobSuccessful(m_copyNb)) {
+    m_atfr.remove();
+  } else {
+    m_atfr.commit();
+  }
 }
 
 OStoreDB::ArchiveJob::~ArchiveJob() {

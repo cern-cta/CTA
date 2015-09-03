@@ -450,7 +450,7 @@ TEST (ObjectStore, RootEntryTapePools) {
     re.fetch();
     ASSERT_THROW(re.getTapePoolAddress("tapePool1"),
       cta::objectstore::RootEntry::NotAllocated);
-    tpAddr1 = re.addOrGetTapePoolAndCommit("tapePool1", 100, ag, cl);
+    tpAddr1 = re.addOrGetTapePoolAndCommit("tapePool1", 100, 5, 5, ag, cl);
     // Check that we car read it
     cta::objectstore::TapePool tp(tpAddr1, be);
     cta::objectstore::ScopedSharedLock tpl(tp);
@@ -461,7 +461,7 @@ TEST (ObjectStore, RootEntryTapePools) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetTapePoolAndCommit("tapePool2", 100, ag, cl);
+    tpAddr2 = re.addOrGetTapePoolAndCommit("tapePool2", 100, 5, 5,ag, cl);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {

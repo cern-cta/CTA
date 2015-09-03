@@ -84,12 +84,17 @@ public:
   class ArchiveJob: public SchedulerDatabase::ArchiveJob {
     friend class ArchiveMount;
   public:
+    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void succeed();
     virtual void fail();
     virtual ~ArchiveJob();
   private:
     ArchiveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
     bool m_jobOwned;
+    uint16_t m_copyNb;
+    uint64_t m_mountId;
+    std::string m_tapePool;
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
     objectstore::ArchiveToFileRequest m_atfr;

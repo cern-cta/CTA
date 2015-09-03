@@ -56,9 +56,72 @@ void cta::objectstore::ArchiveToFileRequest::addJob(uint16_t copyNumber,
   j->set_tapepooladdress(tapepooladdress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
+  j->set_lastmountwithfailure(0);
+  // Those 2 values are set to 0 as at creation time, we do not read the 
+  // tape pools yet.
+  j->set_maxretrieswithinmount(0);
+  j->set_maxtotalretries(0);
 }
 
-void cta::objectstore::ArchiveToFileRequest::setJobsLinkingToTapePool() {
+bool cta::objectstore::ArchiveToFileRequest::setJobSuccessful(uint16_t copyNumber) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
+      for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
+        if (j2->status()!= serializers::ArchiveJobStatus::AJS_Complete && 
+            j2->status()!= serializers::ArchiveJobStatus::AJS_Failed)
+          return false;
+      }
+      return true;
+    }
+  }
+  throw NoSuchJob("In ArchiveToFileRequest::setJobSuccessful(): job not found");
+}
+
+
+void cta::objectstore::ArchiveToFileRequest::setJobFailureLimits(uint16_t copyNumber,
+    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_maxretrieswithinmount(maxRetiesWithinMount);
+      j->set_maxtotalretries(maxTotalRetries);
+      return;
+    }
+  }
+  throw NoSuchJob("In ArchiveToFileRequest::setJobFailureLimits(): job not found");
+}
+
+auto cta::objectstore::ArchiveToFileRequest::addJobFailure(uint16_t copyNumber,
+    uint64_t mountId)
+  -> FailuresCount {
+  FailuresCount ret;
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  // Find the job and update the number of failures (and return the new count)
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      if (j->lastmountwithfailure() == mountId) {
+        j->set_retrieswithinmount(j->retrieswithinmount() + 1);
+      } else {
+        j->set_retrieswithinmount(1);
+        j->set_lastmountwithfailure(mountId);
+      }
+      j->set_totalretries(j->totalretries() + 1);
+    }
+    j->set_status(serializers::AJS_PendingMount);
+    ret.failuresWithinMount = j->retrieswithinmount();
+    ret.totalFailures = j->totalretries();
+    return ret;
+  }
+  throw NoSuchJob ("In ArchiveToFileRequest::addJobFailure(): could not find job");
+}
+
+
+void cta::objectstore::ArchiveToFileRequest::setAllJobsLinkingToTapePool() {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
@@ -66,7 +129,7 @@ void cta::objectstore::ArchiveToFileRequest::setJobsLinkingToTapePool() {
   }
 }
 
-void cta::objectstore::ArchiveToFileRequest::setJobsFailed() {
+void cta::objectstore::ArchiveToFileRequest::setAllJobsFailed() {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
@@ -74,7 +137,7 @@ void cta::objectstore::ArchiveToFileRequest::setJobsFailed() {
   }
 }
 
-void cta::objectstore::ArchiveToFileRequest::setJobsPendingNSdeletion() {
+void cta::objectstore::ArchiveToFileRequest::setAllJobsPendingNSdeletion() {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {

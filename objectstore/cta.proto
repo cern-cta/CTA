@@ -227,6 +227,8 @@ message TapePool {
   required MountQuota archivemountquota = 4109;
   required MountQuota retrievemountquota = 4110;
   required uint64 priority = 4111;
+  required uint32 maxretriespermount = 4112;
+  required uint32 maxtotalretries = 4113;
 }
 
 // ------------- Tape ----------------------------------------------------------
@@ -296,6 +298,9 @@ message ArchiveJobEntry {
   required ArchiveJobStatus status = 4404;
   required uint32 totalretries = 4405;
   required uint32 retrieswithinmount = 4406;
+  required uint64 lastmountwithfailure = 4407;
+  required uint32 maxretrieswithinmount = 4408;
+  required uint32 maxtotalretries = 4409;
 }
 
 message ArchiveToFileRequest {

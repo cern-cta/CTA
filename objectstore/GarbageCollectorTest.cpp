@@ -323,7 +323,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     // They will be automatically connected to the tape pool by the garbage 
     // collector from that moment on.
     {
-      atfr.setJobsLinkingToTapePool();
+      atfr.setAllJobsLinkingToTapePool();
       atfr.commit();
     }
     if (pass < 3) { pass++; continue; }

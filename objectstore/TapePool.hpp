@@ -126,6 +126,12 @@ public:
   };
   MountQuota getMountQuota();
   
+  // Retry limits ==============================================================
+  uint16_t getMaxRetriesWithinMount();
+  void setMaxRetriesWithinMount(uint16_t maxRetriesPerMount);
+  uint16_t getMaxTotalRetries();
+  void setMaxTotalRetries( uint16_t maxTotalRetries);
+  
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
  
