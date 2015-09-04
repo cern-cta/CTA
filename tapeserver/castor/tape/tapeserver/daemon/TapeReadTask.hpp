@@ -101,7 +101,7 @@ public:
 
       lc.log(LOG_INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
-      watchdog.notifyBeginNewJob();
+      watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.path, m_retrieveJob->archiveFile.fileId, m_retrieveJob->tapeFileLocation.fSeq);
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       currentErrorToCount = "Error_tapeReadData";
       while (stillReading) {

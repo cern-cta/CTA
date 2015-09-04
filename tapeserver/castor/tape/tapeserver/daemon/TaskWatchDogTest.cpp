@@ -23,27 +23,17 @@
 
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
+
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 
 namespace unitTests {
   using namespace castor::tape;
   using ::testing::_;
   
-  struct MockReportPacker : 
-  public tapeserver::daemon::ReportPackerInterface<tapeserver::daemon::detail::Recall> {
-    // TODO MOCK_METHOD1(reportStuckOn, void(FileStruct& file));
-    
-    MockReportPacker(tapeserver::client::ClientInterface & tg, castor::log::LogContext lc):
-    tapeserver::daemon::ReportPackerInterface<castor::tape::tapeserver::daemon::detail::Recall>(lc){
-    
-    }
-  };
-  
-
-
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   const double periodToReport = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
@@ -52,9 +42,7 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
   castor::log::LogContext lc(log);
   
-  MockClient mockClient;
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
-
 
   tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
     stuckPeriod,dummyInitialProcess,"testTapeDrive",lc,pollPeriod);
@@ -75,7 +63,6 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
   castor::log::LogContext lc(log);
   
-  MockClient mockClient;
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
   
   // We will poll for a 
@@ -83,8 +70,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
     dummyInitialProcess,"testTapeDrive",  lc, pollPeriod);
   
   watchdog.startThread();
-  tapegateway::FileToMigrateStruct file;
-  watchdog.notifyBeginNewJob(file);
+  watchdog.notifyBeginNewJob("/hey/ho/lets/go", 64, 64);
   usleep(100000);
   watchdog.stopAndWaitThread();
   // This time the internal watchdog should have triggered

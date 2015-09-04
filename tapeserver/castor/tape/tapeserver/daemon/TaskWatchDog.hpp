@@ -372,25 +372,25 @@ protected:
  * Implementation of TaskWatchDog for recalls 
  */
 class RecallWatchDog: public TaskWatchDog {
+  
 private:
-  /** Our file type */
-  //typedef cta::RetrieveJob FileStruct;
+  
   /** The file we are working on */
-  //FileStruct m_file;
+  std::string m_path;
+  uint64_t m_fileId;
+  uint64_t m_fSeq;
   
   virtual void logStuckFile() {
-// This code is commented out pending the implementation of a more complete
-// watchdog involving disk side too (CASTOR-4773 tapeserverd's internal watchdog 
-// improvement: track disk transfers as well)
-// 
-//    castor::log::ScopedParamContainer params(m_lc);
-//    params.addTiming("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-//          .add("Path",m_file.path())
-//          .add("FILEID",m_file.fileid())
-//          .add("fSeq",m_file.fseq());
-//    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+    castor::log::ScopedParamContainer params(m_lc);
+    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
+          .add("path",m_path)
+          .add("NSFILEID",m_fileId)
+          .add("fSeq",m_fSeq);
+    m_lc.log(LOG_WARNING, "No tape block movement for too long");
   }
+  
 public:
+  
   /** Pass through constructor */
   RecallWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
@@ -398,13 +398,16 @@ public:
     log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
     pollPeriod) {}
+  
   /**
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(/*const FileStruct& file*/){
+  void notifyBeginNewJob(const std::string path, const uint64_t fileId, uint64_t fSeq) {
     castor::server::MutexLocker locker(&m_mutex);
-    //m_file=file;
+    m_path=path;
+    m_fileId=fileId;
+    m_fSeq=fSeq;
     m_fileBeingMoved=true;
   }
   
@@ -414,7 +417,9 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-    //m_file=FileStruct();
+    m_path="";
+    m_fileId=0;
+    m_fSeq=0;
   }
 };
 
@@ -422,19 +427,25 @@ public:
  * Implementation of TaskWatchDog for migrations 
  */
 class MigrationWatchDog: public TaskWatchDog {
+
 private:
+  
   /** The file we are working on */
-//  cta::ArchiveJob m_file;
-//  
+  std::string m_path;
+  uint64_t m_fileId;
+  uint64_t m_fSeq;
+ 
   virtual void logStuckFile() {
-//    castor::log::ScopedParamContainer params(m_lc);
-//    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-//          .add("path",m_file.path())
-//          .add("NSFILEID",m_file.fileid())
-//          .add("fSeq",m_file.fseq());
-//    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+    castor::log::ScopedParamContainer params(m_lc);
+    params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
+          .add("path",m_path)
+          .add("NSFILEID",m_fileId)
+          .add("fSeq",m_fSeq);
+    m_lc.log(LOG_WARNING, "No tape block movement for too long");
   }
+  
 public:
+  
   /** Pass through constructor */
   MigrationWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
@@ -442,13 +453,16 @@ public:
     log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
     pollPeriod) {}
+  
   /**
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(/*const cta::ArchiveJob file*/){
+  void notifyBeginNewJob(const std::string path, const uint64_t fileId, uint64_t fSeq){
     castor::server::MutexLocker locker(&m_mutex);
-//    m_file=file;
+    m_path=path;
+    m_fileId=fileId;
+    m_fSeq=fSeq;
     m_fileBeingMoved=true;
   }
   
@@ -458,7 +472,9 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-//    m_file=FileStruct();
+    m_path="";
+    m_fileId=0;
+    m_fSeq=0;
   }
 };
 

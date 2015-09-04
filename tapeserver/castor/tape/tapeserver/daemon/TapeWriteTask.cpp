@@ -94,7 +94,7 @@ namespace daemon {
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
-      watchdog.notifyBeginNewJob();
+      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.path, m_archiveJob->archiveFile.fileId, m_archiveJob->tapeFileLocation.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;

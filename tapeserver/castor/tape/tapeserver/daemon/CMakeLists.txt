@@ -128,7 +128,7 @@ add_library(castortapeserverdaemonunittests SHARED
 # TapeDaemon.cpp
 # TapeDaemonTest.cpp
 
-# TaskWatchDogTest.cpp
+  TaskWatchDogTest.cpp
 )
 
 target_link_libraries(castortapeserverdaemonunittests
