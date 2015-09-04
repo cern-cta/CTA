@@ -23,23 +23,50 @@
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
+#include "scheduler/ArchiveMount.hpp"
+
 #include <gtest/gtest.h>
 #include <fstream>
 #include <cmath>
 #include <ext/stdio_filebuf.h>
 
 namespace unitTests{
-  using namespace castor::tape::tapeserver::daemon;
-
+  
+  class TestingArchiveMount: public cta::ArchiveMount {
+  public:
+    TestingArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbrm): ArchiveMount(std::move(dbrm)) {
+    }
+  };
+  
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
     TestingArchiveJob() {
     }
-  }; 
-
+  };
+  
+  using namespace castor::tape::tapeserver::daemon;
+  using namespace castor::tape::diskFile;
+  
+  struct MockMigrationReportPacker : public MigrationReportPacker {
+    void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, u_int32_t checksum, u_int64_t size) {
+      reportCompletedJob_(successfulArchiveJob, checksum, size);
+    }
+    
+    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception &ex) {
+      reportFailedJob_(failedArchiveJob, ex);
+    }
+    MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::ArchiveJob> &successfulArchiveJob, u_int32_t checksum, u_int64_t size));
+    MOCK_METHOD2(reportFailedJob_, void(std::unique_ptr<cta::ArchiveJob> &failedArchiveJob, const castor::exception::Exception &ex));
+    MOCK_METHOD0(reportEndOfSession, void());
+    MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
+    MockMigrationReportPacker(cta::ArchiveMount *rm,castor::log::LogContext lc):
+      MigrationReportPacker(rm,lc){}
+  };
+  
   class FakeTapeWriteTask : public  DataConsumer{
     castor::server::BlockingQueue<MemBlock*> fifo;
     unsigned long m_checksum;
@@ -67,53 +94,39 @@ namespace unitTests{
     in.read(&v[0],size);
     checksum = adler32(checksum,reinterpret_cast<unsigned char*>(&v[0]),size);
     out.write(&v[0],size);
-//    out.seekg(0, std::ios::beg);
     return checksum;
   }
+  
+  TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
+    char path[]="/tmp/testDRT-XXXXXX";
+    mkstemp(path);
+    std::ofstream out(path,std::ios::out | std::ios::binary);
+    castor::server::AtomicFlag flag;
+    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
+    castor::log::LogContext lc(log);
 
-// This test was commented out in the CMakeLists.txt file that would have
-// compiled it.  There was no comment explaining why it was commented out.
-// The following commit message was associated with the commenting out of the
-// CMakeLists.txt line:
-//
-//   commit 165117042951769b7d0023933cc6e705b04fad54
-//   Author: David COME <david.come@cern.ch>
-//   Date:   Tue Apr 22 11:35:11 2014 +0200
-//
-//      Commented out DiskReadTaskTest
-//
-// This test is commented and left here in the hope that somebody in the future
-// will have the time to make this test compile again.
-//
-//TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
-//  char path[]="/tmp/testDRT-XXXXXX";
-//  mkstemp(path);
-//  std::ofstream out(path,std::ios::out | std::ios::binary);
-//  castor::server::AtomicFlag flag;
-//  castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
-//  castor::log::LogContext lc(log);
-//  
-//  const int blockSize=1500;    
-//  const int fileSize(1024*2000);
-//  
-//  const unsigned long original_checksum = mycopy(out,fileSize);
-//  castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1,blockSize,lc);
-//  
-//  TestingArchiveJob file;
-//  
-//  file.archiveFile.lastKnownPath = path;
-//  file.archiveFile.size = fileSize;
-//  
-//  const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
-//  int value=std::ceil(1024*2000./blockSize);
-//  ASSERT_EQ(value,blockNeeded);
-//  
-//  FakeTapeWriteTask ftwt;
-//  ftwt.pushDataBlock(new MemBlock(1,blockSize));
-//  castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
-//  drt.execute(lc);
-//  
-//  ASSERT_EQ(original_checksum,ftwt.getChecksum());
-//  delete ftwt.getFreeBlock();
-//}
+    const int blockSize=1500;    
+    const int fileSize(1024*2000);
+
+    const unsigned long original_checksum = mycopy(out,fileSize);
+    castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1,blockSize,lc);
+
+    TestingArchiveJob file;
+
+    file.archiveFile.path = path;
+    file.archiveFile.size = fileSize;
+
+    const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
+    int value=std::ceil(1024*2000./blockSize);
+    ASSERT_EQ(value,blockNeeded);
+
+    FakeTapeWriteTask ftwt;
+    ftwt.pushDataBlock(new MemBlock(1,blockSize));
+    castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
+    DiskFileFactory fileFactory("RFIO","",0);
+    drt.execute(lc,fileFactory,*((MigrationWatchDog*)NULL));
+
+    ASSERT_EQ(original_checksum,ftwt.getChecksum());
+    delete ftwt.getFreeBlock();
+  }
 }
