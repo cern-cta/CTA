@@ -147,14 +147,15 @@ namespace unitTests
   };
 
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
-    const int nbJobs=5;
+    const int nbJobs=15;
+    const int maxNbJobsInjectedAtOnce = 6;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
     castor::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
     MockRetrieveMount trm(nbJobs);
-    EXPECT_CALL(trm, internalGetNextJob()).Times(8);
+    EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
     
     FakeDiskWriteThreadPool diskWrite(lc);
     castor::messages::AcsProxyDummy acs;
@@ -169,11 +170,11 @@ namespace unitTests
     castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);
     castor::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
-    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
+    tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
     ASSERT_EQ(true, rti.synchronousInjection());
-    ASSERT_EQ(nbJobs, diskWrite.m_tasks.size());
-    ASSERT_EQ(nbJobs, tapeRead.m_tasks.size());
+    ASSERT_EQ(maxNbJobsInjectedAtOnce+1, diskWrite.m_tasks.size());
+    ASSERT_EQ(maxNbJobsInjectedAtOnce+1, tapeRead.m_tasks.size());
 
     rti.startThreads();
     rti.requestInjection(false);
@@ -211,7 +212,7 @@ namespace unitTests
     castor::tape::tapeserver::drive::FakeDrive drive;
     
     MockRetrieveMount trm(0);
-    EXPECT_CALL(trm, internalGetNextJob()).Times(1);
+    EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
     
     FakeDiskWriteThreadPool diskWrite(lc);
     castor::messages::AcsProxyDummy acs;
