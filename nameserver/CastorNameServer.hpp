@@ -79,6 +79,30 @@ public:
   
   void updateStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
 
+  /**
+   * Add the specified tape file entry to the archive namespace.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @param nameServerTapeFile The tape file entry.
+   */
+  void addTapeFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const NameServerTapeFile &tapeFile);
+
+  /**
+   * Gets the tape entries from the archive namespace corresponding the archive
+   * with the specified path.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @return The tape file entries.
+   */
+  std::list<NameServerTapeFile> getTapeFiles(
+    const SecurityIdentity &requester,
+    const std::string &path);
+
 private:
   
   /**

@@ -6,7 +6,8 @@ add_library (ctanameserver SHARED
   mockNS/MockNameServer.cpp
   mockNS/SmartFd.cpp
   CastorNameServer.cpp
-  NameServer.cpp)
+  NameServer.cpp
+  NameServerTapeFile.cpp)
 
 target_link_libraries(ctanameserver castorns castorcommon)
 

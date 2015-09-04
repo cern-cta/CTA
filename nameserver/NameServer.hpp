@@ -21,6 +21,7 @@
 #include "common/archiveNS/ArchiveDirIterator.hpp"
 #include "common/archiveNS/ArchiveFileStatus.hpp"
 #include "common/SecurityIdentity.hpp"
+#include "nameserver/NameServerTapeFile.hpp"
 
 #include <memory>
 #include <string>
@@ -207,7 +208,7 @@ public:
    * Creates the specified file entry.
    *
    * @param requester The identity of the requester.
-   * @param path The absolute path of the directory.
+   * @param path The absolute path of the file.
    * @param mode The mode bits of the file entry.
    */
   virtual void createFile(
@@ -246,6 +247,30 @@ public:
    * @param path The absolute path of the file.
    */
   virtual void deleteFile(
+    const SecurityIdentity &requester,
+    const std::string &path) = 0;
+
+  /**
+   * Add the specified tape file entry to the archive namespace.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @param nameServerTapeFile The tape file entry.
+   */
+  virtual void addTapeFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const NameServerTapeFile &tapeFile) = 0;
+
+  /**
+   * Gets the tape entries from the archive namespace corresponding the archive
+   * with the specified path.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @return The tape file entries.
+   */
+  virtual std::list<NameServerTapeFile> getTapeFiles(
     const SecurityIdentity &requester,
     const std::string &path) = 0;
 

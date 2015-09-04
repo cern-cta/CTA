@@ -169,6 +169,25 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 }
 
 //------------------------------------------------------------------------------
+// addTapeFile
+//------------------------------------------------------------------------------
+void cta::MockNameServer::addTapeFile(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const NameServerTapeFile &tapeFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+  
+//------------------------------------------------------------------------------
+// getTapeFiles
+//------------------------------------------------------------------------------
+std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::MockNameServer() {

@@ -100,6 +100,26 @@ void cta::CastorNameServer::assertStorageClassIsNotInUse(
   const std::string &path) const {
 }
 
+
+//------------------------------------------------------------------------------
+// addTapeFile
+//------------------------------------------------------------------------------
+void cta::CastorNameServer::addTapeFile(
+  const SecurityIdentity &requester,
+  const std::string &path,
+  const NameServerTapeFile &tapeFile) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// getTapeFiles
+//------------------------------------------------------------------------------
+std::list<cta::NameServerTapeFile> cta::CastorNameServer::getTapeFiles(
+  const SecurityIdentity &requester,
+  const std::string &path) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -312,7 +332,8 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator cta::CastorNameServer::getDirContents(const SecurityIdentity &requester, const std::string &path) const {
+cta::ArchiveDirIterator cta::CastorNameServer::getDirContents(
+  const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   return getDirEntries(requester, path);
 }
@@ -320,7 +341,8 @@ cta::ArchiveDirIterator cta::CastorNameServer::getDirContents(const SecurityIden
 //------------------------------------------------------------------------------
 // getVidOfFile
 //------------------------------------------------------------------------------
-std::string cta::CastorNameServer::getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const {
+std::string cta::CastorNameServer::getVidOfFile(const SecurityIdentity &requester,
+  const std::string &path, const uint16_t copyNb) const {
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_fileid file_uniqueid;
   memset(&file_uniqueid, 0, sizeof(struct Cns_fileid));
