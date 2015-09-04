@@ -419,29 +419,35 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   }
 }
 
-/*
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
-  // TpcpClients only supports 32 bits session number
-  // This number has to be less than 2^31 as in addition there is a mix
-  // of signed and unsigned numbers
-  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
-  std::string vid = "V12345";
-  std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::READ_TP, castor::tape::tapegateway::READ);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
   
-  // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
+  // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
+  
+  // 1) prepare the fake scheduler
+  std::string vid = "V12345";
+  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
+  std::string density = "8000GC";
+
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
+  
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/noSuchTape", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
@@ -452,43 +458,45 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::server::ProcessCapDummy capUtils;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
-  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
+  ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
-  temp += "";
   ASSERT_NE(std::string::npos, logger.getLog().find("Drive not found on this path"));
-  ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionFailtoMount) {
-  // This test is the same as the previous one, with 
-  // wrong parameters set for the recall, so that we fail 
-  // to recall the first file and cancel the second.
+  
+  // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
+  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::TAPE_GATEWAY,
-    castor::tape::tapegateway::READ);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
+  
+  // List to remember the path of each remote file so that the existance of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -498,24 +506,63 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // We can prepare files for reading on the drive
   {
+    
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
         "V12345");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid="V12345";
-    // Prepare a non-empty files to recall list to pass the empty session
-    // detection
+    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+       volInfo , 0, true);
+
+    // Write a few files on the virtual tape and modify the archive name space
+    // so that it is in sync
+    uint8_t data[1000];
+    castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq=1; fseq <= 10 ; fseq ++) {
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+
+      // Create an entry in the archive namespace
+      std::ostringstream archiveFilePath;
+      archiveFilePath << "/test" << fseq;
+      const mode_t archiveFileMode = 0655;
+      const uint64_t archiveFileSize = 256*1024;
+      ns.createFile(
+        requester,
+        archiveFilePath.str(),
+        archiveFileMode,
+        archiveFileSize);
+// TODO
+// We need to add the tape file entry to the name server with at least one entry
+// pointing beyond the end of data
+
+      // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
+      std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
       ftr->tapeFileLocation.fSeq = fseq;
+      ftm_temp->tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
-      // Set the recall destination (/dev/null)
-      ftr->archiveFile.path = "/dev/null";
-      // Record the file for recall, with an out of tape fSeq
-      ftr->setFseq(ftr->fseq() + 1000);
-      sim.addFileToRecall(ftr, 1000);
+      ftm_temp->archiveFile.fileId = 1000 + fseq;
+      castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
+      ftr->tapeFileLocation.blockId = wf.getPosition();
+      ftr->remotePathAndStatus.path = remoteFilePath.str();
+      // Write the data (one block)
+      wf.write(data, sizeof(data));
+      // Close the file
+      wf.close();
+
+      // Schedule the retrieval of the file
+      std::list<std::string> archiveFilePaths;
+      archiveFilePaths.push_back(archiveFilePath.str());
+      scheduler. queueRetrieveRequest(
+        requester,
+        archiveFilePaths,
+        remoteFilePath.str());
     }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
@@ -531,47 +578,41 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
-  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
+  ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
-  // The session is now failing (internal error is reported)
-  ASSERT_EQ(1015, sim.m_sessionErrorCode);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
-  // This test is the same as the previous one, with 
-  // wrong parameters set for the recall, so that we fail 
-  // to recall the first file and cancel the second.
+  
+  // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
+  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::TAPE_GATEWAY,
-    castor::tape::tapegateway::READ, client::ClientSimulator::EmptyOnVolReq);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
+  
   // The drive will not even be opened. so no need for one.
   mockSys.fake.m_pathToDrive["/dev/nst0"] = NULL;
+  
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::MockSchedulerDatabase db;
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
   
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
@@ -586,23 +627,16 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
-  cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
+  ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("", sess.getVid());
-  // Currently, failures are reported by files and recall sessions do not fail.
-  ASSERT_EQ(0, sim.m_sessionErrorCode);
   // We should not have logged any error
   ASSERT_EQ(std::string::npos, logger.getLog().find("LVL=E"));
 }
-
+/*
 class TempFileForData {
 public:
   TempFileForData(size_t size): m_size(size) {
