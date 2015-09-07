@@ -19,7 +19,6 @@
 #include "common/checksum/ByteArray.hpp"
 
 #include <ostream>
-#include <zlib.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -128,14 +127,6 @@ uint32_t cta::ByteArray::getSize() const throw() {
 //------------------------------------------------------------------------------
 const uint8_t *cta::ByteArray::getBytes() const throw() {
   return m_bytes;
-}
-
-//------------------------------------------------------------------------------
-// getAdler32
-//------------------------------------------------------------------------------
-uint32_t cta::ByteArray::getAdler32() const {
-  const uint32_t checksum = adler32(0L, Z_NULL, 0);
-  return adler32(checksum, m_bytes, m_size);
 }
 
 //------------------------------------------------------------------------------

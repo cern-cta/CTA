@@ -20,6 +20,7 @@
 
 #include <list>
 #include <sstream>
+#include <stdint.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -206,6 +207,15 @@ public:
    * @returns true if the string is a valid unsigned integer, else false.
    */
   static bool isValidUInt(const std::string &str) throw();
+
+  /**
+   * Returns the alder32 checksum of the specified buffer.
+   *
+   * @param buf The buffer.
+   * @param len The length of the buffer in bytes.
+   * @return the alder32 checksum of the specified buffer.
+   */
+  static uint32_t getAdler32(const char *buf, const uint32_t len) throw();
 
 }; // class Utils
 

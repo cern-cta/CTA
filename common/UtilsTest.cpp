@@ -452,4 +452,19 @@ TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
   ASSERT_FALSE(Utils::isValidUInt("one"));
 }
 
+TEST_F(cta_UtilsTest, adler32_empty_buf) {
+  using namespace cta;
+
+  // The adler32 of an empty buffer is 1
+  ASSERT_EQ((uint32_t)1, Utils::getAdler32(NULL, 0));
+}
+
+TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
+  using namespace cta;
+
+  const char buf = '1';
+  ASSERT_EQ((uint32_t)0x320032, Utils::getAdler32(&buf, 1));
+}
+
+
 } // namespace unitTests
