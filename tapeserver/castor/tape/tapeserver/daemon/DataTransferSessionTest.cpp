@@ -214,21 +214,17 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
       remoteFilePaths.push_back(remoteFilePath.str());
 
-      // Create an entry in the archive namespace
+      // Create an archive file entry in the archive namespace
       std::ostringstream archiveFilePath;
       archiveFilePath << "/test" << fseq;
       const mode_t archiveFileMode = 0655;
       const uint64_t archiveFileSize = 256*1024;
-      ns.createFile(
+      ASSERT_NO_THROW(ns.createFile(
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        archiveFileSize);
-
-// TODO
-// We need to add the tape file entry to the name server
-
-
+        archiveFileSize));
+        
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm(new MockArchiveJob());
@@ -243,6 +239,23 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       wf.write(data, sizeof(data));
       // Close the file
       wf.close();
+
+      // Create tape file entry in the archive namespace
+      cta::NameServerTapeFile tapeFile;
+      tapeFile.copyNb = 1;
+      tapeFile.tapeFileLocation.fSeq = fseq;
+      tapeFile.tapeFileLocation.blockId = wf.getPosition();
+      tapeFile.tapeFileLocation.vid = volInfo.vid;
+      tapeFile.tapeFileLocation.copyNb = 1;
+      tapeFile.size = archiveFileSize;
+      tapeFile.compressedSize = archiveFileSize; // No compression
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
+        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      tapeFile.checksum = tapeFileChecksum;
+      ASSERT_NO_THROW(ns.addTapeFile(
+        requester,
+        archiveFilePath.str(),
+        tapeFile));
 
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
@@ -346,19 +359,16 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
       remoteFilePaths.push_back(remoteFilePath.str());
 
-      // Create an entry in the archive namespace
+      // Create an archive file entry in the archive namespace
       std::ostringstream archiveFilePath;
       archiveFilePath << "/test" << fseq;
       const mode_t archiveFileMode = 0655;
       const uint64_t archiveFileSize = 256*1024;
-      ns.createFile(
+      ASSERT_NO_THROW(ns.createFile(
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        archiveFileSize);
-// TODO
-// We need to add the tape file entry to the name server with at least one entry
-// pointing beyond the end of data
+        archiveFileSize));
 
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
@@ -374,6 +384,24 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       wf.write(data, sizeof(data));
       // Close the file
       wf.close();
+
+      // Create tape file entry in the archive namespace that is beyond the end
+      // of data
+      cta::NameServerTapeFile tapeFile;
+      tapeFile.copyNb = 1;
+      tapeFile.tapeFileLocation.fSeq = fseq + 10000;
+      tapeFile.tapeFileLocation.blockId = wf.getPosition() + 10000;
+      tapeFile.tapeFileLocation.vid = volInfo.vid;
+      tapeFile.tapeFileLocation.copyNb = 1;
+      tapeFile.size = archiveFileSize;
+      tapeFile.compressedSize = archiveFileSize; // No compression
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
+        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      tapeFile.checksum = tapeFileChecksum;
+      ASSERT_NO_THROW(ns.addTapeFile(
+        requester,
+        archiveFilePath.str(),
+        tapeFile));
 
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
@@ -527,19 +555,16 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
       remoteFilePaths.push_back(remoteFilePath.str());
 
-      // Create an entry in the archive namespace
+      // Create an archive file entry in the archive namespace
       std::ostringstream archiveFilePath;
       archiveFilePath << "/test" << fseq;
       const mode_t archiveFileMode = 0655;
       const uint64_t archiveFileSize = 256*1024;
-      ns.createFile(
+      ASSERT_NO_THROW(ns.createFile(
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        archiveFileSize);
-// TODO
-// We need to add the tape file entry to the name server with at least one entry
-// pointing beyond the end of data
+        archiveFileSize));
 
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
@@ -555,6 +580,23 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       wf.write(data, sizeof(data));
       // Close the file
       wf.close();
+
+      // Create tape file entry in the archive namespace
+      cta::NameServerTapeFile tapeFile;
+      tapeFile.copyNb = 1;
+      tapeFile.tapeFileLocation.fSeq = fseq;
+      tapeFile.tapeFileLocation.blockId = wf.getPosition();
+      tapeFile.tapeFileLocation.vid = volInfo.vid;
+      tapeFile.tapeFileLocation.copyNb = 1;
+      tapeFile.size = archiveFileSize;
+      tapeFile.compressedSize = archiveFileSize; // No compression
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
+        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      tapeFile.checksum = tapeFileChecksum;
+      ASSERT_NO_THROW(ns.addTapeFile(
+        requester,
+        archiveFilePath.str(),
+        tapeFile));
 
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;

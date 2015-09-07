@@ -39,9 +39,9 @@ struct TapeFileLocation {
    * @param fSeq The sequence number of the file.
    * @param blockId The block identifier of the file.
    * @param vid The vid of the tape containing the file. TODO: to be put in the mount object in the future
-   * @param copyNumber The copy number of the tape file. TODO: to be put in the mount object in the future
+   * @param copyNb The copy number of the tape file. TODO: to be put in the mount object in the future
    */
-  TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNumber);
+  TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNb);
 
   /**
    * The sequence number of the file.
@@ -61,7 +61,7 @@ struct TapeFileLocation {
   /**
    * The copy number of the tape file. TODO: to be put in the mount object in the future
    */
-  uint8_t copyNumber;
+  uint8_t copyNb;
 
 }; // struct TapeFileLocation
 

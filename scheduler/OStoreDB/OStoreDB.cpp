@@ -969,14 +969,14 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   // Now add all the candidate tape copies to the request. With validation
   for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
     // Check the tape copy copynumber (range = [1 - copyCount] )
-    if (tc->copyNumber > rqst.getTapeCopies().size() || tc->copyNumber < 1) {
+    if (tc->copyNb > rqst.getTapeCopies().size() || tc->copyNb < 1) {
       throw TapeCopyNumberOutOfRange("In OStoreDB::queue(RetrieveToFile): copy number out of range");
     }
   }
   // Add all the tape copies to the request
   try {
     for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
-      rtfr.addJob(tc->copyNumber, tc->vid, vidToAddress.at(tc->vid));
+      rtfr.addJob(tc->copyNb, tc->vid, vidToAddress.at(tc->vid));
     }
   } catch (std::out_of_range &) {
     throw NoSuchTape("In OStoreDB::queue(RetrieveToFile): tape not found");
@@ -990,7 +990,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   {
     // First tape copy is always better than nothing. 
     auto tc=rqst.getTapeCopies().begin();
-    selectedCopyNumber = tc->copyNumber;
+    selectedCopyNumber = tc->copyNb;
     selectedVid = tc->vid;
     // Get info for the tape.
     {
@@ -1007,7 +1007,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
       t.fetch();
       if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
         bestTapeQueuedBytes = t.getJobsSummary().bytes;
-        selectedCopyNumber = tc->copyNumber;
+        selectedCopyNumber = tc->copyNb;
         selectedVid = tc->vid;
       }
     }

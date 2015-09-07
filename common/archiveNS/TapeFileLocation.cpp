@@ -25,15 +25,19 @@ cta::TapeFileLocation::TapeFileLocation():
   fSeq(0),
   blockId(0),
   vid(""),
-  copyNumber(0) {
+  copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::TapeFileLocation::TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNumber):
+cta::TapeFileLocation::TapeFileLocation(
+  const uint64_t fSeq,
+  const uint64_t blockId,
+  const std::string &vid,
+  const uint8_t copyNb):
   fSeq(fSeq),
   blockId(blockId),
   vid(vid),
-  copyNumber(copyNumber) {
+  copyNb(copyNb) {
 }

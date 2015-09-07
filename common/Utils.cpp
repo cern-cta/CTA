@@ -477,7 +477,7 @@ bool cta::Utils::isValidUInt(const std::string &str)
 //------------------------------------------------------------------------------
 // getAdler32
 //------------------------------------------------------------------------------
-uint32_t cta::Utils::getAdler32(const char *buf, const uint32_t len)
+uint32_t cta::Utils::getAdler32(const uint8_t *buf, const uint32_t len)
   throw() {
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
   return adler32(checksum, (const Bytef*)buf, len);

@@ -215,7 +215,7 @@ public:
    * @param len The length of the buffer in bytes.
    * @return the alder32 checksum of the specified buffer.
    */
-  static uint32_t getAdler32(const char *buf, const uint32_t len) throw();
+  static uint32_t getAdler32(const uint8_t *buf, const uint32_t len) throw();
 
 }; // class Utils
 
