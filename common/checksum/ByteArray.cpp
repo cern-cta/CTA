@@ -19,6 +19,7 @@
 #include "common/checksum/ByteArray.hpp"
 
 #include <ostream>
+#include <strings.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -51,7 +52,21 @@ cta::ByteArray::ByteArray(const std::string &bytes) {
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// copy constructor
+//------------------------------------------------------------------------------
+cta::ByteArray::ByteArray(const uint32_t value) {
+  m_size = sizeof value;
+  m_bytes = new uint8_t[sizeof value];
+  bzero(m_bytes, sizeof m_bytes);
+
+  m_bytes[0] = value       & 0xFF;
+  m_bytes[1] = value >>  8 & 0xFF;
+  m_bytes[2] = value >> 16 & 0xFF;
+  m_bytes[3] = value >> 24 & 0xFF;
+}
+
+//------------------------------------------------------------------------------
+// copy constructor
 //------------------------------------------------------------------------------
 cta::ByteArray::ByteArray(const ByteArray &other) {
   m_size = other.m_size;

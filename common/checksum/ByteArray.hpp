@@ -70,6 +70,15 @@ public:
   ByteArray(const std::string &bytes);
 
   /**
+   * Constructor.
+   *
+   * Copies the specified uint32_t into this object in little endian byte order.
+   *
+   * @param value The value.
+   */
+  explicit ByteArray(const uint32_t value);
+
+  /**
    * Copy constructor.
    */
   ByteArray(const ByteArray &other);

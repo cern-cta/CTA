@@ -81,6 +81,20 @@ TEST_F(cta_ByteArrayTest, string_constructor) {
   ASSERT_EQ((uint8_t)'o', byteArray.getBytes()[4]);
 }
 
+TEST_F(cta_ByteArrayTest, uint32_t_constructor) {
+  using namespace cta;
+
+  const uint32_t value = 0x10203040;
+  const ByteArray byteArray(value);
+ 
+  // uint32_t should be stored in little endian byte order
+  ASSERT_EQ((uint32_t)4, byteArray.getSize());
+  ASSERT_EQ((uint8_t)0x40, byteArray.getBytes()[0]);
+  ASSERT_EQ((uint8_t)0x30, byteArray.getBytes()[1]);
+  ASSERT_EQ((uint8_t)0x20, byteArray.getBytes()[2]);
+  ASSERT_EQ((uint8_t)0x10, byteArray.getBytes()[3]);
+}
+
 TEST_F(cta_ByteArrayTest, copy_constructor) {
   using namespace cta;
 
