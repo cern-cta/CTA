@@ -47,7 +47,8 @@ target_link_libraries (ctacommon
   castorcommon
   pthread
   ${SQLITE3_LIBRARY_RELEASE}
-  uuid)
+  uuid
+  z)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ByteArrayTest.cpp

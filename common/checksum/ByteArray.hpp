@@ -118,6 +118,11 @@ public:
    */
   const uint8_t *getBytes() const throw();
 
+  /**
+   * Returns the adler 32 checksum of the array of bytes.
+   */
+  uint32_t getAdler32() const;
+
 private:
 
   /**

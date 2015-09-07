@@ -206,4 +206,17 @@ TEST_F(cta_ByteArrayTest, equality_operator_ne) {
   ASSERT_NE(byteArray1, byteArray2);
 }
 
+TEST_F(cta_ByteArrayTest, adler32_empty_array) {
+  // The adler32 of an empty buffer is 1
+  cta::ByteArray byteArray;
+  ASSERT_EQ((uint32_t)1, byteArray.getAdler32());
+}
+
+TEST_F(cta_ByteArrayTest, adler32_array_of_character_1) {
+  // The adler32 of an empty buffer is 1
+  const uint8_t c = '1';
+  cta::ByteArray byteArray(1, &c);
+  ASSERT_EQ((uint32_t)0x320032, byteArray.getAdler32());
+}
+
 } // namespace unitTests
