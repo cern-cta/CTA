@@ -22,9 +22,9 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
+#include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

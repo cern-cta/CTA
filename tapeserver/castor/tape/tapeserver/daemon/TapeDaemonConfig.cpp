@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
+#include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
 #include "rmc_constants.h"
 
 //------------------------------------------------------------------------------
