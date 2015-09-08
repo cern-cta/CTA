@@ -678,7 +678,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // We should not have logged any error
   ASSERT_EQ(std::string::npos, logger.getLog().find("LVL=E"));
 }
-/*
+
 class TempFileForData {
 public:
   TempFileForData(size_t size): m_size(size) {
@@ -736,7 +736,7 @@ struct expectedResult {
   uint32_t checksum;
   int errorCode;
 };
-
+/*
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
