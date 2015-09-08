@@ -40,7 +40,7 @@ struct Tape {
    * Destructor.
    */
   ~Tape() throw();
-
+  struct Status;
   /**
    * Constructor.
    *
@@ -61,7 +61,8 @@ struct Tape {
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const uint64_t dataOnTapeInBytes,
-    const CreationLog &creationLog);
+    const CreationLog &creationLog,
+    const Status & status);
 
   /**
    * Less than operator.
@@ -104,6 +105,25 @@ struct Tape {
    * The record of the entry's creation
    */
   CreationLog creationLog;
+  
+  /**
+   * Type holding the tape's status
+   */
+  struct Status {
+    bool busy;
+    bool archived;
+    bool disabled;
+    bool readonly;
+    bool full;
+    bool availableToWrite();
+  };
+  
+  /**
+   * The tape's status
+   */
+  Status status;
+  
+  
 
 }; // class Tape
 

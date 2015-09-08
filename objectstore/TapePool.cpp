@@ -143,17 +143,31 @@ void cta::objectstore::TapePool::removeTapeAndCommit(const std::string& vid) {
   }
 }
 
-auto cta::objectstore::TapePool::dumpTapes() -> std::list<TapeDump>{
+auto cta::objectstore::TapePool::dumpTapesAndFetchStatus() -> std::list<TapeDump>{
   checkPayloadReadable();
   std::list<TapeDump> ret;
   auto & tl = m_payload.tapes();
-  for (auto t=tl.begin(); t!=tl.end(); t++) {
+  for (auto tp=tl.begin(); tp!=tl.end(); tp++) {
+    cta::Tape::Status stat;
+    try {
+      objectstore::Tape t(tp->address(), m_objectStore);
+      objectstore::ScopedSharedLock tlock(t);
+      t.fetch();
+      stat.archived = t.isArchived();
+      stat.busy = t.isBusy();
+      stat.disabled = t.isDisabled();
+      stat.full = t.isFull();
+      stat.readonly = t.isReadOnly();
+    } catch (cta::exception::Exception & ex) {
+      continue;
+    }
     ret.push_back(TapeDump());
-    ret.back().address = t->address();
-    ret.back().vid = t->vid();
-    ret.back().capacityInBytes = t->capacity();
-    ret.back().logicalLibraryName = t->library();
-    ret.back().log.deserialize(t->log());
+    ret.back().address = tp->address();
+    ret.back().vid = tp->vid();
+    ret.back().capacityInBytes = tp->capacity();
+    ret.back().logicalLibraryName = tp->library();
+    ret.back().log.deserialize(tp->log());
+    ret.back().status = stat;
   }
   return ret;
 }

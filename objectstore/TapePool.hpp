@@ -26,6 +26,7 @@
 #include "ArchiveToFileRequest.hpp"
 #include "CreationLog.hpp"
 #include "Agent.hpp"
+#include "common/archiveNS/Tape.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -61,8 +62,9 @@ public:
     std::string logicalLibraryName;
     uint64_t capacityInBytes;
     objectstore::CreationLog log;
+    cta::Tape::Status status;
   };
-  std::list<TapeDump> dumpTapes();
+  std::list<TapeDump> dumpTapesAndFetchStatus();
   
   // Archive jobs management ===================================================
   void addJob(const ArchiveToFileRequest::JobDump & job,

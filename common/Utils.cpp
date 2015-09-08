@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/strerror_r_wrapper.hpp"
 #include "common/Utils.hpp"
 
@@ -30,6 +31,7 @@
 #include <sys/types.h>
 #include <uuid/uuid.h>
 #include <zlib.h>
+#include <sys/utsname.h>
 
 using cta::exception::Exception;
 
@@ -482,3 +484,16 @@ uint32_t cta::Utils::getAdler32(const uint8_t *buf, const uint32_t len)
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
   return adler32(checksum, (const Bytef*)buf, len);
 }
+
+//------------------------------------------------------------------------------
+// getShortHostname
+//------------------------------------------------------------------------------
+std::string cta::Utils::getShortHostname() {
+  struct utsname un;
+  exception::Errnum::throwOnMinusOne(uname (&un));
+  std::vector<std::string> snn;
+  splitString(un.nodename, '.', snn);
+  return snn.at(0);
+}
+
+

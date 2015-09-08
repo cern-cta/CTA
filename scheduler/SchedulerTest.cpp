@@ -29,6 +29,7 @@
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/TapeMount.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "common/archiveNS/StorageClass.hpp"
 #include "common/archiveNS/Tape.hpp"
@@ -2402,8 +2403,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
       s_remoteFileRawPath1), std::exception);
   }
 
-  // Emulate a tape server by ask for a mount and then a file
-  //const MountRequest *mount = scheduler.getNextMount(libraryName);
+  // Emulate a tape server by asking for a mount and then a file
+  std::unique_ptr<cta::TapeMount> mount;
+  ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+  ASSERT_NE((cta::TapeMount*)NULL, mount.get());
 
   {
     std::list<std::string> archiveFiles;
@@ -2559,6 +2562,7 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
     ASSERT_EQ(s_user.gid, status->owner.gid);
   }
 }
+
 
 static cta::MockNameServerFactory mockNsFactory;
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

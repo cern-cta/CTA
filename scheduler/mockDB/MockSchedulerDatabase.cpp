@@ -684,7 +684,8 @@ cta::Tape cta::MockSchedulerDatabase::getTape(const std::string &vid) const {
             sqlite3_column_int(statement.get(),idx("GID"))),
           (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
           time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
-          (char *)sqlite3_column_text(statement.get(),idx("COMMENT")))
+          (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))),
+          Tape::Status()
       );
     }
     break;
@@ -1537,7 +1538,8 @@ std::list<cta::Tape> cta::MockSchedulerDatabase::getTapes() const {
           sqlite3_column_int(statement.get(),idx("GID"))),
         (char *)sqlite3_column_text(statement.get(),idx("COMMENT")),
         time_t(sqlite3_column_int(statement.get(),idx("CREATIONTIME"))),
-        (char *)sqlite3_column_text(statement.get(),idx("COMMENT")))
+        (char *)sqlite3_column_text(statement.get(),idx("COMMENT"))),
+     Tape::Status()
     ));
   }
   return tapes;

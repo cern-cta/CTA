@@ -118,7 +118,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 
     }
     // For each tape in the pool, list the tapes with work
-    auto tl = tpool.dumpTapes();
+    auto tl = tpool.dumpTapesAndFetchStatus();
     for (auto tp = tl.begin(); tp!= tl.end(); tp++) {
       objectstore::Tape t(tp->address, m_objectStore);
       objectstore::ScopedSharedLock tl(t);
@@ -547,7 +547,6 @@ void OStoreDB::createTape(const std::string& vid,
 }
 
 cta::Tape OStoreDB::getTape(const std::string &vid) const {
-  cta::Tape ret;
   // Got through all tape pools. Get the list of them
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
@@ -561,15 +560,16 @@ cta::Tape OStoreDB::getTape(const std::string &vid) const {
     // considered as a dangling pointer (and skip it)
     if (tp.getOwner() != re.getAddressIfSet())
       continue;
-    auto tl=tp.dumpTapes();
+    auto tl=tp.dumpTapesAndFetchStatus();
     for (auto ti=tl.begin(); ti!=tl.end(); ti++) {
       if (vid == ti->vid) {
         objectstore::Tape t(ti->address, m_objectStore);
         ScopedSharedLock tl(t);
         t.fetch();
         const uint64_t nbFiles = 0; // TO BE DONE
+        cta::Tape::Status status;
         return cta::Tape(ti->vid, nbFiles, ti->logicalLibraryName,
-          tpi->tapePool, ti->capacityInBytes, t.getStoredData(), ti->log);
+          tpi->tapePool, ti->capacityInBytes, t.getStoredData(), ti->log, status);
       }
     }
   }
@@ -591,14 +591,15 @@ std::list<cta::Tape> OStoreDB::getTapes() const {
     // considered as a dangling pointer (and skip it)
     if (tp.getOwner() != re.getAddressIfSet())
       continue;
-    auto tl=tp.dumpTapes();
+    auto tl=tp.dumpTapesAndFetchStatus();
     for (auto ti=tl.begin(); ti!=tl.end(); ti++) {
       objectstore::Tape t(ti->address, m_objectStore);
       ScopedSharedLock tl(t);
       t.fetch();
       const uint64_t nbFiles = 0; // TO BE DONE
       ret.push_back(cta::Tape(ti->vid, nbFiles, ti->logicalLibraryName,
-        tpi->tapePool, ti->capacityInBytes, t.getStoredData(), ti->log));
+        tpi->tapePool, ti->capacityInBytes, t.getStoredData(), ti->log,
+        ti->status));
     }
   }
   return ret;
@@ -645,7 +646,7 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
     // considered as a dangling pointer.
     if (tp.getOwner() != re.getAddressIfSet())
       continue;
-    auto tl=tp.dumpTapes();
+    auto tl=tp.dumpTapesAndFetchStatus();
     for (auto t=tl.begin(); t!=tl.end(); t++) {
       if (t->logicalLibraryName == name)
         throw LibraryInUse("In OStoreDB::deleteLogicalLibrary: trying to delete a library used by a tape.");
@@ -962,7 +963,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     objectstore::TapePool tp(pool->address, m_objectStore);
     objectstore::ScopedSharedLock tpl(tp);
     tp.fetch();
-    auto tapes = tp.dumpTapes();
+    auto tapes = tp.dumpTapesAndFetchStatus();
     for(auto tape=tapes.begin(); tape!=tapes.end(); tape++)
       vidToAddress[tape->vid] = tape->address;
   }
@@ -1096,7 +1097,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     objectstore::TapePool tp(tpAdress, m_objectStore);
     objectstore::ScopedSharedLock tpl(tp);
     tp.fetch();
-    auto tlist = tp.dumpTapes();
+    auto tlist = tp.dumpTapesAndFetchStatus();
     std::string tAddress;
     for (auto tptr = tlist.begin(); tptr!=tlist.end(); tptr++) {
       if (tptr->vid == vid)

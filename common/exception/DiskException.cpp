@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/DiskException.hpp"
+#include "common/exception/DiskException.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

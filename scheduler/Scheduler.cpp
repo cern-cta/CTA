@@ -47,6 +47,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <algorithm>
 
 //------------------------------------------------------------------------------
 // TransferFailureToStr
@@ -765,13 +766,101 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo();
   
-  // Prioritize the mounts.
-  throw NotImplemented("");
-  // TODO: finish
-
-//  dbMount = m_db.getNextMount(logicalLibraryName, driveName);
-//
-//  return wrapDbMountInSchedulerMount(std::move(dbMount));
+  // We should now filter the potential mounts to keep only the ones we are
+  // compatible with (match the logical library for retrieves).
+  // We also only want the potential mounts for which we still have 
+  // We cannot filter the archives yet
+  for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
+    if (m->type == MountType::RETRIEVE && m->logicalLibrary != logicalLibraryName) {
+      m = mountInfo->potentialMounts.erase(m);
+    } else {
+      m++;
+    }
+  }
+  
+  // With the existing mount list, we can now populate the potential mount list
+  // with the per tape pool existing mount statistics.
+  typedef std::pair<std::string, cta::MountType::Enum> tpType;
+  std::map<tpType, uint32_t> existingMountsSummary;
+  for (auto em=mountInfo->existingMounts.begin(); em!=mountInfo->existingMounts.end(); em++) {
+    try {
+      existingMountsSummary.at(tpType(em->tapePool, em->type))++;
+    } catch (std::out_of_range &) {
+      existingMountsSummary[tpType(em->tapePool, em->type)] = 1;
+    }
+  }
+  
+  // We can now filter out the potential mounts for which their mount criteria
+  // is already met, filter out the potential mounts for which the maximum mount
+  // quota is already reached, and weight the remaining by how much of their quota 
+  // is reached
+  for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
+    // Get summary data
+    uint32_t existingMounts;
+    try {
+      existingMounts = existingMountsSummary.at(tpType(m->tapePool, m->type));
+    } catch (std::out_of_range) {
+      existingMounts = 0;
+    }
+    bool mountPassesACriteria = false;
+    if (m->bytesQueued / (1 + existingMounts) > m->mountCriteria.maxBytesQueued)
+      mountPassesACriteria = true;
+    if (m->filesQueued / (1 + existingMounts) > m->mountCriteria.maxFilesQueued)
+      mountPassesACriteria = true;
+    if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > (int64_t)m->mountCriteria.maxAge))
+      mountPassesACriteria = true;
+    if (!mountPassesACriteria || existingMounts > m->mountQuota.quota) {
+      m = mountInfo->potentialMounts.erase(m);
+    } else {
+      // populate the mount with a weight 
+      m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->mountQuota.quota;
+   }
+  }
+  
+  // We can now sort the potential mounts in decreasing priority order. 
+  // The ordering is defined in operator <.
+  // We want the result in descending order or priority so we reverse the vector
+  std::sort(mountInfo->potentialMounts.begin(), mountInfo->potentialMounts.end());
+  std::reverse(mountInfo->potentialMounts.begin(), mountInfo->potentialMounts.end());
+  
+  // We can now simply iterate on the candidates until we manage to create a
+  // mount for one of them
+  for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
+    // If the mount is an archive, we still have to find a tape.
+    if (m->type==cta::MountType::ARCHIVE) {
+      // We need to find a tape for archiving. It should be both in the right 
+      // tape pool and in the drive's logical library
+      auto tapesList = m_db.getTapes();
+      // The first tape matching will go for a prototype.
+      // TODO: improve to reuse already partially written tapes
+      for (auto t=tapesList.begin(); t!=tapesList.end(); t++) {
+        if (t->logicalLibraryName == logicalLibraryName &&
+            t->tapePoolName == m->tapePool &&
+            !t->status.availableToWrite()) {
+          // We have our tape. Try to create the session. Prepare a return value
+          // for it.
+          std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount);
+          // Get the db side of the session
+          try {
+            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t->vid,
+                t->tapePoolName, 
+                driveName, 
+                logicalLibraryName, 
+                Utils::getShortHostname(), 
+                time(NULL)).release());
+            return std::unique_ptr<TapeMount> (internalRet.release());
+          } catch (cta::exception::Exception & ex) {
+            continue;
+          }
+        }
+      }
+    } else if (m->type==cta::MountType::RETRIEVE) {
+      throw NotImplemented("");
+    } else {
+      throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
+    }
+  }
+  return std::unique_ptr<TapeMount>();
 }
 
 //

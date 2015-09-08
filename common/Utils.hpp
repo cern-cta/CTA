@@ -207,6 +207,13 @@ public:
    * @returns true if the string is a valid unsigned integer, else false.
    */
   static bool isValidUInt(const std::string &str) throw();
+  
+  /**
+   * Gets the short host name from the system
+   * 
+   * @return the short host name
+   */
+  static std::string getShortHostname();
 
   /**
    * Returns the alder32 checksum of the specified buffer.

@@ -24,6 +24,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <stdexcept>
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
@@ -266,8 +267,24 @@ public:
     MountCriteria mountCriteria; /**< The mount criteria collection */
     MountQuota mountQuota; /**< The mount quota collection */     
     std::string logicalLibrary; /**< The logical library (for a retrieve) */
+    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 [ ratio of existing mounts/quota (for faire share of mounts)*/
+    
+    bool operator < (const PotentialMount &other) const {
+      if (priority < other.priority)
+        return true;
+      if (priority > other.priority)
+        return false;
+      if (type == cta::MountType::Enum::ARCHIVE && other.type != cta::MountType::Enum::ARCHIVE)
+        return false;
+      if (other.type == cta::MountType::Enum::ARCHIVE && type != cta::MountType::Enum::ARCHIVE)
+        return true;
+      if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
+        return true;
+      return false;
+    }
   };
   
+
   /**
    * Information about the existing mounts.
    */
