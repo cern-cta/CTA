@@ -69,10 +69,12 @@ public:
   }
   
   virtual ~OStoreDBWrapper() throw() {
-    m_OStoreDB.setAgent(*((objectstore::Agent*)NULL));
-    objectstore::ScopedExclusiveLock agl(m_agent);
-    m_agent.fetch();
-    m_agent.removeAndUnregisterSelf();
+    try {
+      m_OStoreDB.setAgent(*((objectstore::Agent*)NULL));
+      objectstore::ScopedExclusiveLock agl(m_agent);
+      m_agent.fetch();
+      m_agent.removeAndUnregisterSelf();
+    } catch (cta::exception::Exception &) {}
   }
   
   virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const {

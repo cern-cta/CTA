@@ -96,6 +96,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
     if (tpool.getJobsSummary().files) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
+      m.tapePool = tpp->tapePool;
       m.type = cta::MountType::ARCHIVE;
       m.bytesQueued = tpool.getJobsSummary().bytes;
       m.filesQueued = tpool.getJobsSummary().files;      

@@ -817,11 +817,12 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
       mountPassesACriteria = true;
     if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > (int64_t)m->mountCriteria.maxAge))
       mountPassesACriteria = true;
-    if (!mountPassesACriteria || existingMounts > m->mountCriteria.quota) {
+    if (!mountPassesACriteria || existingMounts >= m->mountCriteria.quota) {
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->mountCriteria.quota;
+      m++;
    }
   }
   
@@ -844,7 +845,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
       for (auto t=tapesList.begin(); t!=tapesList.end(); t++) {
         if (t->logicalLibraryName == logicalLibraryName &&
             t->tapePoolName == m->tapePool &&
-            !t->status.availableToWrite()) {
+            t->status.availableToWrite()) {
           // We have our tape. Try to create the session. Prepare a return value
           // for it.
           std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount);

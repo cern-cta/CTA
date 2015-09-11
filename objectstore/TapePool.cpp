@@ -372,7 +372,14 @@ cta::MountCriteriaByDirection
 void cta::objectstore::TapePool::setMountCriteriaByDirection(
   const MountCriteriaByDirection& mountCriteria) {
   checkPayloadWritable();
-  
+  m_payload.mutable_archivemountcriteria()->set_maxbytesbeforemount(mountCriteria.archive.maxBytesQueued);
+  m_payload.mutable_archivemountcriteria()->set_maxfilesbeforemount(mountCriteria.archive.maxFilesQueued);
+  m_payload.mutable_archivemountcriteria()->set_maxsecondsbeforemount(mountCriteria.archive.maxAge);
+  m_payload.mutable_archivemountcriteria()->set_quota(mountCriteria.archive.quota);
+  m_payload.mutable_retievemountcriteria()->set_maxbytesbeforemount(mountCriteria.retrieve.maxBytesQueued);
+  m_payload.mutable_retievemountcriteria()->set_maxfilesbeforemount(mountCriteria.retrieve.maxFilesQueued);
+  m_payload.mutable_retievemountcriteria()->set_maxsecondsbeforemount(mountCriteria.retrieve.maxAge);
+  m_payload.mutable_retievemountcriteria()->set_quota(mountCriteria.retrieve.quota);
 }
 
 

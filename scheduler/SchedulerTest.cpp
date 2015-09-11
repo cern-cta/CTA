@@ -25,11 +25,11 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "common/archiveNS/StorageClass.hpp"
 #include "common/archiveNS/Tape.hpp"
@@ -2287,8 +2287,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string tapePoolComment = "Tape-pool comment";
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolComment));
-  MountCriteriaByDirection mcbd(MountCriteria(0,0,0,1), MountCriteria(0,0,0,1));
-  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapeTapePool", mcbd));
+  MountCriteriaByDirection mcbd(MountCriteria(1,1,0,1), MountCriteria(1,1,0,1));
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TestTapePool", mcbd));
 
   const std::string libraryName = "TestLogicalLibrary";
   const std::string libraryComment = "Library comment";
@@ -2405,10 +2405,24 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
       s_remoteFileRawPath1), std::exception);
   }
 
-  // Emulate a tape server by asking for a mount and then a file
-  std::unique_ptr<cta::TapeMount> mount;
-  ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
-  ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+  {
+    // Emulate a tape server by asking for a mount and then a file (and succeed
+    // the transfer)
+    std::unique_ptr<cta::TapeMount> mount;
+    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    ASSERT_NO_THROW(archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release())));
+    ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
+    std::unique_ptr<cta::ArchiveJob> archiveJob;
+    ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
+    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
+    archiveJob->complete();
+    ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
+    ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
+    ASSERT_NO_THROW(archiveMount->complete());
+  }
 
   {
     std::list<std::string> archiveFiles;

@@ -30,18 +30,17 @@ namespace cta {
     uint64_t maxAge; /**< The maximum age for a request before trigerring
                            * a request (in seconds) */
     uint16_t quota; /**< The maximum number of mounts for this tape pool */
-    MountCriteria(uint64_t maxFiles, uint64_t maxBytes, uint64_t maxAge, 
-      uint16_t quota):
-    maxFilesQueued(maxFiles), maxBytesQueued(maxBytesQueued), maxAge(maxAge), 
-      quota(quota) {}
+    MountCriteria(uint64_t mf, uint64_t mb, uint64_t ma, 
+      uint16_t q):
+    maxFilesQueued(mf), maxBytesQueued(mb), maxAge(ma), quota(q) {}
     MountCriteria(): maxFilesQueued(0), maxBytesQueued(0), maxAge(0), quota(0) {}
   };
   
   struct MountCriteriaByDirection {
     MountCriteria archive;
     MountCriteria retrieve;
-    MountCriteriaByDirection(const MountCriteria& archive, const MountCriteria & retrieve):
-      archive(archive), retrieve(retrieve) {}
+    MountCriteriaByDirection(const MountCriteria& a, const MountCriteria & r):
+      archive(a), retrieve(r) {}
     MountCriteriaByDirection(): archive(), retrieve() {}
   };
 }
