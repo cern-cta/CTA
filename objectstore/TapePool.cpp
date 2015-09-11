@@ -56,10 +56,8 @@ void cta::objectstore::TapePool::initialize(const std::string& name) {
   m_payload.mutable_retievemountcriteria()->set_maxfilesbeforemount(100000);
   m_payload.mutable_retievemountcriteria()->set_maxsecondsbeforemount(7*24*60*60);
   // Default quotas are zero.
-  m_payload.mutable_archivemountquota()->set_quota(0);
-  m_payload.mutable_archivemountquota()->set_allowedoverhead(0);
-  m_payload.mutable_retrievemountquota()->set_quota(0);
-  m_payload.mutable_retrievemountquota()->set_allowedoverhead(0);
+  m_payload.mutable_archivemountcriteria()->set_quota(0);
+  m_payload.mutable_retievemountcriteria()->set_quota(0);
   // default the retries to 0.
   m_payload.set_maxretriespermount(0);
   m_payload.set_maxtotalretries(0);
@@ -356,28 +354,25 @@ bool cta::objectstore::TapePool::addOrphanedJobPendingNsDeletion(
   return true;
 }
 
-cta::objectstore::TapePool::MountCriteria 
-  cta::objectstore::TapePool::getMountCriteria() {
-  MountCriteria ret;
+cta::MountCriteriaByDirection
+  cta::objectstore::TapePool::getMountCriteriaByDirection() {
+  MountCriteriaByDirection ret;
   checkPayloadReadable();
   ret.archive.maxAge = m_payload.archivemountcriteria().maxsecondsbeforemount();
   ret.archive.maxBytesQueued = m_payload.archivemountcriteria().maxbytesbeforemount();
   ret.archive.maxFilesQueued = m_payload.archivemountcriteria().maxfilesbeforemount();
+  ret.archive.quota = m_payload.archivemountcriteria().quota();
   ret.retrieve.maxAge = m_payload.retievemountcriteria().maxsecondsbeforemount();
   ret.retrieve.maxBytesQueued = m_payload.retievemountcriteria().maxbytesbeforemount();
   ret.retrieve.maxFilesQueued = m_payload.retievemountcriteria().maxfilesbeforemount();
+  ret.retrieve.quota = m_payload.retievemountcriteria().quota();
   return ret;
 }
 
-cta::objectstore::TapePool::MountQuota
-  cta::objectstore::TapePool::getMountQuota() {
-  checkPayloadReadable();
-  MountQuota ret;
-  ret.archive.quota = m_payload.archivemountquota().quota();
-  ret.archive.allowedOverhead = m_payload.archivemountquota().allowedoverhead();
-  ret.retrieve.quota = m_payload.retrievemountquota().quota();
-  ret.retrieve.allowedOverhead = m_payload.retrievemountquota().allowedoverhead();
-  return ret;
+void cta::objectstore::TapePool::setMountCriteriaByDirection(
+  const MountCriteriaByDirection& mountCriteria) {
+  checkPayloadWritable();
+  
 }
 
 

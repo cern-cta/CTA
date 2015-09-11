@@ -427,6 +427,7 @@ cta::TapePool cta::MockSchedulerDatabase::getTapePool(const std::string &name)
       pool = TapePool(
         (char *)sqlite3_column_text(statement.get(),idx("NAME")),
         sqlite3_column_int(statement.get(),idx("NBPARTIALTAPES")),
+        MountCriteriaByDirection(MountCriteria(0,0,0,0),MountCriteria(0,0,0,0)),
         CreationLog(
           UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
             sqlite3_column_int(statement.get(),idx("GID"))),
@@ -1183,6 +1184,7 @@ std::list<cta::TapePool> cta::MockSchedulerDatabase::getTapePools() const {
     pools.push_back(TapePool(
       (char *)sqlite3_column_text(statement.get(),idx("NAME")),
       sqlite3_column_int(statement.get(),idx("NBPARTIALTAPES")),
+      MountCriteriaByDirection(), 
       CreationLog(
           UserIdentity(sqlite3_column_int(statement.get(),idx("UID")),
             sqlite3_column_int(statement.get(),idx("GID"))),

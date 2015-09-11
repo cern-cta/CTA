@@ -332,7 +332,7 @@ public:
     const std::string &name,
     const uint32_t nbPartialTapes,
     const std::string &comment);
-
+  
   /**
    * Delete the tape pool with the specifed name.
    *
@@ -352,6 +352,10 @@ public:
    */
   virtual std::list<TapePool> getTapePools(
     const SecurityIdentity &requester) const;
+  
+  /***/
+  virtual void setTapePoolMountCriteria(const std::string & tapePoolName, 
+    const MountCriteriaByDirection & mountCriteriaByDirection);
 
   /**
    * Creates the specified archive route.

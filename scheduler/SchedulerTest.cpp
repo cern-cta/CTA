@@ -25,7 +25,7 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
+//#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -2287,6 +2287,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string tapePoolComment = "Tape-pool comment";
   ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolComment));
+  MountCriteriaByDirection mcbd(MountCriteria(0,0,0,1), MountCriteria(0,0,0,1));
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapeTapePool", mcbd));
 
   const std::string libraryName = "TestLogicalLibrary";
   const std::string libraryComment = "Library comment";
@@ -2562,13 +2564,14 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
     ASSERT_EQ(s_user.gid, status->owner.gid);
   }
 }
-
-
 static cta::MockNameServerFactory mockNsFactory;
-static cta::MockSchedulerDatabaseFactory mockDbFactory;
 
+#undef TEST_MOCK_DB
+#ifdef TEST_MOCK_DB
+static cta::MockSchedulerDatabaseFactory mockDbFactory;
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
   ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory)));
+#endif
 
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
 

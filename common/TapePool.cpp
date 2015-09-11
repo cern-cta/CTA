@@ -35,13 +35,14 @@ cta::TapePool::~TapePool() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::TapePool::TapePool(
-  const std::string &name,
-  const uint32_t nbPartialTapes,
-  const CreationLog &creationLog):
+    const std::string &name,
+    const uint32_t nbPartialTapes,
+    const MountCriteriaByDirection & mountCriteriaByDirection,
+    const CreationLog &creationLog):
   name(name),
   nbPartialTapes(nbPartialTapes),
-  creationLog(creationLog) {
-}
+  mountCriteriaByDirection(mountCriteriaByDirection),
+  creationLog(creationLog) {}
 
 //------------------------------------------------------------------------------
 // operator<

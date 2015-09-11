@@ -320,6 +320,14 @@ std::list<cta::TapePool> cta::Scheduler::getTapePools(
 }
 
 //------------------------------------------------------------------------------
+// getTapePools
+//------------------------------------------------------------------------------
+void cta::Scheduler::setTapePoolMountCriteria(
+  const std::string & tapePool, const MountCriteriaByDirection & mountCriteriaByDirection) {
+  return m_db.setTapePoolMountCriteria(tapePool, mountCriteriaByDirection);
+}
+
+//------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler::createArchiveRoute(
@@ -809,11 +817,11 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
       mountPassesACriteria = true;
     if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > (int64_t)m->mountCriteria.maxAge))
       mountPassesACriteria = true;
-    if (!mountPassesACriteria || existingMounts > m->mountQuota.quota) {
+    if (!mountPassesACriteria || existingMounts > m->mountCriteria.quota) {
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
-      m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->mountQuota.quota;
+      m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->mountCriteria.quota;
    }
   }
   

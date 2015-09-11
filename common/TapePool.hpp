@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/CreationLog.hpp"
+#include "common/MountControl.hpp"
 
 #include <string>
 
@@ -51,6 +52,7 @@ struct TapePool {
   TapePool(
     const std::string &name,
     const uint32_t nbPartialTapes,
+    const MountCriteriaByDirection & mountCriteriaByDirection,
     const CreationLog &creationLog);
 
   /**
@@ -70,6 +72,11 @@ struct TapePool {
    * time.
    */
   uint32_t nbPartialTapes;
+  
+  /**
+   * The collection of criteria for deciding (or not) to mount a tape.  
+   */
+  MountCriteriaByDirection mountCriteriaByDirection;
   
   /**
    * The record of the entry's creation

@@ -155,6 +155,11 @@ public:
   /* === Tape pools handling  =============================================== */
   virtual void createTapePool(const std::string& name, 
     const uint32_t nbPartialTapes, const cta::CreationLog &creationLog);
+  
+
+  virtual void setTapePoolMountCriteria(const std::string& tapePool,
+    const MountCriteriaByDirection& mountCriteriaByDirection);
+
 
   virtual std::list<TapePool> getTapePools() const;
 

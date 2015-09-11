@@ -103,17 +103,13 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       m.priority = tpool.getJobsSummary().priority;
       
       m.mountCriteria.maxFilesQueued = 
-          tpool.getMountCriteria().archive.maxFilesQueued;
+          tpool.getMountCriteriaByDirection().archive.maxFilesQueued;
       m.mountCriteria.maxBytesQueued = 
-          tpool.getMountCriteria().archive.maxBytesQueued;
+          tpool.getMountCriteriaByDirection().archive.maxBytesQueued;
       m.mountCriteria.maxAge = 
-          tpool.getMountCriteria().archive.maxAge;
-
-      m.mountQuota.quota = 
-          tpool.getMountQuota().archive.quota;
-      m.mountQuota.allowedOverhead = 
-          tpool.getMountQuota().archive.allowedOverhead;
-    
+          tpool.getMountCriteriaByDirection().archive.maxAge;
+      m.mountCriteria.quota = 
+          tpool.getMountCriteriaByDirection().archive.quota;
       m.logicalLibrary = "";
 
     }
@@ -135,17 +131,13 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
         m.logicalLibrary = t.getLogicalLibrary();
         
         m.mountCriteria.maxFilesQueued = 
-            tpool.getMountCriteria().retrieve.maxFilesQueued;
+            tpool.getMountCriteriaByDirection().retrieve.maxFilesQueued;
         m.mountCriteria.maxBytesQueued = 
-            tpool.getMountCriteria().retrieve.maxBytesQueued;
+            tpool.getMountCriteriaByDirection().retrieve.maxBytesQueued;
         m.mountCriteria.maxAge = 
-            tpool.getMountCriteria().retrieve.maxAge;
-
-        m.mountQuota.quota = 
-            tpool.getMountQuota().retrieve.quota;
-        m.mountQuota.allowedOverhead = 
-            tpool.getMountQuota().retrieve.allowedOverhead;
-      
+            tpool.getMountCriteriaByDirection().retrieve.maxAge;
+        m.mountCriteria.quota = 
+            tpool.getMountCriteriaByDirection().retrieve.quota;
         m.logicalLibrary = t.getLogicalLibrary();
       }
     }
@@ -481,7 +473,21 @@ void OStoreDB::createTapePool(const std::string& name,
   assertAgentSet();
   re.addOrGetTapePoolAndCommit(name, nbPartialTapes, 5, 5, *m_agent, creationLog);
   re.commit();
+  }
+
+void OStoreDB::setTapePoolMountCriteria(const std::string& tapePool,
+  const MountCriteriaByDirection& mountCriteriaByDirection) {
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::TapePool tp(re.getTapePoolAddress(tapePool),m_objectStore);
+  rel.release();
+  ScopedExclusiveLock tplock(tp);
+  tp.fetch();
+  tp.setMountCriteriaByDirection(mountCriteriaByDirection);
+  tp.commit();
 }
+
 
 std::list<cta::TapePool> OStoreDB::getTapePools() const {
   RootEntry re(m_objectStore);
@@ -491,7 +497,8 @@ std::list<cta::TapePool> OStoreDB::getTapePools() const {
   rel.release();
   std::list<cta::TapePool> ret;
   for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
-    ret.push_back(cta::TapePool(tp->tapePool, tp->nbPartialTapes, tp->log));
+    ret.push_back(cta::TapePool(tp->tapePool, tp->nbPartialTapes,
+      tp->mountCriteriaByDirection, tp->log));
   }
   return ret;
 }
@@ -860,10 +867,11 @@ std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> >
   auto tpl = re.dumpTapePools();
   rel.release();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
-    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes, tpp->log);
     objectstore::TapePool ostp(tpp->address, m_objectStore);
     ScopedSharedLock ostpl(ostp);
     ostp.fetch();
+    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes,
+      ostp.getMountCriteriaByDirection(), tpp->log);    
     auto arl = ostp.dumpJobs();
     ostpl.release();
     for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
@@ -905,10 +913,11 @@ std::list<ArchiveToTapeCopyRequest>
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     if (tpp->tapePool != tapePoolName) continue;
     std::list<ArchiveToTapeCopyRequest> ret;
-    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes, tpp->log);
     objectstore::TapePool ostp(tpp->address, m_objectStore);
     ScopedSharedLock ostpl(ostp);
     ostp.fetch();
+    cta::TapePool tp(tpp->tapePool, tpp->nbPartialTapes, 
+      ostp.getMountCriteriaByDirection(), tpp->log);
     auto arl = ostp.dumpJobs();
     ostpl.release();
     for (auto ar=arl.begin(); ar!=arl.end(); ar++) {

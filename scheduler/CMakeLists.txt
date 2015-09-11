@@ -13,10 +13,10 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveToTapeCopyRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
-  mockDB/MockSchedulerDatabase.cpp
-  mockDB/MockSchedulerDatabaseFactory.cpp
-  mockDB/SqliteColumnNameToIndex.cpp
-  mockDB/SQLiteStatementDeleter.cpp
+#  mockDB/MockSchedulerDatabase.cpp
+#  mockDB/MockSchedulerDatabaseFactory.cpp
+#  mockDB/SqliteColumnNameToIndex.cpp
+#  mockDB/SQLiteStatementDeleter.cpp
   MountType.cpp
   PositioningMethod.cpp
   RetrieveJob.cpp
@@ -28,8 +28,8 @@ set (CTA_SCHEDULER_SRC_FILES
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
-  mockDB/SqliteColumnNameToIndex.cpp
-  mockDB/SQLiteStatementDeleter.cpp
+#  mockDB/SqliteColumnNameToIndex.cpp
+#  mockDB/SQLiteStatementDeleter.cpp
   MountType.cpp
   UserRequest.cpp)
 
@@ -49,8 +49,8 @@ add_library (ctaschedulerutils SHARED
   DummyScheduler.cpp)
 
 add_library (ctaschedulerunittests SHARED
-  mockDB/MockSchedulerDatabase.cpp
-  mockDB/MockSchedulerDatabaseFactory.cpp
+#  mockDB/MockSchedulerDatabase.cpp
+#  mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
   SchedulerTest.cpp)

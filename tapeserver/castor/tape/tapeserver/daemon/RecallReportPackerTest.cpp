@@ -25,7 +25,8 @@
 #include "castor/log/StringLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "serrno.h"
-#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -154,7 +155,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
 
-  std::unique_ptr<cta::MockSchedulerDatabase> mdb(new cta::MockSchedulerDatabase);
+  std::unique_ptr<cta::SchedulerDatabase> mdb(new cta::OStoreDBWrapper<cta::objectstore::BackendVFS>("UnitTest"));
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 

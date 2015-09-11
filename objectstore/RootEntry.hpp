@@ -24,6 +24,7 @@
 #include "ObjectOps.hpp"
 #include "CreationLog.hpp"
 #include "UserIdentity.hpp"
+#include "common/MountControl.hpp"
 #include <list>
 
 namespace cta { namespace objectstore {
@@ -147,6 +148,7 @@ public:
     std::string tapePool;
     std::string address;
     uint32_t nbPartialTapes;
+    MountCriteriaByDirection mountCriteriaByDirection;
     CreationLog log;
   };
   std::list<TapePoolDump> dumpTapePools();

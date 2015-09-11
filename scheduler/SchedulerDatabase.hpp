@@ -26,8 +26,12 @@
 #include <vector>
 #include <stdexcept>
 #include "common/archiveNS/ArchiveFile.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
+#include "common/MountControl.hpp"
 
 namespace cta {
 
@@ -237,25 +241,10 @@ public:
   };
   
   /*============ Session management ==========================================*/
-  
   /**
    * A structure describing a potential mount with all the information allowing
    * comparison between mounts.
    */
-  struct MountCriteria {
-    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
-                              * before trigerring a mount */
-    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
-                           * a request */
-    uint64_t maxAge; /**< The maximum age for a request before trigerring
-                           * a request (in seconds) */
-  }; 
-  
-  struct MountQuota {
-    uint16_t quota;
-    uint16_t allowedOverhead;
-  };
-  
   struct PotentialMount {
     cta::MountType::Enum type; /**< Is this an archive or retireve? */
     std::string vid; /**< The tape VID (for a retieve) */
@@ -264,8 +253,7 @@ public:
     uint64_t filesQueued; /**< The number of files queued for this queue */
     uint64_t bytesQueued; /**< The amount of data currently queued */
     time_t oldestJobStartTime; /**< Creation time of oldest request */
-    MountCriteria mountCriteria; /**< The mount criteria collection */
-    MountQuota mountQuota; /**< The mount quota collection */     
+    MountCriteria mountCriteria; /**< The mount criteria collection */ 
     std::string logicalLibrary; /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 [ ratio of existing mounts/quota (for faire share of mounts)*/
     
@@ -456,7 +444,16 @@ public:
     const std::string &name,
     const uint32_t nbPartialTapes,
     const CreationLog& creationLog) = 0;
+  
+  /**
+   * Sets the mount criteria for a tape pool.
+   * @param tapePool tape pool name
+   * @param mountCriteriaByDirection the set of all the mount criteria.
+   */
 
+  virtual void setTapePoolMountCriteria(const std::string & tapePool,
+    const MountCriteriaByDirection & mountCriteriaByDirection) = 0;
+  
   /**
    * Delete the tape pool with the specified name.
    *

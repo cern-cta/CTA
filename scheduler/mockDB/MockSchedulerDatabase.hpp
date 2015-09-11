@@ -326,6 +326,10 @@ public:
     const SecurityIdentity &requester,
     const std::string &name);
 
+
+  virtual void setTapePoolMountCriteria(const std::string& tapePool, const MountCriteriaByDirection& mountCriteriaByDirection);
+
+  
   /**
    * Gets the current list of tape pools in lexicographical order.
    *

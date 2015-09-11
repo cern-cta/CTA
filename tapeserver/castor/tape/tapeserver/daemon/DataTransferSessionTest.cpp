@@ -48,7 +48,7 @@
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
 #include "scheduler/DummyScheduler.hpp"
-#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/MountType.hpp"
 
 #include <dirent.h>
@@ -182,7 +182,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 4) Create the scheduler
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
   // Always use the same requester
@@ -327,7 +327,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 4) Create the scheduler
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
   // Always use the same requester
@@ -470,7 +470,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 4) Create the scheduler
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
   // Always use the same requester
@@ -516,7 +516,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 4) Create the scheduler
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
   // Always use the same requester
@@ -650,7 +650,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 4) Create the scheduler
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
   // Always use the same requester
@@ -803,7 +803,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCapDummy capUtils;
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDB db;
   cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -882,7 +882,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCapDummy capUtils;
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDB db;
   cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -973,7 +973,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCapDummy capUtils;
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDB db;
   cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -1069,7 +1069,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCapDummy capUtils;
   cta::MockNameServer ns;
   cta::MockRemoteNS rns;
-  cta::MockSchedulerDatabase db;
+  cta::OStoreDB db;
   cta::Scheduler scheduler(ns, db, rns);
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);

@@ -106,6 +106,10 @@ public:
   virtual void createTapePool(const std::string& name, const uint32_t nbPartialTapes, const CreationLog& creationLog) {
     m_OStoreDB.createTapePool(name, nbPartialTapes, creationLog);
   }
+  
+  virtual void setTapePoolMountCriteria(const std::string& tapePool, const MountCriteriaByDirection& mountCriteriaByDirection) {
+    m_OStoreDB.setTapePoolMountCriteria(tapePool, mountCriteriaByDirection);
+  }
 
   virtual void deleteAdminHost(const SecurityIdentity& requester, const std::string& hostName) {
     m_OStoreDB.deleteAdminHost(requester, hostName);

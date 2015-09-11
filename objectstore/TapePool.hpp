@@ -23,6 +23,7 @@
 #include <string>
 #include "objectstore/cta.pb.h"
 #include "common/CreationLog.hpp"
+#include "common/MountControl.hpp"
 #include "ArchiveToFileRequest.hpp"
 #include "CreationLog.hpp"
 #include "Agent.hpp"
@@ -104,29 +105,9 @@ public:
   std::list<JobDump> dumpJobs();
   
   // Mount management ==========================================================
-  struct MountCriteriaPerDirection {
-    uint64_t maxFilesQueued; /**< The maximum number of files to be queued 
-                              * before trigerring a mount */
-    uint64_t maxBytesQueued; /**< The maximum amount a data before trigerring
-                           * a request */
-    uint64_t maxAge; /**< The maximum age for a request before trigerring
-                           * a request (in seconds) */
-  };
-  struct MountCriteria {
-    MountCriteriaPerDirection archive;
-    MountCriteriaPerDirection retrieve;
-  };
-  MountCriteria getMountCriteria();
-  
-  struct MountQuotaPerDirection {
-    uint16_t quota;
-    uint16_t allowedOverhead;
-  };
-  struct MountQuota {
-    MountQuotaPerDirection archive;
-    MountQuotaPerDirection retrieve;
-  };
-  MountQuota getMountQuota();
+  MountCriteriaByDirection getMountCriteriaByDirection();
+  void setMountCriteriaByDirection(const MountCriteriaByDirection & mountCriteria);
+
   
   // Retry limits ==============================================================
   uint16_t getMaxRetriesWithinMount();

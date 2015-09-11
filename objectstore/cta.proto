@@ -197,11 +197,7 @@ message MountCriteria {
   required uint64 maxFilesBeforeMount = 3200;
   required uint64 maxBytesBeforeMount = 3201;
   required uint64 maxSecondsBeforeMount = 3202;
-}
-
-message MountQuota {
-  required uint32 quota = 3300;
-  required uint32 allowedoverhead = 3301;
+  required uint32 quota = 3203;
 }
 
 // ------------- Tape pools  ---------------------------------------------------
@@ -224,11 +220,9 @@ message TapePool {
   required uint64 oldestJobCreationTime = 4106;
   required MountCriteria archivemountcriteria = 4107;
   required MountCriteria retievemountcriteria = 4108;
-  required MountQuota archivemountquota = 4109;
-  required MountQuota retrievemountquota = 4110;
-  required uint64 priority = 4111;
-  required uint32 maxretriespermount = 4112;
-  required uint32 maxtotalretries = 4113;
+  required uint64 priority = 4109;
+  required uint32 maxretriespermount = 4110;
+  required uint32 maxtotalretries = 4111;
 }
 
 // ------------- Tape ----------------------------------------------------------

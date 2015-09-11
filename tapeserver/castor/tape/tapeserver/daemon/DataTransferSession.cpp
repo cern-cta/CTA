@@ -87,7 +87,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
-  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName())); //getNextMount throws not implemented exception
+  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName())); //getNextMount throws not implemented exception, but can return NULL
+  // No mount to be done found, that was fast...
+  if (!tapeMount.get())
+    return MARK_DRIVE_AS_UP;
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.density=tapeMount->getDensity();
