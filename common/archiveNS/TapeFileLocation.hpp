@@ -44,6 +44,13 @@ struct TapeFileLocation {
   TapeFileLocation(const uint64_t fSeq, const uint64_t blockId, const std::string &vid, const uint8_t copyNb);
 
   /**
+   * Equality operator.
+   *
+   * @param ths The right hand side of the operator.
+   */
+  bool operator==(const TapeFileLocation &rhs) const;
+
+  /**
    * The sequence number of the file.
    */
   uint64_t fSeq;

@@ -201,4 +201,62 @@ TEST_F(cta_MockNameServerTest, storageClass_inheritance) {
   }
 }
 
+TEST_F(cta_MockNameServerTest, adding_and_getting_tapeFiles) {
+    using namespace cta;
+
+  std::unique_ptr<MockNameServer> ns;
+  ASSERT_NO_THROW(ns.reset(new MockNameServer()));
+
+  const std::string archiveFileName = "file1";
+  const std::string archiveFilePath = std::string("/") + archiveFileName;
+  const uint64_t archiveFileSize = 256 * 1024;
+  const std::string vid = "V12345";
+  const uint8_t copyNb = 1;
+  const uint64_t fseq = 1;
+  // block 0: VOL
+  // block 1: HDR1
+  // block 2: HDR2
+  // block 3: UHL1
+  // block 4: File mark
+  // block 5: First block of user file
+  const uint64_t blockId = 5;
+  const uint32_t adlerChecksum = 0x11223344;
+
+  // Create a file entry in the archive namespace
+  ASSERT_NO_THROW(ns->setOwner(s_adminOnAdminHost, "/", s_user));
+  ASSERT_NO_THROW(ns->createFile(s_userOnUserHost, "/file1", 0666,
+    archiveFileSize));
+  {
+    ArchiveDirIterator itor;
+    ASSERT_NO_THROW(itor = ns->getDirContents(s_userOnUserHost, "/"));
+    ASSERT_EQ(itor.hasMore(), true);
+    ASSERT_EQ(itor.next().name, archiveFileName);
+    ASSERT_EQ(itor.hasMore(), false);
+  }
+
+  // Add a tape file entry to the file entry in the archive namespace
+  NameServerTapeFile tapeFile;
+  tapeFile.copyNb = copyNb;
+  tapeFile.tapeFileLocation.fSeq = fseq;
+  tapeFile.tapeFileLocation.blockId = blockId;
+  tapeFile.tapeFileLocation.vid = vid;
+  tapeFile.tapeFileLocation.copyNb = copyNb;
+  tapeFile.size = archiveFileSize;
+  tapeFile.compressedSize = archiveFileSize; // No compression
+  cta::Checksum tapeFileChecksum(Checksum::CHECKSUMTYPE_ADLER32,
+    cta::ByteArray(adlerChecksum));
+  tapeFile.checksum = tapeFileChecksum;
+  ASSERT_NO_THROW(ns->addTapeFile(
+    s_userOnUserHost,
+    archiveFilePath,
+    tapeFile));
+
+  // Get back the tape file entry
+  std::list<NameServerTapeFile> tapeFiles;
+  ASSERT_NO_THROW(tapeFiles = ns->getTapeFiles(s_userOnUserHost,
+    archiveFilePath));
+  ASSERT_EQ(1, tapeFiles.size());
+  ASSERT_TRUE(tapeFile == tapeFiles.front());
+}
+
 } // namespace unitTests

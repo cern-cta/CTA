@@ -36,6 +36,13 @@ struct NameServerTapeFile {
   NameServerTapeFile();
 
   /**
+   * Equality operator.
+   *
+   * @param ths The right hand side of the operator.
+   */
+  bool operator==(const NameServerTapeFile &rhs) const;
+
+  /**
    * The copy number of the tape file where copy numbers start from 1.
    * Please note that copy number 0 is an ivalid copy number.
    */

@@ -47,6 +47,13 @@ cta::Checksum::Checksum(const ChecksumType &type, const ByteArray &byteArray):
 }
 
 //------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::Checksum::operator==(const Checksum &rhs) const {
+  return m_type == rhs.m_type && m_byteArray == rhs.m_byteArray;
+}
+
+//------------------------------------------------------------------------------
 // getType
 //------------------------------------------------------------------------------
 cta::Checksum::ChecksumType cta::Checksum::getType() const throw() {

@@ -61,6 +61,13 @@ public:
   Checksum(const ChecksumType &type, const ByteArray &byteArray);
 
   /**
+   * Equality operator.
+   *
+   * @param ths The right hand side of the operator.
+   */
+  bool operator==(const Checksum &rhs) const;
+
+  /**
    * Returns the type of the checksum.
    *
    * @return The type of the checksum.

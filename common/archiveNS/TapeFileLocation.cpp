@@ -41,3 +41,13 @@ cta::TapeFileLocation::TapeFileLocation(
   vid(vid),
   copyNb(copyNb) {
 }
+
+//------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::TapeFileLocation::operator==(const TapeFileLocation &rhs) const {
+  return fSeq    == rhs.fSeq    &&
+         blockId == rhs.blockId &&
+         vid     == rhs.vid     &&
+         copyNb  == rhs.copyNb;
+}

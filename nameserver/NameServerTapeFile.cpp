@@ -26,3 +26,14 @@ cta::NameServerTapeFile::NameServerTapeFile():
   size(0),
   compressedSize(0) {
 }
+
+//------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::NameServerTapeFile::operator==(const NameServerTapeFile &rhs) const {
+  return copyNb           == rhs.copyNb           &&
+         tapeFileLocation == rhs.tapeFileLocation &&
+         size             == rhs.size             &&
+         compressedSize   == rhs.compressedSize   &&
+         checksum         == rhs.checksum;
+}
