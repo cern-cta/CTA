@@ -679,141 +679,117 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_EQ(std::string::npos, logger.getLog().find("LVL=E"));
 }
 
-class TempFileForData {
-public:
-  TempFileForData(size_t size): m_size(size) {
-    // Create a temporary file
-    int randomFd = open("/dev/urandom", 0);
-    castor::exception::Errnum::throwOnMinusOne(randomFd, "Error opening /dev/urandom");
-    char path[100];
-    strncpy(path, "/tmp/castorUnitTestMigrationSourceXXXXXX", 100);
-    int tmpFileFd = mkstemp(path);
-    castor::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
-    m_path = path;
-    char * buff = NULL;
-    try {
-      buff = new char[size];
-      if(!buff) { throw castor::exception::Exception("Failed to allocate memory to read /dev/urandom"); }
-      castor::exception::Errnum::throwOnMinusOne(read(randomFd, buff, size));
-      castor::exception::Errnum::throwOnMinusOne(write(tmpFileFd, buff, size));
-      m_checksum = adler32(0L, Z_NULL, 0);
-      m_checksum = adler32(m_checksum, (const Bytef *)buff, size);
-      close(randomFd);
-      close(tmpFileFd);
-      delete[] buff;
-    } catch (...) {
-      delete[] buff;
-      unlink(m_path.c_str());
-      throw;
-    }
-  }
-  
-  ~TempFileForData() {
-    unlink(m_path.c_str());
-  }
-  const size_t m_size;
-  const std::string path() const { return m_path; }
-  uint32_t checksum() const { return m_checksum; }
-private:
-  std::string m_path;
-  uint32_t m_checksum;
-};
-
-class tempFileVector: public std::vector<TempFileForData *> {
-public:
-  ~tempFileVector() {
-    while(size()) {
-      delete back();
-      pop_back();
-    }
-  }
-};
-
-struct expectedResult {
-  expectedResult(int fs, uint32_t cs, int eCode = 0):
-    fSeq(fs), checksum(cs), errorCode(eCode) {}
-  int fSeq;
-  uint32_t checksum;
-  int errorCode;
-};
-/*
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionGooddayMigration) {
-  // TpcpClients only supports 32 bits session number
-  // This number has to be less than 2^31 as in addition there is a mix
-  // of signed and unsigned numbers
-  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
   
-  // Just label the tape
-  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345");
-  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+  // Create the bootstrap admin user and host
+  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), "admin user"));
+  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), "admin host"));
   
-  tempFileVector tempFiles;
-  std::vector<expectedResult> expected;
-  // Prepare the files (in real filesystem as they will be opened by the rfio client)
-  for (int fseq=1; fseq<=10; fseq++) {
-    // Create the file from which we will recall
-    std::unique_ptr<TempFileForData> tf(new TempFileForData(1000));
-    // Prepare the migrationRequest
-    MockArchiveJob ftm;
-    ftm.setFileSize(tf->m_size);
-    ftm.archiveFile.fileId = 1000 + fseq;
-    ftm.tapeFileLocation.fSeq = fseq;
-    ftm.setPath(tf->path());
-    sim.addFileToMigrate(ftm);
-    expected.push_back(expectedResult(fseq, tf->checksum()));
-    tempFiles.push_back(tf.release());
+  // create a single copy storage class
+  ASSERT_NO_THROW(scheduler.createStorageClass(requester, "SINGLE", 1, 1, "comment"));
+  
+  // assign it to the root directory
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(requester, "/", "SINGLE"));
+  
+  // create the logical library
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "illogical", "the illogical library"));
+  
+  // create the tape pool
+  ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // create the route
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
+  
+  // create the tape
+  cta::CreationLog log;
+  log.comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  
+  // List to remember the path of each remote file so that the existence of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  
+  // We can prepare files for writing on the drive
+  {    
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], "V12345");
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    
+    // schedule the archivals
+    for(int fseq=1; fseq <= 10 ; fseq ++) {      
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file:" << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+      
+      // Create the entry in the remote namespace (same user id of the requester)
+      cta::RemotePath rpath(remoteFilePath.str());
+      cta::RemoteFileStatus rstatus(requester.getUser(), 0777, 1000);
+      rns.createEntry(rpath, rstatus);
+
+      // Schedule the archival of the file
+      std::list<std::string> remoteFilePathList;
+      remoteFilePathList.push_back(remoteFilePath.str());
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
+    }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCapDummy capUtils;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::OStoreDB db;
-  cta::Scheduler scheduler(ns, db, rns);
-  DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
-  for (std::vector<struct expectedResult>::iterator i = expected.begin();
-      i != expected.end(); i++) {
-    ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  ASSERT_NO_THROW(sess.execute());
+  std::string temp = logger.getLog();
+  temp += "";
+  ASSERT_EQ("V12345", sess.getVid());
+  for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
+    cta::RemotePath rpath(*i);
+    ASSERT_NO_THROW(ns.statFile(requester, rpath.getAfterScheme()));
+    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, rpath.getAfterScheme()));
+    ASSERT_NE((uint64_t)(stat.get()), NULL);
+    ASSERT_EQ(stat->mode, 0777);
+    ASSERT_EQ(stat->size, 1000);
   }
-  ASSERT_EQ(0, sim.m_sessionErrorCode);
 }
 
 //
@@ -821,74 +797,103 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
 // from filesystem immediately. The disk tasks will then fail on open.
 ///
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
-  // TpcpClients only supports 32 bits session number
-  // This number has to be less than 2^31 as in addition there is a mix
-  // of signed and unsigned numbers
-  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
   
-  // Just label the tape
-  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345");
-  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+  // Create the bootstrap admin user and host
+  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), "admin user"));
+  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), "admin host"));
   
-  // Prepare the files, but delete them immediately. The migration will fail.
-  for (int fseq=1; fseq<=10; fseq++) {
-    // Create the file from which we will recall
-    std::unique_ptr<TempFileForData> tf(new TempFileForData(1000));
-    // Prepare the migrationRequest
-    MockArchiveJob ftm;
-    ftm.setFileSize(tf->m_size);
-    ftm.archiveFile.fileId = 1000 + fseq;
-    ftm.tapeFileLocation.fSeq = fseq;
-    ftm.setPath(tf->path());
-    sim.addFileToMigrate(ftm);
+  // create a single copy storage class
+  ASSERT_NO_THROW(scheduler.createStorageClass(requester, "SINGLE", 1, 1, "comment"));
+  
+  // assign it to the root directory
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(requester, "/", "SINGLE"));
+  
+  // create the logical library
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "illogical", "the illogical library"));
+  
+  // create the tape pool
+  ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // create the route
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
+  
+  // create the tape
+  cta::CreationLog log;
+  log.comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  
+  // List to remember the path of each remote file so that the existence of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  
+  // We can prepare files for writing on the drive
+  {    
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], "V12345");
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    
+    // schedule the archivals
+    for(int fseq=1; fseq <= 10 ; fseq ++) {      
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file:" << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+      
+      // WE, ON PURPOSE, DO NOT create the entry in the remote namespace (see previous test))
+      cta::RemotePath rpath(remoteFilePath.str());
+
+      // Schedule the archival of the file
+      std::list<std::string> remoteFilePathList;
+      remoteFilePathList.push_back(remoteFilePath.str());
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
+    }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCapDummy capUtils;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::OStoreDB db;
-  cta::Scheduler scheduler(ns, db, rns);
-  DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
-  ASSERT_EQ(SEINTERNAL, sim.m_sessionErrorCode);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  ASSERT_THROW(sess.execute(), castor::exception::Exception); //this should throw because the remote NS open fails
 }
 
 //
@@ -897,194 +902,235 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
 // last migrations
 //
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
-  // TpcpClients only supports 32 bits session number
-  // This number has to be less than 2^31 as in addition there is a mix
-  // of signed and unsigned numbers
-  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
+  
+  // Create the bootstrap admin user and host
+  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), "admin user"));
+  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), "admin host"));
+  
+  // create a single copy storage class
+  ASSERT_NO_THROW(scheduler.createStorageClass(requester, "SINGLE", 1, 1, "comment"));
+  
+  // assign it to the root directory
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(requester, "/", "SINGLE"));
+  
+  // create the logical library
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "illogical", "the illogical library"));
+  
+  // create the tape pool
+  ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // create the route
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
+  
+  // create the tape
+  cta::CreationLog log;
+  log.comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  
+  // List to remember the path of each remote file so that the existence of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize);
   
-  // Just label the tape
-  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345");
-  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
-  
-  tempFileVector tempFiles;
-  std::vector<expectedResult> expected;
-  uint64_t remainingSpace = tapeSize;
-  bool failedFileDone = false;
-  // Prepare the files (in real filesystem as they will be opened by the rfio client)
-  for (int fseq=1; fseq<=10; fseq++) {
-    // Create the file from which we will recall
-    const size_t fileSize = 1000;
-    std::unique_ptr<TempFileForData> tf(new TempFileForData(fileSize));
-    // Prepare the migrationRequest
-    MockArchiveJob ftm;
-    ftm.setFileSize(tf->m_size);
-    ftm.archiveFile.fileId = 1000 + fseq;
-    ftm.tapeFileLocation.fSeq = fseq;
-    ftm.setPath(tf->path());
-    sim.addFileToMigrate(ftm);
-    if (fileSize + 6 * 80 < remainingSpace) {
-      expected.push_back(expectedResult(fseq, tf->checksum()));
-      remainingSpace -= fileSize + 6 * 80;
-    } else if (!failedFileDone) {
-      // We add also the report for the first file (which will come in error)
-      expected.push_back(expectedResult(fseq, 0, ENOSPC));
-      failedFileDone = true;
+  // We can prepare files for writing on the drive
+  {    
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], "V12345");
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    
+    // schedule the archivals
+    for(int fseq=1; fseq <= 10 ; fseq ++) {      
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file:" << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+      
+      // Create the entry in the remote namespace (same user id of the requester)
+      cta::RemotePath rpath(remoteFilePath.str());
+      cta::RemoteFileStatus rstatus(requester.getUser(), 0777, 1000);
+      rns.createEntry(rpath, rstatus);
+
+      // Schedule the archival of the file
+      std::list<std::string> remoteFilePathList;
+      remoteFilePathList.push_back(remoteFilePath.str());
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
     }
-    tempFiles.push_back(tf.release());
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCapDummy capUtils;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::OStoreDB db;
-  cta::Scheduler scheduler(ns, db, rns);
-  DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
-  for (std::vector<struct expectedResult>::iterator i = expected.begin();
-      i != expected.end(); i++) {
-    if (!i->errorCode) {
-      ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
-    } else {
-      ASSERT_EQ(i->errorCode, sim.m_receivedErrorCodes[i->fSeq]);
-    }
-  }
-  ASSERT_EQ(ENOSPC, sim.m_sessionErrorCode);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  ASSERT_NO_THROW(sess.execute());
+  std::string temp = logger.getLog();
+  temp += "";
+  ASSERT_EQ("V12345", sess.getVid());
+//  //TODO: only 4 files out of 10 should have been migrated to this small tape (we need to check this with the "m" bit)
+//  for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
+//    cta::RemotePath rpath(*i);
+//    ASSERT_NO_THROW(ns.statFile(requester, rpath.getAfterScheme()));
+//    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, rpath.getAfterScheme()));
+//    ASSERT_NE((uint64_t)(stat.get()), NULL);
+//    ASSERT_EQ(stat->mode, 0777);
+//    ASSERT_EQ(stat->size, 1000);
+//  }
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
-  // TpcpClients only supports 32 bits session number
-  // This number has to be less than 2^31 as in addition there is a mix
-  // of signed and unsigned numbers
-  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  
+    
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
-  // 1) prepare the client and run it in another thread
-  uint32_t volReq = 0xBEEF;
+  // 1) prepare the fake scheduler
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density,
-    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
-  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
-  clientRunner simRun(sim);
-  simRun.start();
-  
+
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  // construct and run the session.
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+
+  // 4) Create the scheduler
+  cta::MockNameServer ns;
+  cta::MockRemoteNS rns;
+  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
+  cta::Scheduler scheduler(ns, db, rns);
+
+  // Always use the same requester
+  const cta::SecurityIdentity requester;
+  
+  // Create the bootstrap admin user and host
+  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), "admin user"));
+  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), "admin host"));
+  
+  // create a single copy storage class
+  ASSERT_NO_THROW(scheduler.createStorageClass(requester, "SINGLE", 1, 1, "comment"));
+  
+  // assign it to the root directory
+  ASSERT_NO_THROW(scheduler.setDirStorageClass(requester, "/", "SINGLE"));
+  
+  // create the logical library
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "illogical", "the illogical library"));
+  
+  // create the tape pool
+  ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // create the route
+  ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
+  
+  // create the tape
+  cta::CreationLog log;
+  log.comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  
+  // List to remember the path of each remote file so that the existence of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] =
-      new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
         castor::tape::tapeserver::drive::FakeDrive::OnFlush);
   
-  // Just label the tape
-  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-      "V12345");
-  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
-  
-  tempFileVector tempFiles;
-  std::vector<expectedResult> expected;
-  uint64_t remainingSpace = tapeSize;
-  bool failedFileDone = false;
-  // Prepare the files (in real filesystem as they will be opened by the rfio client)
-  for (int fseq=1; fseq<=10; fseq++) {
-    // Create the file from which we will recall
-    const size_t fileSize = 1000;
-    std::unique_ptr<TempFileForData> tf(new TempFileForData(fileSize));
-    // Prepare the migrationRequest
-    MockArchiveJob ftm;
-    ftm.setFileSize(tf->m_size);
-    ftm.archiveFile.fileId = 1000 + fseq;
-    ftm.tapeFileLocation.fSeq = fseq;
-    ftm.setPath(tf->path());
-    sim.addFileToMigrate(ftm);
-    if (fileSize + 6 * 80 < remainingSpace) {
-      expected.push_back(expectedResult(fseq, tf->checksum()));
-      remainingSpace -= fileSize + 6 * 80;
-    } else if (!failedFileDone) {
-      // We expect no report for this file anymore (but the report for the 
-      // session)
-      failedFileDone = true;
+  // We can prepare files for writing on the drive
+  {    
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], "V12345");
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    
+    // schedule the archivals
+    for(int fseq=1; fseq <= 10 ; fseq ++) {      
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file:" << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+      
+      // Create the entry in the remote namespace (same user id of the requester)
+      cta::RemotePath rpath(remoteFilePath.str());
+      cta::RemoteFileStatus rstatus(requester.getUser(), 0777, 1000);
+      rns.createEntry(rpath, rstatus);
+
+      // Schedule the archival of the file
+      std::list<std::string> remoteFilePathList;
+      remoteFilePathList.push_back(remoteFilePath.str());
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
     }
-    tempFiles.push_back(tf.release());
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castor::messages::AcsProxyDummy acs;
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCapDummy capUtils;
-  cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
-  cta::OStoreDB db;
-  cta::Scheduler scheduler(ns, db, rns);
-  DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  sess.execute();
-  simRun.wait();
-  for (std::vector<struct expectedResult>::iterator i = expected.begin();
-      i != expected.end(); i++) {
-    if (!i->errorCode) {
-      ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
-    } else {
-      ASSERT_EQ(i->errorCode, sim.m_receivedErrorCodes[i->fSeq]);
-    }
-  }
-  ASSERT_EQ(ENOSPC, sim.m_sessionErrorCode);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  ASSERT_NO_THROW(sess.execute());
+  std::string temp = logger.getLog();
+  temp += "";
+  ASSERT_EQ("V12345", sess.getVid());
+//  //TODO: only 4 files out of 10 should have been migrated to this small tape (we need to check this with the "m" bit)
+//  for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
+//    cta::RemotePath rpath(*i);
+//    ASSERT_NO_THROW(ns.statFile(requester, rpath.getAfterScheme()));
+//    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, rpath.getAfterScheme()));
+//    ASSERT_NE((uint64_t)(stat.get()), NULL);
+//    ASSERT_EQ(stat->mode, 0777);
+//    ASSERT_EQ(stat->size, 1000);
+//  }
 }
-*/
 
 } // namespace unitTest
