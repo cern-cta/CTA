@@ -1331,11 +1331,19 @@ void OStoreDB::ArchiveJob::succeed() {
   // Lock the request and set the job as successful.
   objectstore::ScopedExclusiveLock atfrl(m_atfr);
   m_atfr.fetch();
+  std::string atfrAddress = m_atfr.getAddressIfSet();
   if (m_atfr.setJobSuccessful(m_copyNb)) {
     m_atfr.remove();
   } else {
     m_atfr.commit();
   }
+  // We no more own the job (which could be gone)
+  m_jobOwned = false;
+  // Remove ownership from agent
+  objectstore::ScopedExclusiveLock al(m_agent);
+  m_agent.fetch();
+  m_agent.removeFromOwnership(atfrAddress);
+  m_agent.commit();
 }
 
 OStoreDB::ArchiveJob::~ArchiveJob() {
