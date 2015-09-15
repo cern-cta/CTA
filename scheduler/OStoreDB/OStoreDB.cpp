@@ -1090,6 +1090,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   am.mountInfo.vid = vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.tapePool = tapePool;
+  am.mountInfo.logicalLibrary = logicalLibrary;
   am.m_nextFseq = std::numeric_limits<decltype(am.m_nextFseq)>::max();
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
@@ -1274,6 +1275,36 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
   }
   return std::unique_ptr<SchedulerDatabase::ArchiveJob> (NULL);
 }
+
+void OStoreDB::ArchiveMount::complete(time_t completionTime) {
+  // When the session is complete, we can reset the status of the tape and the
+  // drive
+  // Reset the drive
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
+    objectstore::DriveRegister::DriveStatus::Up, completionTime, 
+    objectstore::DriveRegister::MountType::NoMount, 0,
+    0, 0, 0, "", "");
+  dr.commit();
+  // Find the tape and unbusy it.
+  objectstore::TapePool tp (re.getTapePoolAddress(mountInfo.tapePool), m_objectStore);
+  rel.release();
+  objectstore::ScopedSharedLock tpl(tp);
+  tp.fetch();
+  objectstore::Tape t(tp.getTapeAddress(mountInfo.vid), m_objectStore);
+  objectstore::ScopedExclusiveLock tl(t);
+  tpl.release();
+  t.fetch();
+  t.releaseBusy();
+  t.commit();
+}
+
 
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
   objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),

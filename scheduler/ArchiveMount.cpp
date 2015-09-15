@@ -21,14 +21,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(NameServer & ns): m_ns(ns) {
+cta::ArchiveMount::ArchiveMount(NameServer & ns): m_ns(ns), m_sessionRunning(false){
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveMount::ArchiveMount(NameServer & ns,
-  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_ns(ns) {
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_ns(ns), 
+    m_sessionRunning(false) {
   m_dbMount.reset(
     dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
   if(!m_dbMount.get()) {
@@ -83,6 +84,9 @@ std::string cta::ArchiveMount::getMountTransactionId() const throw(){
 // getNextJob
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
+  // Check we are still running the session
+  if (!m_sessionRunning)
+    throw SessionNotRunning("In ArchiveMount::getNextJob(): trying to get job from complete/not started session");
   // try and get a new job from the DB side
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob().release());
   if (!dbJob.get())
@@ -98,7 +102,10 @@ std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
 // complete
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::complete() {
-  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
+  // Just set the session as complete in the DB.
+  m_dbMount->complete(time(NULL));
+  // and record we are done with the mount
+  m_sessionRunning = false;
 }
 
 //------------------------------------------------------------------------------

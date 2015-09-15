@@ -79,6 +79,7 @@ public:
   public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<ArchiveJob> getNextJob();
+    virtual void complete(time_t completionTime);
   };
   
   /* === Archive Job Handling =============================================== */

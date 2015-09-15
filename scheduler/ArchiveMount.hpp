@@ -92,6 +92,7 @@ namespace cta {
      */
     virtual void complete();
 
+    CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**
      * Job factory
      *
@@ -131,6 +132,11 @@ namespace cta {
      */
     NameServer & m_ns;
 
+    /**
+     * Internal tracking of the session completion
+     */
+    bool m_sessionRunning;
+    
   }; // class ArchiveMount
 
 } // namespace cta

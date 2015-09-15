@@ -857,6 +857,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
                 logicalLibraryName, 
                 Utils::getShortHostname(), 
                 time(NULL)).release());
+            internalRet->m_sessionRunning = true;
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
             continue;
