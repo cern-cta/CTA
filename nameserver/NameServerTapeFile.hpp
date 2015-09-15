@@ -44,7 +44,7 @@ struct NameServerTapeFile {
 
   /**
    * The copy number of the tape file where copy numbers start from 1.
-   * Please note that copy number 0 is an ivalid copy number.
+   * Please note that copy number 0 is an invalid copy number.
    */
   uint16_t copyNb;
 

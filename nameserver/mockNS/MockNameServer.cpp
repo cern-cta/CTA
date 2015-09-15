@@ -55,6 +55,27 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
 }
 
 //------------------------------------------------------------------------------
+// assertFsFileExists
+//------------------------------------------------------------------------------
+void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
+  struct stat statResult;
+
+  if(::stat(path.c_str(), &statResult)) {
+    const int savedErrno = errno;
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
+      Utils::errnoToString(savedErrno);
+    throw(exception::Exception(msg.str()));
+  }
+
+  if(!S_ISREG(statResult.st_mode)) {
+    std::ostringstream msg;
+    msg << "assertFsFileExists() - " << path << " is not a regular file";
+    throw(exception::Exception(msg.str()));
+  }
+}
+
+//------------------------------------------------------------------------------
 // assertFsPathDoesNotExist
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
@@ -174,7 +195,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const {
   std::stringstream ss;
   ss << tapeFile.checksum.checksumTypeToStr(tapeFile.checksum.getType())
-      << " " << tapeFile.checksum.str()
+      << " " << *((uint32_t *)(tapeFile.checksum.getByteArray().getBytes()))
       << " " << tapeFile.compressedSize
       << " " << tapeFile.copyNb
       << " " << tapeFile.size
@@ -192,9 +213,9 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
   NameServerTapeFile tapeFile;
   std::stringstream ss(xAttributeString);
   std::string checksumTypeString;
-  std::string checksumString;
+  uint32_t checksumInt32;
   ss >> checksumTypeString 
-     >> checksumString 
+     >> checksumInt32 
      >> tapeFile.compressedSize
      >> tapeFile.copyNb
      >> tapeFile.size
@@ -202,8 +223,8 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
      >> tapeFile.tapeFileLocation.copyNb
      >> tapeFile.tapeFileLocation.fSeq
      >> tapeFile.tapeFileLocation.vid;
-  cta::ByteArray byteArray(checksumString);
-  cta::Checksum::ChecksumType checksumType=checksumString=="ADLER32"?cta::Checksum::ChecksumType::CHECKSUMTYPE_ADLER32:cta::Checksum::ChecksumType::CHECKSUMTYPE_NONE;
+  cta::ByteArray byteArray(checksumInt32);
+  cta::Checksum::ChecksumType checksumType=checksumTypeString=="ADLER32"?cta::Checksum::ChecksumType::CHECKSUMTYPE_ADLER32:cta::Checksum::ChecksumType::CHECKSUMTYPE_NONE;
   cta::Checksum checksum(checksumType, byteArray);
   tapeFile.checksum=checksum;
   return tapeFile;
@@ -215,7 +236,7 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
 void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {  
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
-  assertFsDirExists(fsPath);
+  assertFsFileExists(fsPath);
   if(tapeFile.tapeFileLocation.copyNb==1) {
     Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
   }
@@ -232,7 +253,7 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
 std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) {
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
-  assertFsDirExists(fsPath);  
+  assertFsFileExists(fsPath);  
   std::list<cta::NameServerTapeFile> tapeFileList;
   std::string copyOne = Utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
   std::string copyTwo = Utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");

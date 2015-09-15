@@ -76,9 +76,9 @@ std::string cta::Checksum::str() const {
 
   if(0 < arraySize) {
     const auto bytes = m_byteArray.getBytes();
-    oss << "0x" << std::hex;
+    oss << "0x";
     for(uint32_t i = 0; i < arraySize; i++) {
-      oss << bytes[i];
+      oss << std::hex << bytes[i];
     }
   }
 

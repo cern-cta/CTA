@@ -126,6 +126,8 @@ private:
   
   void assertFsDirExists(const std::string &path) const;
   
+  void assertFsFileExists(const std::string &path) const;
+  
   void assertFsPathDoesNotExist(const std::string &path) const;
   
   std::list<cta::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
