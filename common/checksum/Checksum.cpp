@@ -75,11 +75,8 @@ std::string cta::Checksum::str() const {
   std::ostringstream oss;
 
   if(0 < arraySize) {
-    const auto bytes = m_byteArray.getBytes();
-    oss << "0x";
-    for(uint32_t i = 0; i < arraySize; i++) {
-      oss << std::hex << bytes[i];
-    }
+    uint32_t checkSumInt32 = *((uint32_t *)(m_byteArray.getBytes()));
+    oss << "0x" << std::hex << checkSumInt32;
   }
 
   return oss.str();
