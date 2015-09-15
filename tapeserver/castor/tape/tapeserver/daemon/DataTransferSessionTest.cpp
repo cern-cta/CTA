@@ -143,7 +143,9 @@ protected:
 
   class MockArchiveJob: public cta::ArchiveJob {
   public:
-    MockArchiveJob() {
+    MockArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+        *((cta::NameServer *)NULL), cta::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
     } 
       
     ~MockArchiveJob() throw() {
@@ -229,7 +231,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm(new MockArchiveJob());
       ftr->tapeFileLocation.fSeq = fseq;
-      ftm->tapeFileLocation.fSeq = fseq;
+      ftm->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm, archiveFileSize);
@@ -374,7 +376,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
       ftr->tapeFileLocation.fSeq = fseq;
-      ftm_temp->tapeFileLocation.fSeq = fseq;
+      ftm_temp->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm_temp->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
@@ -570,7 +572,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
       ftr->tapeFileLocation.fSeq = fseq;
-      ftm_temp->tapeFileLocation.fSeq = fseq;
+      ftm_temp->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm_temp->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);

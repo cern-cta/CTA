@@ -58,7 +58,7 @@ namespace daemon {
       LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->archiveFile.nsHostName)),
       LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeFileLocation.fSeq)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->nameServerTapeFile.tapeFileLocation.fSeq)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->archiveFile.path))
       };
       tape::utils::suppresUnusedVariable(sp);      
@@ -129,7 +129,7 @@ namespace daemon {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
     } else {
-      m_firstFseqToWrite = jobs.front()->tapeFileLocation.fSeq;
+      m_firstFseqToWrite = jobs.front()->nameServerTapeFile.tapeFileLocation.fSeq;
       injectBulkMigrations(jobs);
       return true;
     }

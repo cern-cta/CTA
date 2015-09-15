@@ -70,6 +70,10 @@ void cta::objectstore::Tape::removeIfEmpty() {
   }
   remove();
 }
+void cta::objectstore::Tape::setStoredData(uint64_t bytes) {
+  checkPayloadWritable();
+  m_payload.set_bytesstored(bytes);
+}
 
 void cta::objectstore::Tape::addStoredData(uint64_t bytes) {
   checkPayloadWritable();
@@ -79,6 +83,16 @@ void cta::objectstore::Tape::addStoredData(uint64_t bytes) {
 uint64_t cta::objectstore::Tape::getStoredData() {
   checkPayloadReadable();
   return m_payload.bytesstored();
+}
+
+void cta::objectstore::Tape::setLastFseq(uint64_t lastFseq) {
+  checkPayloadWritable();
+  m_payload.set_lastfseq(lastFseq);
+}
+
+uint64_t cta::objectstore::Tape::getLastFseq() {
+  checkPayloadReadable();
+  return m_payload.lastfseq();
 }
 
 std::string cta::objectstore::Tape::getVid() {
@@ -216,5 +230,13 @@ void cta::objectstore::Tape::releaseBusy() {
   checkPayloadWritable();
   m_payload.set_busy(false);
 }
+
+
+
+
+
+
+
+
 
 

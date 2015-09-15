@@ -38,13 +38,16 @@ namespace unitTests{
   
   class TestingArchiveMount: public cta::ArchiveMount {
   public:
-    TestingArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbrm): ArchiveMount(std::move(dbrm)) {
+    TestingArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbrm): 
+      ArchiveMount(*((cta::NameServer *)NULL),std::move(dbrm)) {
     }
   };
   
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
-    TestingArchiveJob() {
+    TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+        *((cta::NameServer *)NULL), cta::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
     }
   };
   

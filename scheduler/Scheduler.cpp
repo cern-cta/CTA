@@ -848,7 +848,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
             t->status.availableToWrite()) {
           // We have our tape. Try to create the session. Prepare a return value
           // for it.
-          std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount);
+          std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount(m_ns));
           // Get the db side of the session
           try {
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t->vid,

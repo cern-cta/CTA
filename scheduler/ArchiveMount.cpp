@@ -21,14 +21,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount() {
+cta::ArchiveMount::ArchiveMount(NameServer & ns): m_ns(ns) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(
-  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount) {
+cta::ArchiveMount::ArchiveMount(NameServer & ns,
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_ns(ns) {
   m_dbMount.reset(
     dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
   if(!m_dbMount.get()) {
@@ -83,7 +83,15 @@ std::string cta::ArchiveMount::getMountTransactionId() const throw(){
 // getNextJob
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
-  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
+  // try and get a new job from the DB side
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob().release());
+  if (!dbJob.get())
+    return std::unique_ptr<cta::ArchiveJob>(NULL);
+  // We have something to migrate: prepare the response
+  std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_ns,
+      dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile));
+  ret->m_dbJob.reset(dbJob.release());
+  return ret;
 }
     
 //------------------------------------------------------------------------------

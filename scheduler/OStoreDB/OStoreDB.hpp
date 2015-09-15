@@ -75,6 +75,7 @@ public:
     ArchiveMount(objectstore::Backend &, objectstore::Agent &);
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
+    uint64_t m_nextFseq;
   public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<ArchiveJob> getNextJob();
@@ -88,6 +89,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void succeed();
     virtual void fail();
+    virtual void bumpUpTapeFileCount(const std::string& vid, uint64_t newFileCount);
     virtual ~ArchiveJob();
   private:
     ArchiveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);

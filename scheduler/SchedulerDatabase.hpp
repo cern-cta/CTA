@@ -26,12 +26,14 @@
 #include <vector>
 #include <stdexcept>
 #include "common/archiveNS/ArchiveFile.hpp"
+#include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
 #include "common/MountControl.hpp"
+#include "nameserver/NameServerTapeFile.hpp"
 
 namespace cta {
 
@@ -176,8 +178,10 @@ public:
   public:
     cta::RemotePathAndStatus remoteFile;
     cta::ArchiveFile archiveFile;
+    cta::NameServerTapeFile nameServerTapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
+    virtual void bumpUpTapeFileCount(const std::string & vid, uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
   

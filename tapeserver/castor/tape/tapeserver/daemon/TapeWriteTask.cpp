@@ -73,7 +73,7 @@ namespace daemon {
           .add("NSFILEID",m_archiveJob->archiveFile.fileId)
           .add("lastKnownFilename",m_archiveJob->archiveFile.path)
           .add("fileSize",m_archiveJob->archiveFile.size)
-          .add("fSeq",m_archiveJob->tapeFileLocation.fSeq)
+          .add("fSeq",m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq)
           .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
     
     // We will clock the stats for the file itself, and eventually add those
@@ -90,11 +90,11 @@ namespace daemon {
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-    session.validateNextFSeq(m_archiveJob->tapeFileLocation.fSeq);
+    session.validateNextFSeq(m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
-      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.path, m_archiveJob->archiveFile.fileId, m_archiveJob->tapeFileLocation.fSeq);
+      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.path, m_archiveJob->archiveFile.fileId, m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -129,8 +129,12 @@ namespace daemon {
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_archiveJob->tapeFileLocation.fSeq);
-      reportPacker.reportCompletedJob(std::move(m_archiveJob),ckSum,output->getBlockId());
+      session.reportWrittenFSeq(m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+      m_archiveJob->nameServerTapeFile.checksum = 
+          cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::ByteArray(ckSum));
+      m_archiveJob->nameServerTapeFile.compressedSize = m_taskStats.dataVolume;
+      m_archiveJob->nameServerTapeFile.tapeFileLocation.blockId = output->getBlockId();
+      reportPacker.reportCompletedJob(std::move(m_archiveJob));
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
@@ -316,7 +320,7 @@ namespace daemon {
            .add("fileSize",m_archiveJob->archiveFile.size)
            .add("NSHOST",m_archiveJob->archiveFile.nsHostName)
            .add("NSFILEID",m_archiveJob->archiveFile.fileId)
-           .add("fSeq",m_archiveJob->tapeFileLocation.fSeq)
+           .add("fSeq",m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq)
            .add("lastKnownFilename",m_archiveJob->archiveFile.path)
            .add("lastModificationTime",m_archiveJob->archiveFile.lastModificationTime);
      

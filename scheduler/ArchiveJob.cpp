@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/ArchiveJob.hpp"
+#include <limits>
 
 //------------------------------------------------------------------------------
 // destructor
@@ -27,20 +28,36 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(/*ArchiveMount &mount,*/
+cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
+  NameServer & ns,
   const ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
-  const TapeFileLocation &tapeFileLocation):
-  /*mount(mount),*/
+  const NameServerTapeFile &nsTapeFile):
+  m_mount(mount), m_ns(ns),
   archiveFile(archiveFile),
   remotePathAndStatus(remotePathAndStatus),
-  tapeFileLocation(tapeFileLocation) {}
+  nameServerTapeFile(nsTapeFile) {}
 
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::complete() {
-  throw NotImplemented("");
+  // First check that the block Id for the file has been set.
+  if (nameServerTapeFile.tapeFileLocation.blockId ==
+      std::numeric_limits<decltype(nameServerTapeFile.tapeFileLocation.blockId)>::max())
+    throw BlockIdNotSet("In cta::ArchiveJob::complete(): Block ID not set");
+  // Also check the checksum has been set
+  if (nameServerTapeFile.checksum.getType() == Checksum::CHECKSUMTYPE_NONE)
+    throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksum not set");
+  // We are good to go to record the data in the persistent storage.
+  // First make the file safe on tape.
+  m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.vid,
+      nameServerTapeFile.tapeFileLocation.fSeq);
+  // Now record the data in the archiveNS
+  m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
+    std::numeric_limits<uint32_t>::max()), ""), archiveFile.path, nameServerTapeFile);
+  // We can now record the success for the job in the database
+  m_dbJob->succeed();
 }
   
 //------------------------------------------------------------------------------

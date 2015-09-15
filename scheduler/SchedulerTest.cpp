@@ -2418,7 +2418,11 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::unique_ptr<cta::ArchiveJob> archiveJob;
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
-    archiveJob->complete();
+    archiveJob->nameServerTapeFile.tapeFileLocation.blockId = 1;
+    archiveJob->nameServerTapeFile.copyNb = archiveJob->nameServerTapeFile.tapeFileLocation.copyNb;
+    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::ByteArray(0x12345687));
+    archiveJob->nameServerTapeFile.checksum = checksum;
+    ASSERT_NO_THROW(archiveJob->complete());
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
     ASSERT_NO_THROW(archiveMount->complete());

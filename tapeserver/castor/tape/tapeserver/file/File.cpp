@@ -437,11 +437,11 @@ namespace castor {
         m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0)
       {
         // Check the sanity of the parameters. fSeq should be >= 1
-        if (0 == m_fileToMigrate.archiveFile.fileId || m_fileToMigrate.tapeFileLocation.fSeq<1) {
+        if (0 == m_fileToMigrate.archiveFile.fileId || m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq<1) {
           std::stringstream err;
           err << "Unexpected fileId in WriteFile::WriteFile (expected != 0, got: "
               << m_fileToMigrate.archiveFile.fileId << ") or fSeq (expected >=1, got: "
-              << m_fileToMigrate.tapeFileLocation.fSeq << ")";
+              << m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq << ")";
           throw castor::exception::InvalidArgument(err.str());
         }
         if(m_session->isCorrupted()) {
@@ -456,12 +456,12 @@ namespace castor {
         std::string fileId;
         s >> fileId;
         std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-        hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFileLocation.fSeq);
+        hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq);
         hdr2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-        uhl1.fill(m_fileToMigrate.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(), 
+        uhl1.fill(m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(), 
             m_session->getHostName(), m_session->m_drive.getDeviceInfo());
         /* Before writing anything, we record the blockId of the file */
-        if (1 == m_fileToMigrate.tapeFileLocation.fSeq) {
+        if (1 == m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq) {
           m_blockId = 0;
         } else {
           m_blockId = getPosition();
@@ -512,9 +512,9 @@ namespace castor {
         std::string fileId;
         s >> fileId;
         std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-        eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFileLocation.fSeq, m_numberOfBlocks);
+        eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_numberOfBlocks);
         eof2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-        utl1.fill(m_fileToMigrate.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(),
+        utl1.fill(m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(),
             m_session->getHostName(), m_session->m_drive.getDeviceInfo());
         m_session->m_drive.writeBlock(&eof1, sizeof(eof1));
         m_session->m_drive.writeBlock(&eof2, sizeof(eof2));

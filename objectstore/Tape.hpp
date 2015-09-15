@@ -78,6 +78,8 @@ public:
   std::string getVid();
   void setStoredData(uint64_t bytes);
   void addStoredData(uint64_t bytes);
+  void setLastFseq(uint64_t lastFseq);
+  uint64_t getLastFseq();
 };
 
 }}

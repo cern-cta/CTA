@@ -20,13 +20,13 @@
 
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
-#include "scheduler/ArchiveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 
 #include <memory>
 
 namespace cta {
+  class NameServer;
   
   /**
    * The class driving a retrieve mount.
@@ -40,14 +40,14 @@ namespace cta {
     /**
      * Constructor.
      */
-    ArchiveMount();
+    ArchiveMount(NameServer & ns);
 
     /**
      * Constructor.
      *
      * @param dbMount The database representation of this mount.
      */
-    ArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
+    ArchiveMount(NameServer & ns, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
 
   public:
 
@@ -125,6 +125,11 @@ namespace cta {
      * The database representation of this mount.
      */
     std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> m_dbMount;
+    
+    /**
+     * A reference to the name server.
+     */
+    NameServer & m_ns;
 
   }; // class ArchiveMount
 

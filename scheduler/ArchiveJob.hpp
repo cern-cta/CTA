@@ -22,6 +22,8 @@
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "nameserver/NameServer.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -47,7 +49,7 @@ protected:
   /**
    * Empty constructor. TODO: to be removed in the future when we put in the reference to the owning mount;
    */
-  ArchiveJob() {}
+  //ArchiveJob(): m_mount(*((ArchiveMount*)NULL)), m_ns(*((NameServer*)NULL)){}
   
   /**
    * Constructor.
@@ -57,18 +59,22 @@ protected:
    * @param remotePathAndStatus location and properties of the remote file
    * @param tapeFileLocation the location within the tape
    */
-  ArchiveJob(/*ArchiveMount &mount,*/
+  ArchiveJob(
+  ArchiveMount &mount,
+  NameServer & ns,
   const ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
-  const TapeFileLocation &tapeFileLocation);
+  const NameServerTapeFile &nameServerTapeFile);
 
 public:
 
   /**
    * Destructor.
    */
-  virtual ~ArchiveJob() throw() = 0;
-
+  virtual ~ArchiveJob() throw();
+  
+  CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
+  CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);
   /**
    * Indicates that the job was successful and updates the backend store
    *
@@ -92,15 +98,22 @@ public:
    * of the tape).
    */
   virtual void retry();
-
-public:
   
-  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+private:
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
   
   /**
    * The mount that generated this job
    */
-  //ArchiveMount &mount;
+  ArchiveMount &m_mount;
+  
+  /**
+   * Reference to the name server
+   */
+  NameServer &m_ns;
+public:
+  
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   
   /**
    * The NS archive file information
@@ -111,11 +124,11 @@ public:
    * The remote file information
    */
   RemotePathAndStatus remotePathAndStatus; 
-                
+  
   /**
-   * The location of the tape file
+   * The file archive result for the NS
    */
-  TapeFileLocation tapeFileLocation;
+  NameServerTapeFile nameServerTapeFile;
 
 }; // class ArchiveJob
 

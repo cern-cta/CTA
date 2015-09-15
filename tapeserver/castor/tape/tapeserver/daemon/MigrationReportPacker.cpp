@@ -60,9 +60,8 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,u_int32_t checksum,
-    u_int32_t blockId) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob),checksum,blockId));
+std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
+  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }

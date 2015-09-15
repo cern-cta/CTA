@@ -31,6 +31,7 @@
 #include "castor/exception/Errnum.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "nameserver/NameServer.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -45,7 +46,9 @@ namespace UnitTests {
 
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
-    TestingArchiveJob() {
+    TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+        *((cta::NameServer *)NULL), cta::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
     }
   };
   
@@ -59,7 +62,7 @@ namespace UnitTests {
       fileToRecall.archiveFile.fileId = 1;
       fileToMigrate.archiveFile.size = 500;
       fileToMigrate.archiveFile.fileId = 1;
-      fileToMigrate.tapeFileLocation.fSeq = 1;
+      fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq = 1;
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;

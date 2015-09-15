@@ -46,7 +46,9 @@ namespace unitTests {
 
     class MockArchiveJob: public cta::ArchiveJob {
     public:
-      MockArchiveJob() {
+      MockArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+        *((cta::NameServer *)NULL), cta::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
       }
 
       ~MockArchiveJob() throw() {
@@ -59,7 +61,7 @@ namespace unitTests {
 
     class MockArchiveMount: public cta::ArchiveMount {
     public:
-      MockArchiveMount() {
+      MockArchiveMount(): cta::ArchiveMount(*((cta::NameServer *)NULL)) {
         const unsigned int nbArchiveJobs = 2;
         createArchiveJobs(nbArchiveJobs);
       }
@@ -118,8 +120,8 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(job1),0,0);
-    mrp.reportCompletedJob(std::move(job2),0,0);
+    mrp.reportCompletedJob(std::move(job1));
+    mrp.reportCompletedJob(std::move(job2));
 
     const tapeserver::drive::compressionStats statsCompress;
     mrp.reportFlush(statsCompress);
@@ -157,8 +159,8 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(job1),0,0);
-    mrp.reportCompletedJob(std::move(job2),0,0);
+    mrp.reportCompletedJob(std::move(job1));
+    mrp.reportCompletedJob(std::move(job2));
 
     const std::string error_msg = "ERROR_TEST_MSG";
     const castor::exception::Exception ex(error_msg);
@@ -206,9 +208,9 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(migratedBigFile),0,0);
-    mrp.reportCompletedJob(std::move(migratedFileSmall),0,0);
-    mrp.reportCompletedJob(std::move(migratedNullFile),0,0);
+    mrp.reportCompletedJob(std::move(migratedBigFile));
+    mrp.reportCompletedJob(std::move(migratedFileSmall));
+    mrp.reportCompletedJob(std::move(migratedNullFile));
     tapeserver::drive::compressionStats stats;
     stats.toTape=(100000+1)/3;
     mrp.reportFlush(stats);

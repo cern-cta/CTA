@@ -55,8 +55,7 @@ public:
    * of the file. This is 0 (instead of 1) for the first file on the tape (aka
    * fseq = 1).
    */
-  void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
-  u_int32_t checksum, u_int32_t blockId);
+  void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
@@ -102,16 +101,13 @@ private:
     virtual void execute(MigrationReportPacker& packer)=0;
   };
   class ReportSuccessful :  public Report {
-    const unsigned long m_checksum;
-    const uint32_t m_blockId;
-    
     /**
      * The successful archive job to be pushed in the report packer queue and reported later
      */
     std::unique_ptr<cta::ArchiveJob> m_successfulArchiveJob;
   public:
-    ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, unsigned long checksum, u_int32_t blockId): 
-    m_checksum(checksum),m_blockId(blockId), m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
+    ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob): 
+    m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
     virtual void execute(MigrationReportPacker& reportPacker);
   };
   class ReportFlush : public Report {

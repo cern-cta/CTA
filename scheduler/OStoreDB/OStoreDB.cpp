@@ -1090,6 +1090,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   am.mountInfo.vid = vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.tapePool = tapePool;
+  am.m_nextFseq = std::numeric_limits<decltype(am.m_nextFseq)>::max();
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
@@ -1142,8 +1143,11 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
       m_agent.addToOwnership(t.getAddressIfSet());
       m_agent.commit();
     }
+    am.m_nextFseq = t.getLastFseq() + 1;
+    am.mountInfo.vid = t.getVid();
     t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
       m_agent.getAddressIfSet());
+    t.commit();
   }
   // Fill up the mount info
   privateRet->mountInfo.drive = driveName;
@@ -1258,6 +1262,11 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     tp.commit();
     privateRet->archiveFile.path = privateRet->m_atfr.getArchiveFile();
     privateRet->remoteFile = privateRet->m_atfr.getRemoteFile();
+    privateRet->nameServerTapeFile.tapeFileLocation.fSeq = m_nextFseq++;
+    privateRet->nameServerTapeFile.tapeFileLocation.copyNb = privateRet->m_copyNb;
+    privateRet->nameServerTapeFile.tapeFileLocation.vid = mountInfo.vid;
+    privateRet->nameServerTapeFile.tapeFileLocation.blockId =
+      std::numeric_limits<decltype(privateRet->nameServerTapeFile.tapeFileLocation.blockId)>::max();
     privateRet->m_jobOwned = true;
     privateRet->m_mountId = mountInfo.mountId;
     privateRet->m_tapePool = mountInfo.tapePool;
@@ -1312,7 +1321,11 @@ void OStoreDB::ArchiveJob::fail() {
     }
   }
   throw NoSuchTapePool("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
+  }
+
+void OStoreDB::ArchiveJob::bumpUpTapeFileCount(const std::string& vid, uint64_t newFileCount) {
 }
+
 
 void OStoreDB::ArchiveJob::succeed() {
   // Lock the request and set the job as successful.
