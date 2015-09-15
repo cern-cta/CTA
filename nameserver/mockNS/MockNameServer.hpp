@@ -105,6 +105,22 @@ public:
     const std::string &path);
 
 private:
+  
+  /**
+   * Converts a NameServerTapeFile to a string to be used as an extended attribute
+   * 
+   * @param tapeFile The NameServerTapeFile object
+   * @return the converted string
+   */
+  std::string fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const;
+  
+  /**
+   * Converts a string (the value of an extended attribute) to a NameServerTapeFile
+   * 
+   * @param xAttributeString The value of an extended attribute
+   * @return the NameServerTapeFile object resulting from the conversion
+   */
+  cta::NameServerTapeFile fromStringToNameServerTapeFile(const std::string &xAttributeString) const;
 
   std::string m_fsDir;
   
@@ -116,7 +132,7 @@ private:
 
   /**
    * Throws an exception if the specified user is not the owner of the
-   * specified namepsace entry.
+   * specified namespace entry.
    *
    * @param requester The identity of the requester.
    * @param user The user.
@@ -148,7 +164,7 @@ private:
     const struct stat statResult) const;
 
   /**
-   * The string name and numeric idenitifer of a storage class.
+   * The string name and numeric identifier of a storage class.
    */
   struct StorageClassNameAndId {
     std::string name;
@@ -178,7 +194,7 @@ private:
    * Throws an exception if the specified storage class numeric identifier
    * already exists.
    *
-   * @param id The numeric idenitifer of the storage class.
+   * @param id The numeric identifier of the storage class.
    */
   void assertStorageClassIdDoesNotExist(const uint32_t id) const;
 

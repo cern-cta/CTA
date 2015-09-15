@@ -169,22 +169,80 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 }
 
 //------------------------------------------------------------------------------
+// fromNameServerTapeFileToString
+//------------------------------------------------------------------------------
+std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const {
+  std::stringstream ss;
+  ss << tapeFile.checksum.checksumTypeToStr(tapeFile.checksum.getType())
+      << " " << tapeFile.checksum.str()
+      << " " << tapeFile.compressedSize
+      << " " << tapeFile.copyNb
+      << " " << tapeFile.size
+      << " " << tapeFile.tapeFileLocation.blockId
+      << " " << tapeFile.tapeFileLocation.copyNb
+      << " " << tapeFile.tapeFileLocation.fSeq
+      << " " << tapeFile.tapeFileLocation.vid;
+  return ss.str();
+}
+
+//------------------------------------------------------------------------------
+// fromStringToNameServerTapeFile
+//------------------------------------------------------------------------------
+cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(const std::string &xAttributeString) const {
+  NameServerTapeFile tapeFile;
+  std::stringstream ss(xAttributeString);
+  std::string checksumTypeString;
+  std::string checksumString;
+  ss >> checksumTypeString 
+     >> checksumString 
+     >> tapeFile.compressedSize
+     >> tapeFile.copyNb
+     >> tapeFile.size
+     >> tapeFile.tapeFileLocation.blockId
+     >> tapeFile.tapeFileLocation.copyNb
+     >> tapeFile.tapeFileLocation.fSeq
+     >> tapeFile.tapeFileLocation.vid;
+  cta::ByteArray byteArray(checksumString);
+  cta::Checksum::ChecksumType checksumType=checksumString=="ADLER32"?cta::Checksum::ChecksumType::CHECKSUMTYPE_ADLER32:cta::Checksum::ChecksumType::CHECKSUMTYPE_NONE;
+  cta::Checksum checksum(checksumType, byteArray);
+  tapeFile.checksum=checksum;
+  return tapeFile;
+}
+
+//------------------------------------------------------------------------------
 // addTapeFile
 //------------------------------------------------------------------------------
-void cta::MockNameServer::addTapeFile(
-  const SecurityIdentity &requester,
-  const std::string &path,
-  const NameServerTapeFile &tapeFile) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {  
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string fsPath = m_fsDir + path;
+  assertFsDirExists(fsPath);
+  if(tapeFile.tapeFileLocation.copyNb==1) {
+    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
+  }
+  else if(tapeFile.tapeFileLocation.copyNb==2) {
+    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", fromNameServerTapeFileToString(tapeFile));
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
+  }
 }
   
 //------------------------------------------------------------------------------
 // getTapeFiles
 //------------------------------------------------------------------------------
-std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(
-  const SecurityIdentity &requester,
-  const std::string &path) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string fsPath = m_fsDir + path;
+  assertFsDirExists(fsPath);  
+  std::list<cta::NameServerTapeFile> tapeFileList;
+  std::string copyOne = Utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
+  std::string copyTwo = Utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
+  if(copyOne!="") {
+    tapeFileList.push_back(fromStringToNameServerTapeFile(copyOne));
+  }
+  if(copyTwo!="") {
+    tapeFileList.push_back(fromStringToNameServerTapeFile(copyTwo));
+  }
+  return tapeFileList;
 }
 
 //------------------------------------------------------------------------------
@@ -286,6 +344,8 @@ void cta::MockNameServer::createFile(
       << Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
+  Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", "");
+  Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", "");
 }
 
 //------------------------------------------------------------------------------
