@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "common/exception/Exception.hpp"
 #include "nameserver/CastorNameServer.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
@@ -51,7 +52,8 @@
 XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
 
 //BEGIN: boilerplate code to prepare the objectstoreDB object
-cta::objectstore::BackendVFS g_backend;
+        
+cta::objectstore::BackendVFS g_backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"));
 
 class BackendPopulator {
 public:
@@ -59,8 +61,6 @@ public:
       m_agent(m_backend) {
     // We need to populate the root entry before using.
     cta::objectstore::RootEntry re(m_backend);
-    re.initialize();
-    re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
     m_agent.generateName("OStoreDBFactory");
@@ -107,6 +107,7 @@ extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
+    g_backend.noDeleteOnExit();
     g_eosNs.createEntry(cta::RemotePath("eos://eos/kruse/file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 0)); //create an empty file to start with for testing purposes
     return new XrdProFilesystem(
       &g_castorNs,
