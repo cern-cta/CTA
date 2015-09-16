@@ -108,7 +108,6 @@ extern "C"
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     g_backend.noDeleteOnExit();
-    g_eosNs.createEntry(cta::RemotePath("eos://eos/kruse/file1"), cta::RemoteFileStatus(cta::UserIdentity(getuid(), getgid()), 0777, 0)); //create an empty file to start with for testing purposes
     return new XrdProFilesystem(
       &g_castorNs,
       &g_OStoreDB,
