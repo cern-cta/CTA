@@ -262,10 +262,10 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
-      scheduler. queueRetrieveRequest(
+      ASSERT_NO_THROW(scheduler. queueRetrieveRequest(
         requester,
         archiveFilePaths,
-        remoteFilePath.str());
+        remoteFilePath.str()));
     }
   }
 
@@ -408,10 +408,10 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
-      scheduler. queueRetrieveRequest(
+      ASSERT_NO_THROW(scheduler. queueRetrieveRequest(
         requester,
         archiveFilePaths,
-        remoteFilePath.str());
+        remoteFilePath.str()));
     }
   }
 
@@ -603,10 +603,10 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
-      scheduler. queueRetrieveRequest(
+      ASSERT_NO_THROW(scheduler. queueRetrieveRequest(
         requester,
         archiveFilePaths,
-        remoteFilePath.str());
+        remoteFilePath.str()));
     }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");

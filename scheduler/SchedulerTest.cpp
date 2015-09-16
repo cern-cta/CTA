@@ -155,6 +155,16 @@ public:
   static const std::string s_remoteFileRawPath3;
   static const std::string s_remoteFileRawPath4;
 
+  static const std::string s_remoteTargetFilename1;
+  static const std::string s_remoteTargetFilename2;
+  static const std::string s_remoteTargetFilename3;
+  static const std::string s_remoteTargetFilename4;
+
+  static const std::string s_remoteTargetRawPath1;
+  static const std::string s_remoteTargetRawPath2;
+  static const std::string s_remoteTargetRawPath3;
+  static const std::string s_remoteTargetRawPath4;
+
 private:
 
   // Prevent copying
@@ -196,6 +206,16 @@ const std::string SchedulerTest::s_remoteFileRawPath1(std::string("mock:") + s_r
 const std::string SchedulerTest::s_remoteFileRawPath2(std::string("mock:") + s_remoteFilename2);
 const std::string SchedulerTest::s_remoteFileRawPath3(std::string("mock:") + s_remoteFilename3);
 const std::string SchedulerTest::s_remoteFileRawPath4(std::string("mock:") + s_remoteFilename4);
+
+const std::string SchedulerTest::s_remoteTargetFilename1("remoteFileForWrite1");
+const std::string SchedulerTest::s_remoteTargetFilename2("remoteFileForWrite2");
+const std::string SchedulerTest::s_remoteTargetFilename3("remoteFileForWrite3");
+const std::string SchedulerTest::s_remoteTargetFilename4("remoteFileForWrite4");
+
+const std::string SchedulerTest::s_remoteTargetRawPath1(std::string("mock:") + s_remoteTargetFilename1);
+const std::string SchedulerTest::s_remoteTargetRawPath2(std::string("mock:") + s_remoteTargetFilename2);
+const std::string SchedulerTest::s_remoteTargetRawPath3(std::string("mock:") + s_remoteTargetFilename3);
+const std::string SchedulerTest::s_remoteTargetRawPath4(std::string("mock:") + s_remoteTargetFilename4);
 
 TEST_P(SchedulerTest, createStorageClass_new_as_adminOnAdminHost) {
   using namespace cta;
@@ -2402,7 +2422,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");
     ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost, archiveFiles,
-      s_remoteFileRawPath1), std::exception);
+      s_remoteTargetRawPath1), std::exception);
   }
 
   {
@@ -2429,14 +2449,16 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
+    
     std::list<std::string> archiveFiles;
     archiveFiles.push_back("/grandparent/parent_file");
     ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
-      archiveFiles, s_remoteFileRawPath1));
+      archiveFiles, s_remoteTargetRawPath1));
   }
 
   {
-    const auto rqsts = scheduler.getRetrieveRequests(s_userOnUserHost);
+    decltype(scheduler.getRetrieveRequests(s_userOnUserHost)) rqsts;
+    ASSERT_NO_THROW(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto tapeItor = rqsts.cbegin();
     ASSERT_FALSE(tapeItor == rqsts.cend());

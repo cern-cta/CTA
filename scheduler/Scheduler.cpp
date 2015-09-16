@@ -733,6 +733,8 @@ void cta::Scheduler::queueRetrieveRequest(
   const std::string &remoteFileOrDir) {
 
   const auto remoteStat = m_remoteNS.statFile(remoteFileOrDir);
+  // If the target does not exist or is a directory, we are retrieving to 
+  // directory
   const bool retrieveToDir = remoteStat.get() && S_ISDIR(remoteStat->mode);
   if(retrieveToDir) {
     const std::string &remoteDir = remoteFileOrDir;
@@ -744,12 +746,33 @@ void cta::Scheduler::queueRetrieveRequest(
   } else {
     const std::string &remoteFile = remoteFileOrDir;
 
+    // The remote file should not exist
     if(remoteStat.get()) {
       std::ostringstream msg;
       msg << "Failed to queue request to retrieve to the single file " <<
         remoteFile << " because the remote file already exists";
       throw exception::Exception(msg.str());
     }
+    // We should only try to retrieve one file
+    if (archiveFiles.size() != 1)
+      throw exception::Exception("Failed to queue request to retrieve to single file: trying to retrieve several files");
+    // Check the validity of the source
+    auto sourceStat = m_ns.statFile(requester, archiveFiles.front());
+    if (!sourceStat.get())
+      throw exception::Exception("Failed to queue request to retrieve to single file: source file does not exist");
+    auto tapeCopies = m_ns.getTapeFiles(requester, archiveFiles.front());
+    if (!tapeCopies.size())
+      throw exception::Exception("Failed to queue request to retrieve to single file: source file has no copy on tape");
+    // Generate the requests and enqueue them in the database
+    CreationLog cl (requester.getUser(), requester.getHost(), time(NULL), 
+        "Retrieve request queueing");
+    std::list<TapeFileLocation> tcl;
+    for (auto nstf = tapeCopies.begin(); nstf != tapeCopies.end(); nstf++) {
+      tcl.push_back(nstf->tapeFileLocation);
+    }
+    RetrieveToFileRequest rtfr (archiveFiles.front(), sourceStat->size,
+        tcl, remoteFile, 0, cl);
+    m_db.queue(rtfr);
   }
 }
 
