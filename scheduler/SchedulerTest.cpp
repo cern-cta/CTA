@@ -2458,7 +2458,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   {
     decltype(scheduler.getRetrieveRequests(s_userOnUserHost)) rqsts;
-    /*ASSERT_NO_THROW*/(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
+    ASSERT_NO_THROW(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto tapeItor = rqsts.cbegin();
     ASSERT_FALSE(tapeItor == rqsts.cend());
@@ -2474,7 +2474,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
       archiveFiles.insert(rqstItor->archiveFile);
     }
     ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
+    ASSERT_FALSE(remoteFiles.find(s_remoteTargetRawPath1) == remoteFiles.end());
     ASSERT_EQ(1, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
       archiveFiles.end());
