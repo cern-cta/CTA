@@ -98,8 +98,6 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("ll"    == command || "logicallibrary"        == command) {xCom_logicallibrary(tokens, requester);}
   else if("ta"    == command || "tape"                  == command) {xCom_tape(tokens, requester);}
   else if("sc"    == command || "storageclass"          == command) {xCom_storageclass(tokens, requester);}
-  else if("loa"   == command || "listongoingarchives"   == command) {xCom_listongoingarchives(tokens, requester);}
-  else if("lor"   == command || "listongoingretrieves"  == command) {xCom_listongoingretrieves(tokens, requester);}
   else if("lpa"   == command || "listpendingarchives"   == command) {xCom_listpendingarchives(tokens, requester);}
   else if("lpr"   == command || "listpendingretrieves"  == command) {xCom_listpendingretrieves(tokens, requester);}
   else if("lds"   == command || "listdrivestates"       == command) {xCom_listdrivestates(tokens, requester);}
@@ -928,11 +926,11 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 }
   
 //------------------------------------------------------------------------------
-// xCom_listongoingarchives
+// xCom_listpendingarchives
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listongoingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " loa/listongoingarchives --tapepool/-t <tapepool_name>" << std::endl;
+  help << tokens[0] << " lpa/listpendingarchives --tapepool/-t <tapepool_name>" << std::endl;
   std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
   std::ostringstream responseSS;
   if(tapePool.empty()) {
@@ -971,11 +969,11 @@ void XrdProFile::xCom_listongoingarchives(const std::vector<std::string> &tokens
 }
   
 //------------------------------------------------------------------------------
-// xCom_listongoingretrieves
+// xCom_listpendingretrieves
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listongoingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lor/listongoingretrieves --vid/-v <vid>" << std::endl;
+  help << tokens[0] << " lpr/listpendingretrieves --vid/-v <vid>" << std::endl;
   std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
   std::ostringstream responseSS;
   if(tapeVid.empty()) {
@@ -1017,24 +1015,6 @@ void XrdProFile::xCom_listongoingretrieves(const std::vector<std::string> &token
     }
   }
   m_data = responseSS.str();
-}
-  
-//------------------------------------------------------------------------------
-// xCom_listpendingarchives
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " lpa/listpendingarchives --tapepool/-t <tapepool_name>" << std::endl;
-  m_data = "Not implemented yet!\n";
-}
-  
-//------------------------------------------------------------------------------
-// xCom_listpendingretrieves
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " lpr/listpendingretrieves --vid/-v <vid>" << std::endl;
-  m_data = "Not implemented yet!\n";
 }
   
 //------------------------------------------------------------------------------
@@ -1244,8 +1224,6 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " ll/logicallibrary add/rm/ls/ch" << std::endl;
   help << programName << " ta/tape           add/rm/ls/ch/reclaim" << std::endl;
   help << programName << " sc/storageclass   add/rm/ls/ch" << std::endl;
-  help << programName << " loa/listongoingarchives" << std::endl;
-  help << programName << " lor/listongoingretrieves" << std::endl;
   help << programName << " lpa/listpendingarchives" << std::endl;
   help << programName << " lpr/listpendingretrieves" << std::endl;
   help << programName << " lds/listdrivestates" << std::endl;

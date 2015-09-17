@@ -166,20 +166,6 @@ protected:
    * 
    * @param tokens The command line tokens
    */
-  void xCom_listongoingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the listongoingretrieves command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_listongoingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the listpendingarchives command
-   * 
-   * @param tokens The command line tokens
-   */
   void xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
