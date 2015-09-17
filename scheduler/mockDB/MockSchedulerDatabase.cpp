@@ -28,7 +28,7 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/mockDB/MockSchedulerDatabase.hpp"
-#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "scheduler/mockDB/SqliteColumnNameToIndex.hpp"

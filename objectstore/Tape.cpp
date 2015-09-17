@@ -18,6 +18,7 @@
 
 #include "Tape.hpp"
 #include "GenericObject.hpp"
+#include "CreationLog.hpp"
 
 cta::objectstore::Tape::Tape(const std::string& address, Backend& os):
   ObjectOps<serializers::Tape>(os, address) { }
@@ -31,9 +32,11 @@ cta::objectstore::Tape::Tape(GenericObject& go):
 }
 
 void cta::objectstore::Tape::initialize(const std::string &name, 
-    const std::string &logicallibrary) {
+    const std::string &logicallibrary, const cta::CreationLog & creationLog) {
   ObjectOps<serializers::Tape>::initialize();
   // Set the reguired fields
+  objectstore::CreationLog oscl(creationLog);
+  oscl.serialize(*m_payload.mutable_log());
   m_payload.set_vid(name);
   m_payload.set_bytesstored(0);
   m_payload.set_lastfseq(0);
@@ -70,6 +73,20 @@ void cta::objectstore::Tape::removeIfEmpty() {
   }
   remove();
 }
+
+cta::CreationLog cta::objectstore::Tape::getCreationLog() {
+  checkPayloadReadable();
+  objectstore::CreationLog oscl;
+  oscl.deserialize(m_payload.log());
+  return cta::CreationLog(oscl);
+}
+
+void cta::objectstore::Tape::setCreationLog(const cta::CreationLog& creationLog) {
+  checkPayloadWritable();
+  objectstore::CreationLog oscl(creationLog);
+  oscl.serialize(*m_payload.mutable_log());
+}
+
 void cta::objectstore::Tape::setStoredData(uint64_t bytes) {
   checkPayloadWritable();
   m_payload.set_bytesstored(bytes);
@@ -144,6 +161,7 @@ void cta::objectstore::Tape::addJob(const RetrieveToFileRequest::JobDump& job,
   auto * j = m_payload.add_retrievejobs();
   j->set_address(retrieveToFileAddress);
   j->set_size(size);
+  j->set_copynb(job.copyNb);
 }
 
 std::string cta::objectstore::Tape::getLogicalLibrary() {
@@ -160,6 +178,37 @@ cta::objectstore::Tape::JobsSummary cta::objectstore::Tape::getJobsSummary() {
   ret.priority = m_payload.priority();
   return ret;
 }
+
+auto cta::objectstore::Tape::dumpAndFetchRetrieveRequests() 
+  -> std::list<RetrieveRequestDump> {
+  checkPayloadReadable();
+  std::list<RetrieveRequestDump> ret;
+  auto & rjl = m_payload.retrievejobs();
+  for (auto rj=rjl.begin(); rj!=rjl.end(); rj++) {
+    try {
+      cta::objectstore::RetrieveToFileRequest rtfr(rj->address(),m_objectStore);
+      objectstore::ScopedSharedLock rtfrl(rtfr);
+      rtfr.fetch();
+      ret.push_back(RetrieveRequestDump());
+      auto & retReq = ret.back();
+      retReq.archiveFile = rtfr.getArchiveFile();
+      retReq.remoteFile = rtfr.getRemoteFile();
+      // Find the copy number from the list of jobs
+      retReq.activeCopyNb = rj->copynb();
+      auto jl = rtfr.dumpJobs();
+      for (auto j=jl.begin(); j!= jl.end(); j++) {
+        retReq.tapeCopies.push_back(TapeFileLocation());
+        auto & retJob = retReq.tapeCopies.back();
+        retJob.blockId = j->blockid;
+        retJob.copyNb = j->copyNb;
+        retJob.fSeq = j->fseq;
+        retJob.vid = j->tape;
+      }
+    } catch (cta::exception::Exception &) {}
+  }
+  return ret;
+}
+
 
 bool cta::objectstore::Tape::isArchived() {
   checkPayloadReadable();

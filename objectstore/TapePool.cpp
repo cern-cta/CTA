@@ -90,7 +90,7 @@ std::string cta::objectstore::TapePool::addOrGetTapeAndCommit(const std::string&
   agent.commit();
   // The create the tape object
   Tape t(tapeAddress, ObjectOps<serializers::TapePool>::m_objectStore);
-  t.initialize(vid, logicalLibraryName);
+  t.initialize(vid, logicalLibraryName, creationLog);
   t.setOwner(agent.getAddressIfSet());
   t.setBackupOwner(getAddressIfSet());
   t.insert();
@@ -139,6 +139,21 @@ void cta::objectstore::TapePool::removeTapeAndCommit(const std::string& vid) {
     // No such tape. Nothing to to.
     throw NoSuchTape("In TapePool::removeTapeAndCommit: trying to remove non-existing tape");
   }
+}
+
+auto cta::objectstore::TapePool::dumpTapes() -> std::list<TapeBasicDump>{
+  checkPayloadReadable();
+  std::list<TapeBasicDump> ret;
+  auto & tl = m_payload.tapes();
+  for (auto tp=tl.begin(); tp!=tl.end(); tp++) {
+    ret.push_back(TapeBasicDump());
+    ret.back().address = tp->address();
+    ret.back().vid = tp->vid();
+    ret.back().capacityInBytes = tp->capacity();
+    ret.back().logicalLibraryName = tp->library();
+    ret.back().log.deserialize(tp->log());
+  }
+  return ret;
 }
 
 auto cta::objectstore::TapePool::dumpTapesAndFetchStatus() -> std::list<TapeDump>{

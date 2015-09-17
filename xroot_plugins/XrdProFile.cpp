@@ -30,7 +30,7 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
-#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "xroot_plugins/XrdProFile.hpp"
 
@@ -980,13 +980,19 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
     auto vidList = m_scheduler->getRetrieveRequests(requester);  
     for(auto vid = vidList.begin(); vid != vidList.end(); vid++) {
       for(auto request = vid->second.begin(); request!=vid->second.end(); request++) {
+        // Find the tape copy for the active copy number
+        cta::TapeFileLocation * tfl = NULL;
+        for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
+          if (l->copyNb == request->activeCopyNb)
+            tfl = &(*l);
+        }
         responseSS << vid->first.vid
                    << " " << request->archiveFile
                    << " " << request->remoteFile
-                   << " " << request->copyNb
-                   << " " << request->tapeCopy.vid
-                   << " " << request->tapeCopy.blockId
-                   << " " << request->tapeCopy.fSeq
+                   << " " << request->activeCopyNb
+                   << " " << (tfl?tfl->vid:"Unknown VID")
+                   << " " << (tfl?tfl->blockId:0)
+                   << " " << (tfl?tfl->fSeq:0)
                    << " " << request->priority
                    << " " << request->creationLog.user.uid
                    << " " << request->creationLog.user.gid
@@ -999,13 +1005,19 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   else {
     auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);    
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
+      // Find the tape copy for the active copy number
+      cta::TapeFileLocation * tfl = NULL;
+      for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
+        if (l->copyNb == request->activeCopyNb)
+          tfl = &(*l);
+      }
       responseSS << tapeVid
                  << " " << request->archiveFile
                  << " " << request->remoteFile
-                 << " " << request->copyNb
-                 << " " << request->tapeCopy.vid
-                 << " " << request->tapeCopy.blockId
-                 << " " << request->tapeCopy.fSeq
+                 << " " << request->activeCopyNb
+                 << " " << (tfl?tfl->vid:"Unknown VID")
+                 << " " << (tfl?tfl->blockId:0)
+                 << " " << (tfl?tfl->fSeq:0)
                  << " " << request->priority
                  << " " << request->creationLog.user.uid
                  << " " << request->creationLog.user.gid

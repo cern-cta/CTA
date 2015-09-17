@@ -39,16 +39,18 @@ void cta::objectstore::RetrieveToFileRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::RetrieveToFileRequest::addJob(uint16_t copyNumber,
-  const std::string& tape, const std::string& tapeaddress) {
+void cta::objectstore::RetrieveToFileRequest::addJob(const cta::TapeFileLocation & tapeFileLocation,
+    const std::string& tapeaddress) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
-  j->set_copynb(copyNumber);
+  j->set_copynb(tapeFileLocation.copyNb);
   j->set_status(serializers::RetrieveJobStatus::RJS_LinkingToTape);
-  j->set_tape(tape);
+  j->set_tape(tapeFileLocation.vid);
   j->set_tapeaddress(tapeaddress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
+  j->set_blockid(tapeFileLocation.blockId);
+  j->set_fseq(tapeFileLocation.fSeq);
 }
 
 void cta::objectstore::RetrieveToFileRequest::setArchiveFile(

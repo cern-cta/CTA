@@ -21,6 +21,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
+#include "common/archiveNS/TapeFileLocation.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -34,7 +35,7 @@ public:
   RetrieveToFileRequest(const std::string & address, Backend & os);
   RetrieveToFileRequest(GenericObject & go);
   void initialize();
-  void addJob(uint16_t copyNumber, const std::string & tape,
+  void addJob(const cta::TapeFileLocation & tapeFileLocation,
     const std::string & tapeaddress);
   void setArchiveFile(const std::string & archiveFile);
   std::string getArchiveFile();
@@ -51,6 +52,8 @@ public:
     uint16_t copyNb;
     std::string tape;
     std::string tapeAddress;
+    uint64_t fseq;
+    uint64_t blockid;
   };
   std::list<JobDump> dumpJobs();
 };

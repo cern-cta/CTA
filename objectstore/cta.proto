@@ -189,6 +189,7 @@ message ArchiveJobPointer {
 message RetrieveJobPointer {
   required uint64 size = 3101;
   required string address = 3102;
+  required uint32 copynb = 3103;
 }
 
 // ------------- Mount criteria and quota  -------------------------------------
@@ -259,6 +260,8 @@ message Tape {
   required bool disabled = 4314;
   required bool readonly = 4315;
   required bool full = 4316;
+  // Creation log
+  required CreationLog log = 4317;
 }
 
 // ------------- Archive Jobs --------------------------------------------------
@@ -331,9 +334,11 @@ message RetrieveJobEntry {
   required uint32 copynb = 4700;
   required string tape = 4701;
   required string tapeaddress = 4702;
-  required RetrieveJobStatus status = 4703;
-  required uint32 totalretries = 4704;
-  required uint32 retrieswithinmount = 4705;
+  required uint64 fseq = 4703;
+  required uint64 blockid = 4704;
+  required RetrieveJobStatus status = 4705;
+  required uint32 totalretries = 4706;
+  required uint32 retrieswithinmount = 4707;
 }
 
 message RetrieveToFileRequest {

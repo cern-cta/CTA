@@ -47,7 +47,7 @@ class ArchiveToTapeCopyRequest;
 class CreationLog;
 class DirIterator;
 class LogicalLibrary;
-class RetrieveFromTapeCopyRequest;
+class RetrieveRequestDump;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
 class SecurityIdentity;
@@ -209,7 +209,7 @@ public:
    * @return All of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests()
+  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests()
     const = 0;
 
   /**
@@ -220,7 +220,7 @@ public:
    * @return The list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+  virtual std::list<RetrieveRequestDump> getRetrieveRequests(
     const std::string &vid) const = 0;
   
   /**

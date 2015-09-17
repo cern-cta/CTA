@@ -2458,7 +2458,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   {
     decltype(scheduler.getRetrieveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
+    /*ASSERT_NO_THROW*/(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto tapeItor = rqsts.cbegin();
     ASSERT_FALSE(tapeItor == rqsts.cend());
@@ -2469,7 +2469,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::set<std::string> remoteFiles;
     std::set<std::string> archiveFiles;
     for(auto rqstItor = tapeRqsts.cbegin(); rqstItor != tapeRqsts.cend();
-      tapeItor++) {
+      rqstItor++) {
       remoteFiles.insert(rqstItor->remoteFile);
       archiveFiles.insert(rqstItor->archiveFile);
     }

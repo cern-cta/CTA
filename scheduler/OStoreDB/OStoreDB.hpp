@@ -250,9 +250,9 @@ public:
 
   virtual void queue(const RetrieveToDirRequest& rqst);
 
-  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(const std::string& vid) const;
+  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const;
 
-  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests() const;
+  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const;
 
   virtual void deleteRetrieveRequest(const SecurityIdentity& requester, 
     const std::string& remoteFile);

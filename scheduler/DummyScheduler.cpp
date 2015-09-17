@@ -35,7 +35,7 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/DummyScheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
@@ -85,18 +85,18 @@ void cta::DummyScheduler::deleteArchiveRequest(
 //------------------------------------------------------------------------------
 // getRetrieveRequests
 //------------------------------------------------------------------------------
-std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > cta::
+std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
   DummyScheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
-  return std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> >();
+  return std::map<cta::Tape, std::list<cta::RetrieveRequestDump> >();
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveRequests
 //------------------------------------------------------------------------------
-std::list<cta::RetrieveFromTapeCopyRequest> cta::DummyScheduler::getRetrieveRequests(
+std::list<cta::RetrieveRequestDump> cta::DummyScheduler::getRetrieveRequests(
   const SecurityIdentity &requester,
   const std::string &vid) const {
-  return std::list<cta::RetrieveFromTapeCopyRequest>();
+  return std::list<cta::RetrieveRequestDump>();
 }
   
 //------------------------------------------------------------------------------

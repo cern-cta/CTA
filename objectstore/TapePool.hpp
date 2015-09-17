@@ -56,6 +56,15 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongTape);
   void removeTapeAndCommit(const std::string &vid);
   std::string getTapeAddress(const std::string &vid);
+  class TapeBasicDump {
+  public:
+    std::string vid;
+    std::string address;
+    std::string logicalLibraryName;
+    uint64_t capacityInBytes;
+    objectstore::CreationLog log;
+  };
+  std::list<TapeBasicDump> dumpTapes();
   class TapeDump {
   public:
     std::string vid;

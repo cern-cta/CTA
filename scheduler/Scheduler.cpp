@@ -34,7 +34,7 @@
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
@@ -113,7 +113,7 @@ void cta::Scheduler::deleteArchiveRequest(
 //------------------------------------------------------------------------------
 // getRetrieveRequests
 //------------------------------------------------------------------------------
-std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > cta::
+std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
   Scheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
   return m_db.getRetrieveRequests();
 }
@@ -121,7 +121,7 @@ std::map<cta::Tape, std::list<cta::RetrieveFromTapeCopyRequest> > cta::
 //------------------------------------------------------------------------------
 // getRetrieveRequests
 //------------------------------------------------------------------------------
-std::list<cta::RetrieveFromTapeCopyRequest> cta::Scheduler::getRetrieveRequests(
+std::list<cta::RetrieveRequestDump> cta::Scheduler::getRetrieveRequests(
   const SecurityIdentity &requester,
   const std::string &vid) const {
   return m_db.getRetrieveRequests(vid);

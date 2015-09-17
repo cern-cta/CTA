@@ -21,6 +21,8 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "RetrieveToFileRequest.hpp"
+#include "common/archiveNS/TapeFileLocation.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -32,12 +34,15 @@ class Tape: public ObjectOps<serializers::Tape> {
 public:
   Tape(const std::string & address, Backend & os);
   Tape(GenericObject & go);
-  void initialize(const std::string & vid, const std::string &logicalLibrary);
+  void initialize(const std::string & vid, const std::string &logicalLibrary, 
+    const cta::CreationLog & creationLog);
   void garbageCollect();
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();
   std::string dump();
+  cta::CreationLog getCreationLog();
+  void setCreationLog(const cta::CreationLog & creationLog);
   
   // Tape location management ==================================================
   std::string getLogicalLibrary();
@@ -72,6 +77,7 @@ public:
     uint64_t priority;
   };
   JobsSummary getJobsSummary();
+  std::list<RetrieveRequestDump> dumpAndFetchRetrieveRequests();
   
   // -- Stored data counting ---------------------------------------------------
   uint64_t getStoredData();

@@ -25,7 +25,7 @@
 #include "common/archiveNS/Tape.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
-#include "scheduler/RetrieveFromTapeCopyRequest.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -183,11 +183,11 @@ public:
     return m_OStoreDB.getLogicalLibraries();
   }
 
-  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> > getRetrieveRequests() const {
+  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const {
     return m_OStoreDB.getRetrieveRequests();
   }
 
-  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(const std::string& vid) const {
+  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const {
     return m_OStoreDB.getRetrieveRequests(vid);
   }
   

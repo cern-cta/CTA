@@ -42,7 +42,7 @@ class LogicalLibrary;
 class NameServer;
 class RemoteNS;
 class RemotePathAndStatus;
-class RetrieveFromTapeCopyRequest;
+class RetrieveRequestDump;
 class RetrieveToDirRequest;
 class RetrieveToFileRequest;
 class SchedulerDatabase;
@@ -138,7 +138,7 @@ public:
    * @return all of the queued retrieve requests.  The returned requsts are
    * grouped by tape and then sorted by creation time, oldest first.
    */
-  virtual std::map<Tape, std::list<RetrieveFromTapeCopyRequest> >
+  virtual std::map<Tape, std::list<RetrieveRequestDump> >
     getRetrieveRequests(const SecurityIdentity &requester) const;
 
   /**
@@ -150,7 +150,7 @@ public:
    * @return The queued retrieve requests for the specified tape.  The
    * returned requests are sorted by creation time, oldest first.
    */
-  virtual std::list<RetrieveFromTapeCopyRequest> getRetrieveRequests(
+  virtual std::list<RetrieveRequestDump> getRetrieveRequests(
     const SecurityIdentity &requester,
     const std::string &vid) const;
   

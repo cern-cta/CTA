@@ -20,7 +20,6 @@ set (CTA_SCHEDULER_SRC_FILES
   MountType.cpp
   PositioningMethod.cpp
   RetrieveJob.cpp
-  RetrieveFromTapeCopyRequest.cpp
   RetrieveMount.cpp
   RetrieveRequest.cpp
   RetrieveToDirRequest.cpp
