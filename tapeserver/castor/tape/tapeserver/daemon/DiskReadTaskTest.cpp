@@ -36,13 +36,6 @@
 
 namespace unitTests{
   
-  class TestingArchiveMount: public cta::ArchiveMount {
-  public:
-    TestingArchiveMount(std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbrm): 
-      ArchiveMount(*((cta::NameServer *)NULL),std::move(dbrm)) {
-    }
-  };
-  
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
     TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 

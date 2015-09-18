@@ -59,18 +59,16 @@ RecallReportPacker::~RecallReportPacker(){
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,
-  u_int32_t checksum, u_int64_t size){
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob),checksum,size));
+void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob){
+  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob)));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------  
-void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
-  const castor::exception::Exception &ex){
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob),ex));
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob){
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob)));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -94,7 +92,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  m_successfulRetrieveJob->complete(m_checksum, m_size);
+  m_successfulRetrieveJob->complete();
 }
 
 //------------------------------------------------------------------------------
@@ -152,8 +150,8 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
-  parent.m_lc.log(LOG_ERR,m_ex.getMessageValue());
-  m_failedRetrieveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
+  parent.m_lc.log(LOG_ERR,m_failedRetrieveJob->failureMessage);
+  m_failedRetrieveJob->failed();
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread

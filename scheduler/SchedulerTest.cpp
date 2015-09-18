@@ -30,6 +30,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/ArchiveMount.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "common/archiveNS/StorageClass.hpp"
 #include "common/archiveNS/Tape.hpp"
@@ -2478,6 +2479,25 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ(1, archiveFiles.size());
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
       archiveFiles.end());
+  }
+  
+  {
+    // Emulate a tape server by asking for a mount and then a file (and succeed
+    // the transfer)
+    std::unique_ptr<cta::TapeMount> mount;
+    /*ASSERT_NO_THROW*/(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_EQ(cta::MountType::RETRIEVE, mount.get()->getMountType());
+    std::unique_ptr<cta::RetrieveMount> retrieveMount;
+    ASSERT_NO_THROW(retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release())));
+    ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
+    std::unique_ptr<cta::RetrieveJob> retrieveJob;
+    ASSERT_NO_THROW(retrieveJob.reset(retrieveMount->getNextJob().release()));
+    ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
+    ASSERT_NO_THROW(retrieveJob->complete());
+    ASSERT_NO_THROW(retrieveJob.reset(retrieveMount->getNextJob().release()));
+    ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
+    ASSERT_NO_THROW(retrieveMount->complete());
   }
 }
 

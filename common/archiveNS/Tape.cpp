@@ -68,3 +68,11 @@ bool cta::Tape::Status::availableToWrite() {
   return !busy && !archived && !disabled && !readonly && !full;
 }
 
+//------------------------------------------------------------------------------
+// Status::availableToRead()
+//------------------------------------------------------------------------------
+bool cta::Tape::Status::availableToRead() {
+  return !busy && !archived && !disabled;
+}
+
+

@@ -888,7 +888,25 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
         }
       }
     } else if (m->type==cta::MountType::RETRIEVE) {
-      throw NotImplemented("");
+      // We know the tape we intend to mount. We have to validate the tape is 
+      // actually available to read, and pass on it if no.
+      auto tapesList = m_db.getTapes();
+      for (auto t=tapesList.begin(); t!=tapesList.end(); t++) {
+        if (t->vid == m->vid && t->status.availableToRead()) {
+          try {
+            std::unique_ptr<RetrieveMount> internalRet (new RetrieveMount());
+            // Get the db side of the session
+            internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(t->vid, 
+                driveName,
+                logicalLibraryName, 
+                Utils::getShortHostname(), 
+                time(NULL)).release());
+            return std::unique_ptr<TapeMount> (internalRet.release()); 
+         } catch (cta::exception::Exception & ex) {
+           continue;
+         }
+        }
+      }
     } else {
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }

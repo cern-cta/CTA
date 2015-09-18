@@ -36,19 +36,19 @@ cta::RetrieveJob::RetrieveJob(/*RetrieveMount &mount,*/
   archiveFile(archiveFile),
   remotePathAndStatus(remotePathAndStatus),
   tapeFileLocation(tapeFileLocation),
-  positioningMethod(positioningMethod) {}
+  positioningMethod(positioningMethod),
+  transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::complete(const uint32_t checksumOfTransfer, 
-  const uint64_t fileSizeOfTransfer) {
+void cta::RetrieveJob::complete() {
 }
   
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::failed(const exception::Exception &ex) {
+void cta::RetrieveJob::failed() {
 }
   
 //------------------------------------------------------------------------------

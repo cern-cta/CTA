@@ -54,8 +54,10 @@ public:
       const std::string & vid, const std::string & tapePool,
       const std::string driveName, const std::string& logicalLibrary, 
       const std::string & hostName, time_t startTime);
-    virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string driveName);
+    virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
+      const std::string & vid, const std::string driveName,
+      const std::string& logicalLibrary, const std::string& hostName, 
+      time_t startTime);
     virtual ~TapeMountDecisionInfo();
   private:
     TapeMountDecisionInfo (objectstore::Backend &, objectstore::Agent &);
@@ -101,6 +103,19 @@ public:
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
     objectstore::ArchiveToFileRequest m_atfr;
+  };
+  
+  /* === Retrieve Mount handling ============================================ */
+  class RetrieveMount: public SchedulerDatabase::RetrieveMount {
+    friend class TapeMountDecisionInfo;
+  private:
+    RetrieveMount(objectstore::Backend &, objectstore::Agent &);
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent & m_agent;
+  public:
+    virtual const MountInfo & getMountInfo();
+    virtual std::unique_ptr<RetrieveJob> getNextJob();
+    virtual void complete(time_t completionTime);
   };
 
   /* === Admin host handling ================================================ */

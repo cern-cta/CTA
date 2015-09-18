@@ -1220,7 +1220,27 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
 
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
-    const std::string& vid, const std::string driveName) {
+    const std::string& vid, const std::string driveName, 
+    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+  // In order to create the mount, we have to:
+  // Check we actually hold the scheduling lock
+  // Check the tape exists, add it to ownership and set its activity status to 
+  // busy, with the current agent pointing to it for unbusying
+  // Set the drive status to up, but do not commit anything to the drive register
+  // the drive register does not need garbage collection as it should reflect the
+  // latest known state of the drive (and its absence of updating if needed)
+  // Prepare the return value
+  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
+    new OStoreDB::RetrieveMount(m_objectStore, m_agent));
+  auto &rm = *privateRet;
+  // Check we hold the scheduling lock
+  if (!m_lockTaken)
+    throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createRetrieveMount: "
+      "cannot create mount without holding scheduling lock");
+  // Find the tape and update it
+  rm.mountInfo.vid = vid;
+  rm.mountInfo.drive = driveName;
+  rm.mountInfo.logicalLibrary = "";
   throw NotImplemented("Not Implemented");
 }
  
@@ -1339,10 +1359,24 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   t.commit();
 }
 
-
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
   objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),
   m_objectStore(os), m_agent(ag), m_atfr(jobAddress, os) {}
+
+OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::Agent& a):
+  m_objectStore(os), m_agent(a) { }
+
+const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo() {
+  return mountInfo;
+}
+
+auto  OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<RetrieveJob> {
+  throw NotImplemented("In OStoreDB::RetrieveMount::getNextJob: not implemented");
+}
+
+void OStoreDB::RetrieveMount::complete(time_t completionTime) {
+  throw NotImplemented("In OStoreDB::RetrieveMount::getNextJob: not implemented");
+}
 
 
 void OStoreDB::ArchiveJob::fail() {

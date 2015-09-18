@@ -54,7 +54,7 @@ public:
    * @param migratedFile the file successfully migrated
    * @param checksum the checksum the DWT has computed for the file 
    */
-  virtual void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, u_int32_t checksum, u_int64_t size);
+  virtual void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob);
   
   /**
    * Create into the MigrationReportPacker a report for the failed migration
@@ -62,7 +62,7 @@ public:
    * @param migratedFile the file which failed 
    * @param ex the reason for the failure
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception& ex);
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob);
        
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -102,30 +102,23 @@ private:
     bool goingToEnd() const {return m_endNear;};
   };
   class ReportSuccessful :  public Report {
-    u_int32_t m_checksum;
-    u_int64_t m_size;
-    
     /**
      * The successful retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
-    ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,u_int32_t checksum,
-      u_int64_t size): 
-    Report(false),m_checksum(checksum),m_size(size), m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
+    ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob): 
+    Report(false), m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
     virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const castor::exception::Exception m_ex;
-    
     /**
      * The failed retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
-    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception &ex):
+    ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob):
     Report(false),
-    m_ex(ex),
     m_failedRetrieveJob(std::move(failedRetrieveJob)) {
     }
 

@@ -118,8 +118,8 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
-  rrp.reportCompletedJob(std::move(job1),0,0);
-  rrp.reportCompletedJob(std::move(job2),0,0);
+  rrp.reportCompletedJob(std::move(job1));
+  rrp.reportCompletedJob(std::move(job2));
 
   rrp.reportEndOfSession();
   rrp.waitThread();
@@ -159,12 +159,13 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
-  rrp.reportCompletedJob(std::move(job1),0,0);
-  rrp.reportCompletedJob(std::move(job2),0,0);
+  rrp.reportCompletedJob(std::move(job1));
+  rrp.reportCompletedJob(std::move(job2));
 
   const std::string error_msg = "ERROR_TEST_MSG";
   const castor::exception::Exception ex(error_msg);
-  rrp.reportFailedJob(std::move(job3),ex);
+  job3->failureMessage = ex.getMessageValue();
+  rrp.reportFailedJob(std::move(job3));
 
   rrp.reportEndOfSession();
   rrp.waitThread();

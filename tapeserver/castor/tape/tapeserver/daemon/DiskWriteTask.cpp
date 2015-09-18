@@ -120,7 +120,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
       }
     } //end of while(1)
     logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
-    reporter.reportCompletedJob(std::move(m_retrieveJob),checksum,m_stats.dataVolume);
+    m_retrieveJob->transferredSize = m_stats.dataVolume;
+    m_retrieveJob->transferredChecksum = cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, 
+      cta::ByteArray(checksum));
+    reporter.reportCompletedJob(std::move(m_retrieveJob));
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
@@ -152,7 +155,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
           .add("errorCode", e.code());
     logWithStat(LOG_ERR, "File writing to disk failed.", lc);
     lc.logBacktrace(LOG_ERR, e.backtrace());
-    reporter.reportFailedJob(std::move(m_retrieveJob),e);
+    m_retrieveJob->failureMessage = e.getMessageValue();
+    reporter.reportFailedJob(std::move(m_retrieveJob));
 
     
     //got an exception, return false

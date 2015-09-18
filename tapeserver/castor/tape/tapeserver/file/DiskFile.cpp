@@ -589,7 +589,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   m_signedURL = m_URL + opaqueBloc.str();
   
   // ... and finally open the file for write (deleting any existing one in case)
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write),
     std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ")
     +m_URL);
 }
@@ -600,7 +600,7 @@ XrootWriteFile::XrootWriteFile(const std::string& xrootUrl) {
   m_URL = xrootUrl;
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write),
     std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
 
 }

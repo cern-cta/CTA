@@ -40,6 +40,11 @@
 #include <gtest/gtest.h>
 
 namespace unitTests{
+  class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
+    virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
+    virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
+    virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
+  };
   
   class TestingRetrieveMount: public cta::RetrieveMount {
   public:
@@ -78,7 +83,7 @@ namespace unitTests{
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock");
     castor::log::LogContext lc(log);
     
-    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     EXPECT_CALL(report,reportFailedJob_(_,_));

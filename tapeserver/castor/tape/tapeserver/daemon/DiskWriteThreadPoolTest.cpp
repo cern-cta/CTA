@@ -33,6 +33,12 @@
 
 namespace unitTests{
   
+  class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
+    virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
+    virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
+    virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
+  };
+  
   class TestingRetrieveMount: public cta::RetrieveMount {
   public:
     TestingRetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(std::move(dbrm)) {
@@ -44,6 +50,8 @@ namespace unitTests{
     TestingRetrieveJob() {
     }
   };
+  
+
   
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
@@ -73,7 +81,7 @@ namespace unitTests{
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteThreadPoolTest");
     castor::log::LogContext lc(log);
     
-    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new cta::SchedulerDatabase::RetrieveMount);
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount);
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     

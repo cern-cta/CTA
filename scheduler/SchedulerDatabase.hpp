@@ -235,8 +235,21 @@ public:
   
   /*============ Retrieve management: tape server side ======================*/
 
-  
-  class RetrieveMount {};
+  class RetrieveJob;
+  class RetrieveMount {
+  public:
+    struct MountInfo {
+      std::string vid;
+      std::string logicalLibrary;
+      std::string tapePool;
+      std::string drive;
+      uint64_t mountId;
+    } mountInfo;
+    virtual const MountInfo & getMountInfo() = 0;
+    virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
+    virtual void complete(time_t completionTime) = 0;
+    virtual ~RetrieveMount() {}
+  };
   
   class RetrieveJob {
     friend class RetrieveMount;
@@ -319,7 +332,8 @@ public:
      * lock.
      */
     virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string driveName) = 0;
+      const std::string driveName, const std::string& logicalLibrary, 
+      const std::string& hostName, time_t startTime) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };

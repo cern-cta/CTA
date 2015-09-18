@@ -116,6 +116,7 @@ struct Tape {
     bool readonly;
     bool full;
     bool availableToWrite();
+    bool availableToRead();
   };
   
   /**
