@@ -897,12 +897,14 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
             std::unique_ptr<RetrieveMount> internalRet (new RetrieveMount());
             // Get the db side of the session
             internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(t->vid, 
+                t->tapePoolName,
                 driveName,
                 logicalLibraryName, 
                 Utils::getShortHostname(), 
                 time(NULL)).release());
             return std::unique_ptr<TapeMount> (internalRet.release()); 
          } catch (cta::exception::Exception & ex) {
+           std::string debug=ex.getMessageValue();
            continue;
          }
         }

@@ -332,8 +332,9 @@ public:
      * lock.
      */
     virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string driveName, const std::string& logicalLibrary, 
-      const std::string& hostName, time_t startTime) = 0;
+      const std::string & tapePool, const std::string driveName, 
+      const std::string& logicalLibrary, const std::string& hostName,
+      time_t startTime) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };

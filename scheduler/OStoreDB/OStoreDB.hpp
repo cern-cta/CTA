@@ -55,7 +55,8 @@ public:
       const std::string driveName, const std::string& logicalLibrary, 
       const std::string & hostName, time_t startTime);
     virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string & vid, const std::string driveName,
+      const std::string & vid, const std::string & tapePool,
+      const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
       time_t startTime);
     virtual ~TapeMountDecisionInfo();

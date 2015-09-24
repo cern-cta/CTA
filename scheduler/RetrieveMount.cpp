@@ -36,7 +36,7 @@ cta::RetrieveMount::RetrieveMount(
 // getMountType
 //------------------------------------------------------------------------------
 cta::MountType::Enum cta::RetrieveMount::getMountType() const throw() {
-  return MountType::ARCHIVE;
+  return MountType::RETRIEVE;
 }
 
 //------------------------------------------------------------------------------

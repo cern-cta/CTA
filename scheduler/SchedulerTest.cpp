@@ -2485,7 +2485,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    /*ASSERT_NO_THROW*/(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::RETRIEVE, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
