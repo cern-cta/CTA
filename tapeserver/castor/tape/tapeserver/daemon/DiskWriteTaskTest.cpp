@@ -54,8 +54,10 @@ namespace unitTests{
   
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob() {
-    }
+    TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    cta::ArchiveFile(), 
+    std::string(), cta::NameServerTapeFile(),
+    cta::PositioningMethod::ByBlock) {}
   };
   
   using namespace castor::tape::tapeserver::daemon;

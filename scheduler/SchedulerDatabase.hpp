@@ -254,9 +254,12 @@ public:
   class RetrieveJob {
     friend class RetrieveMount;
   public:
-    cta::RemotePathAndStatus remoteFile;
+    std::string remoteFile;
     cta::ArchiveFile archiveFile;
-    /* TODO */
+    cta::NameServerTapeFile nameServerTapeFile;
+    virtual void succeed() = 0;
+    virtual void fail() = 0;
+    virtual ~RetrieveJob() {}
   };
   
   /*============ Session management ==========================================*/

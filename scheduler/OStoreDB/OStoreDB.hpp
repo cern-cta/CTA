@@ -21,6 +21,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/RetrieveToFileRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 
 namespace cta {
@@ -117,6 +118,26 @@ public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<RetrieveJob> getNextJob();
     virtual void complete(time_t completionTime);
+  };
+  
+  /* === Retrieve Job handling ============================================== */
+  class RetrieveJob: public SchedulerDatabase::RetrieveJob {
+    friend class RetrieveMount;
+  public:
+    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
+    virtual void succeed();
+    virtual void fail();
+    virtual ~RetrieveJob();
+  private:
+    RetrieveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
+    bool m_jobOwned;
+    uint16_t m_copyNb;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent & m_agent;
+    objectstore::RetrieveToFileRequest m_rtfr;
+    std::map<std::string, std::string> m_vidToAddress; /**< Cache of tape objects
+                                                        *  addresses filled up at queuing time */
   };
 
   /* === Admin host handling ================================================ */

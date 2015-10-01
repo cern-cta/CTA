@@ -36,12 +36,11 @@ namespace cta {
   class RetrieveMount: public TapeMount {
     friend class Scheduler;
   protected:
-
     /**
-     * Constructor.
+     * Trivial constructor
      */
     RetrieveMount();
-
+    
     /**
      * Constructor.
      *
@@ -92,6 +91,7 @@ namespace cta {
      */
     virtual void complete();
 
+    CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**
      * Job factory
      *
@@ -111,6 +111,11 @@ namespace cta {
      * The database representation of this mount.
      */
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
+    
+    /**
+     * Internal tracking of the session completion
+     */
+    bool m_sessionRunning;
 
   }; // class RetrieveMount
 

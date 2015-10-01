@@ -35,18 +35,13 @@ public:
   RetrieveToFileRequest(const std::string & address, Backend & os);
   RetrieveToFileRequest(GenericObject & go);
   void initialize();
+  // Job management ============================================================
   void addJob(const cta::TapeFileLocation & tapeFileLocation,
     const std::string & tapeaddress);
-  void setArchiveFile(const std::string & archiveFile);
-  std::string getArchiveFile();
-  void setRemoteFile (const std::string & remoteFile);
-  std::string getRemoteFile();
-  void setPriority (uint64_t priority);
-  void setCreationLog (const objectstore::CreationLog& creationLog);
-  CreationLog getCreationLog();
-  void setRetrieveToDirRequestAddress(const std::string & dirRequestAddress);
-  void setSize(uint64_t size);
-  uint64_t getSize();
+  void setJobFailureLimits(uint16_t copyNumber,
+    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+  void setJobSelected(uint16_t copyNumber, const std::string & owner);
+  void setJobPending(uint16_t copyNumber);
   class JobDump {
   public:
     uint16_t copyNb;
@@ -55,6 +50,38 @@ public:
     uint64_t fseq;
     uint64_t blockid;
   };
+  JobDump getJob(uint16_t copyNb);
+  struct FailuresCount {
+    uint16_t failuresWithinMount;
+    uint16_t totalFailures;
+  };
+  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
+  serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
+  // Handling of the consequences of a job status. This is simpler that archival
+  // as one finish is enough.
+  void finish();
+  // Mark all jobs as pending mount (following their linking to a tape pool)
+  void setAllJobsLinkingToTapePool();
+  // Mark all the jobs as being deleted, in case of a cancellation
+  void setAllJobsFailed();
+  // Mark all the jobs as pending deletion from NS.
+  void setAllJobsPendingNSdeletion();
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
+  // Request management ========================================================
+  void setSuccessful();
+  void setFailed();
+  // ===========================================================================
+  void setArchiveFile(const std::string & archiveFile);
+  std::string getArchiveFile();
+  void setRemoteFile (const std::string & remoteFile);
+  std::string getRemoteFile();
+  void setPriority (uint64_t priority);
+  uint64_t getPriority();
+  void setCreationLog (const objectstore::CreationLog& creationLog);
+  CreationLog getCreationLog();
+  void setRetrieveToDirRequestAddress(const std::string & dirRequestAddress);
+  void setSize(uint64_t size);
+  uint64_t getSize();
   std::list<JobDump> dumpJobs();
 };
 

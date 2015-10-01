@@ -894,14 +894,15 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
       for (auto t=tapesList.begin(); t!=tapesList.end(); t++) {
         if (t->vid == m->vid && t->status.availableToRead()) {
           try {
-            std::unique_ptr<RetrieveMount> internalRet (new RetrieveMount());
-            // Get the db side of the session
-            internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(t->vid, 
+            // create the mount, and populate its DB side.
+            std::unique_ptr<RetrieveMount> internalRet (
+              new RetrieveMount(mountInfo->createRetrieveMount(t->vid, 
                 t->tapePoolName,
                 driveName,
                 logicalLibraryName, 
                 Utils::getShortHostname(), 
-                time(NULL)).release());
+                time(NULL))));
+            internalRet->m_sessionRunning = true;
             return std::unique_ptr<TapeMount> (internalRet.release()); 
          } catch (cta::exception::Exception & ex) {
            std::string debug=ex.getMessageValue();

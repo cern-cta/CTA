@@ -49,15 +49,7 @@ public:
     uint16_t totalFailures;
   };
   FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
-  // Duplication of the protbuff statuses
-  enum class JobStatus {
-    AJS_LinkingToTapePool = 0,
-    AJS_Pending = 1,
-    AJS_Selected = 2,
-    AJS_Complete = 3,
-    AJS_Failed = 99
-  };
-  JobStatus getJobStatus(uint16_t copyNumber);
+  serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
   // Handling of the consequences of a job status change for the entire request.
   // This function returns true if the request got finished.
   bool finishIfNecessary();

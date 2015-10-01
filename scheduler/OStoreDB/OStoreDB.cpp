@@ -1351,9 +1351,9 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
   while (tp.dumpJobs().size()) {
     // Get the tape pool's jobs list, and pop the first
     auto jl = tp.dumpJobs();
-    // First take a lock on a download the job
+    // First take a lock on and download the job
     // If the request is not around anymore, we will just move the the next
-    // prepare the return value
+    // Prepare the return value
     std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
       jl.front().address, m_objectStore, m_agent));
     privateRet->m_copyNb = jl.front().copyNb;
@@ -1439,12 +1439,90 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
   return mountInfo;
 }
 
-auto  OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<RetrieveJob> {
-  throw NotImplemented("In OStoreDB::RetrieveMount::getNextJob: not implemented");
+auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::RetrieveJob> {
+  // Find the next file to retrieve
+  // Get the tape pool and then tape
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpTapePools();
+  rel.release();
+  std::string tpAddress;
+  for (auto tpp = tpl.begin(); tpp != tpl.end(); tpp++) {
+    if (tpp->tapePool == mountInfo.tapePool)
+      tpAddress = tpp->address;
+  }
+  if (!tpAddress.size())
+    throw NoSuchTapePool("In OStoreDB::RetrieveMount::getNextJob(): tape pool not found");
+  objectstore::TapePool tp(tpAddress, m_objectStore);
+  objectstore::ScopedSharedLock tplock(tp);
+  tp.fetch();
+  auto tl = tp.dumpTapes();
+  tplock.release();
+  std::string tAddress;
+  for (auto tptr = tl.begin(); tptr != tl.end(); tptr++) {
+    if (tptr->vid == mountInfo.vid)
+      tAddress = tptr->address;
+  }
+  if (!tAddress.size())
+    throw NoSuchTape("In OStoreDB::RetrieveMount::getNextJob(): tape not found");
+  objectstore::Tape t(tAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock tlock(t);
+  t.fetch();
+  while (t.dumpJobs().size()) {
+    // Get the tape pool's jobs list, and pop the first
+    auto jl=t.dumpJobs();
+    // First take a lock on and download the job
+    // If the request is not around anymore, we will just move the the next
+    // Prepare the return value
+    std::unique_ptr<OStoreDB::RetrieveJob> privateRet(new OStoreDB::RetrieveJob(
+      jl.front().address, m_objectStore, m_agent));
+    privateRet->m_copyNb = jl.front().copyNb;
+    objectstore::ScopedExclusiveLock rtfrl;
+    try {
+      rtfrl.lock(privateRet->m_rtfr);
+      privateRet->m_rtfr.fetch();
+    } catch (cta::exception::Exception &) {
+      // we failed to access the object. It might be missing.
+      // Just pop this job from the pool and move to the next.
+      t.removeJob(privateRet->m_rtfr.getAddressIfSet());
+      // Commit in case we do not pass by again.
+      t.commit();
+      continue;
+    }
+    // Take ownership of the job
+    // Add to ownership
+    objectstore::ScopedExclusiveLock al(m_agent);
+    m_agent.fetch();
+    m_agent.addToOwnership(privateRet->m_rtfr.getAddressIfSet());
+    m_agent.commit();
+    al.release();
+    // Make the ownership official (for the whole request in retrieves)
+    privateRet->m_rtfr.setOwner(m_agent.getAddressIfSet());
+    privateRet->m_rtfr.commit();
+    // Remove the job from the tape pool queue
+    t.removeJob(privateRet->m_rtfr.getAddressIfSet());
+    // We can commit and release the tape pool lock, we will only fill up
+    // memory structure from here on.
+    t.commit();
+    privateRet->archiveFile.path = privateRet->m_rtfr.getArchiveFile();
+    privateRet->remoteFile = privateRet->m_rtfr.getRemoteFile();
+    objectstore::RetrieveToFileRequest::JobDump jobDump=
+        privateRet->m_rtfr.getJob(privateRet->m_copyNb);
+    privateRet->nameServerTapeFile.tapeFileLocation.fSeq = jobDump.fseq;
+    privateRet->nameServerTapeFile.tapeFileLocation.blockId = jobDump.blockid;
+    privateRet->nameServerTapeFile.tapeFileLocation.copyNb = privateRet->m_copyNb;
+    privateRet->nameServerTapeFile.tapeFileLocation.vid = mountInfo.vid;
+
+      std::numeric_limits<decltype(privateRet->nameServerTapeFile.tapeFileLocation.blockId)>::max();
+    privateRet->m_jobOwned = true;
+    return std::unique_ptr<SchedulerDatabase::RetrieveJob> (privateRet.release());
+  }
+  return std::unique_ptr<SchedulerDatabase::RetrieveJob> (NULL);
 }
 
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {
-  throw NotImplemented("In OStoreDB::RetrieveMount::getNextJob: not implemented");
+  throw NotImplemented("In OStoreDB::RetrieveMount::complete: not implemented");
 }
 
 
@@ -1527,6 +1605,89 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     m_agent.removeFromOwnership(m_atfr.getAddressIfSet());
     m_agent.commit();
   }
+}
+
+OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, 
+    objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),
+  m_objectStore(os), m_agent(ag), m_rtfr(jobAddress, os) { }
+
+void OStoreDB::RetrieveJob::fail() {
+  throw NotImplemented("");
+  }
+
+OStoreDB::RetrieveJob::~RetrieveJob() {
+  if (m_jobOwned) {
+    // Re-queue the job entirely if we failed to handle it.
+    try {
+      // We now need to select the tape from which we will migrate next. This should
+      // be the tape with the most jobs already queued.
+      // TODO: this will have to look at tape statuses on the long run as well
+      uint16_t selectedCopyNumber;
+      uint64_t bestTapeQueuedBytes;
+      std::string selectedVid;
+      std::string selectedTapeAddress;
+      objectstore::ScopedExclusiveLock rtfrl(m_rtfr);
+      m_rtfr.fetch();
+      auto jl=m_rtfr.dumpJobs();
+      {
+        // First tape copy is always better than nothing. 
+        auto tc=jl.begin();
+        selectedCopyNumber = tc->copyNb;
+        selectedVid = tc->tape;
+        selectedTapeAddress = tc->tapeAddress;
+        // Get info for the tape.
+        {
+          objectstore::Tape t(tc->tapeAddress, m_objectStore);
+          objectstore::ScopedSharedLock tl(t);
+          t.fetch();
+          bestTapeQueuedBytes = t.getJobsSummary().bytes;
+        }
+        tc++;
+        // Compare with the next ones
+        for (;tc!=jl.end(); tc++) {
+          objectstore::Tape t(tc->tapeAddress, m_objectStore);
+          objectstore::ScopedSharedLock tl(t);
+          t.fetch();
+          if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
+            bestTapeQueuedBytes = t.getJobsSummary().bytes;
+            selectedCopyNumber = tc->copyNb;
+            selectedVid = tc->tape;
+            selectedTapeAddress = tc->tapeAddress;
+          }
+        }
+      }
+      // We now can enqueue the request on this most promising tape.
+      {
+        objectstore::Tape tp(selectedTapeAddress, m_objectStore);
+        ScopedExclusiveLock tpl(tp);
+        tp.fetch();
+        objectstore::RetrieveToFileRequest::JobDump jd;
+        jd.copyNb = selectedCopyNumber;
+        jd.tape = selectedVid;
+        jd.tapeAddress = selectedTapeAddress;
+        tp.addJob(jd, m_rtfr.getAddressIfSet(), m_rtfr.getSize(), m_rtfr.getPriority(), m_rtfr.getCreationLog().time);
+        tp.commit();
+      }
+      // The request is now fully set. It belongs to the tape.
+      std::string previousOwner = m_rtfr.getOwner();
+      m_rtfr.setOwner(selectedTapeAddress);
+      m_rtfr.commit();
+      // And remove reference from the agent (if it was owned by an agent)
+      try {
+        if (!previousOwner.size())
+          return;
+        objectstore::Agent agent(previousOwner, m_objectStore);
+        objectstore::ScopedExclusiveLock al(agent);
+        agent.fetch();
+        agent.removeFromOwnership(m_rtfr.getAddressIfSet());
+        agent.commit();
+      } catch (...) {}
+    } catch (...) {}
+  }
+}
+
+void OStoreDB::RetrieveJob::succeed() {
+  throw NotImplemented("");
 }
 
 

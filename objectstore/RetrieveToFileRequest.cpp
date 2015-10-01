@@ -80,6 +80,11 @@ void cta::objectstore::RetrieveToFileRequest::setPriority(uint64_t priority) {
   m_payload.set_priority(priority);
 }
 
+uint64_t cta::objectstore::RetrieveToFileRequest::getPriority() {
+  checkPayloadReadable();
+  return m_payload.priority();
+}
+
 void cta::objectstore::RetrieveToFileRequest::setCreationLog(
   const objectstore::CreationLog& creationLog) {
   checkPayloadWritable();
@@ -121,3 +126,23 @@ void cta::objectstore::RetrieveToFileRequest::setSize(uint64_t size) {
   checkPayloadWritable();
   m_payload.set_size(size);
 }
+
+auto  cta::objectstore::RetrieveToFileRequest::getJob(uint16_t copyNb) -> JobDump {
+  checkPayloadReadable();
+  // find the job
+  auto & jl = m_payload.jobs();
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    if (j->copynb() == copyNb) {
+      JobDump ret;
+      ret.blockid = j->blockid();
+      ret.copyNb = j->copynb();
+      ret.fseq = j->fseq();
+      ret.tape = j->tape();
+      ret.tapeAddress = j->tapeaddress();
+      return ret;
+    }
+  }
+  throw NoSuchJob("In objectstore::RetrieveToFileRequest::getJob(): job not found for this copyNb");
+}
+
+

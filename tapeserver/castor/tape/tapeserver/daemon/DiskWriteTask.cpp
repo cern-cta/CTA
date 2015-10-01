@@ -54,7 +54,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   log::ScopedParamContainer URLcontext(lc);
   URLcontext.add("NSFILEID",m_retrieveJob->archiveFile.fileId)
             .add("path", m_retrieveJob->archiveFile.path)
-            .add("fSeq",m_retrieveJob->tapeFileLocation.fSeq);
+            .add("fSeq",m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq);
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to

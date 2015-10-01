@@ -47,8 +47,10 @@ namespace unitTests{
   
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob() {
-    }
+    TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    cta::ArchiveFile(), 
+    std::string(), cta::NameServerTapeFile(),
+    cta::PositioningMethod::ByBlock) {}
   };
   
 
@@ -97,7 +99,7 @@ namespace unitTests{
       std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
       fileToRecall->archiveFile.path = "/dev/null";
       fileToRecall->archiveFile.fileId = i+1;
-      fileToRecall->tapeFileLocation.blockId = 1;
+      fileToRecall->nameServerTapeFile.tapeFileLocation.blockId = 1;
       DiskWriteTask* t=new DiskWriteTask(fileToRecall.release(),mm);
       MemBlock* mb=mm.getFreeBlock();
       mb->m_fileid=i+1;

@@ -78,6 +78,14 @@ public:
   };
   JobsSummary getJobsSummary();
   std::list<RetrieveRequestDump> dumpAndFetchRetrieveRequests();
+  struct JobDump {
+    std::string address;
+    uint16_t copyNb;
+    uint64_t size;
+  };
+  std::list<JobDump> dumpJobs();
+  
+  void removeJob(const std::string & retriveToFileAddress);
   
   // -- Stored data counting ---------------------------------------------------
   uint64_t getStoredData();

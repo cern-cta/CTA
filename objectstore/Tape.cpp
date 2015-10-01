@@ -207,6 +207,20 @@ auto cta::objectstore::Tape::dumpAndFetchRetrieveRequests()
     } catch (cta::exception::Exception &) {}
   }
   return ret;
+  }
+
+auto cta::objectstore::Tape::dumpJobs() -> std::list<JobDump> {
+  checkPayloadReadable();
+  std::list<JobDump> ret;
+  auto & rjl = m_payload.retrievejobs();
+  for (auto rj=rjl.begin(); rj!=rjl.end(); rj++) {
+    ret.push_back(JobDump());
+    auto & b=ret.back();
+    b.copyNb = rj->copynb();
+    b.address = rj->address();
+    b.size = rj->size();
+  }
+  return ret;
 }
 
 
@@ -278,6 +292,30 @@ void cta::objectstore::Tape::setBusy(const std::string& drive, MountType mountTy
 void cta::objectstore::Tape::releaseBusy() {
   checkPayloadWritable();
   m_payload.set_busy(false);
+}
+
+void cta::objectstore::Tape::removeJob(const std::string& retriveToFileAddress) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_retrievejobs();
+  bool found=false;
+  do {
+    found=false;
+    found = false;
+    // Push the found entry all the way to the end.
+    for (size_t i=0; i<(size_t)jl->size(); i++) {
+      if (jl->Get(i).address() == retriveToFileAddress) {
+        found = true;
+        while (i+1 < (size_t)jl->size()) {
+          jl->SwapElements(i, i+1);
+          i++;
+        }
+        break;
+      }
+    }
+    // and remove it
+    if (found)
+      jl->RemoveLast();
+  } while (found);
 }
 
 

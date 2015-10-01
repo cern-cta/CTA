@@ -129,10 +129,12 @@ namespace castor {
 
       void HeaderChecker::checkUHL1(const UHL1 &uhl1,
         const cta::RetrieveJob &fileToRecall)  {
-        if(!checkHeaderNumericalField(uhl1.getfSeq(), fileToRecall.tapeFileLocation.fSeq, decimal)) {
+        if(!checkHeaderNumericalField(uhl1.getfSeq(),
+          fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq, decimal)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: \"" 
-              << uhl1.getfSeq() << "\". Wanted: " << fileToRecall.tapeFileLocation.fSeq;
+              << uhl1.getfSeq() << "\". Wanted: "
+              << fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq;
           throw TapeFormatError(ex_str.str());
         }
       }
@@ -174,15 +176,16 @@ namespace castor {
         m_session->release();
       }
       void ReadFile::positionByFseq(const cta::RetrieveJob &fileToRecall) {
-        if(fileToRecall.tapeFileLocation.fSeq<1) {
+        if(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq<1) {
           std::stringstream err;
           err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
-                  << fileToRecall.tapeFileLocation.fSeq << ")";
+                  << fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq << ")";
           throw castor::exception::InvalidArgument(err.str());
         }
         
-        int64_t fSeq_delta = fileToRecall.tapeFileLocation.fSeq - m_session->getCurrentFseq();
-        if(fileToRecall.tapeFileLocation.fSeq == 1) { 
+        int64_t fSeq_delta = fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq 
+            - m_session->getCurrentFseq();
+        if(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq == 1) { 
           // special case: we can rewind the tape to be faster 
           //(TODO: in the future we could also think of a threshold above 
           //which we rewind the tape anyway and then space forward)       
@@ -212,14 +215,15 @@ namespace castor {
       }
         
         void ReadFile::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
-          if(fileToRecall.tapeFileLocation.blockId > std::numeric_limits<uint32_t>::max()){
+          if(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId > 
+            std::numeric_limits<decltype(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId)>::max()){
             std::stringstream ex_str;
-            ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.tapeFileLocation.blockId;
+            ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.nameServerTapeFile.tapeFileLocation.blockId;
             throw castor::exception::Exception(ex_str.str());
           }
          // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-          const uint32_t destination_block = fileToRecall.tapeFileLocation.blockId ? 
-            fileToRecall.tapeFileLocation.blockId : 1;
+          const uint32_t destination_block = fileToRecall.nameServerTapeFile.tapeFileLocation.blockId ? 
+            fileToRecall.nameServerTapeFile.tapeFileLocation.blockId : 1;
           /* 
           we position using the sg locate because it is supposed to do the 
           right thing possibly in a more optimized way (better than st's 
@@ -263,7 +267,7 @@ namespace castor {
         }
 
         //save the current fSeq into the read session
-        m_session->setCurrentFseq(fileToRecall.tapeFileLocation.fSeq);
+        m_session->setCurrentFseq(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq);
 
         HDR1 hdr1;
         HDR2 hdr2;

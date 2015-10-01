@@ -21,14 +21,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveMount::RetrieveMount() {
-}
+cta::RetrieveMount::RetrieveMount():
+  m_sessionRunning(false) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(
-  std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount) {
+  std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount): 
+  m_sessionRunning(false) {
   m_dbMount.reset(dbMount.release());
 }
 
@@ -64,7 +65,18 @@ std::string cta::RetrieveMount::getMountTransactionId() const throw(){
 // getNextJob
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
-  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
+  if (!m_sessionRunning)
+    throw SessionNotRunning("In RetrieveMount::getNextJob(): trying to get job from complete/not started session");
+  // Try and get a new job from the DB
+  std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> dbJob(m_dbMount->getNextJob().release());
+  if (!dbJob.get())
+    return std::unique_ptr<cta::RetrieveJob>(NULL);
+  // We have something to retrieve: prepare the response
+  std::unique_ptr<cta::RetrieveJob> ret (new RetrieveJob(*this, 
+    dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile, 
+    PositioningMethod::ByBlock));
+  ret->m_dbJob.reset(dbJob.release());
+  return ret;
 }
 
 //------------------------------------------------------------------------------

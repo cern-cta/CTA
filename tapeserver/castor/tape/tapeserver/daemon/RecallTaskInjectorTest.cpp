@@ -56,11 +56,12 @@ namespace unitTests
 
     class MockRetrieveJob: public cta::RetrieveJob {
     public:
-      MockRetrieveJob() {
-      }
+      MockRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    cta::ArchiveFile(), 
+    std::string(), cta::NameServerTapeFile(),
+    cta::PositioningMethod::ByBlock) {}
 
-      ~MockRetrieveJob() throw() {
-      }
+    ~MockRetrieveJob() throw() {}
 
 
       MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));

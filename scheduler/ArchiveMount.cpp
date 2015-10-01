@@ -91,7 +91,7 @@ std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob().release());
   if (!dbJob.get())
     return std::unique_ptr<cta::ArchiveJob>(NULL);
-  // We have something to migrate: prepare the response
+  // We have something to archive: prepare the response
   std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_ns,
       dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile));
   ret->m_dbJob.reset(dbJob.release());

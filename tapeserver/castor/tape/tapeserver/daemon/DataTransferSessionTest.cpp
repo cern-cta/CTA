@@ -154,11 +154,12 @@ protected:
 
   class MockRetrieveJob: public cta::RetrieveJob {
   public:
-    MockRetrieveJob() {
-    } 
+    MockRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    cta::ArchiveFile(), 
+    std::string(), cta::NameServerTapeFile(),
+    cta::PositioningMethod::ByBlock) {} 
       
-    ~MockRetrieveJob() throw() {
-    } 
+    ~MockRetrieveJob() throw() {} 
   };
 };
 
@@ -230,13 +231,13 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm(new MockArchiveJob());
-      ftr->tapeFileLocation.fSeq = fseq;
+      ftr->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftm->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm, archiveFileSize);
-      ftr->tapeFileLocation.blockId = wf.getPosition();
-      ftr->remotePathAndStatus.path = remoteFilePath.str();
+      ftr->nameServerTapeFile.tapeFileLocation.blockId = wf.getPosition();
+      ftr->remotePath = remoteFilePath.str();
       // Write the data (one block)
       wf.write(data, sizeof(data));
       // Close the file
@@ -375,13 +376,13 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
-      ftr->tapeFileLocation.fSeq = fseq;
+      ftr->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftm_temp->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm_temp->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
-      ftr->tapeFileLocation.blockId = wf.getPosition();
-      ftr->remotePathAndStatus.path = remoteFilePath.str();
+      ftr->nameServerTapeFile.tapeFileLocation.blockId = wf.getPosition();
+      ftr->remotePath = remoteFilePath.str();
       // Write the data (one block)
       wf.write(data, sizeof(data));
       // Close the file
@@ -571,13 +572,13 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm_temp(new MockArchiveJob());
-      ftr->tapeFileLocation.fSeq = fseq;
+      ftr->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftm_temp->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftr->archiveFile.fileId = 1000 + fseq;
       ftm_temp->archiveFile.fileId = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
-      ftr->tapeFileLocation.blockId = wf.getPosition();
-      ftr->remotePathAndStatus.path = remoteFilePath.str();
+      ftr->nameServerTapeFile.tapeFileLocation.blockId = wf.getPosition();
+      ftr->remotePath = remoteFilePath.str();
       // Write the data (one block)
       wf.write(data, sizeof(data));
       // Close the file

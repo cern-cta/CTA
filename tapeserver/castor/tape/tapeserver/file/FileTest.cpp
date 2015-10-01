@@ -40,8 +40,10 @@ namespace UnitTests {
 
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob() {
-    }
+    TestingRetrieveJob() : cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    cta::ArchiveFile(), 
+    std::string(), cta::NameServerTapeFile(),
+    cta::PositioningMethod::ByBlock) {}
   };
 
   class TestingArchiveJob: public cta::ArchiveJob {
@@ -57,8 +59,8 @@ namespace UnitTests {
     virtual void SetUp() {
       block_size = 262144;
       label = "K00001";
-      fileToRecall.tapeFileLocation.blockId = 0;
-      fileToRecall.tapeFileLocation.fSeq = 1;
+      fileToRecall.nameServerTapeFile.tapeFileLocation.blockId = 0;
+      fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq = 1;
       fileToRecall.archiveFile.fileId = 1;
       fileToMigrate.archiveFile.size = 500;
       fileToMigrate.archiveFile.fileId = 1;
