@@ -261,6 +261,18 @@ public:
     const SecurityIdentity &requester,
     const std::string &path,
     const NameServerTapeFile &tapeFile) = 0;
+  
+  /**
+   * Delete the specified tape file entry from the archive namespace.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @param copyNb The tape copy to delete.
+   */
+  virtual void deleteTapeFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t copyNb) = 0;
 
   /**
    * Gets the tape entries from the archive namespace corresponding the archive

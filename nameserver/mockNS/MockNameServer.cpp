@@ -267,6 +267,26 @@ std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const Secur
 }
 
 //------------------------------------------------------------------------------
+// deleteTapeFile
+//------------------------------------------------------------------------------
+void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) {
+  Utils::assertAbsolutePathSyntax(path);
+  const std::string fsPath = m_fsDir + path;
+  assertFsFileExists(fsPath);
+  switch(copyNb) {
+    case 1:
+      Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", "");
+      break;
+    case 2:
+      Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", "");
+      break;
+    default:
+      throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
+      break;
+  }
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::MockNameServer() {

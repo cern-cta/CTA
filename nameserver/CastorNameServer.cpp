@@ -121,6 +121,16 @@ std::list<cta::NameServerTapeFile> cta::CastorNameServer::getTapeFiles(
 }
 
 //------------------------------------------------------------------------------
+// deleteTapeFile
+//------------------------------------------------------------------------------
+void cta::CastorNameServer::deleteTapeFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t copyNb) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+  
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::CastorNameServer::CastorNameServer(): m_server("localhost") {

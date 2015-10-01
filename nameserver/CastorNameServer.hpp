@@ -102,6 +102,18 @@ public:
   std::list<NameServerTapeFile> getTapeFiles(
     const SecurityIdentity &requester,
     const std::string &path);
+  
+  /**
+   * Delete the specified tape file entry from the archive namespace.
+   *
+   * @param requester The identity of the requester.
+   * @param path The absolute path of the archive file.
+   * @param copyNb The tape copy to delete.
+   */
+  virtual void deleteTapeFile(
+    const SecurityIdentity &requester,
+    const std::string &path,
+    const uint16_t copyNb);
 
 private:
   
