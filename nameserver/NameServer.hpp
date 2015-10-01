@@ -284,7 +284,7 @@ public:
    */
   virtual std::list<NameServerTapeFile> getTapeFiles(
     const SecurityIdentity &requester,
-    const std::string &path) = 0;
+    const std::string &path) const = 0;
 
 }; // class NameServer
 

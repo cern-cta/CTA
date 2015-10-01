@@ -101,7 +101,7 @@ public:
    */
   std::list<NameServerTapeFile> getTapeFiles(
     const SecurityIdentity &requester,
-    const std::string &path);
+    const std::string &path) const;
   
   /**
    * Delete the specified tape file entry from the archive namespace.

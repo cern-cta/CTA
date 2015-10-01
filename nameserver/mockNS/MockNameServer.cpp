@@ -250,7 +250,7 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 // getTapeFiles
 //------------------------------------------------------------------------------
-std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) {
+std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);  
@@ -624,8 +624,9 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const uint64_t size = 1234;
   ArchiveFileStatus status(owner, statResult.st_mode, size, checksum,
     storageClassName);
+  const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
-  return ArchiveDirEntry(entryType, name, status);
+  return ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
 
 //------------------------------------------------------------------------------

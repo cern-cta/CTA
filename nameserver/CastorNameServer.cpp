@@ -116,7 +116,7 @@ void cta::CastorNameServer::addTapeFile(
 //------------------------------------------------------------------------------
 std::list<cta::NameServerTapeFile> cta::CastorNameServer::getTapeFiles(
   const SecurityIdentity &requester,
-  const std::string &path) {
+  const std::string &path) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -335,8 +335,9 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
   const Checksum checksum(Checksum::CHECKSUMTYPE_ADLER32, std::string(statbuf.csumvalue));
   const uint64_t size(statbuf.filesize);
   ArchiveFileStatus status(owner, statbuf.filemode, size, checksum, storageClassName);
+  const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
-  return ArchiveDirEntry(entryType, name, status);
+  return ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
 
 //------------------------------------------------------------------------------

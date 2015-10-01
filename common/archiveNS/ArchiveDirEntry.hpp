@@ -19,8 +19,10 @@
 #pragma once
 
 #include "common/archiveNS/ArchiveFileStatus.hpp"
+#include "nameserver/NameServerTapeFile.hpp"
 
 #include <string>
+#include <list>
 
 namespace cta {
 
@@ -63,7 +65,7 @@ struct ArchiveDirEntry {
    * @param status The status of the entry.
    */
   ArchiveDirEntry(const EntryType type, const std::string &name,
-    const ArchiveFileStatus &status);
+    const ArchiveFileStatus &status, const std::list<NameServerTapeFile> &tapeCopies);
 
   /**
    * The type of the directory entry.
@@ -79,6 +81,11 @@ struct ArchiveDirEntry {
    * The status of the entry.
    */
   ArchiveFileStatus status;
+  
+  /**
+   * The tape copies associated to this file.
+   */
+  std::list<NameServerTapeFile> tapeCopies;
 
 }; // class ArchiveDirEntry
 

@@ -1141,7 +1141,22 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
     auto mode = dirEntry.status.mode;
     const auto &owner = dirEntry.status.owner;
     const auto storageClassName = dirEntry.status.storageClassName;
-    responseSS << ((dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) ? "d" : "-")
+    std::string firstModeCharacter;
+    if(dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) {
+      firstModeCharacter="d";
+    }
+    else if(dirEntry.type==dirEntry.ENTRYTYPE_FILE) {
+      if(dirEntry.tapeCopies.empty()) {
+        firstModeCharacter="-";
+      }
+      else{
+        firstModeCharacter="a"; //the Murray bit (a.k.a. the Archive bit: true if the file has at least one tape copy)
+      }
+    }
+    else {
+      firstModeCharacter="U"; //unknown directory entry type
+    }
+    responseSS << firstModeCharacter
                << ((mode & S_IRUSR) ? "r" : "-")
                << ((mode & S_IWUSR) ? "w" : "-")
                << ((mode & S_IXUSR) ? "x" : "-")
@@ -1157,6 +1172,12 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << dirEntry.name 
                << " " << dirEntry.status.checksum.str()
                << " " << dirEntry.status.size << std::endl;
+    for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
+      responseSS << "  " << i->tapeFileLocation.copyNb
+                 << " "  << i->tapeFileLocation.vid
+                 << " "  << i->tapeFileLocation.fSeq
+                 << " "  << i->tapeFileLocation.blockId << std::endl;
+    }
   }
   m_data = responseSS.str();
 }
