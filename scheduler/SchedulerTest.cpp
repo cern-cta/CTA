@@ -2497,7 +2497,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NO_THROW(retrieveJob->complete());
     ASSERT_NO_THROW(retrieveJob.reset(retrieveMount->getNextJob().release()));
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
-    ASSERT_NO_THROW(retrieveMount->complete());
   }
 }
 
