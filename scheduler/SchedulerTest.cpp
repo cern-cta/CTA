@@ -2521,22 +2521,13 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
   }
 }
 
-TEST_P(SchedulerTest, getOwner_no_owner_root) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-  const std::string dirPath = "/";
-
-  ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
-}
-
 TEST_P(SchedulerTest, setOwner_getOwner_root) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
   const std::string dirPath = "/";
 
-  ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
+  ASSERT_NO_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath));
   ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, dirPath, s_user));
 
   {
@@ -2555,7 +2546,7 @@ TEST_P(SchedulerTest, setOwner_getDirContents_top_level) {
   {
     const std::string dirPath = "/";
 
-    ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
+    ASSERT_NO_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath));
     ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, dirPath, s_user));
 
     {
@@ -2597,7 +2588,7 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
   {
     const std::string dirPath = "/";
 
-    ASSERT_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath), std::exception);
+    ASSERT_NO_THROW(scheduler.getOwner(s_adminOnAdminHost, dirPath));
     ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, dirPath, s_user));
 
     {
