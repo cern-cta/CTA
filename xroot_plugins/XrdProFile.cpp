@@ -1169,9 +1169,9 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << owner.uid
                << " " << owner.gid
                << " " << storageClassName
-               << " " << dirEntry.name 
                << " " << dirEntry.status.checksum.str()
-               << " " << dirEntry.status.size << std::endl;
+               << " " << dirEntry.status.size
+               << " " << dirEntry.name << std::endl;
     for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
       responseSS << "  " << i->tapeFileLocation.copyNb
                  << " "  << i->tapeFileLocation.vid

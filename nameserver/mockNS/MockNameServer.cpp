@@ -605,6 +605,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const std::string name = Utils::getEnclosedName(path);
   ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
+  std::list<NameServerTapeFile> tapeCopies;
   
   if(S_ISDIR(statResult.st_mode)) {
     entryType = ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
@@ -612,6 +613,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   } else if(S_ISREG(statResult.st_mode)) {
     entryType = ArchiveDirEntry::ENTRYTYPE_FILE;
     storageClassName = getDirStorageClass(requester, enclosingPath);
+    tapeCopies = getTapeFiles(requester, path);
   } else {
     std::ostringstream msg;
     msg << "statFile() - " << m_fsDir+path <<
@@ -624,7 +626,6 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const uint64_t size = 1234;
   ArchiveFileStatus status(owner, statResult.st_mode, size, checksum,
     storageClassName);
-  const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
   return ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
