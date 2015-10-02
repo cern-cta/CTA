@@ -117,7 +117,8 @@ void cta::CastorNameServer::addTapeFile(
 std::list<cta::NameServerTapeFile> cta::CastorNameServer::getTapeFiles(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  std::list<cta::NameServerTapeFile> emptyList; //not implemented yet, still wanted to return the empty list not to cause exception during listing
+  return emptyList;
 }
 
 //------------------------------------------------------------------------------

@@ -19,8 +19,12 @@
 #pragma once
 
 #include "nameserver/mockNS/MockNameServer.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "remotens/EosNS.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "xroot_plugins/BackendPopulator.hpp"
+#include "xroot_plugins/OStoreDBWithAgent.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
@@ -50,7 +54,7 @@ public:
   virtual int stat(const char *Name, struct stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
   virtual int stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
-  XrdProFilesystem(cta::NameServer *ns, cta::SchedulerDatabase *scheddb, cta::RemoteNS *remoteStorage);
+  XrdProFilesystem();
   ~XrdProFilesystem();
   
 protected:
@@ -58,20 +62,30 @@ protected:
   /**
    * The CTA nameserver
    */
-  cta::NameServer *m_ns;
-  
-  /**
-   * The database or object store holding all CTA persistent objects
-   */
-  cta::SchedulerDatabase *m_scheddb;
+  cta::CastorNameServer m_ns;
 
   /**
    * The remote file storage system (typically EOS)
    */
-  cta::RemoteNS *m_remoteStorage;
+  cta::EosNS m_remoteStorage; 
+  
+  /**
+   * The VFS backend for the objectstore DB
+   */
+  cta::objectstore::BackendVFS m_backend;
+  
+  /**
+   * The object used to populate the backend
+   */
+  BackendPopulator m_backendPopulator;
+  
+  /**
+   * The database or object store holding all CTA persistent objects
+   */
+  OStoreDBWithAgent m_scheddb;
 
   /**
    * The scheduler.
    */
-  cta::Scheduler *m_scheduler;
+  cta::Scheduler m_scheduler; 
 };

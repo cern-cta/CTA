@@ -28,7 +28,6 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "common/archiveNS/StorageClass.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -39,9 +38,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
-#include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
-#include "remotens/EosNS.hpp"
 
 #include <memory>
 #include <iostream>
@@ -51,67 +48,22 @@
 
 XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
 
-//BEGIN: boilerplate code to prepare the objectstoreDB object
-        
-cta::objectstore::BackendVFS g_backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"));
-
-class BackendPopulator {
-public:
-    BackendPopulator(cta::objectstore::Backend & be): m_backend(be),
-      m_agent(m_backend) {
-    // We need to populate the root entry before using.
-    cta::objectstore::RootEntry re(m_backend);
-    cta::objectstore::ScopedExclusiveLock rel(re);
-    re.fetch();
-    m_agent.generateName("OStoreDBFactory");
-    m_agent.initialize();
-    cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
-      time(NULL), "Initial creation of the  object store structures");
-    re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
-    rel.release();
-    m_agent.insertAndRegisterSelf();
-    rel.lock(re);
-    re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
-    rel.release();
-  }
-  
-  virtual ~BackendPopulator() throw() {
-    cta::objectstore::ScopedExclusiveLock agl(m_agent);
-    m_agent.fetch();
-    m_agent.removeAndUnregisterSelf();
-  }
-  
-  cta::objectstore::Agent & getAgent() { return m_agent;  }
-private:
-  cta::objectstore::Backend & m_backend;
-  cta::objectstore::Agent m_agent;
-} g_backendPopulator(g_backend);
-
-class OStoreDBWithAgent: public cta::OStoreDB {
-public:
-  OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::Agent & ag):
-  cta::OStoreDB(be) {
-    cta::OStoreDB::setAgent(ag);
-  }
-  virtual ~OStoreDBWithAgent() throw () {
-    cta::OStoreDB::setAgent(*((cta::objectstore::Agent *)NULL));
-  }
-
-} g_OStoreDB(g_backend, g_backendPopulator.getAgent());
-//END: boilerplate code to prepare the objectstoreDB object
-
-cta::EosNS g_eosNs("localhost:1094");
-cta::CastorNameServer g_castorNs;
-
 extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
-    g_backend.noDeleteOnExit();
-    return new XrdProFilesystem(
-      &g_castorNs,
-      &g_OStoreDB,
-      &g_eosNs);
+    try {
+      return new XrdProFilesystem();
+    } catch (cta::exception::Exception &ex) {
+      std::cout << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
+      return NULL;
+    } catch (std::exception &ex) {
+      std::cout << "[ERROR] Could not load the CTA xroot plugin. Exception caught: " << ex.what() << "\n";
+      return NULL;
+    } catch (...) {
+      std::cout << "[ERROR] Could not load the CTA xroot plugin. Unknown exception caught!" << "\n";
+      return NULL;
+    }
   }
 }
 
@@ -130,7 +82,7 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 {  
-  return new XrdProFile(m_scheduler, user, MonID);
+  return new XrdProFile(&m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------
@@ -302,25 +254,29 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem(
-  cta::NameServer *ns,
-  cta::SchedulerDatabase *scheddb,
-  cta::RemoteNS *remoteStorage):
-  m_ns(ns),
-  m_scheddb(scheddb),
-  m_remoteStorage(remoteStorage),
-  m_scheduler(new cta::Scheduler(*ns, *scheddb, *remoteStorage)) {
+XrdProFilesystem::XrdProFilesystem():
+  m_remoteStorage("localhost:1094"), 
+  m_backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath")),
+  m_backendPopulator(m_backend),
+  m_scheddb(m_backend, m_backendPopulator.getAgent()),
+  m_scheduler(m_ns, m_scheddb, m_remoteStorage)
+{  
+  m_backend.noDeleteOnExit();
   const cta::SecurityIdentity bootstrap_requester;
-  m_scheduler->createAdminUserWithoutAuthorizingRequester(bootstrap_requester,
-    cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
-  m_scheduler->createAdminHostWithoutAuthorizingRequester(bootstrap_requester,
-    "localhost", "Bootstrap operator host");
+  try {
+    m_scheduler.createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
+    m_scheduler.createAdminHostWithoutAuthorizingRequester(bootstrap_requester, "localhost", "Bootstrap operator host");
+  } catch (cta::exception::Exception &ex) {
+    std::cout << "[WARNING] Could not create the admin user and admin host. CTA exception caught: " << ex.getMessageValue() << "\n";
+  } catch (std::exception &ex) {
+    std::cout << "[WARNING] Could not create the admin user and admin host. Exception caught: " << ex.what() << "\n";
+  } catch (...) {
+    std::cout << "[WARNING] Could not create the admin user and admin host. Unknown exception caught!" << "\n";
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 XrdProFilesystem::~XrdProFilesystem() {
-  delete m_scheduler;
-  delete m_ns;
 }
