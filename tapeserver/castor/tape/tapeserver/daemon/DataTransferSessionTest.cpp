@@ -195,6 +195,20 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
   
+  // 5) Create the tapepool, library and tape for the scheduler.
+  // Make mounts immediate.
+  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), ""));
+  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), ""));
+  ASSERT_NO_THROW(scheduler.createTapePool(requester, "TapePool", 1, ""));
+  cta::MountCriteria immediateMount;
+  immediateMount.maxAge = 0;
+  immediateMount.maxBytesQueued = 1;
+  immediateMount.maxFilesQueued = 1;
+  immediateMount.quota = 10;
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
+  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "8000GC", ""));
+  
   // 5) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
@@ -263,7 +277,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       // Schedule the retrieval of the file
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
-      ASSERT_NO_THROW(scheduler. queueRetrieveRequest(
+      /*ASSERT_NO_THROW*/(scheduler. queueRetrieveRequest(
         requester,
         archiveFilePaths,
         remoteFilePath.str()));
@@ -730,9 +744,8 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
   
   // create the tape
-  cta::CreationLog log;
-  log.comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  std::string comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, "8000GC", comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -847,9 +860,8 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
   
   // create the tape
-  cta::CreationLog log;
-  log.comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  std::string comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, "8000GC", comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -952,9 +964,8 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
   
   // create the tape
-  cta::CreationLog log;
-  log.comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  std::string comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, "8000GC", comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -1068,9 +1079,8 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
   
   // create the tape
-  cta::CreationLog log;
-  log.comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, log));
+  std::string comment = "the magic tape";
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "illogical", "swimmingpool", 100000, "8000GC", comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test

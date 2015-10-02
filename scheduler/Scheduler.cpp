@@ -27,6 +27,7 @@
 #include "common/Utils.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "common/TapePool.hpp"
+#include "common/CreationLog.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -400,10 +401,12 @@ void cta::Scheduler::createTape(
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
-  const CreationLog &creationLog) {
+  const std::string &density,
+  const std::string & comment) {
   m_db.assertIsAdminOnAdminHost(requester);
+  cta::CreationLog cl (requester.getUser(), requester.getHost(), time(NULL), comment);
   m_db.createTape(vid, logicalLibraryName, tapePoolName,
-    capacityInBytes, creationLog);
+    capacityInBytes, density, cl);
 }
 
 //------------------------------------------------------------------------------

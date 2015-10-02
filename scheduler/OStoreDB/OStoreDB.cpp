@@ -515,8 +515,8 @@ void OStoreDB::deleteTapePool(const SecurityIdentity& requester,
 
 void OStoreDB::createTape(const std::string& vid, 
   const std::string& logicalLibraryName, 
-  const std::string& tapePoolName, const uint64_t capacityInBytes, 
-  const cta::CreationLog& creationLog) {
+  const std::string& tapePoolName, const uint64_t capacityInBytes,
+  const std::string & density, const cta::CreationLog& creationLog) {
   // To create a tape, we have to
   // - Find the storage class and lock for write.
   // - Create the tape object.
@@ -549,7 +549,7 @@ void OStoreDB::createTape(const std::string& vid,
     throw TapeAlreadyExists("In OStoreDB::createTape: trying to create an existing tape.");
   } catch (cta::exception::Exception &) {}
   // Create the tape. The tape pool method takes care of the gory details for us.
-  tp.addOrGetTapeAndCommit(vid, logicalLibraryName, capacityInBytes, 
+  tp.addOrGetTapeAndCommit(vid, logicalLibraryName, capacityInBytes, density,
       *m_agent, creationLog);
   tp.commit();
 }
@@ -1229,6 +1229,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
     new OStoreDB::RetrieveMount(m_objectStore, m_agent));
   auto &rm = *privateRet;
+  std::string tapeDensity;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
     throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createRetrieveMount: "
@@ -1282,6 +1283,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     }
     t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
       m_agent.getAddressIfSet());
+    tapeDensity = t.getDensity();
     t.commit();
   }
   // Fill up the mount info
@@ -1290,6 +1292,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   rm.mountInfo.logicalLibrary = logicalLibrary;
   rm.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   rm.mountInfo.tapePool = tapePool;
+  rm.mountInfo.density = tapeDensity;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry

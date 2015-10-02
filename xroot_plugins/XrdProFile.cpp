@@ -780,8 +780,10 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
 void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls:" << std::endl;
-  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
+  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> \\"<<std::endl
+       <<"\t\t--capacity/-c <capacity_in_bytes> --density/-d <density code> --comment/-m <\"comment\">" << std::endl;
+  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> \\"<<std::endl
+       <<"\t\t--capacity/-c <capacity_in_bytes> --density/-d <density code> --comment/-m <\"comment\">" << std::endl;
   help << "\trm      --vid/-v <vid>" << std::endl;
   help << "\treclaim --vid/-v <vid>" << std::endl;
   help << "\tls" << std::endl;
@@ -795,15 +797,15 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
     std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
     std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()) {
+    std::string density = getOptionValue(tokens, "-d", "--density");
+    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()||density.empty()) {
       m_data = help.str();
       return;
     }
     std::istringstream capacity_ss(capacity_s);
     uint64_t capacity = 0;
     capacity_ss >> capacity;
-    cta::CreationLog log(requester.getUser(), requester.getHost(), time(NULL), comment);
-    m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, log);
+    m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, density, comment);
   }
   else if("ch" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid");
@@ -811,14 +813,15 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
     std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
     std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
     std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()) {
+    std::string density = getOptionValue(tokens, "-d", "--density");
+    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()||density.empty()) {
       m_data = help.str();
       return;
     }
     std::istringstream capacity_ss(capacity_s);
     uint64_t capacity = 0;
     capacity_ss >> capacity;
-//    m_scheduler->modifyTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
+//    m_scheduler->modifyTape(requester, vid, logicalLibrary, tapePool, capacity, density, comment);
   }
   else if("rm" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid");

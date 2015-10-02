@@ -439,7 +439,7 @@ public:
    * belongs.
    * @param tapePoolName The name of the tape pool to which the tape belongs.
    * @param capacityInBytes The capacity of the tape.
-   * @param creationLog The who, where, when an why of this modification.
+   * @param comment reason for the creation of the tape
    */
   virtual void createTape(
     const SecurityIdentity &requester,
@@ -447,7 +447,8 @@ public:
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const CreationLog &creationLog);
+    const std::string &density,
+    const std::string & comment);
 
   /**
    * Deletes the tape with the specified volume identifier.

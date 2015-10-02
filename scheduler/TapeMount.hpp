@@ -35,28 +35,28 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    virtual MountType::Enum getMountType() const throw() = 0;
+    virtual MountType::Enum getMountType() const = 0;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
      *
      * @return The volume identifier of the tape to be mounted.
      */
-    virtual std::string getVid() const throw() = 0;
+    virtual std::string getVid() const = 0;
     
     /**
      * Returns the density of the tape to be mounted.
      *
      * @return The density of the tape to be mounted.
      */
-    virtual std::string getDensity() const throw() = 0;
+    virtual std::string getDensity() const = 0;
     
     /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const throw() = 0;
+    virtual std::string getMountTransactionId() const = 0;
 
     /**
      * Indicates that the mount was completed.

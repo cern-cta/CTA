@@ -36,29 +36,33 @@ cta::RetrieveMount::RetrieveMount(
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::MountType::Enum cta::RetrieveMount::getMountType() const throw() {
+cta::MountType::Enum cta::RetrieveMount::getMountType() const{
   return MountType::RETRIEVE;
 }
 
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::RetrieveMount::getVid() const throw() {
-  return "UNKNOWN_VID_FOR_RETRIEVE_MOUNT";
+std::string cta::RetrieveMount::getVid() const{
+  return m_dbMount->mountInfo.vid;
 }
 
 //------------------------------------------------------------------------------
 // getDensity
 //------------------------------------------------------------------------------
-std::string cta::RetrieveMount::getDensity() const throw() {
-  return "UNKNOWN_DENSITY_FOR_RETRIEVE_MOUNT";
+std::string cta::RetrieveMount::getDensity() const{
+  return m_dbMount->mountInfo.density;
 }
 
 //------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
-std::string cta::RetrieveMount::getMountTransactionId() const throw(){
-  return "UNKNOWN_MOUNTTRANSACTIONID_FOR_RETRIEVE_MOUNT";
+std::string cta::RetrieveMount::getMountTransactionId() const{
+  std::stringstream id;
+  if (!m_dbMount.get())
+    throw exception::Exception("In cta::RetrieveMount::getMountTransactionId(): got NULL dbMount");
+  id << m_dbMount->mountInfo.mountId;
+  return id.str();
 }
 
 //------------------------------------------------------------------------------

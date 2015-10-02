@@ -210,7 +210,7 @@ std::string castor::tape::tapeserver::drive::FakeDrive::contentToString() throw(
   return exc.str();
 }
 void castor::tape::tapeserver::drive::FakeDrive::readExactBlock(void *data, size_t count, std::string context)  {
-  if(count != m_tape[m_currentPosition].data.size()) {
+  if(count != m_tape.at(m_currentPosition).data.size()) {
     std::stringstream exc;
     exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count 
         << " Found: " << m_tape[m_currentPosition].data.size() 

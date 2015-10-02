@@ -212,7 +212,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTape);
   virtual void createTape(const std::string& vid, const std::string& logicalLibraryName, 
     const std::string& tapePoolName, const uint64_t capacityInBytes, 
-    const cta::CreationLog& creationLog);
+    const std::string& density, const cta::CreationLog& creationLog);
 
   virtual Tape getTape(const std::string &vid) const;
 

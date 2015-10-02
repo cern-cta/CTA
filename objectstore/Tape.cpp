@@ -32,12 +32,14 @@ cta::objectstore::Tape::Tape(GenericObject& go):
 }
 
 void cta::objectstore::Tape::initialize(const std::string &name, 
-    const std::string &logicallibrary, const cta::CreationLog & creationLog) {
+    const std::string &logicallibrary, const std::string & density, 
+    const cta::CreationLog & creationLog) {
   ObjectOps<serializers::Tape>::initialize();
   // Set the reguired fields
   objectstore::CreationLog oscl(creationLog);
   oscl.serialize(*m_payload.mutable_log());
   m_payload.set_vid(name);
+  m_payload.set_density(density);
   m_payload.set_bytesstored(0);
   m_payload.set_lastfseq(0);
   m_payload.set_logicallibrary(logicallibrary);
@@ -116,6 +118,18 @@ std::string cta::objectstore::Tape::getVid() {
   checkPayloadReadable();
   return m_payload.vid();
 }
+
+void cta::objectstore::Tape::setDensity(const std::string& density) {
+  checkPayloadWritable();
+  m_payload.set_density(density);
+}
+
+std::string cta::objectstore::Tape::getDensity() {
+  checkPayloadReadable();
+  return m_payload.density();
+}
+
+
 
 std::string cta::objectstore::Tape::dump() {
   checkPayloadReadable();

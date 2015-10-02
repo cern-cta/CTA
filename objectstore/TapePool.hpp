@@ -50,8 +50,9 @@ public:
   
   // Tapes management ==========================================================
   std::string addOrGetTapeAndCommit(const std::string &vid, 
-    const std::string &logicalLibraryName, const uint64_t capacityInBytes, 
-    Agent & agent, const cta::CreationLog & CreationLog);
+    const std::string &logicalLibraryName, const uint64_t capacityInBytes,
+    const std::string &density, Agent & agent,
+    const cta::CreationLog & CreationLog);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTape);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTape);
   void removeTapeAndCommit(const std::string &vid);

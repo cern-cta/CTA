@@ -41,43 +41,43 @@ cta::ArchiveMount::ArchiveMount(NameServer & ns,
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::MountType::Enum cta::ArchiveMount::getMountType() const throw() {
+cta::MountType::Enum cta::ArchiveMount::getMountType() const {
   return MountType::ARCHIVE;
 }
 
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getVid() const throw() {
-  return "UNKNOWN_VID_FOR_ARCHIVE_MOUNT";
+std::string cta::ArchiveMount::getVid() const {
+  throw exception::Exception("UNKNOWN_VID_FOR_ARCHIVE_MOUNT");
 }
 
 //------------------------------------------------------------------------------
 // getDensity
 //------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getDensity() const throw() {
-  return "UNKNOWN_DENSITY_FOR_ARCHIVE_MOUNT";
+std::string cta::ArchiveMount::getDensity() const {
+  throw exception::Exception("UNKNOWN_DENSITY_FOR_ARCHIVE_MOUNT");
 }
 
 //------------------------------------------------------------------------------
 // getPoolName
 //------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getPoolName() const throw() {
-  return "UNKNOWN_POOL_FOR_ARCHIVE_MOUNT";
+std::string cta::ArchiveMount::getPoolName() const {
+  throw exception::Exception("UNKNOWN_POOL_FOR_ARCHIVE_MOUNT");
 }
 
 //------------------------------------------------------------------------------
 // getCopyNumber
 //------------------------------------------------------------------------------
-int cta::ArchiveMount::getCopyNumber() const throw() {
-  return 1;
+int cta::ArchiveMount::getCopyNumber() const {
+  throw exception::Exception("UNKNOWN_COPY_NUMBER_ARCHIVE_MOUNT");
 }
 
 //------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getMountTransactionId() const throw(){
-  return "UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT";
+std::string cta::ArchiveMount::getMountTransactionId() const {
+  throw exception::Exception("UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT");
 }
 
 //------------------------------------------------------------------------------

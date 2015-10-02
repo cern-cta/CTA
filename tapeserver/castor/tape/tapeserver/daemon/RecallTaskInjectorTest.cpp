@@ -181,7 +181,7 @@ namespace unitTests
     rti.requestInjection(false);
     rti.requestInjection(true);
     rti.finish();
-    rti.waitThreads();
+    ASSERT_NO_THROW(rti.waitThreads());
 
     //pushed nbFile*2 files + 1 end of work
     ASSERT_EQ(nbJobs+1, diskWrite.m_tasks.size());
