@@ -22,6 +22,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveFileStatus::ArchiveFileStatus():
+  fileId(0),
   mode(0),
   size(0) {
 }
@@ -31,11 +32,13 @@ cta::ArchiveFileStatus::ArchiveFileStatus():
 //------------------------------------------------------------------------------
 cta::ArchiveFileStatus::ArchiveFileStatus(
   const UserIdentity &owner,
+  const uint64_t fileId,
   const mode_t mode,
   const uint64_t size,
   const Checksum &checksum,
   const std::string &storageClassName):
   owner(owner),
+  fileId(fileId),
   mode(mode),
   size(size),
   checksum(checksum),

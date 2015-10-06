@@ -19,6 +19,7 @@
 #include "RetrieveToFileRequest.hpp"
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
+#include "objectstore/cta.pb.h"
 
 cta::objectstore::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string& address, Backend& os): 
@@ -54,14 +55,26 @@ void cta::objectstore::RetrieveToFileRequest::addJob(const cta::TapeFileLocation
 }
 
 void cta::objectstore::RetrieveToFileRequest::setArchiveFile(
-  const std::string& archiveFile) {
+  const cta::ArchiveFile& archiveFile) {
   checkPayloadWritable();
-  m_payload.set_archivefile(archiveFile);
+  auto *af = m_payload.mutable_archivefile();
+  af->set_checksum(archiveFile.checksum);
+  af->set_fileid(archiveFile.fileId);
+  af->set_lastmodificationtime(archiveFile.lastModificationTime);
+  af->set_nshostname(archiveFile.nsHostName);
+  af->set_path(archiveFile.path);
+  af->set_size(archiveFile.size);
 }
 
-std::string cta::objectstore::RetrieveToFileRequest::getArchiveFile() {
+cta::ArchiveFile cta::objectstore::RetrieveToFileRequest::getArchiveFile() {
   checkPayloadReadable();
-  return m_payload.archivefile();
+  auto checksum = m_payload.archivefile().checksum();
+  auto fileId = m_payload.archivefile().fileid();
+  auto lastModificationTime = m_payload.archivefile().lastmodificationtime();
+  auto nsHostName = m_payload.archivefile().nshostname();
+  auto path = m_payload.archivefile().path();
+  auto size = m_payload.archivefile().size();
+  return ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
 }
 
 void cta::objectstore::RetrieveToFileRequest::setRemoteFile(

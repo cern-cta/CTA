@@ -35,15 +35,13 @@ cta::RetrieveToFileRequest::~RetrieveToFileRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveToFileRequest::RetrieveToFileRequest(
-  const std::string &archiveFile,
-  const uint64_t size,
+  const cta::ArchiveFile &archiveFile,
   const std::list<cta::TapeFileLocation> &tapeCopies,
   const std::string &remoteFile,
   const uint64_t priority,
   const CreationLog & creationLog):
   RetrieveRequest(priority, creationLog),
   m_archiveFile(archiveFile),
-  m_size(size),
   m_tapeCopies(tapeCopies),
   m_remoteFile(remoteFile){
 }
@@ -51,15 +49,8 @@ cta::RetrieveToFileRequest::RetrieveToFileRequest(
 //------------------------------------------------------------------------------
 // getArchiveFile
 //------------------------------------------------------------------------------
-const std::string &cta::RetrieveToFileRequest::getArchiveFile() const throw() {
+const cta::ArchiveFile &cta::RetrieveToFileRequest::getArchiveFile() const throw() {
   return m_archiveFile;
-}
-
-//------------------------------------------------------------------------------
-// getSize
-//------------------------------------------------------------------------------
-uint64_t cta::RetrieveToFileRequest::getSize() const throw() {
-  return m_size;
 }
 
 //------------------------------------------------------------------------------

@@ -214,26 +214,26 @@ namespace castor {
         }
       }
         
-        void ReadFile::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
-          if(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId > 
-            std::numeric_limits<decltype(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId)>::max()){
-            std::stringstream ex_str;
-            ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.nameServerTapeFile.tapeFileLocation.blockId;
-            throw castor::exception::Exception(ex_str.str());
-          }
-         // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-          const uint32_t destination_block = fileToRecall.nameServerTapeFile.tapeFileLocation.blockId ? 
-            fileToRecall.nameServerTapeFile.tapeFileLocation.blockId : 1;
-          /* 
-          we position using the sg locate because it is supposed to do the 
-          right thing possibly in a more optimized way (better than st's 
-          spaceBlocksForward/Backwards) 
-           */
-          
-          // at this point we should be at the beginning of
-          //the headers of the desired file, so now let's check the headers...
-          m_session->m_drive.positionToLogicalObject(destination_block);
+      void ReadFile::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
+        if(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId > 
+          std::numeric_limits<decltype(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId)>::max()){
+          std::stringstream ex_str;
+          ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.nameServerTapeFile.tapeFileLocation.blockId;
+          throw castor::exception::Exception(ex_str.str());
         }
+       // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
+        const uint32_t destination_block = fileToRecall.nameServerTapeFile.tapeFileLocation.blockId ? 
+          fileToRecall.nameServerTapeFile.tapeFileLocation.blockId : 1;
+        /* 
+        we position using the sg locate because it is supposed to do the 
+        right thing possibly in a more optimized way (better than st's 
+        spaceBlocksForward/Backwards) 
+         */
+
+        // at this point we should be at the beginning of
+        //the headers of the desired file, so now let's check the headers...
+        m_session->m_drive.positionToLogicalObject(destination_block);
+      }
 
       void ReadFile::setBlockSize(const UHL1 &uhl1)  {
         m_currentBlockSize = (size_t)atol(uhl1.getBlockSize().c_str());

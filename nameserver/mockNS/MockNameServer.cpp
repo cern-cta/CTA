@@ -289,7 +289,7 @@ void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, cons
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer() {
+cta::MockNameServer::MockNameServer(): m_fileIdCounter(0) {
   umask(0);  
   char path[100];
   strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
@@ -387,6 +387,12 @@ void cta::MockNameServer::createFile(
   }
   Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", "");
   Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", "");
+  std::stringstream sizeString;
+  sizeString << size;
+  Utils::setXattr(fsPath.c_str(), "user.CTASize", sizeString.str());
+  std::stringstream fileIDString;
+  fileIDString << ++m_fileIdCounter;
+  Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
 }
 
 //------------------------------------------------------------------------------
@@ -623,9 +629,10 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 
   const UserIdentity owner = getOwner(requester, path);
   const Checksum checksum;
-  const uint64_t size = 1234;
-  ArchiveFileStatus status(owner, statResult.st_mode, size, checksum,
-    storageClassName);
+  const std::string fsPath = m_fsDir + path;
+  const uint64_t size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
+  const uint64_t fileId = atol(Utils::getXattr(fsPath, "user.CTAFileID").c_str());
+  ArchiveFileStatus status(owner, fileId, statResult.st_mode, size, checksum, storageClassName);
 
   return ArchiveDirEntry(entryType, name, status, tapeCopies);
 }

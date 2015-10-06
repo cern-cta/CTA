@@ -50,6 +50,7 @@ struct ArchiveFileStatus {
    */
   ArchiveFileStatus(
     const UserIdentity &owner,
+    const uint64_t fileId,
     const mode_t mode,
     const uint64_t size,
     const Checksum &checksum,
@@ -59,7 +60,12 @@ struct ArchiveFileStatus {
    * The identity of the owner.
    */
   UserIdentity owner;
-
+  
+  /**
+   * The nameserver file ID
+   */
+  uint64_t fileId;
+  
   /**
    * The mode bits of the directory entry.
    */
@@ -67,8 +73,6 @@ struct ArchiveFileStatus {
 
   /**
    * Returns the size of the file in bytes.
-   *
-   * @return The size of the file in bytes.
    */
   uint64_t size;
 

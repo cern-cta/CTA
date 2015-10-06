@@ -87,7 +87,10 @@ std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
 // complete
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::complete() {
-  throw NotImplemented(std::string(__FUNCTION__) + ": Not implemented");
+  // Just set the session as complete in the DB.
+  m_dbMount->complete(time(NULL));
+  // and record we are done with the mount
+  m_sessionRunning = false;
 }
 
 //------------------------------------------------------------------------------

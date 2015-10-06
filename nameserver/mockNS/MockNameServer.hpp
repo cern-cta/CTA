@@ -23,6 +23,7 @@
 #include "nameserver/NameServer.hpp"
 #include "common/SecurityIdentity.hpp"
 
+#include <cstdatomic>
 #include <list>
 #include <string>
 
@@ -221,6 +222,11 @@ private:
    * @return The next unique numeric identifier for a new storage class.
    */
   uint32_t getNextStorageClassId() const;
+  
+  /**
+   * Counter for file ID of new files
+   */
+  std::atomic<uint64_t> m_fileIdCounter;
 
 }; // class MockNameServer
 

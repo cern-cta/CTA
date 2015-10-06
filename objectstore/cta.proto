@@ -342,9 +342,18 @@ message RetrieveJobEntry {
   required uint32 retrieswithinmount = 4707;
 }
 
+message ArchiveFile {
+  required string path = 4750;
+  required string nsHostName = 4751;
+  required uint64 fileId = 4752;
+  required uint64 size = 4753;
+  required uint32 checksum = 4754;
+  required uint64 lastModificationTime = 4755;
+}
+
 message RetrieveToFileRequest {
   required string remotefile = 4800;
-  required string archivefile = 4801;
+  required ArchiveFile archivefile = 4801;
   required uint64 size = 4802;
   repeated RetrieveJobEntry jobs = 4803;
   required uint64 priority = 4804;

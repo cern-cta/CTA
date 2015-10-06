@@ -961,7 +961,7 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   rtfr.setRemoteFile(rqst.getRemoteFile());
   rtfr.setPriority(rqst.priority);
   rtfr.setCreationLog(rqst.creationLog);
-  rtfr.setSize(rqst.getSize());
+  rtfr.setSize(rqst.getArchiveFile().size);
   // We will need to identity tapes is order to construct the request.
   // First load all the tapes information in a memory map
   std::map<std::string, std::string> vidToAddress;
@@ -998,11 +998,15 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
   uint16_t selectedCopyNumber;
   uint64_t bestTapeQueuedBytes;
   std::string selectedVid;
+  uint64_t selectedFseq;
+  uint64_t selectedBlockid;
   {
     // First tape copy is always better than nothing. 
     auto tc=rqst.getTapeCopies().begin();
     selectedCopyNumber = tc->copyNb;
     selectedVid = tc->vid;
+    selectedFseq = tc->fSeq;
+    selectedBlockid = tc->blockId;
     // Get info for the tape.
     {
       objectstore::Tape t(vidToAddress.at(tc->vid), m_objectStore);
@@ -1020,6 +1024,8 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
         bestTapeQueuedBytes = t.getJobsSummary().bytes;
         selectedCopyNumber = tc->copyNb;
         selectedVid = tc->vid;
+        selectedFseq = tc->fSeq;
+        selectedBlockid = tc->blockId;
       }
     }
   }
@@ -1032,7 +1038,9 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     jd.copyNb = selectedCopyNumber;
     jd.tape = selectedVid;
     jd.tapeAddress = vidToAddress.at(selectedVid);
-    tp.addJob(jd, rtfr.getAddressIfSet(), rqst.getSize(), rqst.priority, rqst.creationLog.time);
+    jd.fseq = selectedFseq;
+    jd.blockid = selectedBlockid;
+    tp.addJob(jd, rtfr.getAddressIfSet(), rqst.getArchiveFile().size, rqst.priority, rqst.creationLog.time);
     tp.commit();
   }
   // The request is now fully set. It belongs to the tape.
@@ -1508,10 +1516,9 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
     // We can commit and release the tape pool lock, we will only fill up
     // memory structure from here on.
     t.commit();
-    privateRet->archiveFile.path = privateRet->m_rtfr.getArchiveFile();
+    privateRet->archiveFile = privateRet->m_rtfr.getArchiveFile();
     privateRet->remoteFile = privateRet->m_rtfr.getRemoteFile();
-    objectstore::RetrieveToFileRequest::JobDump jobDump=
-        privateRet->m_rtfr.getJob(privateRet->m_copyNb);
+    objectstore::RetrieveToFileRequest::JobDump jobDump = privateRet->m_rtfr.getJob(privateRet->m_copyNb);
     privateRet->nameServerTapeFile.tapeFileLocation.fSeq = jobDump.fseq;
     privateRet->nameServerTapeFile.tapeFileLocation.blockId = jobDump.blockid;
     privateRet->nameServerTapeFile.tapeFileLocation.copyNb = privateRet->m_copyNb;
@@ -1525,7 +1532,32 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
 }
 
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {
-  throw NotImplemented("In OStoreDB::RetrieveMount::complete: not implemented");
+  // When the session is complete, we can reset the status of the tape and the
+  // drive
+  // Reset the drive
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
+    objectstore::DriveRegister::DriveStatus::Up, completionTime, 
+    objectstore::DriveRegister::MountType::NoMount, 0,
+    0, 0, 0, "", "");
+  dr.commit();
+  // Find the tape and unbusy it.
+  objectstore::TapePool tp (re.getTapePoolAddress(mountInfo.tapePool), m_objectStore);
+  rel.release();
+  objectstore::ScopedSharedLock tpl(tp);
+  tp.fetch();
+  objectstore::Tape t(tp.getTapeAddress(mountInfo.vid), m_objectStore);
+  objectstore::ScopedExclusiveLock tl(t);
+  tpl.release();
+  t.fetch();
+  t.releaseBusy();
+  t.commit();
 }
 
 

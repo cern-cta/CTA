@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/archiveNS/ArchiveFile.hpp"
 #include "scheduler/RetrieveRequest.hpp"
 
 #include <list>
@@ -48,35 +49,25 @@ public:
   /**
    * Constructor.
    *
-   * @param archiveFile The full path of the source archive file.
+   * @param archiveFile The source archive file.
    * @param tapeCopies The physical location(s) of the archive file on tape.
    * @param remoteFile The URL of the destination remote file.
    * @param priority The priority of the request.
-   * @param user The identity of the user who made the request.
-   * @param creationTime Optionally the absolute time at which the user request
-   * was created.  If no value is given then the current time is used.
+   * @param creationLog The creation log parameters
    */
   RetrieveToFileRequest(
-    const std::string &archiveFile,
-    const uint64_t size,
+    const cta::ArchiveFile &archiveFile,
     const std::list<TapeFileLocation> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
     const CreationLog & creationLog);
 
   /**
-   * Returns the full path of the source archive file.
+   * Returns the source archive file.
    *
-   * @return The full path of the source archive file.
+   * @return The source archive file.
    */
-  const std::string &getArchiveFile() const throw();
-
-  /**
-   * Returns the size of the source archive file.
-   *
-   * @return The size of the source archive file.
-   */
-  uint64_t getSize() const throw();
+  const cta::ArchiveFile &getArchiveFile() const throw();
   
   /**
    * Returns the physical location(s) of the archive file on tape.
@@ -97,12 +88,8 @@ private:
   /**
    * The full path of the source archive file.
    */
-  std::string m_archiveFile;
-
-  /**
-   * The file size
-   */
-  uint64_t m_size;
+  cta::ArchiveFile m_archiveFile;
+  
   /**
    * The physical location(s) of the archive file on tape.
    */

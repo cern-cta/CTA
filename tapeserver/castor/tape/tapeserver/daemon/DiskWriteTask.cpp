@@ -89,7 +89,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
           // Synchronise the counter with the open time counter.
           currentErrorToCount = "Error_diskOpenForWrite";
           transferTime = localTime;
-          writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->archiveFile.path));
+          writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->remotePath));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(LOG_INFO, "Opened disk file for writing");
           m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);

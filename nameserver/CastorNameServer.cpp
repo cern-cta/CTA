@@ -269,7 +269,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
   exception::Serrnum::throwOnMinusOne(Cns_queryclass(m_server.c_str(), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   const std::string storageClassName(cns_fileclass.name);
   return std::unique_ptr<ArchiveFileStatus>(
-    new ArchiveFileStatus(owner, mode, size, checksum, storageClassName));
+    new ArchiveFileStatus(owner, statbuf.fileid, mode, size, checksum, storageClassName));
 }
 
 //------------------------------------------------------------------------------
@@ -335,7 +335,7 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
   const UserIdentity owner(statbuf.uid, statbuf.gid);
   const Checksum checksum(Checksum::CHECKSUMTYPE_ADLER32, std::string(statbuf.csumvalue));
   const uint64_t size(statbuf.filesize);
-  ArchiveFileStatus status(owner, statbuf.filemode, size, checksum, storageClassName);
+  ArchiveFileStatus status(owner, statbuf.fileid, statbuf.filemode, size, checksum, storageClassName);
   const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
   return ArchiveDirEntry(entryType, name, status, tapeCopies);

@@ -26,6 +26,7 @@ namespace cta {
 ArchiveFile::ArchiveFile():
   fileId(0),
   size(0),
+  checksum(0),
   lastModificationTime(0) {
 }
 
@@ -33,7 +34,7 @@ ArchiveFile::ArchiveFile():
 // constructor
 //------------------------------------------------------------------------------
 ArchiveFile::ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
-  uint64_t size, const Checksum & checksum, const time_t lastModificationTime):
+  uint64_t size, const uint32_t checksum, const time_t lastModificationTime):
   path(path),
   nsHostName(nsHostName),          
   fileId(fileId),

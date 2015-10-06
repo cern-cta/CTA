@@ -228,7 +228,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     for (int fseq=1; fseq <= 10 ; fseq ++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
-      remoteFilePath << "file:" << m_tmpDir << "/test" << fseq;
+      remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
@@ -241,16 +241,17 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         archiveFilePath.str(),
         archiveFileMode,
         archiveFileSize));
+      std::unique_ptr<cta::ArchiveFileStatus> status = ns.statFile(requester, archiveFilePath.str());
         
       // Write the file to tape
       std::unique_ptr<cta::RetrieveJob> ftr(new MockRetrieveJob());
       std::unique_ptr<cta::ArchiveJob> ftm(new MockArchiveJob());
       ftr->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
       ftm->nameServerTapeFile.tapeFileLocation.fSeq = fseq;
-      ftr->archiveFile.fileId = 1000 + fseq;
-      ftm->archiveFile.fileId = 1000 + fseq;
+      ftr->archiveFile.fileId = status->fileId;
+      ftm->archiveFile.fileId = status->fileId;
       castor::tape::tapeFile::WriteFile wf(&ws, *ftm, archiveFileSize);
-      ftr->nameServerTapeFile.tapeFileLocation.blockId = wf.getPosition();
+      ftr->nameServerTapeFile.tapeFileLocation.blockId = wf.getBlockId();
       ftr->remotePath = remoteFilePath.str();
       // Write the data (one block)
       wf.write(data, sizeof(data));
@@ -261,7 +262,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       cta::NameServerTapeFile tapeFile;
       tapeFile.copyNb = 1;
       tapeFile.tapeFileLocation.fSeq = fseq;
-      tapeFile.tapeFileLocation.blockId = wf.getPosition();
+      tapeFile.tapeFileLocation.blockId = wf.getBlockId();
       tapeFile.tapeFileLocation.vid = volInfo.vid;
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;

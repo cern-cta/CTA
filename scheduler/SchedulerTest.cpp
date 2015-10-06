@@ -2468,7 +2468,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     for(auto rqstItor = tapeRqsts.cbegin(); rqstItor != tapeRqsts.cend();
       rqstItor++) {
       remoteFiles.insert(rqstItor->remoteFile);
-      archiveFiles.insert(rqstItor->archiveFile);
+      archiveFiles.insert(rqstItor->archiveFile.path);
     }
     ASSERT_EQ(1, remoteFiles.size());
     ASSERT_FALSE(remoteFiles.find(s_remoteTargetRawPath1) == remoteFiles.end());

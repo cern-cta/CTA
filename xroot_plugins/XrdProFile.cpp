@@ -990,7 +990,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
             tfl = &(*l);
         }
         responseSS << vid->first.vid
-                   << " " << request->archiveFile
+                   << " " << request->archiveFile.path
                    << " " << request->remoteFile
                    << " " << request->activeCopyNb
                    << " " << (tfl?tfl->vid:"Unknown VID")
@@ -1015,7 +1015,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           tfl = &(*l);
       }
       responseSS << tapeVid
-                 << " " << request->archiveFile
+                 << " " << request->archiveFile.path
                  << " " << request->remoteFile
                  << " " << request->activeCopyNb
                  << " " << (tfl?tfl->vid:"Unknown VID")

@@ -488,7 +488,8 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().fSeq = 5;
   tcl.back().vid = "Tape3";
   tcl.back().copyNb = 2;
-  ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile", 1234, tcl, "eos://myeos/myeosfile", 10, cl)));
+  cta::ArchiveFile af("cta:://cta/myfile", "", 0, 1234, 0, 0);
+  ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest(af, tcl, "eos://myeos/myeosfile", 10, cl)));
   mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {
@@ -532,7 +533,8 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().fSeq = 3;
   tcl2.back().vid = "Tape2";
   tcl2.back().copyNb = 2;
-  db.queue(cta::RetrieveToFileRequest("cta:://cta/myfile2", 1234, tcl2, "eos://myeos/myeosfile2", 10, cl));
+  cta::ArchiveFile af2("cta:://cta/myfile2", "", 0, 1234, 0, 0);
+  db.queue(cta::RetrieveToFileRequest(af2, tcl2, "eos://myeos/myeosfile2", 10, cl));
   mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
   {

@@ -21,6 +21,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
+#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/archiveNS/TapeFileLocation.hpp"
 
 namespace cta { namespace objectstore {
@@ -71,8 +72,8 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFile(const std::string & archiveFile);
-  std::string getArchiveFile();
+  void setArchiveFile(const cta::ArchiveFile & archiveFile);
+  cta::ArchiveFile getArchiveFile();
   void setRemoteFile (const std::string & remoteFile);
   std::string getRemoteFile();
   void setPriority (uint64_t priority);

@@ -44,7 +44,7 @@ public:
    * @param lastModificationTime The last modification time of the file
    */
   ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
-    uint64_t size, const Checksum & checksum, const time_t lastModificationTime);
+    uint64_t size, const uint32_t checksum, const time_t lastModificationTime);
   
   /**
    * The location of the file at NS lookup time
@@ -69,7 +69,7 @@ public:
   /**
    * The file checksum
    */
-  Checksum checksum;
+  uint32_t checksum;
   
   /**
    * The last modification time of the file

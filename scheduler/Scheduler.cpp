@@ -773,7 +773,8 @@ void cta::Scheduler::queueRetrieveRequest(
     for (auto nstf = tapeCopies.begin(); nstf != tapeCopies.end(); nstf++) {
       tcl.push_back(nstf->tapeFileLocation);
     }
-    RetrieveToFileRequest rtfr (archiveFiles.front(), sourceStat->size,
+    cta::ArchiveFile archiveFile(archiveFiles.front(), "", sourceStat->fileId, sourceStat->size, *((uint32_t*)(sourceStat->checksum.getByteArray().getBytes())), 0); //nshostname is set to "" and lastmodificationtime is 0 because we don't need this info for retrieving the file
+    RetrieveToFileRequest rtfr (archiveFile,
         tcl, remoteFile, 0, cl);
     m_db.queue(rtfr);
   }
