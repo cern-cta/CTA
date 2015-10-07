@@ -313,9 +313,9 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     remoteFilePaths.cend(); pathItor++) {
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
-    const int statRc = stat(pathItor->c_str(), &statBuf);
+    const int statRc = stat(pathItor->substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
-    ASSERT_EQ(256*1024, statBuf.st_size);
+    ASSERT_EQ(1000, statBuf.st_size); //same size of data
   }
 }
 
