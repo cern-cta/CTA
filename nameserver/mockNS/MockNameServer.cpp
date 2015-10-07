@@ -475,6 +475,9 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   
   setDirStorageClass(requester, path, inheritedStorageClass);
   setOwner(requester, path, requester.getUser());
+  std::stringstream fileIDString;
+  fileIDString << ++m_fileIdCounter;
+  Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
 }  
 
 //------------------------------------------------------------------------------
@@ -630,7 +633,10 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const UserIdentity owner = getOwner(requester, path);
   const Checksum checksum;
   const std::string fsPath = m_fsDir + path;
-  const uint64_t size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
+  // Size is 0 for directories (and set for files)
+  uint64_t size = 0;
+  if (ArchiveDirEntry::ENTRYTYPE_FILE == entryType)
+    size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
   const uint64_t fileId = atol(Utils::getXattr(fsPath, "user.CTAFileID").c_str());
   ArchiveFileStatus status(owner, fileId, statResult.st_mode, size, checksum, storageClassName);
 

@@ -800,6 +800,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   // First, get the mount-related info from the DB
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo();
+  auto potentialMounts = mountInfo->potentialMounts;
   
   // We should now filter the potential mounts to keep only the ones we are
   // compatible with (match the logical library for retrieves).
@@ -838,9 +839,9 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
       existingMounts = 0;
     }
     bool mountPassesACriteria = false;
-    if (m->bytesQueued / (1 + existingMounts) > m->mountCriteria.maxBytesQueued)
+    if (m->bytesQueued / (1 + existingMounts) >= m->mountCriteria.maxBytesQueued)
       mountPassesACriteria = true;
-    if (m->filesQueued / (1 + existingMounts) > m->mountCriteria.maxFilesQueued)
+    if (m->filesQueued / (1 + existingMounts) >= m->mountCriteria.maxFilesQueued)
       mountPassesACriteria = true;
     if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > (int64_t)m->mountCriteria.maxAge))
       mountPassesACriteria = true;
