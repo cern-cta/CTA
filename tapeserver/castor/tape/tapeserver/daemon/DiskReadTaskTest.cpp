@@ -48,19 +48,13 @@ namespace unitTests{
   using namespace castor::tape::diskFile;
   
   struct MockMigrationReportPacker : public MigrationReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, u_int32_t checksum, u_int64_t size) {
-      reportCompletedJob_(successfulArchiveJob, checksum, size);
-    }
-    
-    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception &ex) {
-      reportFailedJob_(failedArchiveJob, ex);
-    }
-    MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::ArchiveJob> &successfulArchiveJob, u_int32_t checksum, u_int64_t size));
-    MOCK_METHOD2(reportFailedJob_, void(std::unique_ptr<cta::ArchiveJob> &failedArchiveJob, const castor::exception::Exception &ex));
-    MOCK_METHOD0(reportEndOfSession, void());
-    MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
+    void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {}
+    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex) {}
+    void reportEndOfSession() {}
+    void reportEndOfSessionWithErrors(const std::string msg, int error_code) {}
+    void disableBulk() {}
     MockMigrationReportPacker(cta::ArchiveMount *rm,castor::log::LogContext lc):
-      MigrationReportPacker(rm,lc){}
+      MigrationReportPacker(rm,lc) {}
   };
   
   class FakeTapeWriteTask : public  DataConsumer{

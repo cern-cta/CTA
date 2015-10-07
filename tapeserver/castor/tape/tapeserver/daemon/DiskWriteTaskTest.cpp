@@ -29,6 +29,7 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include "serrno.h"
@@ -64,19 +65,31 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::client;
   using namespace castor::tape::diskFile;
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, u_int32_t checksum, u_int64_t size) {
-      reportCompletedJob_(successfulRetrieveJob, checksum, size);
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) {
+      castor::server::MutexLocker ml(&m_mutex);
+      completeJobs++;
     }
-    
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const castor::exception::Exception &ex) {
-      reportFailedJob_(failedRetrieveJob, ex);
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob) {
+      castor::server::MutexLocker ml(&m_mutex);
+      failedJobs++;
     }
-    MOCK_METHOD3(reportCompletedJob_,void(std::unique_ptr<cta::RetrieveJob> &successfulRetrieveJob, u_int32_t checksum, u_int64_t size));
-    MOCK_METHOD2(reportFailedJob_, void(std::unique_ptr<cta::RetrieveJob> &failedRetrieveJob, const castor::exception::Exception &ex));
-    MOCK_METHOD0(reportEndOfSession, void());
-    MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
+    void disableBulk() {}
+    void reportEndOfSession() {
+      castor::server::MutexLocker ml(&m_mutex);
+      endSessions++;
+    }
+    void reportEndOfSessionWithErrors(const std::string msg, int error_code) {
+      castor::server::MutexLocker ml(&m_mutex);
+      endSessionsWithError++;
+    }
     MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
-     RecallReportPacker(rm,lc){}
+     RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
+      endSessions(0), endSessionsWithError(0) {}
+    castor::server::Mutex m_mutex;
+    int completeJobs;
+    int failedJobs;
+    int endSessions;
+    int endSessionsWithError;
   };
   
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
@@ -88,7 +101,6 @@ namespace unitTests{
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
-    EXPECT_CALL(report,reportFailedJob_(_,_));
     RecallMemoryManager mm(10,100,lc);
     DiskFileFactory fileFactory("RFIO","",0);
     
@@ -109,7 +121,10 @@ namespace unitTests{
 
     t.pushDataBlock(mb);
     t.pushDataBlock(NULL);
-    t.execute(report,lc,fileFactory,*((RecallWatchDog*)NULL));
+    castor::messages::TapeserverProxyDummy tspd;
+    RecallWatchDog rwd(1,1,tspd,"", lc);
+    t.execute(report,lc,fileFactory,rwd);
+    ASSERT_EQ(1, report.failedJobs);
   }
 }
 

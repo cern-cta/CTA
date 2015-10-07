@@ -55,7 +55,7 @@ public:
    * of the file. This is 0 (instead of 1) for the first file on the tape (aka
    * fseq = 1).
    */
-  void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob);
+  virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
@@ -63,33 +63,33 @@ public:
    * @param migratedFile the file which failled 
    * @param ex the reason for the failure 
    */
-  void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex);
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex);
      
    /**
     * Create into the MigrationReportPacker a report for the signaling a flusing on tape
     * @param compressStats 
     * 
     */
-  void reportFlush(drive::compressionStats compressStats);
+  virtual void reportFlush(drive::compressionStats compressStats);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
    */
-  void reportEndOfSession();
+  virtual void reportEndOfSession();
   
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
    * @param msg The error message 
    * @param error_code The error code given by the drive
    */
-  void reportEndOfSessionWithErrors(const std::string msg,int error_code);
+  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code);
 
   /**
    * Immediately report the end of session to the client.
    * @param msg The error message 
    * @param error_code The error code given by the drive
    */
-  void synchronousReportEndWithErrors(const std::string msg,int error_code);
+  virtual void synchronousReportEndWithErrors(const std::string msg,int error_code);
   
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
