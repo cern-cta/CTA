@@ -68,6 +68,9 @@ std::string castor::tape::tapeserver::drive::FakeDrive::getSerialNumber()  {
   throw castor::exception::Exception("FakeDrive::getSerialNumber Not implemented");
 }
 void castor::tape::tapeserver::drive::FakeDrive::positionToLogicalObject(uint32_t blockId)  {
+  if(blockId > m_tape.size()-1) {
+    throw castor::exception::Exception("FakeDrive::trying to position beyond the end of data");
+  }
   m_currentPosition = blockId;
 }
 castor::tape::tapeserver::drive::positionInfo castor::tape::tapeserver::drive::FakeDrive::getPositionInfo()  {
@@ -161,9 +164,9 @@ void castor::tape::tapeserver::drive::FakeDrive::writeSyncFileMarks(size_t count
   if(count==0) return;
   m_tape.resize(m_currentPosition+count);
   for(size_t i=0; i<count; ++i) {
-    m_tape[m_currentPosition].data = filemark;
+    m_tape.at(m_currentPosition).data = filemark;
     // We consider the file mark takes "no space"
-    m_tape[m_currentPosition].remainingSpaceAfter = getRemaingSpace(m_currentPosition);
+    m_tape.at(m_currentPosition).remainingSpaceAfter = getRemaingSpace(m_currentPosition);
     m_currentPosition++;
   }
 }
@@ -185,15 +188,15 @@ void castor::tape::tapeserver::drive::FakeDrive::writeBlock(const void * data, s
     remainingSpaceAfterBlock = getRemaingSpace(m_currentPosition) - count;
   }
   m_tape.resize(m_currentPosition+1);
-  m_tape[m_currentPosition].data.assign((const char *)data, count);
-  m_tape[m_currentPosition].remainingSpaceAfter = remainingSpaceAfterBlock;
+  m_tape.at(m_currentPosition).data.assign((const char *)data, count);
+  m_tape.at(m_currentPosition).remainingSpaceAfter = remainingSpaceAfterBlock;
   m_currentPosition++;
 }
 ssize_t castor::tape::tapeserver::drive::FakeDrive::readBlock(void *data, size_t count)  {
-  if(count < m_tape[m_currentPosition].data.size()) {
+  if(count < m_tape.at(m_currentPosition).data.size()) {
     throw castor::exception::Exception("Block size too small in FakeDrive::readBlock");
   }
-  size_t bytes_copied = m_tape[m_currentPosition].data.copy((char *)data, m_tape[m_currentPosition].data.size());
+  size_t bytes_copied = m_tape.at(m_currentPosition).data.copy((char *)data, m_tape.at(m_currentPosition).data.size());
   m_currentPosition++;
   return bytes_copied;
 }
@@ -213,19 +216,19 @@ void castor::tape::tapeserver::drive::FakeDrive::readExactBlock(void *data, size
   if(count != m_tape.at(m_currentPosition).data.size()) {
     std::stringstream exc;
     exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count 
-        << " Found: " << m_tape[m_currentPosition].data.size() 
+        << " Found: " << m_tape.at(m_currentPosition).data.size() 
         << " Position: " << m_currentPosition 
-        << " String: " << m_tape[m_currentPosition].data << std::endl;
+        << " String: " << m_tape.at(m_currentPosition).data << std::endl;
     exc << contentToString();
     throw castor::exception::Exception(exc.str());
   }
-  if(count != m_tape[m_currentPosition].data.copy((char *)data, count)) {
+  if(count != m_tape.at(m_currentPosition).data.copy((char *)data, count)) {
     throw castor::exception::Exception("Failed FakeDrive::readExactBlock");
   }
   m_currentPosition++;
 }
 void castor::tape::tapeserver::drive::FakeDrive::readFileMark(std::string context)  {
-  if(m_tape[m_currentPosition].data.compare(filemark)) {
+  if(m_tape.at(m_currentPosition).data.compare(filemark)) {
     throw castor::exception::Exception("Failed FakeDrive::readFileMark");
   }
   m_currentPosition++;  
