@@ -754,7 +754,7 @@ private:
   ArchiveToFileRequest createArchiveToFileRequest(
     const SecurityIdentity &requester,
     const RemotePathAndStatus &remoteFile,
-    const std::string &archiveFile,
+    const std::string &archiveFilePath,
     const uint64_t priority) const;
 
   /**

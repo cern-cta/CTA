@@ -35,7 +35,7 @@ cta::ArchiveToFileRequest::~ArchiveToFileRequest() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveToFileRequest::ArchiveToFileRequest(
   const RemotePathAndStatus &remoteFile,
-  const std::string &archiveFile,
+  const cta::ArchiveFile &archiveFile,
   const std::map<uint16_t, std::string> &copyNbToPoolMap,
   const uint64_t priority,
   const CreationLog & creationLog):

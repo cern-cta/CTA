@@ -20,6 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include <list>
 
@@ -66,8 +67,8 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFile(const std::string & archiveFile);
-  std::string getArchiveFile();
+  void setArchiveFile(const cta::ArchiveFile & archiveFile);
+  cta::ArchiveFile getArchiveFile();
   void setRemoteFile (const RemotePathAndStatus & remoteFile);
   cta::RemotePathAndStatus getRemoteFile();
   void setPriority (uint64_t priority);

@@ -146,14 +146,26 @@ void cta::objectstore::ArchiveToFileRequest::setAllJobsPendingNSdeletion() {
 }
 
 void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
-  const std::string& archiveFile) {
+  const cta::ArchiveFile& archiveFile) {
   checkPayloadWritable();
-  m_payload.set_archivefile(archiveFile);
+  auto *af = m_payload.mutable_archivefile();
+  af->set_checksum(archiveFile.checksum);
+  af->set_fileid(archiveFile.fileId);
+  af->set_lastmodificationtime(archiveFile.lastModificationTime);
+  af->set_nshostname(archiveFile.nsHostName);
+  af->set_path(archiveFile.path);
+  af->set_size(archiveFile.size);
 }
 
-std::string cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
+cta::ArchiveFile cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
   checkPayloadReadable();
-  return m_payload.archivefile();
+  auto checksum = m_payload.archivefile().checksum();
+  auto fileId = m_payload.archivefile().fileid();
+  auto lastModificationTime = m_payload.archivefile().lastmodificationtime();
+  auto nsHostName = m_payload.archivefile().nshostname();
+  auto path = m_payload.archivefile().path();
+  auto size = m_payload.archivefile().size();
+  return ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
 }
 
 
@@ -251,7 +263,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addJobIfNecessary(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.remotefile().size()))
+          m_payload.archivefile().path(), m_payload.remotefile().size()))
           tp.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();
@@ -275,7 +287,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.remotefile().size()))
+          m_payload.archivefile().path(), m_payload.remotefile().size()))
           tp.commit();
       } catch (...) {
         j->set_status(serializers::AJS_Failed);
@@ -297,7 +309,7 @@ void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &p
         jd.tapePool = j->tapepool();
         jd.tapePoolAddress = j->tapepooladdress();
         if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile(), m_payload.remotefile().size()))
+          m_payload.archivefile().path(), m_payload.remotefile().size()))
           tp.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();

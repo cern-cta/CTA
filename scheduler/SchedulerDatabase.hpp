@@ -166,6 +166,7 @@ public:
       std::string tapePool;
       std::string drive;
       uint64_t mountId;
+      std::string density;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;

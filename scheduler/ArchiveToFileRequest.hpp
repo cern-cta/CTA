@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "SchedulerDatabase.hpp"
@@ -61,7 +62,7 @@ struct ArchiveToFileRequest: public ArchiveRequest {
    * Constructor.
    *
    * @param remoteFile The path and status of the remote file to be archived.
-   * @param archiveFile The full path of the destination archive file.
+   * @param archiveFile The destination archive file.
    * @param remoteFileStatus The status gotten from stat-ing the remote file.
    * @param copyNbToPoolMap The mapping from archive copy number to destination
    * tape pool.
@@ -70,7 +71,7 @@ struct ArchiveToFileRequest: public ArchiveRequest {
    */
   ArchiveToFileRequest(
     const RemotePathAndStatus &remoteFilePath,
-    const std::string &archiveFile,
+    const cta::ArchiveFile &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -81,9 +82,9 @@ struct ArchiveToFileRequest: public ArchiveRequest {
   RemotePathAndStatus remoteFile;
 
   /**
-   * The full path of the source archive file.
+   * The destination archive file.
    */
-  std::string archiveFile;
+  cta::ArchiveFile archiveFile;
 
   /**
    * The mapping from archive copy number to destination tape pool.

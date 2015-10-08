@@ -265,6 +265,15 @@ message Tape {
   required CreationLog log = 4318;
 }
 
+message ArchiveFile {
+  required string path = 4350;
+  required string nsHostName = 4351;
+  required uint64 fileId = 4352;
+  required uint64 size = 4353;
+  required uint32 checksum = 4354;
+  required uint64 lastModificationTime = 4355;
+}
+
 // ------------- Archive Jobs --------------------------------------------------
 
 // The status of the individual archive jobs. The jobs are materialised 
@@ -303,7 +312,7 @@ message ArchiveJobEntry {
 
 message ArchiveToFileRequest {
   required FilePathAndStatus remotefile = 4500;
-  required string archivefile = 4501;
+  required ArchiveFile archivefile = 4501;
   repeated ArchiveJobEntry jobs = 4502;
   required uint64 priority = 4503;
   required CreationLog log = 4504;
@@ -340,15 +349,6 @@ message RetrieveJobEntry {
   required RetrieveJobStatus status = 4705;
   required uint32 totalretries = 4706;
   required uint32 retrieswithinmount = 4707;
-}
-
-message ArchiveFile {
-  required string path = 4750;
-  required string nsHostName = 4751;
-  required uint64 fileId = 4752;
-  required uint64 size = 4753;
-  required uint32 checksum = 4754;
-  required uint64 lastModificationTime = 4755;
 }
 
 message RetrieveToFileRequest {

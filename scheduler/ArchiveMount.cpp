@@ -49,35 +49,32 @@ cta::MountType::Enum cta::ArchiveMount::getMountType() const {
 // getVid
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getVid() const {
-  throw exception::Exception("UNKNOWN_VID_FOR_ARCHIVE_MOUNT");
+  return m_dbMount->mountInfo.vid;
 }
 
 //------------------------------------------------------------------------------
 // getDensity
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getDensity() const {
-  throw exception::Exception("UNKNOWN_DENSITY_FOR_ARCHIVE_MOUNT");
+  return m_dbMount->mountInfo.density;
 }
 
 //------------------------------------------------------------------------------
 // getPoolName
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getPoolName() const {
-  throw exception::Exception("UNKNOWN_POOL_FOR_ARCHIVE_MOUNT");
-}
-
-//------------------------------------------------------------------------------
-// getCopyNumber
-//------------------------------------------------------------------------------
-int cta::ArchiveMount::getCopyNumber() const {
-  throw exception::Exception("UNKNOWN_COPY_NUMBER_ARCHIVE_MOUNT");
+  return m_dbMount->mountInfo.tapePool;
 }
 
 //------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getMountTransactionId() const {
-  throw exception::Exception("UNKNOWN_MOUNTTRANSACTIONID_FOR_ARCHIVE_MOUNT");
+  std::stringstream id;
+  if (!m_dbMount.get())
+    throw exception::Exception("In cta::ArchiveMount::getMountTransactionId(): got NULL dbMount");
+  id << m_dbMount->mountInfo.mountId;
+  return id.str();
 }
 
 //------------------------------------------------------------------------------

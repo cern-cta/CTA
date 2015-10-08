@@ -387,7 +387,7 @@ void OStoreDB::ArchiveToFileRequestCreation::complete() {
       if (tp.getOwner() != re.getAddressIfSet())
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
-      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile(), 
+      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFile().path, 
         m_request.getRemoteFile().status.size, m_request.getPriority(),
         m_request.getCreationLog().time);
       // Now that we have the tape pool handy, get the retry limits from it and 
@@ -743,7 +743,7 @@ void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester,
       objectstore::ArchiveToFileRequest atfr(ajp->address, m_objectStore);
       ScopedSharedLock atfrl(atfr);
       atfr.fetch();
-      if (atfr.getArchiveFile() == archiveFile) {
+      if (atfr.getArchiveFile().path == archiveFile) {
         atfrl.release();
         objectstore::ScopedExclusiveLock al(*m_agent);
         m_agent->fetch();
@@ -799,7 +799,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
         objectstore::ArchiveToFileRequest tatfr(arp->address, m_objectStore);
         objectstore::ScopedSharedLock tatfrl(tatfr);
         tatfr.fetch();
-        if (tatfr.getArchiveFile() == archiveFile) {
+        if (tatfr.getArchiveFile().path == archiveFile) {
           // Point the agent to the request
           ScopedExclusiveLock agl(*m_agent);
           m_agent->fetch();
@@ -894,7 +894,7 @@ std::map<cta::TapePool, std::list<ArchiveToTapeCopyRequest> >
       if (!copyndFound) continue;
       ret[tp].push_back(cta::ArchiveToTapeCopyRequest(
         osar.getRemoteFile(),
-        osar.getArchiveFile(),
+        osar.getArchiveFile().path,
         copynb,
         tpp->tapePool,
         osar.getPriority(),
@@ -940,7 +940,7 @@ std::list<ArchiveToTapeCopyRequest>
       if (!copyndFound) continue;
       ret.push_back(cta::ArchiveToTapeCopyRequest(
         osar.getRemoteFile(),
-        osar.getArchiveFile(),
+        osar.getArchiveFile().path,
         copynb,
         tpp->tapePool,
         osar.getPriority(),
@@ -1395,7 +1395,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     // We can commit and release the tape pool lock, we will only fill up
     // memory structure from here on.
     tp.commit();
-    privateRet->archiveFile.path = privateRet->m_atfr.getArchiveFile();
+    privateRet->archiveFile = privateRet->m_atfr.getArchiveFile();
     privateRet->remoteFile = privateRet->m_atfr.getRemoteFile();
     privateRet->nameServerTapeFile.tapeFileLocation.fSeq = m_nextFseq++;
     privateRet->nameServerTapeFile.tapeFileLocation.copyNb = privateRet->m_copyNb;
@@ -1583,7 +1583,7 @@ void OStoreDB::ArchiveJob::fail() {
       auto jl = m_atfr.dumpJobs();
       for (auto j=jl.begin(); j!=jl.end(); j++) {
         if (j->copyNb == m_copyNb) {
-          tp.addJobIfNecessary(*j, m_atfr.getAddressIfSet(), m_atfr.getArchiveFile(), m_atfr.getRemoteFile().status.size);
+          tp.addJobIfNecessary(*j, m_atfr.getAddressIfSet(), m_atfr.getArchiveFile().path, m_atfr.getRemoteFile().status.size);
           tp.commit();
           tplock.release();
           // We have a pointer to the job, we can change the job ownership

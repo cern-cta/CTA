@@ -306,7 +306,9 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     // further or cancelled, depending on the NS status.
     cta::objectstore::ArchiveToFileRequest atfr(atfrAddr, be);
     atfr.initialize();
-    atfr.setArchiveFile("cta:/file");
+    cta::ArchiveFile af;
+    af.path = "cta:/file";
+    atfr.setArchiveFile(af);
     atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos:/file"), 
       cta::RemoteFileStatus(cta::UserIdentity(123,456), 0744, 1000+pass)));
     atfr.setPriority(0);
@@ -336,7 +338,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
       jd.tapePoolAddress = tpAddr[0];
-      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile(), 1000+pass, 0, time(NULL));
+      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile().path, 1000+pass, 0, time(NULL));
       tp.commit();
     }
     if (pass < 4) { pass++; continue; }
@@ -350,7 +352,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
       jd.tapePoolAddress = tpAddr[1];
-      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile(), 1000+pass, 0, time(NULL));
+      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile().path, 1000+pass, 0, time(NULL));
       tp.commit();
     }
     if (pass < 5) { pass++; continue; }

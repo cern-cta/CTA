@@ -64,12 +64,10 @@ void cta::ArchiveJob::complete() {
 // failed
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
-  throw NotImplemented("");
 }
   
 //------------------------------------------------------------------------------
 // retry
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::retry() {
-  throw NotImplemented("");
 }

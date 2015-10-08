@@ -665,28 +665,43 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const std::string &archiveFile) {
 
   const uint64_t priority = 0; // TO BE DONE
-  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
-    remoteFile, archiveFile, priority);
-
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
-    requestCreation (m_db.queue(rqst));
-  try {
-    m_ns.createFile(requester, rqst.archiveFile, remoteFile.status.mode, remoteFile.status.size);
-  } catch(std::exception &nsEx) {
-    // Try our best to cleanup the scheduler database.  The garbage collection
-    // logic will try again if we fail.
-    try {
-      requestCreation->cancel();
-      //m_db.deleteArchiveRequest(requester, rqst.archiveFile);
-    } catch(...) {
-    }
-
-    // Whether or not we were able to clean up the scheduler database, the real
-    // problem here was the failure to create an entry in the NS
-    throw nsEx;
-  }
+  m_ns.createFile(requester, archiveFile, remoteFile.status.mode, remoteFile.status.size);
+  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester, remoteFile, archiveFile, priority);
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> requestCreation(m_db.queue(rqst));
   requestCreation->complete();
 }
+
+//------------------------------------------------------------------------------
+// queueArchiveToFileRequest
+//------------------------------------------------------------------------------
+//void cta::Scheduler::queueArchiveToFileRequest(
+//  const SecurityIdentity &requester,
+//  const RemotePathAndStatus &remoteFile,
+//  const std::string &archiveFile) {
+//
+//  const uint64_t priority = 0; // TO BE DONE
+//  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
+//    remoteFile, archiveFile, priority);
+//
+//  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
+//    requestCreation (m_db.queue(rqst));
+//  try {
+//    m_ns.createFile(requester, rqst.archiveFile.path, remoteFile.status.mode, remoteFile.status.size);
+//  } catch(std::exception &nsEx) {
+//    // Try our best to cleanup the scheduler database.  The garbage collection
+//    // logic will try again if we fail.
+//    try {
+//      requestCreation->cancel();
+//      //m_db.deleteArchiveRequest(requester, rqst.archiveFile);
+//    } catch(...) {
+//    }
+//
+//    // Whether or not we were able to clean up the scheduler database, the real
+//    // problem here was the failure to create an entry in the NS
+//    throw nsEx;
+//  }
+//  requestCreation->complete();
+//}
 
 //------------------------------------------------------------------------------
 // createArchiveToFileRequest
@@ -694,16 +709,18 @@ void cta::Scheduler::queueArchiveToFileRequest(
 cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   const SecurityIdentity &requester,
   const RemotePathAndStatus &remoteFile,
-  const std::string &archiveFile,
+  const std::string &archiveFilePath,
   const uint64_t priority) const {
 
-  const std::string enclosingPath = Utils::getEnclosingPath(archiveFile);
+  const std::string enclosingPath = Utils::getEnclosingPath(archiveFilePath);
   const std::string storageClassName = m_ns.getDirStorageClass(requester,
      enclosingPath);
   const StorageClass storageClass = m_db.getStorageClass(storageClassName);
   assertStorageClassHasAtLeastOneCopy(storageClass);
   const auto routes = m_db.getArchiveRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
+  std::unique_ptr<cta::ArchiveFileStatus> status = m_ns.statFile(requester, archiveFilePath);
+  cta::ArchiveFile archiveFile(archiveFilePath, "", status->fileId, remoteFile.status.size, 0, 0);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL));
   return ArchiveToFileRequest(
@@ -835,9 +852,9 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
     uint32_t existingMounts;
     try {
       existingMounts = existingMountsSummary.at(tpType(m->tapePool, m->type));
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range &) {
       existingMounts = 0;
-    }
+    } 
     bool mountPassesACriteria = false;
     if (m->bytesQueued / (1 + existingMounts) >= m->mountCriteria.maxBytesQueued)
       mountPassesACriteria = true;

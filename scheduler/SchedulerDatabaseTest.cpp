@@ -433,7 +433,8 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   std::map<uint16_t, std::string> destinationPoolMap;
   destinationPoolMap[0] = "pool0";
   destinationPoolMap[1] = "pool1";
-  cta::ArchiveToFileRequest atfr(remoteFile, "cta://cta/myfile", destinationPoolMap,
+  cta::ArchiveFile af("cta:://cta/myfile", "", 0, 1234, 0, 0);
+  cta::ArchiveToFileRequest atfr(remoteFile, af, destinationPoolMap,
     10, cl);
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
   creation->complete();
@@ -488,7 +489,6 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl.back().fSeq = 5;
   tcl.back().vid = "Tape3";
   tcl.back().copyNb = 2;
-  cta::ArchiveFile af("cta:://cta/myfile", "", 0, 1234, 0, 0);
   ASSERT_NO_THROW(db.queue(cta::RetrieveToFileRequest(af, tcl, "eos://myeos/myeosfile", 10, cl)));
   mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
@@ -586,7 +586,9 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
     std::map<uint16_t, std::string> destinationPoolMap;
     destinationPoolMap[0] = "pool0";
     destinationPoolMap[1] = "pool1";
-    cta::ArchiveToFileRequest atfr(remoteFile, "cta://cta/myfile", destinationPoolMap,
+    cta::ArchiveFile af;
+    af.path = "cta://cta/myfile";
+    cta::ArchiveToFileRequest atfr(remoteFile, af, destinationPoolMap,
       10, cl);
     std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
     creation->complete();

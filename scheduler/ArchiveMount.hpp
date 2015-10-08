@@ -109,13 +109,6 @@ namespace cta {
     virtual std::string getPoolName() const;
     
     /**
-     * Returns the copy number of the tape to be mounted.
-     *
-     * @return The copy number of the tape to be mounted.
-     */
-    virtual int getCopyNumber() const;
-    
-    /**
      * Destructor.
      */
     virtual ~ArchiveMount() throw();
