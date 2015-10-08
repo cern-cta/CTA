@@ -59,7 +59,7 @@ namespace unitTests {
     }
     
     
-    virtual void failed() {
+    virtual void failed(const cta::exception::Exception& ex) {
       failuresRef++;
     }
     
