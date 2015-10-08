@@ -73,7 +73,7 @@ public:
           .add("NSFILEID", m_retrieveJob->archiveFile.fileId)
           .add("BlockId", m_retrieveJob->nameServerTapeFile.tapeFileLocation.blockId)
           .add("fSeq", m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq)
-          .add("path", m_retrieveJob->archiveFile.path);
+          .add("path", m_retrieveJob->remotePath);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.

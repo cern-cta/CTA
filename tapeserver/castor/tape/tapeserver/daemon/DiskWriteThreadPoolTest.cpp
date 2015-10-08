@@ -110,8 +110,11 @@ namespace unitTests{
        
     for(int i=0;i<5;++i){
       std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
-      fileToRecall->archiveFile.path = "/dev/null";
+      std::stringstream path;
+      path << "/my/beautyful/archive/file" << i;
+      fileToRecall->archiveFile.path = path.str();
       fileToRecall->archiveFile.fileId = i+1;
+      fileToRecall->remotePath = "/dev/null";
       fileToRecall->nameServerTapeFile.tapeFileLocation.blockId = 1;
       DiskWriteTask* t=new DiskWriteTask(fileToRecall.release(),mm);
       MemBlock* mb=mm.getFreeBlock();
