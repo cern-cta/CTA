@@ -45,12 +45,6 @@ class ArchiveJob {
   friend class ArchiveMount;
 
 protected:
-  
-  /**
-   * Empty constructor. TODO: to be removed in the future when we put in the reference to the owning mount;
-   */
-  //ArchiveJob(): m_mount(*((ArchiveMount*)NULL)), m_ns(*((NameServer*)NULL)){}
-  
   /**
    * Constructor.
    * 

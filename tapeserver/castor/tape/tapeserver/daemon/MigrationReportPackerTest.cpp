@@ -24,6 +24,8 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "nameserver/mockNS/MockNameServer.hpp"
+#include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "serrno.h"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
@@ -44,76 +46,47 @@ namespace unitTests {
     void TearDown() {
     }
 
-    class MockArchiveJob: public cta::ArchiveJob {
-    public:
-      MockArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
-        *((cta::NameServer *)NULL), cta::ArchiveFile(), 
-        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
-      }
-
-      ~MockArchiveJob() throw() {
-      }
-
-
-      MOCK_METHOD0(complete, void());
-      MOCK_METHOD1(failed, void(const cta::exception::Exception &ex));
-    }; // class MockArchiveJob
-
-    class MockArchiveMount: public cta::ArchiveMount {
-    public:
-      MockArchiveMount(): cta::ArchiveMount(*((cta::NameServer *)NULL)) {
-        const unsigned int nbArchiveJobs = 2;
-        createArchiveJobs(nbArchiveJobs);
-      }
-
-      ~MockArchiveMount() throw() {
-      }
-
-      std::unique_ptr<cta::ArchiveJob> getNextJob() {
-        internalGetNextJob();
-        if(m_jobs.empty()) {
-          return std::unique_ptr<cta::ArchiveJob>();
-        } else {
-          std::unique_ptr<cta::ArchiveJob> job =  std::move(m_jobs.front());
-          m_jobs.pop_front();
-          return job;
-        }
-      }
-
-      MOCK_METHOD0(internalGetNextJob, cta::ArchiveJob*());
-      MOCK_METHOD0(complete, void());
-
-    private:
-
-      std::list<std::unique_ptr<cta::ArchiveJob>> m_jobs;
-
-      void createArchiveJobs(const unsigned int nbJobs) {
-        for(unsigned int i = 0; i < nbJobs; i++) {
-          m_jobs.push_back(std::unique_ptr<cta::ArchiveJob>(
-            new MockArchiveJob()));
-        }
-      }
-    }; // class MockArchiveMount
-
   }; // class castor_tape_tapeserver_daemonTest
   
+  class MockArchiveJobExternalStats: public cta::MockArchiveJob {
+  public:
+    MockArchiveJobExternalStats(cta::ArchiveMount & am, cta::NameServer & ns, 
+       int & completes, int &failures):
+    MockArchiveJob(am, ns), completesRef(completes), failuresRef(failures) {}
+    
+    virtual void complete() {
+      completesRef++;
+    }
+    
+    
+    virtual void failed() {
+      failuresRef++;
+    }
+    
+  private:
+    int & completesRef;
+    int & failuresRef;
+  };
+  
   TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerNominal) {
-    MockArchiveMount tam;
+    cta::MockNameServer mns;
+    cta::MockArchiveMount tam(mns);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
+    int job1completes(0), job1failures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, complete()).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, job1completes, job1failures));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
+    int job2completes(0), job2failures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, complete()).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, job2completes, job2failures));
       job2.reset(mockJob.release());
     }
-    EXPECT_CALL(tam, complete()).Times(1);
 
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");
     castor::log::LogContext lc(log);
@@ -130,30 +103,34 @@ namespace unitTests {
 
     std::string temp = log.getLog();
     ASSERT_NE(std::string::npos, temp.find("Reported to the client that a batch of files was written on tape"));
+    ASSERT_EQ(1, tam.completes);
+    ASSERT_EQ(1, job1completes);
+    ASSERT_EQ(1, job2completes);
   }
 
   TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerFailure) {
-    MockArchiveMount tam;
+    cta::MockNameServer mns;
+    cta::MockArchiveMount tam(mns);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam,mns));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, mns));
       job2.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job3;
+    int job3completes(0), job3failures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, failed(_)).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, job3completes, job3failures));
       job3.reset(mockJob.release());
     }
-    EXPECT_CALL(tam, complete()).Times(1);
-
+    
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure");
     castor::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
@@ -173,31 +150,36 @@ namespace unitTests {
 
     std::string temp = log.getLog();
     ASSERT_NE(std::string::npos, temp.find(error_msg));
+    ASSERT_EQ(1, tam.completes);
+    ASSERT_EQ(1, job3failures);
   }
 
   TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerOneByteFile) {
-    MockArchiveMount tam;
+    cta::MockNameServer mns;
+    cta::MockArchiveMount tam(mns);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> migratedBigFile;
+    int migratedBigFileCompletes(0), migratedBigFileFailures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, complete()).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, migratedBigFileCompletes, migratedBigFileFailures));
       migratedBigFile.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedFileSmall;
+    int migratedFileSmallCompletes(0), migratedFileSmallFailures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, complete()).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, migratedFileSmallCompletes, migratedFileSmallFailures));
       migratedFileSmall.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedNullFile;
+    int migratedNullFileCompletes(0), migratedNullFileFailures(0);
     {
-      std::unique_ptr<MockArchiveJob> mockJob(new MockArchiveJob());
-      EXPECT_CALL(*mockJob, complete()).Times(1);
+      std::unique_ptr<cta::MockArchiveJob> mockJob(
+        new MockArchiveJobExternalStats(tam, mns, migratedNullFileCompletes, migratedNullFileFailures));
       migratedNullFile.reset(mockJob.release());
     }
-    EXPECT_CALL(tam, complete()).Times(1);
 
     migratedBigFile->archiveFile.size=100000;
     migratedFileSmall->archiveFile.size=1;
@@ -219,5 +201,9 @@ namespace unitTests {
 
     std::string temp = log.getLog();
     ASSERT_NE(std::string::npos, temp.find("Reported to the client that a batch of files was written on tape"));
+    ASSERT_EQ(1, tam.completes);
+    ASSERT_EQ(1, migratedBigFileCompletes);
+    ASSERT_EQ(1, migratedFileSmallCompletes);
+    ASSERT_EQ(1, migratedNullFileCompletes);
   } 
 }

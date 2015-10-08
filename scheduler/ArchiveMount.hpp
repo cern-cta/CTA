@@ -120,7 +120,7 @@ namespace cta {
      */
     virtual ~ArchiveMount() throw();
 
-  private:
+  protected:
 
     /**
      * The database representation of this mount.

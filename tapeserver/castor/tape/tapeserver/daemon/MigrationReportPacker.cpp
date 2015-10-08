@@ -46,7 +46,7 @@ namespace daemon {
 //Constructor
 //------------------------------------------------------------------------------
 MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
-  castor::log::LogContext lc):
+  castor::log::LogContext & lc):
 ReportPackerInterface<detail::Migration>(lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true), m_archiveMount(archiveMount) {
 }

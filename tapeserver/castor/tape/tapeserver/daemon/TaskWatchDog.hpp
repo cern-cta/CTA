@@ -266,7 +266,7 @@ protected:
   TaskWatchDog(double reportPeriod,double stuckPeriod,
          messages::TapeserverProxy& initialProcess,
           const std::string & driveUnitName,
-         log::LogContext lc, double pollPeriod = 0.1):
+         log::LogContext& lc, double pollPeriod = 0.1):
   m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
   m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
   m_initialProcess(initialProcess), m_driveUnitName(driveUnitName),
@@ -395,7 +395,7 @@ public:
   RecallWatchDog(double periodToReport,double stuckPeriod,
     messages::TapeserverProxy& initialProcess,
     const std::string & driveUnitName,
-    log::LogContext lc, double pollPeriod = 0.1): 
+    log::LogContext& lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
     pollPeriod) {}
   

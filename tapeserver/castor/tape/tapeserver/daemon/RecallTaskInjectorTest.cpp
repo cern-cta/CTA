@@ -33,8 +33,11 @@
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/utils/utils.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 #include <gtest/gtest.h>
 
@@ -53,65 +56,45 @@ namespace unitTests
 
     void TearDown() {
     }
-
-    class MockRetrieveJob: public cta::RetrieveJob {
-    public:
-      MockRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::ArchiveFile(), 
-    std::string(), cta::NameServerTapeFile(),
-    cta::PositioningMethod::ByBlock) {}
-
-    ~MockRetrieveJob() throw() {}
-
-
-      MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));
-      MOCK_METHOD1(failed, void(const cta::exception::Exception &ex));
-    }; // class MockRetrieveJob
-
-    class MockRetrieveMount: public cta::RetrieveMount {
-    public:
-      MockRetrieveMount(int nbRecallJobs) {
-        createRetrieveJobs(nbRecallJobs);
-      }
-
-      ~MockRetrieveMount() throw() {
-      }
-
-      std::unique_ptr<cta::RetrieveJob> getNextJob() {
-        internalGetNextJob();
-        if(m_jobs.empty()) {
-          return std::unique_ptr<cta::RetrieveJob>();
-        } else {
-          std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
-          m_jobs.pop_front();
-          return job;
-        }
-      }
-
-      MOCK_METHOD0(internalGetNextJob, cta::RetrieveJob*());
-      MOCK_METHOD0(complete, void());
-
-    private:
-
-      std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
-
-      void createRetrieveJobs(const unsigned int nbJobs) {
-        for(unsigned int i = 0; i < nbJobs; i++) {
-          m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
-            new MockRetrieveJob()));
-        }
-      }
-    }; // class MockRetrieveMount
-
+    
   }; // class castor_tape_tapeserver_daemonTest
-
+  
+  struct MockRecallReportPacker : public RecallReportPacker {
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) {
+      castor::server::MutexLocker ml(&m_mutex);
+      completeJobs++;
+    }
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob) {
+      castor::server::MutexLocker ml(&m_mutex);
+      failedJobs++;
+    }
+    void disableBulk() {}
+    void reportEndOfSession() {
+      castor::server::MutexLocker ml(&m_mutex);
+      endSessions++;
+    }
+    void reportEndOfSessionWithErrors(const std::string msg, int error_code) {
+      castor::server::MutexLocker ml(&m_mutex);
+      endSessionsWithError++;
+    }
+    MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
+     RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
+      endSessions(0), endSessionsWithError(0) {}
+    castor::server::Mutex m_mutex;
+    int completeJobs;
+    int failedJobs;
+    int endSessions;
+    int endSessionsWithError;
+  };
+  
   class FakeDiskWriteThreadPool: public DiskWriteThreadPool
   {
   public:
     using DiskWriteThreadPool::m_tasks;
-    FakeDiskWriteThreadPool(castor::log::LogContext & lc):
-      DiskWriteThreadPool(1,*((RecallReportPacker*)NULL),
-      *((RecallWatchDog*)NULL),lc, "RFIO","/dev/null",0){}
+    FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd, 
+      castor::log::LogContext & lc):
+      DiskWriteThreadPool(1,rrp,
+      rwd,lc, "RFIO","/dev/null",0){}
     virtual ~FakeDiskWriteThreadPool() {};
   };
 
@@ -146,7 +129,13 @@ namespace unitTests
 
     virtual void countTapeLogError(const std::string & error) {};
   };
-
+  
+  class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
+    virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
+    virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
+    virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
+  };
+  
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
     const int nbJobs=15;
     const int maxNbJobsInjectedAtOnce = 6;
@@ -155,10 +144,15 @@ namespace unitTests
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
-    MockRetrieveMount trm(nbJobs);
-    EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
+    cta::MockRetrieveMount trm;
+    trm.createRetrieveJobs(nbJobs);
+    //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
     
-    FakeDiskWriteThreadPool diskWrite(lc);
+    castor::messages::TapeserverProxyDummy tspd;
+    RecallWatchDog rwd(1,1,tspd,"",lc);
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
+    MockRecallReportPacker mrrp(&trm,lc);
+    FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     castor::messages::AcsProxyDummy acs;
     castor::mediachanger::MmcProxyDummy mmc;
     castor::legacymsg::RmcProxyDummy rmc;
@@ -181,7 +175,8 @@ namespace unitTests
     rti.requestInjection(false);
     rti.requestInjection(true);
     rti.finish();
-    ASSERT_NO_THROW(rti.waitThreads());
+    /*ASSERT_NO_THROW*/(rti.waitThreads());
+    ASSERT_EQ(nbJobs+1, trm.getJobs);
 
     //pushed nbFile*2 files + 1 end of work
     ASSERT_EQ(nbJobs+1, diskWrite.m_tasks.size());
@@ -212,10 +207,15 @@ namespace unitTests
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
-    MockRetrieveMount trm(0);
-    EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
+    cta::MockRetrieveMount trm;
+    trm.createRetrieveJobs(0);
+    //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
     
-    FakeDiskWriteThreadPool diskWrite(lc);
+    castor::messages::TapeserverProxyDummy tspd;
+    RecallWatchDog rwd(1,1,tspd,"",lc);
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
+    MockRecallReportPacker mrrp(&trm,lc);
+    FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     castor::messages::AcsProxyDummy acs;
     castor::mediachanger::MmcProxyDummy mmc;
     castor::legacymsg::RmcProxyDummy rmc;
@@ -234,5 +234,6 @@ namespace unitTests
     ASSERT_EQ(false, rti.synchronousInjection());
     ASSERT_EQ(0U, diskWrite.m_tasks.size());
     ASSERT_EQ(0U, tapeRead.m_tasks.size());
+    ASSERT_EQ(1, trm.getJobs);
   }
 }

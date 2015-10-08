@@ -27,6 +27,8 @@
 #include "serrno.h"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
+#include "scheduler/testingMocks/MockRetrieveJob.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -44,75 +46,47 @@ protected:
   void TearDown() {
   }
 
-  class MockRetrieveJob: public cta::RetrieveJob {
-  public:
-    MockRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::ArchiveFile(), 
-    std::string(), cta::NameServerTapeFile(),
-    cta::PositioningMethod::ByBlock) {}
-
-    ~MockRetrieveJob() throw() {}
-    
-
-    MOCK_METHOD2(complete, void(const uint32_t checksumOfTransfer, const uint64_t fileSizeOfTransfer));
-    MOCK_METHOD1(failed, void(const cta::exception::Exception &ex));
-  }; // class MockRetrieveJob
-
-  class MockRetrieveMount: public cta::RetrieveMount {
-  public:
-    MockRetrieveMount(): cta::RetrieveMount() {
-      const unsigned int nbRecallJobs = 2;
-      createRetrieveJobs(nbRecallJobs);
-    }
-
-    ~MockRetrieveMount() throw() {
-    }
-
-    std::unique_ptr<cta::RetrieveJob> getNextJob() {
-      internalGetNextJob();
-      if(m_jobs.empty()) {
-        return std::unique_ptr<cta::RetrieveJob>();
-      } else {
-        std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
-        m_jobs.pop_front();
-        return job;
-      }
-    }
-
-    MOCK_METHOD0(internalGetNextJob, cta::RetrieveJob*());
-    MOCK_METHOD0(complete, void());
-
-  private:
-
-    std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
-
-    void createRetrieveJobs(const unsigned int nbJobs) {
-      for(unsigned int i = 0; i < nbJobs; i++) {
-        m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
-          new MockRetrieveJob()));
-      }
-    }
-  }; // class MockRetrieveMount
-
 }; // class castor_tape_tapeserver_daemonTest
 
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
-  MockRetrieveMount retrieveMount;
+  class MockRetrieveJobExternalStats: public cta::MockRetrieveJob {
+  public:
+    MockRetrieveJobExternalStats(cta::RetrieveMount & rm, int & completes, int &failures):
+    MockRetrieveJob(rm), completesRef(completes), failuresRef(failures) {}
+    
+    virtual void complete() {
+      completesRef++;
+    }
+    
+    
+    virtual void failed() {
+      failuresRef++;
+    }
+    
+  private:
+    int & completesRef;
+    int & failuresRef;
+  };
 
+TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
+  cta::MockRetrieveMount retrieveMount;
+
+
+  
   ::testing::InSequence dummy;
   std::unique_ptr<cta::RetrieveJob> job1;
+  int job1completes(0), job1failures(0);
   {
-    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    std::unique_ptr<cta::MockRetrieveJob> mockJob(
+      new MockRetrieveJobExternalStats(retrieveMount, job1completes, job1failures));
     job1.reset(mockJob.release());
   }
+  int job2completes(0), job2failures(0);
   std::unique_ptr<cta::RetrieveJob> job2;
   {
-    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    std::unique_ptr<cta::MockRetrieveJob> mockJob(
+      new MockRetrieveJobExternalStats(retrieveMount, job2completes, job2failures));
     job2.reset(mockJob.release());
   }
-  EXPECT_CALL(retrieveMount, complete()).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal");
   castor::log::LogContext lc(log);
@@ -127,31 +101,36 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
+  ASSERT_EQ(1,job1completes);
+  ASSERT_EQ(1,job2completes);
+  ASSERT_EQ(1,retrieveMount.completes);
 }
 
 TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
-  MockRetrieveMount retrieveMount;
+  cta::MockRetrieveMount retrieveMount;
 
   ::testing::InSequence dummy;
   std::unique_ptr<cta::RetrieveJob> job1;
+  int job1completes(0), job1failures(0);
   {
-    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    std::unique_ptr<cta::MockRetrieveJob> mockJob(
+      new MockRetrieveJobExternalStats(retrieveMount, job1completes, job1failures));
     job1.reset(mockJob.release());
   }
+  int job2completes(0), job2failures(0);
   std::unique_ptr<cta::RetrieveJob> job2;
   {
-    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, complete(_,_)).Times(1);
+    std::unique_ptr<cta::MockRetrieveJob> mockJob(
+      new MockRetrieveJobExternalStats(retrieveMount, job2completes, job2failures));
     job2.reset(mockJob.release());
   }
+  int job3completes(0), job3failures(0);
   std::unique_ptr<cta::RetrieveJob> job3;
   {
-    std::unique_ptr<MockRetrieveJob> mockJob(new MockRetrieveJob());
-    EXPECT_CALL(*mockJob, failed(_)).Times(1);
+    std::unique_ptr<cta::MockRetrieveJob> mockJob(
+      new MockRetrieveJobExternalStats(retrieveMount, job3completes, job3failures));
     job3.reset(mockJob.release());
   }
-  EXPECT_CALL(retrieveMount, complete()).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
@@ -173,6 +152,10 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
 
   const std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
+  ASSERT_EQ(1, job1completes);
+  ASSERT_EQ(1, job2completes);
+  ASSERT_EQ(1, job3failures);
+  ASSERT_EQ(1, retrieveMount.completes);
 }
 
 }
