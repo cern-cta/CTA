@@ -7,5 +7,5 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-add_library (XrdCtaOfs MODULE XrdProFilesystem.cpp XrdProFile.cpp OStoreDBWithAgent.cpp BackendPopulator.cpp)
+add_library (XrdCtaOfs MODULE XrdCtaFilesystem.cpp XrdCtaFile.cpp OStoreDBWithAgent.cpp BackendPopulator.cpp)
 target_link_libraries (XrdCtaOfs ctascheduler ctacommon ctanameserver ctaremotens ctaOStoreSchedulerDB protobuf CTAObjectStore cryptopp)

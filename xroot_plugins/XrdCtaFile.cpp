@@ -32,7 +32,7 @@
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "xroot_plugins/XrdProFile.hpp"
+#include "xroot_plugins/XrdCtaFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
 
