@@ -922,9 +922,9 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
     /*ASSERT_NO_THROW*/(ns.statFile(requester, *i));
     std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, *i));
-    ASSERT_NE((uint64_t)(stat.get()), NULL);
-    ASSERT_EQ(stat->mode, 0777);
-    ASSERT_EQ(stat->size, 1000);
+    ASSERT_NE(NULL, (uint64_t)(stat.get()));
+    ASSERT_EQ(0100777, stat->mode);
+    ASSERT_EQ(1000, stat->size);
   }
 }
 

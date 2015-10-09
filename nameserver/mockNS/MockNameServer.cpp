@@ -641,7 +641,12 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   if (ArchiveDirEntry::ENTRYTYPE_FILE == entryType)
     size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
   const uint64_t fileId = atol(Utils::getXattr(fsPath, "user.CTAFileID").c_str());
-  ArchiveFileStatus status(owner, fileId, statResult.st_mode, size, checksum, storageClassName);
+  std::stringstream modeStrTr;
+  std::string modeStr = Utils::getXattr(fsPath, "user.CTAMode");
+  modeStrTr <<  modeStr;
+  mode_t mode;
+  modeStrTr >> std::oct >> mode;
+  ArchiveFileStatus status(owner, fileId, mode, size, checksum, storageClassName);
 
   return ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
