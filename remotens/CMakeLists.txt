@@ -16,7 +16,7 @@ target_link_libraries (ctaremotens ${XROOTD_XRDCL_LIB} ctacommon cryptopp)
 
 add_library (ctaremotensunittests SHARED
   MockRemoteNS.cpp
-  MockRemoteNSFactory.cpp 
+  MockRemoteFullFS.cpp
   MockRemoteNSTest.cpp
   RemoteNSDispatcherTest.cpp 
   RemoteNSFactory.cpp)

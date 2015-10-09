@@ -366,7 +366,7 @@ void cta::MockNameServer::createFile(
   const std::string fsPath = m_fsDir + path;
   assertFsPathDoesNotExist(fsPath);
 
-  SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, mode));
+  SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, 0600));
   if(0 > fd.get()) {
     const int savedErrno = errno;
     std::ostringstream msg;
@@ -393,6 +393,9 @@ void cta::MockNameServer::createFile(
   std::stringstream fileIDString;
   fileIDString << ++m_fileIdCounter;
   Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
+  std::stringstream modeString;
+  modeString << std::oct << mode;
+  Utils::setXattr(fsPath.c_str(), "user.CTAMode", modeString.str());
 }
 
 //------------------------------------------------------------------------------

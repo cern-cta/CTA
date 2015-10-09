@@ -46,8 +46,10 @@ namespace daemon {
 //------------------------------------------------------------------------------
   TapeWriteTask::TapeWriteTask(int blockCount, cta::ArchiveJob *archiveJob,
           MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag): 
-  m_archiveJob(archiveJob),m_memManager(mm), m_fifo(blockCount),
-          m_blockCount(blockCount),m_errorFlag(errorFlag)
+    m_archiveJob(archiveJob),m_memManager(mm), m_fifo(blockCount),
+    m_blockCount(blockCount),m_errorFlag(errorFlag), 
+    m_archiveFile(m_archiveJob->archiveFile), m_nameServerTapeFile(m_archiveJob->nameServerTapeFile),
+    m_remotePathAndStatus(m_archiveJob->remotePathAndStatus)
   {
     //register its fifo to the memory manager as a client in order to get mem block
     mm.addClient(&m_fifo); 
@@ -56,7 +58,7 @@ namespace daemon {
 // fileSize
 //------------------------------------------------------------------------------
   uint64_t TapeWriteTask::fileSize() { 
-    return m_archiveJob->archiveFile.size; 
+    return m_archiveFile.size; 
   }
 //------------------------------------------------------------------------------
 // execute
@@ -317,12 +319,12 @@ namespace daemon {
                 /1000/1000/m_taskStats.totalTime:0.0)
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
-           .add("fileSize",m_archiveJob->archiveFile.size)
-           .add("NSHOST",m_archiveJob->archiveFile.nsHostName)
-           .add("NSFILEID",m_archiveJob->archiveFile.fileId)
-           .add("fSeq",m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq)
-           .add("lastKnownFilename",m_archiveJob->archiveFile.path)
-           .add("lastModificationTime",m_archiveJob->archiveFile.lastModificationTime);
+           .add("fileSize",m_archiveFile.size)
+           .add("NSHOST",m_archiveFile.nsHostName)
+           .add("NSFILEID",m_archiveFile.fileId)
+           .add("fSeq",m_nameServerTapeFile.tapeFileLocation.fSeq)
+           .add("lastKnownFilename",m_archiveFile.path)
+           .add("lastModificationTime",m_archiveFile.lastModificationTime);
      
      lc.log(level, msg);
 

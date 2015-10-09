@@ -84,18 +84,18 @@ static void assertPathContainsValidChars(const std::string &path) {
 //------------------------------------------------------------------------------
 // assertPathDoesContainConsecutiveSlashes
 //------------------------------------------------------------------------------
-static void assertPathDoesContainConsecutiveSlashes(const std::string &path) {
-  char previousChar = '\0';
-
-  for(std::string::const_iterator itor = path.begin(); itor != path.end();
-    itor++) {
-    const char &currentChar  = *itor;
-    if(previousChar == '/' && currentChar == '/') {
-      throw Exception("Path contains consecutive slashes");
-    }
-    previousChar = currentChar;
-  }
-}
+//static void assertPathDoesContainConsecutiveSlashes(const std::string &path) {
+//  char previousChar = '\0';
+//
+//  for(std::string::const_iterator itor = path.begin(); itor != path.end();
+//    itor++) {
+//    const char &currentChar  = *itor;
+//    if(previousChar == '/' && currentChar == '/') {
+//      throw Exception("Path contains consecutive slashes");
+//    }
+//    previousChar = currentChar;
+//  }
+//}
 
 //------------------------------------------------------------------------------
 // assertAbsolutePathSyntax
@@ -104,7 +104,7 @@ void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
   try {
     assertPathStartsWithASlash(path);
     assertPathContainsValidChars(path);
-    assertPathDoesContainConsecutiveSlashes(path);
+    //assertPathDoesContainConsecutiveSlashes(path);
   } catch(std::exception &ex) {
     std::ostringstream message;
     message << "Absolute path \"" << path << "\" contains a syntax error: " <<

@@ -173,6 +173,22 @@ private:
    * Stats
    */
   TapeSessionStats m_taskStats;
+  
+  /**
+   * The NS archive file information
+   */
+  cta::ArchiveFile m_archiveFile;
+  
+  /**
+   * The file archive result for the NS
+   */
+  cta::NameServerTapeFile m_nameServerTapeFile;
+  
+  /**
+   * The remote file information
+   */
+  cta::RemotePathAndStatus m_remotePathAndStatus; 
+
 };
 
 }}}}

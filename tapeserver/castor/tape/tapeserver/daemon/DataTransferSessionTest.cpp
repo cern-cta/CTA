@@ -47,6 +47,7 @@
 #include "smc_struct.h"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
+#include "remotens/MockRemoteFullFS.hpp"
 #include "scheduler/DummyScheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/MountType.hpp"
@@ -830,7 +831,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
 
   // 4) Create the scheduler
   cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
+  cta::MockRemoteFullFS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
@@ -883,22 +884,21 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     
     // schedule the archivals
-    for(int fseq=1; fseq <= 10 ; fseq ++) {      
+    for(int fseq=1; fseq <= 10 ; fseq ++) { 
       // Create a path to a remote source file
-      std::ostringstream remoteFilePath;
+      std::ostringstream fileName;
 //      remoteFilePath << "file:" << "/test" << fseq;
-      remoteFilePath << "file:" << "/test" << fseq;
-      remoteFilePaths.push_back(remoteFilePath.str());
+      fileName << "/test" << fseq;
+      remoteFilePaths.push_back(fileName.str());
       
-      // Create the entry in the remote namespace (same user id of the requester)
-      cta::RemotePath rpath(remoteFilePath.str());
-      cta::RemoteFileStatus rstatus(requester.getUser(), 0777, 1000);
-      rns.createEntry(rpath, rstatus);
+      // Create the file to be migrated in the fake remote NS
+      cta::RemotePath rpath(rns.createFullURL(fileName.str()));
+      rns.createFile(rpath.getRaw(), 1000);
 
       // Schedule the archival of the file
       std::list<std::string> remoteFilePathList;
-      remoteFilePathList.push_back(remoteFilePath.str());
-      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
+      remoteFilePathList.push_back(rns.createFullURL(fileName.str()));
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, fileName.str()));
     }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
@@ -920,9 +920,8 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
   for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
-    cta::RemotePath rpath(*i);
-    ASSERT_NO_THROW(ns.statFile(requester, rpath.getAfterScheme()));
-    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, rpath.getAfterScheme()));
+    /*ASSERT_NO_THROW*/(ns.statFile(requester, *i));
+    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, *i));
     ASSERT_NE((uint64_t)(stat.get()), NULL);
     ASSERT_EQ(stat->mode, 0777);
     ASSERT_EQ(stat->size, 1000);
