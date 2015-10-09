@@ -27,6 +27,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
 #include <gtest/gtest.h>
@@ -87,9 +88,27 @@ namespace unitTests{
     return checksum;
   }
   
+  class MockMigrationWatchDog: public MigrationWatchDog {
+  public:
+    MockMigrationWatchDog(double periodToReport,double stuckPeriod,
+    castor::messages::TapeserverProxy& initialProcess,
+    const std::string & driveUnitName,
+    castor::log::LogContext lc, double pollPeriod = 0.1): 
+      MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, 
+          driveUnitName, lc, pollPeriod) {}
+  private:
+
+    virtual void logStuckFile() {}
+
+    virtual void run() {}
+
+  };
+  
   TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
     char path[]="/tmp/testDRT-XXXXXX";
     mkstemp(path);
+    std::string url("file:/");
+    url += path;
     std::ofstream out(path,std::ios::out | std::ios::binary);
     castor::server::AtomicFlag flag;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
@@ -103,8 +122,8 @@ namespace unitTests{
 
     TestingArchiveJob file;
 
-    file.archiveFile.path = path;
     file.archiveFile.size = fileSize;
+    file.remotePathAndStatus.path.setPath(url);
 
     const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
     int value=std::ceil(1024*2000./blockSize);
@@ -114,7 +133,9 @@ namespace unitTests{
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
     DiskFileFactory fileFactory("RFIO","",0);
-    drt.execute(lc,fileFactory,*((MigrationWatchDog*)NULL));
+    castor::messages::TapeserverProxyDummy tspd;
+    MockMigrationWatchDog mmwd(1.0, 1.0, tspd, "", lc);
+    drt.execute(lc,fileFactory,mmwd);
 
     ASSERT_EQ(original_checksum,ftwt.getChecksum());
     delete ftwt.getFreeBlock();

@@ -28,10 +28,11 @@ cta::RemotePath::RemotePath() {
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// setter
 //------------------------------------------------------------------------------
-cta::RemotePath::RemotePath(const std::string &raw):
-  m_raw(raw) {
+void cta::RemotePath::setPath(const std::string &raw)
+{
+  m_raw = raw;
   auto const pos = raw.find(':');
 
   if(std::string::npos == pos) {
@@ -59,6 +60,14 @@ cta::RemotePath::RemotePath(const std::string &raw):
   m_scheme = raw.substr(0, pos);
   m_afterScheme = raw.substr(pos + 1, indexOfLastChar - pos);
 }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::RemotePath::RemotePath(const std::string& raw) {
+  setPath(raw);
+}
+
 
 //------------------------------------------------------------------------------
 // operator==

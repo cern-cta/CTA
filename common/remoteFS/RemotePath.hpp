@@ -33,7 +33,13 @@ public:
    * Constructor.
    */
   RemotePath();
-
+  
+  /**
+   * Setter
+   * @param raw
+   */
+  void setPath(const std::string &raw);
+  
   /**
    * Constructor.
    *
