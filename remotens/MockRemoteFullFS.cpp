@@ -66,6 +66,15 @@ namespace cta {
     }
   }
   
+  void MockRemoteFullFS::deleteFile(const std::string& URL) {
+    auto match = m_pathRegex->exec(URL);
+    if (match.empty())
+      throw exception::Exception("In MockRemoteFullFS::deleteFile(): invalid path");
+    std::string path = m_basePath + "/" + match.at(1);
+    // delete the file
+    unlink(path.c_str());
+  }
+  
   std::string MockRemoteFullFS::getFilename(const RemotePath& remoteFile) const {
     auto match = m_pathRegex->exec(remoteFile.getRaw());
     if (match.size())

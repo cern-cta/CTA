@@ -83,6 +83,11 @@ public:
    */
   void createFile(const std::string & URL, size_t size);
   
+  /**
+   * Delete a file
+   */
+  void deleteFile(const std::string & URL);
+  
 private:
   std::string m_basePath; ///< The path to the directory within which all the URLs will be created
   std::unique_ptr<castor::tape::utils::Regex> m_pathRegex; ///< A regex alloging validation of the path in calls

@@ -887,7 +887,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     for(int fseq=1; fseq <= 10 ; fseq ++) { 
       // Create a path to a remote source file
       std::ostringstream fileName;
-//      remoteFilePath << "file:" << "/test" << fseq;
       fileName << "/test" << fseq;
       remoteFilePaths.push_back(fileName.str());
       
@@ -915,12 +914,12 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  /*ASSERT_NO_THROW*/(sess.execute());
+  ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
   for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
-    /*ASSERT_NO_THROW*/(ns.statFile(requester, *i));
+    ASSERT_NO_THROW(ns.statFile(requester, *i));
     std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, *i));
     ASSERT_NE(NULL, (uint64_t)(stat.get()));
     ASSERT_EQ(0100777, stat->mode);
@@ -953,7 +952,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
 
   // 4) Create the scheduler
   cta::MockNameServer ns;
-  cta::MockRemoteNS rns;
+  cta::MockRemoteFullFS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
 
@@ -975,6 +974,14 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape pool
   ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+
+  // Make the pool mount immediately
+  cta::MountCriteria immediateMount;
+  immediateMount.maxAge = 0;
+  immediateMount.maxBytesQueued = 1;
+  immediateMount.maxFilesQueued = 1;
+  immediateMount.quota = 10;
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("swimmingpool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));
   
   // create the route
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
@@ -1001,17 +1008,22 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     // schedule the archivals
     for(int fseq=1; fseq <= 10 ; fseq ++) {      
       // Create a path to a remote destination file
-      std::ostringstream remoteFilePath;
-      remoteFilePath << "file:" << "/test" << fseq;
-      remoteFilePaths.push_back(remoteFilePath.str());
+      std::ostringstream fileName;
+      fileName << "/test" << fseq;
+      remoteFilePaths.push_back(fileName.str());
       
-      // WE, ON PURPOSE, DO NOT create the entry in the remote namespace (see previous test))
-      cta::RemotePath rpath(remoteFilePath.str());
+      // create the file in the remote file system (to be deleted after queueing
+      // the request)
+      cta::RemotePath rpath(rns.createFullURL(fileName.str()));
+      rns.createFile(rpath.getRaw(), 1000);
 
       // Schedule the archival of the file
       std::list<std::string> remoteFilePathList;
-      remoteFilePathList.push_back(remoteFilePath.str());
-      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, rpath.getAfterScheme()));
+      remoteFilePathList.push_back(rns.createFullURL(fileName.str()));
+      ASSERT_NO_THROW(scheduler.queueArchiveRequest(requester, remoteFilePathList, fileName.str()));
+      
+      // Delete the file
+      rns.deleteFile(rpath.getRaw());
     }
   }
   DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
@@ -1028,7 +1040,9 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  ASSERT_THROW(sess.execute(), castor::exception::Exception); //this should throw because the remote NS open fails
+  ASSERT_NO_THROW(sess.execute()); //the session should run though, but not get any file through
+  // We should no have logged a single successful file read.
+  ASSERT_EQ(std::string::npos, logger.getLog().find("MSG=\"File successfully read from disk\""));
 }
 
 //
@@ -1079,6 +1093,14 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape pool
   ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // Make the pool mount immediately
+  cta::MountCriteria immediateMount;
+  immediateMount.maxAge = 0;
+  immediateMount.maxBytesQueued = 1;
+  immediateMount.maxFilesQueued = 1;
+  immediateMount.quota = 10;
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("swimmingpool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));
   
   // create the route
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
@@ -1194,6 +1216,14 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape pool
   ASSERT_NO_THROW(scheduler.createTapePool(requester, "swimmingpool", 2, "the swimming pool"));
+  
+  // Make the pool mount immediately
+  cta::MountCriteria immediateMount;
+  immediateMount.maxAge = 0;
+  immediateMount.maxBytesQueued = 1;
+  immediateMount.maxFilesQueued = 1;
+  immediateMount.quota = 10;
+  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("swimmingpool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));
   
   // create the route
   ASSERT_NO_THROW(scheduler.createArchiveRoute(requester, "SINGLE", 1, "swimmingpool", "iArchive"));
