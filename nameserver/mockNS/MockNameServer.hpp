@@ -41,6 +41,13 @@ public:
    * Constructor.
    */
   MockNameServer();
+  
+  /**
+   * Constructor for an already existing mock name server temporary directory
+   *
+   * @param path The already existing mock name server temporary directory
+   */
+  MockNameServer(const std::string &path);
 
   /**
    * Destructor.

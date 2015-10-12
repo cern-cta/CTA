@@ -305,6 +305,15 @@ cta::MockNameServer::MockNameServer(): m_fileIdCounter(0) {
 }
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::MockNameServer::MockNameServer(const std::string &path): m_fileIdCounter(0) {
+  Utils::assertAbsolutePathSyntax(path);
+  assertFsDirExists(path);
+  m_fsDir = path;
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::~MockNameServer() throw() {

@@ -62,7 +62,7 @@ protected:
   /**
    * The CTA nameserver
    */
-  cta::CastorNameServer m_ns;
+  cta::MockNameServer m_ns;
 
   /**
    * The remote file storage system (typically EOS)

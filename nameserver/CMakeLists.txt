@@ -23,3 +23,6 @@ add_library (ctanameserverunittests SHARED
 
 target_link_libraries(ctanameserverunittests
   ctanameserver)
+
+add_executable(makeMockNameServerBasePath mockNS/makeMockNameServerBasePath.cpp)
+target_link_libraries(makeMockNameServerBasePath ctacommon)
