@@ -1084,7 +1084,7 @@ TEST_P(SchedulerTest, createDir_top_level) {
 
   ArchiveDirIterator itor;
 
-  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
+  /*ASSERT_NO_THROW*/(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
 
   ASSERT_TRUE(itor.hasMore());
 

@@ -468,7 +468,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   const std::string inheritedStorageClass = getDirStorageClass(requester,
     enclosingPath);
   const std::string fsPath = m_fsDir + path;
-  if(mkdir(fsPath.c_str(), mode)) {
+  if(mkdir(fsPath.c_str(), 0755)) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - mkdir " << fsPath << " error. Reason: \n" <<
@@ -481,6 +481,9 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   std::stringstream fileIDString;
   fileIDString << ++m_fileIdCounter;
   Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
+  std::stringstream modeString;
+  modeString << std::oct << mode;
+  Utils::setXattr(fsPath.c_str(), "user.CTAMode", modeString.str());
 }  
 
 //------------------------------------------------------------------------------
