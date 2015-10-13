@@ -437,8 +437,8 @@ void cta::MockNameServer::setOwner(
   const std::string gidStr = Utils::toString(owner.gid);
   const std::string fsPath = m_fsDir + path;
 
-  Utils::setXattr(fsPath, "user.uid", uidStr);
-  Utils::setXattr(fsPath, "user.gid", gidStr);
+  Utils::setXattr(fsPath, "user.CTAuid", uidStr);
+  Utils::setXattr(fsPath, "user.CTAgid", gidStr);
 }
 
 //------------------------------------------------------------------------------
@@ -449,8 +449,8 @@ cta::UserIdentity cta::MockNameServer::getOwner(
   const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
-  const std::string uidStr = Utils::getXattr(fsPath, "user.uid");
-  const std::string gidStr = Utils::getXattr(fsPath, "user.gid");
+  const std::string uidStr = Utils::getXattr(fsPath, "user.CTAuid");
+  const std::string gidStr = Utils::getXattr(fsPath, "user.CTAgid");
 
   if(uidStr.empty() || gidStr.empty()) {
     std::ostringstream msg;
@@ -680,7 +680,27 @@ std::string cta::MockNameServer::getVidOfFile(
   const SecurityIdentity &requester,
   const std::string &path,
   const uint16_t copyNb) const {
-  return "T00001"; //everything is on one tape for the moment:)
+  if(copyNb!=1 || copyNb!=2) {
+    std::ostringstream msg;
+    msg << "cta::MockNameServer::getVidOfFile() - The mock nameserver only supports the copy number to be 1 or 2. Instead the one supplied is: " << copyNb;
+    throw(exception::Exception(msg.str()));
+  }
+  const std::string fsPath = m_fsDir + path;
+  assertFsFileExists(fsPath);  
+  std::list<cta::NameServerTapeFile> tapeFileList;
+  std::string copyOne = Utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
+  std::string copyTwo = Utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
+  if(copyNb==1) {
+    return fromStringToNameServerTapeFile(copyOne).tapeFileLocation.vid;
+  }
+  else if(copyNb==2) {
+    return fromStringToNameServerTapeFile(copyTwo).tapeFileLocation.vid;
+  }
+  else {
+    std::ostringstream msg;
+    msg << "cta::MockNameServer::getVidOfFile() - The mock nameserver only supports the copy number to be 1 or 2. Instead the one supplied is: " << copyNb;
+    throw(exception::Exception(msg.str()));
+  }
 }
 
 //------------------------------------------------------------------------------

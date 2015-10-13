@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <attr/xattr.h>
+#include <unistd.h>
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
@@ -53,9 +54,13 @@ int main(void) {
     cta::exception::Errnum::throwOnNull(mkdtemp(path), "MockNameServer() - Failed to create temporary directory");
     std::string pathString(path);
     pathString+="/";
+    std::stringstream uidss;
+    uidss << getuid();
+    std::stringstream gidss;
+    gidss << getgid();
     setXattr(pathString.c_str(), "user.CTAStorageClass", "");
-    setXattr(pathString.c_str(), "user.uid", "0");
-    setXattr(pathString.c_str(), "user.gid", "0");
+    setXattr(pathString.c_str(), "user.CTAuid", uidss.str());
+    setXattr(pathString.c_str(), "user.CTAgid", gidss.str());
     std::cout << "New mock name server path: " << pathString << std::endl;
   } catch (cta::exception::Exception & e) {
     std::cerr << "Failed to create a new directory for the mock name server. CTA Exception: " << e.getMessageValue() << std::endl;
