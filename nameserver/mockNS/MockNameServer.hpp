@@ -25,6 +25,7 @@
 
 #include <cstdatomic>
 #include <list>
+#include <mutex>
 #include <string>
 
 namespace cta {
@@ -234,6 +235,11 @@ private:
    * Counter for file ID of new files
    */
   std::atomic<uint64_t> m_fileIdCounter;
+  
+  /**
+   * Mutex to serialize access to the file system modification functions
+   */
+  std::mutex m_mutex;
 
 }; // class MockNameServer
 
