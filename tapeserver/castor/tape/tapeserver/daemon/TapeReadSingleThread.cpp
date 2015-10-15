@@ -183,7 +183,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     typedef castor::log::Param Param;
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
-    m_watchdog.addParameter(Param("density", m_volInfo.density));
     
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash

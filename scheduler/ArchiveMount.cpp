@@ -53,13 +53,6 @@ std::string cta::ArchiveMount::getVid() const {
 }
 
 //------------------------------------------------------------------------------
-// getDensity
-//------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getDensity() const {
-  return m_dbMount->mountInfo.density;
-}
-
-//------------------------------------------------------------------------------
 // getPoolName
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getPoolName() const {

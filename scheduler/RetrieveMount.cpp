@@ -48,13 +48,6 @@ std::string cta::RetrieveMount::getVid() const{
 }
 
 //------------------------------------------------------------------------------
-// getDensity
-//------------------------------------------------------------------------------
-std::string cta::RetrieveMount::getDensity() const{
-  return m_dbMount->mountInfo.density;
-}
-
-//------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getMountTransactionId() const{

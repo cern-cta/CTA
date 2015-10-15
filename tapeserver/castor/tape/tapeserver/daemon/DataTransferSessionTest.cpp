@@ -154,7 +154,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -191,7 +190,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   immediateMount.quota = 10;
   ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
   ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "8000GC", ""));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, ""));
   
   // 5) Prepare files for reading by writing them to the mock system
   {
@@ -317,7 +316,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -354,7 +352,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   immediateMount.quota = 10;
   ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
   ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "8000GC", ""));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, ""));
   
   // 5) Prepare files for reading by writing them to the mock system
   {
@@ -472,7 +470,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -509,7 +506,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   immediateMount.quota = 10;
   ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
   ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "8000GC", ""));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, ""));
   
   // 5) Prepare files for reading by writing them to the mock system
   {
@@ -616,7 +613,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -653,7 +649,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   immediateMount.quota = 10;
   ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
   ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "8000GC", ""));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, ""));
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -767,7 +763,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -817,7 +812,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -866,7 +860,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape
   std::string comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, "8000GC", comment));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -938,7 +932,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -988,7 +981,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape
   std::string comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, "8000GC", comment));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -1057,7 +1050,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -1107,7 +1099,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape
   std::string comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, "8000GC", comment));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
@@ -1180,7 +1172,6 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // 1) prepare the fake scheduler
   std::string vid = "V12345";
-  std::string density = "8000GC";
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   castor::tape::System::mockWrapper mockSys;
@@ -1230,7 +1221,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   
   // create the tape
   std::string comment = "the magic tape";
-  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, "8000GC", comment));
+  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "swimmingpool", 100000, comment));
   
   // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test

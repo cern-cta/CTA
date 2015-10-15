@@ -467,16 +467,16 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
     ASSERT_EQ(cl.time, tmdi.potentialMounts.front().oldestJobStartTime);
   }
   // Add 2 tapes
-  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, "8000GC", cl), 
+  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl), 
     cta::exception::Exception);
   db.createLogicalLibrary("Lib2", cl);
-  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, "8000GC", cl), 
+  ASSERT_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl), 
     cta::exception::Exception);
   db.createTapePool("pool2", 5, cl);
-  ASSERT_NO_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, "8000GC", cl));
+  ASSERT_NO_THROW(db.createTape("Tape2", "Lib2", "pool2", 10L*1000*1000*1000*1000*1000, cl));
   db.createLogicalLibrary("Lib3", cl);
   db.createTapePool("pool3", 5, cl);
-  ASSERT_NO_THROW(db.createTape("Tape3", "Lib3", "pool3", 10L*1000*1000*1000*1000*1000, "8000GC", cl));
+  ASSERT_NO_THROW(db.createTape("Tape3", "Lib3", "pool3", 10L*1000*1000*1000*1000*1000, cl));
   // Add retrieve jobs
   std::list<TapeFileLocation> tcl;
   tcl.push_back(TapeFileLocation());
@@ -602,9 +602,9 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
         "drive1", "lib1", "host1", time(NULL)), cta::OStoreDB::NoSuchTape);
   }
   // Add the tape (and library)
-  ASSERT_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, "8000GC", cl), cta::OStoreDB::NoSuchLibrary);
+  ASSERT_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, cl), cta::OStoreDB::NoSuchLibrary);
   db.createLogicalLibrary("lib1", cl);
-  ASSERT_NO_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, "8000GC", cl));
+  ASSERT_NO_THROW(db.createTape("Tape1", "lib1", "pool1", 10L*1000*1000*1000*1000, cl));
   // This should go through
   {
     auto mountInfo = db.getMountInfo();

@@ -68,13 +68,6 @@ namespace cta {
     virtual std::string getVid() const;
     
     /**
-     * Returns the density of the tape to be mounted.
-     *
-     * @return The density of the tape to be mounted.
-     */
-    virtual std::string getDensity() const;
-    
-    /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.

@@ -73,8 +73,8 @@ namespace {
 }
 
 std::string cta::objectstore::TapePool::addOrGetTapeAndCommit(const std::string& vid, 
-  const std::string& logicalLibraryName, const uint64_t capacityInBytes,
-  const std::string &density, Agent& agent, const cta::CreationLog& creationLog) {
+  const std::string& logicalLibraryName, const uint64_t capacityInBytes, 
+  Agent& agent, const cta::CreationLog& creationLog) {
   checkPayloadWritable();
   // Check the tape already exists
   try {
@@ -90,7 +90,7 @@ std::string cta::objectstore::TapePool::addOrGetTapeAndCommit(const std::string&
   agent.commit();
   // The create the tape object
   Tape t(tapeAddress, ObjectOps<serializers::TapePool>::m_objectStore);
-  t.initialize(vid, logicalLibraryName, density, creationLog);
+  t.initialize(vid, logicalLibraryName, creationLog);
   t.setOwner(agent.getAddressIfSet());
   t.setBackupOwner(getAddressIfSet());
   t.insert();

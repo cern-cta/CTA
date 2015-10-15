@@ -448,7 +448,6 @@ public:
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const std::string &density,
     const std::string & comment);
 
   /**

@@ -886,10 +886,9 @@ TEST_P(SchedulerTest, admin_createTape_new) {
 
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
-  const std::string tapeDensity = "8000GC";
   const std::string tapeComment = "Tape comment";
   ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeDensity, tapeComment));
+    capacityInBytes, tapeComment));
   {
     std::list<Tape> tapes;
     ASSERT_NO_THROW(tapes = scheduler.getTapes(s_adminOnAdminHost));
@@ -963,10 +962,9 @@ TEST_P(SchedulerTest,
 
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
-  const std::string tapeDensity = "8000GC";
   const std::string tapeComment = "Tape comment";
   ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeDensity, tapeComment), std::exception);
+    capacityInBytes, tapeComment), std::exception);
 }
 
 TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
@@ -1012,10 +1010,9 @@ TEST_P(SchedulerTest, admin_createTape_new_non_existing_pool) {
 
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
-  const std::string tapeDensity = "8000GC";
   const std::string tapeComment = "Tape comment";
   ASSERT_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName, tapePoolName,
-    capacityInBytes, tapeDensity, tapeComment), std::exception);
+    capacityInBytes, tapeComment), std::exception);
 }
 
 TEST_P(SchedulerTest, getDirContents_root_dir_is_empty) {
@@ -2326,10 +2323,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
-  const std::string tapeDensity = "8000GC";
   const std::string tapeComment = "Tape comment";  
   ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName,
-    tapePoolName, capacityInBytes, tapeDensity, tapeComment));
+    tapePoolName, capacityInBytes, tapeComment));
 
   const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";

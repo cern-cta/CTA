@@ -240,29 +240,28 @@ message MountInfo {
 message Tape {
   required string vid = 4300;
   required string logicallibrary = 4301;
-  required string density = 4302;
   // Statistics about what is stored in the tape
-  required uint64 lastfseq = 4303;
-  required uint64 bytesstored = 4304;
+  required uint64 lastfseq = 4302;
+  required uint64 bytesstored = 4303;
   // Tape lifetime statistics
-  repeated MountInfo readmounts = 4305;
-  repeated MountInfo writemounts = 4306;
+  repeated MountInfo readmounts = 4304;
+  repeated MountInfo writemounts = 4305;
   // Information about retrive jobs queued on this tape
-  repeated RetrieveJobPointer retrievejobs = 4307;
-  required uint64 retrievejobstotalsize = 4308;
-  required uint64 oldestjobtime = 4309;
-  required uint64 priority = 4310;
+  repeated RetrieveJobPointer retrievejobs = 4306;
+  required uint64 retrievejobstotalsize = 4307;
+  required uint64 oldestjobtime = 4308;
+  required uint64 priority = 4309;
   // There are no per tape mount criteria/quotas (they are per tape pool).
   // Tape status
-  required bool busy = 4311;
-  required MountType currentmounttype = 4312;
-  required MountInfo currentmount = 4313;
-  required bool archived = 4314;
-  required bool disabled = 4315;
-  required bool readonly = 4316;
-  required bool full = 4317;
+  required bool busy = 4310;
+  required MountType currentmounttype = 4311;
+  required MountInfo currentmount = 4312;
+  required bool archived = 4313;
+  required bool disabled = 4314;
+  required bool readonly = 4315;
+  required bool full = 4316;
   // Creation log
-  required CreationLog log = 4318;
+  required CreationLog log = 4317;
 }
 
 message ArchiveFile {

@@ -401,12 +401,11 @@ void cta::Scheduler::createTape(
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
-  const std::string &density,
   const std::string & comment) {
   m_db.assertIsAdminOnAdminHost(requester);
   cta::CreationLog cl (requester.getUser(), requester.getHost(), time(NULL), comment);
   m_db.createTape(vid, logicalLibraryName, tapePoolName,
-    capacityInBytes, density, cl);
+    capacityInBytes, cl);
 }
 
 //------------------------------------------------------------------------------

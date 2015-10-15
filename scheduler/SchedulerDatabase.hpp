@@ -167,7 +167,6 @@ public:
       std::string tapePool;
       std::string drive;
       uint64_t mountId;
-      std::string density;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
@@ -246,7 +245,6 @@ public:
       std::string tapePool;
       std::string drive;
       uint64_t mountId;
-      std::string density;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
@@ -597,7 +595,6 @@ public:
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
-    const std::string &density,
     const CreationLog &creationLog) = 0;
 
   /**

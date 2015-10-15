@@ -93,7 +93,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return MARK_DRIVE_AS_UP;
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
-  m_volInfo.density=tapeMount->getDensity();
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
@@ -101,7 +100,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   {
     log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
-               .add("density", m_volInfo.density)
                .add("mountType", mountTypeToString(m_volInfo.mountType));
     lc.log(LOG_INFO, "Got volume from client");
   }
@@ -342,7 +340,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
  *  3) Try to open it, log if we fail
  */
 /**
- * Try to find the drive that is described by m_request.driveUnit and m_volInfo.density
+ * Try to find the drive that is described by m_request.driveUnit
  * @param lc For logging purpose
  * @return the drive if found, NULL otherwise
  */
@@ -356,7 +354,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     driveInfo = dv.findBySymlink(driveConfig.getDevFilename());
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Drive not found on this path");
     
@@ -370,7 +367,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
@@ -385,7 +381,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
@@ -405,7 +400,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return drive.release();
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error opening tape drive");
@@ -420,7 +414,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp08(lc, log::Param("density", m_volInfo.density));
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     

@@ -35,7 +35,7 @@ public:
   Tape(const std::string & address, Backend & os);
   Tape(GenericObject & go);
   void initialize(const std::string & vid, const std::string &logicalLibrary, 
-    const std::string & density, const cta::CreationLog & creationLog);
+    const cta::CreationLog & creationLog);
   void garbageCollect();
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
@@ -95,8 +95,6 @@ public:
   uint64_t getLastFseq();
   // -- Generic parameters
   std::string getVid();
-  std::string getDensity();
-  void setDensity(const std::string &density);
 };
 
 }}

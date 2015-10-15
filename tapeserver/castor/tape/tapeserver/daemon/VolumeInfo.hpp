@@ -41,8 +41,6 @@ namespace daemon {
       VolumeInfo() {};
       /** The VID we will work on */
       std::string vid;
-      /** The density of the volume */
-      std::string density;
       /** The mount type: archive or retrieve */
       cta::MountType::Enum mountType;
     };
