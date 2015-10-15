@@ -294,7 +294,7 @@ void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, cons
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer(): m_fileIdCounter(0) {
+cta::MockNameServer::MockNameServer(): m_fileIdCounter(0), m_deleteOnExit(true) {
   umask(0);  
   char path[100];
   strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
@@ -312,7 +312,7 @@ cta::MockNameServer::MockNameServer(): m_fileIdCounter(0) {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer(const std::string &path): m_fileIdCounter(0) {
+cta::MockNameServer::MockNameServer(const std::string &path): m_fileIdCounter(0), m_deleteOnExit(false) {
   Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(path);
   m_fsDir = path;
@@ -322,6 +322,11 @@ cta::MockNameServer::MockNameServer(const std::string &path): m_fileIdCounter(0)
 // destructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::~MockNameServer() throw() {
+  if(m_deleteOnExit) {
+    std::string cmd("rm -rf ");
+    cmd += m_fsDir;
+    system(cmd.c_str());
+  }
 }  
 
 //------------------------------------------------------------------------------

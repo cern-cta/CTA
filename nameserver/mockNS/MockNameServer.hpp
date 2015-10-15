@@ -240,6 +240,11 @@ private:
    * Mutex to serialize access to the file system modification functions
    */
   std::mutex m_mutex;
+  
+  /**
+   * Flag that determines whether the base path of the mock name server needs to be deleted by the destructor
+   */
+  bool m_deleteOnExit;
 
 }; // class MockNameServer
 
