@@ -1,5 +1,5 @@
 # Load the plugin XrdCtaOfs
-xrootd.fslib /usr/lib64/libXrdCtaOfs.so
+xrootd.fslib libXrdCtaOfs.so
 
 # Use the Kerberos 5 security module
 xrootd.seclib libXrdSec.so
