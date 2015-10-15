@@ -18,6 +18,8 @@
 
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/Utils.hpp"
+
 #include <fstream>
 #include <stdlib.h>
 #include <ftw.h>
@@ -192,10 +194,23 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
   ret->set(::open(path.c_str(), O_RDONLY), path);
-  cta::exception::Errnum::throwOnMinusOne(ret->m_fd,
-      "In BackendStoreVFS::lockHelper, failed to open the lock file.");
-  cta::exception::Errnum::throwOnMinusOne(::flock(ret->m_fd, LOCK_EX),
-      "In BackendStoreVFS::lockHelper, failed to flock the lock file.");
+
+  if(0 > ret->m_fd) {
+    const std::string errnoStr = Utils::errnoToString(errno);
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << ": Failed to open file " << path <<
+      ": " << errnoStr;
+    throw ex;
+  }
+
+  if(::flock(ret->m_fd, LOCK_EX)) {
+    const std::string errnoStr = Utils::errnoToString(errno);
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << ": Failed to flock file " << path <<
+      ": " << errnoStr;
+    throw ex;
+  }
+
   return ret.release();
 }
 
