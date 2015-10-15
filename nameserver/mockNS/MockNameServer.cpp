@@ -322,9 +322,6 @@ cta::MockNameServer::MockNameServer(const std::string &path): m_fileIdCounter(0)
 // destructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::~MockNameServer() throw() {
-  std::string cmd("rm -rf ");
-  cmd += m_fsDir;
-  system(cmd.c_str());
 }  
 
 //------------------------------------------------------------------------------
