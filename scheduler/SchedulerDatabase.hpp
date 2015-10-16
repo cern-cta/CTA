@@ -31,9 +31,10 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "scheduler/MountType.hpp"
 #include "common/MountControl.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
+#include "objectstore/DriveRegister.hpp"
+#include "scheduler/MountType.hpp"
 
 namespace cta {
 
@@ -625,6 +626,14 @@ public:
    * volume identifiers.
    */
   virtual std::list<Tape> getTapes() const = 0;
+  
+  /* === Drive state handling  ============================================== */
+  /**
+   * Returns the current list of registered drives.
+   *
+   * @return The current list of registered drives.
+   */
+  virtual std::list<cta::DriveState> getDriveStates() const = 0;
 
 }; // class SchedulerDatabase
 

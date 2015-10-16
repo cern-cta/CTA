@@ -18,8 +18,9 @@
 
 #pragma once
 
-#include "scheduler/SchedulerDatabase.hpp"
 #include "common/exception/Exception.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "objectstore/DriveRegister.hpp"
 
 #include <list>
 #include <map>
@@ -652,6 +653,13 @@ public:
    */
   virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName,
     const std::string & driveName);
+  
+  /**
+   * Returns the current list of registered drives.
+   *
+   * @return The current list of registered drives.
+   */
+  virtual std::list<cta::DriveState> getDriveStates(const SecurityIdentity &requester) const;
 
 private:
 

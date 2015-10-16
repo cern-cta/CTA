@@ -19,9 +19,9 @@
 #pragma once
 
 #include "ObjectOps.hpp"
-#include "objectstore/cta.pb.h"
 #include <list>
 #include <limits>
+#include "common/DriveState.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -44,48 +44,9 @@ public:
   void addDrive (const std::string & driveName, const std::string & logicalLibrary,
     const CreationLog & creationLog);
   void removeDrive (const std::string  & name);
-  enum class MountType {
-    NoMount,
-    Archive,
-    Retrieve
-  };
-  enum class DriveStatus {
-    Down,
-    Up,
-    Starting, // This status allows drive register to represent drives committed
-    // to mounting a tape before the mounting is confirmed. It is necessary to
-    // allow race-free scheduling
-    Mounting,
-    Transfering,
-    Unloading,
-    Unmounting,
-    DrainingToDisk,
-    CleaningUp
-  };
-  struct DriveState {
-    std::string name;
-    std::string logicalLibrary;
-    uint64_t sessionId;
-    uint64_t bytesTransferedInSession;
-    uint64_t filesTransferedInSession;
-    double latestBandwidth; /** < Byte per seconds */
-    time_t sessionStartTime;
-    time_t mountStartTime;
-    time_t transferStartTime;
-    time_t unloadStartTime;
-    time_t unmountStartTime;
-    time_t drainingStartTime;
-    time_t downOrUpStartTime;
-    time_t cleanupStartTime;
-    time_t lastUpdateTime;
-    MountType mountType;
-    DriveStatus status;
-    std::string currentVid;
-    std::string currentTapePool;
-  };
 private:
-  MountType deserializeMountType(serializers::MountType);
-  serializers::MountType serializeMountType(MountType);
+  cta::MountType::Enum deserializeMountType(serializers::MountType);
+  serializers::MountType serializeMountType(cta::MountType::Enum);
   DriveStatus deserializeDriveStatus(serializers::DriveStatus);
   serializers::DriveStatus serializeDriveStatus(DriveStatus);
 public:
@@ -100,7 +61,7 @@ public:
    */
   void reportDriveStatus (const std::string & drive, const std::string & logicalLibary,
     DriveStatus status, time_t reportTime, 
-    MountType mountType = MountType::NoMount,
+    cta::MountType::Enum mountType = cta::MountType::NONE,
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(), 
     uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
@@ -113,7 +74,7 @@ private:
     const std::string & drive;
     const std::string & logicalLibary;
     DriveStatus status;
-    MountType mountType;
+    cta::MountType::Enum mountType;
     time_t reportTime; 
     uint64_t mountSessionId;
     uint64_t byteTransfered;

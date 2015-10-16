@@ -152,25 +152,16 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   dr.fetch();
   auto dl = dr.dumpDrives();
   std::set<int> activeDriveStatuses = {
-    (int)objectstore::DriveRegister::DriveStatus::Starting,
-    (int)objectstore::DriveRegister::DriveStatus::Mounting,
-    (int)objectstore::DriveRegister::DriveStatus::Transfering,
-    (int)objectstore::DriveRegister::DriveStatus::Unloading,
-    (int)objectstore::DriveRegister::DriveStatus::Unmounting,
-    (int)objectstore::DriveRegister::DriveStatus::DrainingToDisk };
+    (int)cta::DriveStatus::Starting,
+    (int)cta::DriveStatus::Mounting,
+    (int)cta::DriveStatus::Transfering,
+    (int)cta::DriveStatus::Unloading,
+    (int)cta::DriveStatus::Unmounting,
+    (int)cta::DriveStatus::DrainingToDisk };
   for (auto d=dl.begin(); d!= dl.end(); d++) {
     if (activeDriveStatuses.count((int)d->status)) {
       tmdi.existingMounts.push_back(ExistingMount());
-      switch (d->mountType) {
-        case objectstore::DriveRegister::MountType::Archive:
-          tmdi.existingMounts.back().type = cta::MountType::ARCHIVE;
-          break;
-        case objectstore::DriveRegister::MountType::Retrieve:
-          tmdi.existingMounts.back().type = cta::MountType::RETRIEVE;
-          break;
-        default:
-          throw exception::Exception("In OStoreDB::getMountInfo(): got drive with unexpected mount type");
-      }
+      tmdi.existingMounts.back().type = d->mountType;
       tmdi.existingMounts.back().tapePool = d->currentTapePool;
     }
   }
@@ -1109,6 +1100,17 @@ void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
   }
 
+std::list<cta::DriveState> OStoreDB::getDriveStates() const {
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  return dr.dumpDrives();
+}
+
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName,
@@ -1204,8 +1206,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
     dr.reportDriveStatus(driveName, logicalLibrary, 
-      objectstore::DriveRegister::DriveStatus::Starting, startTime, 
-      objectstore::DriveRegister::MountType::Archive, privateRet->mountInfo.mountId,
+      cta::DriveStatus::Starting, startTime, 
+      cta::MountType::ARCHIVE, privateRet->mountInfo.mountId,
       0, 0, 0, vid, tapePool);
     dr.commit();
   }
@@ -1311,8 +1313,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
     dr.reportDriveStatus(driveName, logicalLibrary, 
-      objectstore::DriveRegister::DriveStatus::Starting, startTime, 
-      objectstore::DriveRegister::MountType::Retrieve, privateRet->mountInfo.mountId,
+      cta::DriveStatus::Starting, startTime, 
+      cta::MountType::RETRIEVE, privateRet->mountInfo.mountId,
       0, 0, 0, vid, tapePool);
     dr.commit();
   }
@@ -1422,8 +1424,8 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   dr.fetch();
   // Reset the drive state.
   dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    objectstore::DriveRegister::DriveStatus::Up, completionTime, 
-    objectstore::DriveRegister::MountType::NoMount, 0,
+    cta::DriveStatus::Up, completionTime, 
+    cta::MountType::NONE, 0,
     0, 0, 0, "", "");
   dr.commit();
   // Find the tape and unbusy it.
@@ -1543,8 +1545,8 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   dr.fetch();
   // Reset the drive state.
   dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    objectstore::DriveRegister::DriveStatus::Up, completionTime, 
-    objectstore::DriveRegister::MountType::NoMount, 0,
+    cta::DriveStatus::Up, completionTime, 
+    cta::MountType::NONE, 0,
     0, 0, 0, "", "");
   dr.commit();
   // Find the tape and unbusy it.

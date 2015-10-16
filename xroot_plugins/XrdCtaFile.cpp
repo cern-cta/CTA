@@ -1077,6 +1077,57 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   }
   m_data = responseSS.str();
 }
+
+std::string fromDriveStatusToString(cta::DriveStatus status) {
+  switch(status) {
+    case cta::DriveStatus::CleaningUp:
+      return "CleaningUp";
+    case cta::DriveStatus::Down:
+      return "Down";
+    case cta::DriveStatus::DrainingToDisk:
+      return "DrainingToDisk";
+    case cta::DriveStatus::Mounting:
+      return "Mounting";
+    case cta::DriveStatus::Starting:
+      return "Starting";
+    case cta::DriveStatus::Transfering:
+      return "Transfering";
+    case cta::DriveStatus::Unloading:
+      return "Unloading";
+    case cta::DriveStatus::Unmounting:
+      return "Unmounting";
+    case cta::DriveStatus::Up:
+      return "Up";
+    default:
+      return "UnknownState";
+  }
+}
+
+time_t getDurationSinceStatusBegin(const cta::DriveState &state) {
+  time_t now = time(0);
+  switch(state.status) {
+    case cta::DriveStatus::CleaningUp:
+      return now-state.cleanupStartTime;
+    case cta::DriveStatus::Down:
+      return now-state.downOrUpStartTime;
+    case cta::DriveStatus::DrainingToDisk:
+      return now-state.drainingStartTime;
+    case cta::DriveStatus::Mounting:
+      return now-state.mountStartTime;
+    case cta::DriveStatus::Starting:
+      return now-state.startStartTime;
+    case cta::DriveStatus::Transfering:
+      return now-state.transferStartTime;
+    case cta::DriveStatus::Unloading:
+      return now-state.unloadStartTime;
+    case cta::DriveStatus::Unmounting:
+      return now-state.unmountStartTime;
+    case cta::DriveStatus::Up:
+      return now-state.downOrUpStartTime;
+    default:
+      return 0;
+  }
+}
   
 //------------------------------------------------------------------------------
 // xCom_listdrivestates
@@ -1084,7 +1135,23 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates" << std::endl;
-  m_data = "Not implemented yet!\n";
+  auto list = m_scheduler->getDriveStates(requester);
+  std::ostringstream responseSS;
+  for(auto it = list.begin(); it != list.end(); it++) {
+    responseSS << it->name  
+               << " " << fromDriveStatusToString(it->status)
+               << " " << cta::MountType::toString(it->mountType)
+               << " " << getDurationSinceStatusBegin(*it)
+               << " " << it->currentVid
+               << " " << it->bytesTransferedInSession
+               << " " << it->filesTransferedInSession
+               << " " << it->latestBandwidth
+               << " " << it->logicalLibrary
+               << " " << it->sessionId
+               << " " << time(0)-it->startStartTime
+               << " " << it->lastUpdateTime << std::endl;
+  }
+  m_data = responseSS.str();
 }
   
 //------------------------------------------------------------------------------

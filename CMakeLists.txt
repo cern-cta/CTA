@@ -51,6 +51,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(cmdline)
 add_subdirectory(common)

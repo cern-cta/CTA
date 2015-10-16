@@ -594,32 +594,6 @@ void cta::Scheduler::queueArchiveRequest(
 }
 
 //------------------------------------------------------------------------------
-// queueArchiveToDirRequest
-//------------------------------------------------------------------------------
-//void cta::Scheduler::queueArchiveToDirRequest(
-//  const SecurityIdentity &requester,
-//  const std::list<RemotePathAndStatus> &remoteFiles,
-//  const std::string &archiveDir) {
-//
-//  const uint64_t priority = 0; // TO BE DONE
-//
-//  const auto storageClassName = m_ns.getDirStorageClass(requester, archiveDir);
-//  const auto storageClass = m_db.getStorageClass(storageClassName);
-//  assertStorageClassHasAtLeastOneCopy(storageClass);
-//  const auto archiveToFileRequests = createArchiveToFileRequests(requester,
-//    remoteFiles, archiveDir, priority);
-//
-//  CreationLog log(requester.getUser(), requester.getHost(), time(NULL), "");
-//  m_db.queue(ArchiveToDirRequest(archiveDir, archiveToFileRequests, priority,
-//    log));
-//
-//  for(auto itor = archiveToFileRequests.cbegin(); itor !=
-//    archiveToFileRequests.cend(); itor++) {
-//    createNSEntryAndUpdateSchedulerDatabase(requester, *itor);
-//  }
-//}
-
-//------------------------------------------------------------------------------
 // assertStorageClassHasAtLeastOneCopy
 //------------------------------------------------------------------------------
 void cta::Scheduler::assertStorageClassHasAtLeastOneCopy(
@@ -670,38 +644,6 @@ void cta::Scheduler::queueArchiveToFileRequest(
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> requestCreation(m_db.queue(rqst));
   requestCreation->complete();
 }
-
-//------------------------------------------------------------------------------
-// queueArchiveToFileRequest
-//------------------------------------------------------------------------------
-//void cta::Scheduler::queueArchiveToFileRequest(
-//  const SecurityIdentity &requester,
-//  const RemotePathAndStatus &remoteFile,
-//  const std::string &archiveFile) {
-//
-//  const uint64_t priority = 0; // TO BE DONE
-//  const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester,
-//    remoteFile, archiveFile, priority);
-//
-//  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> 
-//    requestCreation (m_db.queue(rqst));
-//  try {
-//    m_ns.createFile(requester, rqst.archiveFile.path, remoteFile.status.mode, remoteFile.status.size);
-//  } catch(std::exception &nsEx) {
-//    // Try our best to cleanup the scheduler database.  The garbage collection
-//    // logic will try again if we fail.
-//    try {
-//      requestCreation->cancel();
-//      //m_db.deleteArchiveRequest(requester, rqst.archiveFile);
-//    } catch(...) {
-//    }
-//
-//    // Whether or not we were able to clean up the scheduler database, the real
-//    // problem here was the failure to create an entry in the NS
-//    throw nsEx;
-//  }
-//  requestCreation->complete();
-//}
 
 //------------------------------------------------------------------------------
 // createArchiveToFileRequest
@@ -939,51 +881,9 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
   return std::unique_ptr<TapeMount>();
 }
 
-//
-////------------------------------------------------------------------------------
-//// finishedMount
-////------------------------------------------------------------------------------
-//void cta::Scheduler::finishedMount(const std::string &mountId) {
-//}
-//
-////------------------------------------------------------------------------------
-//// getNextArchive
-////------------------------------------------------------------------------------
-//cta::ArchiveJob *cta::Scheduler::getNextArchive(
-//  const std::string &mountId) {
-//  return NULL;
-//}
-//
-////------------------------------------------------------------------------------
-//// archiveSuccessful
-////------------------------------------------------------------------------------
-//void cta::Scheduler::archiveSuccessful(const std::string &transferId) {
-//}
-//
-////------------------------------------------------------------------------------
-//// archiveFailed
-////------------------------------------------------------------------------------
-//void cta::Scheduler::archiveFailed(const std::string &transferId,
-//  const TapeJobFailure failureType, const std::string &errorMessage) {
-//}
-//
-////------------------------------------------------------------------------------
-//// getNextRetrieve
-////------------------------------------------------------------------------------
-//cta::RetrieveJob *cta::Scheduler::getNextRetrieve(
-//  const std::string &mountId) {
-//  return NULL;
-//}
-//
-////------------------------------------------------------------------------------
-//// retrieveSucceeded
-////------------------------------------------------------------------------------
-//void cta::Scheduler::retrieveSucceeded(const std::string &transferId) {
-//}
-//
-////------------------------------------------------------------------------------
-//// retrieveFailed
-////------------------------------------------------------------------------------
-//void cta::Scheduler::retrieveFailed(const std::string &transferId,
-//  const TapeJobFailure failureType, const std::string &errorMessage) {
-//}
+//------------------------------------------------------------------------------
+// getDriveStates
+//------------------------------------------------------------------------------
+std::list<cta::DriveState> cta::Scheduler::getDriveStates(const SecurityIdentity &requester) const {
+  return m_db.getDriveStates();
+}

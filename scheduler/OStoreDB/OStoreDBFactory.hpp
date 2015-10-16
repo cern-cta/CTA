@@ -230,6 +230,10 @@ public:
   virtual void queue(const RetrieveToDirRequest& rqst) {
     m_OStoreDB.queue(rqst);
   }
+  
+  virtual std::list<cta::DriveState> getDriveStates() const {
+    return m_OStoreDB.getDriveStates();
+  }
 private:
   BackendType m_backend;
   cta::OStoreDB m_OStoreDB;

@@ -20,6 +20,7 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
+#include "common/DriveState.hpp"
 #include <set>
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):
@@ -120,7 +121,7 @@ cta::objectstore::serializers::DriveStatus
   }
 }
 
-cta::objectstore::DriveRegister::DriveStatus
+cta::DriveStatus
   cta::objectstore::DriveRegister::deserializeDriveStatus(
     serializers::DriveStatus driveStatus) {
   switch (driveStatus) {
@@ -148,28 +149,28 @@ cta::objectstore::DriveRegister::DriveStatus
 }
 
 cta::objectstore::serializers::MountType
-  cta::objectstore::DriveRegister::serializeMountType(MountType mountType) {
+  cta::objectstore::DriveRegister::serializeMountType(cta::MountType::Enum mountType) {
   switch (mountType) {
-    case MountType::NoMount:
+    case MountType::NONE:
       return serializers::MountType::NoMount;
-    case MountType::Archive:
+    case MountType::ARCHIVE:
       return serializers::MountType::Archive;
-    case MountType::Retrieve:
+    case MountType::RETRIEVE:
       return serializers::MountType::Retrieve;
     default:
       throw exception::Exception("In DriveRegister::serializeMountType: unexpected MountType");
   }
 }
 
-cta::objectstore::DriveRegister::MountType
+cta::MountType::Enum
   cta::objectstore::DriveRegister::deserializeMountType(serializers::MountType mountType) {
   switch (mountType) {
     case serializers::MountType::NoMount:
-      return MountType::NoMount;
+      return MountType::NONE;
     case serializers::MountType::Archive:
-      return MountType::Archive;
+      return MountType::ARCHIVE;
     case serializers::MountType::Retrieve:
-      return MountType::Retrieve;
+      return MountType::RETRIEVE;
     default:
       throw exception::Exception("In DriveRegister::serializeMountType: unexpected MountType");
   }
@@ -185,7 +186,7 @@ namespace {
 
 void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& driveName,
   const std::string& logicalLibary, DriveStatus status, time_t reportTime,
-  MountType mountType, uint64_t mountSessionId, uint64_t byteTransfered,
+  cta::MountType::Enum mountType, uint64_t mountSessionId, uint64_t byteTransfered,
   uint64_t filesTransfered, double latestBandwidth, const std::string & vid,
   const std::string & tapepool) {
   // Wrap all the parameters together for easier manipulation by sub-functions

@@ -21,6 +21,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 
@@ -294,6 +295,8 @@ public:
   virtual void deleteRetrieveRequest(const SecurityIdentity& requester, 
     const std::string& remoteFile);
   
+  /* === Drive state handling  ============================================== */
+  virtual std::list<cta::DriveState> getDriveStates() const;
 private:
   objectstore::Backend & m_objectStore;
   objectstore::Agent * m_agent;
