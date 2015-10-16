@@ -38,7 +38,7 @@ public:
    */
   int main(const int argc, const char **argv) const throw();
 
-protected:
+private:
   
   /**
    * Sends the command and waits for the reply
@@ -68,7 +68,14 @@ protected:
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
   
   /**
-   * Encodes a string in base 64
+   * Encodes a string in base 64 and replaces slatches ('/') in the result
+   * with underscores ('_').
+   *
+   * Need to replace slashes ('/') with underscores ('_') because xroot removes
+   * consecutive slashes, and the cryptopp base64 algorithm may produce
+   * consecutive slashes. This is solved in cryptopp-5.6.3 (using
+   * Base64URLEncoder instead of Base64Encoder) but we currently have
+   * cryptopp-5.6.2. To be changed in the future...
    * 
    * @param msg string to encode
    * @return encoded string

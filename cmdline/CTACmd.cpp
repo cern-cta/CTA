@@ -86,18 +86,9 @@ int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
 //------------------------------------------------------------------------------
 std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
   std::string cmdPath = "root://localhost:10955//";
-  std::string arg = encode(std::string(argv[0]));
-  replaceAll(arg, "/", "_");  
-  //need to add this because xroot removes consecutive slashes, and the 
-  //cryptopp base64 algorithm may produce consecutive slashes. This is solved 
-  //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
-  //currently have cryptopp-5.6.2. To be changed in the future...
-  cmdPath += arg;
-  for(int i=1; i<argc; i++) {
-    std::string arg = encode(std::string(argv[i]));
-    replaceAll(arg, "/", "_");
-    cmdPath += "&";
-    cmdPath += arg;
+  for(int i=0; i<argc; i++) {
+    if(i) cmdPath += "&";
+    cmdPath += encode(std::string(argv[i]));
   }
   return cmdPath;
 }
@@ -122,5 +113,13 @@ std::string CTACopyCmd::encode(const std::string msg) const {
   std::string ret;
   const bool noNewLineInBase64Output = false;
   CryptoPP::StringSource ss1(msg, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(ret), noNewLineInBase64Output));
+
+  // need to replace slashes ('/') with underscores ('_') because xroot removes
+  // consecutive slashes, and the cryptopp base64 algorithm may produce
+  // consecutive slashes. This is solved in cryptopp-5.6.3 (using
+  // Base64URLEncoder instead of Base64Encoder) but we currently have
+  // cryptopp-5.6.2. To be changed in the future...
+  replaceAll(ret, "/", "_");
+
   return ret;
 }
