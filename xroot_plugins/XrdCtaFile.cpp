@@ -341,6 +341,18 @@ std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, c
 }
 
 //------------------------------------------------------------------------------
+// hasOption
+//------------------------------------------------------------------------------
+bool XrdProFile::hasOption(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName) {
+  for(auto it=tokens.begin(); it!=tokens.end(); it++) {
+    if(optionShortName == *it || optionLongName == *it) {
+      return true;
+    }
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 // xCom_admin
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
@@ -933,15 +945,44 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpa/listpendingarchives --tapepool/-t <tapepool_name>" << std::endl;
+  help << tokens[0] << " lpa/listpendingarchives [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
   std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
+  bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
   if(tapePool.empty()) {
     auto poolList = m_scheduler->getArchiveRequests(requester);  
     for(auto pool = poolList.begin(); pool != poolList.end(); pool++) {
+      uint64_t numberOfRequests=0;
+      uint64_t totalSize=0;
       for(auto request = pool->second.begin(); request!=pool->second.end(); request++) {
-        responseSS << pool->first.name
+        if(extended) {
+          responseSS << pool->first.name
+                     << " " << request->remoteFile.path.getRaw()
+                     << " " << request->remoteFile.status.size
+                     << " " << request->archiveFile
+                     << " " << request->copyNb
+                     << " " << request->priority
+                     << " " << request->creationLog.user.uid
+                     << " " << request->creationLog.user.gid
+                     << " " << request->creationLog.host
+                     << " " << request->creationLog.time 
+                     << " \"" << request->creationLog.comment << "\"" << std::endl;
+        }
+        numberOfRequests++;
+        totalSize+=request->remoteFile.status.size;
+      }
+      responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
+    }  
+  }
+  else {
+    uint64_t numberOfRequests=0;
+    uint64_t totalSize=0;
+    auto requestList = m_scheduler->getArchiveRequests(requester, tapePool);    
+    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
+      if(extended) {
+        responseSS << tapePool
                    << " " << request->remoteFile.path.getRaw()
+                   << " " << request->remoteFile.status.size
                    << " " << request->archiveFile
                    << " " << request->copyNb
                    << " " << request->priority
@@ -950,23 +991,11 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
                    << " " << request->creationLog.host
                    << " " << request->creationLog.time 
                    << " \"" << request->creationLog.comment << "\"" << std::endl;
-      }    
-    }  
-  }
-  else {
-    auto requestList = m_scheduler->getArchiveRequests(requester, tapePool);    
-    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
-      responseSS << tapePool
-                 << " " << request->remoteFile.path.getRaw()
-                 << " " << request->archiveFile
-                 << " " << request->copyNb
-                 << " " << request->priority
-                 << " " << request->creationLog.user.uid
-                 << " " << request->creationLog.user.gid
-                 << " " << request->creationLog.host
-                 << " " << request->creationLog.time 
-                 << " \"" << request->creationLog.comment << "\"" << std::endl;
+      }
+      numberOfRequests++;
+      totalSize+=request->remoteFile.status.size;
     }
+    responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
   }
   m_data = responseSS.str();
 }
@@ -976,12 +1005,15 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpr/listpendingretrieves --vid/-v <vid>" << std::endl;
+  help << tokens[0] << " lpr/listpendingretrieves [--vid/-v <vid>] [--extended/-x]" << std::endl;
   std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
+  bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
   if(tapeVid.empty()) {
     auto vidList = m_scheduler->getRetrieveRequests(requester);  
     for(auto vid = vidList.begin(); vid != vidList.end(); vid++) {
+      uint64_t numberOfRequests=0;
+      uint64_t totalSize=0;
       for(auto request = vid->second.begin(); request!=vid->second.end(); request++) {
         // Find the tape copy for the active copy number
         cta::TapeFileLocation * tfl = NULL;
@@ -989,8 +1021,43 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           if (l->copyNb == request->activeCopyNb)
             tfl = &(*l);
         }
-        responseSS << vid->first.vid
+        if(extended) {
+          responseSS << vid->first.vid
+                     << " " << request->archiveFile.path
+                     << " " << request->archiveFile.size
+                     << " " << request->remoteFile
+                     << " " << request->activeCopyNb
+                     << " " << (tfl?tfl->vid:"Unknown VID")
+                     << " " << (tfl?tfl->blockId:0)
+                     << " " << (tfl?tfl->fSeq:0)
+                     << " " << request->priority
+                     << " " << request->creationLog.user.uid
+                     << " " << request->creationLog.user.gid
+                     << " " << request->creationLog.host
+                     << " " << request->creationLog.time 
+                     << " \"" << request->creationLog.comment << "\"" << std::endl;
+        }
+        numberOfRequests++;
+        totalSize+=request->archiveFile.size;
+      }
+      responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;    
+    }  
+  }
+  else {
+    uint64_t numberOfRequests=0;
+    uint64_t totalSize=0;    
+    auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);
+    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
+      // Find the tape copy for the active copy number
+      cta::TapeFileLocation * tfl = NULL;
+      for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
+        if (l->copyNb == request->activeCopyNb)
+          tfl = &(*l);
+      }
+      if(extended) {
+        responseSS << tapeVid
                    << " " << request->archiveFile.path
+                   << " " << request->archiveFile.size
                    << " " << request->remoteFile
                    << " " << request->activeCopyNb
                    << " " << (tfl?tfl->vid:"Unknown VID")
@@ -1002,32 +1069,11 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
                    << " " << request->creationLog.host
                    << " " << request->creationLog.time 
                    << " \"" << request->creationLog.comment << "\"" << std::endl;
-      }    
-    }  
-  }
-  else {
-    auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);    
-    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
-      // Find the tape copy for the active copy number
-      cta::TapeFileLocation * tfl = NULL;
-      for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
-        if (l->copyNb == request->activeCopyNb)
-          tfl = &(*l);
       }
-      responseSS << tapeVid
-                 << " " << request->archiveFile.path
-                 << " " << request->remoteFile
-                 << " " << request->activeCopyNb
-                 << " " << (tfl?tfl->vid:"Unknown VID")
-                 << " " << (tfl?tfl->blockId:0)
-                 << " " << (tfl?tfl->fSeq:0)
-                 << " " << request->priority
-                 << " " << request->creationLog.user.uid
-                 << " " << request->creationLog.user.gid
-                 << " " << request->creationLog.host
-                 << " " << request->creationLog.time 
-                 << " \"" << request->creationLog.comment << "\"" << std::endl;
+      numberOfRequests++;
+      totalSize+=request->archiveFile.size;
     }
+    responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
   }
   m_data = responseSS.str();
 }

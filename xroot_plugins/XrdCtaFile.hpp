@@ -106,6 +106,16 @@ protected:
   std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
   
   /**
+   * Given the command line string vector it returns true if the specified option is present, false otherwise
+   * 
+   * @param tokens          The command line tokens 
+   * @param optionShortName The short name of the required option
+   * @param optionLongName  The long name of the required option
+   * @return true if the specified option is present, false otherwise
+   */
+  bool hasOption(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
+  
+  /**
    * Executes the admin command
    * 
    * @param tokens The command line tokens
