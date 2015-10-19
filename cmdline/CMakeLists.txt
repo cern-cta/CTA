@@ -6,3 +6,11 @@ include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE
 
 add_executable (cta CTACmdMain.cpp CTACmd.cpp)
 target_link_libraries (cta ${XROOTD_XRDCL_LIB} ctacommon cryptopp)
+
+
+include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
+add_executable (ctaAddAdminUser CTAAddAdminUser.cpp )
+target_link_libraries (ctaAddAdminUser castorcommon castorserver castorlog 
+  CTAObjectStore ctaOStoreSchedulerDB ctacommon castorutils protobuf ctascheduler
+  ctanameserver)
+
