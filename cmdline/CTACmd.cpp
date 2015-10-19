@@ -63,20 +63,20 @@ int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
   XrdCl::XRootDStatus status = copyProcess.AddJob(properties, &results);
   if(!status.IsOK())
   {
-    throw cta::exception::Exception("Job adding error");
+    throw cta::exception::Exception(status.ToStr());
   }
   
   status = copyProcess.Prepare();
   if(!status.IsOK())
   {
-    throw cta::exception::Exception("Job preparing error");
+    throw cta::exception::Exception(status.ToStr());
   }
   
   XrdCl::CopyProgressHandler copyProgressHandler;
   status = copyProcess.Run(&copyProgressHandler);
   if(!status.IsOK())
   {
-    throw cta::exception::Exception("Copy process run error");
+    throw cta::exception::Exception(status.ToStr());
   }
   return 0;
 }
