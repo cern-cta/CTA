@@ -50,9 +50,6 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
   TapeDaemonConfig config;
   
   config.catalogueConfig = CatalogueConfig::createFromCastorConf(log);
-  config.cupvHost = castorConf.getConfEntString("UPV" , "HOST", log);
-  config.vdqmHost = castorConf.getConfEntString("VDQM", "HOST", log);
-  config.vmgrHost = castorConf.getConfEntString("VMGR", "HOST", log);
   config.objectStoreBackendPath = castorConf.getConfEntString("TapeServer", "ObjectStoreBackendPath", log);
   config.rmcPort = castorConf.getConfEntInt("RMC", "PORT",
     (unsigned short)RMC_PORT, log);
@@ -66,7 +63,6 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
     TAPESERVER_LABEL_PORT, log);
   config.internalPort = castorConf.getConfEntInt("TapeServer", "InternalPort",
     TAPESERVER_INTERNAL_PORT, log);
-  config.vdqmHosts = createVdqmHostsFromCastorConf(log, castorConf);
 
   config.dataTransfer = DataTransferConfig::createFromCastorConf(log);
   
