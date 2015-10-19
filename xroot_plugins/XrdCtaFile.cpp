@@ -1089,7 +1089,7 @@ std::string fromDriveStatusToString(cta::DriveStatus status) {
     case cta::DriveStatus::Starting:
       return "Starting";
     case cta::DriveStatus::Transfering:
-      return "Transfering";
+      return "Transferring";
     case cta::DriveStatus::Unloading:
       return "Unloading";
     case cta::DriveStatus::Unmounting:

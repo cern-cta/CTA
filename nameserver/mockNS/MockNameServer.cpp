@@ -42,14 +42,14 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
   if(::stat(path.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " stat error. Reason: " <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
   if(!S_ISDIR(statResult.st_mode)) {
     std::ostringstream msg;
-    msg << "assertFsDirExists() - " << path << " is not a directory";
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " is not a directory";
     throw(exception::Exception(msg.str()));
   }
 }
@@ -63,14 +63,14 @@ void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
   if(::stat(path.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " stat error. Reason: " <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
   if(!S_ISREG(statResult.st_mode)) {
     std::ostringstream msg;
-    msg << "assertFsFileExists() - " << path << " is not a regular file";
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " is not a regular file";
     throw(exception::Exception(msg.str()));
   }
 }
@@ -84,7 +84,7 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
 
   if(::stat(path.c_str(), &statResult) == 0) {
     std::ostringstream msg;
-    msg << "assertFsPathExist() - " << path << " exists.";
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " exists.";
     throw(exception::Exception(msg.str()));
   }
 }
@@ -489,7 +489,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
     if(mkdir(fsPath.c_str(), 0755)) {
       const int savedErrno = errno;
       std::ostringstream msg;
-      msg << __FUNCTION__ << " - mkdir " << fsPath << " error. Reason: \n" <<
+      msg << __FUNCTION__ << " - mkdir " << path << " error. Reason: \n" <<
         Utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
@@ -515,7 +515,7 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
   if(unlink(fsPath.c_str())) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - unlink " << fsPath << " error. Reason: \n" <<
+    msg << __FUNCTION__ << " - unlink " << path << " error. Reason: \n" <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }  
@@ -538,7 +538,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
   if(rmdir(fsPath.c_str())) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - rmdir " << fsPath << " error. Reason: \n" <<
+    msg << __FUNCTION__ << " - rmdir " << path << " error. Reason: \n" <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }  
@@ -563,7 +563,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
     }
 
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << fsPath << " stat error. Reason: " <<
+    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
@@ -585,7 +585,7 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
   if(dp == NULL) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - opendir " << fsPath << " error. Reason: \n"
+    msg << __FUNCTION__ << " - opendir " << path << " error. Reason: \n"
       << Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
@@ -620,7 +620,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   if(::stat(fsPath.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - " << fsPath << " stat error. Reason: " <<
+    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
       Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
@@ -651,7 +651,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
     tapeCopies = getTapeFiles(requester, path);
   } else {
     std::ostringstream msg;
-    msg << "statFile() - " << m_fsDir+path <<
+    msg << "statFile() - " << path <<
       " is neither a directory nor a regular file";
     throw(exception::Exception(msg.str()));
   } 
