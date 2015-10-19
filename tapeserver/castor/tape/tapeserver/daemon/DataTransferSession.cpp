@@ -87,7 +87,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
-  std::unique_ptr<cta::TapeMount> tapeMount(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()));
+  std::unique_ptr<cta::TapeMount> tapeMount;
+  try {
+    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
+  } catch (cta::exception::Exception & e) {
+    log::ScopedParamContainer localParams(lc);
+    localParams.add("errorMessage", e.getMessageValue());
+    lc.log(LOG_ERR, "Error while scheduling new mount. Putting the drive down.");
+    return MARK_DRIVE_AS_DOWN;
+  }
   // No mount to be done found, that was fast...
   if (!tapeMount.get())
     return MARK_DRIVE_AS_UP;

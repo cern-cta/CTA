@@ -1220,7 +1220,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
   objectstore::Backend& os, objectstore::Agent& a):
-    m_objectStore(os), m_agent(a) {}
+   m_lockTaken(false), m_objectStore(os), m_agent(a) {}
 
 
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 

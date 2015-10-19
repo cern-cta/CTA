@@ -57,13 +57,6 @@ struct CatalogueConfig {
    */
   time_t blockMoveTimeoutSecs;
 
-  /**
-   * The time interval in seconds to wait between attempts to keep the vdqmd
-   * daemon synchronized with the state of a tape drive within the catalogue of
-   * the tapeserverd daemon.
-   */
-  time_t vdqmDriveSyncIntervalSecs;
-
   /** The delay in seconds the master process of the tapeserverd daemon should
    * wait before launching another transfer session whilst the corresponding
    * drive is idle.

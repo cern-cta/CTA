@@ -24,6 +24,7 @@
 
 #include "BackendVFS.hpp"
 #include "RootEntry.hpp"
+#include "Agent.hpp"
 #include <iostream>
 
 int main(void) {
@@ -33,6 +34,20 @@ int main(void) {
     cta::objectstore::RootEntry re(be);
     re.initialize();
     re.insert();
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    cta::objectstore::Agent ag(be);
+    ag.generateName("makeMinimalVFS");
+    ag.initialize();
+    cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
+      time(NULL), "Initial creation of the  object store structures");
+    re.addOrGetAgentRegisterPointerAndCommit(ag,cl);
+    rel.release();
+    ag.insertAndRegisterSelf();
+    rel.lock(re);
+    re.addOrGetDriveRegisterPointerAndCommit(ag, cl);
+    re.addOrGetSchedulerGlobalLockAndCommit(ag,cl);
+    rel.release();
     std::cout << "New object store path: " << be.getParams()->getPath() << std::endl;
   } catch (std::exception & e) {
     std::cerr << "Failed to initialise the root entry in a new VFS backend store"
