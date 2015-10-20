@@ -59,10 +59,10 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   checkUserCanLabelTape(log::Logger &log,
   const legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) {
-  std::ostringstream msg;
+  /* TODO: re-implement std::ostringstream msg;
   msg << __FUNCTION__ <<
     ": For now no users are allowed to label tapes in the CTA project";
-  throw castor::exception::Exception(msg.str());
+  throw castor::exception::Exception(msg.str()); */ 
 }
 
 //------------------------------------------------------------------------------

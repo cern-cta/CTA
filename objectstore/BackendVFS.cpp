@@ -89,7 +89,8 @@ void BackendVFS::create(std::string name, std::string content) {
   bool fileCreated = false;
   bool lockCreated = false;
   try {
-    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
+    // TODO: lax permissions to get prototype going. Should be revisited
+    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
     // Create and fill up the path
     cta::exception::Errnum::throwOnMinusOne(fd,
         "In ObjectStoreVFS::create, failed to open the file");
@@ -100,7 +101,8 @@ void BackendVFS::create(std::string name, std::string content) {
     cta::exception::Errnum::throwOnMinusOne(::close(fd),
         "In ObjectStoreVFS::create, failed to close the file");
     // Create the lock file
-    int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU);
+    // TODO: lax permissions to get prototype going. Should be revisited
+    int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
     lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
         "In ObjectStoreVFS::create, failed to creat the lock file");
@@ -125,7 +127,8 @@ void BackendVFS::atomicOverwrite(std::string name, std::string content) {
     throw cta::exception::Exception("In BackendVFS::atomicOverwrite, trying to update a non-existing object");
   }
   // Create the new version of the file, make sure it's visible, lock it.
-  int fd = ::creat(tempPath.c_str(), S_IRWXU);
+  // TODO: lax permissions to get prototype going. Should be revisited
+  int fd = ::creat(tempPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   cta::exception::Errnum::throwOnMinusOne(fd,
       "In ObjectStoreVFS::atomicOverwrite, failed to creat the pre-overwrite file");
   cta::exception::Errnum::throwOnMinusOne(
