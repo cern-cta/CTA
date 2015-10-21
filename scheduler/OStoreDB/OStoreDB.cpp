@@ -655,6 +655,7 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
   const std::string& name) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
+  re.fetch();
   // Check we are not deleting a non-empty library
   auto tpl = re.dumpTapePools();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
@@ -671,7 +672,6 @@ void OStoreDB::deleteLogicalLibrary(const SecurityIdentity& requester,
         throw LibraryInUse("In OStoreDB::deleteLogicalLibrary: trying to delete a library used by a tape.");
     }
   }
-  re.fetch();
   re.removeLibrary(name);
   re.commit();
 }
