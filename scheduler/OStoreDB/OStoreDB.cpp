@@ -46,6 +46,7 @@
 #include <time.h>       /* time */
 #include <stdexcept>
 #include <set>
+#include <iostream>
 
 namespace cta {
   
@@ -603,9 +604,29 @@ std::list<cta::Tape> OStoreDB::getTapes() const {
   return ret;
 }
 
-void OStoreDB::deleteTape(const SecurityIdentity& requester, 
-  const std::string& vid) {
-  throw exception::Exception("Not Implemented");
+void OStoreDB::deleteTape(const SecurityIdentity& requester, const std::string& vid) {
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  // Check we are not deleting a non-empty library
+  auto tapePoolList = re.dumpTapePools();
+  for (auto tpi=tapePoolList.begin(); tpi!=tapePoolList.end(); tpi++) {
+    objectstore::TapePool tp(tpi->address, m_objectStore);
+    ScopedExclusiveLock tpl(tp);
+    tp.fetch();
+    // Check the tape pool is owned by the root entry. If not, it should be
+    // considered as a dangling pointer (and skip it)
+    if (tp.getOwner() != re.getAddressIfSet())
+      continue;
+    auto tl=tp.dumpTapesAndFetchStatus();
+    for (auto ti=tl.begin(); ti!=tl.end(); ti++) {
+      if(ti->vid==vid) {
+        tp.removeTapeAndCommit(vid);
+        return;
+      }
+    }
+  }
+  throw exception::Exception("Cannot delete the tape: it does not exist in any tape pool");
 }
 
 void OStoreDB::createLogicalLibrary(const std::string& name, 

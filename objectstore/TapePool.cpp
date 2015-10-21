@@ -129,6 +129,9 @@ void cta::objectstore::TapePool::removeTapeAndCommit(const std::string& vid) {
           << vid << " found: " << t.getVid();
       throw WrongTape(err.str());
     }
+    if(t.isEmpty()) {
+      throw exception::Exception("Cannot delete the tape: it has queued retrieve jobs");
+    }
     // We can now delete the tape
     t.remove();
     // And remove it from our entry
