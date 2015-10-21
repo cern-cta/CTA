@@ -25,6 +25,60 @@ terminating and the child running in the background.  If required the
 \fB\-f, \-\-foreground\fP option can be used to stop \fBtapeserverd\fP from
 forking and keep the parent process in the foreground.
 
+.SH TAPE LIBRARY SUPPORT
+
+CASTOR supports two types of tape libraries, SCSI compatible ones and Oracle
+Automatic Cartridge System (ACS) ones.  The tapeserverd daemon requires a tape
+library daemon to be installed and run on the same tape server as itself.
+There are two types of CASTOR tape library daemons, one for SCSI compatible tape
+libraries and one for ACS tape libraries.
+
+A SCSI compatible tape library requires the following daemon:
+
+\fBrmcd\fP
+
+The installation RPM for the \fBrmcd\fP daemon and its manual page is:
+
+\fBcastor-rmc-server-2.1.15-XX.slc6.x86_64\fP
+
+The \fBrmcd\fP daemon can be started, stopped and its status queried using
+the usual service commands:
+
+\fBservice rmcd start\fP
+.br
+\fBservice rmcd status\fP
+.br
+\fBservice rmcd stop\fP
+
+An ACS tape library requires the following daemon:
+
+\fBacsd\fP
+
+The installation RPM for the \fBacsd\fP daemon and its manual page is:
+
+\fBcastor-acs-server-2.1.15-17.slc6.x86_64\fP
+
+The \fBacsd\fP daemon can be started, stopped and its status queried using
+the usual service commands:
+
+\fBservice acsd start\fP
+.br
+\fBservice acsd status\fP
+.br
+\fBservice acsd stop\fP
+
+Even though there is a separate daemon for each of the supported tape library
+types, there is a single generic set of command-line tools for mounting and
+un-mounting tapes:
+
+\fBcastor-tape-mediachanger-mount\fP
+.br
+\fBcastor-tape-mediachanger-dismount\fP
+
+The installation RPM for these command-line tools and their manual pages is:
+
+\fBcastor-tape-developer-tools-2.1.15-XX.slc6.x86_64\fP
+
 .SH OPTIONS
 .TP
 \fB\-f, \-\-foreground
@@ -179,6 +233,9 @@ The CASTOR configuration file.
 .TP
 .B /var/log/castor/tapeserverd.log
 The tape tapeserver log file.
+
+.SH TRADEMARKS
+Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
