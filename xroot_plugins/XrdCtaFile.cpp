@@ -611,8 +611,16 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     }
     std::istringstream partialtapes_ss(partialtapes_s);
     int partialtapes = 0;
-    partialtapes_ss >> partialtapes;
+    partialtapes_ss >> partialtapes;    
     m_scheduler->createTapePool(requester, name, partialtapes, comment);
+    
+    //TODO: The following hardcoded parameters should really be given by the user from the CLI. However before doing this we must clarify the scheduler interface and change it accordingly
+    cta::MountCriteria immediateMount;
+    immediateMount.maxAge = 0;
+    immediateMount.maxBytesQueued = 1;
+    immediateMount.maxFilesQueued = 1;
+    immediateMount.quota = 10;
+    m_scheduler->setTapePoolMountCriteria(name, cta::MountCriteriaByDirection(immediateMount, immediateMount));
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");

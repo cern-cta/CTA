@@ -22,8 +22,9 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::Tape::Tape():
-    capacityInBytes(0),
-    dataOnTapeInBytes(0) {
+  nbFiles(0),
+  capacityInBytes(0),
+  dataOnTapeInBytes(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -36,22 +37,22 @@ cta::Tape::~Tape() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::Tape::Tape(
-    const std::string &vid,
-    const uint64_t nbFiles,
-    const std::string &logicalLibraryName,
-    const std::string &tapePoolName,
-    const uint64_t capacityInBytes,
-    const uint64_t dataOnTapeInBytes,
-    const CreationLog & creationLog,
-    const Status & status):
-    vid(vid),
-    nbFiles(nbFiles),
-    logicalLibraryName(logicalLibraryName),
-    tapePoolName(tapePoolName),
-    capacityInBytes(capacityInBytes),
-    dataOnTapeInBytes(dataOnTapeInBytes),
-    creationLog(creationLog),
-    status(status) {
+  const std::string &vid,
+  const uint64_t nbFiles,
+  const std::string &logicalLibraryName,
+  const std::string &tapePoolName,
+  const uint64_t capacityInBytes,
+  const uint64_t dataOnTapeInBytes,
+  const CreationLog & creationLog,
+  const Status & status):
+  vid(vid),
+  nbFiles(nbFiles),
+  logicalLibraryName(logicalLibraryName),
+  tapePoolName(tapePoolName),
+  capacityInBytes(capacityInBytes),
+  dataOnTapeInBytes(dataOnTapeInBytes),
+  creationLog(creationLog),
+  status(status) {
 }
 
 //------------------------------------------------------------------------------
