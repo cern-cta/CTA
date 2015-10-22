@@ -113,8 +113,7 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies) {
-  const uint32_t id = getNextStorageClassId();
-  createStorageClass(requester, name, nbCopies, id);
+  //no need to do anything here
 }
 
 //------------------------------------------------------------------------------
@@ -122,20 +121,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies, const uint32_t id) {
-
-  std::lock_guard<std::mutex> lock(m_mutex);
-  if(9999 < id) {
-    std::ostringstream msg;
-    msg << "Failed to create storage class " << name << " with numeric"
-    " identifier " << id << " because the identifier is greater than the"
-    " maximum permitted value of 9999";
-    throw exception::Exception(msg.str());
-  }
-
-  assertStorageClassNameDoesNotExist(name);
-  assertStorageClassIdDoesNotExist(id);
-
-  m_storageClasses.push_back(StorageClassNameAndId(name, id));
+  //no need to do anything here
 } 
 
 //------------------------------------------------------------------------------
@@ -143,20 +129,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
-
-  std::lock_guard<std::mutex> lock(m_mutex);
-  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end();
-    itor++) {
-    if(name == itor->name) {
-      m_storageClasses.erase(itor);
-      return;
-    }
-  }
-
-  std::ostringstream msg;
-  msg << "Failed to delete storage class " << name << " because it does not"
-    " exist";
-  throw exception::Exception(msg.str());
+  //no need to do anything here
 }
  
 //------------------------------------------------------------------------------
@@ -266,10 +239,10 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);
   if(tapeFile.tapeFileLocation.copyNb==1) {
-    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
+    Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
   }
   else if(tapeFile.tapeFileLocation.copyNb==2) {
-    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", fromNameServerTapeFileToString(tapeFile));
+    Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", fromNameServerTapeFileToString(tapeFile));
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
   }
@@ -306,10 +279,10 @@ void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, cons
   assertFsFileExists(fsPath);
   switch(copyNb) {
     case 1:
-      Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", "");
+      Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
       break;
     case 2:
-      Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", "");
+      Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
       break;
     default:
       throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
@@ -318,9 +291,22 @@ void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, cons
 }
 
 //------------------------------------------------------------------------------
+// getNextFileID
+//------------------------------------------------------------------------------
+uint64_t cta::MockNameServer::getNextFileID() {  
+  //lock not needed as it is already taken by the two calling methods  
+  std::string counterString = Utils::getXattr(m_fsDir, "user.CTAFileIDCounter");
+  uint64_t newValue = atol(counterString.c_str())+1;
+  std::stringstream newValueString;
+  newValueString << newValue;
+  Utils::setXattr(m_fsDir, "user.CTAFileIDCounter", newValueString.str());
+  return newValue;
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer(): m_fileIdCounter(0), m_deleteOnExit(true) {
+cta::MockNameServer::MockNameServer(): m_deleteOnExit(true) {
   umask(0);  
   char path[100];
   strncpy(path, "/tmp/CTATmpFsXXXXXX", 100);
@@ -328,17 +314,18 @@ cta::MockNameServer::MockNameServer(): m_fileIdCounter(0), m_deleteOnExit(true) 
     mkdtemp(path),
     "MockNameServer() - Failed to create temporary directory");
   m_fsDir = path;
-  assertBasePathAccessible();
   const SecurityIdentity initialRequester;
   const UserIdentity initialOwner;
   setDirStorageClass(initialRequester, "/", "");
   setOwner(initialRequester, "/", initialOwner);
+  Utils::setXattr(m_fsDir, "user.CTAFileIDCounter", "0");
+  assertBasePathAccessible();
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MockNameServer::MockNameServer(const std::string &path): m_fsDir(path), m_fileIdCounter(0), m_deleteOnExit(false) {
+cta::MockNameServer::MockNameServer(const std::string &path): m_fsDir(path), m_deleteOnExit(false) {
   assertBasePathAccessible();
   Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(path);
@@ -365,7 +352,7 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
-  Utils::setXattr(fsPath.c_str(), "user.CTAStorageClass", storageClassName);
+  Utils::setXattr(fsPath, "user.CTAStorageClass", storageClassName);
 }  
 
 //------------------------------------------------------------------------------
@@ -428,17 +415,17 @@ void cta::MockNameServer::createFile(
         << Utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
-    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyOne", "");
-    Utils::setXattr(fsPath.c_str(), "user.CTATapeFileCopyTwo", "");
+    Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
+    Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
     std::stringstream sizeString;
     sizeString << size;
-    Utils::setXattr(fsPath.c_str(), "user.CTASize", sizeString.str());
+    Utils::setXattr(fsPath, "user.CTASize", sizeString.str());
     std::stringstream fileIDString;
-    fileIDString << ++m_fileIdCounter;
-    Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
+    fileIDString << getNextFileID();
+    Utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
     std::stringstream modeString;
     modeString << std::oct << mode;
-    Utils::setXattr(fsPath.c_str(), "user.CTAMode", modeString.str());
+    Utils::setXattr(fsPath, "user.CTAMode", modeString.str());
   }
   setOwner(requester, path, requester.getUser());
 }
@@ -528,11 +515,11 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
       throw(exception::Exception(msg.str()));
     }
     std::stringstream fileIDString;
-    fileIDString << ++m_fileIdCounter;
-    Utils::setXattr(fsPath.c_str(), "user.CTAFileID", fileIDString.str());
+    fileIDString << getNextFileID();
+    Utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
     std::stringstream modeString;
     modeString << std::oct << mode;
-    Utils::setXattr(fsPath.c_str(), "user.CTAMode", modeString.str());
+    Utils::setXattr(fsPath, "user.CTAMode", modeString.str());
   }
   setDirStorageClass(requester, path, inheritedStorageClass);
   setOwner(requester, path, requester.getUser());
@@ -754,51 +741,4 @@ std::string cta::MockNameServer::getVidOfFile(
     msg << "cta::MockNameServer::getVidOfFile() - The mock nameserver only supports the copy number to be 1 or 2. Instead the one supplied is: " << copyNb;
     throw(exception::Exception(msg.str()));
   }
-}
-
-//------------------------------------------------------------------------------
-// assertStorageClassNameDoesNotExist
-//------------------------------------------------------------------------------
-void cta::MockNameServer::assertStorageClassNameDoesNotExist(
-  const std::string &name) const {
-  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end();
-    itor++) {
-    if(name == itor->name) {
-      std::ostringstream msg;
-      msg << "Storage class " << name << " already exists in the archive"
-        " namespace";
-      throw exception::Exception(msg.str());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// assertStorageClassIdDoesNotExist
-//------------------------------------------------------------------------------
-void cta::MockNameServer::assertStorageClassIdDoesNotExist(const uint32_t id)
-  const {
-  for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end(); 
-    itor++) {
-    if(id == itor->id) {
-      std::ostringstream msg;
-      msg << "Storage class numeric idenitifier " << id << " already exists in"
-        " the archive namespace";
-      throw exception::Exception(msg.str());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// getNextStorageClassId
-//------------------------------------------------------------------------------
-uint32_t cta::MockNameServer::getNextStorageClassId() const {
-  for(uint32_t id = 1; id <= 9999; id++) {
-    try {
-      assertStorageClassIdDoesNotExist(id);
-      return id;
-    } catch(...) {
-    }
-  }
-
-  throw exception::Exception("Ran out of numeric storage identifiers");
 }

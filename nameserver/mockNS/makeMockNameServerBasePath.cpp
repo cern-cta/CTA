@@ -58,9 +58,10 @@ int main(void) {
     uidss << getuid();
     std::stringstream gidss;
     gidss << getgid();
-    setXattr(pathString.c_str(), "user.CTAStorageClass", "");
-    setXattr(pathString.c_str(), "user.CTAuid", uidss.str());
-    setXattr(pathString.c_str(), "user.CTAgid", gidss.str());
+    setXattr(pathString, "user.CTAStorageClass", "");
+    setXattr(pathString, "user.CTAuid", uidss.str());
+    setXattr(pathString, "user.CTAgid", gidss.str());
+    setXattr(pathString, "user.CTAFileIDCounter", "0");
     std::cout << "New mock name server path: " << pathString << std::endl;
   } catch (cta::exception::Exception & e) {
     std::cerr << "Failed to create a new directory for the mock name server. CTA Exception: " << e.getMessageValue() << std::endl;

@@ -187,56 +187,11 @@ private:
     const SecurityIdentity &requester,
     const std::string &path,
     const struct stat statResult) const;
-
-  /**
-   * The string name and numeric identifier of a storage class.
-   */
-  struct StorageClassNameAndId {
-    std::string name;
-    uint32_t id;
-
-    StorageClassNameAndId(): id(0) {
-    }
-
-    StorageClassNameAndId(const std::string &name, const uint32_t id):
-      name(name), id(id) {
-    }
-  };
-
-  /**
-   * The list of storage class.
-   */
-  std::list<StorageClassNameAndId> m_storageClasses;
-
-  /**
-   * Throws an exception if the specified storage class name already exists.
-   *
-   * @paran name The name of teh storage class.
-   */
-  void assertStorageClassNameDoesNotExist(const std::string &name) const;
-
-  /**
-   * Throws an exception if the specified storage class numeric identifier
-   * already exists.
-   *
-   * @param id The numeric identifier of the storage class.
-   */
-  void assertStorageClassIdDoesNotExist(const uint32_t id) const;
-
-  /**
-   * Returns the next unique numeric identifier for a new storage class.
-   *
-   * Please note that the numeric identifiers of deleted storage classes can be
-   * reused.
-   *
-   * @return The next unique numeric identifier for a new storage class.
-   */
-  uint32_t getNextStorageClassId() const;
   
   /**
-   * Counter for file ID of new files
+   * Returns the next integer to be used as the file ID of a new file
    */
-  std::atomic<uint64_t> m_fileIdCounter;
+  uint64_t getNextFileID();
   
   /**
    * Mutex to serialize access to the file system modification functions
