@@ -53,7 +53,7 @@ void cta::MockNameServer::assertBasePathAccessible() const {
 // assertFsDirExists
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
-  assertBasePathAccessible();
+
   struct stat statResult;
 
   if(::stat(path.c_str(), &statResult)) {
@@ -75,7 +75,7 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
 // assertFsFileExists
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
-  assertBasePathAccessible();
+
   struct stat statResult;
 
   if(::stat(path.c_str(), &statResult)) {
@@ -98,7 +98,7 @@ void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
   const {
-  assertBasePathAccessible();
+
   struct stat statResult;
 
   if(::stat(path.c_str(), &statResult) == 0) {
@@ -122,7 +122,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies, const uint32_t id) {
-  assertBasePathAccessible();
+
   std::lock_guard<std::mutex> lock(m_mutex);
   if(9999 < id) {
     std::ostringstream msg;
@@ -143,7 +143,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
   const std::string &name) {
-  assertBasePathAccessible();
+
   std::lock_guard<std::mutex> lock(m_mutex);
   for(auto itor = m_storageClasses.begin(); itor != m_storageClasses.end();
     itor++) {
@@ -164,7 +164,7 @@ void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::updateStorageClass(const SecurityIdentity &requester,
   const std::string &name, const uint16_t nbCopies) {
-  assertBasePathAccessible();
+
   std::lock_guard<std::mutex> lock(m_mutex);
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -176,7 +176,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
   const SecurityIdentity &requester,
   const std::string &storageClass,
   const std::string &path) const {
-  assertBasePathAccessible();
+
 
   if(getDirStorageClass(requester, path) == storageClass) {
     std::ostringstream msg;
@@ -260,7 +260,7 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
 // addTapeFile
 //------------------------------------------------------------------------------
 void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {
-  assertBasePathAccessible();
+
   std::lock_guard<std::mutex> lock(m_mutex);  
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
@@ -279,7 +279,7 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
 // getTapeFiles
 //------------------------------------------------------------------------------
 std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);  
@@ -299,7 +299,7 @@ std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const Secur
 // deleteTapeFile
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) {
-  assertBasePathAccessible();
+
   std::lock_guard<std::mutex> lock(m_mutex);
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
@@ -328,7 +328,7 @@ cta::MockNameServer::MockNameServer(): m_fileIdCounter(0), m_deleteOnExit(true) 
     mkdtemp(path),
     "MockNameServer() - Failed to create temporary directory");
   m_fsDir = path;
-
+  assertBasePathAccessible();
   const SecurityIdentity initialRequester;
   const UserIdentity initialOwner;
   setDirStorageClass(initialRequester, "/", "");
@@ -361,7 +361,7 @@ cta::MockNameServer::~MockNameServer() throw() {
 void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
   const std::string &path, const std::string &storageClassName) {
   std::lock_guard<std::mutex> lock(m_mutex);
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
@@ -374,7 +374,7 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
 void cta::MockNameServer::clearDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &path) {
-  assertBasePathAccessible();
+
   setDirStorageClass(requester, path, "");
 }  
 
@@ -384,7 +384,7 @@ void cta::MockNameServer::clearDirStorageClass(
 std::string cta::MockNameServer::getDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
@@ -402,7 +402,7 @@ void cta::MockNameServer::createFile(
   const uint64_t size) {
   {
     std::lock_guard<std::mutex> lock(m_mutex);
-    assertBasePathAccessible();
+  
     Utils::assertAbsolutePathSyntax(path);  
     const std::string dir = Utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + dir);
@@ -450,7 +450,7 @@ void cta::MockNameServer::assertIsOwner(
   const SecurityIdentity &requester,
   const UserIdentity &user,
   const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const UserIdentity owner = getOwner(requester, path);
 
@@ -470,7 +470,7 @@ void cta::MockNameServer::setOwner(
   const std::string &path,
   const UserIdentity &owner) {
   std::lock_guard<std::mutex> lock(m_mutex);
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string uidStr = Utils::toString(owner.uid);
   const std::string gidStr = Utils::toString(owner.gid);
@@ -486,7 +486,7 @@ void cta::MockNameServer::setOwner(
 cta::UserIdentity cta::MockNameServer::getOwner(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   const std::string uidStr = Utils::getXattr(fsPath, "user.CTAuid");
@@ -512,7 +512,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   std::string inheritedStorageClass = "";
   {
     std::lock_guard<std::mutex> lock(m_mutex); 
-    assertBasePathAccessible(); 
+   
     Utils::assertAbsolutePathSyntax(path);  
     const std::string enclosingPath = Utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + enclosingPath);
@@ -543,7 +543,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const std::string &path) { 
   std::lock_guard<std::mutex> lock(m_mutex); 
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
@@ -562,7 +562,7 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
 void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
   const std::string &path) {
   std::lock_guard<std::mutex> lock(m_mutex);
-  assertBasePathAccessible();
+
   if(path == "/") {    
     std::ostringstream msg;
     msg << __FUNCTION__ << " - Cannot delete root directory";
@@ -586,7 +586,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
 std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string name = Utils::getEnclosedName(path);
   const std::string enclosingPath = Utils::getEnclosingPath(path);
@@ -616,7 +616,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
 std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
   const SecurityIdentity &requester,
   const std::string &path) const { 
-  assertBasePathAccessible(); 
+ 
   const std::string fsPath = m_fsDir + path;
   DIR *const dp = opendir(fsPath.c_str());
 
@@ -651,7 +651,7 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
 cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
 
@@ -674,7 +674,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path,
   const struct stat statResult) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   const std::string enclosingPath = Utils::getEnclosingPath(path);
   const std::string name = Utils::getEnclosedName(path);
@@ -719,7 +719,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 //------------------------------------------------------------------------------
 cta::ArchiveDirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
-  assertBasePathAccessible();
+
   Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(m_fsDir+path);
   return getDirEntries(requester, path);
@@ -732,7 +732,7 @@ std::string cta::MockNameServer::getVidOfFile(
   const SecurityIdentity &requester,
   const std::string &path,
   const uint16_t copyNb) const {
-  assertBasePathAccessible();
+
   if(copyNb!=1 || copyNb!=2) {
     std::ostringstream msg;
     msg << "cta::MockNameServer::getVidOfFile() - The mock nameserver only supports the copy number to be 1 or 2. Instead the one supplied is: " << copyNb;
