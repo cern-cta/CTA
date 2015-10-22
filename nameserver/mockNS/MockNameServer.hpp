@@ -145,6 +145,8 @@ private:
 
   std::string m_fsDir;
   
+  void assertBasePathAccessible() const;
+  
   void assertFsDirExists(const std::string &path) const;
   
   void assertFsFileExists(const std::string &path) const;
