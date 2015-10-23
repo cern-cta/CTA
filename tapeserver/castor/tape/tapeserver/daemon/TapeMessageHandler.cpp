@@ -337,19 +337,10 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     castor::messages::ArchiveJobFromCTA rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
     
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
+    CatalogueDrive &drive = m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
-
-    {
-      std::ostringstream msg;
-      msg << __FUNCTION__ << ": Not fully implemented because the number of"
-        " files on tape is not known because there is no vmgr in the CTA"
-        " project";
-      throw castor::exception::Exception(msg.str());
-    }
-    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
-    //return reply;
+    messages::Frame reply = createNbFilesOnTapeFrame(rqstBody.nbfiles());
+    return reply;
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<

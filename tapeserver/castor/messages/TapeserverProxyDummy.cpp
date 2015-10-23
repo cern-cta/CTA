@@ -25,7 +25,7 @@
 // gotArchiveJobFromCTA
 //------------------------------------------------------------------------------
 uint32_t castor::messages::TapeserverProxyDummy::gotArchiveJobFromCTA(
-  const std::string &vid, const std::string &unitName) {
+  const std::string &vid, const std::string &unitName, const uint32_t nbFiles) {
   return 0;
 }
 

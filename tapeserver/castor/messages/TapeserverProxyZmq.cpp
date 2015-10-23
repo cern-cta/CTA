@@ -56,11 +56,11 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 // gotArchiveJobFromCTA
 //------------------------------------------------------------------------------
 uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
-  const std::string &vid, const std::string &unitName) {
+  const std::string &vid, const std::string &unitName, const uint32_t nbFiles) {
   MutexLocker lock(&m_mutex);
 
   try {
-    const Frame rqst = createArchiveJobFromCTAFrame(vid, unitName);
+    const Frame rqst = createArchiveJobFromCTAFrame(vid, unitName, nbFiles);
     sendFrame(m_serverSocket, rqst);
 
     NbFilesOnTape reply;
@@ -303,7 +303,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::TapeserverProxyZmq::
   createArchiveJobFromCTAFrame(const std::string &vid,
-  const std::string &unitName) {
+  const std::string &unitName, const uint32_t nbFiles) {
   try {
     Frame frame;
 
@@ -314,6 +314,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     ArchiveJobFromCTA body;
     body.set_vid(vid);
     body.set_unitname(unitName);
+    body.set_nbfiles(nbFiles);
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;

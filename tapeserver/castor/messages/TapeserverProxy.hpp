@@ -84,7 +84,7 @@ public:
    * @return The number of files currently stored on the tape
    */
   virtual uint32_t gotArchiveJobFromCTA(const std::string &vid,
-    const std::string &unitName) = 0;
+    const std::string &unitName, const uint32_t nbFiles) = 0;
   
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got

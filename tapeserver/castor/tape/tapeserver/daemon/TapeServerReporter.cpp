@@ -96,7 +96,7 @@ TapeServerReporter::TapeServerReporter(
       m_lc.log(LOG_ERR,"TapeServerReporter is running but calling a synchronous operation on it"
       "Could cause a race with the underlying  zmq sockets in the proxy");
     }
-    return m_tapeserverProxy.gotArchiveJobFromCTA(m_volume.vid, m_unitName);
+    return m_tapeserverProxy.gotArchiveJobFromCTA(m_volume.vid, m_unitName, m_volume.nbFiles);
   }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient

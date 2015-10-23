@@ -49,7 +49,14 @@ namespace cta {
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const = 0;
+    virtual std::string getMountTransactionId() const = 0;    
+    
+    /**
+     * Returns the mount transaction id.
+     *
+     * @return The mount transaction id.
+     */
+    virtual uint32_t getNbFiles() const = 0;
 
     /**
      * Indicates that the mount was completed.

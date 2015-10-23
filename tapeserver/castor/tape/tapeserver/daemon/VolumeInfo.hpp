@@ -43,6 +43,8 @@ namespace daemon {
       std::string vid;
       /** The mount type: archive or retrieve */
       cta::MountType::Enum mountType;
+      /** The number of files currently on tape*/
+      uint32_t nbFiles;
     };
 
 } // namespace daemon

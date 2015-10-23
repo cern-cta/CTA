@@ -101,6 +101,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return MARK_DRIVE_AS_UP;
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
+  m_volInfo.nbFiles=tapeMount->getNbFiles();
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
   log::ScopedParamContainer params(lc);
@@ -290,8 +291,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
       //theses 2 numbers should match. Otherwise, it means the stager went mad 
       if(firstFseqFromClient != nbOfFileOnTape + 1) {
-        lc.log(LOG_ERR, "First file to write's fseq  and number of files on "
-        "the tape according to the VMGR dont match");
+        std::stringstream ss;
+        ss << "First file to write's fseq(" << firstFseqFromClient << ")  and number of files on the tape (" << nbOfFileOnTape << " + 1) dont match";
+        lc.log(LOG_ERR, ss.str());
        //no mount at all, drive to be kept up = return 0
         return MARK_DRIVE_AS_UP;
       }

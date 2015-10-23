@@ -172,6 +172,7 @@ public:
     virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual ~ArchiveMount() {}
+    uint32_t nbFilesCurrentlyOnTape;
   };
   
   /**
@@ -250,6 +251,7 @@ public:
     virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual ~RetrieveMount() {}
+    uint32_t nbFilesCurrentlyOnTape;
   };
   
   class RetrieveJob {

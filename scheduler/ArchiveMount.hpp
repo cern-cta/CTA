@@ -102,6 +102,13 @@ namespace cta {
     virtual std::string getPoolName() const;
     
     /**
+     * Returns the mount transaction id.
+     *
+     * @return The mount transaction id.
+     */
+    virtual uint32_t getNbFiles() const;
+    
+    /**
      * Destructor.
      */
     virtual ~ArchiveMount() throw();

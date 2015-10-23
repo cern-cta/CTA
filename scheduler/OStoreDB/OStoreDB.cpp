@@ -1203,7 +1203,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
       m_agent.addToOwnership(t.getAddressIfSet());
       m_agent.commit();
     }
-    am.m_nextFseq = t.getLastFseq() + 1;
+    am.nbFilesCurrentlyOnTape = t.getLastFseq();
     am.mountInfo.vid = t.getVid();
     t.setBusy(driveName, objectstore::Tape::MountType::Archive, hostName, startTime, 
       m_agent.getAddressIfSet());
@@ -1416,7 +1416,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     tp.commit();
     privateRet->archiveFile = privateRet->m_atfr.getArchiveFile();
     privateRet->remoteFile = privateRet->m_atfr.getRemoteFile();
-    privateRet->nameServerTapeFile.tapeFileLocation.fSeq = m_nextFseq++;
+    privateRet->nameServerTapeFile.tapeFileLocation.fSeq = ++nbFilesCurrentlyOnTape;
     privateRet->nameServerTapeFile.tapeFileLocation.copyNb = privateRet->m_copyNb;
     privateRet->nameServerTapeFile.tapeFileLocation.vid = mountInfo.vid;
     privateRet->nameServerTapeFile.tapeFileLocation.blockId =

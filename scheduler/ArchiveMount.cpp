@@ -60,6 +60,13 @@ std::string cta::ArchiveMount::getPoolName() const {
 }
 
 //------------------------------------------------------------------------------
+// getNbFiles
+//------------------------------------------------------------------------------
+uint32_t cta::ArchiveMount::getNbFiles() const {
+  return m_dbMount->nbFilesCurrentlyOnTape;
+}
+
+//------------------------------------------------------------------------------
 // getMountTransactionId
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getMountTransactionId() const {

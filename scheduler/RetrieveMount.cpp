@@ -41,6 +41,13 @@ cta::MountType::Enum cta::RetrieveMount::getMountType() const{
 }
 
 //------------------------------------------------------------------------------
+// getNbFiles
+//------------------------------------------------------------------------------
+uint32_t cta::RetrieveMount::getNbFiles() const {
+  return m_dbMount->nbFilesCurrentlyOnTape;
+}
+
+//------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getVid() const{

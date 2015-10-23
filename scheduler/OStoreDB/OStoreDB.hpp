@@ -80,7 +80,6 @@ public:
     ArchiveMount(objectstore::Backend &, objectstore::Agent &);
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
-    uint64_t m_nextFseq;
   public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<ArchiveJob> getNextJob();
