@@ -46,6 +46,7 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLRfioFile("^rfio://(.*)$"),
+  m_URLEosFile("^eos://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
@@ -143,6 +144,10 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalReadFile(regexResult[1]);
+  }// EOS URL?
+  regexResult = m_URLEosFile.exec(path);
+  if (regexResult.size()) {
+    return new EosReadFile(regexResult[1]);
   }
   // RFIO URL?
   regexResult = m_URLRfioFile.exec(path);
@@ -621,6 +626,83 @@ void XrootBaseWriteFile::close()  {
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
+  if(!m_closeTried){
+    m_xrootFile.Close();
+  }
+}
+
+//==============================================================================
+// EOS READ FILE
+//==============================================================================  
+EosReadFile::EosReadFile(const std::string &eosUrl) {
+  // Setup parent's variables
+  m_readPosition = 0;
+  std::stringstream ss;
+  ss << "xroot://localhost:1094//" << eosUrl;
+  m_URL = ss.str();
+  // and simply open
+  using XrdCl::OpenFlags;
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),
+    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+m_URL);
+}
+
+size_t EosReadFile::read(void *data, const size_t size) const {
+  uint32_t ret;
+  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret),
+    std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
+  m_readPosition += ret;
+  return ret;
+}
+
+size_t EosReadFile::size() const {
+  const bool forceStat=true;
+  XrdCl::StatInfo *statInfo(NULL);
+  size_t ret;
+  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo),
+    std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
+  ret= statInfo->GetSize();
+  delete statInfo;
+  return ret;
+}
+
+EosReadFile::~EosReadFile() throw() {
+  try{
+    m_xrootFile.Close();
+  } catch (...) {}
+}
+
+//==============================================================================
+// EOS WRITE FILE
+//============================================================================== 
+EosWriteFile::EosWriteFile(const std::string& eosUrl) {
+  // Setup parent's variables
+  m_writePosition = 0;
+  std::stringstream ss;
+  ss << "xroot://localhost:1094//" << eosUrl;
+  m_URL = ss.str();
+  // and simply open
+  using XrdCl::OpenFlags;
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write),
+    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
+
+}
+
+void EosWriteFile::write(const void *data, const size_t size)  {
+  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data),
+    std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
+    +m_URL);
+  m_writePosition += size;
+}
+
+void EosWriteFile::close()  {
+  // Multiple close protection
+  if (m_closeTried) return;
+  m_closeTried=true;
+  XrootClEx::throwOnError(m_xrootFile.Close(),
+    std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
+}
+
+EosWriteFile::~EosWriteFile() throw() {
   if(!m_closeTried){
     m_xrootFile.Close();
   }

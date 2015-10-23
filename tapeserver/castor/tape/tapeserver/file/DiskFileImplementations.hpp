@@ -156,6 +156,39 @@ namespace castor {
         virtual ~XrootC2FSWriteFile() throw () {}
       private:
         std::string m_signedURL;
+      };     
+      
+      //==============================================================================
+      // EOS FILES
+      //==============================================================================  
+      class EosReadFile: public ReadFile {
+      public:
+        EosReadFile(const std::string &eosUrl);
+        virtual size_t size() const;
+        virtual size_t read(void *data, const size_t size) const;
+        virtual ~EosReadFile() throw();
+      protected:
+        // Access to parent's protected member...
+        void setURL(const std::string & v) { m_URL = v; }
+        // There is no const-correctness with XrdCl...
+        mutable XrdCl::File m_xrootFile;
+        mutable uint64_t m_readPosition;
+        typedef castor::tape::server::exception::XrootCl XrootClEx;
+      };
+      
+      class EosWriteFile: public WriteFile {
+      public:
+        EosWriteFile(const std::string &eosUrl);
+        virtual void write(const void *data, const size_t size);
+        virtual void close();
+        virtual ~EosWriteFile() throw();        
+      protected:
+        // Access to parent's protected member...
+        void setURL(const std::string & v) { m_URL = v; }
+        XrdCl::File m_xrootFile;
+        uint64_t m_writePosition;
+        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        bool m_closeTried;      
       };
       
       //==============================================================================
