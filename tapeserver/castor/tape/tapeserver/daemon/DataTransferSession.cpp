@@ -97,8 +97,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...
-  if (!tapeMount.get())
+  if (!tapeMount.get()) {
+    lc.log(LOG_INFO, "No new mount found!");
     return MARK_DRIVE_AS_UP;
+  }
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.nbFiles=tapeMount->getNbFiles();
