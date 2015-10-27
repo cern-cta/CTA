@@ -68,7 +68,7 @@ struct TapeFileLocation {
   /**
    * The copy number of the tape file. TODO: to be put in the mount object in the future
    */
-  uint8_t copyNb;
+  uint16_t copyNb;
 
 }; // struct TapeFileLocation
 

@@ -1456,6 +1456,10 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   t.fetch();
   t.releaseBusy();
   t.commit();
+  objectstore::ScopedExclusiveLock agl(m_agent);
+  m_agent.fetch();
+  m_agent.removeFromOwnership(t.getAddressIfSet());
+  m_agent.commit();
 }
 
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
@@ -1577,6 +1581,10 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   t.fetch();
   t.releaseBusy();
   t.commit();
+  objectstore::ScopedExclusiveLock agl(m_agent);
+  m_agent.fetch();
+  m_agent.removeFromOwnership(t.getAddressIfSet());
+  m_agent.commit();
 }
 
 

@@ -93,7 +93,13 @@ void cta::objectstore::Agent::removeAndUnregisterSelf() {
   checkPayloadWritable();
   // Check that we are not empty
   if (!isEmpty()) {
-    throw AgentStillOwnsObjects("In Agent::deleteAndUnregisterSelf: agent still owns objects");
+    std::list<std::string> ownershipList = getOwnershipList();
+    std::stringstream exSs;
+    exSs << "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here's the list:";
+    for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
+      exSs << " " << *i;
+    }
+    throw AgentStillOwnsObjects(exSs.str());
   }
   // First delete ourselves
   remove();

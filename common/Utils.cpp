@@ -26,6 +26,7 @@
 #include <memory>
 #include <shift/serrno.h>
 #include <sstream>
+#include <iostream>
 #include <stdlib.h>
 #include <strings.h>
 #include <sys/types.h>

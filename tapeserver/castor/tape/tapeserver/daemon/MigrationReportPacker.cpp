@@ -85,8 +85,8 @@ void MigrationReportPacker::reportFlush(drive::compressionStats compressStats){
 //reportEndOfSession
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSession() {
-    castor::server::MutexLocker ml(&m_producterProtection);
-    m_fifo.push(new ReportEndofSession());
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportEndofSession());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
@@ -111,44 +111,11 @@ void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_successfulArchiveJobs.push(std::move(m_successfulArchiveJob));
 }
-//------------------------------------------------------------------------------
-//ReportFlush::computeCompressedSize
-//------------------------------------------------------------------------------
-//void MigrationReportPacker::ReportFlush::computeCompressedSize(
-//std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator beg,
-//std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator end
-//)
-//{
-//  //lets pray for C++11 lamba and std accumulate
-//  uint64_t rawSize = 0;
-//  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
-//          it != end ;++it){
-//            rawSize+=(*it)->fileSize();
-//  }
-//
-//  uint64_t nbByteWritenWithCompression = m_compressStats.toTape;  
-//  //we dont want compressionRatio to be equal to zero not to have a division by zero
-//  double compressionRatio = nbByteWritenWithCompression>0 && rawSize >0 ? 
-//    1.0*nbByteWritenWithCompression/rawSize : 1.;
-//  
-//  for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator  it = beg;
-//          it != end ;++it){
-//    const uint64_t compressedFileSize =
-//    static_cast<uint64_t>((*it)->fileSize() * compressionRatio);
-//
-//    // The compressed file size should never be reported as being less than 1
-//    // byte
-//    uint64_t validCompressedFileSize = 0 < compressedFileSize ? compressedFileSize : 1;
-//    
-//    (*it)->setCompressedFileSize(validCompressedFileSize);
-//  }
-//}
 
 //------------------------------------------------------------------------------
 //ReportFlush::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPacker){
-
   if(!reportPacker.m_errorHappened){
     // We can receive double flushes when the periodic flush happens
     // right before the end of session (which triggers also a flush)
@@ -221,7 +188,6 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker){
-  
   if(reportPacker.m_errorHappened) {
     reportPacker.m_archiveMount->complete();
     log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -275,7 +241,7 @@ void MigrationReportPacker::WorkerThread::run(){
         rep->execute(m_parent);
       }
       catch(const failedMigrationRecallResult& e){
-        //here we catch a failed report MigrationResult. We try to close and it that fails too
+        //here we catch a failed report MigrationResult. We try to close and if that fails too
         //we end up in the catch below
         m_parent.m_archiveMount->complete();
         m_parent.m_lc.log(LOG_INFO,"Successfully closed client's session after the failed report MigrationResult");
@@ -290,7 +256,39 @@ void MigrationReportPacker::WorkerThread::run(){
   catch(const castor::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    m_parent.m_lc.log(LOG_ERR,"tried to report endOfSession(WithError) and got an exception, cant do much more");
+    std::stringstream ssEx;
+    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a castor exception, cant do much more. The exception is the following: " << e.getMessageValue();
+    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+    }
+  } catch(const cta::exception::Exception& e){
+    //we get there because to tried to close the connection and it failed
+    //either from the catch a few lines above or directly from rep->execute
+    std::stringstream ssEx;
+    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more. The exception is the following: " << e.getMessageValue();
+    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+    }
+  } catch(const std::exception& e){
+    //we get there because to tried to close the connection and it failed
+    //either from the catch a few lines above or directly from rep->execute
+    std::stringstream ssEx;
+    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more. The exception is the following: " << e.what();
+    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+    }
+  } catch(...){
+    //we get there because to tried to close the connection and it failed
+    //either from the catch a few lines above or directly from rep->execute
+    std::stringstream ssEx;
+    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.";
+    m_parent.m_lc.log(LOG_ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(log::Param("status","failure"));

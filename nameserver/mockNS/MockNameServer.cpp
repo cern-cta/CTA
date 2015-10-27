@@ -233,8 +233,7 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
 // addTapeFile
 //------------------------------------------------------------------------------
 void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {
-
-  std::lock_guard<std::mutex> lock(m_mutex);  
+  std::lock_guard<std::mutex> lock(m_mutex);
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);
@@ -326,6 +325,7 @@ cta::MockNameServer::MockNameServer(): m_deleteOnExit(true) {
 // constructor
 //------------------------------------------------------------------------------
 cta::MockNameServer::MockNameServer(const std::string &path): m_fsDir(path), m_deleteOnExit(false) {
+  umask(0);
   assertBasePathAccessible();
   Utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(path);
@@ -398,7 +398,7 @@ void cta::MockNameServer::createFile(
     const std::string fsPath = m_fsDir + path;
     assertFsPathDoesNotExist(fsPath);
 
-    SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, 0600));
+    SmartFd fd(open(fsPath.c_str(), O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK, 0666));
     if(0 > fd.get()) {
       const int savedErrno = errno;
       std::ostringstream msg;
@@ -507,7 +507,7 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
 
     inheritedStorageClass = getDirStorageClass(requester, enclosingPath);
     const std::string fsPath = m_fsDir + path;
-    if(mkdir(fsPath.c_str(), 0755)) {
+    if(mkdir(fsPath.c_str(), 0777)) {
       const int savedErrno = errno;
       std::ostringstream msg;
       msg << __FUNCTION__ << " - mkdir " << path << " error. Reason: \n" <<
