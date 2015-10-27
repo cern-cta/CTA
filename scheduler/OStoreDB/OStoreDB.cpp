@@ -1454,6 +1454,7 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   objectstore::ScopedExclusiveLock tl(t);
   tpl.release();
   t.fetch();
+  t.setLastFseq(nbFilesCurrentlyOnTape);
   t.releaseBusy();
   t.commit();
   objectstore::ScopedExclusiveLock agl(m_agent);
