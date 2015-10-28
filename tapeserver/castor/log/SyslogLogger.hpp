@@ -409,8 +409,8 @@ protected:
 
       // Check the parameter name, if it's an empty string set the value to
       // "Undefined".
-      const std::string name = param.getName() == "" ? "Undefined" :
-        cleanString(param.getName(), true);
+      const std::string name = (param.getName() == "" ? "Undefined" :
+        cleanString(param.getName(), true));
 
       // Process the parameter value
       const std::string value = cleanString(param.getValue(), false);

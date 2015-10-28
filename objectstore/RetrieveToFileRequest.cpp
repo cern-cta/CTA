@@ -54,6 +54,24 @@ void cta::objectstore::RetrieveToFileRequest::addJob(const cta::TapeFileLocation
   j->set_fseq(tapeFileLocation.fSeq);
 }
 
+bool cta::objectstore::RetrieveToFileRequest::setJobSuccessful(uint16_t copyNumber) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_status(serializers::RetrieveJobStatus::RJS_Complete);
+      for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
+        if (j2->status()!= serializers::RetrieveJobStatus::RJS_Complete &&
+            j2->status()!= serializers::RetrieveJobStatus::RJS_Failed)
+          return false;
+      }
+      return true;
+    }
+  }
+  throw NoSuchJob("In RetrieveToFileRequest::setJobSuccessful(): job not found");
+}
+
+
 void cta::objectstore::RetrieveToFileRequest::setArchiveFile(
   const cta::ArchiveFile& archiveFile) {
   checkPayloadWritable();

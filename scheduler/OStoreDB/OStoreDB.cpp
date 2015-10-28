@@ -1750,7 +1750,22 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 }
 
 void OStoreDB::RetrieveJob::succeed() {
-  throw NotImplemented("");
+  // Lock the request and set the job as successful.
+  objectstore::ScopedExclusiveLock rtfrl(m_rtfr);
+  m_rtfr.fetch();
+  std::string rtfrAddress = m_rtfr.getAddressIfSet();
+  if (m_rtfr.setJobSuccessful(m_copyNb)) {
+    m_rtfr.remove();
+  } else {
+    m_rtfr.commit();
+  }
+  // We no more own the job (which could be gone)
+  m_jobOwned = false;
+  // Remove ownership form the agent
+  objectstore::ScopedExclusiveLock al(m_agent);
+  m_agent.fetch();
+  m_agent.removeFromOwnership(rtfrAddress);
+  m_agent.commit();
 }
 
 

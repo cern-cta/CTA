@@ -43,6 +43,7 @@ public:
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
+  bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   class JobDump {
   public:
     uint16_t copyNb;

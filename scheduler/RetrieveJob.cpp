@@ -43,6 +43,7 @@ cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
 // complete
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::complete() {
+  m_dbJob->succeed();
 }
   
 //------------------------------------------------------------------------------
