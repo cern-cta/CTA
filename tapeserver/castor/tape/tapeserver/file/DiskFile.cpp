@@ -200,6 +200,10 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalWriteFile(regexResult[1]);
+  }// EOS URL?
+  regexResult = m_URLEosFile.exec(path);
+  if (regexResult.size()) {
+    return new EosWriteFile(regexResult[1]);
   }
   // RFIO URL?
   regexResult = m_URLRfioFile.exec(path);
