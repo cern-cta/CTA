@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
 #include <map>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -57,7 +58,9 @@ std::unique_ptr<cta::RemoteFileStatus> cta::EosNS::statFile(const RemotePath &pa
     return std::unique_ptr<RemoteFileStatus>();
   }
   UserIdentity owner(0,0);
-  cta::RemoteFileStatus *rfs = new cta::RemoteFileStatus(owner, stat_res->GetFlags(), stat_res->GetSize());
+  //here we cannot get the mode bits from EOS with stat_res->GetFlags() (xroot does not allow this to work properly)
+  //therefore we hardcode a fully permissive mode for the prototype
+  cta::RemoteFileStatus *rfs = new cta::RemoteFileStatus(owner, 0666, stat_res->GetSize());
   delete stat_res;
   return std::unique_ptr<RemoteFileStatus>(rfs);
 }
