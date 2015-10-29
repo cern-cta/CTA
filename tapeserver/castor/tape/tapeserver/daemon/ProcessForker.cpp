@@ -556,7 +556,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
     zmqContext.get());
   
-  cta::EosNS eosNs("localhost:1094");
+  cta::EosNS eosNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort"));
   cta::MockNameServer mockNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath"));
   cta::objectstore::BackendVFS backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"));
   BackendPopulator backendPopulator(backend);

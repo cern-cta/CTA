@@ -256,7 +256,7 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 XrdProFilesystem::XrdProFilesystem():
   m_ns(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath")),
-  m_remoteStorage("localhost:1094"), 
+  m_remoteStorage(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort")), 
   m_backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath")),
   m_backendPopulator(m_backend),
   m_scheddb(m_backend, m_backendPopulator.getAgent()),
