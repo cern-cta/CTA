@@ -605,31 +605,47 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
   const std::string &path) const { 
  
   const std::string fsPath = m_fsDir + path;
-  DIR *const dp = opendir(fsPath.c_str());
-
-  if(dp == NULL) {
+  
+  struct stat statResult;
+  if(::stat(fsPath.c_str(), &statResult)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << __FUNCTION__ << " - opendir " << path << " error. Reason: \n"
-      << Utils::errnoToString(savedErrno);
+    msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
+      Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
-  
-  std::list<ArchiveDirEntry> entries;
-  struct dirent *entry;
-  
-  const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
-  while((entry = readdir(dp))) {
-    const std::string entryName(entry->d_name);
-    if(entryName != "." && entryName != "..") {
-      const std::string entryPath = pathEndsWithASlash ?
-        path + entryName : path + "/" + entryName;
-      entries.push_back(getArchiveDirEntry(requester, entryPath));
+  if(S_ISDIR(statResult.st_mode)) {
+    DIR *const dp = opendir(fsPath.c_str());
+    if(dp == NULL) {
+      const int savedErrno = errno;
+      std::ostringstream msg;
+      msg << __FUNCTION__ << " - opendir " << path << " error. Reason: \n"
+        << Utils::errnoToString(savedErrno);
+      throw(exception::Exception(msg.str()));
     }
+    std::list<ArchiveDirEntry> entries;
+    struct dirent *entry;
+    const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
+    while((entry = readdir(dp))) {
+      const std::string entryName(entry->d_name);
+      if(entryName != "." && entryName != "..") {
+        const std::string entryPath = pathEndsWithASlash ?
+          path + entryName : path + "/" + entryName;
+        entries.push_back(getArchiveDirEntry(requester, entryPath));
+      }
+    }
+    closedir(dp);  
+    return entries;
+  } else if(S_ISREG(statResult.st_mode)) {
+    std::list<ArchiveDirEntry> entries;
+    entries.push_back(getArchiveDirEntry(requester, path));  
+    return entries;
+  } else {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " " << path <<
+      " is neither a directory nor a regular file";
+    throw(exception::Exception(msg.str()));
   }
-  
-  closedir(dp);  
-  return entries;
 }
 
 //------------------------------------------------------------------------------
@@ -708,7 +724,6 @@ cta::ArchiveDirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
 
   Utils::assertAbsolutePathSyntax(path);
-  assertFsDirExists(m_fsDir+path);
   return getDirEntries(requester, path);
 }
 
