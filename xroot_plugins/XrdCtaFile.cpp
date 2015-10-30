@@ -29,7 +29,6 @@
 #include "common/UserIdentity.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
@@ -38,6 +37,7 @@
 
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <pwd.h>
@@ -425,14 +425,25 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getAdminUsers(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(8) << "uid" 
+               << " " << std::setw(8) << "gid"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->getUser().uid 
-                 << " " << it->getUser().gid 
-                 << " " << it->getCreationLog().user.uid 
-                 << " " << it->getCreationLog().user.gid 
-                 << " " << it->getCreationLog().host
-                 << " " << it->getCreationLog().time 
-                 << " " << it->getCreationLog().comment << std::endl;
+      std::string timeString(ctime(&(it->getCreationLog().time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(8) << it->getUser().uid 
+                 << " " << std::setw(8) << it->getUser().gid 
+                 << " " << std::setw(18) << it->getCreationLog().user.uid 
+                 << " " << std::setw(18) << it->getCreationLog().user.gid 
+                 << " " << std::setw(30) << it->getCreationLog().host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -484,13 +495,23 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getAdminHosts(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(17) << "name" 
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->name 
-                 << " " << it->creationLog.user.uid 
-                 << " " << it->creationLog.user.gid
-                 << " " << it->creationLog.host 
-                 << " " << it->creationLog.time 
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(17) << it->name 
+                 << " " << std::setw(18) << it->creationLog.user.uid 
+                 << " " << std::setw(18) << it->creationLog.user.gid
+                 << " " << std::setw(30) << it->creationLog.host 
+                 << " " << std::setw(30) << timeString 
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -646,14 +667,25 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getTapePools(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(18) << "name" 
+               << " " << std::setw(25) << "# partially used tapes"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->name  
-                 << " " << it->nbPartialTapes
-                 << " " << it->creationLog.user.uid 
-                 << " " << it->creationLog.user.gid 
-                 << " " << it->creationLog.host
-                 << " " << it->creationLog.time
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(18) << it->name  
+                 << " " << std::setw(25) << it->nbPartialTapes
+                 << " " << std::setw(18) << it->creationLog.user.uid 
+                 << " " << std::setw(18) << it->creationLog.user.gid 
+                 << " " << std::setw(30) << it->creationLog.host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -719,15 +751,27 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getArchiveRoutes(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(18) << "name" 
+               << " " << std::setw(8) << "copynb"
+               << " " << std::setw(16) << "tapepool"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->storageClassName
-                 << " " << it->copyNb
-                 << " " << it->tapePoolName
-                 << " " << it->creationLog.user.uid
-                 << " " << it->creationLog.user.gid
-                 << " " << it->creationLog.host
-                 << " " << it->creationLog.time
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(18) << it->storageClassName
+                 << " " << std::setw(8) << it->copyNb
+                 << " " << std::setw(16) << it->tapePoolName
+                 << " " << std::setw(18) << it->creationLog.user.uid
+                 << " " << std::setw(18) << it->creationLog.user.gid
+                 << " " << std::setw(30) << it->creationLog.host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -779,13 +823,23 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getLogicalLibraries(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(17) << "name" 
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->name
-                 << " " << it->creationLog.user.uid 
-                 << " " << it->creationLog.user.gid
-                 << " " << it->creationLog.host
-                 << " " << it->creationLog.time
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(17) << it->name
+                 << " " << std::setw(18) << it->creationLog.user.uid 
+                 << " " << std::setw(18) << it->creationLog.user.gid
+                 << " " << std::setw(30) << it->creationLog.host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -852,17 +906,31 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getTapes(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(8) << "vid" 
+               << " " << std::setw(18) << "logical library"
+               << " " << std::setw(18) << "capacity in bytes" 
+               << " " << std::setw(18) << "tapepool" 
+               << " " << std::setw(18) << "used capacity"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->vid
-                 << " " << it->logicalLibraryName
-                 << " " << it->capacityInBytes
-                 << " " << it->tapePoolName
-                 << " " << it->dataOnTapeInBytes
-                 << " " << it->creationLog.user.uid 
-                 << " " << it->creationLog.user.gid 
-                 << " " << it->creationLog.host
-                 << " " << it->creationLog.time
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(8) << it->vid
+                 << " " << std::setw(18) << it->logicalLibraryName
+                 << " " << std::setw(18) << it->capacityInBytes
+                 << " " << std::setw(18) << it->tapePoolName
+                 << " " << std::setw(18) << it->dataOnTapeInBytes
+                 << " " << std::setw(18) << it->creationLog.user.uid 
+                 << " " << std::setw(18) << it->creationLog.user.gid 
+                 << " " << std::setw(30) << it->creationLog.host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -930,14 +998,25 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
   else if("ls" == tokens[2]) {
     auto list = m_scheduler->getStorageClasses(requester);
     std::ostringstream responseSS;
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(17) << "name" 
+               << " " << std::setw(8) << "# copies"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(48) << "comment"
+               << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
-      responseSS << it->name
-                 << " " << it->nbCopies
-                 << " " << it->creationLog.user.uid
-                 << " " << it->creationLog.user.gid
-                 << " " << it->creationLog.host
-                 << " " << it->creationLog.time
-                 << " " << it->creationLog.comment << std::endl;
+      std::string timeString(ctime(&(it->creationLog.time)));
+      timeString=timeString.substr(0,24);//remove the newline
+      responseSS << " " << std::setw(17) << it->name
+                 << " " << std::setw(8) << it->nbCopies
+                 << " " << std::setw(18) << it->creationLog.user.uid
+                 << " " << std::setw(18) << it->creationLog.user.gid
+                 << " " << std::setw(30) << it->creationLog.host
+                 << " " << std::setw(30) << timeString
+                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
