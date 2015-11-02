@@ -53,7 +53,6 @@ int main(void) {
     strncpy(path, "/tmp/CTAMockNSXXXXXX", 100);
     cta::exception::Errnum::throwOnNull(mkdtemp(path), "MockNameServer() - Failed to create temporary directory");
     std::string pathString(path);
-    pathString+="/";
     std::stringstream uidss;
     uidss << getuid();
     std::stringstream gidss;
