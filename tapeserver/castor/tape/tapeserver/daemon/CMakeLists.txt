@@ -78,7 +78,7 @@ target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  c
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_executable(tapeserverd TapeDaemon.cpp)
-target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapegatewayprotocol castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
+target_link_libraries(tapeserverd castorTapeServerDaemon SCSI System Utils File TapeDrive castorcommon castorclient castorlegacymsg castorserver castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
 
 add_library(castortapeserverdaemonutils SHARED
   ProcessForkerProxyDummy.cpp)
