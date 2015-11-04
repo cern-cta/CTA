@@ -23,20 +23,34 @@
  */
 
 #include "BackendVFS.hpp"
+#include "BackendFactory.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 #include <iostream>
+#include <stdexcept>
 
-int main(void) {
+int main(int argc, char ** argv) {
   try {
-    cta::objectstore::BackendVFS be;
-    be.noDeleteOnExit();
-    cta::objectstore::RootEntry re(be);
+    std::unique_ptr<cta::objectstore::Backend> be;
+    if (1 == argc) {
+      be.reset(new cta::objectstore::BackendVFS);
+      
+    } else if (2 == argc) {
+      be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+    } else {
+      throw std::runtime_error("Wrong number of arguments: expected 0 or 1");
+    }
+    // If the backend is a VFS, make sure we don't delete it on exit.
+    // If not, nevermind.
+    try {
+      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
+    } catch (std::bad_cast &){}
+    cta::objectstore::RootEntry re(*be);
     re.initialize();
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    cta::objectstore::Agent ag(be);
+    cta::objectstore::Agent ag(*be);
     ag.generateName("makeMinimalVFS");
     ag.initialize();
     cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
@@ -48,7 +62,7 @@ int main(void) {
     re.addOrGetDriveRegisterPointerAndCommit(ag, cl);
     re.addOrGetSchedulerGlobalLockAndCommit(ag,cl);
     rel.release();
-    std::cout << "New object store path: " << be.getParams()->getPath() << std::endl;
+    std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
   } catch (std::exception & e) {
     std::cerr << "Failed to initialise the root entry in a new VFS backend store"
         << std::endl << e.what() << std::endl;

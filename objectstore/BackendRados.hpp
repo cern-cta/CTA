@@ -34,7 +34,7 @@ public:
    * @param userId
    * @param pool
    */
-  BackendRados(std::string userId, std::string pool);
+  BackendRados(const std::string & userId, const std::string & pool);
   virtual ~BackendRados();
   virtual std::string user() {
     return m_user;
@@ -85,6 +85,7 @@ public:
      * @return a string representation of the parameters for logging
      */
     virtual std::string toStr();
+    virtual std::string toURL();
   private:
     std::string m_userId;
     std::string m_pool;

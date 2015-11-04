@@ -49,6 +49,7 @@
 #include "castor/utils/utils.hpp"
 #include "nameserver/CastorNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
+#include "objectstore/BackendFactory.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "remotens/EosNS.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
@@ -558,9 +559,17 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   
   cta::EosNS eosNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort"));
   cta::MockNameServer mockNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath"));
-  cta::objectstore::BackendVFS backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"));
-  BackendPopulator backendPopulator(backend);
-  OStoreDBWithAgent osdb(backend, backendPopulator.getAgent());
+  std::unique_ptr<cta::objectstore::Backend> backend(
+    cta::objectstore::BackendFactory::createBackend(
+      castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))
+        .release());
+  // If the backend is a VFS, make sure we don't delete it on exit.
+  // If not, nevermind.
+  try {
+    dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
+  } catch (std::bad_cast &){}
+  BackendPopulator backendPopulator(*backend);
+  OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
   
   cta::Scheduler scheduler(mockNs, osdb, eosNs);
 

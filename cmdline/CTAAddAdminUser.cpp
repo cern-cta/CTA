@@ -17,6 +17,7 @@
  */
 
 #include <exception>
+#include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "tapeserver/castor/common/CastorConfiguration.hpp"
 #include "tapeserver/castor/log/DummyLogger.hpp"
@@ -34,9 +35,15 @@ int main(int argc, char ** argv) {
         castor::common::CastorConfiguration::getConfig();
     
     castor::log::DummyLogger log("ctaAddAdminUser");
-    cta::objectstore::BackendVFS be(castorConf.getConfEntString("TapeServer", "ObjectStoreBackendPath", &log));
-    be.noDeleteOnExit();
-    cta::OStoreDB db(be);
+    std::unique_ptr<cta::objectstore::Backend> be(
+      cta::objectstore::BackendFactory::createBackend(
+        castorConf.getConfEntString("TapeServer", "ObjectStoreBackendPath", &log)).release());
+    // If the backend is a VFS, make sure we don't delete it on exit.
+    // If not, nevermind.
+    try {
+      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
+    } catch (std::bad_cast &){}
+    cta::OStoreDB db(*be);
     db.createAdminUser(cta::SecurityIdentity(cta::UserIdentity(getuid(), getgid()), 
                                              castor::utils::getHostName()),
         cta::UserIdentity(uid, gid), "");

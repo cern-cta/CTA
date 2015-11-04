@@ -10,7 +10,7 @@ set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
 # following:
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x -fms-extensions")
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x -fms-extensions -fstack-protector-all")
 
 
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build

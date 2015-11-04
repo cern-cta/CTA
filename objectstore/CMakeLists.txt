@@ -24,11 +24,13 @@ add_library (CTAObjectStore
   DriveRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp
+  BackendFactory.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp)
+target_link_libraries(CTAObjectStore Utils rados)
 
 set(ObjectStoreUnitTests
   BackendTest.cpp

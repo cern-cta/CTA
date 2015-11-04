@@ -241,4 +241,10 @@ std::string BackendVFS::Parameters::toStr() {
   return ret.str();
 }
 
+std::string BackendVFS::Parameters::toURL() {
+  std::stringstream ret;
+  ret << "file://" << m_path;
+  return ret.str();
+}
+
 }} // end of cta::objectstore

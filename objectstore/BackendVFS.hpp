@@ -95,6 +95,12 @@ public:
      * @return a string representation of the parameters for logging
      */
     virtual std::string toStr();
+
+    /**
+     * The standard-issue params to URL
+     * @return a string representation of the parameters for logging
+     */
+    virtual std::string toURL();
     
     /**
      * A more specific member, giving access to the path itself

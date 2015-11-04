@@ -105,6 +105,12 @@ public:
     virtual std::string toStr() = 0;
     
     /**
+     * Turns parameter class into URL representation
+     * @return the URL
+     */
+    virtual std::string toURL() = 0;
+    
+    /**
      * Virtual destructor 
      */
     virtual ~Parameters() {}
