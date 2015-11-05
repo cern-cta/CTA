@@ -103,8 +103,8 @@ bool BackendRados::exists(std::string name) {
 
 std::list<std::string> BackendRados::list() {
   std::list<std::string> ret;
-  for (auto o=m_radosCtx.nobjects_begin(); o!=m_radosCtx.nobjects_end(); o++) {
-    ret.push_back(o->get_oid());
+  for (auto o=m_radosCtx.objects_begin(); o!=m_radosCtx.objects_end(); o++) {
+    ret.push_back(o->first);
   }
   return ret;
 }
@@ -112,10 +112,19 @@ std::list<std::string> BackendRados::list() {
 
 void BackendRados::ScopedLock::release() {
   if (!m_lockSet) return;
-  cta::exception::Errnum::throwOnReturnedErrno(
-      -m_context.unlock(m_oid, "lock", m_clientId),
-      std::string("In cta::objectstore::ScopedLock::release, failed unlock ") +
-      m_oid);
+  // We should be tolerant with unlocking a deleted object, which is part
+  // of the lock-remove-(implicit unlock) cycle when we delete an object
+  // we hence overlook the ENOENT errors.
+  int rc=m_context.unlock(m_oid, "lock", m_clientId);
+  switch (-rc) {
+    case ENOENT:
+      break;
+    default:
+      cta::exception::Errnum::throwOnReturnedErrno(-rc,
+        std::string("In cta::objectstore::ScopedLock::release, failed unlock ") +
+        m_oid);
+      break;
+  }
   m_lockSet = false;
 }
 

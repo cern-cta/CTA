@@ -31,6 +31,7 @@ add_library (CTAObjectStore
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp)
 target_link_libraries(CTAObjectStore Utils rados)
+set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 
 set(ObjectStoreUnitTests
   BackendTest.cpp

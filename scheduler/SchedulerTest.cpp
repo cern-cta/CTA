@@ -2623,7 +2623,7 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTest,
   ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactoryVFS)));
 #endif
 
-#define TEST_RADOS
+#undef TEST_RADOS
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 
