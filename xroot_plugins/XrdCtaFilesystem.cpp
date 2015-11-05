@@ -39,6 +39,7 @@
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
 #include "objectstore/RootEntry.hpp"
+#include "objectstore/BackendFactory.hpp"
 
 #include <memory>
 #include <iostream>
@@ -257,12 +258,18 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 XrdProFilesystem::XrdProFilesystem():
   m_ns(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath")),
   m_remoteStorage(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort")), 
-  m_backend(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath")),
-  m_backendPopulator(m_backend),
-  m_scheddb(m_backend, m_backendPopulator.getAgent()),
+  m_backend(cta::objectstore::BackendFactory::createBackend(
+    castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))
+      .release()),
+  m_backendPopulator(*m_backend),
+  m_scheddb(*m_backend, m_backendPopulator.getAgent()),
   m_scheduler(m_ns, m_scheddb, m_remoteStorage)
 {  
-  m_backend.noDeleteOnExit();
+  // If the backend is a VFS, make sure we don't delete it on exit.
+  // If not, nevermind.
+  try {
+    dynamic_cast<cta::objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
+  } catch (std::bad_cast &){}
   const cta::SecurityIdentity bootstrap_requester;
   try {
     m_scheduler.createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");

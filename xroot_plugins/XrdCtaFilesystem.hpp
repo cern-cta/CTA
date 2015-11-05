@@ -72,7 +72,7 @@ protected:
   /**
    * The VFS backend for the objectstore DB
    */
-  cta::objectstore::BackendVFS m_backend;
+  std::unique_ptr<cta::objectstore::Backend> m_backend;
   
   /**
    * The object used to populate the backend
