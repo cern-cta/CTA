@@ -66,7 +66,12 @@ TEST_P(BackendAbstractTest, LockingInterface) {
       m_os->lockExclusive(testObjectName));
     lock->release();
   }
+  // We should also tolerate releasing a lock taken on an object deleted
+  // in the mean time
+  std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+      m_os->lockExclusive(testObjectName));
   m_os->remove(testObjectName);
+  ASSERT_NO_THROW(lock->release());
 }
 
 TEST_P(BackendAbstractTest, ParametersInterface) {
