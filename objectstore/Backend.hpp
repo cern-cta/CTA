@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <list>
 
 namespace cta { namespace objectstore {
   
@@ -62,6 +63,12 @@ public:
    * @return true if the object is found
    */
   virtual bool exists(std::string name) = 0;  
+  
+  /**
+   * Lists all objects
+   * @return list of all object names
+   */
+  virtual std::list<std::string> list() = 0;
   
   /**
    * RAII class holding locks

@@ -19,6 +19,7 @@
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/Utils.hpp"
+#include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -31,6 +32,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #undef DEBUG_PRINT_LOGS
 #ifdef DEBUG_PRINT_LOGS
 #include <iostream>
@@ -174,6 +176,21 @@ bool BackendVFS::exists(std::string name) {
   struct stat buffer;   
   return (stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0);
 }
+
+std::list<std::string> BackendVFS::list() {
+  std::list<std::string> ret;
+  // We should not list ., .. and the .<object>.lock files
+  castor::tape::utils::Regex re("^(\\..+\\.lock|\\.{1,2})$");
+  ::DIR * dir = ::opendir(m_root.c_str());
+  cta::exception::Errnum::throwOnNull(dir);
+  while (struct ::dirent * ent=::readdir(dir)) {
+    if (re.exec(ent->d_name).empty()) {
+      ret.push_back(ent->d_name);
+    }
+  }
+  return ret;
+}
+
 
 
 BackendVFS::Parameters* BackendVFS::getParams() {

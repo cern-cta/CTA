@@ -69,6 +69,8 @@ public:
   
   virtual bool exists(std::string name);
   
+  virtual std::list<std::string> list();
+  
   class ScopedLock: public Backend::ScopedLock {
     friend class BackendVFS;
   public:

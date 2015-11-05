@@ -28,6 +28,7 @@
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/SecurityIdentity.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
+#include "objectstore/BackendRados.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -634,9 +635,21 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(mockDbFactory)));
 #endif
 
-static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
+#define TEST_VFS
+#ifdef TEST_VFS
+static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
-INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTest, SchedulerDatabaseTest,
-  ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactory)));
+INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestVFS, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryVFS)));
+#endif
+
+
+#define TEST_RADOS
+#ifdef TEST_RADOS
+static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
+
+INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestRados, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryRados)));
+#endif
 
 } // namespace unitTests

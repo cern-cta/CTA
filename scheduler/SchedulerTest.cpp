@@ -2615,8 +2615,19 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
   ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory)));
 #endif
 
-static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactory;
+#define TEST_VFS
+#ifdef TEST_VFS
+static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
-INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactory)));
+INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTest,
+  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactoryVFS)));
+#endif
+
+#define TEST_RADOS
+#ifdef TEST_RADOS
+static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
+
+INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, SchedulerTest,
+  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactoryRados)));
+#endif
 } // namespace unitTests

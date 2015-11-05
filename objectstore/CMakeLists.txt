@@ -47,3 +47,7 @@ target_link_libraries(ctaobjectstoreunittests
 add_executable(makeMinimalVFS makeMinimalVFS.cpp)
 target_link_libraries(makeMinimalVFS
   protobuf CTAObjectStore ctacommon)
+
+add_executable(listObjectStore listObjectStore.cpp)
+target_link_libraries(listObjectStore
+  protobuf CTAObjectStore ctacommon)

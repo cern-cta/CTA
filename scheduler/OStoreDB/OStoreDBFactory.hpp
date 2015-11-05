@@ -29,6 +29,9 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/BackendVFS.hpp"
+#include "objectstore/BackendRados.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include <memory>
 
 namespace cta {
   
@@ -46,36 +49,9 @@ namespace {
 template <class BackendType>
 class OStoreDBWrapper: public SchedulerDatabase {
 public:
-  OStoreDBWrapper(const std::string &context): m_backend(),
-      m_OStoreDB(m_backend), m_agent(m_backend) {
-    // We need to populate the root entry before using.
-    objectstore::RootEntry re(m_backend);
-    re.initialize();
-    re.insert();
-    objectstore::ScopedExclusiveLock rel(re);
-    re.fetch();
-    m_agent.generateName("OStoreDBFactory");
-    m_agent.initialize();
-    objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
-      time(NULL), "Initial creation of the  object store structures");
-    re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
-    rel.release();
-    m_agent.insertAndRegisterSelf();
-    rel.lock(re);
-    re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
-    re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
-    rel.release();
-    m_OStoreDB.setAgent(m_agent);
-  }
+  OStoreDBWrapper(const std::string &context, const std::string &URL = "");
   
-  virtual ~OStoreDBWrapper() throw() {
-    try {
-      m_OStoreDB.setAgent(*((objectstore::Agent*)NULL));
-      objectstore::ScopedExclusiveLock agl(m_agent);
-      m_agent.fetch();
-      m_agent.removeAndUnregisterSelf();
-    } catch (cta::exception::Exception &) {}
-  }
+  ~OStoreDBWrapper() throw () {}
   
   virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
     m_OStoreDB.assertIsAdminOnAdminHost(id);
@@ -235,10 +211,67 @@ public:
     return m_OStoreDB.getDriveStates();
   }
 private:
-  BackendType m_backend;
+  std::unique_ptr <cta::objectstore::Backend> m_backend;
   cta::OStoreDB m_OStoreDB;
   objectstore::Agent m_agent;
 };
+
+template <>
+OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
+        const std::string &context, const std::string &URL) :
+m_backend(new cta::objectstore::BackendVFS()),
+m_OStoreDB(*m_backend), m_agent(*m_backend) {
+  // We need to populate the root entry before using.
+  objectstore::RootEntry re(*m_backend);
+  re.initialize();
+  re.insert();
+  objectstore::ScopedExclusiveLock rel(re);
+  re.fetch();
+  m_agent.generateName("OStoreDBFactory");
+  m_agent.initialize();
+  objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost",
+          time(NULL), "Initial creation of the  object store structures");
+  re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
+  rel.release();
+  m_agent.insertAndRegisterSelf();
+  rel.lock(re);
+  re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
+  rel.release();
+  m_OStoreDB.setAgent(m_agent);
+}
+
+template <>
+OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
+        const std::string &context, const std::string &URL) :
+m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()),
+m_OStoreDB(*m_backend), m_agent(*m_backend) {
+  // We need to first clean up possible left overs in the pool
+  auto l = m_backend->list();
+  for (auto o=l.begin(); o!=l.end(); o++) {
+    try {
+      m_backend->remove(*o);
+    } catch (std::exception &) {}
+  }
+  // We need to populate the root entry before using.
+  objectstore::RootEntry re(*m_backend);
+  re.initialize();
+  re.insert();
+  objectstore::ScopedExclusiveLock rel(re);
+  re.fetch();
+  m_agent.generateName("OStoreDBFactory");
+  m_agent.initialize();
+  objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost",
+          time(NULL), "Initial creation of the  object store structures");
+  re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
+  rel.release();
+  m_agent.insertAndRegisterSelf();
+  rel.lock(re);
+  re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
+  rel.release();
+  m_OStoreDB.setAgent(m_agent);
+}
 
 }
 
@@ -252,7 +285,7 @@ public:
   /**
    * Constructor
    */
-  OStoreDBFactory() {}
+  OStoreDBFactory(const std::string & URL = ""): m_URL(URL) {}
   
   /**
    * Destructor.
@@ -265,8 +298,11 @@ public:
    * @return A newly created scheduler database object.
    */
   std::unique_ptr<SchedulerDatabase> create() const {
-    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest"));
+    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", m_URL));
   }
+  
+  private:
+    std::string m_URL;
 }; // class OStoreDBFactory
 
 } // namespace cta
