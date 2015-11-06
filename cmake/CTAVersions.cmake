@@ -1,0 +1,2 @@
+set(CTA_VERSION 0)
+set(CTA_RELEASE 0)

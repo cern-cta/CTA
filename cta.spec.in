@@ -1,0 +1,76 @@
+# Generic macros
+#---------------
+%define name cta
+%define ctaVersion @CTA_VERSION@
+%define ctaRelease @CTA_RELEASE@
+
+# Neutral packaging (for srpm)
+#-----------------------------
+%if 0%{?neutralpackage:1} > 0
+%define mydist %{nil}
+%else
+%define mydist %{?dist}
+%endif
+
+# Skipping unit tests (for developpers)
+#--------------------------------------
+%define skip_unit_tests @SKIP_UNIT_TESTS@
+
+# General settings
+#-----------------
+Summary: CERN Tape Archive
+Name: %{name}
+Version: %{ctaVersion}
+Release: %{ctaRelease}%{mydist}
+Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
+License: http://cern.ch/castor/DIST/CONDITIONS
+Group: Application/cta
+BuildRoot: %{_builddir}/%{name}-%{version}-root
+BuildRequires: cmake >= 2.6 redhat-rpm-config
+# only build debug info if you're building the whole code
+
+%description
+The CTA project is the CERN Tape Archive system.
+
+%prep
+%setup -q -n %{name}-%{ctaVersion}-%{ctaRelease}
+
+%build
+
+mkdir -p build
+cd build
+# The cmake step does the selection between client/server compilation or just client
+cmake .. -DCOMPILE_PACKAGING:STRING=0
+%{__make} -s %{_smp_mflags}
+
+%install
+# define castor version (modified by maketar.sh to put the exact version)
+%{__rm} -rf ${RPM_BUILD_ROOT}
+
+cd build
+%{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
+
+%clean
+%{__rm} -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_DIR/%{name}-%{version}
+
+
+%check
+%if "%{skip_unit_tests}" == "0"
+cd build
+%{__make} test
+%endif
+
+# The packages will be cta-tapeserver, cta-frontend, cta-cli
+
+%package -n cta-tapeserver
+Summary: CERN Tape Archive
+Group: Application/CTA
+%description -n cta-tapeserver
+CERN Tape Archive:
+The tape server daemon
+%files -n cta-tapeserver
+%defattr(-,root,root)
+%attr(0644,root,root) /usr/bin/tapeserverd
+
+
