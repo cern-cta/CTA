@@ -432,7 +432,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->getCreationLog().time)));
@@ -443,7 +443,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
                  << " " << std::setw(18) << it->getCreationLog().user.gid 
                  << " " << std::setw(30) << it->getCreationLog().host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->getCreationLog().comment << std::endl;
+                 << " " << std::setw(30) << it->getCreationLog().comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -501,7 +501,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -511,7 +511,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
                  << " " << std::setw(18) << it->creationLog.user.gid
                  << " " << std::setw(30) << it->creationLog.host 
                  << " " << std::setw(30) << timeString 
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -674,7 +674,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -685,7 +685,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
                  << " " << std::setw(18) << it->creationLog.user.gid 
                  << " " << std::setw(30) << it->creationLog.host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -759,7 +759,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -771,7 +771,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
                  << " " << std::setw(18) << it->creationLog.user.gid
                  << " " << std::setw(30) << it->creationLog.host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -829,7 +829,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -839,7 +839,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
                  << " " << std::setw(18) << it->creationLog.user.gid
                  << " " << std::setw(30) << it->creationLog.host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -916,7 +916,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -930,7 +930,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
                  << " " << std::setw(18) << it->creationLog.user.gid 
                  << " " << std::setw(30) << it->creationLog.host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -1005,7 +1005,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
                << " " << std::setw(18) << "creator gid" 
                << " " << std::setw(30) << "creation host"
                << " " << std::setw(30) << "creation time"
-               << " " << std::setw(48) << "comment"
+               << " " << std::setw(30) << "comment"
                << "\x1b[0m" << std::endl;
     for(auto it = list.begin(); it != list.end(); it++) {
       std::string timeString(ctime(&(it->creationLog.time)));
@@ -1016,7 +1016,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
                  << " " << std::setw(18) << it->creationLog.user.gid
                  << " " << std::setw(30) << it->creationLog.host
                  << " " << std::setw(30) << timeString
-                 << " " << std::setw(48) << it->creationLog.comment << std::endl;
+                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
     }
     m_data = responseSS.str();
   }
@@ -1034,6 +1034,28 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
   std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
   bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
+  if(extended) {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(18) << "tapepool" 
+               << " " << std::setw(30) << "remote filepath" 
+               << " " << std::setw(16) << "size"
+               << " " << std::setw(30) << "cta filepath"
+               << " " << std::setw(8) << "copynb"
+               << " " << std::setw(8) << "priority"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(30) << "comment"
+               << "\x1b[0m" << std::endl;
+  }
+  else {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(18) << "tapepool" 
+               << " " << std::setw(25) << "number of requests" 
+               << " " << std::setw(16) << "total size"
+               << "\x1b[0m" << std::endl;
+  }
   if(tapePool.empty()) {
     auto poolList = m_scheduler->getArchiveRequests(requester);  
     for(auto pool = poolList.begin(); pool != poolList.end(); pool++) {
@@ -1041,22 +1063,28 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
       uint64_t totalSize=0;
       for(auto request = pool->second.begin(); request!=pool->second.end(); request++) {
         if(extended) {
-          responseSS << pool->first.name
-                     << " " << request->remoteFile.path.getRaw()
-                     << " " << request->remoteFile.status.size
-                     << " " << request->archiveFile
-                     << " " << request->copyNb
-                     << " " << request->priority
-                     << " " << request->creationLog.user.uid
-                     << " " << request->creationLog.user.gid
-                     << " " << request->creationLog.host
-                     << " " << request->creationLog.time 
-                     << " \"" << request->creationLog.comment << "\"" << std::endl;
+          std::string timeString(ctime(&(request->creationLog.time)));
+          timeString=timeString.substr(0,24);//remove the newline
+          responseSS << " " << std::setw(18) << pool->first.name
+                     << " " << std::setw(30) << request->remoteFile.path.getRaw()
+                     << " " << std::setw(16) << request->remoteFile.status.size
+                     << " " << std::setw(30) << request->archiveFile
+                     << " " << std::setw(8) << request->copyNb
+                     << " " << std::setw(8) << request->priority
+                     << " " << std::setw(18) << request->creationLog.user.uid
+                     << " " << std::setw(18) << request->creationLog.user.gid
+                     << " " << std::setw(30) << request->creationLog.host
+                     << " " << std::setw(30) << timeString 
+                     << " " << std::setw(30) << request->creationLog.comment << std::endl;
         }
         numberOfRequests++;
         totalSize+=request->remoteFile.status.size;
       }
-      responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
+      if(!extended) {
+        responseSS << " " << std::setw(18) << pool->first.name
+                   << " " << std::setw(25) << numberOfRequests 
+                   << " " << std::setw(16) << totalSize << std::endl;
+      }
     }  
   }
   else {
@@ -1065,22 +1093,28 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
     auto requestList = m_scheduler->getArchiveRequests(requester, tapePool);    
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
       if(extended) {
-        responseSS << tapePool
-                   << " " << request->remoteFile.path.getRaw()
-                   << " " << request->remoteFile.status.size
-                   << " " << request->archiveFile
-                   << " " << request->copyNb
-                   << " " << request->priority
-                   << " " << request->creationLog.user.uid
-                   << " " << request->creationLog.user.gid
-                   << " " << request->creationLog.host
-                   << " " << request->creationLog.time 
-                   << " \"" << request->creationLog.comment << "\"" << std::endl;
+        std::string timeString(ctime(&(request->creationLog.time)));
+        timeString=timeString.substr(0,24);//remove the newline
+        responseSS << " " << std::setw(18) << tapePool
+                   << " " << std::setw(30) << request->remoteFile.path.getRaw()
+                   << " " << std::setw(16) << request->remoteFile.status.size
+                   << " " << std::setw(30) << request->archiveFile
+                   << " " << std::setw(8) << request->copyNb
+                   << " " << std::setw(8) << request->priority
+                   << " " << std::setw(18) << request->creationLog.user.uid
+                   << " " << std::setw(18) << request->creationLog.user.gid
+                   << " " << std::setw(30) << request->creationLog.host
+                   << " " << std::setw(30) << timeString 
+                   << " " << std::setw(30) << request->creationLog.comment << std::endl;
       }
       numberOfRequests++;
       totalSize+=request->remoteFile.status.size;
     }
-    responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
+    if(!extended) {
+      responseSS << " " << std::setw(18) << tapePool
+                 << " " << std::setw(25) << numberOfRequests 
+                 << " " << std::setw(16) << totalSize << std::endl;
+    }
   }
   m_data = responseSS.str();
 }
@@ -1094,38 +1128,70 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
   bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
+  if(extended) {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(8) << "vid" 
+               << " " << std::setw(30) << "cta filepath" 
+               << " " << std::setw(16) << "size"
+               << " " << std::setw(30) << "remote filepath"
+               << " " << std::setw(8) << "copynb"
+               << " " << std::setw(8) << "block id"
+               << " " << std::setw(8) << "fseq"
+               << " " << std::setw(8) << "priority"
+               << " " << std::setw(18) << "creator uid" 
+               << " " << std::setw(18) << "creator gid" 
+               << " " << std::setw(30) << "creation host"
+               << " " << std::setw(30) << "creation time"
+               << " " << std::setw(30) << "comment"
+               << "\x1b[0m" << std::endl;
+  }
+  else {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(8) << "vid" 
+               << " " << std::setw(25) << "number of requests" 
+               << " " << std::setw(16) << "total size"
+               << "\x1b[0m" << std::endl;
+  }
   if(tapeVid.empty()) {
     auto vidList = m_scheduler->getRetrieveRequests(requester);  
     for(auto vid = vidList.begin(); vid != vidList.end(); vid++) {
       uint64_t numberOfRequests=0;
       uint64_t totalSize=0;
       for(auto request = vid->second.begin(); request!=vid->second.end(); request++) {
-        // Find the tape copy for the active copy number
-        cta::TapeFileLocation * tfl = NULL;
-        for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
-          if (l->copyNb == request->activeCopyNb)
-            tfl = &(*l);
-        }
         if(extended) {
-          responseSS << vid->first.vid
-                     << " " << request->archiveFile.path
-                     << " " << request->archiveFile.size
-                     << " " << request->remoteFile
-                     << " " << request->activeCopyNb
-                     << " " << (tfl?tfl->vid:"Unknown VID")
-                     << " " << (tfl?tfl->blockId:0)
-                     << " " << (tfl?tfl->fSeq:0)
-                     << " " << request->priority
-                     << " " << request->creationLog.user.uid
-                     << " " << request->creationLog.user.gid
-                     << " " << request->creationLog.host
-                     << " " << request->creationLog.time 
-                     << " \"" << request->creationLog.comment << "\"" << std::endl;
+          std::stringstream blockIdSS;
+          std::stringstream fseqSS;
+          // Find the tape copy for the active copy number
+          for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
+            if (l->copyNb == request->activeCopyNb) {
+              blockIdSS << l->blockId;
+              fseqSS << l->fSeq;
+            }
+          }
+          std::string timeString(ctime(&(request->creationLog.time)));
+          timeString=timeString.substr(0,24);//remove the newline
+          responseSS << " " << std::setw(8) << vid->first.vid
+                     << " " << std::setw(30) << request->archiveFile.path
+                     << " " << std::setw(16) << request->archiveFile.size
+                     << " " << std::setw(30) << request->remoteFile
+                     << " " << std::setw(8) << request->activeCopyNb
+                     << " " << std::setw(8) << blockIdSS.str()
+                     << " " << std::setw(8) << fseqSS.str()
+                     << " " << std::setw(8) << request->priority
+                     << " " << std::setw(18) << request->creationLog.user.uid
+                     << " " << std::setw(18) << request->creationLog.user.gid
+                     << " " << std::setw(30) << request->creationLog.host
+                     << " " << std::setw(30) << timeString 
+                     << " " << std::setw(30) << request->creationLog.comment << std::endl;
         }
         numberOfRequests++;
         totalSize+=request->archiveFile.size;
       }
-      responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;    
+      if(!extended) {
+        responseSS << " " << std::setw(8) << vid->first.vid
+                   << " " << std::setw(25) << numberOfRequests
+                   << " " << std::setw(16) << totalSize << std::endl;
+      }
     }  
   }
   else {
@@ -1133,32 +1199,40 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
     uint64_t totalSize=0;    
     auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);
     for(auto request = requestList.begin(); request!=requestList.end(); request++) {
-      // Find the tape copy for the active copy number
-      cta::TapeFileLocation * tfl = NULL;
-      for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
-        if (l->copyNb == request->activeCopyNb)
-          tfl = &(*l);
-      }
       if(extended) {
-        responseSS << tapeVid
-                   << " " << request->archiveFile.path
-                   << " " << request->archiveFile.size
-                   << " " << request->remoteFile
-                   << " " << request->activeCopyNb
-                   << " " << (tfl?tfl->vid:"Unknown VID")
-                   << " " << (tfl?tfl->blockId:0)
-                   << " " << (tfl?tfl->fSeq:0)
-                   << " " << request->priority
-                   << " " << request->creationLog.user.uid
-                   << " " << request->creationLog.user.gid
-                   << " " << request->creationLog.host
-                   << " " << request->creationLog.time 
-                   << " \"" << request->creationLog.comment << "\"" << std::endl;
+        std::stringstream blockIdSS;
+        std::stringstream fseqSS;
+        // Find the tape copy for the active copy number
+        for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
+          if (l->copyNb == request->activeCopyNb) {
+            blockIdSS << l->blockId;
+            fseqSS << l->fSeq;
+          }
+        }
+        std::string timeString(ctime(&(request->creationLog.time)));
+        timeString=timeString.substr(0,24);//remove the newline
+        responseSS << " " << std::setw(8) << tapeVid
+                   << " " << std::setw(30) << request->archiveFile.path
+                   << " " << std::setw(16) << request->archiveFile.size
+                   << " " << std::setw(30) << request->remoteFile
+                   << " " << std::setw(8) << request->activeCopyNb
+                   << " " << std::setw(8) << blockIdSS.str()
+                   << " " << std::setw(8) << fseqSS.str()
+                   << " " << std::setw(8) << request->priority
+                   << " " << std::setw(18) << request->creationLog.user.uid
+                   << " " << std::setw(18) << request->creationLog.user.gid
+                   << " " << std::setw(30) << request->creationLog.host
+                   << " " << std::setw(30) << timeString 
+                   << " " << std::setw(30) << request->creationLog.comment << std::endl;
       }
       numberOfRequests++;
       totalSize+=request->archiveFile.size;
     }
-    responseSS << "Number of Requests: " << numberOfRequests << " Total size: " << totalSize << std::endl;
+    if(!extended) {
+      responseSS << " " << std::setw(8) << tapeVid
+                 << " " << std::setw(25) << numberOfRequests
+                 << " " << std::setw(16) << totalSize << std::endl;
+    }
   }
   m_data = responseSS.str();
 }
@@ -1330,54 +1404,89 @@ void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens, const cta::S
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ls <dirpath>" << std::endl;
-  if(tokens.size()!=3){
+  help << tokens[0] << " ls [-t/--tapecopyinfo] <dirpath>" << std::endl;
+  if(tokens.size()!=3 && tokens.size()!=4){
     m_data = help.str();
     return;
   }
-  auto dirIterator = m_scheduler->getDirContents(requester, tokens[2]);
+  auto dirIterator = m_scheduler->getDirContents(requester, tokens[tokens.size()-1]); //the last token is the path
+  bool tapeCopyInfo = hasOption(tokens, "-t", "--tapecopyinfo");
   std::ostringstream responseSS;
+  if(!tapeCopyInfo) {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(18) << "mode"
+               << " " << std::setw(18) << "uid" 
+               << " " << std::setw(18) << "gid" 
+               << " " << std::setw(17) << "storage class"
+               << " " << std::setw(16) << "checksum"
+               << " " << std::setw(16) << "size"
+               << " " << std::setw(30) << "filename"
+               << "\x1b[0m" << std::endl;
+  }
+  else {
+    responseSS << "\x1b[31;1m"
+               << " " << std::setw(8) << "copynb"
+               << " " << std::setw(8) << "vid" 
+               << " " << std::setw(15) << "fseq" 
+               << " " << std::setw(20) << "block id"
+               << " " << std::setw(30) << "filename"
+               << "\x1b[0m" << std::endl;
+  }
   while(dirIterator.hasMore()) {
     auto dirEntry = dirIterator.next();
-    auto mode = dirEntry.status.mode;
-    const auto &owner = dirEntry.status.owner;
-    const auto storageClassName = dirEntry.status.storageClassName;
-    std::string firstModeCharacter;
-    if(dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) {
-      firstModeCharacter="d";
-    }
-    else if(dirEntry.type==dirEntry.ENTRYTYPE_FILE) {
-      if(dirEntry.tapeCopies.empty()) {
-        firstModeCharacter="-";
+    if(!tapeCopyInfo) {
+      auto mode = dirEntry.status.mode;
+      const auto &owner = dirEntry.status.owner;
+      const auto storageClassName = dirEntry.status.storageClassName;
+      std::string firstModeCharacter;
+      if(dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) {
+        firstModeCharacter="d";
       }
-      else{
-        firstModeCharacter="a"; //the Murray bit (a.k.a. the Archive bit: true if the file has at least one tape copy)
+      else if(dirEntry.type==dirEntry.ENTRYTYPE_FILE) {
+        if(dirEntry.tapeCopies.empty()) {
+          firstModeCharacter="-";
+        }
+        else{
+          firstModeCharacter="a"; //the Murray bit (a.k.a. the Archive bit: true if the file has at least one tape copy)
+        }
       }
+      else {
+        firstModeCharacter="U"; //unknown directory entry type
+      }
+      std::stringstream modeSS;
+      modeSS << firstModeCharacter
+             << ((mode & S_IRUSR) ? "r" : "-")
+             << ((mode & S_IWUSR) ? "w" : "-")
+             << ((mode & S_IXUSR) ? "x" : "-")
+             << ((mode & S_IRGRP) ? "r" : "-")
+             << ((mode & S_IWGRP) ? "w" : "-")
+             << ((mode & S_IXGRP) ? "x" : "-")
+             << ((mode & S_IROTH) ? "r" : "-")
+             << ((mode & S_IWOTH) ? "w" : "-")
+             << ((mode & S_IXOTH) ? "x" : "-");
+      responseSS << " " << std::setw(18) << modeSS.str()
+                 << " " << std::setw(18) << owner.uid
+                 << " " << std::setw(18) << owner.gid
+                 << " " << std::setw(17) << storageClassName
+                 << " " << std::setw(16) << dirEntry.status.checksum.str()
+                 << " " << std::setw(16) << dirEntry.status.size
+                 << " " << std::setw(30) << dirEntry.name << std::endl;
     }
     else {
-      firstModeCharacter="U"; //unknown directory entry type
-    }
-    responseSS << firstModeCharacter
-               << ((mode & S_IRUSR) ? "r" : "-")
-               << ((mode & S_IWUSR) ? "w" : "-")
-               << ((mode & S_IXUSR) ? "x" : "-")
-               << ((mode & S_IRGRP) ? "r" : "-")
-               << ((mode & S_IWGRP) ? "w" : "-")
-               << ((mode & S_IXGRP) ? "x" : "-")
-               << ((mode & S_IROTH) ? "r" : "-")
-               << ((mode & S_IWOTH) ? "w" : "-")
-               << ((mode & S_IXOTH) ? "x" : "-")
-               << " " << owner.uid
-               << " " << owner.gid
-               << " " << storageClassName
-               << " " << dirEntry.status.checksum.str()
-               << " " << dirEntry.status.size
-               << " " << dirEntry.name << std::endl;
-    for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
-      responseSS << "  " << i->tapeFileLocation.copyNb
-                 << " "  << i->tapeFileLocation.vid
-                 << " "  << i->tapeFileLocation.fSeq
-                 << " "  << i->tapeFileLocation.blockId << std::endl;
+      for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
+        std::stringstream blockIdSS;
+        if(i->tapeFileLocation.fSeq==1) {
+          blockIdSS << "-";
+        }
+        else{
+          blockIdSS << i->tapeFileLocation.blockId;
+        }
+        responseSS << " " << std::setw(8) << i->tapeFileLocation.copyNb
+                   << " " << std::setw(8) << i->tapeFileLocation.vid
+                   << " " << std::setw(15) << i->tapeFileLocation.fSeq
+                   << " " << std::setw(20) << blockIdSS.str()
+                   << " " << std::setw(30) << dirEntry.name << std::endl;
+      }
     }
   }
   m_data = responseSS.str();
