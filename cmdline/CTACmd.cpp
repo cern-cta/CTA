@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "cmdline/CTACmd.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -85,7 +86,7 @@ int CTACopyCmd::sendCommand(const int argc, const char **argv) const {
 // formatCommandPath
 //------------------------------------------------------------------------------
 std::string CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
-  std::string cmdPath = "root://localhost:10955//";
+  std::string cmdPath = "root://"+castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "CTAFrontendHostAndPort")+"//";
   for(int i=0; i<argc; i++) {
     if(i) cmdPath += "&";
     cmdPath += encode(std::string(argv[i]));
