@@ -1133,7 +1133,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
                << " " << std::setw(8) << "vid" 
                << " " << std::setw(30) << "cta filepath" 
                << " " << std::setw(16) << "size"
-               << " " << std::setw(30) << "remote filepath"
+               << " " << std::setw(50) << "remote filepath"
                << " " << std::setw(8) << "copynb"
                << " " << std::setw(8) << "block id"
                << " " << std::setw(8) << "fseq"
@@ -1173,7 +1173,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           responseSS << " " << std::setw(8) << vid->first.vid
                      << " " << std::setw(30) << request->archiveFile.path
                      << " " << std::setw(16) << request->archiveFile.size
-                     << " " << std::setw(30) << request->remoteFile
+                     << " " << std::setw(50) << request->remoteFile
                      << " " << std::setw(8) << request->activeCopyNb
                      << " " << std::setw(8) << blockIdSS.str()
                      << " " << std::setw(8) << fseqSS.str()
@@ -1214,7 +1214,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
         responseSS << " " << std::setw(8) << tapeVid
                    << " " << std::setw(30) << request->archiveFile.path
                    << " " << std::setw(16) << request->archiveFile.size
-                   << " " << std::setw(30) << request->remoteFile
+                   << " " << std::setw(50) << request->remoteFile
                    << " " << std::setw(8) << request->activeCopyNb
                    << " " << std::setw(8) << blockIdSS.str()
                    << " " << std::setw(8) << fseqSS.str()

@@ -193,6 +193,7 @@ auto cta::objectstore::Tape::dumpAndFetchRetrieveRequests()
       auto & retReq = ret.back();
       retReq.archiveFile = rtfr.getArchiveFile();
       retReq.remoteFile = rtfr.getRemoteFile();
+      retReq.creationLog = rtfr.getCreationLog();
       // Find the copy number from the list of jobs
       retReq.activeCopyNb = rj->copynb();
       auto jl = rtfr.dumpJobs();
@@ -207,7 +208,7 @@ auto cta::objectstore::Tape::dumpAndFetchRetrieveRequests()
     } catch (cta::exception::Exception &) {}
   }
   return ret;
-  }
+}
 
 auto cta::objectstore::Tape::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
