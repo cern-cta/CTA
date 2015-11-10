@@ -76,6 +76,8 @@ ELSE(DEFINED PackageOnly)
   list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
   include(cmake/CTAInstallationFunctions.cmake)
   include(cmake/CTAVersions.cmake)
+  include(GNUInstallDirs)
+  set(CMAKE_INSTALL_PREFIX "/")
 
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})
