@@ -11,6 +11,25 @@ set (CTAProtoFiles
 
 PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
+set (CTAProtoDependants objectstore/Agent.hpp
+  objectstore/ArchiveToFileRequest.hpp
+  objectstore/CreationLog.hpp
+  objectstore/GenericObject.hpp
+  objectstore/ObjectOps.cpp
+  objectstore/ObjectOps.hpp
+  objectstore/RetrieveToFileRequest.cpp
+  objectstore/RetrieveToFileRequest.hpp
+  objectstore/RootEntry.hpp
+  objectstore/SchedulerGlobalLock.hpp
+  objectstore/Tape.hpp
+  objectstore/TapePool.hpp
+  objectstore/UserIdentity.hpp)
+
+SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
+SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants} 
+  PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
+
+
 add_library (CTAObjectStore
   ${CTAProtoSources}
   RootEntry.cpp

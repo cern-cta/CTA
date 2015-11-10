@@ -20,7 +20,6 @@
 
 #include "common/exception/Exception.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "objectstore/DriveRegister.hpp"
 
 #include <list>
 #include <map>

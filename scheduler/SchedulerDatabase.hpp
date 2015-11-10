@@ -32,8 +32,8 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/MountControl.hpp"
+#include "common/DriveState.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
-#include "objectstore/DriveRegister.hpp"
 #include "scheduler/MountType.hpp"
 
 namespace cta {
