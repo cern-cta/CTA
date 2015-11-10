@@ -11,6 +11,8 @@ add_library (ctanameserver SHARED
 
 target_link_libraries(ctanameserver castorns castorcommon)
 
+install (TARGETS ctanameserver DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 add_executable(castornstest CastorNameServerTest.cpp)
 
 target_link_libraries(castornstest ctanameserver ctacommon ctascheduler)

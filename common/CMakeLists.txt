@@ -42,6 +42,7 @@ set (COMMON_LIB_SRC_FILES
 
 add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})
+install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
   castorcommon

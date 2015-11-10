@@ -20,9 +20,9 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
 
 # Generate the compilation variables, if needed
 if (NOT DEFINED SKIP_UNIT_TESTS)
-  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 1")
-  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=0")
-  set(SKIP_UNIT_TESTS 1)
+  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 0")
+  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=1")
+  set(SKIP_UNIT_TESTS 0)
 else (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
 endif (NOT DEFINED SKIP_UNIT_TESTS)
@@ -115,7 +115,7 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 #add_custom_target(test test/castorUnitTests
 #                    COMMENT "Not running the unit tests" VERBATIM)
 
-add_custom_target(test test/unitTests
+add_custom_target(test tests/unittests
                     #  
                     #COMMAND valgrind --track-fds=yes --leak-check=full --demangle=no --gen-suppressions=all --show-reachable=yes --error-exitcode=1 test/castorUnitTests
                     #COMMAND test/castorThreadedUnitTests
@@ -123,6 +123,6 @@ add_custom_target(test test/unitTests
                     #COMMAND valgrind --tool=helgrind -v --demangle=no --conflict-cache-size=30000000 --error-exitcode=1 test/castorThreadedUnitTests
                     #COMMAND test/castorMultiprocessUnitTests
                     #COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests 
-                    DEPENDS test/unitTests #test/castorThreadedUnitTests test/castorMultiprocessUnitTests test/castorThreadedUnitTests.supp
+                    DEPENDS tests/unittests #test/castorThreadedUnitTests test/castorMultiprocessUnitTests test/castorThreadedUnitTests.supp
                     COMMENT "Running unit tests" VERBATIM)
 

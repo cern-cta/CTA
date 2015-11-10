@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 find_package (sqlite REQUIRED)
 include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} 
-  ${PROJECT_SOURCE_DIR})
+  ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
@@ -30,19 +30,14 @@ set (CTA_SCHEDULER_SRC_FILES
 #  mockDB/SqliteColumnNameToIndex.cpp
 #  mockDB/SQLiteStatementDeleter.cpp
   MountType.cpp
-  UserRequest.cpp)
+  UserRequest.cpp
+  OStoreDB/OStoreDB.cpp)
 
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
+install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon)
-
-include_directories(${CMAKE_BINARY_DIR})
-add_library(ctaOStoreSchedulerDB SHARED
-  OStoreDB/OStoreDB.cpp)
-
-target_link_libraries(ctaOStoreSchedulerDB
-  CTAObjectStore)
+target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon CTAObjectStore protobuf)
 
 add_library (ctaschedulerutils SHARED
   DummyScheduler.cpp)
@@ -57,5 +52,4 @@ add_library (ctaschedulerunittests SHARED
 target_link_libraries (ctaschedulerunittests ${SQLITE3_LIBRARY_RELEASE})
 
 target_link_libraries(ctaschedulerunittests
-  ctascheduler
-  ctaOStoreSchedulerDB)
+  ctascheduler)
