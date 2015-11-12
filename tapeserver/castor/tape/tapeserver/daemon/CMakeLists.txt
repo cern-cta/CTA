@@ -74,7 +74,7 @@ add_library(castorTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler XrdCtaOfs)
+target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler)
 add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
 
 add_executable(tapeserverd TapeDaemon.cpp)

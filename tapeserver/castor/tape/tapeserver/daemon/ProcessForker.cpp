@@ -56,8 +56,8 @@
 #include "scheduler/Scheduler.hpp"
 #include "serrno.h"
 #include "nameserver/mockNS/MockNameServer.hpp"
-#include "xroot_plugins/BackendPopulator.hpp"
-#include "xroot_plugins/OStoreDBWithAgent.hpp"
+#include "objectstore/BackendPopulator.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 
 #include <errno.h>
 #include <memory>

@@ -43,6 +43,7 @@ add_library (CTAObjectStore
   DriveRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp
+  BackendPopulator.cpp
   BackendFactory.cpp
   ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp

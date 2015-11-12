@@ -23,8 +23,8 @@
 #include "remotens/EosNS.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "xroot_plugins/BackendPopulator.hpp"
-#include "xroot_plugins/OStoreDBWithAgent.hpp"
+#include "objectstore/BackendPopulator.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
 

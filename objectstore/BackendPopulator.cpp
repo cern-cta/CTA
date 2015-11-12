@@ -18,7 +18,7 @@
 
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
-#include "xroot_plugins/BackendPopulator.hpp"
+#include "objectstore/BackendPopulator.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor

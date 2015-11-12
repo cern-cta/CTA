@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "xroot_plugins/OStoreDBWithAgent.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor
