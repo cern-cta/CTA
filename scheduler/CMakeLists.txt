@@ -38,7 +38,7 @@ add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon CTAObjectStore protobuf)
+target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon CTAObjectStore protobuf Utils)
 
 add_library (ctaschedulerutils SHARED
   DummyScheduler.cpp)

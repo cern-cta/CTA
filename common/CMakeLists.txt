@@ -15,7 +15,6 @@ set (COMMON_LIB_SRC_FILES
   archiveNS/Tape.cpp
   archiveNS/TapeFileLocation.cpp
   CreationLog.cpp
-  checksum/ByteArray.cpp
   checksum/Checksum.cpp
   exception/Backtrace.cpp
   exception/DiskException.hpp
@@ -49,10 +48,10 @@ target_link_libraries (ctacommon
   pthread
   ${SQLITE3_LIBRARY_RELEASE}
   uuid
-  z)
+  z
+  Utils)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
-  checksum/ByteArrayTest.cpp
   checksum/ChecksumTest.cpp
   remoteFS/RemotePathTest.cpp
   UserIdentityTest.cpp

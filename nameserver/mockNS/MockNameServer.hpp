@@ -69,7 +69,7 @@ public:
   
   std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const;
   
-  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode, const uint64_t size);
+  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode, const Checksum & checkcum, const uint64_t size);
 
   void setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner);
 
@@ -150,6 +150,8 @@ private:
   void assertFsDirExists(const std::string &path) const;
   
   void assertFsFileExists(const std::string &path) const;
+  
+  void assertChecksumOrSetIfMissing(const std::string &path, const std::string &checksum);
   
   void assertFsPathDoesNotExist(const std::string &path) const;
   

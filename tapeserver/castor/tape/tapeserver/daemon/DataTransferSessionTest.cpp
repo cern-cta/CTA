@@ -223,6 +223,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
         archiveFileSize));
       std::unique_ptr<cta::ArchiveFileStatus> status = ns.statFile(requester, archiveFilePath.str());
       
@@ -253,8 +254,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
-        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -386,6 +386,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
         archiveFileSize));
 
       // Write the file to tape
@@ -416,8 +417,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
-        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -540,6 +540,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
         archiveFileSize));
 
       // Write the file to tape
@@ -570,8 +571,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
-        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -689,6 +689,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
+        cta::Checksum(),
         archiveFileSize));
 
       // Write the file to tape
@@ -718,8 +719,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32,
-        cta::ByteArray(cta::Utils::getAdler32(data, sizeof data)));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,

@@ -1081,7 +1081,7 @@ TEST_P(SchedulerTest, createDir_top_level) {
 
   ArchiveDirIterator itor;
 
-  /*ASSERT_NO_THROW*/(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
+  ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
 
   ASSERT_TRUE(itor.hasMore());
 
@@ -1567,7 +1567,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   {
     decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
-    /*ASSERT_NO_THROW*/(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
+    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
@@ -1942,7 +1942,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
     ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
   }
 
-  /*ASSERT_NO_THROW*/(scheduler.deleteArchiveRequest(s_userOnUserHost,
+  ASSERT_NO_THROW(scheduler.deleteArchiveRequest(s_userOnUserHost,
     "/grandparent/parent_file"));
 
   {
@@ -2433,7 +2433,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveJob->nameServerTapeFile.tapeFileLocation.blockId = 1;
     archiveJob->nameServerTapeFile.copyNb = archiveJob->nameServerTapeFile.tapeFileLocation.copyNb;
-    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::ByteArray(0x12345687));
+    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, ntohl(0x12345687));
     archiveJob->nameServerTapeFile.checksum = checksum;
     ASSERT_NO_THROW(archiveJob->complete());
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));

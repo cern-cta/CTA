@@ -17,7 +17,7 @@
  */
 
 #include "common/checksum/Checksum.hpp"
-
+#include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
 #include <sstream>
 
 //------------------------------------------------------------------------------
@@ -35,16 +35,24 @@ const char *cta::Checksum::checksumTypeToStr(const ChecksumType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Checksum::Checksum(): m_type(CHECKSUMTYPE_NONE) {
+cta::Checksum::Checksum(): m_type(CHECKSUMTYPE_NONE) { }
+
+
+cta::Checksum::Checksum(const std::string& url) {
+  if (url.empty()) {
+    return;
+  }
+  castor::tape::utils::Regex re("^adler32:0[Xx]([[:xdigit:]]+)$");
+  auto result = re.exec(url);
+  if (result.size()) {
+    m_type = CHECKSUMTYPE_ADLER32;
+    std::stringstream valStr(result.at(1));
+    uint32_t val;
+    valStr >> std::hex >> val;
+    setNumeric(val);
+  }
 }
-  
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::Checksum::Checksum(const ChecksumType &type, const ByteArray &byteArray):
-  m_type(type),
-  m_byteArray(byteArray) {
-}
+
 
 //------------------------------------------------------------------------------
 // operator==
@@ -63,7 +71,7 @@ cta::Checksum::ChecksumType cta::Checksum::getType() const throw() {
 //------------------------------------------------------------------------------
 // getByteArray
 //------------------------------------------------------------------------------
-const cta::ByteArray &cta::Checksum::getByteArray() const throw() {
+const std::string &cta::Checksum::getByteArray() const throw() {
   return m_byteArray;
 }
 
@@ -71,13 +79,13 @@ const cta::ByteArray &cta::Checksum::getByteArray() const throw() {
 // str
 //------------------------------------------------------------------------------
 std::string cta::Checksum::str() const {
-  const auto arraySize = m_byteArray.getSize();
   std::ostringstream oss;
 
-  if(0 < arraySize) {
-    uint32_t checkSumInt32 = *((uint32_t *)(m_byteArray.getBytes()));
-    oss << "0x" << std::hex << checkSumInt32;
+  switch(m_type) {
+    case CHECKSUMTYPE_ADLER32:
+      oss << "adler32:" << std::hex << std::showbase << getNumeric<uint32_t>();
+      break;
+    default:;
   }
-
   return oss.str();
 }

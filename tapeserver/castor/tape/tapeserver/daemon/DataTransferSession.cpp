@@ -238,7 +238,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(archiveMount, lc);
     MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
-    TapeWriteSingleThread twst(*drive.get(),
+    TapeWriteSingleThread twst(*drive,
         m_mc,
         tsr,
         mwd,

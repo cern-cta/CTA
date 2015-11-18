@@ -33,7 +33,7 @@ m_user(userId), m_pool(pool), m_cluster(), m_radosCtx() {
     cta::exception::Errnum::throwOnNonZero(m_cluster.conf_read_file(NULL),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_read_file");
     cta::exception::Errnum::throwOnNonZero(m_cluster.conf_parse_env(NULL),
-        "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_read_file");
+        "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_parse_env");
     cta::exception::Errnum::throwOnNonZero(m_cluster.connect(),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.connect");
     cta::exception::Errnum::throwOnNonZero(m_cluster.ioctx_create(pool.c_str(), m_radosCtx),

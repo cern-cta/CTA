@@ -638,7 +638,7 @@ void cta::Scheduler::queueArchiveToFileRequest(
   const std::string &archiveFile) {
 
   const uint64_t priority = 0; // TO BE DONE
-  m_ns.createFile(requester, archiveFile, remoteFile.status.mode, remoteFile.status.size);
+  m_ns.createFile(requester, archiveFile, remoteFile.status.mode, Checksum(), remoteFile.status.size);
   const ArchiveToFileRequest rqst = createArchiveToFileRequest(requester, remoteFile, archiveFile, priority);
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> requestCreation(m_db.queue(rqst));
   requestCreation->complete();
@@ -731,7 +731,21 @@ void cta::Scheduler::queueRetrieveRequest(
     for (auto nstf = tapeCopies.begin(); nstf != tapeCopies.end(); nstf++) {
       tcl.push_back(nstf->tapeFileLocation);
     }
-    cta::ArchiveFile archiveFile(archiveFiles.front(), "", sourceStat->fileId, sourceStat->size, *((uint32_t*)(sourceStat->checksum.getByteArray().getBytes())), 0); //nshostname is set to "" and lastmodificationtime is 0 because we don't need this info for retrieving the file
+    if (sourceStat->checksum.getByteArray().size() != sizeof(uint32_t)) {
+        std::stringstream err;
+        err << "Unexpected checksum size in cta::Scheduler::queueRetrieveRequest: size="
+            << sourceStat->checksum.getByteArray().size()
+            << " expected=" << sizeof(uint32_t);
+      throw cta::exception::Exception(err.str());
+    }
+    uint32_t cs = sourceStat->checksum.getNumeric<uint32_t>();
+    cta::ArchiveFile archiveFile(archiveFiles.front(), 
+        "", 
+        sourceStat->fileId,
+        sourceStat->size,
+        cs,
+        0);
+    //nshostname is set to "" and lastmodificationtime is 0 because we don't need this info for retrieving the file
     RetrieveToFileRequest rtfr (archiveFile,
         tcl, remoteFile, 0, cl);
     m_db.queue(rtfr);

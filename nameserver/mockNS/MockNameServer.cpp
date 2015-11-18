@@ -94,6 +94,27 @@ void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
 }
 
 //------------------------------------------------------------------------------
+// assertFsFileExists
+//------------------------------------------------------------------------------
+void cta::MockNameServer::assertChecksumOrSetIfMissing(const std::string &path, const std::string &checksum) {
+  // We suppose the file path is valid. getXattr will nevertheless fail on us 
+  // if not
+  // Get the existing checksum
+  auto ec = Utils::getXattr(path, "user.CTAChecksum");
+  if (ec.empty()) {
+    // Checksum not set: set it.
+    Utils::setXattr(path, "user.CTAChecksum", checksum);
+  } else if (ec != checksum) {
+    // Checksum set: assert it matches
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " unexpected checksum: current="
+        << ec  << " new=" << checksum;
+    throw(exception::Exception(msg.str()));
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // assertFsPathDoesNotExist
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
@@ -194,7 +215,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const {
   std::stringstream ss;
   ss << tapeFile.checksum.checksumTypeToStr(tapeFile.checksum.getType())
-      << " " << *((uint32_t *)(tapeFile.checksum.getByteArray().getBytes()))
+      << " " << tapeFile.checksum.getNumeric<uint32_t>()
       << " " << tapeFile.compressedSize
       << " " << tapeFile.copyNb
       << " " << tapeFile.size
@@ -222,9 +243,8 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
      >> tapeFile.tapeFileLocation.copyNb
      >> tapeFile.tapeFileLocation.fSeq
      >> tapeFile.tapeFileLocation.vid;
-  cta::ByteArray byteArray(checksumInt32);
   cta::Checksum::ChecksumType checksumType=checksumTypeString=="ADLER32"?cta::Checksum::ChecksumType::CHECKSUMTYPE_ADLER32:cta::Checksum::ChecksumType::CHECKSUMTYPE_NONE;
-  cta::Checksum checksum(checksumType, byteArray);
+  cta::Checksum checksum(checksumType, checksumInt32);
   tapeFile.checksum=checksum;
   return tapeFile;
 }
@@ -237,6 +257,7 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
   Utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);
+  assertChecksumOrSetIfMissing(fsPath, tapeFile.checksum.str());
   if(tapeFile.tapeFileLocation.copyNb==1) {
     Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
   }
@@ -386,6 +407,7 @@ void cta::MockNameServer::createFile(
   const SecurityIdentity &requester,
   const std::string &path,
   const mode_t mode,
+  const Checksum &checksum,
   const uint64_t size) {
   {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -426,6 +448,7 @@ void cta::MockNameServer::createFile(
     std::stringstream modeString;
     modeString << std::oct << mode;
     Utils::setXattr(fsPath, "user.CTAMode", modeString.str());
+    Utils::setXattr(fsPath, "user.CTAChecksum", checksum.str());
   }
   setOwner(requester, path, requester.getUser());
 }
@@ -700,12 +723,14 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   } 
 
   const UserIdentity owner = getOwner(requester, path);
-  const Checksum checksum;
   const std::string fsPath = m_fsDir + path;
   // Size is 0 for directories (and set for files)
   uint64_t size = 0;
-  if (ArchiveDirEntry::ENTRYTYPE_FILE == entryType)
+  Checksum checksum;
+  if (ArchiveDirEntry::ENTRYTYPE_FILE == entryType) {
     size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
+    checksum = Checksum(Utils::getXattr(fsPath, "user.CTAChecksum"));
+  }
   const uint64_t fileId = atol(Utils::getXattr(fsPath, "user.CTAFileID").c_str());
   std::stringstream modeStrTr;
   std::string modeStr = Utils::getXattr(fsPath, "user.CTAMode");

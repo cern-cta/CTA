@@ -215,6 +215,7 @@ public:
     const SecurityIdentity &requester,
     const std::string &path,
     const mode_t mode,
+    const Checksum & checksum,
     const uint64_t size) = 0;
 
   /**

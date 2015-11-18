@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include "common/checksum/ByteArray.hpp"
+#include <sstream>
+#include <typeinfo>
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 
@@ -55,10 +57,17 @@ public:
    * Constructor.
    *
    * @param type The type of the checksum.
-   * @param byteArray The checksum as a byte array that can be used to store
-   * the checksum in a database alongside its type.
+   * @param val A numeric value to store in the byte array.
    */
-  Checksum(const ChecksumType &type, const ByteArray &byteArray);
+  template <typename t>
+  Checksum(const ChecksumType &type, t val): m_type(type) { setNumeric(val); }
+  
+  /**
+   * String based constructor.
+   * 
+   * @param url A string describing the type of the checksum
+   */
+  Checksum(const std::string & url);
 
   /**
    * Equality operator.
@@ -81,12 +90,29 @@ public:
    * @return The checksum as a byte array that can be used for storing in a
    * database.
    */
-  const ByteArray &getByteArray() const throw();
+  const std::string &getByteArray() const throw();
 
   /**
    * Returns a human-readable string representation of the checksum.
    */
   std::string str() const;
+  
+  template <typename t>
+  t getNumeric() const {
+    if (m_byteArray.size() != sizeof(t)) {
+      std::stringstream err;
+      err << "In Checksum::getNumeric<"
+              << typeid(t).name() << ">(): wrong size of byte array="
+              << m_byteArray.size() << " expected=" << sizeof(t);
+      throw cta::exception::Exception(err.str());
+    }
+    return (*((t*)m_byteArray.data()));
+  }
+  
+  template <typename t>
+  void setNumeric(t val) {
+    m_byteArray.replace(m_byteArray.begin(), m_byteArray.end(), (char *)&val, sizeof(t));
+  }
 
 private:
 
@@ -99,7 +125,7 @@ private:
    * The checksum as a byte array that can be used to store the checksum in a
    * database alongside its type.
    */
-  ByteArray m_byteArray;
+  std::string m_byteArray;
 
 }; // class Checksum
 

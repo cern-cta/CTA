@@ -53,7 +53,8 @@ void cta::ArchiveJob::complete() {
   // First make the file safe on tape.
   m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.vid,
       nameServerTapeFile.tapeFileLocation.fSeq);
-  // Now record the data in the archiveNS
+  // Now record the data in the archiveNS. The checksum will be validated if already
+  // present, of inserted if not.
   m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
     std::numeric_limits<uint32_t>::max()), ""), archiveFile.path, nameServerTapeFile);
   // We can now record the success for the job in the database

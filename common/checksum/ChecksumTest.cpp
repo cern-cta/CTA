@@ -17,8 +17,8 @@
  */
 
 #include "common/checksum/Checksum.hpp"
-
 #include <gtest/gtest.h>
+#include <arpa/inet.h>
 
 namespace unitTests {
 
@@ -39,26 +39,31 @@ TEST_F(cta_ChecksumTest, default_constructor) {
   ASSERT_EQ(Checksum::CHECKSUMTYPE_NONE, checksum.getType());
   ASSERT_TRUE(checksum.str().empty());
 
-  const ByteArray &byteArray = checksum.getByteArray();
-  
-  ASSERT_EQ((uint32_t)0, byteArray.getSize());
-  ASSERT_EQ(NULL, byteArray.getBytes());
+  ASSERT_EQ((uint32_t)0, checksum.getByteArray().size());
 }
 
 TEST_F(cta_ChecksumTest, two_param_constructor) {
   using namespace cta;
 
   const Checksum::ChecksumType checksumType = Checksum::CHECKSUMTYPE_ADLER32;
-  const uint8_t bytes[4] = {10, 20, 30, 40};
-  const ByteArray byteArray(bytes);
-  const Checksum checksum(checksumType, bytes);
+  const uint32_t val = ntohl(0x0A141E28);
+  const Checksum checksum(checksumType, val);
 
   ASSERT_EQ(Checksum::CHECKSUMTYPE_ADLER32, checksum.getType());
-  ASSERT_EQ((uint32_t)4, checksum.getByteArray().getSize());
-  ASSERT_EQ((uint8_t)10, checksum.getByteArray().getBytes()[0]);
-  ASSERT_EQ((uint8_t)20, checksum.getByteArray().getBytes()[1]);
-  ASSERT_EQ((uint8_t)30, checksum.getByteArray().getBytes()[2]);
-  ASSERT_EQ((uint8_t)40, checksum.getByteArray().getBytes()[3]);
+  ASSERT_EQ((uint32_t)4, checksum.getByteArray().size());
+  ASSERT_EQ((uint8_t)10, checksum.getByteArray()[0]);
+  ASSERT_EQ((uint8_t)20, checksum.getByteArray()[1]);
+  ASSERT_EQ((uint8_t)30, checksum.getByteArray()[2]);
+  ASSERT_EQ((uint8_t)40, checksum.getByteArray()[3]);
+}
+
+TEST_F(cta_ChecksumTest, url_constructor) {
+  using namespace cta;
+  
+  const Checksum checksum("adler32:0x12345678");
+  
+  ASSERT_EQ(Checksum::CHECKSUMTYPE_ADLER32, checksum.getType());
+  ASSERT_EQ(0x12345678, checksum.getNumeric<uint32_t>());
 }
 
 } // namespace unitTests

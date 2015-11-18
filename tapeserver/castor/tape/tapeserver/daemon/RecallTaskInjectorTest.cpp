@@ -174,7 +174,7 @@ namespace unitTests
     rti.requestInjection(false);
     rti.requestInjection(true);
     rti.finish();
-    /*ASSERT_NO_THROW*/(rti.waitThreads());
+    ASSERT_NO_THROW(rti.waitThreads());
     ASSERT_EQ(nbJobs+1, trm.getJobs);
 
     //pushed nbFile*2 files + 1 end of work

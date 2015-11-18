@@ -616,7 +616,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     re.fetch();
     ASSERT_THROW(re.getDriveRegisterAddress(),
       cta::objectstore::RootEntry::NotAllocated);
-    /*ASSERT_NO_THROW*/(
+    ASSERT_NO_THROW(
       schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(ag, cl));
     ASSERT_TRUE(be.exists(schedulerGlobalLockAddress));
   }

@@ -121,8 +121,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     } //end of while(1)
     logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     m_retrieveJob->transferredSize = m_stats.dataVolume;
-    m_retrieveJob->transferredChecksum = cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, 
-      cta::ByteArray(checksum));
+    m_retrieveJob->transferredChecksum = cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, checksum);
     reporter.reportCompletedJob(std::move(m_retrieveJob));
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();

@@ -174,7 +174,7 @@ TEST_P(SchedulerDatabaseTest, create_new_admin_host) {
 
   {
     std::list<AdminHost> adminHosts;
-    /*ASSERT_NO_THROW*/(adminHosts = db.getAdminHosts());
+    ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
     ASSERT_EQ((std::list<AdminHost>::size_type)1, adminHosts.size());
 
     const AdminHost &adminHost = adminHosts.front();

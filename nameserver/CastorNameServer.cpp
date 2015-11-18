@@ -188,7 +188,7 @@ std::string cta::CastorNameServer::getDirStorageClass(const SecurityIdentity &re
 // createFile
 //------------------------------------------------------------------------------
 void cta::CastorNameServer::createFile(const SecurityIdentity &requester,
-  const std::string &path, const mode_t mode, const uint64_t size) {
+  const std::string &path, const mode_t mode, const Checksum & checksum, const uint64_t size) {
   Utils::assertAbsolutePathSyntax(path);
   exception::Serrnum::throwOnMinusOne(Cns_creat(path.c_str(), mode), __FUNCTION__);
   exception::Serrnum::throwOnMinusOne(Cns_setfsize(path.c_str(), NULL, size, 0, 0), __FUNCTION__);
