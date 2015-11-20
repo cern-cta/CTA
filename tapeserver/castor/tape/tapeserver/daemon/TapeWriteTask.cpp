@@ -133,7 +133,7 @@ namespace daemon {
       // Record the fSeq in the tape session
       session.reportWrittenFSeq(m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
       m_archiveJob->nameServerTapeFile.checksum = 
-          cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, ckSum);
+          cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, (uint32_t)ckSum);
       m_archiveJob->nameServerTapeFile.compressedSize = m_taskStats.dataVolume;
       m_archiveJob->nameServerTapeFile.tapeFileLocation.blockId = output->getBlockId();
       reportPacker.reportCompletedJob(std::move(m_archiveJob));

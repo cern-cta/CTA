@@ -60,7 +60,21 @@ public:
    * @param val A numeric value to store in the byte array.
    */
   template <typename t>
-  Checksum(const ChecksumType &type, t val): m_type(type) { setNumeric(val); }
+  Checksum(const ChecksumType &type, t val): m_type(type) { 
+    switch (m_type) {
+      case CHECKSUMTYPE_ADLER32:
+        if (sizeof(t) != 4) {
+          std::stringstream err;
+          err << "In Checksum::Checksum(type,value): unexpected value size="
+                  << sizeof(t) << " expected=4";
+          throw cta::exception::Exception(err.str());
+        }
+        break;
+      default:
+        throw cta::exception::Exception("In Checksum::Checksum(type,value): unsupported type for any value");
+    }
+    setNumeric(val);
+  }
   
   /**
    * String based constructor.

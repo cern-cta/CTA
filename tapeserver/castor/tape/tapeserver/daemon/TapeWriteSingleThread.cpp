@@ -23,6 +23,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "shift/serrno.h"
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
@@ -310,7 +311,73 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     logWithStats(LOG_INFO, "Tape thread complete",
             params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage,errorCode);
-  }    
+  }
+  catch(const cta::exception::Exception& e){
+    //we end there because write session could not be opened 
+    //or because a task failed or because flush failed
+    
+    // First off, indicate the problem to the task injector so it does not inject
+    // more work in the pipeline
+    // If the problem did not originate here, we just re-flag the error, and
+    // this has no effect, but if we had a problem with a non-file operation
+    // like mounting the tape, then we have to signal the problem to the disk
+    // side and the task injector, which will trigger the end of session.
+    m_injector->setErrorFlag();
+    // We can still update the session stats one last time (unmount timings
+    // should have been updated by the RAII cleaner/unmounter).
+    m_watchdog.updateStats(m_stats);
+    
+    // If we reached the end of tape, this is not an error (ENOSPC)
+    try {
+      // If it's not the error we're looking for, we will go about our business
+      // in the catch section. dynamic cast will throw, and we'll do ourselves
+      // if the error code is not the one we want.
+      const castor::exception::Errnum & en = 
+        dynamic_cast<const castor::exception::Errnum &>(e);
+      if(en.errorNumber()!= ENOSPC) {
+        throw 0;
+      }
+      // This is indeed the end of the tape. Not an error.
+      m_watchdog.setErrorCount("Info_tapeFilledUp",1);
+    } catch (...) {
+      // The error is not an ENOSPC, so it is, indeed, an error.
+      // If we got here with a new error, currentErrorToCount will be non-empty,
+      // and we will pass the error name to the watchdog.
+      if(currentErrorToCount.size()) {
+        m_watchdog.addToErrorCount(currentErrorToCount);
+      }
+    }
+    
+    //first empty all the tasks and circulate mem blocks
+    while(1) {
+      std::unique_ptr<TapeWriteTask>  task(m_tasks.pop());
+      if(task.get()==NULL) {
+        break;
+      }
+      task->circulateMemBlocks();
+    }
+    // Prepare the standard error codes for the session
+    std::string errorMessage(e.getMessageValue());
+    int errorCode(SEINTERNAL);
+    // Override if we got en ENOSPC error (end of tape)
+    // This is 
+    try {
+      const castor::exception::Errnum & errnum = 
+          dynamic_cast<const castor::exception::Errnum &> (e);
+      if (ENOSPC == errnum.errorNumber()) {
+        errorCode = ENOSPC;
+        errorMessage = "End of migration due to tape full";
+      }
+    } catch (...) {}
+    // then log the end of write thread
+    log::ScopedParamContainer params(m_logContext);
+    params.add("status", "error")
+          .add("ErrorMesage", errorMessage);
+    m_stats.totalTime = totalTimer.secs();
+    logWithStats(LOG_INFO, "Tape thread complete",
+            params);
+    m_reportPacker.reportEndOfSessionWithErrors(errorMessage,errorCode);
+  }      
 }
 
 //------------------------------------------------------------------------------
