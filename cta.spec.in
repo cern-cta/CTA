@@ -109,3 +109,4 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctanameserver.so
 %attr(0755,root,root) %{_libdir}/libctaremotens.so
 %attr(0755,root,root) %{_libdir}/libctascheduler.so
+%attr(0755,root,root) %{_libdir}/libctaobjectstore.so

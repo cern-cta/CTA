@@ -30,7 +30,7 @@ SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
   PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
 
-add_library (CTAObjectStore
+add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
   RootEntry.cpp
   Agent.cpp
@@ -50,8 +50,9 @@ add_library (CTAObjectStore
   GenericObject.cpp
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp)
-target_link_libraries(CTAObjectStore Utils rados)
+target_link_libraries(ctaobjectstore Utils rados)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(ObjectStoreUnitTests
   BackendTest.cpp
@@ -63,12 +64,12 @@ set(ObjectStoreUnitTests
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
-  protobuf rados ctacommon gtest gmock CTAObjectStore)
+  protobuf rados ctacommon gtest gmock ctaobjectstore)
 
 add_executable(makeMinimalVFS makeMinimalVFS.cpp)
 target_link_libraries(makeMinimalVFS
-  protobuf CTAObjectStore ctacommon)
+  protobuf ctaobjectstore ctacommon)
 
 add_executable(listObjectStore listObjectStore.cpp)
 target_link_libraries(listObjectStore
-  protobuf CTAObjectStore ctacommon)
+  protobuf ctaobjectstore ctacommon)

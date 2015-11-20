@@ -106,7 +106,7 @@ namespace unitTests{
   
   TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
     char path[]="/tmp/testDRT-XXXXXX";
-    mkstemp(path);
+    ::close(::mkstemp(path));
     std::string url("file://");
     url += path;
     std::ofstream out(path,std::ios::out | std::ios::binary);

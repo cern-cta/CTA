@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include <iostream>
 
 namespace {
   const long unsigned int max_fake_drive_record_length = 1000;

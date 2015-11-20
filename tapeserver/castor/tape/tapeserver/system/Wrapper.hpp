@@ -150,6 +150,8 @@ namespace System {
     void setupSLC6();
     void setupForVirtualDriveSLC6();
     void referenceFiles();
+    virtual ~fakeWrapper();
+
   private:
 
     struct ourDIR {

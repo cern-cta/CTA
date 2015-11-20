@@ -117,7 +117,7 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 
 add_custom_target(test tests/unittests
                     #  
-                    #COMMAND valgrind --track-fds=yes --leak-check=full --demangle=no --gen-suppressions=all --show-reachable=yes --error-exitcode=1 test/castorUnitTests
+                    #COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 tests/unittests
                     #COMMAND test/castorThreadedUnitTests
                     #COMMAND valgrind --track-fds=yes --leak-check=full --show-reachable=yes --error-exitcode=1  test/castorThreadedUnitTests
                     #COMMAND valgrind --tool=helgrind -v --demangle=no --conflict-cache-size=30000000 --error-exitcode=1 test/castorThreadedUnitTests
@@ -125,4 +125,3 @@ add_custom_target(test tests/unittests
                     #COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests 
                     DEPENDS tests/unittests #test/castorThreadedUnitTests test/castorMultiprocessUnitTests test/castorThreadedUnitTests.supp
                     COMMENT "Running unit tests" VERBATIM)
-

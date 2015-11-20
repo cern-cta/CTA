@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "Wrapper.hpp"
+#include "../drive/DriveInterface.hpp"
 #include <errno.h>
 #include <limits.h>
 #include <stdexcept>
@@ -215,6 +216,15 @@ void System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, stDeviceFile>::iterator i = m_stFiles.begin();
           i != m_stFiles.end(); i++)
     m_files[i->first] = &m_stFiles[i->first]; 
+}
+/**
+ * Destructor: delete leftover drive objects
+ */
+System::fakeWrapper::~fakeWrapper() {
+  for (auto d=m_pathToDrive.begin(); d!=m_pathToDrive.end(); d++) {
+    delete d->second;
+    d->second = NULL;
+  }
 }
 
 System::mockWrapper::mockWrapper() {

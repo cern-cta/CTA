@@ -19,7 +19,7 @@ target_link_libraries(unittests
   castorutilsunittests
   ctacommon
   ctacommonunittests
-  CTAObjectStore
+  ctaobjectstore
   ctaobjectstoreunittests
   ctanameserverunittests
   ctaremotensunittests
