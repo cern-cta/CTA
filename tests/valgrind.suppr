@@ -1,0 +1,238 @@
+{
+   C__Coptind
+   Memcheck:Leak
+   fun:calloc
+   fun:C__Coptind
+   ...
+}
+
+{
+   C__serrno
+   Memcheck:Leak
+   fun:calloc
+   fun:C__serrno
+   ...
+}
+
+{
+   C__Copterr
+   Memcheck:Leak
+   fun:calloc
+   fun:C__Copterr
+   ...
+}
+
+{
+   C__Coptreset
+   Memcheck:Leak
+   fun:calloc
+   fun:C__Coptreset
+   ...
+}
+
+
+{
+   C__Coptopt
+   Memcheck:Leak
+   fun:calloc
+   fun:C__Coptopt
+   ...
+}
+
+{
+   Cglobals_get
+   Memcheck:Leak
+   fun:calloc
+   fun:Cglobals_get
+   ...
+}
+
+{
+   xrootdclient
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_ZN8XrdNetIF9SetDomainEv
+   fun:_GLOBAL__I_XrdNetIF.cc
+   obj:/usr/lib64/libXrdUtils.so.2.0.0
+   obj:/usr/lib64/libXrdUtils.so.2.0.0
+}
+
+{
+   C__Coptarg
+   Memcheck:Leak
+   fun:calloc
+   fun:C__Coptarg
+   ...
+}
+
+{
+   C__serrno_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__serrno
+   ...
+}
+
+{
+   C__rfio_errno_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__rfio_errno
+   ...
+}
+
+{
+   C__Copterr_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__Copterr
+   ...
+}
+
+{
+   C__Coptind_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__Coptind
+   ...
+}
+
+{
+   C__Coptopt_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__Coptopt
+   ...
+}
+
+{
+   C__Coptreset_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__Coptreset
+   ...
+}
+
+{
+   C__Coptarg_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:C__Coptarg
+   ...
+}
+
+{
+   Cglobals_get_thread
+   Memcheck:Leak
+   fun:malloc
+   fun:Cthread_Getspecific
+   fun:Cthread_Getspecific_init
+   fun:Cglobals_get
+   ...
+}
+
+{
+   xrootdclient_2
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_ZN11XrdSysUtils8ExecNameEv
+   fun:_ZN5XrdCl10DefaultEnvC1Ev
+   fun:_ZN5XrdCl10DefaultEnv10InitializeEv
+   fun:_GLOBAL__I_XrdClDefaultEnv.cc
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+}
+
+{
+   liblttng-ust
+   Memcheck:Leak
+   fun:calloc
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:__tracepoints__ptrs_init
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+}
+
+{
+   Cthread_init
+   Memcheck:Leak
+   fun:malloc
+   fun:_Cthread_addcid
+   fun:_Cthread_once
+   fun:pthread_once
+   fun:_Cthread_init
+   fun:Cthread_init
+   ...
+}
+
+{
+   libXrdUtils
+   Memcheck:Leak
+   fun:malloc
+   fun:__res_vinit
+   fun:gaih_inet
+   fun:getaddrinfo
+   fun:_ZN10XrdNetAddr3SetEPKci
+   fun:_ZN10XrdNetAddrC1Ei
+   fun:_ZN8XrdNetIF9SetDomainEv
+   fun:_GLOBAL__I_XrdNetIF.cc
+   obj:/usr/lib64/libXrdUtils.so.2.0.0
+   obj:/usr/lib64/libXrdUtils.so.2.0.0
+}
+
+{
+   liblttng-ust_3
+   Memcheck:Leak
+   fun:malloc
+   fun:add_to_global
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:__tracepoints__ptrs_init
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+}
+
+{
+   liblttng-ust_4
+   Memcheck:Leak
+   fun:calloc
+   fun:_dl_allocate_tls
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:lttng_ust_init
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+}
+
+{
+   liblttng-ust_5
+   Memcheck:Leak
+   fun:calloc
+   fun:_dl_allocate_tls
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:lttng_ust_init
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+}
+

@@ -294,6 +294,15 @@ void MigrationReportPacker::WorkerThread::run(){
       m_parent.m_watchdog->addParameter(log::Param("status","failure"));
     }
   }
+  // Drain the FIFO if necessary. We know that m_continue will be 
+  // set by ReportEndofSessionWithErrors or ReportEndofSession
+  // TODO devise a more generic mechanism
+  while(m_parent.m_continue) {
+    std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
+    if (dynamic_cast<ReportEndofSessionWithErrors *>(rep.get())  || 
+        dynamic_cast<ReportEndofSession *>(rep.get()))
+      m_parent.m_continue = false;
+  }
 }
 
 }}}}

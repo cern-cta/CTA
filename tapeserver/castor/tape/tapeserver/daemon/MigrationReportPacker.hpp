@@ -146,7 +146,7 @@ private:
   public:
     ReportEndofSessionWithErrors(std::string msg,int errorCode):
     m_message(msg),m_errorCode(errorCode){}
-
+    
     virtual void execute(MigrationReportPacker& reportPacker);
   };
   
