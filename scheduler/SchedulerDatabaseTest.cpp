@@ -73,7 +73,7 @@ public:
   }
 
   virtual void TearDown() {
-    m_db.release();
+    m_db.reset();
   }
 
   cta::SchedulerDatabase &getDb() {
