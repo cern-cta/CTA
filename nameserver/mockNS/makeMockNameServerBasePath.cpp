@@ -46,11 +46,19 @@ void setXattr(const std::string &path, const std::string &name, const std::strin
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(void) {
+int main(int argc, char ** argv) {
   try {
     umask(0);  
     char path[100];
-    strncpy(path, "/cephfs/ctaNS/CTAMockNSXXXXXX", 100);
+    if (1 == argc) {
+      strncpy(path, "/tmp/CTAMockNSXXXXXX", 100);
+    } else if (2 == argc) {
+      std::stringstream pathSS;
+      pathSS << argv[1] << "/CTAMockNSXXXXXX";
+      strncpy(path, pathSS.str().c_str(), 100);
+    } else {
+      throw cta::exception::Exception("Wrong number of arguments: expected 0 or 1");
+    }
     cta::exception::Errnum::throwOnNull(mkdtemp(path), "MockNameServer() - Failed to create temporary directory");
     std::string pathString(path);
     std::stringstream uidss;
