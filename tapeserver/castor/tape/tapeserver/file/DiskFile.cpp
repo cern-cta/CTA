@@ -22,6 +22,7 @@
  *****************************************************************************/
 #include <sys/types.h>
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/exception/Errnum.hpp"
@@ -642,7 +643,7 @@ EosReadFile::EosReadFile(const std::string &eosUrl) {
   // Setup parent's variables
   m_readPosition = 0;
   std::stringstream ss;
-  ss << "xroot://localhost:1094//" << eosUrl;
+  ss << "xroot://" << castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort") << "//" << eosUrl;
   m_URL = ss.str();
   // and simply open
   using XrdCl::OpenFlags;
@@ -682,7 +683,7 @@ EosWriteFile::EosWriteFile(const std::string& eosUrl) {
   // Setup parent's variables
   m_writePosition = 0;
   std::stringstream ss;
-  ss << "xroot://localhost:1094//" << eosUrl;
+  ss << "xroot://" << castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort") << "//" << eosUrl;
   m_URL = ss.str();
   // and simply open
   using XrdCl::OpenFlags;
