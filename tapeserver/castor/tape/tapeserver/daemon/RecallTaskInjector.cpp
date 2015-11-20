@@ -85,7 +85,7 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 //injectBulkRecalls
 //------------------------------------------------------------------------------
-void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs) {
+void RecallTaskInjector::injectBulkRecalls(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   for (auto it = jobs.begin(); it != jobs.end(); ++it) {
     
     (*it)->positioningMethod=cta::PositioningMethod::ByBlock;
@@ -101,8 +101,9 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>
     
     m_lc.log(LOG_INFO, "Recall task created");
     
-    DiskWriteTask * dwt = new DiskWriteTask(*it, m_memManager);
-    TapeReadTask * trt = new TapeReadTask(*it, *dwt, m_memManager);
+    cta::RetrieveJob *job = it->get();
+    DiskWriteTask * dwt = new DiskWriteTask(it->release(), m_memManager);
+    TapeReadTask * trt = new TapeReadTask(job, *dwt, m_memManager);
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
@@ -116,7 +117,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<cta::RetrieveJob *>
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousInjection()
 {
-  std::vector<cta::RetrieveJob *> jobs;
+  std::vector<std::unique_ptr<cta::RetrieveJob>> jobs;
   
   try {
     uint64_t files=0;
@@ -126,7 +127,7 @@ bool RecallTaskInjector::synchronousInjection()
       if(!job.get()) break;
       files++;
       bytes+=job->archiveFile.size;
-      jobs.push_back(job.release());
+      jobs.emplace_back(job.release());
     }
   } catch (castor::exception::Exception & ex) {
     castor::log::ScopedParamContainer scoped(m_lc);
@@ -185,7 +186,7 @@ void RecallTaskInjector::WorkerThread::run()
         break;
       }
       m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
-      std::vector<cta::RetrieveJob *> jobs;
+      std::vector<std::unique_ptr<cta::RetrieveJob>> jobs;
       
       uint64_t files=0;
       uint64_t bytes=0;
@@ -194,7 +195,7 @@ void RecallTaskInjector::WorkerThread::run()
         if(!job.get()) break;
         files++;
         bytes+=job->archiveFile.size;
-        jobs.push_back(job.release());
+        jobs.emplace_back(job.release());
       }
       
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));

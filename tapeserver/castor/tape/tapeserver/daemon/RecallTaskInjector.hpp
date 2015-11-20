@@ -126,7 +126,7 @@ private:
    * Create all the tape-read and write-disk tasks for set of files to retrieve
    * @param jobs
    */
-  void injectBulkRecalls(const std::vector<cta::RetrieveJob *>& jobs);
+  void injectBulkRecalls(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs);
 
   /**
    * A request of files to recall. We request EITHER
