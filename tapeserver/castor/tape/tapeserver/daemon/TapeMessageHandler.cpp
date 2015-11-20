@@ -198,20 +198,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   case messages::MSG_TYPE_RETRIEVEJOBFROMCTA:
     return handleRetrieveJobFromCTA(rqst);
 
-  case messages::MSG_TYPE_MIGRATIONJOBFROMTAPEGATEWAY:
-    return handleMigrationJobFromTapeGateway(rqst);
-
-  case messages::MSG_TYPE_MIGRATIONJOBFROMWRITETP:
-    return handleMigrationJobFromWriteTp(rqst);
-
   case messages::MSG_TYPE_LABELERROR:
     return handleLabelError(rqst);
-
-  case messages::MSG_TYPE_RECALLJOBFROMREADTP:
-    return handleRecallJobFromReadTp(rqst);
-
-  case messages::MSG_TYPE_RECALLJOBFROMTAPEGATEWAY:
-    return handleRecallJobFromTapeGateway(rqst);
 
   case messages::MSG_TYPE_TAPEMOUNTEDFORMIGRATION:
     return handleTapeMountedForMigration(rqst);
@@ -294,39 +282,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 }
 
 //------------------------------------------------------------------------------
-// handleMigrationJobFromTapeGateway
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleMigrationJobFromTapeGateway(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling MigrationJobFromTapeGateway message");
-
-  try {
-    castor::messages::MigrationJobFromWriteTp rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-    
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
-    drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
-
-    {
-      std::ostringstream msg;
-      msg << __FUNCTION__ << ": Not fully implemented because the number of"
-        " files on tape is not known because there is no vmgr in the CTA"
-        " project";
-      throw castor::exception::Exception(msg.str());
-    }
-    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
-    //return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to handle MigrationJobFromTapeGateway message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }   
-}
-
-//------------------------------------------------------------------------------
 // handleArchiveJobFromCTA
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
@@ -366,91 +321,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   frame.serializeProtocolBufferIntoBody(body);
 
   return frame;
-}
-
-//------------------------------------------------------------------------------
-// handleMigrationJobFromWriteTp
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleMigrationJobFromWriteTp(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling MigrationJobFromWriteTp message");
-
-  try {
-    messages::MigrationJobFromWriteTp rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
-    drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
-
-    {
-      std::ostringstream msg;
-      msg << __FUNCTION__ << ": Not fully implemented because the number of"
-        " files on tape is not known because there is no vmgr in the CTA"
-        " project";
-      throw castor::exception::Exception(msg.str());
-    }
-    //messages::Frame reply = createNbFilesOnTapeFrame(tapeInfo.nbFiles);
-    //return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to handle MigrationJobFromWriteTp message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleRecallJobFromReadTp
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleRecallJobFromReadTp(const messages::Frame &rqst) {
-
-  try {
-    messages::RecallJobFromReadTp rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
-    drive.getTransferSession().receivedRecallJob(rqstBody.vid());
-
-    const messages::Frame reply = createReturnValueFrame(0);
-    return reply;
-
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to handle RecallJobFromTapeGateway message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleRecallJobFromTapeGateway
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleRecallJobFromTapeGateway(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling RecallJobFromTapeGateway message");
-
-  try {
-    messages::RecallJobFromTapeGateway rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-
-    CatalogueDrive &drive =
-      m_driveCatalogue.findDrive(rqstBody.unitname());
-    drive.getTransferSession().receivedRecallJob(rqstBody.vid());
-
-    const messages::Frame reply = createReturnValueFrame(0);
-    return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to handle RecallJobFromTapeGateway message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

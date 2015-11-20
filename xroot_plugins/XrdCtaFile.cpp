@@ -48,10 +48,11 @@
 // checkClient
 //------------------------------------------------------------------------------
 cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
-  if(!client || !client->host || strncmp(client->host, "localhost", 9))
-  {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] operation possible only from localhost");
-  }
+// TEMPORARILY commented out host check for demo purposes:
+//  if(!client || !client->host || strncmp(client->host, "localhost", 9))
+//  {
+//    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] operation possible only from localhost");
+//  }
   cta::SecurityIdentity requester;
   struct passwd pwd;
   struct passwd *result;

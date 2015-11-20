@@ -70,50 +70,6 @@ public:
     const std::string &unitName);
 
   /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  void gotRecallJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the readtp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  void gotRecallJobFromReadTp(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  uint32_t gotMigrationJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the writetp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  uint32_t gotMigrationJobFromWriteTp(const std::string &vid,
-    const std::string &unitName);
-
-  /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
    *
    * @param vid The tape to be mounted for recall.
@@ -229,46 +185,6 @@ private:
    * @return The frame.
    */
   Frame createRetrieveJobFromCTAFrame(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Creates a frame containing a RecallJobFromTapeGateway message.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param unitName The unit name of the tape drive.
-   * @return The frame.
-   */
-  Frame createRecallJobFromTapeGatewayFrame(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Creates a frame containing a RecallJobFromReadTp message.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param unitName The unit name of the tape drive.
-   * @return The frame.
-   */
-  Frame createRecallJobFromReadTpFrame(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Creates a frame containing a MigrationJobFromTapeGateway message.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param unitName The unit name of the tape drive.
-   * @return The frame.
-   */
-  Frame createMigrationJobFromTapeGatewayFrame(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Creates a frame containing a MigrationJobFromWriteTp message.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param unitName The unit name of the tape drive.
-   * @return The frame.
-   */
-  Frame createMigrationJobFromWriteTpFrame(const std::string &vid,
     const std::string &unitName);
 
   /**

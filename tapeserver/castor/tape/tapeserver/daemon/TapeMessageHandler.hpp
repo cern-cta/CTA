@@ -168,15 +168,6 @@ private:
    * @return The reply.
    */
   messages::Frame handleLabelError(const messages::Frame &rqst);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */
-  messages::Frame handleMigrationJobFromTapeGateway(
-    const messages::Frame &rqst);
   
   /**
    * Handles the specified request.
@@ -194,22 +185,6 @@ private:
    * @return The message frame.
    */
   messages::Frame createNbFilesOnTapeFrame(const uint32_t nbFiles);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */
-  messages::Frame handleMigrationJobFromWriteTp(const messages::Frame &rqst);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */
-  messages::Frame handleRecallJobFromTapeGateway(const messages::Frame &rqst);
   
   /**
    * Handles the specified request.
@@ -218,14 +193,6 @@ private:
    * @return The reply.
    */
   messages::Frame handleRetrieveJobFromCTA(const messages::Frame &rqst);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */  
-  messages::Frame handleRecallJobFromReadTp(const messages::Frame &rqst);
 
   /**
    * Handles the specified request.

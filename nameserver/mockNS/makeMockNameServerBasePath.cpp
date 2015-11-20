@@ -50,7 +50,7 @@ int main(void) {
   try {
     umask(0);  
     char path[100];
-    strncpy(path, "/tmp/CTAMockNSXXXXXX", 100);
+    strncpy(path, "/cephfs/ctaNS/CTAMockNSXXXXXX", 100);
     cta::exception::Errnum::throwOnNull(mkdtemp(path), "MockNameServer() - Failed to create temporary directory");
     std::string pathString(path);
     std::stringstream uidss;

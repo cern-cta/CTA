@@ -42,38 +42,6 @@ public:
    * Destructor.
    */
   virtual ~TapeserverProxy()  = 0;
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void gotRecallJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the readtp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void gotRecallJobFromReadTp(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  virtual uint32_t gotMigrationJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName) = 0;
   
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got
@@ -94,18 +62,6 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   virtual void gotRetrieveJobFromCTA(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the writetp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  virtual uint32_t gotMigrationJobFromWriteTp(const std::string &vid,
     const std::string &unitName) = 0;
 
   /**
