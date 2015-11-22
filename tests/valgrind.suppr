@@ -165,7 +165,7 @@
    fun:calloc
    fun:_dlerror_run
    fun:dlopen@@GLIBC_2.2.5
-   fun:__tracepoints__ptrs_init
+   ...
    obj:/usr/lib64/liblttng-ust.so.0.0.0
    obj:/usr/lib64/liblttng-ust.so.0.0.0
 }
@@ -209,7 +209,7 @@
    fun:_dl_catch_error
    fun:_dlerror_run
    fun:dlopen@@GLIBC_2.2.5
-   fun:__tracepoints__ptrs_init
+   ...
    obj:/usr/lib64/liblttng-ust.so.0.0.0
    obj:/usr/lib64/liblttng-ust.so.0.0.0
 }
@@ -235,4 +235,18 @@
    obj:/usr/lib64/liblttng-ust.so.0.0.0
    obj:/usr/lib64/liblttng-ust.so.0.0.0
 }
+
+{
+   xrootdclient_3
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_ZN11XrdSysUtils8ExecNameEv
+   fun:_ZN5XrdCl10DefaultEnvC1Ev
+   fun:_ZN5XrdCl10DefaultEnv10InitializeEv
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+}
+
 
