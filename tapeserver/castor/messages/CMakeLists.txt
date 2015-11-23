@@ -53,6 +53,7 @@ set(CtaMessageSrcs
 
 add_library(ctamessages SHARED
   ${CtaMessageSrcs})
+install (TARGETS ctamessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_dependencies(ctamessages ctamessagesprotobuf)
 

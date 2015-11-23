@@ -73,6 +73,7 @@ The tape server daemon
 %files -n cta-tapeserver
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-tapeserverd
+%attr(0755,root,root) %{_libdir}/libctamessages.so
 
 %package -n cta-frontend
 Summary: CERN Tape Archive
