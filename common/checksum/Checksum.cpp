@@ -85,6 +85,9 @@ std::string cta::Checksum::str() const {
     case CHECKSUMTYPE_ADLER32:
       oss << "adler32:" << std::hex << std::showbase << getNumeric<uint32_t>();
       break;
+    case CHECKSUMTYPE_NONE:
+      oss << "-";
+      break;
     default:;
   }
   return oss.str();

@@ -214,8 +214,9 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 //------------------------------------------------------------------------------
 std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const {
   std::stringstream ss;
+  
   ss << tapeFile.checksum.checksumTypeToStr(tapeFile.checksum.getType())
-      << " " << tapeFile.checksum.getNumeric<uint32_t>()
+      << " " << tapeFile.checksum.str()
       << " " << tapeFile.compressedSize
       << " " << tapeFile.copyNb
       << " " << tapeFile.size
