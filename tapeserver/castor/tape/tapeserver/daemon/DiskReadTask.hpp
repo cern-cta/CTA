@@ -98,6 +98,16 @@ private:
   cta::ArchiveJob *m_archiveJob;
   
   /**
+   * Information about the archive job we will cache as it is needed
+   * after the archive job is going to be potentially deleted by the 
+   * writer
+   */
+  struct {
+    std::string remotePath;
+    uint64_t fileId;
+  } m_archiveJobCachedInfo;
+  
+  /**
    * The number of memory block we will need to read the whole file
    */
   size_t m_numberOfBlock;

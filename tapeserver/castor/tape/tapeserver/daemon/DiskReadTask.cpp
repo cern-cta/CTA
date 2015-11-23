@@ -39,7 +39,10 @@ DiskReadTask::DiskReadTask(DataConsumer & destination,
         size_t numberOfBlock,castor::server::AtomicFlag& errorFlag):
 m_nextTask(destination),m_archiveJob(archiveJob),
         m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
-{}
+{
+  m_archiveJobCachedInfo.remotePath = m_archiveJob->remotePathAndStatus.path.getRaw();
+  m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.fileId;
+}
 
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
@@ -208,8 +211,8 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext&
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_archiveJob->archiveFile.fileId)
-           .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
+           .add("FILEID",m_archiveJobCachedInfo.fileId)
+           .add("path",m_archiveJobCachedInfo.remotePath);
     lc.log(level,msg);
 }
 
