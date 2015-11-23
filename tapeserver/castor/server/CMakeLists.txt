@@ -3,10 +3,10 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
-add_library (castorserverutils SHARED
+add_library (ctaserverutils SHARED
   ProcessCapDummy.cpp)
 
-add_library (castorserverunittests SHARED
+add_library (ctaserverunittests SHARED
   AtomicCounterTest.cpp
   DaemonTest.cpp
   SmartCapTest.cpp
@@ -15,5 +15,5 @@ add_library (castorserverunittests SHARED
   ThreadingMTTests.cpp
   ThreadingTests.cpp)
 
-target_link_libraries (castorserverunittests
+target_link_libraries (ctaserverunittests
   castorserver)

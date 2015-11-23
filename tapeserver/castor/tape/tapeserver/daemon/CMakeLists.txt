@@ -28,7 +28,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 find_package( ZLIB REQUIRED )
 
-add_library(castorTapeServerDaemon
+add_library(ctaTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   Catalogue.cpp
@@ -74,19 +74,19 @@ add_library(castorTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(castorTapeServerDaemon castormessages castortapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler)
-add_dependencies(castorTapeServerDaemon castormessagesprotobuf)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler)
+add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
-target_link_libraries(cta-tapeserverd castorTapeServerDaemon SCSI System Utils 
-  File TapeDrive castorcommon castorclient castorlegacymsg castorserver 
-  castortapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} castormessages zmq)
+target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
+  File TapeDrive ctacommon castorclient castorlegacymsg castorserver 
+  ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} ctamessages zmq)
 install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 
-add_library(castortapeserverdaemonutils SHARED
+add_library(ctatapeserverdaemonutils SHARED
   ProcessForkerProxyDummy.cpp)
 
-add_library(castortapeserverdaemonunittests SHARED
+add_library(ctatapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
   CatalogueTest.cpp
   DataTransferSessionTest.cpp
@@ -103,9 +103,9 @@ add_library(castortapeserverdaemonunittests SHARED
   TaskWatchDogTest.cpp
 )
 
-target_link_libraries(castortapeserverdaemonunittests
-  castormediachangerutils
-  castormessagesutils
-  castorserverutils
-  castortapeserverdaemonutils
+target_link_libraries(ctatapeserverdaemonunittests
+  ctamediachangerutils
+  ctamessagesutils
+  ctaserverutils
+  ctatapeserverdaemonutils
   ctaschedulerutils)

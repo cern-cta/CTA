@@ -28,14 +28,14 @@ find_package(Protobuf)
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
-add_library(castormessagesprotobuf
+add_library(ctamessagesprotobuf
   ${ProtoSources})
 
-add_library(castormessagesutils SHARED
+add_library(ctamessagesutils SHARED
   AcsProxyDummy.cpp
   TapeserverProxyDummy.cpp)
 
-set(CastorMessageSrcs
+set(CtaMessageSrcs
   AcsProxy.cpp
   AcsProxyZmq.cpp
   Constants.cpp
@@ -51,21 +51,21 @@ set(CastorMessageSrcs
   ZmqSocketST.cpp
 )
 
-add_library(castormessages SHARED
-  ${CastorMessageSrcs})
+add_library(ctamessages SHARED
+  ${CtaMessageSrcs})
 
-add_dependencies(castormessages castormessagesprotobuf)
+add_dependencies(ctamessages ctamessagesprotobuf)
 
-target_link_libraries(castormessages
-  castormessagesprotobuf
-  castorlog
-  castormediachanger
-  castorutils
+target_link_libraries(ctamessages
+  ctamessagesprotobuf
+  ctalog
+  ctamediachanger
+  ctautils
   protobuf
   ssl
   zmq)
 
-add_library(castormessagesunittests SHARED
+add_library(ctamessagesunittests SHARED
   MessagesTest.cpp
   MutexLockerTest.cpp
   MutexTest.cpp)

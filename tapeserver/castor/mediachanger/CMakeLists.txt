@@ -32,7 +32,7 @@ set (MEDIA_CHANGER_LIB_SRC_FILES
   MmcProxyNotSupported.cpp
   ScsiLibrarySlot.cpp
   TapeLibraryType.cpp)
-add_library(castormediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
+add_library(ctamediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
 
-add_library(castormediachangerutils SHARED
+add_library(ctamediachangerutils SHARED
   MmcProxyDummy.cpp)

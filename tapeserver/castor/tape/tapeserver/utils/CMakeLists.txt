@@ -22,8 +22,8 @@ include_directories (${CMAKE_SOURCE_DIR}/tapeserver)
 
 add_library (Utils Regex.cpp)
 
-add_library (castortapeserverutilsunittests SHARED
+add_library (ctatapeserverutilsunittests SHARED
   RegexTest.cpp)
 
-target_link_libraries (castortapeserverutilsunittests
+target_link_libraries (ctatapeserverutilsunittests
   Utils)

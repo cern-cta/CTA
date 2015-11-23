@@ -9,7 +9,7 @@ add_library (ctanameserver SHARED
   NameServer.cpp
   NameServerTapeFile.cpp)
 
-target_link_libraries(ctanameserver castorns castorcommon)
+target_link_libraries(ctanameserver castorns ctacommon)
 
 install (TARGETS ctanameserver DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

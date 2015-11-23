@@ -30,18 +30,18 @@ set (REACTOR_SRC_FILES
   PollReactorImpl.cpp
   ZMQPollEventHandler.cpp
   ZMQReactor.cpp)
-add_library (castortapereactor ${REACTOR_SRC_FILES})
-target_link_libraries (castortapereactor)
+add_library (ctatapereactor ${REACTOR_SRC_FILES})
+target_link_libraries (ctatapereactor)
 
-add_library (castortapereactorutils SHARED
+add_library (ctatapereactorutils SHARED
   DummyPollEventHandler.cpp
   DummyPollReactor.cpp
   DummyZMQReactor.cpp)
 
-add_library (castortapereactorunittests SHARED
+add_library (ctatapereactorunittests SHARED
   PollReactorImplTest.cpp
   ZMQReactorTest.cpp)
 
-target_link_libraries (castortapereactorunittests
-  castortapereactor
-  castortapereactorutils)
+target_link_libraries (ctatapereactorunittests
+  ctatapereactor
+  ctatapereactorutils)

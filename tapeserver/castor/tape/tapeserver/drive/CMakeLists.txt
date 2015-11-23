@@ -29,21 +29,21 @@ add_executable(TapeDriveReadWriteTest
   TapeDriveReadWriteTest.cpp)
 target_link_libraries(TapeDriveReadWriteTest
   TapeDrive
-  castormediachanger
+  ctamediachanger
   SCSI
   System
   Utils
-  castorcommon
-  castorclient
-  castorTapeServerDaemon
+  ctacommon
+  #ctaclient
+  ctaTapeServerDaemon
   gtest
   gmock
   pthread)
 
-add_library(castortapeserverdriveunittests SHARED
+add_library(ctatapeserverdriveunittests SHARED
   DriveTest.cpp)
 
-target_link_libraries(castortapeserverdriveunittests
-  castorTapeServerDaemon
+target_link_libraries(ctatapeserverdriveunittests
+  ctaTapeServerDaemon
   System
   TapeDrive)

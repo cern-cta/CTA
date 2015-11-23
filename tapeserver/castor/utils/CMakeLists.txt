@@ -27,9 +27,9 @@ set (UTILS_LIB_SRC_FILES
   SmartFILEPtr.cpp
   Timer.cpp
   utils.cpp)
-add_library (castorutils ${UTILS_LIB_SRC_FILES})
+add_library (ctautils ${UTILS_LIB_SRC_FILES})
 
-add_library (castorutilsunittests SHARED
+add_library (ctautilsunittests SHARED
   SmartArrayPtrTest.cpp
   SmartFdTest.cpp
   UtilsTest.cpp)

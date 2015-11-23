@@ -4,19 +4,19 @@ add_executable(unittests
   unit_tests.cpp)
 
 target_link_libraries(unittests
-  castorexceptionunittests
-  castoriounittests
-  castorlegacymsgunittests
-  castorlogunittests
-  castormessagesunittests
-  castorserverunittests
-  castortapereactorunittests
-  castortapeserverdaemonunittests
-  castortapeserverdriveunittests
-  castortapeserverfileunittests
-  castortapeserverscsiunittests
-  castortapeserverutilsunittests
-  castorutilsunittests
+  ctaexceptionunittests
+  ctaiounittests
+  ctalegacymsgunittests
+  ctalogunittests
+  ctamessagesunittests
+  ctaserverunittests
+  ctatapereactorunittests
+  ctatapeserverdaemonunittests
+  ctatapeserverdriveunittests
+  ctatapeserverfileunittests
+  ctatapeserverscsiunittests
+  ctatapeserverutilsunittests
+  ctautilsunittests
   ctacommon
   ctacommonunittests
   ctaobjectstore

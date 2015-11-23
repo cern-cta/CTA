@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
-add_library (castorlogutils SHARED
+add_library (ctalogutils SHARED
   DummyLogger.cpp)
 
 set (LOG_LIB_SRC_FILES
@@ -14,9 +14,9 @@ set (LOG_LIB_SRC_FILES
   LogContext.cpp
   Message.cpp
   Param.cpp)
-add_library (castorlog ${LOG_LIB_SRC_FILES})
+add_library (ctalog ${LOG_LIB_SRC_FILES})
 
-add_library (castorlogunittests SHARED
+add_library (ctalogunittests SHARED
   ParamTest.cpp
   LogContextTest.cpp
   StringLoggerTest.cpp
