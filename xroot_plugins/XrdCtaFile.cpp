@@ -1419,7 +1419,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                << " " << std::setw(18) << "uid" 
                << " " << std::setw(18) << "gid" 
                << " " << std::setw(17) << "storage class"
-               << " " << std::setw(16) << "checksum"
+               << " " << std::setw(26) << "checksum"
                << " " << std::setw(16) << "size"
                << " " << std::setw(30) << "filename"
                << "\x1b[0m" << std::endl;
@@ -1469,7 +1469,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
                  << " " << std::setw(18) << owner.uid
                  << " " << std::setw(18) << owner.gid
                  << " " << std::setw(17) << storageClassName
-                 << " " << std::setw(16) << dirEntry.status.checksum.str()
+                 << " " << std::setw(26) << dirEntry.status.checksum.str()
                  << " " << std::setw(16) << dirEntry.status.size
                  << " " << std::setw(30) << dirEntry.name << std::endl;
     }
