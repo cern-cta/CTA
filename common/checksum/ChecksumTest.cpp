@@ -37,7 +37,7 @@ TEST_F(cta_ChecksumTest, default_constructor) {
   const Checksum checksum;
 
   ASSERT_EQ(Checksum::CHECKSUMTYPE_NONE, checksum.getType());
-  ASSERT_TRUE(checksum.str().empty());
+  ASSERT_EQ("-", checksum.str());
 
   ASSERT_EQ((uint32_t)0, checksum.getByteArray().size());
 }

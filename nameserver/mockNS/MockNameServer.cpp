@@ -101,7 +101,7 @@ void cta::MockNameServer::assertChecksumOrSetIfMissing(const std::string &path, 
   // if not
   // Get the existing checksum
   auto ec = Utils::getXattr(path, "user.CTAChecksum");
-  if (ec.empty()) {
+  if (ec.empty() || ec == "-") {
     // Checksum not set: set it.
     Utils::setXattr(path, "user.CTAChecksum", checksum);
   } else if (ec != checksum) {
@@ -215,8 +215,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
 std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const {
   std::stringstream ss;
   
-  ss << tapeFile.checksum.checksumTypeToStr(tapeFile.checksum.getType())
-      << " " << tapeFile.checksum.str()
+  ss << tapeFile.checksum.str()
       << " " << tapeFile.compressedSize
       << " " << tapeFile.copyNb
       << " " << tapeFile.size
@@ -233,10 +232,8 @@ std::string cta::MockNameServer::fromNameServerTapeFileToString(const cta::NameS
 cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(const std::string &xAttributeString) const {
   NameServerTapeFile tapeFile;
   std::stringstream ss(xAttributeString);
-  std::string checksumTypeString;
-  uint32_t checksumInt32;
-  ss >> checksumTypeString 
-     >> checksumInt32 
+  std::string checksumString;
+  ss >> checksumString 
      >> tapeFile.compressedSize
      >> tapeFile.copyNb
      >> tapeFile.size
@@ -244,8 +241,7 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
      >> tapeFile.tapeFileLocation.copyNb
      >> tapeFile.tapeFileLocation.fSeq
      >> tapeFile.tapeFileLocation.vid;
-  cta::Checksum::ChecksumType checksumType=checksumTypeString=="ADLER32"?cta::Checksum::ChecksumType::CHECKSUMTYPE_ADLER32:cta::Checksum::ChecksumType::CHECKSUMTYPE_NONE;
-  cta::Checksum checksum(checksumType, checksumInt32);
+  cta::Checksum checksum(checksumString);
   tapeFile.checksum=checksum;
   return tapeFile;
 }
