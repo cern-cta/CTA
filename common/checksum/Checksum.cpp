@@ -38,7 +38,7 @@ const char *cta::Checksum::checksumTypeToStr(const ChecksumType enumValue)
 cta::Checksum::Checksum(): m_type(CHECKSUMTYPE_NONE) { }
 
 
-cta::Checksum::Checksum(const std::string& url) {
+cta::Checksum::Checksum(const std::string& url): m_type(CHECKSUMTYPE_NONE) {
   if (url.empty() || url == "-") {
     return;
   }
