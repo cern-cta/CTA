@@ -39,7 +39,7 @@ cta::Checksum::Checksum(): m_type(CHECKSUMTYPE_NONE) { }
 
 
 cta::Checksum::Checksum(const std::string& url) {
-  if (url.empty()) {
+  if (url.empty() || url == "-") {
     return;
   }
   castor::tape::utils::Regex re("^adler32:0[Xx]([[:xdigit:]]+)$");
