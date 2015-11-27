@@ -42,13 +42,13 @@ int main(int argc, char ** argv) {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
     std::cout << "Object store path: " << be->getParams()->toURL() 
-        << " object name=" << argv[2];
+        << " object name=" << argv[2] << std::endl;
     cta::objectstore::GenericObject ge(argv[2], *be);
     cta::objectstore::ScopedSharedLock gel(ge);
     ge.fetch();
     std::cout << ge.dump(gel) << std::endl;
   } catch (std::exception & e) {
-    std::cerr << "Failed to initialise the root entry in a new VFS backend store"
+    std::cerr << "Failed to dump object: "
         << std::endl << e.what() << std::endl;
   }
 }

@@ -126,7 +126,9 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
     case serializers::AgentRegister_t:
       return dumpWithType<AgentRegister>(this, lock);
     default:
-      throw std::runtime_error("Unsupported type");
+      std::stringstream err;
+      err << "Unsupported type: " << m_header.type();
+      throw std::runtime_error(err.str());
   }
 }
 
