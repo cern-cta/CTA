@@ -20,6 +20,7 @@
 #include "AgentRegister.hpp"
 #include "TapePool.hpp"
 #include "DriveRegister.hpp"
+#include <stdexcept>
 
 namespace cta {  namespace objectstore {
 
@@ -104,5 +105,29 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock,
   }
 }
 
+namespace {
+  using cta::objectstore::GenericObject;
+  using cta::objectstore::ScopedExclusiveLock;
+  template <class C>
+  std::string dumpWithType(GenericObject * gop, ScopedSharedLock& lock) {
+    C typedObject(*gop);
+    lock.transfer(typedObject);
+    std::string ret = typedObject.dump();
+    // Release the lock now as if we let the caller do, it will point
+    // to the then-removed typedObject.
+    lock.release();
+    return ret;
+  }
+}
+
+std::string GenericObject::dump(ScopedSharedLock& lock) {
+  checkHeaderReadable();
+  switch(m_header.type()) {
+    case serializers::AgentRegister_t:
+      return dumpWithType<AgentRegister>(this, lock);
+    default:
+      throw std::runtime_error("Unsupported type");
+  }
+}
 
 }}

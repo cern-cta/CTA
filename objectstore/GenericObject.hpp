@@ -62,6 +62,13 @@ public:
    */
   void garbageCollect(ScopedExclusiveLock & lock, const std::string &presumedOwner);
   
+  /** This dispatcher function will call the object's dump.
+   * It also handles the passed lock.
+   *
+   * @param lock reference to the generic object's lock
+   */
+  std::string dump(ScopedSharedLock & lock);
+  
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
   /**
    * This static function is a helper that will garbage collect the object at 

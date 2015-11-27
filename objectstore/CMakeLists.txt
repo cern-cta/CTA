@@ -73,3 +73,7 @@ target_link_libraries(makeMinimalVFS
 add_executable(listObjectStore listObjectStore.cpp)
 target_link_libraries(listObjectStore
   protobuf ctaobjectstore ctacommon)
+
+add_executable(dumpObject dumpObject.cpp)
+target_link_libraries(dumpObject
+  protobuf ctaobjectstore ctacommon)
