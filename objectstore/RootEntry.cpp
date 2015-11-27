@@ -575,7 +575,7 @@ std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent. We expect the
     // agent to be passed locked.
-    std::string drAddress (agent.nextId("agentRegister"));
+    std::string drAddress (agent.nextId("driveRegister"));
     ScopedExclusiveLock agl(agent);
     agent.fetch();
     agent.addToOwnership(drAddress);
