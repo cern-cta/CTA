@@ -21,6 +21,7 @@
 #include "CreationLog.hpp"
 #include "TapePool.hpp"
 #include "UserIdentity.hpp"
+#include <json/json.h>
 
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string& address, Backend& os): 
@@ -359,7 +360,57 @@ bool cta::objectstore::ArchiveToFileRequest::finishIfNecessary() {
   return true;
 }
 
-      
+std::string cta::objectstore::ArchiveToFileRequest::dump() {
+  checkPayloadReadable();
+  std::stringstream ret;
+  ret << "ArchiveToFileRequest" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  json_object_object_add(jo, "archivetodiraddress", json_object_new_string(m_payload.archivetodiraddress().c_str()));
+  json_object_object_add(jo, "priority", json_object_new_int64(m_payload.priority()));
+  // Object for archive file
+  json_object * jaf = json_object_new_object();
+  json_object_object_add(jaf, "checksum", json_object_new_int(m_payload.archivefile().checksum()));
+  json_object_object_add(jaf, "fileid", json_object_new_int(m_payload.archivefile().fileid()));
+  json_object_object_add(jaf, "lastmodificationtime", json_object_new_int64(m_payload.archivefile().lastmodificationtime()));
+  json_object_object_add(jaf, "nshostname", json_object_new_string(m_payload.archivefile().nshostname().c_str()));
+  json_object_object_add(jaf, "path", json_object_new_string(m_payload.archivefile().path().c_str()));
+  json_object_object_add(jaf, "size", json_object_new_int64(m_payload.archivefile().size()));
+  json_object_object_add(jo, "archiveFile", jaf);
+  // Array for jobs
+  json_object * jja = json_object_new_array();
+  auto & jl = m_payload.jobs();
+  for (auto j=jl.begin(); j!=jl.end(); j++) {
+    // Object for job
+    json_object * jj = json_object_new_object();
+    json_object_object_add(jj, "copynb", json_object_new_int64(j->copynb()));
+    json_object_object_add(jj, "lastmountwithfailure", json_object_new_int64(j->lastmountwithfailure()));
+    json_object_object_add(jj, "maxretrieswithinmount", json_object_new_int64(j->maxretrieswithinmount()));
+    json_object_object_add(jj, "maxtotalretries", json_object_new_int64(j->maxtotalretries()));
+    json_object_object_add(jj, "owner", json_object_new_string(j->owner().c_str()));
+    json_object_object_add(jj, "retrieswithinmount", json_object_new_int64(j->retrieswithinmount()));
+    json_object_object_add(jj, "status", json_object_new_int64(j->status()));
+    json_object_object_add(jj, "tapepool", json_object_new_string(j->tapepool().c_str()));
+    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->tapepooladdress().c_str()));
+    json_object_object_add(jj, "totalRetries", json_object_new_int64(j->totalretries()));
+    json_object_array_add(jja, jj);
+  }
+  json_object_object_add(jo, "jobs", jja);
+  // Object for log
+  json_object * jlog = json_object_new_object();
+  json_object_object_add(jlog, "comment", json_object_new_string(m_payload.log().comment().c_str()));
+  json_object_object_add(jlog, "host", json_object_new_string(m_payload.log().host().c_str()));
+  json_object_object_add(jlog, "time", json_object_new_int64(m_payload.log().time()));
+  json_object_object_add(jo, "log", jlog);
+  // Object for remote file
+  json_object * jrf = json_object_new_object();
+  json_object_object_add(jrf, "mode", json_object_new_int(m_payload.remotefile().mode()));
+  json_object_object_add(jrf, "path", json_object_new_string(m_payload.remotefile().path().c_str()));
+  json_object_object_add(jrf, "size", json_object_new_int64(m_payload.remotefile().size()));
+  json_object_object_add(jo, "remoteFile", jrf);
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  return ret.str();
+}
+
 
 
 
