@@ -19,6 +19,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
+#include <json/json.h>
 
 namespace cta { namespace objectstore { 
 
@@ -87,6 +88,18 @@ bool SchedulerGlobalLock::isEmpty() {
   checkPayloadReadable();
   // There is no content in the global lock.
   return true;
+}
+
+std::string SchedulerGlobalLock::dump() {  
+  checkPayloadReadable();
+  std::stringstream ret;
+  ret << "SchedulerGlobalLock" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  
+  json_object_object_add(jo, "nextmountid", json_object_new_int64(m_payload.nextmountid()));
+  
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  return ret.str();
 }
   
 }}

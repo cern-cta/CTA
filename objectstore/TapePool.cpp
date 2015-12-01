@@ -22,6 +22,7 @@
 #include "CreationLog.hpp"
 #include "Tape.hpp"
 #include "RootEntry.hpp"
+#include <json/json.h>
 
 cta::objectstore::TapePool::TapePool(const std::string& address, Backend& os):
   ObjectOps<serializers::TapePool>(os, address) { }
@@ -34,6 +35,74 @@ cta::objectstore::TapePool::TapePool(GenericObject& go):
   getPayloadFromHeader();
 }
 
+std::string cta::objectstore::TapePool::dump() {  
+  checkPayloadReadable();
+  std::stringstream ret;
+  ret << "TapePool" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  
+  json_object_object_add(jo, "name", json_object_new_string(m_payload.name().c_str()));
+  json_object_object_add(jo, "ArchiveJobsTotalSize", json_object_new_int64(m_payload.archivejobstotalsize()));
+  json_object_object_add(jo, "oldestJobCreationTime", json_object_new_int64(m_payload.oldestjobcreationtime()));
+  json_object_object_add(jo, "archivemountcriteria - maxFilesBeforeMount", json_object_new_int64(m_payload.archivemountcriteria().maxfilesbeforemount()));
+  json_object_object_add(jo, "archivemountcriteria - maxBytesBeforeMount", json_object_new_int64(m_payload.archivemountcriteria().maxbytesbeforemount()));
+  json_object_object_add(jo, "archivemountcriteria - maxSecondsBeforeMount", json_object_new_int64(m_payload.archivemountcriteria().maxsecondsbeforemount()));
+  json_object_object_add(jo, "archivemountcriteria - quota", json_object_new_int(m_payload.archivemountcriteria().quota()));
+  json_object_object_add(jo, "retievemountcriteria - maxFilesBeforeMount", json_object_new_int64(m_payload.retievemountcriteria().maxfilesbeforemount()));
+  json_object_object_add(jo, "retievemountcriteria - maxBytesBeforeMount", json_object_new_int64(m_payload.retievemountcriteria().maxbytesbeforemount()));
+  json_object_object_add(jo, "retievemountcriteria - maxSecondsBeforeMount", json_object_new_int64(m_payload.retievemountcriteria().maxsecondsbeforemount()));
+  json_object_object_add(jo, "retievemountcriteria - quota", json_object_new_int(m_payload.retievemountcriteria().quota()));
+  json_object_object_add(jo, "priority", json_object_new_int64(m_payload.priority()));
+  json_object_object_add(jo, "maxretriespermount", json_object_new_int(m_payload.maxretriespermount()));
+  json_object_object_add(jo, "maxtotalretries", json_object_new_int(m_payload.maxtotalretries()));
+  
+  json_object * array = json_object_new_array();
+  for (auto i = m_payload.tapes().begin(); i!=m_payload.tapes().end(); i++) {
+    json_object * jot = json_object_new_object();
+    json_object_object_add(jot, "vid", json_object_new_string(i->vid().c_str()));
+    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+    json_object_object_add(jot, "capacity", json_object_new_int64(i->capacity()));
+    json_object_object_add(jot, "library", json_object_new_string(i->library().c_str()));
+    json_object_array_add(array, jot);
+  }
+  json_object_object_add(jo, "tapes", array);
+  
+  array = json_object_new_array();
+  for (auto i = m_payload.pendingarchivejobs().begin(); i!=m_payload.pendingarchivejobs().end(); i++) {
+    json_object * jot = json_object_new_object();
+    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+    json_object_array_add(array, jot);
+  }
+  json_object_object_add(jo, "pendingarchivejobs", array);
+  
+  array = json_object_new_array();
+  for (auto i = m_payload.orphanedarchivejobsnscreation().begin(); i!=m_payload.orphanedarchivejobsnscreation().end(); i++) {
+    json_object * jot = json_object_new_object();
+    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+    json_object_array_add(array, jot);
+  }
+  json_object_object_add(jo, "orphanedarchivejobsnscreation", array);
+  
+  array = json_object_new_array();
+  for (auto i = m_payload.orphanedarchivejobsnsdeletion().begin(); i!=m_payload.orphanedarchivejobsnsdeletion().end(); i++) {
+    json_object * jot = json_object_new_object();
+    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+    json_object_array_add(array, jot);
+  }
+  json_object_object_add(jo, "orphanedarchivejobsnsdeletion", array);
+  
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  return ret.str();
+}
 
 void cta::objectstore::TapePool::initialize(const std::string& name) {
   // Setup underlying object
