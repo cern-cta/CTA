@@ -84,6 +84,7 @@ public:
   };
   std::list<JobDump> dumpJobs();
   void garbageCollect(const std::string &presumedOwner);
+  std::string  dump();
 };
 
 }}

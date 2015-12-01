@@ -25,6 +25,8 @@
 #include <list>
 
 namespace cta { namespace objectstore {
+  
+class GenericObject;
 
 /**
  * Class containing agent information and managing the update of the 
@@ -39,6 +41,7 @@ class Agent: public ObjectOps<serializers::Agent> {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(Backend & os);
+  Agent(GenericObject & go);
   
   Agent(const std::string & name, Backend & os);
 

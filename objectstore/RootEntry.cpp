@@ -21,6 +21,7 @@
 #include "Agent.hpp"
 #include "TapePool.hpp"
 #include "DriveRegister.hpp"
+#include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
@@ -29,6 +30,14 @@
 // Checks the existence and correctness of the root entry
 cta::objectstore::RootEntry::RootEntry(Backend & os):
   ObjectOps<serializers::RootEntry>(os, "root") {}
+
+cta::objectstore::RootEntry::RootEntry(GenericObject& go): 
+  ObjectOps<serializers::RootEntry>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
 
 // Initialiser. This uses the base object's initialiser and sets the defaults 
 // of payload.

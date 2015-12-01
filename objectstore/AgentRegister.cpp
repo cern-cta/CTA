@@ -19,6 +19,7 @@
 #include "AgentRegister.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
+#include <json/json_object.h>
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):
 ObjectOps<serializers::AgentRegister>(os) {}
@@ -113,15 +114,20 @@ std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
 std::string cta::objectstore::AgentRegister::dump() {
   checkPayloadReadable();
   std::stringstream ret;
-  ret<< "<<<< AgentRegister " << getAddressIfSet() << " dump start" << std::endl
-    << "Agents array size=" << m_payload.agents_size() << std::endl;
+  ret << "AgentRegister" << std::endl;
+  struct json_object * jo;
+  jo = json_object_new_object();
+  json_object * jal = json_object_new_array();
   for (int i=0; i<m_payload.agents_size(); i++) {
-    ret << "element[" << i << "]=" << m_payload.agents(i) << std::endl;
+    json_object_array_add(jal, json_object_new_string(m_payload.agents(i).c_str()));
   }
-  ret << "Untracked agents array size=" << m_payload.untrackedagents_size() << std::endl;
+  json_object_object_add(jo, "agents", jal);
+  json_object * jual = json_object_new_array();
   for (int i=0; i<m_payload.untrackedagents_size(); i++) {
-    ret << "intendedElement[" << i << "]=" << m_payload.untrackedagents(i) << std::endl;
+    json_object_array_add(jual, json_object_new_string(m_payload.untrackedagents(i).c_str()));
   }
-  ret<< ">>>> AgentRegister " << getAddressIfSet() << " dump end" << std::endl;
+  json_object_object_add(jo, "untrackedAgents", jual);
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  free(jo);
   return ret.str();
 }

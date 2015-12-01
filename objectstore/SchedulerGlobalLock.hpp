@@ -39,6 +39,7 @@ public:
   // Mount id management =======================================================
   void setNextMountId(uint64_t nextId);
   uint64_t getIncreaseCommitMountId();
+  std::string dump();
 };
 
 }}

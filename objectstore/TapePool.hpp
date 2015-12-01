@@ -130,6 +130,8 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   // Garbage collection
   void garbageCollect(const std::string &presumedOwner);
+  
+  std::string dump();
 };
   
 }}

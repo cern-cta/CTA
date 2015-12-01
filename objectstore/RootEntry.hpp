@@ -30,11 +30,13 @@
 namespace cta { namespace objectstore {
 
 class Agent;
+class GenericObject;
   
 class RootEntry: public ObjectOps<serializers::RootEntry> {
 public:
   // Constructor
   RootEntry(Backend & os);
+  RootEntry(GenericObject & go);
   
   CTA_GENERATE_EXCEPTION_CLASS(NotAllocated);
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);

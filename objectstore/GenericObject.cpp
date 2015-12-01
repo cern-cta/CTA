@@ -18,7 +18,14 @@
 
 #include "GenericObject.hpp"
 #include "AgentRegister.hpp"
+#include "Agent.hpp"
+#include "ArchiveToFileRequest.hpp"
+#include "DriveRegister.hpp"
+#include "RetrieveToFileRequest.hpp"
+#include "RootEntry.hpp"
+#include "SchedulerGlobalLock.hpp"
 #include "TapePool.hpp"
+#include "Tape.hpp"
 #include "DriveRegister.hpp"
 #include <stdexcept>
 
@@ -123,8 +130,24 @@ namespace {
 std::string GenericObject::dump(ScopedSharedLock& lock) {
   checkHeaderReadable();
   switch(m_header.type()) {
+    case serializers::RootEntry_t:
+      return dumpWithType<RootEntry>(this, lock);
     case serializers::AgentRegister_t:
       return dumpWithType<AgentRegister>(this, lock);
+    case serializers::Agent_t:
+      return dumpWithType<Agent>(this, lock);
+    case serializers::TapePool_t:
+      return dumpWithType<TapePool>(this, lock);
+    case serializers::DriveRegister_t:
+      return dumpWithType<DriveRegister>(this, lock);
+    case serializers::Tape_t:
+      return dumpWithType<cta::objectstore::Tape>(this, lock);
+    case serializers::ArchiveToFileRequest_t:
+      return dumpWithType<ArchiveToFileRequest>(this, lock);
+    case serializers::RetrieveToFileRequest_t:
+      return dumpWithType<RetrieveToFileRequest>(this, lock);
+    case serializers::SchedulerGlobalLock_t:
+      return dumpWithType<SchedulerGlobalLock>(this, lock);
     default:
       std::stringstream err;
       err << "Unsupported type: " << m_header.type();

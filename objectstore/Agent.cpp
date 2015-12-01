@@ -19,6 +19,7 @@
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
 #include "RootEntry.hpp"
+#include "GenericObject.hpp"
 #include "common/exception/Errnum.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <string>
@@ -28,9 +29,18 @@
 #include <ctime>
 #include <cxxabi.h>
 #include <unistd.h>
+#include <json/json.h>
 
 cta::objectstore::Agent::Agent(Backend & os): 
   ObjectOps<serializers::Agent>(os), m_nextId(0) {}
+
+cta::objectstore::Agent::Agent(GenericObject& go):
+  ObjectOps<serializers::Agent>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
 
 cta::objectstore::Agent::Agent(const std::string & name, Backend & os): 
   ObjectOps<serializers::Agent>(os, name), m_nextId(0) {}
@@ -198,4 +208,24 @@ void cta::objectstore::Agent::setTimeout_us(uint64_t timeout) {
   checkPayloadWritable();
   m_payload.set_timeout_us(timeout);
 }
+
+std::string cta::objectstore::Agent::dump() {
+  checkPayloadReadable();
+  std::stringstream ret;
+  ret << "Agent" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  // Array for owned objects
+  json_object * joo = json_object_new_array();
+  auto & ool = m_payload.ownedobjects();
+  for (auto oo = ool.begin(); oo!=ool.end(); oo++) {
+    json_object_array_add(joo, json_object_new_string(oo->c_str()));
+  }
+  json_object_object_add(jo, "ownedObjects", joo);
+  json_object_object_add(jo, "description", json_object_new_string(m_payload.description().c_str()));
+  json_object_object_add(jo, "heartbeat", json_object_new_int64(m_payload.heartbeat()));
+  json_object_object_add(jo, "timeout_us", json_object_new_int64(m_payload.timeout_us()));
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  return ret.str();
+}
+
 

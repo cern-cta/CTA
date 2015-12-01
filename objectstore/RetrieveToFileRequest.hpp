@@ -85,6 +85,7 @@ public:
   void setSize(uint64_t size);
   uint64_t getSize();
   std::list<JobDump> dumpJobs();
+  std::string dump();
 };
 
 }}
