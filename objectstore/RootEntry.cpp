@@ -25,6 +25,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
+#include <json/json.h>
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
@@ -850,18 +851,190 @@ void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
 
 
 // Dump the root entry
-std::string cta::objectstore::RootEntry::dump () {
+std::string cta::objectstore::RootEntry::dump () {  
   checkPayloadReadable();
   std::stringstream ret;
-  ret << "<<<< Root entry dump start" << std::endl;
-  if (m_payload.has_agentregisterpointer() &&
-      m_payload.agentregisterpointer().address().size())
-    ret << "agentRegister=" << m_payload.agentregisterpointer().address() << std::endl;
-  if (m_payload.agentregisterintent().size())
-    ret << "agentRegister Intent=" << m_payload.agentregisterintent() << std::endl;
-//  if (m_payload.has_jobpool()) ret << "jobPool=" << m_payload.jobpool() << std::endl;
-/*  if (m_payload.has_driveregister()) ret << "driveRegister=" << m_payload.driveregister() << std::endl;
-  if (m_payload.has_taperegister()) ret << "tapeRegister=" << m_payload.taperegister() << std::endl;*/
-  ret << ">>>> Root entry dump end" << std::endl;
+  ret << "RootEntry" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  
+  json_object_object_add(jo, "agentregisterintent", json_object_new_string(m_payload.agentregisterintent().c_str()));
+  
+  {
+    json_object * pointer = json_object_new_object();
+    json_object_object_add(pointer, "address", json_object_new_string(m_payload.driveregisterpointer().address().c_str()));
+    json_object * jlog = json_object_new_object();
+    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.driveregisterpointer().log().comment().c_str()));
+    json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
+    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
+    json_object * id = json_object_new_object();
+    json_object_object_add(id, "uid", json_object_new_int(m_payload.driveregisterpointer().log().user().uid()));
+    json_object_object_add(id, "gid", json_object_new_int(m_payload.driveregisterpointer().log().user().gid()));
+    json_object_object_add(jlog, "user", id);
+    json_object_object_add(pointer, "log", jlog);
+    json_object_object_add(jo, "driveregisterpointer", pointer);
+  }
+  {
+    json_object * pointer = json_object_new_object();
+    json_object_object_add(pointer, "address", json_object_new_string(m_payload.agentregisterpointer().address().c_str()));
+    json_object * jlog = json_object_new_object();
+    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.agentregisterpointer().log().comment().c_str()));
+    json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
+    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
+    json_object * id = json_object_new_object();
+    json_object_object_add(id, "uid", json_object_new_int(m_payload.agentregisterpointer().log().user().uid()));
+    json_object_object_add(id, "gid", json_object_new_int(m_payload.agentregisterpointer().log().user().gid()));
+    json_object_object_add(jlog, "user", id);
+    json_object_object_add(pointer, "log", jlog);
+    json_object_object_add(jo, "agentregisterpointer", pointer);
+  }
+  {
+    json_object * pointer = json_object_new_object();
+    json_object_object_add(pointer, "address", json_object_new_string(m_payload.schedulerlockpointer().address().c_str()));
+    json_object * jlog = json_object_new_object();
+    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.schedulerlockpointer().log().comment().c_str()));
+    json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
+    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
+    json_object * id = json_object_new_object();
+    json_object_object_add(id, "uid", json_object_new_int(m_payload.schedulerlockpointer().log().user().uid()));
+    json_object_object_add(id, "gid", json_object_new_int(m_payload.schedulerlockpointer().log().user().gid()));
+    json_object_object_add(jlog, "user", id);
+    json_object_object_add(pointer, "log", jlog);
+    json_object_object_add(jo, "schedulerlockpointer", pointer);
+  }
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.adminhosts().begin(); i!=m_payload.adminhosts().end(); i++) {
+      json_object * jot = json_object_new_object();
+
+      json_object_object_add(jot, "hostname", json_object_new_string(i->hostname().c_str())); 
+
+      json_object * jlog = json_object_new_object();
+      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
+      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
+      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
+      json_object * id = json_object_new_object();
+      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
+      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
+      json_object_object_add(jlog, "user", id);
+      json_object_object_add(jot, "log", jlog);
+
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "adminhosts", array);
+  }
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.adminusers().begin(); i!=m_payload.adminusers().end(); i++) {
+      json_object * jot = json_object_new_object();
+
+      json_object * fid = json_object_new_object();
+      json_object_object_add(fid, "uid", json_object_new_int(i->user().uid()));
+      json_object_object_add(fid, "gid", json_object_new_int(i->user().gid()));
+      json_object_object_add(jot, "user", fid); 
+
+      json_object * jlog = json_object_new_object();
+      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
+      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
+      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
+      json_object * id = json_object_new_object();
+      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
+      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
+      json_object_object_add(jlog, "user", id);
+      json_object_object_add(jot, "log", jlog);
+
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "adminusers", array);
+  }
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.storageclasses().begin(); i!=m_payload.storageclasses().end(); i++) {
+      json_object * jot = json_object_new_object();
+
+      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
+      json_object_object_add(jot, "copycount", json_object_new_int(i->copycount()));
+      
+      json_object * array = json_object_new_array();
+      for (auto j = i->routes().begin(); j!=i->routes().end(); j++) {
+        json_object * jott = json_object_new_object();
+
+        json_object_object_add(jott, "tapepool", json_object_new_string(j->tapepool().c_str())); 
+        json_object_object_add(jott, "copynb", json_object_new_int(j->copynb()));
+
+        json_object * jlogt = json_object_new_object();
+        json_object_object_add(jlogt, "comment", json_object_new_string(j->log().comment().c_str()));
+        json_object_object_add(jlogt, "host", json_object_new_string(j->log().host().c_str()));
+        json_object_object_add(jlogt, "time", json_object_new_int64(j->log().time()));
+        json_object * idt = json_object_new_object();
+        json_object_object_add(idt, "uid", json_object_new_int(j->log().user().uid()));
+        json_object_object_add(idt, "gid", json_object_new_int(j->log().user().gid()));
+        json_object_object_add(jlogt, "user", idt);
+        json_object_object_add(jott, "log", jlogt);
+
+        json_object_array_add(array, jott);
+      }
+      json_object_object_add(jot, "routes", array);
+
+      json_object * jlog = json_object_new_object();
+      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
+      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
+      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
+      json_object * id = json_object_new_object();
+      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
+      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
+      json_object_object_add(jlog, "user", id);
+      json_object_object_add(jot, "log", jlog);
+
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "storageclasses", array);
+  }
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.tapepoolpointers().begin(); i!=m_payload.tapepoolpointers().end(); i++) {
+      json_object * jot = json_object_new_object();
+
+      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
+      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));  
+      json_object_object_add(jot, "nbpartialtapes", json_object_new_int(i->nbpartialtapes()));
+
+      json_object * jlog = json_object_new_object();
+      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
+      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
+      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
+      json_object * id = json_object_new_object();
+      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
+      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
+      json_object_object_add(jlog, "user", id);
+      json_object_object_add(jot, "log", jlog);
+
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "tapepoolpointers", array);
+  }
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.libraries().begin(); i!=m_payload.libraries().end(); i++) {
+      json_object * jot = json_object_new_object();
+
+      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
+
+      json_object * jlog = json_object_new_object();
+      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
+      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
+      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
+      json_object * id = json_object_new_object();
+      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
+      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
+      json_object_object_add(jlog, "user", id);
+      json_object_object_add(jot, "log", jlog);
+
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "libraries", array);
+  }
+  
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  json_object_put(jo);
   return ret.str();
 }

@@ -19,6 +19,7 @@
 #include "Tape.hpp"
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
+#include <json/json.h>
 
 cta::objectstore::Tape::Tape(const std::string& address, Backend& os):
   ObjectOps<serializers::Tape>(os, address) { }
@@ -117,26 +118,91 @@ std::string cta::objectstore::Tape::getVid() {
   return m_payload.vid();
 }
 
-std::string cta::objectstore::Tape::dump() {
+std::string cta::objectstore::Tape::dump() {  
   checkPayloadReadable();
   std::stringstream ret;
-  ret << "<<<< Tape dump start: vid=" << m_payload.vid() << std::endl;
-  ret << "  lastFseq=" << m_payload.lastfseq() 
-      << " bytesStored=" << m_payload.bytesstored() << std::endl;
-  ret << "  Retrieve jobs queued: " << m_payload.retrievejobs_size() << std::endl;
-  if (m_payload.readmounts_size()) {
-    auto lrm = m_payload.readmounts(0);
-    ret << "  Latest read for mount: " << lrm.host() << " " << lrm.time() << " " 
-        << lrm.drivevendor() << " " << lrm.drivemodel() << " " 
-        << lrm.driveserial() << std::endl;
+  ret << "TapePool" << std::endl;
+  struct json_object * jo = json_object_new_object();
+  
+  json_object_object_add(jo, "vid", json_object_new_string(m_payload.vid().c_str()));
+  json_object_object_add(jo, "logicallibrary", json_object_new_string(m_payload.logicallibrary().c_str()));
+  json_object_object_add(jo, "lastfseq", json_object_new_int64(m_payload.lastfseq()));
+  json_object_object_add(jo, "bytesstored", json_object_new_int64(m_payload.bytesstored()));
+  json_object_object_add(jo, "retrievejobstotalsize", json_object_new_int64(m_payload.retrievejobstotalsize()));
+  json_object_object_add(jo, "oldestjobtime", json_object_new_int64(m_payload.oldestjobtime()));
+  json_object_object_add(jo, "priority", json_object_new_int64(m_payload.priority()));
+  json_object_object_add(jo, "currentmounttype", json_object_new_int(m_payload.currentmounttype()));
+  
+  json_object_object_add(jo, "busy", json_object_new_boolean(m_payload.busy()));
+  json_object_object_add(jo, "archived", json_object_new_boolean(m_payload.archived()));
+  json_object_object_add(jo, "disabled", json_object_new_boolean(m_payload.disabled()));
+  json_object_object_add(jo, "readonly", json_object_new_boolean(m_payload.readonly()));
+  json_object_object_add(jo, "full", json_object_new_boolean(m_payload.full()));
+  
+  json_object * jlog = json_object_new_object();
+  json_object_object_add(jlog, "comment", json_object_new_string(m_payload.log().comment().c_str()));
+  json_object_object_add(jlog, "host", json_object_new_string(m_payload.log().host().c_str()));
+  json_object_object_add(jlog, "time", json_object_new_int64(m_payload.log().time()));
+  json_object * id = json_object_new_object();
+  json_object_object_add(id, "uid", json_object_new_int(m_payload.log().user().uid()));
+  json_object_object_add(id, "gid", json_object_new_int(m_payload.log().user().gid()));
+  json_object_object_add(jlog, "user", id);
+  json_object_object_add(jo, "log", jlog);
+  
+  {
+    json_object * minfo = json_object_new_object();
+    json_object_object_add(minfo, "host", json_object_new_string(m_payload.currentmount().host().c_str()));
+    json_object_object_add(minfo, "drivevendor", json_object_new_string(m_payload.currentmount().drivevendor().c_str()));
+    json_object_object_add(minfo, "drivemodel", json_object_new_string(m_payload.currentmount().drivemodel().c_str()));
+    json_object_object_add(minfo, "driveserial", json_object_new_string(m_payload.currentmount().driveserial().c_str()));
+    json_object_object_add(minfo, "drivename", json_object_new_string(m_payload.currentmount().drivename().c_str()));
+    json_object_object_add(minfo, "time", json_object_new_int64(m_payload.currentmount().time()));
+    json_object_object_add(jo, "currentmount", minfo);
   }
-  if (m_payload.writemounts_size()) {
-    auto lwm = m_payload.writemounts(0);
-    ret << "  Latest write for mount: " << lwm.host() << " " << lwm.time() << " " 
-        << lwm.drivevendor() << " " << lwm.drivemodel() << " " 
-        << lwm.driveserial() << std::endl;
+  
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.readmounts().begin(); i!=m_payload.readmounts().end(); i++) {
+      json_object * minfo = json_object_new_object();
+      json_object_object_add(minfo, "host", json_object_new_string(i->host().c_str()));
+      json_object_object_add(minfo, "drivevendor", json_object_new_string(i->drivevendor().c_str()));
+      json_object_object_add(minfo, "drivemodel", json_object_new_string(i->drivemodel().c_str()));
+      json_object_object_add(minfo, "driveserial", json_object_new_string(i->driveserial().c_str()));
+      json_object_object_add(minfo, "drivename", json_object_new_string(i->drivename().c_str()));
+      json_object_object_add(minfo, "time", json_object_new_int64(i->time()));
+      json_object_array_add(array, minfo);
+    }
+    json_object_object_add(jo, "readmounts", array);
   }
-  ret << ">>>> Tape dump end" << std::endl;
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.writemounts().begin(); i!=m_payload.writemounts().end(); i++) {
+      json_object * minfo = json_object_new_object();
+      json_object_object_add(minfo, "host", json_object_new_string(i->host().c_str()));
+      json_object_object_add(minfo, "drivevendor", json_object_new_string(i->drivevendor().c_str()));
+      json_object_object_add(minfo, "drivemodel", json_object_new_string(i->drivemodel().c_str()));
+      json_object_object_add(minfo, "driveserial", json_object_new_string(i->driveserial().c_str()));
+      json_object_object_add(minfo, "drivename", json_object_new_string(i->drivename().c_str()));
+      json_object_object_add(minfo, "time", json_object_new_int64(i->time()));
+      json_object_array_add(array, minfo);
+    }
+    json_object_object_add(jo, "writemounts", array);
+  }  
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.retrievejobs().begin(); i!=m_payload.retrievejobs().end(); i++) {
+      json_object * rjobs = json_object_new_object();
+      json_object_object_add(rjobs, "size", json_object_new_int64(i->size()));
+      json_object_object_add(rjobs, "address", json_object_new_string(i->address().c_str()));
+      json_object_object_add(rjobs, "copynb", json_object_new_int(i->copynb()));
+      json_object_array_add(array, rjobs);
+    }
+    json_object_object_add(jo, "retrievejobs", array);
+  }
+  
+  
+  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  json_object_put(jo);
   return ret.str();
 }
 

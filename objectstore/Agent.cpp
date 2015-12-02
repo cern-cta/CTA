@@ -225,6 +225,7 @@ std::string cta::objectstore::Agent::dump() {
   json_object_object_add(jo, "heartbeat", json_object_new_int64(m_payload.heartbeat()));
   json_object_object_add(jo, "timeout_us", json_object_new_int64(m_payload.timeout_us()));
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  json_object_put(jo);
   return ret.str();
 }
 

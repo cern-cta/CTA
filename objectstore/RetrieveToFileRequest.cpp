@@ -220,5 +220,6 @@ std::string cta::objectstore::RetrieveToFileRequest::dump() {
   json_object_object_add(jo, "log", jlog);
   json_object_object_add(jo, "remoteFile", json_object_new_string(m_payload.remotefile().c_str()));
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  json_object_put(jo);
   return ret.str();
 }

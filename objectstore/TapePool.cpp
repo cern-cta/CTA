@@ -55,52 +55,56 @@ std::string cta::objectstore::TapePool::dump() {
   json_object_object_add(jo, "priority", json_object_new_int64(m_payload.priority()));
   json_object_object_add(jo, "maxretriespermount", json_object_new_int(m_payload.maxretriespermount()));
   json_object_object_add(jo, "maxtotalretries", json_object_new_int(m_payload.maxtotalretries()));
-  
-  json_object * array = json_object_new_array();
-  for (auto i = m_payload.tapes().begin(); i!=m_payload.tapes().end(); i++) {
-    json_object * jot = json_object_new_object();
-    json_object_object_add(jot, "vid", json_object_new_string(i->vid().c_str()));
-    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-    json_object_object_add(jot, "capacity", json_object_new_int64(i->capacity()));
-    json_object_object_add(jot, "library", json_object_new_string(i->library().c_str()));
-    json_object_array_add(array, jot);
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.tapes().begin(); i!=m_payload.tapes().end(); i++) {
+      json_object * jot = json_object_new_object();
+      json_object_object_add(jot, "vid", json_object_new_string(i->vid().c_str()));
+      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+      json_object_object_add(jot, "capacity", json_object_new_int64(i->capacity()));
+      json_object_object_add(jot, "library", json_object_new_string(i->library().c_str()));
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "tapes", array);
   }
-  json_object_object_add(jo, "tapes", array);
-  
-  array = json_object_new_array();
-  for (auto i = m_payload.pendingarchivejobs().begin(); i!=m_payload.pendingarchivejobs().end(); i++) {
-    json_object * jot = json_object_new_object();
-    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
-    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-    json_object_array_add(array, jot);
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.pendingarchivejobs().begin(); i!=m_payload.pendingarchivejobs().end(); i++) {
+      json_object * jot = json_object_new_object();
+      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+      json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "pendingarchivejobs", array);
   }
-  json_object_object_add(jo, "pendingarchivejobs", array);
-  
-  array = json_object_new_array();
-  for (auto i = m_payload.orphanedarchivejobsnscreation().begin(); i!=m_payload.orphanedarchivejobsnscreation().end(); i++) {
-    json_object * jot = json_object_new_object();
-    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
-    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-    json_object_array_add(array, jot);
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.orphanedarchivejobsnscreation().begin(); i!=m_payload.orphanedarchivejobsnscreation().end(); i++) {
+      json_object * jot = json_object_new_object();
+      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+      json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "orphanedarchivejobsnscreation", array);
   }
-  json_object_object_add(jo, "orphanedarchivejobsnscreation", array);
-  
-  array = json_object_new_array();
-  for (auto i = m_payload.orphanedarchivejobsnsdeletion().begin(); i!=m_payload.orphanedarchivejobsnsdeletion().end(); i++) {
-    json_object * jot = json_object_new_object();
-    json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-    json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-    json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
-    json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-    json_object_array_add(array, jot);
+  {
+    json_object * array = json_object_new_array();
+    for (auto i = m_payload.orphanedarchivejobsnsdeletion().begin(); i!=m_payload.orphanedarchivejobsnsdeletion().end(); i++) {
+      json_object * jot = json_object_new_object();
+      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
+      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
+      json_object_object_add(jot, "path", json_object_new_string(i->path().c_str()));
+      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
+      json_object_array_add(array, jot);
+    }
+    json_object_object_add(jo, "orphanedarchivejobsnsdeletion", array);
   }
-  json_object_object_add(jo, "orphanedarchivejobsnsdeletion", array);
-  
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
+  json_object_put(jo);
   return ret.str();
 }
 

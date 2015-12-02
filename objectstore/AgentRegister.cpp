@@ -128,6 +128,6 @@ std::string cta::objectstore::AgentRegister::dump() {
   }
   json_object_object_add(jo, "untrackedAgents", jual);
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  free(jo);
+  json_object_put(jo);
   return ret.str();
 }
