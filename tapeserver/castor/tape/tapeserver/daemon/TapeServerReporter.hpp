@@ -126,7 +126,7 @@ private:
   public:
     virtual void execute(TapeServerReporter&);
   };
-  class ReportTapeMounterForWrite : public Report {
+  class ReportTapeMountedForWrite : public Report {
   public:
     virtual void execute(TapeServerReporter&);
   };

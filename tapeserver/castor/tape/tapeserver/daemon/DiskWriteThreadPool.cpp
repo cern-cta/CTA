@@ -90,6 +90,7 @@ void DiskWriteThreadPool::waitThreads() {
     (*i)->wait();
   }
   m_lc.log(LOG_INFO, "All DiskWriteThreadPool threads are now complete");
+  m_reporter.setDiskDone();
 }
 
 //------------------------------------------------------------------------------

@@ -95,6 +95,9 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
 
   rrp.reportCompletedJob(std::move(job1));
   rrp.reportCompletedJob(std::move(job2));
+  
+  rrp.setDiskDone();
+  rrp.setTapeDone();
 
   rrp.reportEndOfSession();
   rrp.waitThread();
@@ -146,6 +149,9 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   const castor::exception::Exception ex(error_msg);
   job3->failureMessage = ex.getMessageValue();
   rrp.reportFailedJob(std::move(job3));
+  
+  rrp.setDiskDone();
+  rrp.setTapeDone();
 
   rrp.reportEndOfSession();
   rrp.waitThread();

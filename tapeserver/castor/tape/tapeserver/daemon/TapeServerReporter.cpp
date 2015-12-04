@@ -85,7 +85,7 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------    
   void TapeServerReporter::tapeMountedForWrite(){
     m_fifo.push(
-    new ReportTapeMounterForWrite()
+    new ReportTapeMountedForWrite()
     );
   }
 //------------------------------------------------------------------------------
@@ -166,7 +166,7 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------
 // ReportTapeMounterForWrite::execute
 //------------------------------------------------------------------------------         
-    void TapeServerReporter::ReportTapeMounterForWrite::
+    void TapeServerReporter::ReportTapeMountedForWrite::
     execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForMigration(parent.m_volume.vid,
         parent.m_unitName);

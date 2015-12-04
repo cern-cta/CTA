@@ -28,6 +28,7 @@
 #include "serrno.h"
 
 #include <signal.h>
+#include <iostream>
 
 namespace{
   struct failedReportRecallResult : public castor::exception::Exception{
@@ -138,7 +139,6 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //ReportEndofSession::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& packer) {
-  packer.setDiskDone();
   return packer.allThreadsDone();
 }
 
@@ -169,7 +169,6 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //ReportEndofSessionWithErrors::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd(RecallReportPacker& packer) {
-  packer.setDiskDone();
   return packer.allThreadsDone();
 }
 

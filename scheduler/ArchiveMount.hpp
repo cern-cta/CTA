@@ -84,6 +84,11 @@ namespace cta {
      * Indicates that the mount was cancelled.
      */
     virtual void abort();
+    
+    /**
+     * Report a drive status change
+     */
+    virtual void setDriveStatus(cta::DriveStatus status);
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**

@@ -29,6 +29,7 @@
 #include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
@@ -63,7 +64,8 @@ public:
           uint64_t maxFilesRequest,
           castor::server::ProcessCap &capUtils,
           RecallWatchDog& watchdog,
-          castor::log::LogContext & lc);
+          castor::log::LogContext & lc,
+          RecallReportPacker &rrp);
    
    /**
     * Set the task injector. Has to be done that way (and not in the constructor)
@@ -132,6 +134,9 @@ private:
   
   /// Reference to the watchdog, used in run()
   RecallWatchDog& m_watchdog;
+  
+  /// Reference to the RecallReportPacker, used to update tape/drive state during recall
+  RecallReportPacker & m_rrp;
   
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 

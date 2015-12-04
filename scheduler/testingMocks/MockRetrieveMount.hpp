@@ -25,48 +25,48 @@
 
 namespace cta {
   class MockRetrieveMount: public cta::RetrieveMount {
-    public:
-      int getJobs;
-      int completes;
-      MockRetrieveMount(): getJobs(0), completes(0) {}
+  public:
+    int getJobs;
+    int completes;
+    MockRetrieveMount(): getJobs(0), completes(0) {}
 
-      ~MockRetrieveMount() throw() {
-      }
+    ~MockRetrieveMount() throw() {
+    }
 
-      std::unique_ptr<cta::RetrieveJob> getNextJob() {
-        getJobs++;
-        if(m_jobs.empty()) {
-          return std::unique_ptr<cta::RetrieveJob>();
-        } else {
-          std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
-          m_jobs.pop_front();
-          return job;
-        }
+    std::unique_ptr<cta::RetrieveJob> getNextJob() {
+      getJobs++;
+      if(m_jobs.empty()) {
+        return std::unique_ptr<cta::RetrieveJob>();
+      } else {
+        std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
+        m_jobs.pop_front();
+        return job;
       }
-      
-      virtual std::string getMountTransactionId() const {
-        return "1234567890";
-      }
-      
-      virtual void complete() { completes ++;  }
-      
-      virtual void abort() { completes ++; }
-      
-      void diskComplete() {};
+    }
 
-      void tapeComplete() {};
-      
-      bool bothSidesComplete() { return false; }
-      
-    private:
+    virtual std::string getMountTransactionId() const {
+      return "1234567890";
+    }
 
-      std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
-    public:
-      void createRetrieveJobs(const unsigned int nbJobs) {
-        for(unsigned int i = 0; i < nbJobs; i++) {
-          m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
-            new MockRetrieveJob(*this)));
-        }
+    virtual void complete() { completes ++;  }
+
+    virtual void abort() { completes ++; }
+
+    void diskComplete() { completes ++;};
+
+    void tapeComplete() {};
+
+    bool bothSidesComplete() { return false; }
+
+  private:
+
+    std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
+  public:
+    void createRetrieveJobs(const unsigned int nbJobs) {
+      for(unsigned int i = 0; i < nbJobs; i++) {
+        m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(
+          new MockRetrieveJob(*this)));
       }
-    }; // class MockRetrieveMount
+    }
+  }; // class MockRetrieveMount
 }

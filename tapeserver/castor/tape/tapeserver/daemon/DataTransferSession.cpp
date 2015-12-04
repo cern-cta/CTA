@@ -153,7 +153,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     tsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
-        m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc);
+        m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp);
 
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
@@ -188,8 +188,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // All client notifications are done by the report packer, including the
       // end of session
       rti.waitThreads();
-      rrp.waitThread();
       dwtp.waitThreads();
+      rrp.waitThread();
       trst.waitThreads();
       tsr.waitThreads();
       rwd.stopAndWaitThread();

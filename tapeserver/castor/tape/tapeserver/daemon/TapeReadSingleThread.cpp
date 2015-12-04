@@ -33,11 +33,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   uint64_t maxFilesRequest,
   castor::server::ProcessCap& capUtils,
   RecallWatchDog& watchdog,
-  castor::log::LogContext& lc) :
+  castor::log::LogContext& lc,
+  RecallReportPacker &rrp) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc),
   m_maxFilesRequest(maxFilesRequest),
-  m_watchdog(watchdog) {}
+  m_watchdog(watchdog),
+  m_rrp(rrp){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -113,6 +115,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   done:
   //then we terminate the global status reporter
   m_this.m_initialProcess.finish();
+  m_this.m_rrp.setTapeDone();
 }
 
 //------------------------------------------------------------------------------

@@ -1601,7 +1601,24 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::DriveStatus status, time_t com
   dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
     status, completionTime, 
     cta::MountType::RETRIEVE, 0,
-    0, 0, 0, "", "");
+    0, 0, 0, getMountInfo().vid, getMountInfo().tapePool);
+  dr.commit();
+}
+
+void OStoreDB::ArchiveMount::setDriveStatus(cta::DriveStatus status, time_t completionTime) {
+  // We just report the drive status as instructed by the tape thread.
+  // Get the drive register
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
+    status, completionTime, 
+    cta::MountType::ARCHIVE, 0,
+    0, 0, 0, getMountInfo().vid, getMountInfo().tapePool);
   dr.commit();
 }
 
