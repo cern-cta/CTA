@@ -77,13 +77,13 @@ namespace cta {
 
     /**
      * Indicates that the mount was completed.
-     *
-     * @param checksumOfTransfer The adler-32 checksum of the file as calculated
-     * during the execution of the job.
-     * @param fileSizeOfTransfer The size of the file as calculated during the
-     * execution of the job.
      */
     virtual void complete();
+    
+    /**
+     * Indicates that the mount was cancelled.
+     */
+    virtual void abort();
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**

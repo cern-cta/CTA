@@ -201,7 +201,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
       log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
-        retrieveMount->complete();
+        retrieveMount->abort();
         log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
         log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
         log::LogContext::ScopedParam sp12(lc, log::Param("errorCode", SEINTERNAL));
@@ -371,7 +371,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Drive not found on this path" << lc;
-    mount->complete();
+    mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
@@ -385,7 +385,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Error looking to path to tape drive: " << lc;
-    mount->complete();
+    mount->abort();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
@@ -398,7 +398,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while looking for drive" << lc;
-    mount->complete();
+    mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
@@ -418,7 +418,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Error opening tape drive" << lc;
-    mount->complete();
+    mount->abort();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
@@ -431,7 +431,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while opening drive" << lc;
-    mount->complete();
+    mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));

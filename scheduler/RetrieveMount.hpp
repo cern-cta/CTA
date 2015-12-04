@@ -80,17 +80,37 @@ namespace cta {
      * @return The mount transaction id.
      */
     virtual uint32_t getNbFiles() const;
+    
+    /**
+     * Report a drive status change
+     */
+    virtual void setDriveStatus(cta::DriveStatus status);
 
     /**
-     * Indicates that the mount was completed.
-     *
-     * @param checksumOfTransfer The adler-32 checksum of the file as calculated
-     * during the execution of the job.
-     * @param fileSizeOfTransfer The size of the file as calculated during the
-     * execution of the job.
+     * Indicates that the disk thread of the mount was completed. This
+     * will implicitly trigger the transition from DrainingToDisk to Up if necessary.
      */
-    virtual void complete();
+    virtual void diskComplete();
 
+    /**
+     * Indicates that the tape thread of the mount was completed. This 
+     * will implicitly trigger the transition from Unmounting to either Up or
+     * DrainingToDisk, depending on the the disk thread's status.
+     */
+    virtual void tapeComplete();
+    
+    /**
+     * Indicates that the we should cancel the mount (equivalent to diskComplete
+     * + tapeComeplete).
+     */
+    virtual void abort();
+    
+    /**
+     * Tests whether all threads are complete
+     * @return true if both tape and disk are complete.
+     */
+    virtual bool bothSidesComplete();
+    
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**
      * Job factory
@@ -116,6 +136,18 @@ namespace cta {
      * Internal tracking of the session completion
      */
     bool m_sessionRunning;
+    
+    /**
+     * Internal tracking of the tape thread
+     */
+    bool m_tapeRunning;
+    
+    /**
+     * Internal tracking of the disk thread
+     */
+    bool m_diskRunning;
+    
+    
 
   }; // class RetrieveMount
 

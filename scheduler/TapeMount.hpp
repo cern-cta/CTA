@@ -59,14 +59,9 @@ namespace cta {
     virtual uint32_t getNbFiles() const = 0;
 
     /**
-     * Indicates that the mount was completed.
-     *
-     * @param checksumOfTransfer The adler-32 checksum of the file as calculated
-     * during the execution of the job.
-     * @param fileSizeOfTransfer The size of the file as calculated during the
-     * execution of the job.
+     * Indicates that the mount was aborted.
      */
-    virtual void complete() = 0;
+    virtual void abort() = 0;
 
     /**
      * Destructor.

@@ -46,8 +46,10 @@ namespace daemon {
 //Constructor
 //------------------------------------------------------------------------------
 RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, log::LogContext lc):
-ReportPackerInterface<detail::Recall>(lc),
-        m_workerThread(*this),m_errorHappened(false), m_retrieveMount(retrieveMount){
+  ReportPackerInterface<detail::Recall>(lc),
+  m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
+  m_tapeThreadComplete(false), m_diskThreadComplete(false)
+{
 
 }
 //------------------------------------------------------------------------------
@@ -79,6 +81,14 @@ void RecallReportPacker::reportEndOfSession(){
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
+
+//------------------------------------------------------------------------------
+//setDriveStatus
+//------------------------------------------------------------------------------
+void RecallReportPacker::setDriveStatus(cta::DriveStatus status) {
+  m_retrieveMount->setDriveStatus(status);
+}
+
   
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
@@ -99,43 +109,52 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
-    if(!parent.errorHappened()){
-      parent.m_retrieveMount->complete();
-      parent.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
-      if (parent.m_watchdog) {
-        parent.m_watchdog->addParameter(log::Param("status","success"));
-        // We have a race condition here between the processing of this message by
-        // the initial process and the printing of the end-of-session log, triggered
-        // by the end our process. To delay the latter, we sleep half a second here.
-        usleep(500*1000);
-      }
+  if(!parent.errorHappened()){
+    parent.m_retrieveMount->diskComplete();
+    parent.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
+    if (parent.m_watchdog) {
+      parent.m_watchdog->addParameter(log::Param("status","success"));
+      // We have a race condition here between the processing of this message by
+      // the initial process and the printing of the end-of-session log, triggered
+      // by the end our process. To delay the latter, we sleep half a second here.
+      usleep(500*1000);
     }
-    else {
-      const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
-      parent.m_lc.log(LOG_ERR,msg);
-      parent.m_retrieveMount->complete();
-      if (parent.m_watchdog) {
-        parent.m_watchdog->addParameter(log::Param("status","failure"));
-        // We have a race condition here between the processing of this message by
-        // the initial process and the printing of the end-of-session log, triggered
-        // by the end our process. To delay the latter, we sleep half a second here.
-        usleep(500*1000);
-      }
+  }
+  else {
+    const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
+    parent.m_lc.log(LOG_ERR,msg);
+    parent.m_retrieveMount->diskComplete();
+    if (parent.m_watchdog) {
+      parent.m_watchdog->addParameter(log::Param("status","failure"));
+      // We have a race condition here between the processing of this message by
+      // the initial process and the printing of the end-of-session log, triggered
+      // by the end our process. To delay the latter, we sleep half a second here.
+      usleep(500*1000);
     }
+  }
 }
+
+//------------------------------------------------------------------------------
+//ReportEndofSession::goingToEnd
+//------------------------------------------------------------------------------
+bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& packer) {
+  packer.setDiskDone();
+  return packer.allThreadsDone();
+}
+
 //------------------------------------------------------------------------------
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   if(parent.m_errorHappened) {
-    parent.m_retrieveMount->complete();
+    parent.m_retrieveMount->diskComplete();
     LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
     parent.m_lc.log(LOG_ERR,m_message);
   }
   else{
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    parent.m_lc.log(LOG_ERR,msg);  
-   parent.m_retrieveMount->complete();
+   parent.m_retrieveMount->diskComplete();
   }
   if (parent.m_watchdog) {
     parent.m_watchdog->addParameter(log::Param("status","failure"));
@@ -145,6 +164,15 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
     usleep(500*1000);
   }
 }
+
+//------------------------------------------------------------------------------
+//ReportEndofSessionWithErrors::goingToEnd
+//------------------------------------------------------------------------------
+bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd(RecallReportPacker& packer) {
+  packer.setDiskDone();
+  return packer.allThreadsDone();
+}
+
 //------------------------------------------------------------------------------
 //ReportError::execute
 //------------------------------------------------------------------------------
@@ -153,6 +181,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_lc.log(LOG_ERR,m_failedRetrieveJob->failureMessage);
   m_failedRetrieveJob->failed();
 }
+
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
 //------------------------------------------------------------------------------
@@ -171,7 +200,7 @@ void RecallReportPacker::WorkerThread::run(){
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());    
       rep->execute(m_parent);
 
-      if(rep->goingToEnd()) {
+      if(rep->goingToEnd(m_parent)) {
         endFound = true;
         break;
       }
@@ -221,7 +250,7 @@ void RecallReportPacker::WorkerThread::run(){
   if (!endFound) {
     while (1) {
       std::unique_ptr<Report> report(m_parent.m_fifo.pop());
-      if (report->goingToEnd())
+      if (report->goingToEnd(m_parent))
         break;
     }
   }
@@ -233,6 +262,27 @@ void RecallReportPacker::WorkerThread::run(){
 //------------------------------------------------------------------------------
 bool RecallReportPacker::errorHappened() {
   return m_errorHappened || (m_watchdog && m_watchdog->errorHappened());
+}
+
+//------------------------------------------------------------------------------
+//reportTapeDone()
+//------------------------------------------------------------------------------
+void RecallReportPacker::setTapeDone() {
+  m_tapeThreadComplete = true;
+}
+
+//------------------------------------------------------------------------------
+//reportDiskDone()
+//------------------------------------------------------------------------------
+void RecallReportPacker::setDiskDone() {
+  m_diskThreadComplete = true;
+}
+
+//------------------------------------------------------------------------------
+//reportDiskDone()
+//------------------------------------------------------------------------------
+bool RecallReportPacker::allThreadsDone() {
+  return m_tapeThreadComplete && m_diskThreadComplete;
 }
 
 }}}}

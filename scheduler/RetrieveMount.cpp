@@ -84,13 +84,57 @@ std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
 }
 
 //------------------------------------------------------------------------------
-// complete
+// tapeComplete())
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::complete() {
-  // Just set the session as complete in the DB.
-  m_dbMount->complete(time(NULL));
-  // and record we are done with the mount
-  m_sessionRunning = false;
+void cta::RetrieveMount::tapeComplete() {
+  m_tapeRunning = false;
+  if (!m_diskRunning) {
+    // Just set the session as complete in the DB.
+    m_dbMount->complete(time(NULL));
+    // and record we are done with the mount
+    m_sessionRunning = false;
+  } else {
+    // This is a special case: we have to report the tape server is draining
+    // its memory to disk
+    setDriveStatus(cta::DriveStatus::DrainingToDisk);
+  }
+}
+
+//------------------------------------------------------------------------------
+// diskComplete())
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::diskComplete() {
+  m_diskRunning = false;
+  if (!m_tapeRunning) {
+    // Just set the session as complete in the DB.
+    cta::SchedulerDatabase::RetrieveMount  * ptr = m_dbMount.get();
+    ptr=ptr;
+    m_dbMount->complete(time(NULL));
+    // and record we are done with the mount
+    m_sessionRunning = false;
+  }
+}
+
+//------------------------------------------------------------------------------
+// abort())
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::abort() {
+  diskComplete();
+  tapeComplete();
+}
+
+//------------------------------------------------------------------------------
+// setDriveStatus()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setDriveStatus(cta::DriveStatus status) {
+  m_dbMount->setDriveStatus(status, time(NULL));
+}
+
+//------------------------------------------------------------------------------
+// bothSidesComplete())
+//------------------------------------------------------------------------------
+bool cta::RetrieveMount::bothSidesComplete() {
+  return !(m_diskRunning || m_tapeRunning);
 }
 
 //------------------------------------------------------------------------------

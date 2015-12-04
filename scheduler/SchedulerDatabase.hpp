@@ -250,6 +250,7 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
+    virtual void setDriveStatus(DriveStatus status, time_t completionTime) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };

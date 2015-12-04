@@ -880,6 +880,8 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
                 Utils::getShortHostname(), 
                 time(NULL))));
             internalRet->m_sessionRunning = true;
+            internalRet->m_diskRunning = true;
+            internalRet->m_tapeRunning = true;
             return std::unique_ptr<TapeMount> (internalRet.release()); 
          } catch (cta::exception::Exception & ex) {
            std::string debug=ex.getMessageValue();

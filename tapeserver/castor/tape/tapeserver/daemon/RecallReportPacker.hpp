@@ -75,6 +75,29 @@ public:
    * @param error_code The error code given by the drive
    */
   virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code); 
+  
+  /**
+   * Report the drive state and set it in the central drive register. This
+   * function is to be used by the tape thread when running.
+   * @param state the new drive state.
+   */
+  virtual void setDriveStatus(cta::DriveStatus status);
+  
+  /**
+   * Flag disk thread as done.
+   */
+  virtual void setDiskDone();
+  
+  /**
+   * Flag tape thread as done. Set the drive status to draining if needed.
+   */
+  virtual void setTapeDone();
+  
+  /**
+   * Query the status of disk and tape threads (are they both done?).
+   * @return true if both tape and disk threads are done.
+   */
+  virtual bool allThreadsDone();
 
   /**
    * Start the inner thread
@@ -94,12 +117,10 @@ public:
 private:
   //inner classes use to store content while receiving a report 
   class Report {
-    const bool m_endNear;
   public:
-    Report(bool b):m_endNear(b){}
     virtual ~Report(){}
     virtual void execute(RecallReportPacker& packer)=0;
-    bool goingToEnd() const {return m_endNear;};
+    virtual bool goingToEnd(RecallReportPacker& packer) {return false;};
   };
   class ReportSuccessful :  public Report {
     /**
@@ -108,7 +129,7 @@ private:
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
     ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob): 
-    Report(false), m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
+    m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
     virtual void execute(RecallReportPacker& reportPacker);
   };
   class ReportError : public Report {
@@ -118,26 +139,34 @@ private:
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
   public:
     ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob):
-    Report(false),
     m_failedRetrieveJob(std::move(failedRetrieveJob)) {
     }
 
     virtual void execute(RecallReportPacker& reportPacker);
   };
   
+  class ReportDriveStatus : public Report {
+    cta::DriveStatus m_status;
+  public:
+    ReportDriveStatus(cta::DriveStatus status): m_status(status) {}
+  };
+  
   class ReportEndofSession : public Report {
   public:
-    ReportEndofSession():Report(true){}
+    ReportEndofSession(){}
     virtual void execute(RecallReportPacker& reportPacker);
+    virtual bool goingToEnd(RecallReportPacker& packer);
+
   };
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
     int m_error_code;
   public:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
-    Report(true),m_message(msg),m_error_code(error_code){}
+    m_message(msg),m_error_code(error_code){}
   
     virtual void execute(RecallReportPacker& reportPacker);
+    virtual bool goingToEnd(RecallReportPacker& packer);
   };
   
   class WorkerThread: public castor::server::Thread {
@@ -165,6 +194,16 @@ private:
    * The mount object used to send reports
    */
   cta::RetrieveMount * m_retrieveMount;
+  
+  /**
+   * Tracking of the tape thread end
+   */
+  bool m_tapeThreadComplete;
+  
+  /**
+   * Tracking of the disk thread end
+   */
+  bool m_diskThreadComplete;
 };
 
 }}}}

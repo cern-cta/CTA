@@ -45,6 +45,7 @@ namespace unitTests{
     virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
     virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
     virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
+    virtual void setDriveStatus(cta::DriveStatus status, time_t completionTime) { throw std::runtime_error("Not implemented"); }
   };
   
   class TestingRetrieveMount: public cta::RetrieveMount {

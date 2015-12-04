@@ -49,7 +49,15 @@ namespace cta {
       }
       
       virtual void complete() { completes ++;  }
+      
+      virtual void abort() { completes ++; }
+      
+      void diskComplete() {};
 
+      void tapeComplete() {};
+      
+      bool bothSidesComplete() { return false; }
+      
     private:
 
       std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;

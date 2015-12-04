@@ -1586,8 +1586,24 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   m_agent.fetch();
   m_agent.removeFromOwnership(t.getAddressIfSet());
   m_agent.commit();
-}
+  }
 
+void OStoreDB::RetrieveMount::setDriveStatus(cta::DriveStatus status, time_t completionTime) {
+  // We just report the drive status as instructed by the tape thread.
+  // Get the drive register
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
+    status, completionTime, 
+    cta::MountType::RETRIEVE, 0,
+    0, 0, 0, "", "");
+  dr.commit();
+}
 
 void OStoreDB::ArchiveJob::fail() {
   if (!m_jobOwned)
