@@ -115,7 +115,6 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   done:
   //then we terminate the global status reporter
   m_this.m_initialProcess.finish();
-  m_this.m_rrp.setTapeDone();
 }
 
 //------------------------------------------------------------------------------

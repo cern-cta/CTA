@@ -189,8 +189,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // end of session
       rti.waitThreads();
       dwtp.waitThreads();
-      rrp.waitThread();
+      rrp.setDiskDone();
       trst.waitThreads();
+      rrp.setTapeDone();
+      rrp.waitThread();
       tsr.waitThreads();
       rwd.stopAndWaitThread();
       return trst.getHardwareStatus();

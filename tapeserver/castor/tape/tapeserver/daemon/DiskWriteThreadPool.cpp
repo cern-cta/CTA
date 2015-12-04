@@ -90,7 +90,6 @@ void DiskWriteThreadPool::waitThreads() {
     (*i)->wait();
   }
   m_lc.log(LOG_INFO, "All DiskWriteThreadPool threads are now complete");
-  m_reporter.setDiskDone();
 }
 
 //------------------------------------------------------------------------------
@@ -181,6 +180,8 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   logWithStat(LOG_INFO, "Finishing DiskWriteWorkerThread");
   m_parentThreadPool.addThreadStats(m_threadStat);
   if(0 == --m_parentThreadPool.m_nbActiveThread){
+    m_parentThreadPool.m_reporter.setDiskDone();
+    m_parentThreadPool.m_reporter.setTapeDone();
 
     //Im the last Thread alive, report end of session
     if(m_parentThreadPool.m_failedWriteCount==0){
