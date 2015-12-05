@@ -33,13 +33,15 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         TapeServerReporter & tsr,
         MigrationWatchDog & mwd,
         const VolumeInfo& volInfo,
-        castor::log::LogContext & lc, MigrationReportPacker & repPacker,
+        castor::log::LogContext & lc,
+        MigrationReportPacker & repPacker,
         castor::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo,capUtils, lc),
         m_filesBeforeFlush(filesBeforeFlush),
         m_bytesBeforeFlush(bytesBeforeFlush),
-        m_drive(drive), m_reportPacker(repPacker),
+        m_drive(drive),
+        m_reportPacker(repPacker),
         m_lastFseq(-1),
         m_compress(true),
         m_watchdog(mwd){}
@@ -168,6 +170,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // 
       TapeCleaning cleaner(*this, timer);
       currentErrorToCount = "Error_tapeMountForWrite";
+      m_reportPacker.reportDriveStatus(cta::DriveStatus::Mounting);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       mountTapeReadWrite();
@@ -202,7 +205,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
-      std::unique_ptr<TapeWriteTask> task;    
+      std::unique_ptr<TapeWriteTask> task;   
+      m_reportPacker.reportDriveStatus(cta::DriveStatus::Transfering); 
       while(1) {
         //get a task
         task.reset(m_tasks.pop());

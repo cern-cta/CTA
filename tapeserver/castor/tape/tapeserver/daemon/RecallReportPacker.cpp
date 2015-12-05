@@ -84,10 +84,11 @@ void RecallReportPacker::reportEndOfSession(){
 }
 
 //------------------------------------------------------------------------------
-//setDriveStatus
+//reportDriveStatus
 //------------------------------------------------------------------------------
-void RecallReportPacker::setDriveStatus(cta::DriveStatus status) {
-  m_retrieveMount->setDriveStatus(status);
+void RecallReportPacker::reportDriveStatus(cta::DriveStatus status) {
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportDriveStatus(status));
 }
 
   
@@ -142,6 +143,20 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& packer) {
   return packer.allThreadsDone();
+}
+
+//------------------------------------------------------------------------------
+//ReportDriveStatus::execute
+//------------------------------------------------------------------------------
+void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
+  parent.m_retrieveMount->setDriveStatus(m_status);
+}
+
+//------------------------------------------------------------------------------
+//ReportDriveStatus::goingToEnd
+//------------------------------------------------------------------------------
+bool RecallReportPacker::ReportDriveStatus::goingToEnd(RecallReportPacker& packer) {
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -200,7 +215,7 @@ void RecallReportPacker::WorkerThread::run(){
   bool endFound = false;
   try{
     while(1) {    
-      std::unique_ptr<Report> rep(m_parent.m_fifo.pop());    
+      std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
       rep->execute(m_parent);
 
       if(rep->goingToEnd(m_parent)) {

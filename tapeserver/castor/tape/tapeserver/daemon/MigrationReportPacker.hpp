@@ -70,7 +70,14 @@ public:
     * @param compressStats 
     * 
     */
-  virtual void reportFlush(drive::compressionStats compressStats);
+  virtual void reportFlush(drive::compressionStats compressStats); 
+  
+  /**
+   * Report the drive state and set it in the central drive register. This
+   * function is to be used by the tape thread when running.
+   * @param state the new drive state.
+   */
+  virtual void reportDriveStatus(cta::DriveStatus status);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -110,6 +117,14 @@ private:
     m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
     virtual void execute(MigrationReportPacker& reportPacker);
   };
+  
+  class ReportDriveStatus : public Report {
+    cta::DriveStatus m_status;
+  public:
+    ReportDriveStatus(cta::DriveStatus status): m_status(status) {}
+    virtual void execute(MigrationReportPacker& reportPacker);
+  };
+  
   class ReportFlush : public Report {
     drive::compressionStats m_compressStats;
     

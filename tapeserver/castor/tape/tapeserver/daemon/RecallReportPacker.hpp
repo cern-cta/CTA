@@ -81,7 +81,7 @@ public:
    * function is to be used by the tape thread when running.
    * @param state the new drive state.
    */
-  virtual void setDriveStatus(cta::DriveStatus status);
+  virtual void reportDriveStatus(cta::DriveStatus status);
   
   /**
    * Flag disk thread as done.
@@ -149,6 +149,8 @@ private:
     cta::DriveStatus m_status;
   public:
     ReportDriveStatus(cta::DriveStatus status): m_status(status) {}
+    virtual void execute(RecallReportPacker& reportPacker);
+    virtual bool goingToEnd(RecallReportPacker& packer);
   };
   
   class ReportEndofSession : public Report {

@@ -65,7 +65,8 @@ public:
     TapeServerReporter & tsr,
     MigrationWatchDog & mwd,
     const VolumeInfo& volInfo,
-    castor::log::LogContext & lc, MigrationReportPacker & repPacker,
+    castor::log::LogContext & lc,
+    MigrationReportPacker & repPacker,
     castor::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush);
     
@@ -103,6 +104,7 @@ private:
     TapeCleaning(TapeWriteSingleThread& parent, castor::utils::Timer & timer):
       m_this(parent), m_timer(timer) {}
     ~TapeCleaning(){
+      m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::CleaningUp);
       // This out-of-try-catch variables allows us to record the stage of the 
       // process we're in, and to count the error if it occurs.
       // We will not record errors for an empty string. This will allow us to
@@ -125,6 +127,7 @@ private:
         }
         // in the special case of a "manual" mode tape, we should skip the unload too.
         if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
+          m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Unloading);
           m_this.m_drive.unloadTape();
           m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape unloaded");
         } else {
@@ -135,6 +138,7 @@ private:
         // In case of manual mode, this will be filtered by the rmc daemon
         // (which will do nothing)
         currentErrorToCount = "Error_tapeDismount";
+        m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Unmounting);
         m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
         m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
@@ -145,6 +149,7 @@ private:
       catch(const castor::exception::Exception& ex){
         // Notify something failed during the cleaning 
         m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+        m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Down);
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
@@ -159,6 +164,7 @@ private:
       } catch (...) {
           // Notify something failed during the cleaning 
           m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+          m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Down);
           m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
           try {
           if (currentErrorToCount.size()) {

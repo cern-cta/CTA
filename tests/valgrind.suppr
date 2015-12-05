@@ -249,4 +249,14 @@
    obj:/usr/lib64/libXrdCl.so.2.0.0
 }
 
-
+{
+   tape_cleaning
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon21MigrationReportPacker17reportDriveStatusEN3cta11DriveStatusE
+   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread12TapeCleaningD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}

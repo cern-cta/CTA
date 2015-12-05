@@ -113,6 +113,21 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 }
 
 //------------------------------------------------------------------------------
+//reportDriveStatus
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportDriveStatus(cta::DriveStatus status) {
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportDriveStatus(status));
+}
+
+//------------------------------------------------------------------------------
+//ReportDriveStatus::execute
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
+  parent.m_archiveMount->setDriveStatus(m_status);
+}
+
+//------------------------------------------------------------------------------
 //ReportFlush::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPacker){

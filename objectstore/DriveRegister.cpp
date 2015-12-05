@@ -23,6 +23,7 @@
 #include "common/DriveState.hpp"
 #include <set>
 #include <json/json.h>
+#include <iostream>
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):
   ObjectOps<serializers::DriveRegister>(os, address) { }
@@ -278,16 +279,18 @@ void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& drive
       CreationLog cl(UserIdentity(0,0), "", reportTime, "Automatic creation of "
           "drive on status report");
       addDrive(driveName, logicalLibary, cl);
-    } else
+    } else {
       throw NoSuchDrive("In DriveRegister::reportDriveStatus(): No such drive");
+    }
     // Find the drive again
     auto dl = m_payload.mutable_drives();
     for (auto dp = dl->begin(); dp != dl->end(); dp++) {
       if (dp->drivename() == driveName)
         drive = &(*dp);
     }
-    if (!drive)
+    if (!drive) {
       throw NoSuchDrive("In DriveRegister::reportDriveStatus(): Failed to create the drive");
+    }
   }
   switch (status) {
     case DriveStatus::Down:
@@ -402,7 +405,7 @@ void cta::objectstore::DriveRegister::setDriveStarting(ReportDriveStatusInputs& 
   drive->set_cleanupstarttime(0);
   drive->set_lastupdatetime(inputs.reportTime);
   drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Mounting);
+  drive->set_drivestatus(serializers::DriveStatus::Starting);
   drive->set_currentvid(inputs.vid);
   drive->set_currenttapepool(inputs.tapepool);
 }
@@ -470,19 +473,111 @@ void cta::objectstore::DriveRegister::setDriveTransfering(ReportDriveStatusInput
 }
 
 void cta::objectstore::DriveRegister::setDriveUnloading(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  throw NotImplemented("");
+  if (drive->drivestatus() == serializers::DriveStatus::Unloading) {
+    drive->set_lastupdatetime(inputs.reportTime);
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  drive->set_logicallibrary(inputs.logicalLibary);
+  drive->set_sessionid(inputs.mountSessionId);
+  drive->set_bytestransferedinsession(0);
+  drive->set_filestransferedinsession(0);
+  drive->set_latestbandwidth(0);
+  drive->set_sessionstarttime(0);
+  drive->set_mountstarttime(0);
+  drive->set_transferstarttime(0);
+  drive->set_unloadstarttime(inputs.reportTime);
+  drive->set_unmountstarttime(0);
+  drive->set_drainingstarttime(0);
+  drive->set_downorupstarttime(0);
+  drive->set_cleanupstarttime(0);
+  drive->set_lastupdatetime(inputs.reportTime);
+  drive->set_mounttype(serializeMountType(inputs.mountType));
+  drive->set_drivestatus(serializers::DriveStatus::Unloading);
+  drive->set_currentvid(inputs.vid);
+  drive->set_currenttapepool(inputs.tapepool);
 }
 
 void cta::objectstore::DriveRegister::setDriveUnmounting(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  throw NotImplemented("");  
+  if (drive->drivestatus() == serializers::DriveStatus::Unmounting) {
+    drive->set_lastupdatetime(inputs.reportTime);
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  drive->set_logicallibrary(inputs.logicalLibary);
+  drive->set_sessionid(inputs.mountSessionId);
+  drive->set_bytestransferedinsession(0);
+  drive->set_filestransferedinsession(0);
+  drive->set_latestbandwidth(0);
+  drive->set_sessionstarttime(0);
+  drive->set_mountstarttime(0);
+  drive->set_transferstarttime(0);
+  drive->set_unloadstarttime(0);
+  drive->set_unmountstarttime(inputs.reportTime);
+  drive->set_drainingstarttime(0);
+  drive->set_downorupstarttime(0);
+  drive->set_cleanupstarttime(0);
+  drive->set_lastupdatetime(inputs.reportTime);
+  drive->set_mounttype(serializeMountType(inputs.mountType));
+  drive->set_drivestatus(serializers::DriveStatus::Unmounting);
+  drive->set_currentvid(inputs.vid);
+  drive->set_currenttapepool(inputs.tapepool);
 }
 
 void cta::objectstore::DriveRegister::setDriveDrainingToDisk(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  throw NotImplemented("");  
+  if (drive->drivestatus() == serializers::DriveStatus::DrainingToDisk) {
+    drive->set_lastupdatetime(inputs.reportTime);
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  drive->set_logicallibrary(inputs.logicalLibary);
+  drive->set_sessionid(inputs.mountSessionId);
+  drive->set_bytestransferedinsession(0);
+  drive->set_filestransferedinsession(0);
+  drive->set_latestbandwidth(0);
+  drive->set_sessionstarttime(0);
+  drive->set_mountstarttime(0);
+  drive->set_transferstarttime(0);
+  drive->set_unloadstarttime(0);
+  drive->set_unmountstarttime(0);
+  drive->set_drainingstarttime(inputs.reportTime);
+  drive->set_downorupstarttime(0);
+  drive->set_cleanupstarttime(0);
+  drive->set_lastupdatetime(inputs.reportTime);
+  drive->set_mounttype(serializeMountType(inputs.mountType));
+  drive->set_drivestatus(serializers::DriveStatus::DrainingToDisk);
+  drive->set_currentvid(inputs.vid);
+  drive->set_currenttapepool(inputs.tapepool);
 }
 
 void cta::objectstore::DriveRegister::setDriveCleaningUp(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  throw NotImplemented("");
+  if (drive->drivestatus() == serializers::DriveStatus::CleaningUp) {
+    drive->set_lastupdatetime(inputs.reportTime);
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  drive->set_logicallibrary(inputs.logicalLibary);
+  drive->set_sessionid(inputs.mountSessionId);
+  drive->set_bytestransferedinsession(0);
+  drive->set_filestransferedinsession(0);
+  drive->set_latestbandwidth(0);
+  drive->set_sessionstarttime(0);
+  drive->set_mountstarttime(0);
+  drive->set_transferstarttime(0);
+  drive->set_unloadstarttime(0);
+  drive->set_unmountstarttime(0);
+  drive->set_drainingstarttime(0);
+  drive->set_downorupstarttime(0);
+  drive->set_cleanupstarttime(inputs.reportTime);
+  drive->set_lastupdatetime(inputs.reportTime);
+  drive->set_mounttype(serializeMountType(inputs.mountType));
+  drive->set_drivestatus(serializers::DriveStatus::CleaningUp);
+  drive->set_currentvid(inputs.vid);
+  drive->set_currenttapepool(inputs.tapepool);
 }
 
 
