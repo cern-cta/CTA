@@ -81,10 +81,12 @@ public:
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
   public:
+    CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<ArchiveJob> getNextJob();
     virtual void complete(time_t completionTime);
     virtual void setDriveStatus(cta::DriveStatus status, time_t completionTime);
+    virtual void setTapeMaxFileCount(uint64_t maxFileId);
   };
   
   /* === Archive Job Handling =============================================== */
@@ -95,10 +97,11 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void succeed();
     virtual void fail();
-    virtual void bumpUpTapeFileCount(const std::string& vid, uint64_t newFileCount);
+    virtual void bumpUpTapeFileCount(uint64_t newFileCount);
     virtual ~ArchiveJob();
   private:
-    ArchiveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
+    ArchiveJob(const std::string &, objectstore::Backend &,
+      objectstore::Agent &, ArchiveMount &);
     bool m_jobOwned;
     uint16_t m_copyNb;
     uint64_t m_mountId;
@@ -106,6 +109,7 @@ public:
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
     objectstore::ArchiveToFileRequest m_atfr;
+    ArchiveMount & m_archiveMount;
   };
   
   /* === Retrieve Mount handling ============================================ */

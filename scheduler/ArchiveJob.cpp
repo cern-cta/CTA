@@ -51,8 +51,7 @@ void cta::ArchiveJob::complete() {
     throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksum not set");
   // We are good to go to record the data in the persistent storage.
   // First make the file safe on tape.
-  m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.vid,
-      nameServerTapeFile.tapeFileLocation.fSeq);
+  m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.fSeq);
   // Now record the data in the archiveNS. The checksum will be validated if already
   // present, of inserted if not.
   m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 

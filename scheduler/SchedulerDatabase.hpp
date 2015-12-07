@@ -186,7 +186,7 @@ public:
     cta::NameServerTapeFile nameServerTapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
-    virtual void bumpUpTapeFileCount(const std::string & vid, uint64_t newFileCount) = 0;
+    virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
   

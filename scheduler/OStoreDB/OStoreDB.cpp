@@ -1385,7 +1385,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     // If the request is not around anymore, we will just move the the next
     // Prepare the return value
     std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
-      jl.front().address, m_objectStore, m_agent));
+      jl.front().address, m_objectStore, m_agent, *this));
     privateRet->m_copyNb = jl.front().copyNb;
     objectstore::ScopedExclusiveLock atfrl;
     try {
@@ -1454,7 +1454,6 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   objectstore::ScopedExclusiveLock tl(t);
   tpl.release();
   t.fetch();
-  t.setLastFseq(nbFilesCurrentlyOnTape);
   t.releaseBusy();
   t.commit();
   objectstore::ScopedExclusiveLock agl(m_agent);
@@ -1464,8 +1463,8 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 }
 
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
-  objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),
-  m_objectStore(os), m_agent(ag), m_atfr(jobAddress, os) {}
+  objectstore::Backend& os, objectstore::Agent& ag, ArchiveMount & am): m_jobOwned(false),
+  m_objectStore(os), m_agent(ag), m_atfr(jobAddress, os), m_archiveMount(am) {}
 
 OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::Agent& a):
   m_objectStore(os), m_agent(a) { }
@@ -1622,6 +1621,31 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::DriveStatus status, time_t comp
   dr.commit();
 }
 
+void OStoreDB::ArchiveMount::setTapeMaxFileCount(uint64_t maxFileId) {
+  // Update the max file count for the tape
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  // Find the tape and update it.
+  objectstore::TapePool tp (re.getTapePoolAddress(mountInfo.tapePool), m_objectStore);
+  rel.release();
+  objectstore::ScopedSharedLock tpl(tp);
+  tp.fetch();
+  objectstore::Tape t(tp.getTapeAddress(mountInfo.vid), m_objectStore);
+  objectstore::ScopedExclusiveLock tl(t);
+  tpl.release();
+  t.fetch();
+  // We should never set the max file to the same value or lower (it should)
+  // always strictly go up.
+  if (t.getLastFseq() >= maxFileId) {
+    throw MaxFSeqNotGoingUp("In OStoreDB::ArchiveMount::setTapeMaxFileCount: trying to set maxFSeq to lower or equal value to before");
+  }
+  t.setLastFseq(maxFileId);
+  t.releaseBusy();
+  t.commit();
+}
+
+
 void OStoreDB::ArchiveJob::fail() {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
@@ -1665,7 +1689,8 @@ void OStoreDB::ArchiveJob::fail() {
   throw NoSuchTapePool("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
   }
 
-void OStoreDB::ArchiveJob::bumpUpTapeFileCount(const std::string& vid, uint64_t newFileCount) {
+void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
+  m_archiveMount.setTapeMaxFileCount(newFileCount);
 }
 
 
