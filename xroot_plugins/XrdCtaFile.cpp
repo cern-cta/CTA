@@ -1487,7 +1487,7 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
       for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
         std::stringstream blockIdSS;
         if(i->tapeFileLocation.fSeq==1) {
-          blockIdSS << "-";
+          blockIdSS << "1";
         }
         else{
           blockIdSS << i->tapeFileLocation.blockId;
