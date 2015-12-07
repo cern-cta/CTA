@@ -93,7 +93,6 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   
   if     ("ad"    == command || "admin"                 == command) {xCom_admin(tokens, requester);}
   else if("ah"    == command || "adminhost"             == command) {xCom_adminhost(tokens, requester);}
-  else if("us"    == command || "user"                  == command) {xCom_user(tokens, requester);}
   else if("tp"    == command || "tapepool"              == command) {xCom_tapepool(tokens, requester);}
   else if("ar"    == command || "archiveroute"          == command) {xCom_archiveroute(tokens, requester);}
   else if("ll"    == command || "logicallibrary"        == command) {xCom_logicallibrary(tokens, requester);}
@@ -523,13 +522,6 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
   else {
     m_data = help.str();
   }
-}
-  
-//------------------------------------------------------------------------------
-// xCom_user
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  m_data = "Not implemented\n";
 }
   
 //------------------------------------------------------------------------------
@@ -1292,10 +1284,10 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
                << " " << std::setw(10) << "#secs"
                << " " << std::setw(12) << "mount type"
                << " " << std::setw(8) << "vid"
-               << " " << std::setw(18) << "bytes transfered"
-               << " " << std::setw(18) << "files transfered"
-               << " " << std::setw(15) << "bandwidth"
-               << " " << std::setw(12) << "session id"
+//               << " " << std::setw(18) << "bytes transfered"
+//               << " " << std::setw(18) << "files transfered"
+//               << " " << std::setw(15) << "bandwidth"
+//               << " " << std::setw(12) << "session id"
                << "\x1b[0m" << std::endl;
   }
   for(auto it = list.begin(); it != list.end(); it++) {
@@ -1305,10 +1297,11 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
                << " " << std::setw(10) << getDurationSinceStatusBegin(*it)
                << " " << std::setw(12) << cta::MountType::toString(it->mountType)
                << " " << std::setw(8) << it->currentVid
-               << " " << std::setw(18) << it->bytesTransferedInSession
-               << " " << std::setw(18) << it->filesTransferedInSession
-               << " " << std::setw(15) << it->latestBandwidth
-               << " " << std::setw(12) << it->sessionId << std::endl;
+//               << " " << std::setw(18) << it->bytesTransferedInSession
+//               << " " << std::setw(18) << it->filesTransferedInSession
+//               << " " << std::setw(15) << it->latestBandwidth
+//               << " " << std::setw(12) << it->sessionId 
+               << std::endl;
   }
   m_data = responseSS.str();
 }
@@ -1424,22 +1417,22 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
   if(dirIterator.hasMore()) {
     if(!tapeCopyInfo) {
       responseSS << "\x1b[31;1m"
-                 << " " << std::setw(18) << "mode"
-                 << " " << std::setw(18) << "uid" 
-                 << " " << std::setw(18) << "gid" 
-                 << " " << std::setw(17) << "storage class"
-                 << " " << std::setw(26) << "checksum"
-                 << " " << std::setw(16) << "size"
-                 << " " << std::setw(30) << "filename"
+                 << " " << std::setw(11) << "mode"
+                 << " " << std::setw(8) << "uid" 
+                 << " " << std::setw(8) << "gid" 
+                 << " " << std::setw(14) << "storage class"
+                 << " " << std::setw(24) << "checksum"
+                 << " " << std::setw(12) << "size"
+                 << " " << std::setw(10) << "filename"
                  << "\x1b[0m" << std::endl;
     }
     else {
       responseSS << "\x1b[31;1m"
-                 << " " << std::setw(8) << "copynb"
-                 << " " << std::setw(8) << "vid" 
-                 << " " << std::setw(15) << "fseq" 
-                 << " " << std::setw(20) << "block id"
-                 << " " << std::setw(30) << "filename"
+                 << " " << std::setw(7) << "copynb"
+                 << " " << std::setw(7) << "vid" 
+                 << " " << std::setw(5) << "fseq" 
+                 << " " << std::setw(10) << "block id"
+                 << " " << std::setw(10) << "filename"
                  << "\x1b[0m" << std::endl;
     }
   }
@@ -1475,13 +1468,13 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
              << ((mode & S_IROTH) ? "r" : "-")
              << ((mode & S_IWOTH) ? "w" : "-")
              << ((mode & S_IXOTH) ? "x" : "-");
-      responseSS << " " << std::setw(18) << modeSS.str()
-                 << " " << std::setw(18) << owner.uid
-                 << " " << std::setw(18) << owner.gid
-                 << " " << std::setw(17) << storageClassName
-                 << " " << std::setw(26) << dirEntry.status.checksum.str()
-                 << " " << std::setw(16) << dirEntry.status.size
-                 << " " << std::setw(30) << dirEntry.name << std::endl;
+      responseSS << " " << std::setw(11) << modeSS.str()
+                 << " " << std::setw(8) << owner.uid
+                 << " " << std::setw(8) << owner.gid
+                 << " " << std::setw(14) << storageClassName
+                 << " " << std::setw(24) << dirEntry.status.checksum.str()
+                 << " " << std::setw(12) << dirEntry.status.size
+                 << " " << std::setw(10) << dirEntry.name << std::endl;
     }
     else {
       for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
@@ -1492,11 +1485,11 @@ void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::Secu
         else{
           blockIdSS << i->tapeFileLocation.blockId;
         }
-        responseSS << " " << std::setw(8) << i->tapeFileLocation.copyNb
-                   << " " << std::setw(8) << i->tapeFileLocation.vid
-                   << " " << std::setw(15) << i->tapeFileLocation.fSeq
-                   << " " << std::setw(20) << blockIdSS.str()
-                   << " " << std::setw(30) << dirEntry.name << std::endl;
+        responseSS << " " << std::setw(7) << i->tapeFileLocation.copyNb
+                   << " " << std::setw(7) << i->tapeFileLocation.vid
+                   << " " << std::setw(5) << i->tapeFileLocation.fSeq
+                   << " " << std::setw(10) << blockIdSS.str()
+                   << " " << std::setw(10) << dirEntry.name << std::endl;
       }
     }
   }
@@ -1572,7 +1565,6 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << "" << std::endl;
   help << programName << " ad/admin          add/rm/ls/ch" << std::endl;
   help << programName << " ah/adminhost      add/rm/ls/ch" << std::endl;
-  help << programName << " us/user           add/rm/ls/ch" << std::endl;
   help << programName << " tp/tapepool       add/rm/ls/ch" << std::endl;
   help << programName << " ar/archiveroute   add/rm/ls/ch" << std::endl;
   help << programName << " ll/logicallibrary add/rm/ls/ch" << std::endl;
