@@ -1652,8 +1652,19 @@ void OStoreDB::ArchiveJob::fail() {
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock atfrl(m_atfr);
   m_atfr.fetch();
-  m_atfr.addJobFailure(m_copyNb, m_mountId);
-  // Return the job to its original tape pool's queue
+  // Add a job failure. If the job is failed, we will delete it.
+  if (m_atfr.addJobFailure(m_copyNb, m_mountId)) {
+    // The job will not be retried. Either another jobs for the same request is 
+    // queued and keeps the request referenced or the request has been deleted.
+    // In any case, we can forget it.
+    objectstore::ScopedExclusiveLock al(m_agent);
+    m_agent.fetch();
+    m_agent.removeFromOwnership(m_atfr.getAddressIfSet());
+    m_agent.commit();
+    m_jobOwned = false;
+    return;
+  }
+  // The job still has a chance, return it to its original tape pool's queue
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
@@ -1680,6 +1691,7 @@ void OStoreDB::ArchiveJob::fail() {
           m_agent.fetch();
           m_agent.removeFromOwnership(m_atfr.getAddressIfSet());
           m_agent.commit();
+          m_jobOwned = false;
           return;
         }
       }
@@ -1734,7 +1746,7 @@ OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress,
 
 void OStoreDB::RetrieveJob::fail() {
   throw NotImplemented("");
-  }
+}
 
 OStoreDB::RetrieveJob::~RetrieveJob() {
   if (m_jobOwned) {

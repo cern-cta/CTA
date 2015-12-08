@@ -45,11 +45,7 @@ public:
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
-  struct FailuresCount {
-    uint16_t failuresWithinMount;
-    uint16_t totalFailures;
-  };
-  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
+  bool addJobFailure(uint16_t copyNumber, uint64_t sessionId); //< returns true the job failed
   serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
   // Handling of the consequences of a job status change for the entire request.
   // This function returns true if the request got finished.

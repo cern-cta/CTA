@@ -96,10 +96,8 @@ void cta::objectstore::ArchiveToFileRequest::setJobFailureLimits(uint16_t copyNu
   throw NoSuchJob("In ArchiveToFileRequest::setJobFailureLimits(): job not found");
 }
 
-auto cta::objectstore::ArchiveToFileRequest::addJobFailure(uint16_t copyNumber,
-    uint64_t mountId)
-  -> FailuresCount {
-  FailuresCount ret;
+bool cta::objectstore::ArchiveToFileRequest::addJobFailure(uint16_t copyNumber,
+    uint64_t mountId) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures (and return the new count)
@@ -113,10 +111,14 @@ auto cta::objectstore::ArchiveToFileRequest::addJobFailure(uint16_t copyNumber,
       }
       j->set_totalretries(j->totalretries() + 1);
     }
-    j->set_status(serializers::AJS_PendingMount);
-    ret.failuresWithinMount = j->retrieswithinmount();
-    ret.totalFailures = j->totalretries();
-    return ret;
+    if (j->totalretries() >= j->maxtotalretries()) {
+      j->set_status(serializers::AJS_Failed);
+      finishIfNecessary();
+      return true;
+    } else {
+      j->set_status(serializers::AJS_PendingMount);
+      return false;
+    }
   }
   throw NoSuchJob ("In ArchiveToFileRequest::addJobFailure(): could not find job");
 }
@@ -340,7 +342,6 @@ void cta::objectstore::ArchiveToFileRequest::setJobOwner(
   }
   throw NoSuchJob("In ArchiveToFileRequest::setJobOwner: no such job");
 }
-
 
 bool cta::objectstore::ArchiveToFileRequest::finishIfNecessary() {
   checkPayloadWritable();

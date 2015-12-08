@@ -64,7 +64,7 @@ void cta::ArchiveJob::complete() {
 // failed
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
-  throw std::runtime_error("cta::ArchiveJob::failed(): not implemented");
+  m_dbJob->fail();
 }
   
 //------------------------------------------------------------------------------
