@@ -88,6 +88,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     currentErrorToCount = "Error_tapeDismount";     
     m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Unmounting);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
+    m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");

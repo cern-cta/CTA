@@ -125,7 +125,7 @@ private:
   class ReportTestGoingToEnd :  public Report {
   public:
     ReportTestGoingToEnd() {}
-    virtual void execute(MigrationReportPacker& reportPacker) {reportPacker.m_continue=false;}
+    virtual void execute(MigrationReportPacker& reportPacker) {reportPacker.m_continue=false;reportPacker.m_archiveMount->complete();}
   };
   
   class ReportDriveStatus : public Report {

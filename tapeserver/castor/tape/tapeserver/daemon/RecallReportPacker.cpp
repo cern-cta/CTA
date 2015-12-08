@@ -121,8 +121,6 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
   if(!parent.errorHappened()){
-    parent.m_retrieveMount->diskComplete();
-    parent.m_retrieveMount->tapeComplete();
     parent.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
     if (parent.m_watchdog) {
       parent.m_watchdog->addParameter(log::Param("status","success"));
@@ -135,8 +133,6 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
   else {
     const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
     parent.m_lc.log(LOG_ERR,msg);
-    parent.m_retrieveMount->diskComplete();
-    parent.m_retrieveMount->tapeComplete();
     if (parent.m_watchdog) {
       parent.m_watchdog->addParameter(log::Param("status","failure"));
       // We have a race condition here between the processing of this message by
@@ -159,6 +155,10 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& pack
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
   parent.m_retrieveMount->setDriveStatus(m_status);
+  if(m_status==cta::DriveStatus::Unmounting) {
+    parent.m_retrieveMount->diskComplete();
+    parent.m_retrieveMount->tapeComplete();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -174,16 +174,12 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd(RecallReportPacker& packe
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   if(parent.m_errorHappened) {
-    parent.m_retrieveMount->diskComplete();
-    parent.m_retrieveMount->tapeComplete();
     LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
     parent.m_lc.log(LOG_ERR,m_message);
   }
   else{
     const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
-    parent.m_lc.log(LOG_ERR,msg);  
-    parent.m_retrieveMount->diskComplete();
-    parent.m_retrieveMount->tapeComplete();
+    parent.m_lc.log(LOG_ERR,msg);
   }
   if (parent.m_watchdog) {
     parent.m_watchdog->addParameter(log::Param("status","failure"));

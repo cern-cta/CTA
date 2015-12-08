@@ -305,3 +305,15 @@
    fun:start_thread
    fun:clone
 }
+
+{
+   recall_packer_4
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker17reportDriveStatusEN3cta11DriveStatusE
+   fun:_ZN6castor4tape10tapeserver6daemon20TapeReadSingleThread12TapeCleaningD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon20TapeReadSingleThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}

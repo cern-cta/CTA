@@ -130,7 +130,9 @@ private:
   class ReportTestGoingToEnd :  public Report {
   public:
     ReportTestGoingToEnd() {}
-    virtual void execute(RecallReportPacker& reportPacker) {}
+    virtual void execute(RecallReportPacker& reportPacker) {
+    reportPacker.m_retrieveMount->diskComplete();
+    reportPacker.m_retrieveMount->tapeComplete();}
     virtual bool goingToEnd(RecallReportPacker& packer) {return true;}
   };
   class ReportSuccessful :  public Report {

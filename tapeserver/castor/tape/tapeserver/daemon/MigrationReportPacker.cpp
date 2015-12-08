@@ -135,7 +135,10 @@ void MigrationReportPacker::reportDriveStatus(cta::DriveStatus status) {
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
   parent.m_archiveMount->setDriveStatus(m_status);
-  if(m_status==cta::DriveStatus::Unmounting) parent.m_continue=false;
+  if(m_status==cta::DriveStatus::Unmounting) {
+    parent.m_continue=false;
+    parent.m_archiveMount->complete();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -181,7 +184,6 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& reportPacker){
   if(!reportPacker.m_errorHappened){
-    reportPacker.m_archiveMount->complete();
     log::ScopedParamContainer sp(reportPacker.m_lc);
     reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
     if(reportPacker.m_watchdog) {
@@ -194,7 +196,6 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   }
   else {
     // We have some errors
-    reportPacker.m_archiveMount->complete();
     log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", "Previous file errors")
       .add("errorCode", SEINTERNAL);
@@ -214,7 +215,6 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker){
   if(reportPacker.m_errorHappened) {
-    reportPacker.m_archiveMount->complete();
     log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", m_message)
       .add("errorCode", m_errorCode);
@@ -226,7 +226,6 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     if (ENOSPC != m_errorCode) {
       m_errorCode = SEINTERNAL;
     }
-    reportPacker.m_archiveMount->complete(); 
     reportPacker.m_lc.log(LOG_INFO,msg);
   }
   if(reportPacker.m_watchdog) {
@@ -267,7 +266,6 @@ void MigrationReportPacker::WorkerThread::run(){
       catch(const failedMigrationRecallResult& e){
         //here we catch a failed report MigrationResult. We try to close and if that fails too
         //we end up in the catch below
-        m_parent.m_archiveMount->complete();
         m_parent.m_lc.log(LOG_INFO,"Successfully closed client's session after the failed report MigrationResult");
         if (m_parent.m_watchdog) {
           m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");

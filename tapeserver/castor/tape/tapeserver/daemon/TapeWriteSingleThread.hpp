@@ -140,6 +140,7 @@ private:
         currentErrorToCount = "Error_tapeDismount";
         m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Unmounting);
         m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
+        m_this.m_reportPacker.reportDriveStatus(cta::DriveStatus::Up);
         m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
