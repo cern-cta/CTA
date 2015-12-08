@@ -99,6 +99,7 @@ namespace unitTests {
     const tapeserver::drive::compressionStats statsCompress;
     mrp.reportFlush(statsCompress);
     mrp.reportEndOfSession();
+    mrp.reportTestGoingToEnd();
     mrp.waitThread(); //here
 
     std::string temp = log.getLog();
@@ -146,6 +147,7 @@ namespace unitTests {
     const tapeserver::drive::compressionStats statsCompress;
     mrp.reportFlush(statsCompress);
     mrp.reportEndOfSession();
+    mrp.reportTestGoingToEnd();
     mrp.waitThread();
 
     std::string temp = log.getLog();
@@ -197,6 +199,7 @@ namespace unitTests {
     stats.toTape=(100000+1)/3;
     mrp.reportFlush(stats);
     mrp.reportEndOfSession();
+    mrp.reportTestGoingToEnd();
     mrp.waitThread();
 
     std::string temp = log.getLog();

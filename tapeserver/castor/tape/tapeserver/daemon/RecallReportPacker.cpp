@@ -100,6 +100,15 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
 
+  
+//------------------------------------------------------------------------------
+//reportTestGoingToEnd
+//------------------------------------------------------------------------------
+void RecallReportPacker::reportTestGoingToEnd(){
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportTestGoingToEnd());
+}
+
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
@@ -142,7 +151,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //ReportEndofSession::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& packer) {
-  return packer.allThreadsDone();
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -156,6 +165,7 @@ void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
 //ReportDriveStatus::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportDriveStatus::goingToEnd(RecallReportPacker& packer) {
+  if(m_status==cta::DriveStatus::Unmounting) return true;
   return false;
 }
 
@@ -188,7 +198,7 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //ReportEndofSessionWithErrors::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd(RecallReportPacker& packer) {
-  return packer.allThreadsDone();
+  return false;
 }
 
 //------------------------------------------------------------------------------

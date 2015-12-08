@@ -29,6 +29,7 @@
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
+#include "common/DriveState.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -100,6 +101,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
   rrp.setTapeDone();
 
   rrp.reportEndOfSession();
+  rrp.reportTestGoingToEnd();
   rrp.waitThread();
   
   std::string temp = log.getLog();
@@ -154,6 +156,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
   rrp.setTapeDone();
 
   rrp.reportEndOfSession();
+  rrp.reportTestGoingToEnd();
   rrp.waitThread();
 
   const std::string temp = log.getLog();

@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "serrno.h"
+#include "common/DriveState.hpp"
 
 #include <memory>
 #include <numeric>
@@ -95,6 +96,15 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
+
+//------------------------------------------------------------------------------
+//reportTestGoingToEnd
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportTestGoingToEnd(){
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportTestGoingToEnd());
+}
+
 //------------------------------------------------------------------------------
 //synchronousReportEndWithErrors
 //------------------------------------------------------------------------------ 
@@ -125,6 +135,7 @@ void MigrationReportPacker::reportDriveStatus(cta::DriveStatus status) {
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
   parent.m_archiveMount->setDriveStatus(m_status);
+  if(m_status==cta::DriveStatus::Unmounting) parent.m_continue=false;
 }
 
 //------------------------------------------------------------------------------
@@ -196,7 +207,6 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
       usleep(500*1000);
     }
   }
-  reportPacker.m_continue=false;
 }
 
 //------------------------------------------------------------------------------
@@ -227,7 +237,6 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     // by the end our process. To delay the latter, we sleep half a second here.
     usleep(500*1000);
   }
-  reportPacker.m_continue=false;
 }
 //------------------------------------------------------------------------------
 //ReportError::execute
@@ -312,11 +321,8 @@ void MigrationReportPacker::WorkerThread::run(){
   // Drain the FIFO if necessary. We know that m_continue will be 
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
-  while(m_parent.m_continue) {
+  while(m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
-    if (dynamic_cast<ReportEndofSessionWithErrors *>(rep.get())  || 
-        dynamic_cast<ReportEndofSession *>(rep.get()))
-      m_parent.m_continue = false;
   }
 }
 

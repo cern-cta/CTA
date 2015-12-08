@@ -70,6 +70,11 @@ public:
   virtual void reportEndOfSession();
   
   /**
+   * Function for testing purposes. It is used to tell the report packer that this is the last report
+   */
+  virtual void reportTestGoingToEnd();
+  
+  /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
    * @param msg The error message 
    * @param error_code The error code given by the drive
@@ -120,7 +125,13 @@ private:
   public:
     virtual ~Report(){}
     virtual void execute(RecallReportPacker& packer)=0;
-    virtual bool goingToEnd(RecallReportPacker& packer) {return false;};
+    virtual bool goingToEnd(RecallReportPacker& packer) {return false;}
+  };
+  class ReportTestGoingToEnd :  public Report {
+  public:
+    ReportTestGoingToEnd() {}
+    virtual void execute(RecallReportPacker& reportPacker) {}
+    virtual bool goingToEnd(RecallReportPacker& packer) {return true;}
   };
   class ReportSuccessful :  public Report {
     /**

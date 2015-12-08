@@ -260,3 +260,48 @@
    fun:start_thread
    fun:clone
 }
+
+{
+   recall_packer
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker18reportCompletedJobESt10unique_ptrIN3cta11RetrieveJobESt14default_deleteIS6_EE
+   fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTask7executeERNS2_18RecallReportPackerERNS_3log10LogContextERNS0_8diskFile15DiskFileFactoryERNS2_14RecallWatchDogE
+   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}
+
+{
+   migration_packer
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon21MigrationReportPacker28reportEndOfSessionWithErrorsESsi
+   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}
+
+{
+   recall_packer_2
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker28reportEndOfSessionWithErrorsESsi
+   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}
+
+{
+   recall_packer_3
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker18reportEndOfSessionEv
+   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
+   fun:_ZN6castor6server6Thread14pthread_runnerEPv
+   fun:start_thread
+   fun:clone
+}
