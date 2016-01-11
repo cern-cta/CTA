@@ -42,8 +42,6 @@ for example a DVD.
 .TP
 .I drvord
 specifies the drive ordinal in the robot.
-.LP
-This function requires TP_SYSTEM privilege in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -55,8 +53,7 @@ is set appropriately.
 Communication error.
 .TP
 .B ERMCUNREC
-Unknown host or invalid loader or vid too long or invalid drive ordinal or
-requester does not have TP_SYSTEM privilege in the Cupv database.
+Unknown host or invalid loader or vid too long or invalid drive ordinal.
 .TP
 .B ERMCFASTR
 Unit attention.
@@ -65,7 +62,6 @@ Unit attention.
 Hardware error or Medium Removal Prevented.
 .SH SEE ALSO
 .BR rmc_get_geometry(3) ,
-.BR Cupvlist(1) ,
 .B smc(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

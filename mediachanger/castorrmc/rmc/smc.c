@@ -34,14 +34,14 @@ static void smc_usage(const char *const cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr,
-	    "-d -D drive_ordinal -h rmcserver [-V vid] [-v]\n"
-	    "\t-e -h rmcserver -V vid [-v]\n"
-	    "\t-i -h rmcserver [-V vid] [-v]\n"
-	    "\t-m -D drive_ordinal -h rmcserver [-I] -V vid [-v]\n"
-	    "\t-q D [-D drive_ordinal] -h rmcserver [-v]\n"
-	    "\t-q L -h rmcserver [-v]\n"
-	    "\t-q S -h rmcserver [-N nbelem] [-S starting_slot] [-v]\n"
-	    "\t-q V -h rmcserver [-N nbelem] [-V vid] [-v]\n");
+	    "-d -D drive_ordinal [-V vid] [-v]\n"
+	    "\t-e -V vid [-v]\n"
+	    "\t-i [-V vid] [-v]\n"
+	    "\t-m -D drive_ordinal [-I] -V vid [-v]\n"
+	    "\t-q D [-D drive_ordinal] [-v]\n"
+	    "\t-q L [-v]\n"
+	    "\t-q S [-N nbelem] [-S starting_slot] [-v]\n"
+	    "\t-q V [-N nbelem] [-V vid] [-v]\n");
 }
 
 static int smc_qdrive (
@@ -265,7 +265,7 @@ int main(const int argc,
 	char qry_type = 0;
 	char req_type = 0;
 	struct robot_info robot_info;
-	char rmchost[CA_MAXHOSTNAMELEN+1];
+	const char *rmchost = "localhost";
 	int slotaddr = -1;
 	int targetslotaddr = -1;
 	int verbose = 0;
@@ -273,9 +273,8 @@ int main(const int argc,
 
 	/* parse and check command options */
 
-        memset(rmchost, '\0', sizeof(rmchost));
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deh:IimN:q:S:V:vT:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:de:IimN:q:S:V:vT:")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -291,16 +290,6 @@ int main(const int argc,
 				errflg++;
 			} else
 				req_type = c;
-			break;
-		case 'h':	/* remote server */
-			if(strlen(optarg) > (sizeof(rmchost) - 1)) {
-				fprintf(stderr,
-				  "rmcserver %s must be at most %d characters long\n",
-				  optarg, (int)(sizeof(rmchost) - 1));
-				errflg++;
-			} else {
-				strncpy (rmchost, optarg, sizeof(rmchost) - 1);
-			}
 			break;
 		case 'i':	/* import */
 			if (req_type) {

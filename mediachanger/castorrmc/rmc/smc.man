@@ -8,7 +8,6 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -d
 .BI -D " drive_ordinal"
-.BI -h " rmcserver"
 [
 .BI -V " vid"
 ] [
@@ -17,7 +16,6 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -e
-.BI -h " rmcserver"
 .BI -V " vid"
 [
 .BI -v
@@ -25,7 +23,6 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -i
-.BI -h " rmcserver"
 [
 .BI -V " vid"
 ] [
@@ -35,7 +32,6 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -m
 .BI -D " drive_ordinal"
-.BI -h " rmcserver"
 [
 .BI -I
 ]
@@ -45,7 +41,6 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-.BI -h " rmcserver"
 .B -q D
 [
 .BI -D " drive_ordinal"
@@ -55,21 +50,18 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-.BI -h " rmcserver"
 .B -q L
 [
 .BI -v
 ]
 .br
 .B smc
-.BI -h " rmcserver"
 .B -q P
 [
 .BI -v
 ]
 .br
 .B smc
-.BI -h " rmcserver"
 .B -q S
 [
 .BI -N " nbelem"
@@ -80,7 +72,6 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-.BI -h " rmcserver"
 .B -q V
 [
 .BI -N " nbelem"
@@ -105,10 +96,6 @@ is specified, the vid must match the vid on the cartridge to be dismounted.
 .BI \-e
 exports a volume. The cartridge must be in a storage slot (not a drive).
 The vid must be specified.
-.TP
-.BI \-h " rmcserver"
-specifies the hostname of the machine where the Remote SCSI Media Changer
-daemon runs. This parameter is mandatory.
 .TP
 .BI \-I
 flips media side.

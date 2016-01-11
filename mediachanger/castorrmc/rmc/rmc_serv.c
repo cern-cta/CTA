@@ -167,7 +167,8 @@ int rmc_main(const char *const robot)
 			sin.sin_port = htons ((unsigned short)RMC_PORT);
 		}
 	}
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	// rmcd should only accept connections from the loopback interface
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 		rmc_logit (func, RMC02, "setsockopt", neterror());
         }

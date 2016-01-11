@@ -12,7 +12,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include "Cupv_api.h"
 #include "marshall.h"
 #include "serrno.h"
 #include "rmc_constants.h"
@@ -60,13 +59,6 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
 	rmc_logreq (func, logbuf);
 
-	if (Cupv_check (uid, gid, rqst_context->clienthost,
-		rqst_context->localhost, P_TAPE_OPERATOR)) {
-		rmc_sendrep (rqst_context->rpfd, MSG_ERR, "%s\n",
-			sstrerror(serrno));
-		rmc_logit (func, "returns %d\n", ERMCUNREC);
-		return ERMCUNREC;
-	}
 	c = smc_export (rqst_context->rpfd, extended_robot_info.smc_fd,
           extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
@@ -243,13 +235,6 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
 	rmc_logreq (func, logbuf);
 
-	if (Cupv_check (uid, gid, rqst_context->clienthost,
-		rqst_context->localhost, P_TAPE_OPERATOR)) {
-		rmc_sendrep (rqst_context->rpfd, MSG_ERR, "%s\n",
-			sstrerror(serrno));
-		rmc_logit (func, "returns %d\n", ERMCUNREC);
-		return ERMCUNREC;
-	}
 	c = smc_import (rqst_context->rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
@@ -295,13 +280,6 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "mount %s/%d on drive %d", vid, invert, drvord);
 	rmc_logreq (func, logbuf);
 
-	if (Cupv_check (uid, gid, rqst_context->clienthost,
-		rqst_context->localhost, P_TAPE_SYSTEM)) {
-		rmc_sendrep (rqst_context->rpfd, MSG_ERR, "%s\n",
-			sstrerror(serrno));
-		rmc_logit (func, "returns %d\n", ERMCUNREC);
-		return ERMCUNREC;
-	}
 	c = smc_mount (rqst_context->rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
 	  vid, invert);
@@ -432,13 +410,6 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "unmount %s %d %d", vid, drvord, force);
 	rmc_logreq (func, logbuf);
 
-	if (Cupv_check (uid, gid, rqst_context->clienthost,
-		rqst_context->localhost, P_TAPE_SYSTEM)) {
-		rmc_sendrep (rqst_context->rpfd, MSG_ERR, "%s\n",
-			sstrerror(serrno));
-		rmc_logit (func, "returns %d\n", ERMCUNREC);
-		return ERMCUNREC;
-	}
 	c = smc_dismount (rqst_context->rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
 	  force == 0 ? vid : "");
