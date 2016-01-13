@@ -37,7 +37,7 @@ static void smc_usage(const char *const cmd)
 	    "-d -D drive_ordinal [-V vid] [-v]\n"
 	    "\t-e -V vid [-v]\n"
 	    "\t-i [-V vid] [-v]\n"
-	    "\t-m -D drive_ordinal [-I] -V vid [-v]\n"
+	    "\t-m -D drive_ordinal -V vid [-v]\n"
 	    "\t-q D [-D drive_ordinal] [-v]\n"
 	    "\t-q L [-v]\n"
 	    "\t-q S [-N nbelem] [-S starting_slot] [-v]\n"
@@ -259,7 +259,7 @@ int main(const int argc,
 	int drvord = -1;
 	int errflg = 0;
 	const int fd = -1;
-	int invert = 0;
+	const int invert = 0;
 	int n;
 	int nbelem = 0;
 	char qry_type = 0;
@@ -274,7 +274,7 @@ int main(const int argc,
 	/* parse and check command options */
 
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deIimN:q:S:V:vT:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deimN:q:S:V:vT:")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -297,9 +297,6 @@ int main(const int argc,
 				errflg++;
 			} else
 				req_type = c;
-			break;
-		case 'I':	/* invert */
-			invert = 1;
 			break;
 		case 'm':	/* mount */
 			if (req_type) {

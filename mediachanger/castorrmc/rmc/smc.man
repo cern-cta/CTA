@@ -32,9 +32,6 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -m
 .BI -D " drive_ordinal"
-[
-.BI -I
-]
 .BI -V " vid"
 [
 .BI -v
@@ -96,9 +93,6 @@ is specified, the vid must match the vid on the cartridge to be dismounted.
 .BI \-e
 exports a volume. The cartridge must be in a storage slot (not a drive).
 The vid must be specified.
-.TP
-.BI \-I
-flips media side.
 .TP
 .BI \-i
 imports either a specific volume indicated by
