@@ -274,7 +274,7 @@ int main(const int argc,
 	/* parse and check command options */
 
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:de:IimN:q:S:V:vT:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deIimN:q:S:V:vT:")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
