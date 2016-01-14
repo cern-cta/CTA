@@ -441,8 +441,7 @@ int smc_find_cartridge(
 	strncpy(func, "findWithVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
         
-        /* for Spectra like library we will skip 0xB6 cdb command as soon as
-           is does not supported to speed up the function */
+        /* Skip the 0xB6 cdb command if the tape library is Spectra like */
         smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType &&
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {

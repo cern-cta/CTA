@@ -123,14 +123,9 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	if (extended_robot_info.smc_support_voltag)
-		c = smc_find_cartridge (extended_robot_info.smc_fd,
-		    extended_robot_info.smc_ldr, template, type, startaddr,
-		    nbelem, element_info);
-	else
-		c = smc_find_cartridgeWithoutSendVolumeTag (extended_robot_info.smc_fd,
-		    extended_robot_info.smc_ldr, template, type, startaddr,
-		    nbelem, element_info);
+	c = smc_find_cartridge (extended_robot_info.smc_fd,
+	    extended_robot_info.smc_ldr, template, type, startaddr,
+	    nbelem, element_info);
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);

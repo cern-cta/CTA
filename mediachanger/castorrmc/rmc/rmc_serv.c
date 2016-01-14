@@ -51,17 +51,13 @@ struct extended_robot_info extended_robot_info;
 int rmc_main(const char *const robot)
 {
 	int c;
-	unsigned char cdb[12];
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
 	const char *msgaddr;
-	int nb_sense_ret;
 	int on = 1;	/* for REUSEADDR */
-	char plist[40];
 	fd_set readfd, readmask;
 	int s;
-	char sense[MAXSENSE];
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
 	struct timeval timeval;
@@ -125,27 +121,6 @@ int rmc_main(const char *const robot)
 		}
 	}
 
-	/* check if robot support Volume Tag */
-
-	extended_robot_info.smc_support_voltag = 1;
-	memset (cdb, 0, sizeof(cdb));
-	cdb[0] = 0xB6;		/* send volume tag */
-	cdb[5] = 5;
-	cdb[9] = 40;
-	memset (plist, 0, sizeof(plist));
-	strcpy (plist, "DUMMY0");
-	c = rmc_send_scsi_cmd (extended_robot_info.smc_fd,
-                     extended_robot_info.smc_ldr, 0, cdb, 12, (unsigned char*)plist, 40,
-	    sense, 38, SCSI_OUT, &nb_sense_ret, &msgaddr);
-	if (c < 0) {
-		if (c == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5 &&
-		    sense[12] == 0x20) {
-			extended_robot_info.smc_support_voltag = 0;
-		} else {
-			rmc_logit (func, RMC02, "find_cartridge", msgaddr);
-			exit (SYERR);
-		}
-	}
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
 	signal (SIGPIPE, SIG_IGN);

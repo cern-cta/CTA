@@ -22,7 +22,6 @@ struct robot_info {
 struct extended_robot_info {
   int     smc_fd;
   char    smc_ldr[CA_MAXRBTNAMELEN+1];
-  int     smc_support_voltag;
   struct robot_info robot_info;
 };
 
