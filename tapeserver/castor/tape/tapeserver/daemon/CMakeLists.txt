@@ -74,12 +74,12 @@ add_library(ctaTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
 target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
-  File TapeDrive ctacommon castorclient castorlegacymsg castorserver 
+  File TapeDrive ctacommon castorclient 
   ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} ctamessages zmq)
 install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 

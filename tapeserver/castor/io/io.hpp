@@ -324,25 +324,7 @@ void readBytes(
   const int   socketFd,
   const int   timeout,
   const int   nbBytes,
-  char *const buf)
-  ;
-
-/**
- * Reads the specified number of bytes from the specified closable socket
- * and writes the result into the specified buffer.
- *
- * @param socketFd   The file descriptor of the socket to be read from.
- * @param timeout    The timeout in seconds.
- * @param nbBytes    The number of bytes to be read.
- * @param buf        The buffer into which the bytes will be written.
- * @return           True if the connection was closed by the peer, else false.
- */
-bool readBytesFromCloseable(
-  const int   socketFd, 
-  const int   timeout,
-  const int   nbBytes,
-  char *const buf) 
-  ;
+  char *const buf);
 
 /**
  * Writes the specified number of bytes from the specified buffer to the

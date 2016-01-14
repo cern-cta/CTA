@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <stdint.h>
 #include "castor/server/Mutex.hpp"
 
 namespace castor {
@@ -35,9 +36,11 @@ namespace server {
    */
   class PosixSemaphore {
   public:
+    class Timeout{};
     PosixSemaphore(int initial = 0) ;
     ~PosixSemaphore();
     void acquire() ;
+    void acquireWithTimeout(uint64_t timeout_us); /**< Throws an exception (Timeout) in case of timeout */
     bool tryAcquire() ;
     void release(int n=1) ;
   private:

@@ -30,7 +30,7 @@ add_library(File
   DiskFile.cpp
   Structures.cpp
   ../exception/XrootCl.cpp)
-target_link_libraries (File castorrfio XrdCl cryptopp)
+target_link_libraries (File castorrfio XrdCl cryptopp ctaserverutils)
 
 add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp

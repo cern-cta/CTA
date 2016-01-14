@@ -114,17 +114,6 @@ protected:
   void daemonizeIfNotRunInForeground(const bool runAsStagerSuperuser);
 
   /**
-   * Sends a notification message to the given host,port
-   * to wake up nbThreads threads to handle pending requests.
-   * @param host the destination host
-   * @param port the destination port
-   * @param tpName the name of the thread pool to be signaled
-   * @param nbThreads the number of threads to be signaled
-   */
-  static void sendNotification(const std::string &host, const int port,
-    const char tpName, const int nbThreads = 1) throw();
-
-  /**
    * Stream representing standard out.
    */
   std::ostream &m_stdOut;

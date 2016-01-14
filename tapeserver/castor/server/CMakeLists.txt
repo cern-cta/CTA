@@ -4,7 +4,12 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 add_library (ctaserverutils SHARED
-  ProcessCapDummy.cpp)
+  ProcessCapDummy.cpp
+  Semaphores.cpp
+  Mutex.cpp
+  Threading.cpp
+  ProcessCap.cpp
+  Daemon.cpp)
 
 add_library (ctaserverunittests SHARED
   AtomicCounterTest.cpp
@@ -15,5 +20,4 @@ add_library (ctaserverunittests SHARED
   ThreadingMTTests.cpp
   ThreadingTests.cpp)
 
-target_link_libraries (ctaserverunittests
-  castorserver)
+target_link_libraries (ctaserverunittests)
