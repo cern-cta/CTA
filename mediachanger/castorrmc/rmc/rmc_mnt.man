@@ -32,7 +32,7 @@ It must be at most six characters long.
 specifies the drive in the robot in the following form:
 .RS
 .TP
-smc@hostname,drive_ordinal
+smcDRIVE_ORDINAL
 .RE
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
@@ -46,7 +46,7 @@ have been set appropriately.
 Communication error.
 .TP
 .B ERMCUNREC
-Unknown host or invalid loader or vid too long.
+Invalid loader or vid too long.
 .TP
 .B ERMCFASTR
 Unit attention.
