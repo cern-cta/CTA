@@ -5,8 +5,7 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 add_library (ctaio
   io.cpp
-  IpAndPort.cpp
-  StreamAddress.cpp)
+  IpAndPort.cpp)
 
 add_library (ctaiounittests SHARED
   IoTest.cpp)
