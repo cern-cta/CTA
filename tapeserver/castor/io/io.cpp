@@ -735,7 +735,7 @@ void castor::io::writeBytes(
       }
     }
     {
-      int sendRet = recv(socketFd, writePtr, bytesRemaining, 0);
+      int sendRet = send(socketFd, writePtr, bytesRemaining, 0);
       cta::exception::Errnum::throwOnMinusOne(sendRet, "In io::writeBytes: failed to send data: ");
       if (sendRet > 0) {
         // We did read more data...

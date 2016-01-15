@@ -9,7 +9,10 @@ add_library (ctaserverutils SHARED
   Mutex.cpp
   Threading.cpp
   ProcessCap.cpp
+  SmartCap.cpp
   Daemon.cpp)
+
+target_link_libraries(ctaserverutils cap)
 
 add_library (ctaserverunittests SHARED
   AtomicCounterTest.cpp

@@ -8,7 +8,20 @@ add_library (ctalegacymsg
   RmcProxyTcpIp.cpp
   RmcMarshal.cpp
   GenericMarshal.cpp
-  MessageHeader.cpp)
+  MessageHeader.cpp
+  legacymsg.cpp
+  TapeConfigRequestMsgBody.cpp
+  TapeMarshal.cpp
+  CommonMarshal.cpp
+  TapeStatReplyMsgBody.cpp
+  TapeStatRequestMsgBody.cpp
+  GenericErrorReplyMsgBody.cpp
+  GenericReplyMsgBody.cpp
+  TapeStatDriveEntry.cpp
+  RmcProxy.cpp
+  RmcMountMsgBody.cpp
+  RmcUnmountMsgBody.cpp
+  RmcProxyDummy.cpp)
 
 add_library (ctalegacymsgunittests SHARED
   CommonMarshalTest.cpp
