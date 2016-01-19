@@ -103,12 +103,7 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("lds"   == command || "listdrivestates"       == command) {xCom_listdrivestates(tokens, requester);}
   
   else if("lsc"   == command || "liststorageclass"      == command) {xCom_liststorageclass(tokens, requester);}
-  else if("ssc"   == command || "setstorageclass"       == command) {xCom_setstorageclass(tokens, requester);}
-  else if("csc"   == command || "clearstorageclass"     == command) {xCom_clearstorageclass(tokens, requester);}
-  else if("mkdir" == command)                                       {xCom_mkdir(tokens, requester);}
-  else if("chown" == command)                                       {xCom_chown(tokens, requester);}
-  else if("rmdir" == command)                                       {xCom_rmdir(tokens, requester);}
-  else if("ls"    == command)                                       {xCom_ls(tokens, requester);}
+  else if("ufi"   == command || "updatefileinfo"        == command) {xCom_updatefileinfo(tokens, requester);}
   else if("a"     == command || "archive"               == command) {xCom_archive(tokens, requester);}
   else if("r"     == command || "retrieve"              == command) {xCom_retrieve(tokens, requester);}
   else if("da"    == command || "deletearchive"         == command) {xCom_deletearchive(tokens, requester);}
@@ -1332,168 +1327,14 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
 //------------------------------------------------------------------------------
 // xCom_setstorageclass
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_setstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ssc/setstorageclass <dirpath> <storage_class_name>" << std::endl;
+  help << tokens[0] << " ufi/updatefileinfo <dirpath> <storage_class_name>" << std::endl;
   if(tokens.size()!=4){
     m_data = help.str();
     return;
   }
   m_scheduler->setDirStorageClass(requester, tokens[2], tokens[3]);
-}
-  
-//------------------------------------------------------------------------------
-// xCom_clearstorageclass
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_clearstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " csc/clearstorageclass <dirpath>" << std::endl;
-  if(tokens.size()!=3){
-    m_data = help.str();
-    return;
-  }
-  m_scheduler->clearDirStorageClass(requester, tokens[2]);
-}
-  
-//------------------------------------------------------------------------------
-// xCom_mkdir
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_mkdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " mkdir <dirpath>" << std::endl;
-  if(tokens.size()!=3){
-    m_data = help.str();
-    return;
-  }
-  m_scheduler->createDir(requester, tokens[2], ACCESSPERMS); // we need to set mode appropriately NOT 0777!
-}
-
-//------------------------------------------------------------------------------
-// xCom_chown
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_chown(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " chown <uid> <gid> <dirpath>" << std::endl;
-  if(tokens.size()!=5){
-    m_data = help.str();
-    return;
-  }
-  std::istringstream uid_ss(tokens[2]);
-  int uid = 0;
-  uid_ss >> uid;
-  std::istringstream gid_ss(tokens[3]);
-  int gid = 0;
-  gid_ss >> gid;
-  cta::UserIdentity owner(uid, gid);
-  m_scheduler->setOwner(requester, tokens[4], owner);
-}
-  
-//------------------------------------------------------------------------------
-// xCom_rmdir
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_rmdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " rmdir <dirpath>" << std::endl;
-  if(tokens.size()!=3){
-    m_data = help.str();
-    return;
-  }
-  m_scheduler->deleteDir(requester, tokens[2]);
-}
-  
-//------------------------------------------------------------------------------
-// xCom_ls
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_ls(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " ls [-t/--tapecopyinfo] <dirpath>" << std::endl;
-  if(tokens.size()!=3 && tokens.size()!=4){
-    m_data = help.str();
-    return;
-  }
-  auto dirIterator = m_scheduler->getDirContents(requester, tokens[tokens.size()-1]); //the last token is the path
-  bool tapeCopyInfo = hasOption(tokens, "-t", "--tapecopyinfo");
-  std::ostringstream responseSS;
-  if(dirIterator.hasMore()) {
-    if(!tapeCopyInfo) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(11) << "mode"
-                 << " " << std::setw(8) << "uid" 
-                 << " " << std::setw(8) << "gid" 
-                 << " " << std::setw(14) << "storage class"
-                 << " " << std::setw(24) << "checksum"
-                 << " " << std::setw(12) << "size"
-                 << " " << std::setw(10) << "filename"
-                 << "\x1b[0m" << std::endl;
-    }
-    else {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(7) << "copynb"
-                 << " " << std::setw(7) << "vid" 
-                 << " " << std::setw(5) << "fseq" 
-                 << " " << std::setw(10) << "block id"
-                 << " " << std::setw(10) << "filename"
-                 << "\x1b[0m" << std::endl;
-    }
-  }
-  while(dirIterator.hasMore()) {
-    auto dirEntry = dirIterator.next();
-    if(!tapeCopyInfo) {
-      auto mode = dirEntry.status.mode;
-      const auto &owner = dirEntry.status.owner;
-      const auto storageClassName = dirEntry.status.storageClassName;
-      std::string firstModeCharacter;
-      if(dirEntry.type==dirEntry.ENTRYTYPE_DIRECTORY) {
-        firstModeCharacter="d";
-      }
-      else if(dirEntry.type==dirEntry.ENTRYTYPE_FILE) {
-        if(dirEntry.tapeCopies.empty()) {
-          firstModeCharacter="-";
-        }
-        else{
-          firstModeCharacter="a"; //the Murray bit (a.k.a. the Archive bit: true if the file has at least one tape copy)
-        }
-      }
-      else {
-        firstModeCharacter="U"; //unknown directory entry type
-      }
-      std::stringstream modeSS;
-      modeSS << firstModeCharacter
-             << ((mode & S_IRUSR) ? "r" : "-")
-             << ((mode & S_IWUSR) ? "w" : "-")
-             << ((mode & S_IXUSR) ? "x" : "-")
-             << ((mode & S_IRGRP) ? "r" : "-")
-             << ((mode & S_IWGRP) ? "w" : "-")
-             << ((mode & S_IXGRP) ? "x" : "-")
-             << ((mode & S_IROTH) ? "r" : "-")
-             << ((mode & S_IWOTH) ? "w" : "-")
-             << ((mode & S_IXOTH) ? "x" : "-");
-      responseSS << " " << std::setw(11) << modeSS.str()
-                 << " " << std::setw(8) << owner.uid
-                 << " " << std::setw(8) << owner.gid
-                 << " " << std::setw(14) << storageClassName
-                 << " " << std::setw(24) << dirEntry.status.checksum.str()
-                 << " " << std::setw(12) << dirEntry.status.size
-                 << " " << std::setw(10) << dirEntry.name << std::endl;
-    }
-    else {
-      for(auto i=dirEntry.tapeCopies.begin(); i!=dirEntry.tapeCopies.end(); i++) {
-        std::stringstream blockIdSS;
-        if(i->tapeFileLocation.fSeq==1) {
-          blockIdSS << "1";
-        }
-        else{
-          blockIdSS << i->tapeFileLocation.blockId;
-        }
-        responseSS << " " << std::setw(7) << i->tapeFileLocation.copyNb
-                   << " " << std::setw(7) << i->tapeFileLocation.vid
-                   << " " << std::setw(5) << i->tapeFileLocation.fSeq
-                   << " " << std::setw(10) << blockIdSS.str()
-                   << " " << std::setw(10) << dirEntry.name << std::endl;
-      }
-    }
-  }
-  m_data = responseSS.str();
 }
   
 //------------------------------------------------------------------------------
@@ -1579,12 +1420,7 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << "For most commands there is a short version and a long one." << std::endl;
   help << "" << std::endl;
   help << programName << " lsc/liststorageclass" << std::endl;
-  help << programName << " ssc/setstorageclass" << std::endl;
-  help << programName << " csc/clearstorageclass" << std::endl;
-  help << programName << " mkdir" << std::endl;
-  help << programName << " chown" << std::endl;
-  help << programName << " rmdir" << std::endl;
-  help << programName << " ls" << std::endl;
+  help << programName << " ufi/updatefileinfo" << std::endl;
   help << programName << " a/archive" << std::endl;
   help << programName << " r/retrieve" << std::endl;
   help << programName << " da/deletearchive" << std::endl;

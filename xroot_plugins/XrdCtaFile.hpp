@@ -200,46 +200,11 @@ protected:
   void xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
-   * Executes the setstorageclass command
+   * Executes the updatefileinfo command
    * 
    * @param tokens The command line tokens
    */
-  void xCom_setstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the clearstorageclass command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_clearstorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the mkdir command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_mkdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the chown command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_chown(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the rmdir command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_rmdir(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the ls command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_ls(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
   
   /**
    * Executes the archive command
