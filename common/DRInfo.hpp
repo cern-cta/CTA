@@ -21,45 +21,39 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/DRInfo.hpp"
-
 namespace cta {
 
 /**
  * Structure to store an archive request.
  */
-struct ArchiveRequest {
+struct DRInfo {
   
   /**
-   * The EOS src URL.
+   * The EOS instance.
    */
-  std::string src_URL;
+  std::string instance;
 
   /**
-   * The size of the file to be archived in bytes.
+   * The EOS path.
    */
-  uint64_t fileSize;
+  std::string path;
 
   /**
-   * The checksum type.
+   * The EOS owner.
    */
-  std::string checksumType;
+  std::string owner;
 
   /**
-   * The checksum value.
+   * The EOS group.
    */
-  std::string checksumValue;
+  std::string group;
   
   /**
-   * The storage class name.
+   * The EOS key-value string containing everything above and more (no parsing by CTA).
    */
-  std::string storageClass;
-  
-  /**
-   * The disaster recovery info
-   */
-  cta::DRInfo drInfo;
+  std::string blob;
 
-}; // struct ArchiveRequest
+}; // struct DRInfo
 
 } // namespace cta
+
