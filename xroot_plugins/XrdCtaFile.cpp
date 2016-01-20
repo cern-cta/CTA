@@ -1306,7 +1306,11 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lsc/liststorageclass" << std::endl;
+  help << tokens[0] << " lsc/liststorageclass <VO>" << std::endl;
+  if(tokens.size()!=3){
+    m_data = help.str();
+    return;
+  }
   auto list = m_scheduler->getStorageClasses(requester);
   std::ostringstream responseSS;
   if(list.size()>0) {
@@ -1329,8 +1333,8 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo <dirpath> <storage_class_name>" << std::endl;
-  if(tokens.size()!=4){
+  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] <CTA_ArchiveFileID> <storage_class> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=11) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10)){
     m_data = help.str();
     return;
   }
@@ -1342,8 +1346,8 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " a/archive <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>" << std::endl;
-  if(tokens.size()<4){
+  help << tokens[0] << " a/archive [--noencoding/-n] <src_URL> <size> <checksum> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=12) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=11)){
     m_data = help.str();
     return;
   }
@@ -1358,8 +1362,8 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve <source_file1> [<source_file2> [<source_file3> [...]]] <destination_path>" << std::endl;
-  if(tokens.size()<4){
+  help << tokens[0] << " r/retrieve [--noencoding/-n] <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
     m_data = help.str();
     return;
   }
@@ -1374,7 +1378,7 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " da/deletearchive <destination_path>" << std::endl;
+  help << tokens[0] << " da/deletearchive <CTA_ArchiveFileID>" << std::endl;
   if(tokens.size()!=3){
     m_data = help.str();
     return;
@@ -1387,8 +1391,8 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve <destination_path>" << std::endl;
-  if(tokens.size()!=3){
+  help << tokens[0] << " cr/cancelretrieve [--noencoding/-n] <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
     m_data = help.str();
     return;
   }
@@ -1415,7 +1419,7 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " lpr/listpendingretrieves" << std::endl;
   help << programName << " lds/listdrivestates" << std::endl;
   help << "" << std::endl;
-  help << "CTA USER commands:" << std::endl;
+  help << "CTA EOS commands:" << std::endl;
   help << "" << std::endl;
   help << "For most commands there is a short version and a long one." << std::endl;
   help << "" << std::endl;
