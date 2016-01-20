@@ -67,6 +67,7 @@ ELSE(DEFINED PackageOnly)
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})
 
+  add_subdirectory(catalogue)
   add_subdirectory(cmdline)
   add_subdirectory(common)
   add_subdirectory(objectstore)
