@@ -14,6 +14,7 @@ set (COMMON_LIB_SRC_FILES
   archiveNS/StorageClass.cpp
   archiveNS/Tape.cpp
   archiveNS/TapeFileLocation.cpp
+  ArchiveRequest.cpp
   CreationLog.cpp
   checksum/Checksum.cpp
   exception/Backtrace.cpp
