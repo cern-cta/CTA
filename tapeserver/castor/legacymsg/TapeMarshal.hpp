@@ -29,6 +29,7 @@
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
+#include "castor/legacymsg/TapeConstants.h"
 
 #include <errno.h>
 #include <stdint.h>

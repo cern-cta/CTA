@@ -23,7 +23,7 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
-#include "h/strerror_r_wrapper.h"
+#include "common/strerror_r_wrapper.hpp"
 
 #include <string.h>
 #include <zmq.h>

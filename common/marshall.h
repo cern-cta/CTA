@@ -14,14 +14,32 @@
 
 #pragma once
 
-#include <osdep.h>              /* Operating system dependencies        */
 #include <memory.h>             /* memory operations definition         */
 #include <arpa/inet.h>
 
+// Imported old stuff needed by marshal_XXX macros
+
+typedef unsigned char   U_BYTE;
+typedef unsigned short  U_SHORT;
+typedef unsigned int    U_LONG;
+typedef          char   BYTE;
+typedef          short  WORD;
+typedef          int    LONG;
+typedef uint64_t U_HYPER;
+
+#define BYTEADDR(x)     (((char *)&(x))+sizeof(BYTE)-BYTESIZE)
+#define BYTESIZE        1
+
 #define SHORT			WORD
 /* #define U_SHORT			U_WORD */
+#define WORDSIZE        2
+#define WORDADDR(x)     (((char *)&(x))+sizeof(WORD)-WORDSIZE)
+
 #define SHORTSIZE		WORDSIZE
 #define SHORTADDR		WORDADDR
+
+#define LONGSIZE        4
+#define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
 
 #define marshall_WORD		marshall_SHORT
 #define unmarshall_WORD		unmarshall_SHORT		
@@ -139,7 +157,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					  INC_PTR(ptr,strlen(str)+1); \
 					}
 
-EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
+extern "C" int _unmarshall_STRINGN (char **, char*, int);
 #define  unmarshall_STRINGN(ptr,str,n)  _unmarshall_STRINGN(&ptr, str, n)
 
 /*

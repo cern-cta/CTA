@@ -39,7 +39,6 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "log.h"
 #include "serrno.h"
-#include "stager_client_commandline.h"
 #include "scheduler/RetrieveMount.hpp"
 
 #include <google/protobuf/stubs/common.h>

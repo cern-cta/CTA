@@ -25,8 +25,6 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "rtcp_constants.h"
-#include "Ctape.h"
 
 #include <errno.h>
 #include <string.h>

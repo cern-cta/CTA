@@ -24,7 +24,6 @@
 #include "DummyLogger.hpp"
 #include "StringLogger.hpp"
 #include "LogContext.hpp"
-#include "log.h"
 
 #include <gtest/gtest.h>
 

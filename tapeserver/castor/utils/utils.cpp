@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
-#include "tapeserver/h/strerror_r_wrapper.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -420,7 +419,7 @@ void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
 std::string castor::utils::errnoToString(const int errnoValue) throw() {
   char buf[100];
 
-  if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
+  if(!strerror_r(errnoValue, buf, sizeof(buf))) {
     return buf;
   } else {
     const int errnoSetByStrerror_r_wrapper = errno;

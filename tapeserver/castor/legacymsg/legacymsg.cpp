@@ -26,9 +26,10 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/GenericReplyMsgBody.hpp"
-#include "Ctape.h"
+#include "castor/legacymsg/TapeConstants.h"
 #include "castor/utils/utils.hpp"
 #include "GenericMarshal.hpp"
+
 
 //------------------------------------------------------------------------------
 // writeTapeRcReplyMsg
