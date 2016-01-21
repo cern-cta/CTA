@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/ArchiveRequest.hpp"
+#include "scheduler/UserArchiveRequest.hpp"
 
 #include <list>
 #include <string>
@@ -32,7 +32,7 @@ class ArchiveToFileRequest;
  * Class representing a user request to archive one or more remote files to an
  * archive directory.
  */
-class ArchiveToDirRequest: public ArchiveRequest {
+class ArchiveToDirRequest: public UserArchiveRequest {
 public:
 
   /**

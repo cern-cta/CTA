@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "scheduler/ArchiveRequest.hpp"
+#include "scheduler/UserArchiveRequest.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -29,7 +29,7 @@ namespace cta {
 /**
  * A user request to archive a remote file to a copy on tape.
  */
-struct ArchiveToTapeCopyRequest: public ArchiveRequest {
+struct ArchiveToTapeCopyRequest: public UserArchiveRequest {
 
   /**
    * Constructor.

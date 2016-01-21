@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/archiveNS/ArchiveFile.hpp"
-#include "scheduler/RetrieveRequest.hpp"
+#include "scheduler/UserRetrieveRequest.hpp"
 
 #include <list>
 #include <string>
@@ -33,7 +33,7 @@ class TapeFileLocation;
  * Class representing a user request to retrieve a single archived file to a
  * single remote file.
  */
-class RetrieveToFileRequest: public RetrieveRequest {
+class RetrieveToFileRequest: public UserRetrieveRequest {
 public:
 
   /**

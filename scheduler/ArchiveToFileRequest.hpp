@@ -20,7 +20,7 @@
 
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "scheduler/ArchiveRequest.hpp"
+#include "scheduler/UserArchiveRequest.hpp"
 #include "SchedulerDatabase.hpp"
 
 #include <map>
@@ -34,7 +34,7 @@ namespace cta {
  * Class representing a user request to archive to a single remote file to a
  * single destination archive file.
  */
-struct ArchiveToFileRequest: public ArchiveRequest {
+struct ArchiveToFileRequest: public UserArchiveRequest {
 
   /**
    * Constructor.
@@ -51,7 +51,7 @@ struct ArchiveToFileRequest: public ArchiveRequest {
    * @param other
    */
   ArchiveToFileRequest(const ArchiveToFileRequest & other):
-  ArchiveRequest(other)
+  UserArchiveRequest(other)
   {
     archiveFile = other.archiveFile;
     remoteFile = other.remoteFile;

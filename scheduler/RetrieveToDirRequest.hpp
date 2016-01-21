@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "scheduler/RetrieveRequest.hpp"
+#include "scheduler/UserRetrieveRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 
 #include <list>
@@ -30,7 +30,7 @@ namespace cta {
  * Class representing a user request to retrieve one or more archived files to a
  * remote directory.
  */
-class RetrieveToDirRequest: public RetrieveRequest {
+class RetrieveToDirRequest: public UserRetrieveRequest {
 public:
 
   /**

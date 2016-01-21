@@ -40,7 +40,7 @@ cta::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string &remoteFile,
   const uint64_t priority,
   const CreationLog & creationLog):
-  RetrieveRequest(priority, creationLog),
+  UserRetrieveRequest(priority, creationLog),
   m_archiveFile(archiveFile),
   m_tapeCopies(tapeCopies),
   m_remoteFile(remoteFile){

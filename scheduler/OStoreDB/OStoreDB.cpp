@@ -28,7 +28,7 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "scheduler/ArchiveRequest.hpp"
+#include "scheduler/UserArchiveRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"

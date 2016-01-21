@@ -40,7 +40,7 @@ cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
   const std::string tapePoolName,
   const uint64_t priority,
   const CreationLog &creationLog):
-  ArchiveRequest(priority, creationLog),
+  UserArchiveRequest(priority, creationLog),
   remoteFile(remoteFile),
   archiveFile(archiveFile),
   copyNb(copyNb),

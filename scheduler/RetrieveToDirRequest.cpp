@@ -37,7 +37,7 @@ cta::RetrieveToDirRequest::RetrieveToDirRequest(
   const std::string &remoteDir,
   const uint64_t priority,
   const CreationLog & creationLog):
-  RetrieveRequest(priority, creationLog),
+  UserRetrieveRequest(priority, creationLog),
   m_remoteDir(remoteDir) {
 }
 

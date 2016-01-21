@@ -39,7 +39,7 @@ cta::ArchiveToDirRequest::ArchiveToDirRequest(
   const std::list<ArchiveToFileRequest> &archiveToFileRequests,
   const uint64_t priority,
   const CreationLog & creationLog):
-  ArchiveRequest(priority, creationLog),
+  UserArchiveRequest(priority, creationLog),
   m_archiveDir(archiveDir),
   m_archiveToFileRequests(archiveToFileRequests) {
 }

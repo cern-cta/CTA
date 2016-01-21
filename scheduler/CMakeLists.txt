@@ -7,7 +7,7 @@ include_directories (${SQLITE3_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
-  ArchiveRequest.cpp
+  UserArchiveRequest.cpp
   ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
@@ -21,7 +21,7 @@ set (CTA_SCHEDULER_SRC_FILES
   PositioningMethod.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp
-  RetrieveRequest.cpp
+  UserRetrieveRequest.cpp
   RetrieveToDirRequest.cpp
   RetrieveToFileRequest.cpp
   Scheduler.cpp

@@ -16,25 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/RetrieveRequest.hpp"
+#include "scheduler/UserArchiveRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveRequest::RetrieveRequest() {
+cta::UserArchiveRequest::UserArchiveRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrieveRequest::~RetrieveRequest() throw() {
+cta::UserArchiveRequest::~UserArchiveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveRequest::RetrieveRequest(
+cta::UserArchiveRequest::UserArchiveRequest(
   const uint64_t priority,
-  const CreationLog & creationLog):
+  const CreationLog &creationLog):
   UserRequest(priority, creationLog) {
 }

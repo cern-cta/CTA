@@ -27,18 +27,18 @@ namespace cta {
 /**
  * Abstract class representing a user request to retrieve some data.
  */
-class RetrieveRequest: public UserRequest {
+class UserRetrieveRequest: public UserRequest {
 public:
 
   /**
    * Constructor.
    */
-  RetrieveRequest();
+  UserRetrieveRequest();
 
   /**
    * Destructor.
    */
-  virtual ~RetrieveRequest() throw() = 0;
+  virtual ~UserRetrieveRequest() throw() = 0;
 
   /**
    * Constructor.
@@ -48,7 +48,7 @@ public:
    * @param creationTime Optionally the absolute time at which the user request
    * was created.  If no value is given then the current time is used.
    */
-  RetrieveRequest(
+  UserRetrieveRequest(
     const uint64_t priority,
     const CreationLog &creationLog);
 
