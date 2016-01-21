@@ -67,7 +67,7 @@
 
 using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
-namespace unitTest {
+namespace unitTests {
 
 class castor_tape_tapeserver_daemon_DataTransferSessionTest: public
   ::testing::Test {

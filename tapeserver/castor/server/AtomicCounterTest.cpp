@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 #include "castor/server/Threading.hpp"
 #include "castor/server/AtomicCounter.hpp"
-namespace unitTest {
+namespace unitTests {
   struct ThreadPlus : public castor::server::Thread{
     ThreadPlus( castor::server::AtomicCounter<int>& c):count(c){}
   protected:
@@ -42,7 +42,7 @@ namespace unitTest {
         --count;
     }
   };
-  TEST(castor_tape_threading, AtomicCOunterTest) {
+  TEST(castor_tape_threading, AtomicCounterTest) {
     castor::server::AtomicCounter<int> c(42);
     
     ThreadPlus t(c);
