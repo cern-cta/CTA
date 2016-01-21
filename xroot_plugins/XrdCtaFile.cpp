@@ -1333,8 +1333,8 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] <CTA_ArchiveFileID> <storage_class> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
-  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=11) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10)){
+  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] <CTA_ArchiveFileID> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
     m_data = help.str();
     return;
   }
