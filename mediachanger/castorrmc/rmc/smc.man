@@ -155,19 +155,19 @@ verbose mode. On query requests it prints headers on top of the columns.
 To mount the volume JK2005 on drive 1:
 .br
 .RS
-.B "smc -l /dev/smc01 -m -D 1 -V JK2005"
+.B "smc -m -D 1 -V JK2005"
 .RE
 .LP
 To dismount the volume present on drive 1 after checking the vid:
 .br
 .RS
-.B "smc -l /dev/smc01 -d -D 1 -V JK2005"
+.B "smc -d -D 1 -V JK2005"
 .RE
 .LP
 To query the main charateristics of the library:
 .br
 .RS
-.B "smc -l /dev/smc01 -q L"
+.B "smc -q L"
 .sp
 .nf
 Vendor/Product/Revision = <STK     9714            1500>
@@ -181,7 +181,7 @@ Device Count = 2, Start = 1030
 To query the status of all the drives:
 .br
 .RS
-.B "smc -l /dev/smc01 -q D -v"
+.B "smc -q D -v"
 .sp
 .nf
 .cs R 20
@@ -195,7 +195,7 @@ Drive Ordinal   Element Addr.   Status          Vid
 To get the list of a few slots in the library:
 .br
 .RS
-.B "smc -l /dev/smc01 -q S -S 20 -N 10 -v"
+.B "smc -q S -S 20 -N 10 -v"
 .sp
 .nf
 .cs R 20
@@ -217,7 +217,7 @@ Element Addr.   Vid
 To get the status of volumes for which the vid starts with JK200
 .br
 .RS
-.B "smc -l /dev/smc01 -q V -V 'JK200*' -v"
+.B "smc -q V -V 'JK200*' -v"
 .sp
 .nf
 .cs R 20
