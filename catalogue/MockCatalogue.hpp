@@ -20,6 +20,13 @@
 
 #include "catalogue/Catalogue.hpp"
 
+// The header file for atomic was is actually called cstdatomic in gcc 4.4
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
+    #include <cstdatomic>
+#else
+  #include <atomic>
+#endif
+
 #include <string>
 
 namespace cta {
@@ -64,7 +71,7 @@ private:
   /**
    * The next identifier to be used for a new archive file.
    */
-  uint64_t m_nextArchiveFileId;
+  std::atomic<uint64_t> m_nextArchiveFileId;
 
 }; // class MockCatalogue
 
