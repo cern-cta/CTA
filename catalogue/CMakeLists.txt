@@ -17,7 +17,8 @@ cmake_minimum_required (VERSION 2.6)
 
 set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
-  MockCatalogue.cpp)
+  MockCatalogue.cpp
+  SQLiteDatabase.cpp)
 
 add_library (ctacatalogue
   ${CATALOGUE_LIB_SRC_FILES})

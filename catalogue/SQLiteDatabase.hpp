@@ -16,31 +16,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/MockCatalogue.hpp"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <sqlite3.h>
+#include <string>
 
-namespace unitTests {
+namespace cta {
+namespace catalogue {
 
-class cta_MockCatalogueTest: public ::testing::Test {
-protected:
+/**
+ * A C++ wrapper around an SQLite database handle.
+ */
+class SQLiteDatabase {
+public:
 
-  virtual void SetUp() {
-  }
+  /**
+   * Constructor.
+   *
+   * @param filename The filename to be passed to the sqlit3_open() function.
+   */
+  SQLiteDatabase(const std::string &filename);
 
-  virtual void TearDown() {
-  }
-};
+  /**
+   * Destructor.
+   */
+  ~SQLiteDatabase();
 
-TEST_F(cta_MockCatalogueTest, getNextArchiveFileId) {
-  using namespace cta;
+  /**
+   * Returns the underlying database handle.
+   *
+   * @return the underlying database handle.
+   */
+  sqlite3 *getHandle();
 
-  catalogue::MockCatalogue c;
+private:
 
-  const uint64_t archiveFileId1 = c.getNextArchiveFileId();
-  const uint64_t archiveFileId2 = c.getNextArchiveFileId();
+  /**
+   * SQLite database handle.
+   */
+  sqlite3 *m_dbHandle;
 
-  ASSERT_GT(archiveFileId2, archiveFileId1);
-}
+}; // class SqlLiteDatabase
 
-} // namespace unitTests
+} // namespace catalogue
+} // namespace cta
