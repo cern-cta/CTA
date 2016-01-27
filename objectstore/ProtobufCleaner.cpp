@@ -18,7 +18,7 @@
 
 #include <google/protobuf/service.h>
 
-namespace cta::objectstore {
+namespace cta { namespace objectstore {
 /**
  * This singleton class will check the compatibility of the runtime library
  * with the headers it was compiled against on construction (library load)
@@ -35,4 +35,4 @@ class ProtobufCleaner {
  }
 } g_protobufCleaner;
 
-} // end of namespaces
+}} // end of namespaces

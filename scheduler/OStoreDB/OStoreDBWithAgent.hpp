@@ -22,6 +22,8 @@
 #include "objectstore/Backend.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 
+namespace cta {
+
 class OStoreDBWithAgent: public cta::OStoreDB {
   
 public:  
@@ -38,3 +40,5 @@ public:
    */
   virtual ~OStoreDBWithAgent() throw ();
 };
+
+}

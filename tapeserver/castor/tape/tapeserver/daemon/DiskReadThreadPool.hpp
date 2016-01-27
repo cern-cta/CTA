@@ -54,7 +54,7 @@ public:
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
           castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
           castor::log::LogContext lc, const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKeyPath, uint16_t moverHandlerPort);
+          const std::string & xrootPrivateKeyPath);
   
   /**
    * Destructor.

@@ -103,7 +103,7 @@ namespace unitTests{
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     RecallMemoryManager mm(10,100,lc);
-    DiskFileFactory fileFactory("RFIO","",0);
+    DiskFileFactory fileFactory("RFIO","");
     
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
     fileToRecall->archiveFile.path = "/dev/null";

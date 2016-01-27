@@ -115,12 +115,6 @@ struct DataTransferConfig {
   std::string xrootPrivateKey;
 
   /**
-   * The TCP/IP port on which the disk manager listens for data-transfer
-   * notifications from XROOT server.
-   */
-  uint16_t moverHandlerPort;
-
-  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */

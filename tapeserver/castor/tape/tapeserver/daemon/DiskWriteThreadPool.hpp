@@ -68,8 +68,7 @@ public:
           RecallWatchDog& recallWatchDog,
           castor::log::LogContext lc,
           const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKeyPath,
-          uint16_t moverHandlerPort);
+          const std::string & xrootPrivateKeyPath);
   /**
    * Destructor: we suppose the threads are no running (waitThreads() should
    * be called befor destruction unless the threads were not started.

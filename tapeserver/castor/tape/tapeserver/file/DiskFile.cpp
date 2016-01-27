@@ -41,7 +41,7 @@ namespace tape {
 namespace diskFile {
 
 DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyFile, uint16_t moverHandlerPort):
+  const std::string & xrootPrivateKeyFile):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^(.*:)(/.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
@@ -52,8 +52,7 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootPrivateKeyLoaded(false),
-  m_moverHandlerPort(moverHandlerPort)
+  m_xrootPrivateKeyLoaded(false)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
@@ -178,7 +177,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
       // In the current CASTOR implementation, the xrootd port is hard coded to 1095
       return new XrootC2FSReadFile(
         std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-        xrootPrivateKey(), m_moverHandlerPort);
+        xrootPrivateKey());
     } else {
       return new RfioReadFile(regexResult[1]+regexResult[2]);
     }
@@ -188,7 +187,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   if (regexResult.size()) {
     return new XrootC2FSReadFile(
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_moverHandlerPort, regexResult[1]);
+      xrootPrivateKey(), regexResult[1]);
   }
   throw castor::exception::Exception(
       std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
@@ -234,7 +233,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
       // In the current CASTOR implementation, the xrootd port is hard coded to 1095
       return new XrootC2FSWriteFile(
         std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-        xrootPrivateKey(), m_moverHandlerPort);
+        xrootPrivateKey());
     } else {
       return new RfioWriteFile(regexResult[1]+regexResult[2]);
     }
@@ -244,7 +243,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   if (regexResult.size()) {
     return new XrootC2FSWriteFile(
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_moverHandlerPort, regexResult[1]);
+      xrootPrivateKey(), regexResult[1]);
   }
   throw castor::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
@@ -451,7 +450,6 @@ std::string CryptoPPSigner::sign(const std::string msg,
 //==============================================================================  
 XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
-  uint16_t moverHandlerPort,
   const std::string & pool) {
   // Setup parent's members
   m_readPosition = 0;
@@ -487,13 +485,13 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   uuid_generate(uuid);
   uuid_unparse(uuid, suuid);
   std::stringstream signatureBlock;
-  signatureBlock << path << "0:" << moverHandlerPort << ":" << suuid << "0" << expTime << "tape";
+  signatureBlock << path << "0:" << suuid << "0" << expTime << "tape";
   // Sign the block
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
   // Build URL parameters
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor.pfn1=" << path;
-  opaqueBloc << "&castor.pfn2=0:" <<  moverHandlerPort << ":" << suuid;
+  opaqueBloc << "&castor.pfn2=0:" << suuid;
   if (pool.size())
     opaqueBloc << "&castor.pool=" << pool;
   opaqueBloc << "&castor.exptime=" << expTime;
@@ -547,7 +545,6 @@ XrootBaseReadFile::~XrootBaseReadFile() throw() {
 //============================================================================== 
 XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
-  uint16_t moverHandlerPort,
   const std::string & pool){
   // Setup parent's members
   m_writePosition = 0;
@@ -584,13 +581,13 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   uuid_generate(uuid);
   uuid_unparse(uuid, suuid);
   std::stringstream signatureBlock;
-  signatureBlock << path << "0:" << moverHandlerPort << ":" << suuid << "0" << expTime << "tape";
+  signatureBlock << path << "0:" << suuid << "0" << expTime << "tape";
   // Sign the block
   std::string signature = CryptoPPSigner::sign(signatureBlock.str(), xrootPrivateKey);
   // Build URL parameters
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor.pfn1=" << path;
-  opaqueBloc << "&castor.pfn2=0:" <<  moverHandlerPort << ":" << suuid;
+  opaqueBloc << "&castor.pfn2=0:" << suuid;
   if (pool.size())
     opaqueBloc << "&castor.pool=" << pool;
   opaqueBloc << "&castor.exptime=" << expTime;

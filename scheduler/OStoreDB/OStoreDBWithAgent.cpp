@@ -21,13 +21,13 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::Agent & ag): cta::OStoreDB(be) {
+cta::OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::Agent & ag): cta::OStoreDB(be) {
   cta::OStoreDB::setAgent(ag);
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-OStoreDBWithAgent::~OStoreDBWithAgent() throw () {
+cta::OStoreDBWithAgent::~OStoreDBWithAgent() throw () {
   cta::OStoreDB::setAgent(*((cta::objectstore::Agent *)NULL));
 }

@@ -44,6 +44,8 @@
 #include <sstream>
 #include <string>
 
+namespace cta { namespace xrootPlugins {
+
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
@@ -1431,3 +1433,5 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " cr/cancelretrieve" << std::endl;
   return help.str();
 }
+
+}}

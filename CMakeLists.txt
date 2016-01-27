@@ -102,8 +102,10 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 #                    COMMENT "Not running the unit tests" VERBATIM)
 
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
-add_custom_target(test tests/unittests
-                    #  
-                    COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/unittests
-                    DEPENDS tests/unittests tests/valgrind.suppr
-                    COMMENT "Running unit tests" VERBATIM)
+add_custom_target(unittests
+  tests/unitTests
+  COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/unitTests
+  COMMAND valgrind --tool=helgrind -v --demangle=no --conflict-cache-size=30000000 --error-exitcode=1 tests/unitTests 
+
+  DEPENDS tests/unittests tests/valgrind.suppr
+  COMMENT "Running unit tests" VERBATIM)

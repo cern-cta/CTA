@@ -106,7 +106,7 @@ namespace unitTests{
     castor::messages::TapeserverProxyDummy tspd;
     RecallWatchDog rwd(1,1,tspd,"", lc);
     
-    DiskWriteThreadPool dwtp(2,report,rwd,lc,"RFIO","/dev/null",0);
+    DiskWriteThreadPool dwtp(2,report,rwd,lc,"RFIO","/dev/null");
     dwtp.startThreads();
        
     for(int i=0;i<5;++i){

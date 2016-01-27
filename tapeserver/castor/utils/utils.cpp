@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
+#include "common/strerror_r_wrapper.hpp"
 
 #include <algorithm>
 #include <errno.h>
@@ -37,6 +38,7 @@
 #include <shift/vmgr_constants.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
+
 
 //-----------------------------------------------------------------------------
 // writeTime
@@ -419,7 +421,7 @@ void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
 std::string castor::utils::errnoToString(const int errnoValue) throw() {
   char buf[100];
 
-  if(!strerror_r(errnoValue, buf, sizeof(buf))) {
+  if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
     return buf;
   } else {
     const int errnoSetByStrerror_r_wrapper = errno;

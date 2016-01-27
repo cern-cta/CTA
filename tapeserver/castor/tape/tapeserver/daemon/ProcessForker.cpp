@@ -568,8 +568,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   try {
     dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
   } catch (std::bad_cast &){}
-  BackendPopulator backendPopulator(*backend);
-  OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
+  cta::objectstore::BackendPopulator backendPopulator(*backend);
+  cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
   
   cta::Scheduler scheduler(mockNs, osdb, eosNs);
 

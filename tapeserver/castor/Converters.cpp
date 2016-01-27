@@ -27,7 +27,7 @@
 #include "IConverter.hpp"
 
 /** the unique and single factory table */
-castor::Converters* ConvertersInstance = NULL;
+castor::Converters* g_ConvertersInstance = NULL;
 
 /** The janitor in charge of clening up the converters instance:
  * it might or might not give the initial kick that triggers the 
@@ -72,10 +72,10 @@ castor::Converters::~Converters() {
 // instance
 //-----------------------------------------------------------------------------
 castor::Converters* castor::Converters::instance()    {
-  if (0 == ConvertersInstance) {
-    ConvertersInstance = new castor::Converters();
+  if (0 == g_ConvertersInstance) {
+    g_ConvertersInstance = new castor::Converters();
   }
-  return ConvertersInstance;
+  return g_ConvertersInstance;
 }
 
 //-----------------------------------------------------------------------------

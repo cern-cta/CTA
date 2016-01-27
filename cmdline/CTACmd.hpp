@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cta { namespace cmdline { 
+
 /**
  * Class implementing the business logic of the archive command-line tool.
  */
@@ -83,3 +85,6 @@ private:
   std::string encode(const std::string msg) const;
 
 }; // class CTACopyCmd
+
+}}
+

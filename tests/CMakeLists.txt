@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 
-add_executable(unittests
+add_executable(unitTests
   unit_tests.cpp)
 
-target_link_libraries(unittests
+target_link_libraries(unitTests
   ctacatalogueunittests
   ctaexceptionunittests
   ctaiounittests

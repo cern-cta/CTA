@@ -54,7 +54,7 @@ extern "C"
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     try {
-      return new XrdProFilesystem();
+      return new cta::xrootPlugins::XrdProFilesystem();
     } catch (cta::exception::Exception &ex) {
       std::cout << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
       return NULL;
@@ -67,6 +67,8 @@ extern "C"
     }
   }
 }
+
+namespace cta { namespace xrootPlugins {
 
 //------------------------------------------------------------------------------
 // FSctl
@@ -83,7 +85,7 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 {  
-  return new XrdProFile(&m_scheduler, user, MonID);
+  return new cta::xrootPlugins::XrdProFile(&m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------
@@ -185,7 +187,7 @@ int XrdProFilesystem::rename(const char *oPath, const char *nPath, XrdOucErrInfo
 //------------------------------------------------------------------------------
 // stat
 //------------------------------------------------------------------------------
-int XrdProFilesystem::stat(const char *Name, struct stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
+int XrdProFilesystem::stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
 {
   (void)Name; (void)buf; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -314,3 +316,5 @@ XrdProFilesystem::XrdProFilesystem():
 //------------------------------------------------------------------------------
 XrdProFilesystem::~XrdProFilesystem() {
 }
+
+}}

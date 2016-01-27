@@ -28,12 +28,14 @@
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
+
+namespace cta { namespace xrootPlugins { 
 /**
  * This class is the entry point for the xroot plugin: it is returned by 
  * XrdSfsGetFileSystem when the latter is called by the xroot server to load the
  * plugin. All function documentation can be found in XrdSfs/XrdSfsInterface.hh.
  */
-class XrdProFilesystem : public XrdSfsFileSystem {
+class XrdProFilesystem : public ::XrdSfsFileSystem {
 public:
   virtual XrdSfsDirectory *newDir(char *user=0, int MonID=0);
   virtual XrdSfsFile *newFile(char *user=0, int MonID=0);
@@ -51,7 +53,7 @@ public:
   virtual int rem(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int remdir(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int rename(const char *oPath, const char *nPath, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaqueO = 0, const char *opaqueN = 0);
-  virtual int stat(const char *Name, struct stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
+  virtual int stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
   virtual int stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   XrdProFilesystem();
@@ -77,15 +79,17 @@ protected:
   /**
    * The object used to populate the backend
    */
-  BackendPopulator m_backendPopulator;
+  cta::objectstore::BackendPopulator m_backendPopulator;
   
   /**
    * The database or object store holding all CTA persistent objects
    */
-  OStoreDBWithAgent m_scheddb;
+  cta::OStoreDBWithAgent m_scheddb;
 
   /**
    * The scheduler.
    */
   cta::Scheduler m_scheduler; 
 };
+
+}}

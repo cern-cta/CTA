@@ -36,7 +36,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace UnitTests {
+namespace unitTests {
 
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
@@ -232,7 +232,7 @@ namespace UnitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
-    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","",0);
+    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","");
     {
       std::unique_ptr<castor::tape::diskFile::ReadFile> rf(
         fileFactory.createReadFile("localhost:/etc/fstab"));

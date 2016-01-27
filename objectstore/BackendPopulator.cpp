@@ -20,6 +20,8 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendPopulator.hpp"
 
+namespace cta { namespace objectstore {
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -53,3 +55,5 @@ BackendPopulator::~BackendPopulator() throw() {
 cta::objectstore::Agent & BackendPopulator::getAgent() {
   return m_agent;
 }
+
+}}

@@ -55,15 +55,6 @@ typedef uint64_t U_HYPER;
 
 #define  bitsof(t)      sizeof(t)*BITSOFBYTE /* number of bits in a type*/
 
-typedef  char*          bitvct; /* bit vector type definition           */
-
-/*
- * Allocate enough memory for a 'bitvct' type variable containing
- * 'size' bits
- */
-
-#define  bitalloc(size)		(bitvct)malloc(size/BITSOFBYTE + \
-				((size%BITSOFBYTE) ? 1 : 0))
 
 /*
  *  Set the bit 'bit-th' starting from the byte pointed to by 'ptr'

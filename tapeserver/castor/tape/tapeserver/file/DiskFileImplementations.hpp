@@ -121,7 +121,6 @@ namespace castor {
       public:
         XrootC2FSReadFile(const std::string &xrootUrl,
           const CryptoPP::RSA::PrivateKey & privateKey,
-          uint16_t moverHandlerPort,
           const std::string & cephPool = "");
         virtual ~XrootC2FSReadFile() throw () {}
       private:
@@ -151,7 +150,6 @@ namespace castor {
       public:
         XrootC2FSWriteFile(const std::string &xrootUrl,
           const CryptoPP::RSA::PrivateKey & privateKey,
-          uint16_t moverHandlerPort,
           const std::string & cephPool = "");
         virtual ~XrootC2FSWriteFile() throw () {}
       private:

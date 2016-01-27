@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+namespace cta { namespace xrootPlugins {
+
 /**
  * This class represents the heart of the xroot server plugin: it inherits from 
  * XrdSfsFile and it is used by XrdProFilesystem whenever a command is executed 
@@ -44,7 +46,7 @@ public:
   virtual XrdSfsXferSize read(XrdSfsAio *aioparm);
   virtual XrdSfsXferSize write(XrdSfsFileOffset offset, const char *buffer, XrdSfsXferSize size);
   virtual int write(XrdSfsAio *aioparm);
-  virtual int stat(struct stat *buf);
+  virtual int stat(struct ::stat *buf);
   virtual int sync();
   virtual int sync(XrdSfsAio *aiop);
   virtual int truncate(XrdSfsFileOffset fsize);
@@ -242,3 +244,5 @@ protected:
    */
   std::string getGenericHelp(const std::string &programName) const;
 };
+
+}}

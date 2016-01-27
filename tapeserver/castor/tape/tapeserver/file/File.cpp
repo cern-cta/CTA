@@ -34,12 +34,12 @@
 #include <fstream>
 #include <shift/rfio_api.h>
 
-const unsigned short max_unix_hostname_length = 256; //255 + 1 terminating character
-
 namespace castor {
   namespace tape {
     namespace tapeFile {
-
+      
+      const unsigned short max_unix_hostname_length = 256; //255 + 1 terminating character
+      
       LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid)  {
         VOL1 vol1;
         vol1.fill(vid);

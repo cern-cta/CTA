@@ -43,11 +43,11 @@
 
 using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;
-const int blockSize=4096;
+
 
 namespace unitTests
 {
-  
+  const int blockSize=4096;
   class castor_tape_tapeserver_daemonTest: public ::testing::Test {
   protected:
 
@@ -94,7 +94,7 @@ namespace unitTests
     FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd, 
       castor::log::LogContext & lc):
       DiskWriteThreadPool(1,rrp,
-      rwd,lc, "RFIO","/dev/null",0){}
+      rwd,lc, "RFIO","/dev/null"){}
     virtual ~FakeDiskWriteThreadPool() {};
   };
 

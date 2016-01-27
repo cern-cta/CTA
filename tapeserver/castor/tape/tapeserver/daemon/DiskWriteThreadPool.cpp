@@ -43,9 +43,8 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
   RecallWatchDog& recallWatchDog,
   castor::log::LogContext lc,
   const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyPath,
-  uint16_t moverHandlerPort):
-  m_diskFileFactory(remoteFileProtocol,xrootPrivateKeyPath,moverHandlerPort),
+  const std::string & xrootPrivateKeyPath):
+  m_diskFileFactory(remoteFileProtocol,xrootPrivateKeyPath),
   m_reporter(report),m_watchdog(recallWatchDog),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));

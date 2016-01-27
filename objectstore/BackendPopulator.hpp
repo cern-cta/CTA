@@ -21,6 +21,8 @@
 #include "objectstore/Agent.hpp"
 #include "objectstore/Backend.hpp"
 
+namespace cta { namespace objectstore { 
+
 class BackendPopulator {
   
 public:
@@ -54,3 +56,5 @@ private:
    */
   cta::objectstore::Agent m_agent;
 };
+
+}}

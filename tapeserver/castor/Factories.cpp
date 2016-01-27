@@ -26,7 +26,7 @@
 #include "ISvcFactory.hpp"
 
 /** the unique and single factory table */
-castor::Factories* FactoriesInstance = NULL;
+castor::Factories* g_FactoriesInstance = NULL;
 
 /** The janitor in charge of clening up the factories instance:
  * it might or might not give the initial kick that triggers the 
@@ -60,19 +60,19 @@ castor::Factories::~Factories() throw() {
 // instance
 //-----------------------------------------------------------------------------
 castor::Factories* castor::Factories::instance()    {
-  if (0 == FactoriesInstance) {
-    FactoriesInstance = new Factories();
+  if (0 == g_FactoriesInstance) {
+    g_FactoriesInstance = new Factories();
   }
-  return FactoriesInstance;
+  return g_FactoriesInstance;
 }
 
 //-----------------------------------------------------------------------------
 // finalize
 //-----------------------------------------------------------------------------
 void castor::Factories::finalize() throw() {
-  if (0 != FactoriesInstance) {
-    delete FactoriesInstance;
-    FactoriesInstance = 0;
+  if (0 != g_FactoriesInstance) {
+    delete g_FactoriesInstance;
+    g_FactoriesInstance = 0;
   }
 }
 
