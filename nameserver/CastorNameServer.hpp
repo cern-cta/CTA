@@ -63,7 +63,7 @@ public:
   
   void deleteDir(const SecurityIdentity &requester, const std::string &path);
   
-  std::unique_ptr<ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
+  std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
   
   common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   

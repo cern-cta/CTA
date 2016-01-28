@@ -590,7 +590,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
+std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::statFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
@@ -603,7 +603,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
   if(::stat(fsPath.c_str(), &statResult)) {
     const int savedErrno = errno;
     if(ENOENT == savedErrno) {
-      return std::unique_ptr<cta::ArchiveFileStatus>();
+      return std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus>();
     }
 
     std::ostringstream msg;
@@ -613,8 +613,8 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
   }
 
   common::archiveNS::ArchiveDirEntry entry = getArchiveDirEntry(requester, path, statResult);
-  return std::unique_ptr<ArchiveFileStatus>(
-    new ArchiveFileStatus(entry.status));
+  return std::unique_ptr<common::archiveNS::ArchiveFileStatus>(
+    new common::archiveNS::ArchiveFileStatus(entry.status));
 }
 
 //------------------------------------------------------------------------------
@@ -734,7 +734,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   modeStrTr <<  modeStr;
   mode_t mode;
   modeStrTr >> std::oct >> mode;
-  ArchiveFileStatus status(owner, fileId, mode, size, checksum, storageClassName);
+  common::archiveNS::ArchiveFileStatus status(owner, fileId, mode, size, checksum, storageClassName);
 
   return common::archiveNS::ArchiveDirEntry(entryType, name, status, tapeCopies);
 }

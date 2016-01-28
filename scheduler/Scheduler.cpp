@@ -31,13 +31,11 @@
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -494,7 +492,7 @@ cta::common::archiveNS::ArchiveDirIterator cta::Scheduler::getDirContents(
 //------------------------------------------------------------------------------
 // statArchiveFile
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveFileStatus> cta::Scheduler::statArchiveFile(
+std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::Scheduler::statArchiveFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.statFile(requester, path);
@@ -536,7 +534,7 @@ void cta::Scheduler::queueArchiveRequest(
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
 
-  const std::unique_ptr<ArchiveFileStatus> archiveStat =
+  const std::unique_ptr<common::archiveNS::ArchiveFileStatus> archiveStat =
     m_ns.statFile(requester, archiveFileOrDir);
   const bool archiveToDir = archiveStat.get() && S_ISDIR(archiveStat->mode);
   if(archiveToDir) {
@@ -660,7 +658,7 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   assertStorageClassHasAtLeastOneCopy(storageClass);
   const auto routes = m_db.getArchiveRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
-  std::unique_ptr<cta::ArchiveFileStatus> status = m_ns.statFile(requester, archiveFilePath);
+  std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> status = m_ns.statFile(requester, archiveFilePath);
   cta::common::archiveNS::ArchiveFile archiveFile(archiveFilePath, "", status->fileId, remoteFile.status.size, 0, 0);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL));

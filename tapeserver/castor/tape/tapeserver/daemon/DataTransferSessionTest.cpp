@@ -225,7 +225,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         archiveFileMode,
         cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
         archiveFileSize));
-      std::unique_ptr<cta::ArchiveFileStatus> status = ns.statFile(requester, archiveFilePath.str());
+      std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> status = ns.statFile(requester, archiveFilePath.str());
       
       // Write the file to tape
       cta::MockRetrieveMount mrm;
@@ -906,7 +906,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   ASSERT_EQ("V12345", sess.getVid());
   for(auto i=remoteFilePaths.begin(); i!=remoteFilePaths.end(); i++) {
     ASSERT_NO_THROW(ns.statFile(requester, *i));
-    std::unique_ptr<cta::ArchiveFileStatus> stat(ns.statFile(requester, *i));
+    std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> stat(ns.statFile(requester, *i));
     ASSERT_NE(NULL, (uint64_t)(stat.get()));
     ASSERT_EQ(0100777, stat->mode);
     ASSERT_EQ(1000, stat->size);

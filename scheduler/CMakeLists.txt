@@ -8,7 +8,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   UserArchiveRequest.cpp
-  ArchiveToDirRequest.cpp
   ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
   TapeMount.cpp
@@ -22,7 +21,6 @@ set (CTA_SCHEDULER_SRC_FILES
   RetrieveJob.cpp
   RetrieveMount.cpp
   UserRetrieveRequest.cpp
-  RetrieveToDirRequest.cpp
   RetrieveToFileRequest.cpp
   Scheduler.cpp
   SchedulerDatabase.cpp

@@ -35,10 +35,8 @@
 #include "common/archiveNS/StorageClass.hpp"
 #include "common/TapePool.hpp"
 #include "common/archiveNS/Tape.hpp"
-#include "ArchiveToDirRequest.hpp"
 #include "RetrieveToFileRequest.hpp"
 #include "common/archiveNS/TapeFileLocation.hpp"
-#include "RetrieveToDirRequest.hpp"
 #include "ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveNS/ArchiveFile.hpp"
 #include <algorithm>
@@ -729,13 +727,6 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   return ret;
 }
 
-void OStoreDB::queue(const ArchiveToDirRequest& rqst) {
-  auto & archiveToFileRequests = rqst.getArchiveToFileRequests();
-  for(auto req=archiveToFileRequests.begin(); req!=archiveToFileRequests.end(); req++) {
-    queue(*req);
-  }
-}
-
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
   const std::string& archiveFile) {
   // First of, find the archive request form all the tape pools.
@@ -1063,13 +1054,6 @@ void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
     m_agent->fetch();
     m_agent->removeFromOwnership(rtfr.getAddressIfSet());
     m_agent->commit();
-  }
-}
-
-void OStoreDB::queue(const RetrieveToDirRequest& rqst) {
-  auto & retrieveToFileRequests = rqst.getRetrieveToFileRequests();
-  for(auto req=retrieveToFileRequests.begin(); req!=retrieveToFileRequests.end(); req++) {
-    queue(*req);
   }
 }
 

@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
+namespace cta { namespace common { namespace archiveNS { 
 
 /**
  * The status of a file or a directory entry in the archive namespace.
@@ -89,4 +89,4 @@ struct ArchiveFileStatus {
 
 }; // class ArchiveFileStatus
 
-} // namespace cta
+}}} // namespace cta::common::archiveNS

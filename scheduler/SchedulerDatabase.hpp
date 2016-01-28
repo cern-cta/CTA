@@ -64,12 +64,6 @@ public:
     virtual void cancel() = 0;
     virtual ~ArchiveToFileRequestCreation() {};
   };
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request.
-   */
-  virtual void queue(const ArchiveToDirRequest &rqst) = 0;
 
   /**
    * Queues the specified request.
@@ -172,12 +166,6 @@ public:
   };
   
   /*============ Retrieve  management: user side ============================*/
-  /**
-   * Queues the specified request.
-   *
-   * @param rqst The request.
-   */
-  virtual void queue(const RetrieveToDirRequest &rqst) = 0;
 
   /**
    * Queues the specified request.

@@ -30,14 +30,12 @@
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveToDirRequest.hpp"
 #include "scheduler/ArchiveToFileRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/DummyScheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "scheduler/RetrieveToDirRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -384,10 +382,10 @@ cta::common::archiveNS::ArchiveDirIterator cta::DummyScheduler::getDirContents(
 //------------------------------------------------------------------------------
 // statArchiveFile
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveFileStatus> cta::DummyScheduler::statArchiveFile(
+std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::DummyScheduler::statArchiveFile(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  return std::unique_ptr<cta::ArchiveFileStatus>();
+  return std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus>();
 }
 
 //------------------------------------------------------------------------------

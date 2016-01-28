@@ -43,7 +43,7 @@ cta::common::archiveNS::ArchiveDirEntry::ArchiveDirEntry() {
 cta::common::archiveNS::ArchiveDirEntry::ArchiveDirEntry(
   const EntryType type,
   const std::string &name,
-  const ArchiveFileStatus &status,
+  const common::archiveNS::ArchiveFileStatus &status,
   const std::list<NameServerTapeFile> &tapeCopies):
   type(type),
   name(name),

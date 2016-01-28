@@ -65,7 +65,7 @@ struct ArchiveDirEntry {
    * @param status The status of the entry.
    */
   ArchiveDirEntry(const EntryType type, const std::string &name,
-    const ArchiveFileStatus &status, const std::list<NameServerTapeFile> &tapeCopies);
+    const common::archiveNS::ArchiveFileStatus &status, const std::list<NameServerTapeFile> &tapeCopies);
 
   /**
    * The type of the directory entry.
@@ -80,7 +80,7 @@ struct ArchiveDirEntry {
   /**
    * The status of the entry.
    */
-  ArchiveFileStatus status;
+  common::archiveNS::ArchiveFileStatus status;
   
   /**
    * The tape copies associated to this file.

@@ -1558,7 +1558,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
     ASSERT_TRUE(status.get());
@@ -1730,7 +1730,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
     ASSERT_TRUE(status.get());
@@ -1804,7 +1804,7 @@ TEST_P(SchedulerTest, archive_twice_to_same_file) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
     ASSERT_TRUE(status.get());
@@ -1894,7 +1894,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       archiveFile));
     ASSERT_TRUE(status.get());
@@ -1957,7 +1957,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       "/grandparent/parent_file"));
     ASSERT_FALSE(status.get());
@@ -2361,7 +2361,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_adminOnAdminHost,
       archiveFile));
     ASSERT_TRUE(status.get());
@@ -2679,7 +2679,7 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
     const uint16_t mode = 0777;
     ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
 
-    std::unique_ptr<ArchiveFileStatus> status;
+    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
 
     ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
       dirPath));

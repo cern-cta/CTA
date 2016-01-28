@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus():
+cta::common::archiveNS::ArchiveFileStatus::ArchiveFileStatus():
   fileId(0),
   mode(0),
   size(0) {
@@ -30,7 +30,7 @@ cta::ArchiveFileStatus::ArchiveFileStatus():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveFileStatus::ArchiveFileStatus(
+cta::common::archiveNS::ArchiveFileStatus::ArchiveFileStatus(
   const UserIdentity &owner,
   const uint64_t fileId,
   const mode_t mode,

@@ -246,14 +246,14 @@ void cta::CastorNameServer::deleteDir(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
+std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::CastorNameServer::statFile(
   const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   struct Cns_filestatcs statbuf;  
   if(Cns_statcs(path.c_str(), &statbuf)) {
     const int savedSerrno = serrno;
     if(ENOENT == serrno) {
-      return std::unique_ptr<ArchiveFileStatus>();
+      return std::unique_ptr<common::archiveNS::ArchiveFileStatus>();
     }
 
     std::ostringstream msg;
@@ -268,8 +268,8 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
   struct Cns_fileclass cns_fileclass;
   exception::Serrnum::throwOnMinusOne(Cns_queryclass(m_server.c_str(), statbuf.fileclass, NULL, &cns_fileclass), __FUNCTION__);
   const std::string storageClassName(cns_fileclass.name);
-  return std::unique_ptr<ArchiveFileStatus>(
-    new ArchiveFileStatus(owner, statbuf.fileid, mode, size, checksum, storageClassName));
+  return std::unique_ptr<common::archiveNS::ArchiveFileStatus>(
+    new common::archiveNS::ArchiveFileStatus(owner, statbuf.fileid, mode, size, checksum, storageClassName));
 }
 
 //------------------------------------------------------------------------------
@@ -335,7 +335,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntr
   const UserIdentity owner(statbuf.uid, statbuf.gid);
   const Checksum checksum(Checksum::CHECKSUMTYPE_ADLER32, std::string(statbuf.csumvalue));
   const uint64_t size(statbuf.filesize);
-  ArchiveFileStatus status(owner, statbuf.fileid, statbuf.filemode, size, checksum, storageClassName);
+  common::archiveNS::ArchiveFileStatus status(owner, statbuf.fileid, statbuf.filemode, size, checksum, storageClassName);
   const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
   return common::archiveNS::ArchiveDirEntry(entryType, name, status, tapeCopies);

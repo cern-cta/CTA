@@ -195,15 +195,7 @@ public:
     return m_OStoreDB.queue(rqst);
   }
 
-  virtual void queue(const ArchiveToDirRequest& rqst) {
-    m_OStoreDB.queue(rqst);
-  }
-
   virtual void queue(const RetrieveToFileRequest& rqst) {
-    m_OStoreDB.queue(rqst);
-  }
-
-  virtual void queue(const RetrieveToDirRequest& rqst) {
     m_OStoreDB.queue(rqst);
   }
   

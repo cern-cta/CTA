@@ -96,7 +96,7 @@ public:
    * @return The status of the file or directory or NULL if the file or
    * directory does not exist.
    */
-  virtual std::unique_ptr<ArchiveFileStatus> statFile(
+  virtual std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

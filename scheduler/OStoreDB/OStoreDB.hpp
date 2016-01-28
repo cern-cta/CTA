@@ -259,8 +259,6 @@ public:
   virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> 
     queue(const ArchiveToFileRequest& rqst);
 
-  virtual void queue(const ArchiveToDirRequest& rqst);
-
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
   virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile);
@@ -290,8 +288,6 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
   virtual void queue(const RetrieveToFileRequest& rqst_);
-
-  virtual void queue(const RetrieveToDirRequest& rqst);
 
   virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const;
 
