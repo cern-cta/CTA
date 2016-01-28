@@ -129,12 +129,12 @@ public:
     m_OStoreDB.deleteTapePool(requester, name);
   }
 
-  virtual std::list<AdminHost> getAdminHosts() const {
+  virtual std::list<common::admin::AdminHost> getAdminHosts() const {
     return m_OStoreDB.getAdminHosts();
   }
 
 
-  virtual std::list<AdminUser> getAdminUsers() const {
+  virtual std::list<common::admin::AdminUser> getAdminUsers() const {
     return m_OStoreDB.getAdminUsers();
   }
 

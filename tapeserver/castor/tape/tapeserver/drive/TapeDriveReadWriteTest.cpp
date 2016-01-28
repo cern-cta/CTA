@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <memory>
 
+namespace {
 /*
  * Prints and compares the current position with the expected one. Returns on
  * success (expected value is the same as the actual value), or else fails the 
@@ -57,6 +58,8 @@ void print_and_assert_data(const char * expected_data, const char * actual_data)
   std::cout << "Data Read: "  << actual_data << " (Expected: " << expected_data << ")" << std::endl;
   assert(0 == strcmp(expected_data, actual_data));
   return;
+}
+
 }
 
 int main ()

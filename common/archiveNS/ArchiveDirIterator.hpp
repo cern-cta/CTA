@@ -22,7 +22,7 @@
 
 #include <list>
 
-namespace cta {
+namespace cta { namespace common { namespace archiveNS {
 
 /**
  * Instances of ths class should be used in the following way to iterate
@@ -51,7 +51,7 @@ public:
    *
    * @param entries The directory entries.
    */
-  ArchiveDirIterator(const std::list<ArchiveDirEntry> &entries);
+  ArchiveDirIterator(const std::list<common::archiveNS::ArchiveDirEntry> &entries);
 
   /**
    * Destructor.
@@ -71,15 +71,15 @@ public:
    *
    * @return The next directory entry.
    */
-  const ArchiveDirEntry next();
+  const common::archiveNS::ArchiveDirEntry next();
 
 private:
 
   /**
    * The directory entries.
    */
-  std::list<ArchiveDirEntry> m_entries;
+  std::list<common::archiveNS::ArchiveDirEntry> m_entries;
 
 }; // ArchiveDirIterator
 
-} // namespace cta
+}}} // namespace cta

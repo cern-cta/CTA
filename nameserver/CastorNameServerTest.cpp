@@ -26,9 +26,9 @@ int main() {
   try {
     cta::CastorNameServer ns;
     const cta::SecurityIdentity requester;
-    cta::ArchiveDirIterator it = ns.getDirContents(requester, "/");
+    cta::common::archiveNS::ArchiveDirIterator it = ns.getDirContents(requester, "/");
     while(it.hasMore()) {
-      cta::ArchiveDirEntry entry = it.next();
+      cta::common::archiveNS::ArchiveDirEntry entry = it.next();
       std::cout << entry.name << " " << entry.entryTypeToStr(entry.type) <<
         std::endl;
     }

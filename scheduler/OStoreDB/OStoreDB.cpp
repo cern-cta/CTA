@@ -179,15 +179,15 @@ void OStoreDB::createAdminHost(const std::string& hostName,
   re.commit();
 }
 
-std::list<AdminHost> OStoreDB::getAdminHosts() const {
+std::list<common::admin::AdminHost> OStoreDB::getAdminHosts() const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  std::list<AdminHost> ret;
+  std::list<common::admin::AdminHost> ret;
   auto hl=re.dumpAdminHosts();
   rel.release();
   for (auto h=hl.begin(); h!=hl.end(); h++) {
-    ret.push_back(AdminHost(h->hostname, 
+    ret.push_back(common::admin::AdminHost(h->hostname, 
         h->log));
   }
   return ret;
@@ -223,15 +223,15 @@ void OStoreDB::deleteAdminUser(const SecurityIdentity& requester,
   re.commit();
 }
 
-std::list<AdminUser> OStoreDB::getAdminUsers() const {
-  std::list<AdminUser> ret;
+std::list<common::admin::AdminUser> OStoreDB::getAdminUsers() const {
+  std::list<common::admin::AdminUser> ret;
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
   auto aul = re.dumpAdminUsers();
   for (auto au=aul.begin(); au!=aul.end(); au++) {
     ret.push_back(
-      AdminUser(
+      common::admin::AdminUser(
         cta::UserIdentity(au->user.uid, au->user.gid),
         au->log
     ));

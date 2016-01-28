@@ -172,7 +172,7 @@ void cta::Scheduler::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::Scheduler::getAdminUsers(const SecurityIdentity
+std::list<cta::common::admin::AdminUser> cta::Scheduler::getAdminUsers(const SecurityIdentity
   &requester) const {
   m_db.assertIsAdminOnAdminHost(requester);
   return m_db.getAdminUsers();
@@ -215,7 +215,7 @@ void cta::Scheduler::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::AdminHost> cta::Scheduler::getAdminHosts(const SecurityIdentity
+std::list<cta::common::admin::AdminHost> cta::Scheduler::getAdminHosts(const SecurityIdentity
   &requester) const {
   return m_db.getAdminHosts();
 }
@@ -485,7 +485,7 @@ std::string cta::Scheduler::getVidOfFile(
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator cta::Scheduler::getDirContents(
+cta::common::archiveNS::ArchiveDirIterator cta::Scheduler::getDirContents(
   const SecurityIdentity &requester,
   const std::string &path) const {
   return m_ns.getDirContents(requester, path);

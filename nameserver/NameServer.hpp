@@ -82,7 +82,7 @@ public:
    * @param path The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  virtual ArchiveDirIterator getDirContents(
+  virtual common::archiveNS::ArchiveDirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &path) const = 0;
 

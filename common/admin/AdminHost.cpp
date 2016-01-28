@@ -21,19 +21,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminHost::AdminHost() {
+cta::common::admin::AdminHost::AdminHost() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminHost::~AdminHost() throw() {
+cta::common::admin::AdminHost::~AdminHost() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminHost::AdminHost(
+cta::common::admin::AdminHost::AdminHost(
   const std::string &name,
   const CreationLog &creationLog):
   name(name), creationLog(creationLog) {}

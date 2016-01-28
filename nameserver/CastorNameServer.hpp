@@ -65,7 +65,7 @@ public:
   
   std::unique_ptr<ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
   
-  ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
+  common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
   
@@ -128,7 +128,7 @@ private:
    * @param path      The absolute path of the directory to get the entries from.
    * @return the list of directory entries of the specified path
    */
-  std::list<cta::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
+  std::list<common::archiveNS::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
 
   /**
    * Returns the directory entry corresponding to the specified path.
@@ -136,7 +136,7 @@ private:
    * @param requester The identity of the requester.
    * @param The absolute path of the namespace entry.
    */
-  ArchiveDirEntry getArchiveDirEntry(const SecurityIdentity &requester, const std::string &path) const;
+  common::archiveNS::ArchiveDirEntry getArchiveDirEntry(const SecurityIdentity &requester, const std::string &path) const;
   
 }; // class CastorNameServer
 

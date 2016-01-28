@@ -801,9 +801,9 @@ void cta::MockSchedulerDatabase::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::MockSchedulerDatabase::getAdminUsers() const {
+std::list<cta::common::admin::AdminUser> cta::MockSchedulerDatabase::getAdminUsers() const {
   std::ostringstream query;
-  std::list<cta::AdminUser> list;
+  std::list<cta::common::admin::AdminUser> list;
   query << "SELECT ADMIN_UID, ADMIN_GID, UID, GID, HOST, CREATIONTIME, COMMENT"
     " FROM ADMINUSER ORDER BY ADMIN_UID, ADMIN_GID;";
   sqlite3_stmt *s = NULL;

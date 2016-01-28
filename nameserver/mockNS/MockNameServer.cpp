@@ -612,7 +612,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
     throw(exception::Exception(msg.str()));
   }
 
-  ArchiveDirEntry entry = getArchiveDirEntry(requester, path, statResult);
+  common::archiveNS::ArchiveDirEntry entry = getArchiveDirEntry(requester, path, statResult);
   return std::unique_ptr<ArchiveFileStatus>(
     new ArchiveFileStatus(entry.status));
 }
@@ -620,7 +620,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::MockNameServer::statFile(
 //------------------------------------------------------------------------------
 // getDirEntries
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
+std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
   const SecurityIdentity &requester,
   const std::string &path) const { 
  
@@ -643,7 +643,7 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
         << Utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
-    std::list<ArchiveDirEntry> entries;
+    std::list<common::archiveNS::ArchiveDirEntry> entries;
     struct dirent *entry;
     const bool pathEndsWithASlash = path.at(path.length()-1) == '/';
     while((entry = readdir(dp))) {
@@ -657,7 +657,7 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
     closedir(dp);  
     return entries;
   } else if(S_ISREG(statResult.st_mode)) {
-    std::list<ArchiveDirEntry> entries;
+    std::list<common::archiveNS::ArchiveDirEntry> entries;
     entries.push_back(getArchiveDirEntry(requester, path));  
     return entries;
   } else {
@@ -671,7 +671,7 @@ std::list<cta::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
 //------------------------------------------------------------------------------
 // getArchiveDirEntry
 //------------------------------------------------------------------------------
-cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
+cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
@@ -693,7 +693,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 //------------------------------------------------------------------------------
 // getArchiveDirEntry
 //------------------------------------------------------------------------------
-cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
+cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path,
   const struct stat statResult) const {
@@ -701,15 +701,15 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   Utils::assertAbsolutePathSyntax(path);
   const std::string enclosingPath = Utils::getEnclosingPath(path);
   const std::string name = Utils::getEnclosedName(path);
-  ArchiveDirEntry::EntryType entryType;
+  common::archiveNS::ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
   std::list<NameServerTapeFile> tapeCopies;
   
   if(S_ISDIR(statResult.st_mode)) {
-    entryType = ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
+    entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
     storageClassName = getDirStorageClass(requester, path);
   } else if(S_ISREG(statResult.st_mode)) {
-    entryType = ArchiveDirEntry::ENTRYTYPE_FILE;
+    entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE;
     storageClassName = getDirStorageClass(requester, enclosingPath);
     tapeCopies = getTapeFiles(requester, path);
   } else {
@@ -724,7 +724,7 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   // Size is 0 for directories (and set for files)
   uint64_t size = 0;
   Checksum checksum;
-  if (ArchiveDirEntry::ENTRYTYPE_FILE == entryType) {
+  if (common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE == entryType) {
     size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
     checksum = Checksum(Utils::getXattr(fsPath, "user.CTAChecksum"));
   }
@@ -736,13 +736,13 @@ cta::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   modeStrTr >> std::oct >> mode;
   ArchiveFileStatus status(owner, fileId, mode, size, checksum, storageClassName);
 
-  return ArchiveDirEntry(entryType, name, status, tapeCopies);
+  return common::archiveNS::ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
 
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator cta::MockNameServer::getDirContents(
+cta::common::archiveNS::ArchiveDirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
 
   Utils::assertAbsolutePathSyntax(path);

@@ -23,38 +23,38 @@ using cta::exception::Exception;
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator::ArchiveDirIterator() {
+cta::common::archiveNS::ArchiveDirIterator::ArchiveDirIterator() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator::ArchiveDirIterator(
-  const std::list<ArchiveDirEntry> &entries): m_entries(entries) {
+cta::common::archiveNS::ArchiveDirIterator::ArchiveDirIterator(
+  const std::list<common::archiveNS::ArchiveDirEntry> &entries): m_entries(entries) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator::~ArchiveDirIterator() throw() {
+cta::common::archiveNS::ArchiveDirIterator::~ArchiveDirIterator() throw() {
 }
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool cta::ArchiveDirIterator::hasMore() {
+bool cta::common::archiveNS::ArchiveDirIterator::hasMore() {
   return !m_entries.empty();
 }
 
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-const cta::ArchiveDirEntry cta::ArchiveDirIterator::next() {
+const cta::common::archiveNS::ArchiveDirEntry cta::common::archiveNS::ArchiveDirIterator::next() {
   if(m_entries.empty()) {
     throw Exception("Out of bounds: There are no more directory entries");
   }
 
-  ArchiveDirEntry entry = m_entries.front();
+  common::archiveNS::ArchiveDirEntry entry = m_entries.front();
   m_entries.pop_front();
   return entry;
 }

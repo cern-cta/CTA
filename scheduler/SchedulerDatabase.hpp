@@ -37,10 +37,12 @@
 #include "scheduler/MountType.hpp"
 
 namespace cta {
-
-// Forward declarations for opaque references
+  
+// Forward declarations for opaque references  
+namespace common { namespace admin {
 class AdminHost;
-class AdminUser;
+class AdminUser;   
+}}
 class ArchiveRoute;
 class ArchiveToDirRequest;
 class ArchiveToFileRequest;
@@ -383,7 +385,7 @@ public:
    *
    * @return The current list of administrators in lexicographical order.
    */
-  virtual std::list<AdminUser> getAdminUsers() const = 0;
+  virtual std::list<common::admin::AdminUser> getAdminUsers() const = 0;
 
   /**
    * Creates the specified administration host.
@@ -410,7 +412,7 @@ public:
    *
    * @return The current list of administration hosts in lexicographical order.
    */
-  virtual std::list<AdminHost> getAdminHosts() const = 0;
+  virtual std::list<common::admin::AdminHost> getAdminHosts() const = 0;
 
   /**
    * Throws an exception if the specified user is not an administrator or if the

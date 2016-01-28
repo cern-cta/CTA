@@ -83,7 +83,7 @@ public:
   
   std::unique_ptr<ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
   
-  ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
+  common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
   
   std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
   
@@ -155,7 +155,7 @@ private:
   
   void assertFsPathDoesNotExist(const std::string &path) const;
   
-  std::list<cta::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
+  std::list<cta::common::archiveNS::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
 
   /**
    * Throws an exception if the specified user is not the owner of the
@@ -173,7 +173,7 @@ private:
    * @param requester The identity of the requester.
    * @param The absolute path of the namespace entry.
    */
-  ArchiveDirEntry getArchiveDirEntry(
+  common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
     const SecurityIdentity &requester,
     const std::string &path) const;
 
@@ -185,7 +185,7 @@ private:
    * @param The absolute path of the namespace entry.
    * @param statResult The result of running stat().
    */
-  ArchiveDirEntry getArchiveDirEntry(
+  common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
     const SecurityIdentity &requester,
     const std::string &path,
     const struct stat statResult) const;

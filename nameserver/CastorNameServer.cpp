@@ -275,7 +275,7 @@ std::unique_ptr<cta::ArchiveFileStatus> cta::CastorNameServer::statFile(
 //------------------------------------------------------------------------------
 // getDirEntries
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveDirEntry> cta::CastorNameServer::getDirEntries(const SecurityIdentity &requester, const std::string &path) const {
+std::list<cta::common::archiveNS::ArchiveDirEntry> cta::CastorNameServer::getDirEntries(const SecurityIdentity &requester, const std::string &path) const {
   Cns_DIR *dirp;
   struct dirent *dp;
   std::string no_final_slash_path(path);
@@ -288,7 +288,7 @@ std::list<cta::ArchiveDirEntry> cta::CastorNameServer::getDirEntries(const Secur
     msg << __FUNCTION__ << " - Cns_opendir " << no_final_slash_path << " error. Reason: \n" << Utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
-  std::list<ArchiveDirEntry> entries;
+  std::list<common::archiveNS::ArchiveDirEntry> entries;
   while((dp = Cns_readdir(dirp)) != NULL) {
     std::string entryPath = "";
     if(no_final_slash_path=="/") {
@@ -306,7 +306,7 @@ std::list<cta::ArchiveDirEntry> cta::CastorNameServer::getDirEntries(const Secur
 //------------------------------------------------------------------------------
 // getArchiveDirEntry
 //------------------------------------------------------------------------------
-cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIdentity &requester, const std::string &path) const {
+cta::common::archiveNS::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   
   struct Cns_filestatcs statbuf;  
@@ -315,15 +315,15 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
   const std::string name = Utils::getEnclosedName(path);
   const std::string enclosingPath = Utils::getEnclosingPath(path);
 
-  ArchiveDirEntry::EntryType entryType;
+  common::archiveNS::ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
   
   if(S_ISDIR(statbuf.filemode)) {
-    entryType = ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
+    entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
     storageClassName = getDirStorageClass(requester, path);
   }
   else if(S_ISREG(statbuf.filemode)) {
-    entryType = ArchiveDirEntry::ENTRYTYPE_FILE;
+    entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE;
     storageClassName = getDirStorageClass(requester, enclosingPath);
   }
   else {
@@ -338,13 +338,13 @@ cta::ArchiveDirEntry cta::CastorNameServer::getArchiveDirEntry(const SecurityIde
   ArchiveFileStatus status(owner, statbuf.fileid, statbuf.filemode, size, checksum, storageClassName);
   const std::list<NameServerTapeFile> tapeCopies = getTapeFiles(requester, path);
 
-  return ArchiveDirEntry(entryType, name, status, tapeCopies);
+  return common::archiveNS::ArchiveDirEntry(entryType, name, status, tapeCopies);
 }
 
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator cta::CastorNameServer::getDirContents(
+cta::common::archiveNS::ArchiveDirIterator cta::CastorNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
   Utils::assertAbsolutePathSyntax(path);
   return getDirEntries(requester, path);

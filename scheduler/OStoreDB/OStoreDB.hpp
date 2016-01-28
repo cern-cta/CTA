@@ -151,7 +151,7 @@ public:
     const CreationLog& creationLog);
 
 
-    virtual std::list<AdminHost> getAdminHosts() const;
+    virtual std::list<common::admin::AdminHost> getAdminHosts() const;
 
   
   virtual void deleteAdminHost(const SecurityIdentity& requester,
@@ -162,7 +162,7 @@ public:
     const UserIdentity& user, const std::string& comment);
     
 
-    virtual std::list<AdminUser> getAdminUsers() const;
+    virtual std::list<common::admin::AdminUser> getAdminUsers() const;
 
 
   virtual void deleteAdminUser(const SecurityIdentity& requester,

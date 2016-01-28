@@ -21,19 +21,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminUser::AdminUser() {
+cta::common::admin::AdminUser::AdminUser() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::AdminUser::~AdminUser() throw() {
+cta::common::admin::AdminUser::~AdminUser() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::AdminUser::AdminUser(
+cta::common::admin::AdminUser::AdminUser(
   const UserIdentity &user,
   const CreationLog &creationLog):
   m_user(user), m_creationLog(creationLog) {
@@ -42,7 +42,7 @@ cta::AdminUser::AdminUser(
 //------------------------------------------------------------------------------
 // getUser
 //------------------------------------------------------------------------------
-const cta::UserIdentity &cta::AdminUser::getUser() const throw() {
+const cta::UserIdentity &cta::common::admin::AdminUser::getUser() const throw() {
   return m_user;
 }
 
@@ -50,6 +50,6 @@ const cta::UserIdentity &cta::AdminUser::getUser() const throw() {
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-const cta::CreationLog &cta::AdminUser::getCreationLog() const throw() {
+const cta::CreationLog &cta::common::admin::AdminUser::getCreationLog() const throw() {
   return m_creationLog;
 }

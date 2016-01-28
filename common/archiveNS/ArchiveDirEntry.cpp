@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 // entryTypeToStr
 //------------------------------------------------------------------------------
-const char *cta::ArchiveDirEntry::entryTypeToStr(const EntryType enumValue)
+const char *cta::common::archiveNS::ArchiveDirEntry::entryTypeToStr(const EntryType enumValue)
   throw() {
   switch(enumValue) {
   case ENTRYTYPE_NONE     : return "NONE";
@@ -34,13 +34,13 @@ const char *cta::ArchiveDirEntry::entryTypeToStr(const EntryType enumValue)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveDirEntry::ArchiveDirEntry() {
+cta::common::archiveNS::ArchiveDirEntry::ArchiveDirEntry() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveDirEntry::ArchiveDirEntry(
+cta::common::archiveNS::ArchiveDirEntry::ArchiveDirEntry(
   const EntryType type,
   const std::string &name,
   const ArchiveFileStatus &status,

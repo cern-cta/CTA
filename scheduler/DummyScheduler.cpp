@@ -136,9 +136,9 @@ void cta::DummyScheduler::deleteAdminUser(
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::DummyScheduler::getAdminUsers(const SecurityIdentity
+std::list<cta::common::admin::AdminUser> cta::DummyScheduler::getAdminUsers(const SecurityIdentity
   &requester) const {
-  return std::list<cta::AdminUser>();
+  return std::list<common::admin::AdminUser>();
 }
 
 //------------------------------------------------------------------------------
@@ -170,9 +170,9 @@ void cta::DummyScheduler::deleteAdminHost(
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::AdminHost> cta::DummyScheduler::getAdminHosts(const SecurityIdentity
+std::list<cta::common::admin::AdminHost> cta::DummyScheduler::getAdminHosts(const SecurityIdentity
   &requester) const {
-  return std::list<cta::AdminHost>();
+  return std::list<cta::common::admin::AdminHost>();
 }
 
 //------------------------------------------------------------------------------
@@ -375,10 +375,10 @@ std::string cta::DummyScheduler::getVidOfFile(
 //------------------------------------------------------------------------------
 // getDirContents
 //------------------------------------------------------------------------------
-cta::ArchiveDirIterator cta::DummyScheduler::getDirContents(
+cta::common::archiveNS::ArchiveDirIterator cta::DummyScheduler::getDirContents(
   const SecurityIdentity &requester,
   const std::string &path) const {
-  return cta::ArchiveDirIterator();
+  return cta::common::archiveNS::ArchiveDirIterator();
 }
 
 //------------------------------------------------------------------------------

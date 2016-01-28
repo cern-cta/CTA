@@ -56,10 +56,7 @@ namespace threading {
   /**
    * An exception class thrown by the Thread class.
    */
-  class UncaughtExceptionInThread: public cta::exception::Exception {
-  public:
-    UncaughtExceptionInThread(const std::string& w= ""): cta::exception::Exception(w) {}
-  };
+  CTA_GENERATE_EXCEPTION_CLASS(UncaughtExceptionInThread);
 
   /**
    * A Thread class, based on the Qt interface. To be used, on should

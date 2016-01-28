@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace cta {
+namespace cta { namespace common { namespace admin {
 
 /**
  * An administration host.
@@ -68,4 +68,4 @@ struct AdminHost {
 
 }; // struct AdminHost
 
-} // namespace cta
+}}} // namespace cta::common::admin

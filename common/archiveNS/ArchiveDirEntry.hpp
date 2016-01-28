@@ -24,7 +24,7 @@
 #include <string>
 #include <list>
 
-namespace cta {
+namespace cta { namespace common { namespace archiveNS {
 
 /**
  * A directory entry within the archive namespace.
@@ -89,4 +89,4 @@ struct ArchiveDirEntry {
 
 }; // class ArchiveDirEntry
 
-} // namespace cta
+}}} // namespace cta::common::archiveNS

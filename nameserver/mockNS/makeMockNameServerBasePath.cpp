@@ -31,6 +31,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/Utils.hpp"
 
+namespace {
+
 //------------------------------------------------------------------------------
 // setXattr
 //------------------------------------------------------------------------------
@@ -41,6 +43,8 @@ void setXattr(const std::string &path, const std::string &name, const std::strin
     msg << "Call to setxattr() failed: path=" << path << " name=" << name << " value=" << value << ": " << cta::Utils::errnoToString(savedErrno);
     throw cta::exception::Exception(msg.str());
   }
+}
+
 }
 
 //------------------------------------------------------------------------------

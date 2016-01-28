@@ -28,16 +28,18 @@
 #include <string>
 
 namespace cta {
-
 // Forward declarations for opaque references.
+namespace common { namespace admin {
 class AdminHost;
 class AdminUser;
+class ArchiveToDirRequest;
+class ArchiveDirIterator;
+}}
+
 class ArchiveFileStatus;
 class ArchiveRoute;
-class ArchiveToDirRequest;
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
-class ArchiveDirIterator;
 class LogicalLibrary;
 class NameServer;
 class RemoteNS;
@@ -211,7 +213,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  virtual std::list<AdminUser> getAdminUsers(
+  virtual std::list<common::admin::AdminUser> getAdminUsers(
     const SecurityIdentity &requester) const;
 
   /**
@@ -260,7 +262,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administration hosts in lexicographical order.
    */
-  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester)
+  virtual std::list<common::admin::AdminHost> getAdminHosts(const SecurityIdentity &requester)
     const;
 
   /**
@@ -546,7 +548,7 @@ public:
    * @param path The absolute path of the directory.
    * @return An iterator over the contents of the directory.
    */
-  virtual ArchiveDirIterator getDirContents(
+  virtual common::archiveNS::ArchiveDirIterator getDirContents(
     const SecurityIdentity &requester,
     const std::string &path) const;
 

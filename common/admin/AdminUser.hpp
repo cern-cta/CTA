@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace cta {
+namespace cta { namespace common { namespace admin {
 
 /**
  * Class representing an administrator.
@@ -84,4 +84,4 @@ private:
 
 }; // class AdminUser
 
-} // namespace cta
+}}} // namespace cta::common::admin

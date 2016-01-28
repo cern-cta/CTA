@@ -134,7 +134,7 @@ TEST_P(SchedulerDatabaseTest, create_new_admin) {
   SchedulerDatabase &db = getDb();
 
   {
-    std::list<AdminUser> adminUsers;
+    std::list<common::admin::AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = db.getAdminUsers());
     ASSERT_TRUE(adminUsers.empty());
   }
@@ -144,11 +144,11 @@ TEST_P(SchedulerDatabaseTest, create_new_admin) {
   db.createAdminUser(s_systemOnSystemHost, s_admin, comment);
 
   {
-    std::list<AdminUser> adminUsers;
+    std::list<common::admin::AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = db.getAdminUsers());
-    ASSERT_EQ((std::list<AdminUser>::size_type)1, adminUsers.size());
+    ASSERT_EQ((std::list<common::admin::AdminUser>::size_type)1, adminUsers.size());
 
-    const AdminUser &adminUser = adminUsers.front();
+    const common::admin::AdminUser &adminUser = adminUsers.front();
     ASSERT_EQ(s_system, adminUser.getCreationLog().user);
     ASSERT_EQ(comment, adminUser.getCreationLog().comment);
     ASSERT_EQ(s_admin, adminUser.getUser());
@@ -161,7 +161,7 @@ TEST_P(SchedulerDatabaseTest, create_new_admin_host) {
   SchedulerDatabase &db = getDb();
 
   {
-    std::list<AdminHost> adminHosts;
+    std::list<common::admin::AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
     ASSERT_TRUE(adminHosts.empty());
   }
@@ -173,11 +173,11 @@ TEST_P(SchedulerDatabaseTest, create_new_admin_host) {
   db.createAdminHost(s_adminHost, log);
 
   {
-    std::list<AdminHost> adminHosts;
+    std::list<common::admin::AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
-    ASSERT_EQ((std::list<AdminHost>::size_type)1, adminHosts.size());
+    ASSERT_EQ((std::list<common::admin::AdminHost>::size_type)1, adminHosts.size());
 
-    const AdminHost &adminHost = adminHosts.front();
+    const common::admin::AdminHost &adminHost = adminHosts.front();
     ASSERT_EQ(s_system, adminHost.creationLog.user);
     ASSERT_EQ(comment, adminHost.creationLog.comment);
     ASSERT_EQ(s_adminHost, adminHost.name);
@@ -190,13 +190,13 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
   SchedulerDatabase &db = getDb();
 
   {
-    std::list<AdminUser> adminUsers;
+    std::list<common::admin::AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = db.getAdminUsers());
     ASSERT_TRUE(adminUsers.empty());
   }
 
   {
-    std::list<AdminHost> adminHosts;
+    std::list<common::admin::AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
     ASSERT_TRUE(adminHosts.empty());
   } 
@@ -217,23 +217,23 @@ TEST_P(SchedulerDatabaseTest, create_assert_admin_on_admin_host) {
   ASSERT_NO_THROW(db.assertIsAdminOnAdminHost(s_adminOnAdminHost));
 
   {
-    std::list<AdminUser> adminUsers;
+    std::list<common::admin::AdminUser> adminUsers;
     ASSERT_NO_THROW(adminUsers = db.getAdminUsers());
-    ASSERT_EQ((std::list<AdminUser>::size_type)1, adminUsers.size());
+    ASSERT_EQ((std::list<common::admin::AdminUser>::size_type)1, adminUsers.size());
 
-    const AdminUser &adminUser = adminUsers.front();
+    const common::admin::AdminUser &adminUser = adminUsers.front();
     ASSERT_EQ(s_system, adminUser.getCreationLog().user);
     ASSERT_EQ(userComment, adminUser.getCreationLog().comment);
     ASSERT_EQ(s_admin, adminUser.getUser());
   }
 
   {
-    std::list<AdminHost> adminHosts;
+    std::list<common::admin::AdminHost> adminHosts;
     ASSERT_NO_THROW(adminHosts = db.getAdminHosts());
-    ASSERT_EQ((std::list<AdminHost>::size_type)1, adminHosts.size());
+    ASSERT_EQ((std::list<common::admin::AdminHost>::size_type)1, adminHosts.size());
 
-    const AdminHost &adminHost = adminHosts.front();
-    ASSERT_EQ(s_system, adminHost.creationLog.user);
+    const common::admin::AdminHost &adminHost = adminHosts.front();
+ASSERT_EQ(s_system, adminHost.creationLog.user);
     ASSERT_EQ(hostComment, adminHost.creationLog.comment);
     ASSERT_EQ(s_adminHost, adminHost.name);
   }
