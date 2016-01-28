@@ -21,7 +21,7 @@
 #include <string>
 #include "common/checksum/Checksum.hpp"
 
-namespace cta {
+namespace cta {  namespace common { namespace archiveNS {
 /**
  * A class containing the location and properties of an archive file. 
  */
@@ -76,4 +76,5 @@ public:
    */
   time_t lastModificationTime;
 };
-}
+}}} // namespace cta::common::archiveNS
+

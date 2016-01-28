@@ -30,7 +30,7 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   NameServer & ns,
-  const ArchiveFile &archiveFile,
+  const common::archiveNS::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
   const NameServerTapeFile &nsTapeFile):
   m_mount(mount), m_ns(ns),

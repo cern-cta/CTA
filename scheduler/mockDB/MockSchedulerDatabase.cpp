@@ -1205,7 +1205,7 @@ void cta::MockSchedulerDatabase::createArchiveRoute(
   const uint16_t copyNb,
   const std::string &tapePoolName,
   const CreationLog &creationLog) {
-  const std::list<ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
+  const std::list<common::archiveRoute::ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
     storageClassName);
   const StorageClass storageClass = getStorageClass(storageClassName);
   if(routes.size() >= storageClass.nbCopies) {
@@ -1245,7 +1245,7 @@ void cta::MockSchedulerDatabase::createArchiveRoute(
 // assertTapePoolIsNotAlreadyADestination
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
-  const std::list<ArchiveRoute> &routes,
+  const std::list<common::archiveRoute::ArchiveRoute> &routes,
   const std::string &tapePoolName) const {
   for(auto itor = routes.begin(); itor != routes.end(); itor++) {
     if(tapePoolName == itor->tapePoolName) {
@@ -1288,10 +1288,10 @@ void cta::MockSchedulerDatabase::deleteArchiveRoute(
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes()
+std::list<cta::common::archiveRoute::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes()
   const {
   std::ostringstream query;
-  std::list<cta::ArchiveRoute> routes;
+  std::list<cta::common::archiveRoute::ArchiveRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
     " CREATIONTIME, COMMENT FROM ARCHIVEROUTE ORDER BY STORAGECLASS_NAME,"
     " COPYNB;";
@@ -1305,7 +1305,7 @@ std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes()
   }
   while(SQLITE_ROW == sqlite3_step(statement.get())) {
     SqliteColumnNameToIndex idx(statement.get());
-    routes.push_back(ArchiveRoute(
+    routes.push_back(common::archiveRoute::ArchiveRoute(
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),
@@ -1324,10 +1324,10 @@ std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes()
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes(
+std::list<cta::common::archiveRoute::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes(
   const std::string &storageClassName) const {
   std::ostringstream query;
-  const std::list<cta::ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
+  const std::list<cta::common::archiveRoute::ArchiveRoute> routes = getArchiveRoutesWithoutChecks(
     storageClassName);
 
   const StorageClass storageClass = getStorageClass(storageClassName);
@@ -1344,10 +1344,10 @@ std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::getArchiveRoutes(
 //------------------------------------------------------------------------------
 // getArchiveRoutesWithoutChecks
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::
+std::list<cta::common::archiveRoute::ArchiveRoute> cta::MockSchedulerDatabase::
   getArchiveRoutesWithoutChecks(const std::string &storageClassName) const {
   std::ostringstream query;
-  std::list<cta::ArchiveRoute> routes;
+  std::list<cta::common::archiveRoute::ArchiveRoute> routes;
   query << "SELECT STORAGECLASS_NAME, COPYNB, TAPEPOOL, UID, GID, HOST,"
     " CREATIONTIME, COMMENT FROM ARCHIVEROUTE WHERE STORAGECLASS_NAME='" <<
     storageClassName << "' ORDER BY STORAGECLASS_NAME, COPYNB;";
@@ -1361,7 +1361,7 @@ std::list<cta::ArchiveRoute> cta::MockSchedulerDatabase::
   }
   while(SQLITE_ROW == sqlite3_step(statement.get())) {
     SqliteColumnNameToIndex idx(statement.get());
-    routes.push_back(ArchiveRoute(
+    routes.push_back(common::archiveRoute::ArchiveRoute(
       (char *)sqlite3_column_text(statement.get(),idx("STORAGECLASS_NAME")),
       sqlite3_column_int(statement.get(),idx("COPYNB")),
       (char *)sqlite3_column_text(statement.get(),idx("TAPEPOOL")),

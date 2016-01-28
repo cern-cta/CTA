@@ -306,7 +306,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     // further or cancelled, depending on the NS status.
     cta::objectstore::ArchiveToFileRequest atfr(atfrAddr, be);
     atfr.initialize();
-    cta::ArchiveFile af;
+    cta::common::archiveNS::ArchiveFile af;
     af.path = "cta:/file";
     atfr.setArchiveFile(af);
     atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos:/file"), 

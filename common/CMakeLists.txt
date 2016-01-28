@@ -6,7 +6,6 @@ set (COMMON_LIB_SRC_FILES
   admin/AdminHost.cpp
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
-  archiveRoutes/ArchiveRouteId.cpp
   archiveNS/ArchiveDirEntry.cpp
   archiveNS/ArchiveDirIterator.cpp
   archiveNS/ArchiveFile.cpp

@@ -71,7 +71,7 @@ struct ArchiveToFileRequest: public UserArchiveRequest {
    */
   ArchiveToFileRequest(
     const RemotePathAndStatus &remoteFilePath,
-    const cta::ArchiveFile &archiveFile,
+    const cta::common::archiveNS::ArchiveFile &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -84,7 +84,7 @@ struct ArchiveToFileRequest: public UserArchiveRequest {
   /**
    * The destination archive file.
    */
-  cta::ArchiveFile archiveFile;
+  cta::common::archiveNS::ArchiveFile archiveFile;
 
   /**
    * The mapping from archive copy number to destination tape pool.

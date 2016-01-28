@@ -73,8 +73,8 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFile(const cta::ArchiveFile & archiveFile);
-  cta::ArchiveFile getArchiveFile();
+  void setArchiveFile(const cta::common::archiveNS::ArchiveFile & archiveFile);
+  cta::common::archiveNS::ArchiveFile getArchiveFile();
   void setRemoteFile (const std::string & remoteFile);
   std::string getRemoteFile();
   void setPriority (uint64_t priority);

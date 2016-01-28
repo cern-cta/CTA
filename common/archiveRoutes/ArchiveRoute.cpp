@@ -21,20 +21,20 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRoute::ArchiveRoute():
+cta::common::archiveRoute::ArchiveRoute::ArchiveRoute():
   copyNb(0) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveRoute::~ArchiveRoute() throw() {
+cta::common::archiveRoute::ArchiveRoute::~ArchiveRoute() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveRoute::ArchiveRoute(
+cta::common::archiveRoute::ArchiveRoute::ArchiveRoute(
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,

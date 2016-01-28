@@ -35,30 +35,9 @@
 #include "common/DriveState.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
+#include "common/forwardDeclarations.hpp"
 
 namespace cta {
-  
-// Forward declarations for opaque references  
-namespace common { namespace admin {
-class AdminHost;
-class AdminUser;   
-}}
-class ArchiveRoute;
-class ArchiveToDirRequest;
-class ArchiveToFileRequest;
-class ArchiveToTapeCopyRequest;
-class CreationLog;
-class DirIterator;
-class LogicalLibrary;
-class RetrieveRequestDump;
-class RetrieveToDirRequest;
-class RetrieveToFileRequest;
-class SecurityIdentity;
-class StorageClass;
-class Tape;
-class TapePool;
-class UserIdentity;
-
 /**
  * Abstract class defining the interface to the database of a tape resource
  * scheduler.
@@ -184,7 +163,7 @@ public:
   class ArchiveJob {
   public:
     cta::RemotePathAndStatus remoteFile;
-    cta::ArchiveFile archiveFile;
+    cta::common::archiveNS::ArchiveFile archiveFile;
     cta::NameServerTapeFile nameServerTapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
@@ -262,7 +241,7 @@ public:
     friend class RetrieveMount;
   public:
     std::string remoteFile;
-    cta::ArchiveFile archiveFile;
+    cta::common::archiveNS::ArchiveFile archiveFile;
     cta::NameServerTapeFile nameServerTapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
@@ -537,7 +516,7 @@ public:
    *
    * @return The current list of archive routes.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes() const = 0;
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const = 0;
 
   /**
    * Returns the list of archive routes for the specified storage class.
@@ -550,7 +529,7 @@ public:
    * @param storageClassName The name of the storage class.
    * @return The list of archive routes for the specified storage class.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes(
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
     const std::string &storageClassName) const = 0;
   
   /*============ Logical libraries management ==============================*/

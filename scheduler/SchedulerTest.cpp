@@ -530,12 +530,12 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -561,7 +561,7 @@ TEST_P(SchedulerTest, admin_deleteStorageClass_in_use_by_route) {
     copyNb));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
@@ -605,7 +605,7 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
@@ -629,12 +629,12 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -644,12 +644,12 @@ TEST_P(SchedulerTest, admin_deleteTapePool_in_use) {
   ASSERT_THROW(scheduler.deleteTapePool(s_adminOnAdminHost, tapePoolName), std::exception);
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -663,7 +663,7 @@ TEST_P(SchedulerTest, admin_createArchiveRoute_new) {
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
@@ -687,12 +687,12 @@ TEST_P(SchedulerTest, admin_createArchiveRoute_new) {
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -707,7 +707,7 @@ TEST_P(SchedulerTest,
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
   }
@@ -730,12 +730,12 @@ TEST_P(SchedulerTest,
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -752,7 +752,7 @@ TEST_P(SchedulerTest, admin_deleteArchiveRoute_existing) {
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
@@ -776,12 +776,12 @@ TEST_P(SchedulerTest, admin_deleteArchiveRoute_existing) {
     copyNb, tapePoolName, comment));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_EQ(1, archiveRoutes.size());
 
-    ArchiveRoute archiveRoute;
+    common::archiveRoute::ArchiveRoute archiveRoute;
     ASSERT_NO_THROW(archiveRoute = archiveRoutes.front());
     ASSERT_EQ(storageClassName, archiveRoute.storageClassName);
     ASSERT_EQ(copyNb, archiveRoute.copyNb);
@@ -792,7 +792,7 @@ TEST_P(SchedulerTest, admin_deleteArchiveRoute_existing) {
     copyNb));
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());
   }
@@ -804,7 +804,7 @@ TEST_P(SchedulerTest, admin_deleteArchiveRoute_non_existing) {
   Scheduler &scheduler = getScheduler();
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = scheduler.getArchiveRoutes(
       s_adminOnAdminHost));
     ASSERT_TRUE(archiveRoutes.empty());

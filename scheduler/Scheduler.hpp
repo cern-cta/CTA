@@ -27,34 +27,9 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-// Forward declarations for opaque references.
-namespace common { namespace admin {
-class AdminHost;
-class AdminUser;
-class ArchiveToDirRequest;
-class ArchiveDirIterator;
-}}
+#include "common/forwardDeclarations.hpp"
 
-class ArchiveFileStatus;
-class ArchiveRoute;
-class ArchiveToFileRequest;
-class ArchiveToTapeCopyRequest;
-class LogicalLibrary;
-class NameServer;
-class RemoteNS;
-class RemotePathAndStatus;
-class RetrieveRequestDump;
-class RetrieveToDirRequest;
-class RetrieveToFileRequest;
-class SchedulerDatabase;
-class SecurityIdentity;
-class StorageClass;
-class Tape;
-class TapeMount;
-class TapeSession;
-class TapePool;
-class UserIdentity;
+namespace cta {
 
 /**
  * Class implementimg a tape resource scheduler.
@@ -396,7 +371,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  virtual std::list<ArchiveRoute> getArchiveRoutes(
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const;
 
   /**
@@ -774,7 +749,7 @@ private:
    * set of archive routes.
    */
   std::map<uint16_t, std::string> createCopyNbToPoolMap(
-    const std::list<ArchiveRoute> &routes) const;
+    const std::list<common::archiveRoute::ArchiveRoute> &routes) const;
 
 }; // class Scheduler
 

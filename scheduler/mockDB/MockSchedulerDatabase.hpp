@@ -384,7 +384,7 @@ public:
    * @param storageClassName The name of the storage class.
    * @return The list of archive routes for the specified storage class.
    */
-  std::list<ArchiveRoute> getArchiveRoutes(
+  std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
     const std::string &storageClassName) const;
 
   /**
@@ -503,7 +503,7 @@ private:
    * @param storageClassName The name of the storage class.
    * @return The list of archive routes for the specified storage class.
    */
-  std::list<ArchiveRoute> getArchiveRoutesWithoutChecks(
+  std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutesWithoutChecks(
     const std::string &storageClassName) const;
 
   /**
@@ -514,7 +514,7 @@ private:
    * @param tapePoolName The name of the tape pool.
    */
   void assertTapePoolIsNotAlreadyADestination(
-    const std::list<ArchiveRoute> &routes, 
+    const std::list<common::archiveRoute::ArchiveRoute> &routes, 
     const std::string &tapePoolName) const;
 
   /**

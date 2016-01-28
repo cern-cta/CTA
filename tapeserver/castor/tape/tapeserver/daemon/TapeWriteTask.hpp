@@ -177,7 +177,7 @@ private:
   /**
    * The NS archive file information
    */
-  cta::ArchiveFile m_archiveFile;
+  cta::common::archiveNS::ArchiveFile m_archiveFile;
   
   /**
    * The file archive result for the NS

@@ -28,7 +28,7 @@ namespace cta {
     int completes;
     int failures;
     MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(rm,
-    cta::ArchiveFile(), 
+    cta::common::archiveNS::ArchiveFile(), 
     std::string(), cta::NameServerTapeFile(),
     cta::PositioningMethod::ByBlock), completes(0), failures(0) {} 
     

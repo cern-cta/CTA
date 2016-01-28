@@ -56,7 +56,7 @@ public:
    * @param creationLog The creation log parameters
    */
   RetrieveToFileRequest(
-    const cta::ArchiveFile &archiveFile,
+    const cta::common::archiveNS::ArchiveFile &archiveFile,
     const std::list<TapeFileLocation> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
@@ -67,7 +67,7 @@ public:
    *
    * @return The source archive file.
    */
-  const cta::ArchiveFile &getArchiveFile() const throw();
+  const cta::common::archiveNS::ArchiveFile &getArchiveFile() const throw();
   
   /**
    * Returns the physical location(s) of the archive file on tape.
@@ -88,7 +88,7 @@ private:
   /**
    * The full path of the source archive file.
    */
-  cta::ArchiveFile m_archiveFile;
+  cta::common::archiveNS::ArchiveFile m_archiveFile;
   
   /**
    * The physical location(s) of the archive file on tape.

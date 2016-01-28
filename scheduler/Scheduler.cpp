@@ -357,7 +357,7 @@ void cta::Scheduler::deleteArchiveRoute(
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::Scheduler::getArchiveRoutes(
+std::list<cta::common::archiveRoute::ArchiveRoute> cta::Scheduler::getArchiveRoutes(
   const SecurityIdentity &requester) const {
   return m_db.getArchiveRoutes();
 }
@@ -661,7 +661,7 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
   const auto routes = m_db.getArchiveRoutes(storageClassName);
   const auto copyNbToPoolMap = createCopyNbToPoolMap(routes);
   std::unique_ptr<cta::ArchiveFileStatus> status = m_ns.statFile(requester, archiveFilePath);
-  cta::ArchiveFile archiveFile(archiveFilePath, "", status->fileId, remoteFile.status.size, 0, 0);
+  cta::common::archiveNS::ArchiveFile archiveFile(archiveFilePath, "", status->fileId, remoteFile.status.size, 0, 0);
 
   const CreationLog log(requester.getUser(), requester.getHost(), time(NULL));
   return ArchiveToFileRequest(
@@ -676,10 +676,10 @@ cta::ArchiveToFileRequest cta::Scheduler::createArchiveToFileRequest(
 // createCopyNbToPoolMap
 //------------------------------------------------------------------------------
 std::map<uint16_t, std::string> cta::Scheduler::createCopyNbToPoolMap(
-  const std::list<ArchiveRoute> &routes) const {
+  const std::list<common::archiveRoute::ArchiveRoute> &routes) const {
   std::map<uint16_t, std::string> copyNbToPoolMap;
     for(auto itor = routes.begin(); itor != routes.end(); itor++) {
-    const ArchiveRoute &route = *itor;
+    const common::archiveRoute::ArchiveRoute &route = *itor;
     copyNbToPoolMap[route.copyNb] = route.tapePoolName;
   }
   return copyNbToPoolMap;
@@ -739,7 +739,7 @@ void cta::Scheduler::queueRetrieveRequest(
       throw cta::exception::Exception(err.str());
     }
     uint32_t cs = sourceStat->checksum.getNumeric<uint32_t>();
-    cta::ArchiveFile archiveFile(archiveFiles.front(), 
+    cta::common::archiveNS::ArchiveFile archiveFile(archiveFiles.front(), 
         "", 
         sourceStat->fileId,
         sourceStat->size,

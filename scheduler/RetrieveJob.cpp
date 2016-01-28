@@ -28,7 +28,7 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
-  const ArchiveFile &archiveFile,
+  const common::archiveNS::ArchiveFile &archiveFile,
   const std::string &remotePath,
   const NameServerTapeFile &nameServerTapeFile,
   const PositioningMethod positioningMethod):

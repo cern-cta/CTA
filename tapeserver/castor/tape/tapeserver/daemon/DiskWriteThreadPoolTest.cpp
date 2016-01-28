@@ -50,7 +50,7 @@ namespace unitTests{
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
     TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::ArchiveFile(), 
+    cta::common::archiveNS::ArchiveFile(), 
     std::string(), cta::NameServerTapeFile(),
     cta::PositioningMethod::ByBlock) {}
   };

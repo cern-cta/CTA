@@ -55,7 +55,7 @@ public:
    * @param positioningMethod the positioning method
    */
   RetrieveJob(RetrieveMount &mount,
-  const ArchiveFile &archiveFile,
+  const common::archiveNS::ArchiveFile &archiveFile,
   const std::string &remotePath,
   const NameServerTapeFile &tapeFileLocation,
   const PositioningMethod positioningMethod);
@@ -103,7 +103,7 @@ public:
   /**
    * The NS archive file information
    */
-  ArchiveFile archiveFile;
+  common::archiveNS::ArchiveFile archiveFile;
   
   /**
    * The remote file path

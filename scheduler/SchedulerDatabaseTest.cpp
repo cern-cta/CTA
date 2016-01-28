@@ -315,9 +315,9 @@ TEST_P(SchedulerDatabaseTest, getArchiveRoutes_complete) {
   }
 
   {
-    std::list<ArchiveRoute> archiveRoutes;
+    std::list<common::archiveRoute::ArchiveRoute> archiveRoutes;
     ASSERT_NO_THROW(archiveRoutes = db.getArchiveRoutes());
-    ASSERT_EQ((std::list<ArchiveRoute>::size_type)2, archiveRoutes.size());
+    ASSERT_EQ((std::list<common::archiveRoute::ArchiveRoute>::size_type)2, archiveRoutes.size());
   }
 }
 
@@ -434,7 +434,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   std::map<uint16_t, std::string> destinationPoolMap;
   destinationPoolMap[0] = "pool0";
   destinationPoolMap[1] = "pool1";
-  cta::ArchiveFile af("cta:://cta/myfile", "", 0, 1234, 0, 0);
+  cta::common::archiveNS::ArchiveFile af("cta:://cta/myfile", "", 0, 1234, 0, 0);
   cta::ArchiveToFileRequest atfr(remoteFile, af, destinationPoolMap,
     10, cl);
   std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> creation(db.queue(atfr));
@@ -534,7 +534,7 @@ TEST_P(SchedulerDatabaseTest, getMountInfo) {
   tcl2.back().fSeq = 3;
   tcl2.back().vid = "Tape2";
   tcl2.back().copyNb = 2;
-  cta::ArchiveFile af2("cta:://cta/myfile2", "", 0, 1234, 0, 0);
+  cta::common::archiveNS::ArchiveFile af2("cta:://cta/myfile2", "", 0, 1234, 0, 0);
   db.queue(cta::RetrieveToFileRequest(af2, tcl2, "eos://myeos/myeosfile2", 10, cl));
   mountCandidates.reset(NULL);
   ASSERT_NO_THROW(mountCandidates = db.getMountInfo());
@@ -587,7 +587,7 @@ TEST_P(SchedulerDatabaseTest, createArchiveMountAndGetJob) {
     std::map<uint16_t, std::string> destinationPoolMap;
     destinationPoolMap[0] = "pool0";
     destinationPoolMap[1] = "pool1";
-    cta::ArchiveFile af;
+    cta::common::archiveNS::ArchiveFile af;
     af.path = "cta://cta/myfile";
     cta::ArchiveToFileRequest atfr(remoteFile, af, destinationPoolMap,
       10, cl);

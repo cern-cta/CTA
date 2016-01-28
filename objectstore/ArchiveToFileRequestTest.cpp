@@ -34,7 +34,7 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
   {
     // Try to create the ArchiveToFileRequest entry
     cta::objectstore::ArchiveToFileRequest atfr(tapeAddress, be);
-    atfr.initialize();cta::ArchiveFile af;
+    atfr.initialize();cta::common::archiveNS::ArchiveFile af;
     af.path = "cta://dir/file";
     atfr.setArchiveFile(af);
     atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos://dir2/file2"), 

@@ -191,9 +191,9 @@ public:
     const CreationLog& creationLog);
 
   CTA_GENERATE_EXCEPTION_CLASS(IncompleteRouting);
-  virtual std::list<ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const;
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const;
 
-  virtual std::list<ArchiveRoute> getArchiveRoutes() const;
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const;
 
   virtual void deleteArchiveRoute(const SecurityIdentity& requester, 
     const std::string& storageClassName, const uint16_t copyNb);

@@ -149,7 +149,7 @@ void cta::objectstore::ArchiveToFileRequest::setAllJobsPendingNSdeletion() {
 }
 
 void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
-  const cta::ArchiveFile& archiveFile) {
+  const cta::common::archiveNS::ArchiveFile& archiveFile) {
   checkPayloadWritable();
   auto *af = m_payload.mutable_archivefile();
   af->set_checksum(archiveFile.checksum);
@@ -160,7 +160,7 @@ void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
   af->set_size(archiveFile.size);
 }
 
-cta::ArchiveFile cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
+cta::common::archiveNS::ArchiveFile cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
   checkPayloadReadable();
   auto checksum = m_payload.archivefile().checksum();
   auto fileId = m_payload.archivefile().fileid();
@@ -168,7 +168,7 @@ cta::ArchiveFile cta::objectstore::ArchiveToFileRequest::getArchiveFile() {
   auto nsHostName = m_payload.archivefile().nshostname();
   auto path = m_payload.archivefile().path();
   auto size = m_payload.archivefile().size();
-  return ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
+  return common::archiveNS::ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
 }
 
 

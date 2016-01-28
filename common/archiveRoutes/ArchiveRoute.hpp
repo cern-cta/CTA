@@ -25,7 +25,7 @@
 #include <string>
 #include <time.h>
 
-namespace cta {
+namespace cta { namespace common { namespace archiveRoute {
 
 /**
  * An archive route.
@@ -80,4 +80,4 @@ struct ArchiveRoute {
 
 }; // class ArchiveRoute
 
-} // namespace cta
+}}} // namespace cta::common::archiveRoute 

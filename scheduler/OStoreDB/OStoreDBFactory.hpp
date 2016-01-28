@@ -139,11 +139,11 @@ public:
   }
 
 
-  virtual std::list<ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {
     return m_OStoreDB.getArchiveRoutes(storageClassName);
   }
 
-  virtual std::list<ArchiveRoute> getArchiveRoutes() const{ 
+  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const{ 
     return m_OStoreDB.getArchiveRoutes();
   }
 

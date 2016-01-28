@@ -338,7 +338,7 @@ public:
    *
    * @param requester The identity of the user requesting the list.
    */
-  std::list<ArchiveRoute> getArchiveRoutes(
+  std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
     const SecurityIdentity &requester) const;
 
   /**

@@ -56,7 +56,7 @@ protected:
   ArchiveJob(
   ArchiveMount &mount,
   NameServer & ns,
-  const ArchiveFile &archiveFile,
+  const common::archiveNS::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
   const NameServerTapeFile &nameServerTapeFile);
 
@@ -112,7 +112,7 @@ public:
   /**
    * The NS archive file information
    */
-  ArchiveFile archiveFile;
+  common::archiveNS::ArchiveFile archiveFile;
   
   /**
    * The remote file information

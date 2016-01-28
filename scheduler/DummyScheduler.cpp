@@ -261,9 +261,9 @@ void cta::DummyScheduler::deleteArchiveRoute(
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::DummyScheduler::getArchiveRoutes(
+std::list<cta::common::archiveRoute::ArchiveRoute> cta::DummyScheduler::getArchiveRoutes(
   const SecurityIdentity &requester) const {
-  return std::list<cta::ArchiveRoute>();
+  return std::list<cta::common::archiveRoute::ArchiveRoute>();
 }
 
 //------------------------------------------------------------------------------

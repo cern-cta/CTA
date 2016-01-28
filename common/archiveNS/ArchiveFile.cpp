@@ -18,7 +18,7 @@
 
 #include "ArchiveFile.hpp"
 
-namespace cta {
+namespace cta { namespace common { namespace archiveNS {
   
 //------------------------------------------------------------------------------
 // constructor
@@ -41,4 +41,4 @@ ArchiveFile::ArchiveFile(const std::string & path, const std::string & nsHostNam
   size(size),
   checksum(checksum),
   lastModificationTime(lastModificationTime) {}
-}
+}}} //namespace cta::common::archiveNS
