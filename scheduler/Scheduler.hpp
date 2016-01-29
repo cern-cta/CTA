@@ -634,7 +634,7 @@ public:
    *
    * @return The current list of registered drives.
    */
-  virtual std::list<cta::DriveState> getDriveStates(const SecurityIdentity &requester) const;
+  virtual std::list<cta::common::DriveState> getDriveStates(const SecurityIdentity &requester) const;
 
 private:
 

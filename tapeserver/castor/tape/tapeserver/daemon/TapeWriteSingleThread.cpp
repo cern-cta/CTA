@@ -170,7 +170,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // 
       TapeCleaning cleaner(*this, timer);
       currentErrorToCount = "Error_tapeMountForWrite";
-      m_reportPacker.reportDriveStatus(cta::DriveStatus::Mounting);
+      m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Mounting);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       mountTapeReadWrite();
@@ -206,7 +206,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       std::unique_ptr<TapeWriteTask> task;   
-      m_reportPacker.reportDriveStatus(cta::DriveStatus::Transfering); 
+      m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Transfering); 
       while(1) {
         //get a task
         task.reset(m_tasks.pop());

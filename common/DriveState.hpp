@@ -20,7 +20,7 @@
 
 #include "scheduler/MountType.hpp"
 
-namespace cta {
+namespace cta { namespace common {
 
   enum DriveStatus {
     Down,
@@ -59,4 +59,4 @@ namespace cta {
     std::string currentTapePool;
   };
   
-}
+}} //namespace cta::common

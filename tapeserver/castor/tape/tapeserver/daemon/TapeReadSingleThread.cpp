@@ -45,7 +45,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_rrp.reportDriveStatus(cta::DriveStatus::CleaningUp);
+  m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::CleaningUp);
   // Tell everyone to wrap up the session
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more.
@@ -75,7 +75,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
     if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {      
-      m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Unloading);
+      m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Unloading);
       m_this.m_drive.unloadTape();
       m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape unloaded");
     } else {
@@ -86,9 +86,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
     currentErrorToCount = "Error_tapeDismount";     
-    m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Unmounting);
+    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
-    m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Up);
+    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
@@ -97,7 +97,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch(const castor::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Down);
+    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
     castor::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exception_message", ex.getMessageValue())
           .add("exception_code",ex.code());
@@ -110,7 +110,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch (...) {
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::DriveStatus::Down);
+    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
     m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
     try {
       if (currentErrorToCount.size()) {
@@ -204,7 +204,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
       currentErrorToCount = "Error_tapeMountForRead";
-      m_rrp.reportDriveStatus(cta::DriveStatus::Mounting);
+      m_rrp.reportDriveStatus(cta::common::DriveStatus::Mounting);
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
@@ -233,7 +233,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Then we will loop on the tasks as they get from 
       // the task injector
       std::unique_ptr<TapeReadTask> task;
-      m_rrp.reportDriveStatus(cta::DriveStatus::Transfering);
+      m_rrp.reportDriveStatus(cta::common::DriveStatus::Transfering);
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());

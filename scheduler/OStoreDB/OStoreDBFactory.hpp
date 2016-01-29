@@ -199,7 +199,7 @@ public:
     m_OStoreDB.queue(rqst);
   }
   
-  virtual std::list<cta::DriveState> getDriveStates() const {
+  virtual std::list<cta::common::DriveState> getDriveStates() const {
     return m_OStoreDB.getDriveStates();
   }
 private:

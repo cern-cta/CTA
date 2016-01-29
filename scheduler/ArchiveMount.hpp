@@ -88,7 +88,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::DriveStatus status);
+    virtual void setDriveStatus(cta::common::DriveStatus status);
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**

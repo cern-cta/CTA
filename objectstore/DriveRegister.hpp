@@ -47,8 +47,8 @@ public:
 private:
   cta::MountType::Enum deserializeMountType(serializers::MountType);
   serializers::MountType serializeMountType(cta::MountType::Enum);
-  DriveStatus deserializeDriveStatus(serializers::DriveStatus);
-  serializers::DriveStatus serializeDriveStatus(DriveStatus);
+  common::DriveStatus deserializeDriveStatus(serializers::DriveStatus);
+  serializers::DriveStatus serializeDriveStatus(common::DriveStatus);
 public:
   CTA_GENERATE_EXCEPTION_CLASS(MissingStatistics);
   CTA_GENERATE_EXCEPTION_CLASS(MissingTapeInfo);
@@ -60,7 +60,7 @@ public:
    * Report the status of the drive to the DB.
    */
   void reportDriveStatus (const std::string & drive, const std::string & logicalLibary,
-    DriveStatus status, time_t reportTime, 
+    common::DriveStatus status, time_t reportTime, 
     cta::MountType::Enum mountType = cta::MountType::NONE,
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(), 
@@ -73,7 +73,7 @@ private:
   struct ReportDriveStatusInputs {
     const std::string & drive;
     const std::string & logicalLibary;
-    DriveStatus status;
+    common::DriveStatus status;
     cta::MountType::Enum mountType;
     time_t reportTime; 
     uint64_t mountSessionId;
@@ -96,7 +96,7 @@ private:
   void setDriveDrainingToDisk(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
   void setDriveCleaningUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
 public:
-  std::list<DriveState> dumpDrives();
+  std::list<common::DriveState> dumpDrives();
   std::string dump();
 };
 

@@ -146,7 +146,7 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(DriveStatus status, time_t completionTime) = 0;
+    virtual void setDriveStatus(common::DriveStatus status, time_t completionTime) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -220,7 +220,7 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(DriveStatus status, time_t completionTime) = 0;
+    virtual void setDriveStatus(common::DriveStatus status, time_t completionTime) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -603,7 +603,7 @@ public:
    *
    * @return The current list of registered drives.
    */
-  virtual std::list<cta::DriveState> getDriveStates() const = 0;
+  virtual std::list<cta::common::DriveState> getDriveStates() const = 0;
 
 }; // class SchedulerDatabase
 

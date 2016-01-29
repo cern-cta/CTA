@@ -148,7 +148,8 @@ void cta::objectstore::DriveRegister::addDrive(const std::string & driveName,
 }
 
 cta::objectstore::serializers::DriveStatus 
-  cta::objectstore::DriveRegister::serializeDriveStatus(DriveStatus driveStatus) {
+  cta::objectstore::DriveRegister::serializeDriveStatus(common::DriveStatus driveStatus) {
+  using common::DriveStatus;
   switch (driveStatus) {
     case DriveStatus::Down:
       return serializers::DriveStatus::Down;
@@ -173,9 +174,10 @@ cta::objectstore::serializers::DriveStatus
   }
 }
 
-cta::DriveStatus
+cta::common::DriveStatus
   cta::objectstore::DriveRegister::deserializeDriveStatus(
     serializers::DriveStatus driveStatus) {
+  using common::DriveStatus;
   switch (driveStatus) {
     case serializers::DriveStatus::Down:
       return DriveStatus::Down;
@@ -237,10 +239,11 @@ namespace {
 }
 
 void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& driveName,
-  const std::string& logicalLibary, DriveStatus status, time_t reportTime,
+  const std::string& logicalLibary, common::DriveStatus status, time_t reportTime,
   cta::MountType::Enum mountType, uint64_t mountSessionId, uint64_t byteTransfered,
   uint64_t filesTransfered, double latestBandwidth, const std::string & vid,
   const std::string & tapepool) {
+  using common::DriveStatus;
   // Wrap all the parameters together for easier manipulation by sub-functions
   ReportDriveStatusInputs inputs (driveName, logicalLibary);
   inputs.mountType = mountType;
@@ -583,6 +586,7 @@ void cta::objectstore::DriveRegister::setDriveCleaningUp(ReportDriveStatusInputs
 
 void cta::objectstore::DriveRegister::checkReportDriveStatusInputs(
   ReportDriveStatusInputs& inputs) {
+  using common::DriveStatus;
     // Depending on the status, we might or might not expect statistics.
   std::set<int> statusesRequiringStats = {
     (int)DriveStatus::Transfering,
@@ -610,12 +614,12 @@ void cta::objectstore::DriveRegister::checkReportDriveStatusInputs(
 }
 
 
-auto cta::objectstore::DriveRegister::dumpDrives() -> std::list<DriveState> {
+auto cta::objectstore::DriveRegister::dumpDrives() -> std::list<common::DriveState> {
   checkPayloadReadable();
   auto & dl = m_payload.drives();
-  std::list<DriveState> ret;
+  std::list<common::DriveState> ret;
   for (auto d=dl.begin(); d!=dl.end(); d++) {
-    ret.push_back(DriveState());
+    ret.push_back(common::DriveState());
     auto & di = ret.back();
     di.name = d->drivename();
     di.logicalLibrary = d->logicallibrary();

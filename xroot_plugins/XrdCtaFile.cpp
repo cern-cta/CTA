@@ -1214,51 +1214,53 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   m_data = responseSS.str();
 }
 
-std::string fromDriveStatusToString(cta::DriveStatus status) {
+std::string fromDriveStatusToString(cta::common::DriveStatus status) {
+  using cta::common::DriveStatus;
   switch(status) {
-    case cta::DriveStatus::CleaningUp:
+    case DriveStatus::CleaningUp:
       return "CleaningUp";
-    case cta::DriveStatus::Down:
+    case DriveStatus::Down:
       return "Down";
-    case cta::DriveStatus::DrainingToDisk:
+    case DriveStatus::DrainingToDisk:
       return "DrainingToDisk";
-    case cta::DriveStatus::Mounting:
+    case DriveStatus::Mounting:
       return "Mounting";
-    case cta::DriveStatus::Starting:
+    case DriveStatus::Starting:
       return "Starting";
-    case cta::DriveStatus::Transfering:
+    case DriveStatus::Transfering:
       return "Transferring";
-    case cta::DriveStatus::Unloading:
+    case DriveStatus::Unloading:
       return "Unloading";
-    case cta::DriveStatus::Unmounting:
+    case DriveStatus::Unmounting:
       return "Unmounting";
-    case cta::DriveStatus::Up:
+    case DriveStatus::Up:
       return "Up";
     default:
       return "UnknownState";
   }
 }
 
-time_t getDurationSinceStatusBegin(const cta::DriveState &state) {
+time_t getDurationSinceStatusBegin(const cta::common::DriveState &state) {
   time_t now = time(0);
   switch(state.status) {
-    case cta::DriveStatus::CleaningUp:
+  using cta::common::DriveStatus;
+    case DriveStatus::CleaningUp:
       return now-state.cleanupStartTime;
-    case cta::DriveStatus::Down:
+    case DriveStatus::Down:
       return now-state.downOrUpStartTime;
-    case cta::DriveStatus::DrainingToDisk:
+    case DriveStatus::DrainingToDisk:
       return now-state.drainingStartTime;
-    case cta::DriveStatus::Mounting:
+    case DriveStatus::Mounting:
       return now-state.mountStartTime;
-    case cta::DriveStatus::Starting:
+    case DriveStatus::Starting:
       return now-state.startStartTime;
-    case cta::DriveStatus::Transfering:
+    case DriveStatus::Transfering:
       return now-state.transferStartTime;
-    case cta::DriveStatus::Unloading:
+    case DriveStatus::Unloading:
       return now-state.unloadStartTime;
-    case cta::DriveStatus::Unmounting:
+    case DriveStatus::Unmounting:
       return now-state.unmountStartTime;
-    case cta::DriveStatus::Up:
+    case DriveStatus::Up:
       return now-state.downOrUpStartTime;
     default:
       return 0;

@@ -856,7 +856,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
                 Utils::getShortHostname(), 
                 time(NULL)).release());
             internalRet->m_sessionRunning = true;
-            internalRet->setDriveStatus(cta::DriveStatus::Starting);
+            internalRet->setDriveStatus(cta::common::DriveStatus::Starting);
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
             continue;
@@ -881,7 +881,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
             internalRet->m_sessionRunning = true;
             internalRet->m_diskRunning = true;
             internalRet->m_tapeRunning = true;
-            internalRet->setDriveStatus(cta::DriveStatus::Starting);
+            internalRet->setDriveStatus(cta::common::DriveStatus::Starting);
             return std::unique_ptr<TapeMount> (internalRet.release()); 
          } catch (cta::exception::Exception & ex) {
            std::string debug=ex.getMessageValue();
@@ -899,6 +899,6 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<cta::DriveState> cta::Scheduler::getDriveStates(const SecurityIdentity &requester) const {
+std::list<cta::common::DriveState> cta::Scheduler::getDriveStates(const SecurityIdentity &requester) const {
   return m_db.getDriveStates();
 }

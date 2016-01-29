@@ -84,7 +84,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::DriveStatus status);
+    virtual void setDriveStatus(cta::common::DriveStatus status);
 
     /**
      * Indicates that the disk thread of the mount was completed. This

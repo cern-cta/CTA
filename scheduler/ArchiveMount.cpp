@@ -121,6 +121,6 @@ cta::ArchiveMount::~ArchiveMount() throw() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setDriveStatus(cta::DriveStatus status) {
+void cta::ArchiveMount::setDriveStatus(cta::common::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
 }

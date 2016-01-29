@@ -85,7 +85,7 @@ public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<ArchiveJob> getNextJob();
     virtual void complete(time_t completionTime);
-    virtual void setDriveStatus(cta::DriveStatus status, time_t completionTime);
+    virtual void setDriveStatus(cta::common::DriveStatus status, time_t completionTime);
     virtual void setTapeMaxFileCount(uint64_t maxFileId);
   };
   
@@ -123,7 +123,7 @@ public:
     virtual const MountInfo & getMountInfo();
     virtual std::unique_ptr<RetrieveJob> getNextJob();
     virtual void complete(time_t completionTime);
-    virtual void setDriveStatus(cta::DriveStatus status, time_t completionTime);
+    virtual void setDriveStatus(cta::common::DriveStatus status, time_t completionTime);
   };
   
   /* === Retrieve Job handling ============================================== */
@@ -297,7 +297,7 @@ public:
     const std::string& remoteFile);
   
   /* === Drive state handling  ============================================== */
-  virtual std::list<cta::DriveState> getDriveStates() const;
+  virtual std::list<cta::common::DriveState> getDriveStates() const;
 private:
   objectstore::Backend & m_objectStore;
   objectstore::Agent * m_agent;

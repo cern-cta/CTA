@@ -86,7 +86,7 @@ void RecallReportPacker::reportEndOfSession(){
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportDriveStatus(cta::DriveStatus status) {
+void RecallReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
 }
@@ -155,7 +155,7 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& pack
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
   parent.m_retrieveMount->setDriveStatus(m_status);
-  if(m_status==cta::DriveStatus::Unmounting) {
+  if(m_status==cta::common::DriveStatus::Unmounting) {
     parent.m_retrieveMount->diskComplete();
     parent.m_retrieveMount->tapeComplete();
   }
@@ -165,7 +165,7 @@ void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
 //ReportDriveStatus::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportDriveStatus::goingToEnd(RecallReportPacker& packer) {
-  if(m_status==cta::DriveStatus::Unmounting) return true;
+  if(m_status==cta::common::DriveStatus::Unmounting) return true;
   return false;
 }
 

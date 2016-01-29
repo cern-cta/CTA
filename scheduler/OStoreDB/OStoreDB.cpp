@@ -150,13 +150,14 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::ScopedSharedLock drl(dr);
   dr.fetch();
   auto dl = dr.dumpDrives();
+  using common::DriveStatus;
   std::set<int> activeDriveStatuses = {
-    (int)cta::DriveStatus::Starting,
-    (int)cta::DriveStatus::Mounting,
-    (int)cta::DriveStatus::Transfering,
-    (int)cta::DriveStatus::Unloading,
-    (int)cta::DriveStatus::Unmounting,
-    (int)cta::DriveStatus::DrainingToDisk };
+    (int)DriveStatus::Starting,
+    (int)DriveStatus::Mounting,
+    (int)DriveStatus::Transfering,
+    (int)DriveStatus::Unloading,
+    (int)DriveStatus::Unmounting,
+    (int)DriveStatus::DrainingToDisk };
   for (auto d=dl.begin(); d!= dl.end(); d++) {
     if (activeDriveStatuses.count((int)d->status)) {
       tmdi.existingMounts.push_back(ExistingMount());
@@ -1104,7 +1105,7 @@ void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester,
   throw exception::Exception("Not Implemented");
   }
 
-std::list<cta::DriveState> OStoreDB::getDriveStates() const {
+std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
@@ -1210,7 +1211,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
     dr.reportDriveStatus(driveName, logicalLibrary, 
-      cta::DriveStatus::Starting, startTime, 
+      cta::common::DriveStatus::Starting, startTime, 
       cta::MountType::ARCHIVE, privateRet->mountInfo.mountId,
       0, 0, 0, vid, tapePool);
     dr.commit();
@@ -1314,7 +1315,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
     dr.reportDriveStatus(driveName, logicalLibrary, 
-      cta::DriveStatus::Starting, startTime, 
+      cta::common::DriveStatus::Starting, startTime, 
       cta::MountType::RETRIEVE, privateRet->mountInfo.mountId,
       0, 0, 0, vid, tapePool);
     dr.commit();
@@ -1425,7 +1426,7 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   dr.fetch();
   // Reset the drive state.
   dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    cta::DriveStatus::Up, completionTime, 
+    cta::common::DriveStatus::Up, completionTime, 
     cta::MountType::NONE, 0,
     0, 0, 0, "", "");
   dr.commit();
@@ -1550,7 +1551,7 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   dr.fetch();
   // Reset the drive state.
   dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    cta::DriveStatus::Up, completionTime, 
+    cta::common::DriveStatus::Up, completionTime, 
     cta::MountType::NONE, 0,
     0, 0, 0, "", "");
   dr.commit();
@@ -1571,7 +1572,7 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   m_agent.commit();
   }
 
-void OStoreDB::RetrieveMount::setDriveStatus(cta::DriveStatus status, time_t completionTime) {
+void OStoreDB::RetrieveMount::setDriveStatus(cta::common::DriveStatus status, time_t completionTime) {
   // We just report the drive status as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
@@ -1588,7 +1589,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::DriveStatus status, time_t com
   dr.commit();
 }
 
-void OStoreDB::ArchiveMount::setDriveStatus(cta::DriveStatus status, time_t completionTime) {
+void OStoreDB::ArchiveMount::setDriveStatus(cta::common::DriveStatus status, time_t completionTime) {
   // We just report the drive status as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);

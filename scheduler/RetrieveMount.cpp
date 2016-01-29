@@ -96,7 +96,7 @@ void cta::RetrieveMount::tapeComplete() {
   } else {
     // This is a special case: we have to report the tape server is draining
     // its memory to disk
-    setDriveStatus(cta::DriveStatus::DrainingToDisk);
+    setDriveStatus(cta::common::DriveStatus::DrainingToDisk);
   }
 }
 
@@ -126,7 +126,7 @@ void cta::RetrieveMount::abort() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setDriveStatus(cta::DriveStatus status) {
+void cta::RetrieveMount::setDriveStatus(cta::common::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
 }
 
