@@ -31,7 +31,6 @@
 #include "common.h"
 #include "serrno.h"
 #include "Ctape.h"
-#include "vdqm_api.h"
 
 #include <errno.h>
 #include <memory>
