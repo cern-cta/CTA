@@ -22,12 +22,11 @@
  *****************************************************************************/
 
 #include "castor/exception/CommandLineNotParsed.hpp"
-#include "serrno.h"
 
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::CommandLineNotParsed::CommandLineNotParsed():
-  castor::exception::Exception(SECMDLNNOTPRSD) {
+  castor::exception::Exception(666) {
 }

@@ -24,8 +24,6 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/log/Logger.hpp"
-#include "log.h"
-#include "serrno.h"
 
 #include <signal.h>
 #include <iostream>

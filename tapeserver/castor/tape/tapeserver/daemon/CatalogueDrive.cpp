@@ -26,9 +26,7 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/utils/utils.hpp"
-#include "Ctape_constants.h"
 #include "rmc_constants.h"
-#include "serrno.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -390,7 +388,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::checkDriveIsEmpty() {
   EmptyDriveProbe probe(m_log, m_config, m_sysWrapper);
 
   if(!probe.driveIsEmpty()) {
-    castor::exception::Exception ex(ETDRVNOTREADYFORMNT);
+    castor::exception::Exception ex;
     ex.getMessage() << "Drive " << m_config.getUnitName() << " is not empty";
     throw ex;
   }

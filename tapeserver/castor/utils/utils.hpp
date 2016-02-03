@@ -242,16 +242,6 @@ template <class T>std::string demangledNameOf(const T&t){
 std::string errnoToString(const int errnoValue) throw();
 
 /**
- * Determines the string representation of the specified CASTOR error number.
- *
- * Please note this method is thread safe.
- *
- * @param serrnoValue The serrno value;
- * @return The string representation of the specified CASTOR error number.
- */
-std::string serrnoToString(const int serrnoValue) throw();
-
-/**
  * Sets both the process name and the command-line to the specified value.
  *
  * The command-line is set by modifiying argv[0] and the process name is

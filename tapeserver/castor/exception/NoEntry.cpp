@@ -24,7 +24,6 @@
 
 // Include Files
 #include <errno.h>
-#include "serrno.h"
 #include "castor/exception/NoEntry.hpp"
 
 // -----------------------------------------------------------------------

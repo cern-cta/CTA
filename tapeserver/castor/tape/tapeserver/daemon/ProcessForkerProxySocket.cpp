@@ -27,7 +27,6 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/utils.hpp"
-#include "serrno.h"
 
 #include <errno.h>
 #include <unistd.h>

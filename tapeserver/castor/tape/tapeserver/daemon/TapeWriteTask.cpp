@@ -34,7 +34,6 @@
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
-#include "serrno.h"
 
 namespace castor {
 namespace tape {
@@ -240,10 +239,10 @@ namespace daemon {
         errorCode=mb->errorCode();
       } else if (mb->isCanceled()) {
         errorMsg="Received a block marked as cancelled";
-        errorCode=SEINTERNAL;
+        errorCode=666;
       } else{
         errorMsg="Mismatch between expected and received file id or blockid";
-        errorCode=SEINTERNAL;
+        errorCode=666;
       }
       // Set the error flag for the session (in case of mismatch)
       m_errorFlag.set();

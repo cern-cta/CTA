@@ -28,7 +28,6 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/SErrnum.hpp"
 #include "castor/server/MutexLocker.hpp"
-#include <rfio_api.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <radosstriper/libradosstriper.hpp>
 #include <uuid/uuid.h>
@@ -46,7 +45,6 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_NoURLRemoteFile("^(.*:)(/.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
-  m_URLRfioFile("^rfio://(.*)$"),
   m_URLEosFile("^eos://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosStriper://(.*)$"),
@@ -57,14 +55,6 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
     m_remoteFileProtocol.begin(), ::tolower);
-  {
-    // We take a global lock as rfiosetopt is not thread safe
-    castor::server::MutexLocker rfioLock(&g_rfioOptionsLock);
-    // Set the global RFIO option to STREAM (RFIOv3)
-    int pval=RFIO_STREAM;
-    exception::Errnum::throwOnNonZero(rfiosetopt(RFIO_READOPT, &pval,0),
-        "In DiskFileFactory::DiskFileFactory: failed to set RFIO_STREAM mode");
-  }
 }
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
@@ -149,11 +139,6 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   if (regexResult.size()) {
     return new EosReadFile(regexResult[1]);
   }
-  // RFIO URL?
-  regexResult = m_URLRfioFile.exec(path);
-  if (regexResult.size()) {
-    return new RfioReadFile(regexResult[1]);
-  }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
@@ -173,14 +158,10 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Do we have a remote file?
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
-    if (m_remoteFileProtocol == "xroot") {
-      // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-      return new XrootC2FSReadFile(
-        std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-        xrootPrivateKey());
-    } else {
-      return new RfioReadFile(regexResult[1]+regexResult[2]);
-    }
+    // In the current CASTOR implementation, the xrootd port is hard coded to 1095
+    return new XrootC2FSReadFile(
+      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
+      xrootPrivateKey());
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
@@ -205,11 +186,6 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   if (regexResult.size()) {
     return new EosWriteFile(regexResult[1]);
   }
-  // RFIO URL?
-  regexResult = m_URLRfioFile.exec(path);
-  if (regexResult.size()) {
-    return new RfioWriteFile(regexResult[1]);
-  }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
@@ -229,14 +205,10 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // Do we have a remote file?
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
-    if (m_remoteFileProtocol == "xroot") {
-      // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-      return new XrootC2FSWriteFile(
-        std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-        xrootPrivateKey());
-    } else {
-      return new RfioWriteFile(regexResult[1]+regexResult[2]);
-    }
+    // In the current CASTOR implementation, the xrootd port is hard coded to 1095
+    return new XrootC2FSWriteFile(
+      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
+      xrootPrivateKey());
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
@@ -258,7 +230,7 @@ LocalReadFile::LocalReadFile(const std::string &path)  {
   m_fd = ::open64((char *)path.c_str(), O_RDONLY);
   m_URL = "file://";
   m_URL += path;
-  castor::exception::SErrnum::throwOnMinusOne(m_fd,
+  castor::exception::Errnum::throwOnMinusOne(m_fd,
     std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ")+m_URL);
 
 }
@@ -271,7 +243,7 @@ size_t LocalReadFile::size() const {
   //struct is mandatory here, because there is a function stat64 
   struct stat64 statbuf;        
   int ret = ::fstat64(m_fd,&statbuf);
-  castor::exception::SErrnum::throwOnMinusOne(ret,
+  castor::exception::Errnum::throwOnMinusOne(ret,
     std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ")+m_URL);
   
   return statbuf.st_size;
@@ -289,7 +261,7 @@ LocalWriteFile::LocalWriteFile(const std::string &path): m_closeTried(false){
   m_fd = ::open64((char *)path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
   m_URL = "file://";
   m_URL += path;
-  castor::exception::SErrnum::throwOnMinusOne(m_fd,
+  castor::exception::Errnum::throwOnMinusOne(m_fd,
       std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ")
       +m_URL);        
 
@@ -310,113 +282,6 @@ void LocalWriteFile::close()  {
 LocalWriteFile::~LocalWriteFile() throw() {
   if(!m_closeTried){
     ::close(m_fd);
-  }
-}
-
-//==============================================================================
-// RFIO READ FILE
-//==============================================================================  
-RfioReadFile::RfioReadFile(const std::string &rfioUrl)  {
-  m_fd = rfio_open64((char *)rfioUrl.c_str(), O_RDONLY);
-  m_URL = "rfio://";
-  m_URL += rfioUrl;
-  castor::exception::SErrnum::throwOnMinusOne(m_fd, 
-      std::string("In RfioReadFile::RfioReadFile failed rfio_open64() on ") + m_URL);
-
-}
-
-size_t RfioReadFile::read(void *data, const size_t size) const {
-  int ret = rfio_read(m_fd, data, size);
-  castor::exception::SErrnum::throwOnMinusOne(ret, 
-    std::string("In RfioReadFile::read failed rfio_read() on ") + m_URL);
-  if (ret >= 0 && (unsigned int) ret > size) {
-    std::stringstream err;
-    err << "In RfioReadFile::read, rfio_read() returned a size ("
-        << ret << ") bigger than what was asked for ("
-        << size << ") on " << m_URL;
-    throw castor::exception::Exception(err.str());
-  }
-  // -1 was already covered higher. This is just a sanity check
-  if (ret < 0) {
-    std::stringstream err;
-    err << "In RfioReadFile::read, rfio_read() returned an unexpected value ("
-        << ret << ") on " << m_URL;
-    throw castor::exception::Exception(err.str());
-  }
-  return ret;
-}
-
-size_t RfioReadFile::size() const {
-  //struct is mandatory here, because there is a function stat64 
-  struct stat64 statbuf;        
-  int ret = rfio_fstat64(m_fd,&statbuf);
-  castor::exception::SErrnum::throwOnMinusOne(ret,
-    std::string("In RfioReadFile::RfioReadFile failed to rfio_fstat64() on ")+m_URL);
-  
-  return statbuf.st_size;
-}
-
-RfioReadFile::~RfioReadFile() throw() {
-  rfio_close(m_fd);
-}
-
-//==============================================================================
-// RFIO WRITE FILE
-//============================================================================== 
-RfioWriteFile::RfioWriteFile(const std::string &rfioUrl)  : m_closeTried(false){
-  m_fd = rfio_open64((char *)rfioUrl.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); 
-  /* 
-   * The O_TRUNC flag is here to prevent file corruption in case retrying to write a file to disk.
-   * In principle this should be totally safe as the filenames are generated using unique ids given by
-   * the database, so the protection is provided by the uniqueness of the filenames.
-   * As a side note, we tried to use the O_EXCL flag as well (which would provide additional safety)
-   * however this flag does not work with rfio_open64 as apparently it causes memory corruption.
-   */
-  m_URL = "rfio://";
-  m_URL += rfioUrl;
-  castor::exception::SErrnum::throwOnMinusOne(m_fd, 
-    std::string("In RfioWriteFile::RfioWriteFile failed rfio_open64()on ")+m_URL);        
-
-}
-
-void RfioWriteFile::write(const void *data, const size_t size)  {
-  int ret = rfio_write(m_fd, (void *)data, size);
-  castor::exception::SErrnum::throwOnMinusOne(ret, 
-    std::string("In RfioWriteFile::write failed rfio_write() on ") + m_URL);
-  if (ret >= 0 && (unsigned int) ret > size) {
-    std::stringstream err;
-    err << "In RfioWriteFile::write, rfio_write() returned a size ("
-        << ret << ") bigger than what was asked for ("
-        << size << ") on " << m_URL;
-    throw castor::exception::Exception(err.str());
-  }
-  // -1 was already covered higher. This is just a sanity check
-  if (ret < 0) {
-    std::stringstream err;
-    err << "In RfioWriteFile::write, rfio_write() returned an unexpected value ("
-        << ret << ") on " << m_URL;
-    throw castor::exception::Exception(err.str());
-  }
-  // And bomb out if we fail to write what we wanted to
-  if ((unsigned int) ret != size) {
-    std::stringstream err;
-    err << "In RfioWriteFile::write, in rfio_write() could not write ("
-        << ret << ") as much as wanted (" << size << ") on " << m_URL;
-    throw castor::exception::Exception(err.str());
-  }
-}
-
-void RfioWriteFile::close()  {
-  // Multiple close protection
-  if (m_closeTried) return;
-  m_closeTried=true;
-  castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), 
-    std::string("In RfioWriteFile::close failed rfio_close on ")+m_URL);
-}
-
-RfioWriteFile::~RfioWriteFile() throw() {
-  if(!m_closeTried){
-    rfio_close(m_fd);
   }
 }
 

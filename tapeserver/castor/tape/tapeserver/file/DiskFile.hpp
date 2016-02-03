@@ -62,7 +62,6 @@ namespace castor {
         Regex m_NoURLRemoteFile;
         Regex m_NoURLRadosStriperFile;
         Regex m_URLLocalFile;
-        Regex m_URLRfioFile;
         Regex m_URLEosFile;
         Regex m_URLXrootFile;
         Regex m_URLCephFile;

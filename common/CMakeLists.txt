@@ -44,7 +44,7 @@ add_library (ctacommon SHARED
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
-  castorcommon
+  ctautils
   pthread
   ${SQLITE3_LIBRARY_RELEASE}
   uuid

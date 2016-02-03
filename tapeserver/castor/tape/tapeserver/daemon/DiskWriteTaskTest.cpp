@@ -32,7 +32,6 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
-#include "serrno.h"
 #include "scheduler/Scheduler.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
@@ -114,7 +113,7 @@ namespace unitTests{
       mb->m_fileid=0;
       mb->m_fileBlock=i;
       if(5==i){
-        mb->markAsFailed("Test error",SEINTERNAL);
+        mb->markAsFailed("Test error",666);
       }
       t.pushDataBlock(mb);
     }

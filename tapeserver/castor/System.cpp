@@ -28,14 +28,17 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <pwd.h>
+#include <grp.h>
 
 // Local includes
 #include "System.hpp"
-#include "stage_constants.h"
-#include "Cgrp.h"
-#include "Cnetdb.h"
-#include "common.h"
 #include "castor/exception/OutOfMemory.hpp"
+
+#define STAGERSUPERGROUP "st"
+#define STAGERSUPERUSER "stage"
+
 
 //------------------------------------------------------------------------------
 // getHostName
@@ -117,31 +120,6 @@ int castor::System::porttoi(char* str)
 }
 
 //------------------------------------------------------------------------------
-// ipAddressToHostName
-//------------------------------------------------------------------------------
-std::string castor::System::ipAddressToHostname
-(unsigned long long ipAddress)
-   {
-  std::ostringstream res;
-  res << ((ipAddress & 0xFF000000) >> 24) << "."
-      << ((ipAddress & 0x00FF0000) >> 16) << "."
-      << ((ipAddress & 0x0000FF00) >> 8)  << "."
-      << ((ipAddress & 0x000000FF));
-
-  // Resolve the ip address to a hostname
-  in_addr_t addr = inet_addr(res.str().c_str());
-  hostent *hp = Cgethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
-  if (hp == NULL) {
-    castor::exception::Exception e(serrno);
-    e.getMessage() << "Failed to resolve ipAddress: " << res.str()
-		   << " to a hostname" << std::endl;
-    throw e;
-  }
-
-  return hp->h_name;
-}
-
-//------------------------------------------------------------------------------
 // switchToCastorSuperuser
 //------------------------------------------------------------------------------
 void castor::System::switchToCastorSuperuser()
@@ -159,20 +137,20 @@ void castor::System::switchToCastorSuperuser()
   egid = getegid();
 
   // Get information on generic stage account from password file
-  if ((stage_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
+  if ((stage_passwd = getpwnam(STAGERSUPERUSER)) == NULL) {
     castor::exception::Exception e;
     e.getMessage() << "Castor super user " << STAGERSUPERUSER
                    << " not found in password file";
     throw e;
   }
   // verify existence of its primary group id
-  if (Cgetgrgid(stage_passwd->pw_gid) == NULL) {
+  if (getgrgid(stage_passwd->pw_gid) == NULL) {
     castor::exception::Exception e;
     e.getMessage() << "Castor super user group does not exist";
     throw e;
   }
   // Get information on generic stage account from group file
-  if ((stage_group = Cgetgrnam(STAGERSUPERGROUP)) == NULL) {
+  if ((stage_group = getgrnam(STAGERSUPERGROUP)) == NULL) {
     castor::exception::Exception e;
     e.getMessage() << "Castor super user group " << STAGERSUPERGROUP
                    << " not found in group file";

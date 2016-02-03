@@ -23,9 +23,10 @@
 
 #pragma once
 
-#include <shift/Castor_limits.h>
-#include <shift/Cuuid.h>
+#include "h/Castor_limits.h"
 #include <stdint.h>
+#include <sys/stat.h>
+
 
 namespace castor {
 namespace legacymsg {

@@ -24,7 +24,6 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "serrno.h"
 #include "common/DriveState.hpp"
 
 #include <memory>
@@ -197,8 +196,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   else {
     // We have some errors
     log::ScopedParamContainer sp(reportPacker.m_lc);
-    sp.add("errorMessage", "Previous file errors")
-      .add("errorCode", SEINTERNAL);
+    sp.add("errorMessage", "Previous file errors");
     reportPacker.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
     if(reportPacker.m_watchdog) {
       reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
@@ -224,7 +222,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     // As a measure of safety we censor any session error which is not ENOSPC into
     // SEINTERNAL. ENOSPC is the only one interpreted by the tape gateway.
     if (ENOSPC != m_errorCode) {
-      m_errorCode = SEINTERNAL;
+      m_errorCode = 666;
     }
     reportPacker.m_lc.log(LOG_INFO,msg);
   }

@@ -23,7 +23,10 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
-#include "Ctape_constants.h"
+#include "h/Castor_limits.h"
+
+#define WRITE_ENABLE 1
+#define WRITE_DISABLE 0
 
 //------------------------------------------------------------------------------
 // create

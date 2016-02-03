@@ -29,8 +29,6 @@ include_directories(${PROJECT_BINARY_DIR})
 find_package( ZLIB REQUIRED )
 
 add_library(ctaTapeServerDaemon
-  AdminAcceptHandler.cpp
-  AdminConnectionHandler.cpp
   Catalogue.cpp
   CatalogueDrive.cpp
   CatalogueDriveState.cpp
@@ -49,8 +47,6 @@ add_library(ctaTapeServerDaemon
   DriveConfigMap.cpp
   EmptyDriveProbe.cpp
   TapeServerReporter.cpp
-  LabelCmdAcceptHandler.cpp
-  LabelCmdConnectionHandler.cpp
   LabelSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp 
@@ -79,8 +75,8 @@ add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
 target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
-  File TapeDrive ctacommon castorclient 
-  ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} ctamessages zmq)
+  File TapeDrive ctacommon ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} 
+  ctamessages zmq ctaio ctautils)
 install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 
 add_library(ctatapeserverdaemonutils SHARED

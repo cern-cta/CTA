@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <shift/osdep.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 namespace castor {
 namespace utils {
@@ -58,7 +58,7 @@ public:
    * Gives elapsed time in microseconds with respect to the reference time
    * optionally resets the counter.
    */
-  signed64 usecs(reset_t reset = keepRunning);
+  int64_t usecs(reset_t reset = keepRunning);
 
   /**
    * Gives elapsed time in seconds (with microsecond precision)

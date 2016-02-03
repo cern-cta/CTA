@@ -47,14 +47,12 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
-#include "nameserver/CastorNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "remotens/EosNS.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "serrno.h"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
@@ -231,7 +229,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     m_log(LOG_ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
       params);
     messages::Exception msg;
-    msg.set_code(SEINTERNAL);
+    msg.set_code(666);
     msg.set_message(se.what());
     ProcessForkerUtils::writeFrame(m_cmdSocket, msg);
     return true; // The main event loop should continue
@@ -239,7 +237,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     m_log(LOG_ERR,
       "ProcessForker::dispatchMsgHandler() threw an unknown exception");
     messages::Exception msg;
-    msg.set_code(SEINTERNAL);
+    msg.set_code(666);
     msg.set_message("Caught and unknown and unexpected exception");
     ProcessForkerUtils::writeFrame(m_cmdSocket, msg);
     return true; // The main event loop should continue
@@ -307,7 +305,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    return createExceptionResult(SEINTERNAL,
+    return createExceptionResult(666,
       "Failed to fork cleaner session for tape drive", true);
 
   // Else if this is the parent process
@@ -361,7 +359,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    return createExceptionResult(SEINTERNAL,
+    return createExceptionResult(666,
       "Failed to fork data-transfer session for tape drive", true);
   // Else if this is the parent process
   } else if(0 < forkRc) {
@@ -414,7 +412,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // If fork failed
   if(0 > forkRc) {
-    return createExceptionResult(SEINTERNAL,
+    return createExceptionResult(666,
       "Failed to fork label session for tape drive", true);
 
   // Else if this is the parent process

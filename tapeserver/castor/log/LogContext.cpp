@@ -28,7 +28,6 @@
 #include <list>
 #include <algorithm>
 #include <bfd.h>
-#include <shift/Ctape_constants.h>
 
 castor::log::LogContext::LogContext(castor::log::Logger& logger) throw():
 m_log(logger) {}

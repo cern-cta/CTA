@@ -12,7 +12,7 @@ add_library (ctaremotens SHARED
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-target_link_libraries (ctaremotens ${XROOTD_XRDCL_LIB} ctacommon cryptopp)
+target_link_libraries (ctaremotens ${XROOTD_XRDCL_LIB} ctacommon cryptopp ctautils)
 install (TARGETS ctaremotens DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library (ctaremotensunittests SHARED
@@ -23,4 +23,5 @@ add_library (ctaremotensunittests SHARED
   RemoteNSFactory.cpp)
 
 target_link_libraries(ctaremotensunittests
-  ctaremotens)
+  ctaremotens
+  ctautils)

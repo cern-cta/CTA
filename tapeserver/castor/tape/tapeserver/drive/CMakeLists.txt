@@ -46,4 +46,5 @@ add_library(ctatapeserverdriveunittests SHARED
 target_link_libraries(ctatapeserverdriveunittests
   ctaTapeServerDaemon
   System
-  TapeDrive)
+  TapeDrive
+  ctautils)

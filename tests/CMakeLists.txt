@@ -25,6 +25,7 @@ target_link_libraries(unitTests
   ctanameserverunittests
   ctaremotensunittests
   ctaschedulerunittests
+  ctaio
   gmock
   gtest
   pthread)

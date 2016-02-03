@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
-#include <shift/rfio_api.h>
 
 namespace castor {
   namespace tape {

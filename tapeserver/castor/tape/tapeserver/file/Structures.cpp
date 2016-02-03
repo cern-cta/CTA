@@ -23,11 +23,12 @@
 
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/exception/Exception.hpp"
-#include "patchlevel.h"
 #include <time.h>
 #include <stdio.h>
 
 using namespace castor::tape;
+
+#define BASEVERSION "2.1.15"
 
 void tapeFile::VOL1::fill(std::string VSN) {
   setString(m_label, "VOL1");

@@ -347,18 +347,6 @@ protected:
   void createAndRegisterProcessForkerConnectionHandler(const int reaperSocket);
 
   /**
-   * Creates the handler to accept connections from the admin commands and
-   * registers it with the reactor.
-   */
-  void createAndRegisterAdminAcceptHandler() ;
-
-  /**
-   * Creates the handler to accept connections from the label tape
-   * command-line tool and registers it with the reactor.
-   */
-  void createAndRegisterLabelCmdAcceptHandler();
-
-  /**
    * Creates the handler to handle messages from forked sessions.
    */
   void createAndRegisterTapeMessageHandler();

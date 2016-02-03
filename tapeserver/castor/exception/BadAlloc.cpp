@@ -22,12 +22,11 @@
  *****************************************************************************/
 
 #include "castor/exception/BadAlloc.hpp"
-#include "serrno.h"
 
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::BadAlloc::BadAlloc():
-  castor::exception::Exception(SEBADALLOC) {
+  castor::exception::Exception(666) {
 }

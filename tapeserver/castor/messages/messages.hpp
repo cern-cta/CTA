@@ -36,7 +36,6 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <shift/Ctape.h>
 
 namespace castor {
 namespace messages {

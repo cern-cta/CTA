@@ -23,7 +23,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
-#include "shift/serrno.h"
+
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
@@ -362,7 +362,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
-    int errorCode(SEINTERNAL);
+    int errorCode(666);
     // Override if we got en ENOSPC error (end of tape)
     // This is 
     try {

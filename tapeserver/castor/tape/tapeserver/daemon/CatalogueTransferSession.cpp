@@ -24,7 +24,6 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
-#include "Ctape_constants.h"
 #include "rmc_constants.h"
 
 #include <sys/types.h>

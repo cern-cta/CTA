@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
-add_library (ctaserverutils SHARED
+add_library (ctaserverutils
   ProcessCapDummy.cpp
   Semaphores.cpp
   Mutex.cpp
@@ -12,7 +12,7 @@ add_library (ctaserverutils SHARED
   SmartCap.cpp
   Daemon.cpp)
 
-target_link_libraries(ctaserverutils cap)
+target_link_libraries(ctaserverutils cap ctautils)
 
 add_library (ctaserverunittests SHARED
   AtomicCounterTest.cpp

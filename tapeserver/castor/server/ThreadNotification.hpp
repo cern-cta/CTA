@@ -132,7 +132,7 @@ namespace castor {
        * The id of this object
        * @return the value of m_id
        */
-      u_signed64 id() const {
+      uint64_t id() const {
         return m_id;
       }
 
@@ -141,7 +141,7 @@ namespace castor {
        * The id of this object
        * @param new_var the new value of m_id
        */
-      void setId(u_signed64 new_var) {
+      void setId(uint64_t new_var) {
         m_id = new_var;
       }
 
@@ -154,7 +154,7 @@ namespace castor {
       unsigned char m_nbThreads;
 
       /// The id of this object
-      u_signed64 m_id;
+      uint64_t m_id;
 
     }; /* end of class ThreadNotification */
 

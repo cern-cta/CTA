@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "castor/dlf/Message.hpp"
 #include "castor/exception/CommandLineNotParsed.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
@@ -90,13 +89,6 @@ protected:
    * @param foreground Set to true if the daemon should run in the foreground.
    */
   void setCommandLineHasBeenParsed(const bool foreground) throw();
-
-  /**
-   * Initializes the DLF, both for streaming and regular messages
-   * Does not create the DLF thread, this is created after daemonization
-   * @param messages the messages to be passed to dlf_init
-   */
-  void dlfInit(castor::dlf::Message messages[]);
 
   /**
    * Daemonizes the daemon if it has not been configured to run in the

@@ -21,6 +21,7 @@
 
 #include "castor/utils/utils.hpp"
 #include "common/strerror_r_wrapper.hpp"
+#include "h/Castor_limits.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -28,14 +29,12 @@
 #include <iomanip>
 #include <iostream>
 #include <locale>
-#include <shift/serrno.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <shift/vmgr_constants.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 
@@ -449,21 +448,6 @@ std::string castor::utils::errnoToString(const int errnoValue) throw() {
 }
 
 //------------------------------------------------------------------------------
-// serrnoToString
-//------------------------------------------------------------------------------
-std::string castor::utils::serrnoToString(const int serrnoValue) throw() {
-  char buf[100];
-  if(!sstrerror_r(serrnoValue, buf, sizeof(buf))) {;
-    return buf;
-  } else {
-    std::ostringstream oss;
-    oss << "Failed to convert serrnoValue to string"
-      ": sstrerror_r returned -1: serrnoValue=" << serrnoValue;
-    return oss.str();
-  }
-}
-
-//------------------------------------------------------------------------------
 // setProcessNameAndCmdLine
 //------------------------------------------------------------------------------
 void castor::utils::setProcessNameAndCmdLine(char *const argv0,
@@ -518,51 +502,6 @@ std::string castor::utils::getHostName() {
 
   buf[sizeof(buf) - 1] = '\0';
   return buf;
-}
-
-//------------------------------------------------------------------------------
-// tapeStatusToString
-//------------------------------------------------------------------------------
-std::string castor::utils::tapeStatusToString(const uint32_t status) {
-  std::string str;
-  if(DISABLED & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "DISABLED";
-  }
-  if(EXPORTED & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "EXPORTED";
-  }
-  if(TAPE_BUSY & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "BUSY";
-  }
-  if(TAPE_FULL & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "FULL";
-  }
-  if(TAPE_RDONLY & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "RDONLY";
-  }
-  if(ARCHIVED & status) {
-    if(!str.empty()) {
-      str += "|";
-    }
-    str += "ARCHIVED";
-  }
-
-  return str;
 }
 
 //-----------------------------------------------------------------------------

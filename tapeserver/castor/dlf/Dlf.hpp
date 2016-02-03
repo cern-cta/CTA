@@ -28,7 +28,6 @@
 #include "castor/dlf/Param.hpp"
 #include "castor/exception/Exception.hpp"
 
-#include <shift/dlf_api.h>
 #include <vector>
 
 /**

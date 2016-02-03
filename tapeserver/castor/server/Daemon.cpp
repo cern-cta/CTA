@@ -19,7 +19,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  ******************************************************************************/
 
-#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
@@ -29,6 +28,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -141,37 +141,6 @@ void castor::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
   throw() {
   m_foreground = foreground;
   m_commandLineHasBeenParsed = true;
-}
-
-//-----------------------------------------------------------------------------
-// dlfInit
-//-----------------------------------------------------------------------------
-void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
-   {
-  castor::dlf::dlf_init((char*)m_log.getProgramName().c_str(), messages);
-  // Add framework specific messages
-  castor::dlf::Message frameworkMessages[] =
-    {{  1, "Error while reading datagrams" },
-     {  2, "Error while accepting connections" },
-     {  3, "Thread pool started" },
-     {  4, "Exception caught in the user thread" },
-     {  5, "Thread run error" },
-     {  6, "NotifierThread exception" },
-     {  8, "Exception caught while initializing the child process" },
-     {  9, "Error while processing an object from the pipe" },
-     { 10, "Uncaught exception in a thread from pool" },
-     { 11, "Uncaught GENERAL exception in a thread from pool" },
-     { 12, "Caught signal - GRACEFUL STOP" },
-     { 14, "Caught signal - CHILD STOPPED" },
-     { 15, "Signal caught but not handled - IMMEDIATE STOP" },
-     { 16, "Exception during wait for signal loop" },
-     { 18, "No idle thread in pool to process request" },
-     { 19, "Error while dispatching to a thread" },
-     { 20, "Spawning a new thread in pool" },
-     { 21, "Terminating a thread in pool" },
-     { 22, "Task processed" },
-     { -1, "" }};
-  castor::dlf::dlf_addMessages(DLF_BASE_FRAMEWORK, frameworkMessages);
 }
 
 //------------------------------------------------------------------------------

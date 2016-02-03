@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/utils/Timer.hpp"
-#include "serrno.h"
 
 namespace castor {
 namespace tape {
@@ -221,7 +220,7 @@ void DiskWriteTask::releaseAllBlock(){
       }
       else{
         errorMsg="Mismatch between expected and received filed or blockid";
-        errCode=SEINTERNAL;
+        errCode=666;
       }
       lc.log(LOG_ERR,errorMsg);
       throw castor::exception::Exception(errorMsg);

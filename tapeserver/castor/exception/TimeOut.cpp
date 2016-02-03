@@ -23,10 +23,9 @@
  *****************************************************************************/
 
 #include "castor/exception/TimeOut.hpp"
-#include "serrno.h"
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::TimeOut::TimeOut() :
-  castor::exception::Exception(SETIMEDOUT) {}
+  castor::exception::Exception(666) {}

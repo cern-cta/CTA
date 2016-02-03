@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "serrno.h"
 #include "castor/exception/AcceptConnectionInterrupted.hpp"
 
 
@@ -30,7 +29,7 @@
 // -----------------------------------------------------------------------------
 castor::exception::AcceptConnectionInterrupted::AcceptConnectionInterrupted(
   const time_t remainingTime) throw() :
-  castor::exception::Exception(SEACCPTCONNINTR),
+  castor::exception::Exception(666),
   m_remainingTime(remainingTime) {
 
   // Do nothing

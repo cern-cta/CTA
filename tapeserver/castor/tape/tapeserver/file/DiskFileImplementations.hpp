@@ -63,30 +63,6 @@ namespace castor {
       };
       
       //==============================================================================
-      // RFIO FILES
-      //==============================================================================  
-      class RfioReadFile: public ReadFile {
-      public:
-        RfioReadFile(const std::string &rfioUrl);
-        virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size) const;
-        virtual ~RfioReadFile() throw();
-      private:
-        int m_fd;
-      };
-
-      class RfioWriteFile: public WriteFile {
-      public:
-        RfioWriteFile(const std::string &rfioUrl);
-        virtual void write(const void *data, const size_t size);
-        virtual void close();
-        virtual ~RfioWriteFile() throw();
-      private:
-        int m_fd;
-        bool m_closeTried;
-      };
-      
-      //==============================================================================
       // CRYPTOPP SIGNER
       //==============================================================================
       struct CryptoPPSigner {

@@ -158,31 +158,6 @@ castor::client::BaseClient::~BaseClient() throw() {
   if (0 != m_callbackSocket) delete m_callbackSocket;
 }
 
-//------------------------------------------------------------------------------
-// sendrequest
-//------------------------------------------------------------------------------
-std::string castor::client::BaseClient::sendRequest
-(castor::stager::Request* req,
- castor::client::IResponseHandler* rh)
-   {
-
-  // Build and send the Request with the Client information
-  createClientAndSend(req);
-
-  // Wait for callbacks
-  try {
-    pollAnswersFromStager(req, rh);
-  } catch (castor::exception::Exception& e) {
-    unsigned int i;
-    for (i = 0; i < m_connected.size(); i++) {
-      if (m_connected[i] != 0) delete m_connected[i];
-    }
-    m_connected.clear();
-    throw e;
-  }
-
-  return requestId();
-}
 
 //------------------------------------------------------------------------------
 // createClient

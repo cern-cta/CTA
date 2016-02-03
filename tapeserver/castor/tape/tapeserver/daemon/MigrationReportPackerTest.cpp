@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
-#include "serrno.h"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include <gtest/gtest.h>

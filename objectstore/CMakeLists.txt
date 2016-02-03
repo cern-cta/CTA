@@ -50,7 +50,7 @@ add_library (ctaobjectstore SHARED
   GenericObject.cpp
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp)
-target_link_libraries(ctaobjectstore Utils rados json)
+target_link_libraries(ctaobjectstore Utils rados json ctautils)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -68,7 +68,7 @@ target_link_libraries(ctaobjectstoreunittests
 
 add_executable(makeMinimalVFS makeMinimalVFS.cpp)
 target_link_libraries(makeMinimalVFS
-  protobuf ctaobjectstore ctacommon)
+  protobuf ctaobjectstore ctacommon ctautils)
 
 add_executable(listObjectStore listObjectStore.cpp)
 target_link_libraries(listObjectStore

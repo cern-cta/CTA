@@ -42,8 +42,6 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/utils/utils.hpp"
-#include "Ctape.h"
-#include "serrno.h"
 
 #include <sstream>
 #include <iomanip>
@@ -147,9 +145,9 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   } catch(castor::exception::Exception &ex) {
     reply = createExceptionFrame(ex.code(), ex.getMessage().str());
   } catch(std::exception &se) {
-    reply = createExceptionFrame(SEINTERNAL, se.what());
+    reply = createExceptionFrame(666, se.what());
   } catch(...) {
-    reply = createExceptionFrame(SEINTERNAL, "Caught an unknown exception");
+    reply = createExceptionFrame(666, "Caught an unknown exception");
   }
 
   // Send the reply to the client

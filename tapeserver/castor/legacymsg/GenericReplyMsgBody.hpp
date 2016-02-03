@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <shift/Castor_limits.h>
+#include "Castor_limits.h"
 #include <stdint.h>
 
 namespace castor {

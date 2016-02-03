@@ -24,8 +24,8 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueLabelSession.hpp"
-#include "Ctape_constants.h"
-#include "serrno.h"
+
+#define WRITE_ENABLE 1
 
 //------------------------------------------------------------------------------
 // create
@@ -122,10 +122,10 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
     const std::string labelErrors = concatLabelErrors(" ,");
     if(!labelErrors.empty()) {
       legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
-        SEINTERNAL, labelErrors);
+        666, labelErrors);
     } else {
       legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
-        SEINTERNAL, "Unknown error");
+        666, "Unknown error");
     }
   } catch(castor::exception::Exception &we) {
     log::Param params[] = {log::Param("message", we.getMessage().str())};

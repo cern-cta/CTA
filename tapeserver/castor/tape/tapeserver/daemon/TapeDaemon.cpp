@@ -27,11 +27,9 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
@@ -43,9 +41,7 @@
 #include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "Ctape.h"
 #include "rmc_constants.h"
-#include "serrno.h"
 
 #include <algorithm>
 #include <errno.h>
@@ -554,8 +550,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor(
   const int reaperSocket) {
   createAndRegisterProcessForkerConnectionHandler(reaperSocket);
-  createAndRegisterAdminAcceptHandler();
-  createAndRegisterLabelCmdAcceptHandler();
   createAndRegisterTapeMessageHandler();
 }
 
@@ -582,99 +576,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create and register ProcessForkerConnectionHandler: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAndRegisterAdminAcceptHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  createAndRegisterAdminAcceptHandler()  {
-  try {
-    castor::utils::SmartFd listenSock;
-    try {
-      listenSock.reset(io::createListenerSock(m_tapeDaemonConfig.adminPort));
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex(ne.code());
-      ex.getMessage() <<
-        "Failed to create socket to listen for admin command connections"
-        ": " << ne.getMessage().str();
-      throw ex;
-    }
-    {
-      log::Param params[] = {
-        log::Param("listeningPort", m_tapeDaemonConfig.adminPort)};
-      m_log(LOG_INFO, "Listening for connections from the admin commands",
-        params);
-    }
-
-    std::unique_ptr<AdminAcceptHandler> handler;
-    try {
-      handler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor, m_log,
-        *m_catalogue, m_hostName));
-      listenSock.release();
-    } catch(std::bad_alloc &ba) {
-      castor::exception::BadAlloc ex;
-      ex.getMessage() <<
-        "Failed to create event handler for accepting admin connections"
-        ": " << ba.what();
-      throw ex;
-    }
-    m_reactor.registerHandler(handler.get());
-    handler.release();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to create and register AdminAcceptHandler: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAndRegisterLabelCmdAcceptHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::
-  createAndRegisterLabelCmdAcceptHandler()  {
-  try {
-    castor::utils::SmartFd listenSock;
-    try {
-      listenSock.reset(
-        io::createLocalhostListenerSock(m_tapeDaemonConfig.labelPort));
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex(ne.code());
-      ex.getMessage() <<
-        "Failed to create socket to listen for admin command connections"
-        ": " << ne.getMessage().str();
-      throw ex;
-    }
-    {
-      log::Param params[] = {
-        log::Param("listeningPort", m_tapeDaemonConfig.labelPort)};
-      m_log(LOG_INFO, "Listening for connections from label command",
-        params);
-    }
-
-    std::unique_ptr<LabelCmdAcceptHandler> handler;
-    try {
-      handler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
-        m_log, *m_catalogue, m_hostName));
-      listenSock.release();
-    } catch(std::bad_alloc &ba) {
-      castor::exception::BadAlloc ex;
-      ex.getMessage() <<
-        "Failed to create event handler for accepting label-command connections"
-        ": " << ba.what();
-      throw ex;
-    }
-    m_reactor.registerHandler(handler.get());
-    handler.release();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to create and register LabelCmdAcceptHandler: " <<
       ne.getMessage().str();
     throw ex;
   }

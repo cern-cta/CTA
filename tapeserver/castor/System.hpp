@@ -49,15 +49,6 @@ namespace castor {
      * @exception in case of invalid value
      */
     static int porttoi(char* str) ;
-    
-    /**
-     * Converts an ip address to a hostname
-     * @param ipAddress the ip address to be converted.
-     * @exception in case of an error
-     */
-    static std::string ipAddressToHostname
-    (unsigned long long ipAddress)
-      ;
 
     /**
      * Switches the current process to use the Castor superuser

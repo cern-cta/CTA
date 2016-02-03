@@ -25,8 +25,7 @@
 #include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
 #include "castor/utils/SmartFILEPtr.hpp"
 #include "castor/utils/utils.hpp"
-#include "Castor_limits.h"
-#include "serrno.h"
+#include "h/Castor_limits.h"
 
 #include <errno.h>
 

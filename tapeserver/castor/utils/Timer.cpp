@@ -33,10 +33,10 @@ castor::utils::Timer::Timer() {
 //------------------------------------------------------------------------------
 // usecs
 //------------------------------------------------------------------------------
-signed64 castor::utils::Timer::usecs(reset_t reset) {
+int64_t castor::utils::Timer::usecs(reset_t reset) {
   timeval now;
   gettimeofday(&now, 0);
-  signed64 ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
+  int64_t ret = ((now.tv_sec * 1000000) + now.tv_usec) - 
                  ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
   if (reset == resetCounter) {
     m_reference = now;

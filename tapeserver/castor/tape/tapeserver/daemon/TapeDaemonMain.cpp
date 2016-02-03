@@ -29,10 +29,12 @@
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
-#include "patchlevel.h"
-#include "rmc_constants.h"
-#include "vdqm_constants.h"
-#include "vmgr_constants.h"
+#include "h/rmc_constants.h"
+
+#define MAJORVERSION 2
+#define MINORVERSION 1
+#define MAJORRELEASE 15
+#define MINORRELEASE 9999
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>

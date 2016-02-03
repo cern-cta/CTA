@@ -25,8 +25,6 @@
 #include "castor/utils/utils.hpp"
 
 #include <errno.h>
-#include <shift/Castor_limits.h>
-#include <shift/getconfent.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
@@ -54,18 +52,7 @@ castor::log::StringLogger::StringLogger(
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
 size_t castor::log::StringLogger::determineMaxMsgLen() const throw() {
-  const char *p = NULL;
-  size_t msgSize = 0;
-
-  if((p = getconfent("LOG", "MaxMessageSize", 0)) != NULL) {
-    msgSize = atoi(p);
-  }
-  // Check that the size of messages falls within acceptable limits
-  if((msgSize >= DEFAULT_SYSLOG_MSGLEN) && (msgSize <= LOG_MAX_LINELEN)) {
-    return msgSize;
-  } else {
-    return DEFAULT_SYSLOG_MSGLEN;
-  }
+  return DEFAULT_SYSLOG_MSGLEN;
 }
 
 //------------------------------------------------------------------------------
@@ -104,21 +91,21 @@ void castor::log::StringLogger::initMutex() {
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
      castor::exception::Exception ex;
      ex.getMessage() << "Failed to initialize m_mutex: " <<
-       utils::serrnoToString(rc);
+       utils::errnoToString(rc);
      throw ex;
    }
   rc = pthread_mutexattr_destroy(&attr);
@@ -126,7 +113,7 @@ void castor::log::StringLogger::initMutex() {
     pthread_mutex_destroy(&m_mutex);
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
 }

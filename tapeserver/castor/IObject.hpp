@@ -24,8 +24,8 @@
 #pragma once
 
 #include <iostream>
-#include <shift/osdep.h>
 #include <string>
+#include <sys/types.h>
 
 namespace castor {
 
@@ -50,12 +50,12 @@ namespace castor {
      * Sets the id of the object
      * @param id The new id
      */
-    virtual void setId(u_signed64 id) = 0;
+    virtual void setId(uint64_t id) = 0;
 
     /**
      * gets the id of the object
      */
-    virtual u_signed64 id() const = 0;
+    virtual uint64_t id() const = 0;
 
     /**
      * Gets the type of the object

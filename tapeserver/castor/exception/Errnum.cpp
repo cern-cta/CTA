@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/exception/Errnum.hpp"
-#include "serrno.h"
+#include "common/Utils.hpp"
 
 #include <errno.h>
 #include <string.h>
@@ -40,19 +40,7 @@ Errnum::Errnum(int err, std::string what):Exception("") {
 }
 
 void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
-  char buf[100];
-
-  if(sstrerror_r(m_errnum, buf, sizeof(buf))) {
-    // sstrerror_r() failed
-    const int new_errno = errno;
-    std::stringstream w;
-    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
-            << new_errno << ")";
-    m_strerror = w.str();
-  } else {
-    // sstrerror_r() succeeded
-    m_strerror = buf;
-  }
+  m_strerror = cta::Utils::errnoToString(m_errnum);
   std::stringstream w2;
   if (what.size())
     w2 << what << " ";

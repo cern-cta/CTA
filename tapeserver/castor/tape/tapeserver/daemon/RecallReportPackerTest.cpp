@@ -24,7 +24,6 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "common/exception/Exception.hpp"
-#include "serrno.h"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"

@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/exception/NoPortInRange.hpp"
-#include "serrno.h"
 
 
 //------------------------------------------------------------------------------
@@ -31,7 +30,7 @@
 castor::exception::NoPortInRange::NoPortInRange(
   const unsigned short lowPort,
   const unsigned short highPort) throw() :
-  castor::exception::Exception(SENOPORTINRANGE),
+  castor::exception::Exception(666),
   m_lowPort(lowPort),
   m_highPort(highPort)  {
 

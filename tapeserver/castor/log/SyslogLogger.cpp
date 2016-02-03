@@ -23,10 +23,9 @@
 
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/utils/utils.hpp"
+#include "castor/common/CastorConfiguration.hpp"
 
 #include <errno.h>
-#include <shift/Castor_limits.h>
-#include <shift/getconfent.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
@@ -56,36 +55,30 @@ castor::log::SyslogLogger::SyslogLogger(
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
 size_t castor::log::SyslogLogger::determineMaxMsgLen() const throw() {
-  const char *p = NULL;
   size_t msgSize = 0;
+  // Determine the size automatically, this is not guaranteed to work!
+  FILE *const fp = fopen("/etc/rsyslog.conf", "r");
+  if(fp) {
+    char buffer[1024];
 
-  if((p = getconfent("LOG", "MaxMessageSize", 0)) != NULL) {
-    msgSize = atoi(p);
-  } else {
-    // Determine the size automatically, this is not guaranteed to work!
-    FILE *const fp = fopen("/etc/rsyslog.conf", "r");
-    if(fp) {
-      char buffer[1024];
+    // The /etc/rsyslog.conf file exists so we assume the default message
+    // size of 2K.
+    msgSize = DEFAULT_RSYSLOG_MSGLEN;
 
-      // The /etc/rsyslog.conf file exists so we assume the default message
-      // size of 2K.
-      msgSize = DEFAULT_RSYSLOG_MSGLEN;
-
-      // In rsyslog versions >= 3.21.4, the maximum size of a message became
-      // configurable through the $MaxMessageSize global config directive.
-      // Here we attempt to find out if the user has increased the size!
-      while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-        if(strncasecmp(buffer, "$MaxMessageSize", 15)) {
-          continue; // Option not of interest
-        }
-        msgSize = atol(&buffer[15]);
+    // In rsyslog versions >= 3.21.4, the maximum size of a message became
+    // configurable through the $MaxMessageSize global config directive.
+    // Here we attempt to find out if the user has increased the size!
+    while(fgets(buffer, sizeof(buffer), fp) != NULL) {
+      if(strncasecmp(buffer, "$MaxMessageSize", 15)) {
+        continue; // Option not of interest
       }
-      fclose(fp);
+      msgSize = atol(&buffer[15]);
     }
-    // If the /etc/rsyslog.conf file is missing which implies that we are
-    // running on a stock syslogd system, therefore the message size is
-    // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
+    fclose(fp);
   }
+  // If the /etc/rsyslog.conf file is missing which implies that we are
+  // running on a stock syslogd system, therefore the message size is
+  // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
 
   // Check that the size of messages falls within acceptable limits
   if((msgSize >= DEFAULT_SYSLOG_MSGLEN) && (msgSize <= LOG_MAX_LINELEN)) {
@@ -157,21 +150,21 @@ void castor::log::SyslogLogger::initMutex() {
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
      castor::exception::Exception ex;
      ex.getMessage() << "Failed to initialize m_mutex: " <<
-       utils::serrnoToString(rc);
+       utils::errnoToString(rc);
      throw ex;
    }
   rc = pthread_mutexattr_destroy(&attr);
@@ -179,7 +172,7 @@ void castor::log::SyslogLogger::initMutex() {
     pthread_mutex_destroy(&m_mutex);
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      utils::serrnoToString(rc);
+      utils::errnoToString(rc);
     throw ex;
   }
 }
@@ -201,7 +194,7 @@ void castor::log::SyslogLogger::prepareForFork() {
     if(0 != mutex_lock_rc) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
-        << utils::serrnoToString(mutex_lock_rc);
+        << utils::errnoToString(mutex_lock_rc);
       throw ex;
     }
   }
@@ -214,7 +207,7 @@ void castor::log::SyslogLogger::prepareForFork() {
     if(0 != mutex_unlock_rc) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
-        << utils::serrnoToString(mutex_unlock_rc);
+        << utils::errnoToString(mutex_unlock_rc);
       throw ex;
     }
   }
@@ -479,13 +472,14 @@ void castor::log::SyslogLogger::operator() (
 // logMask
 //------------------------------------------------------------------------------
 int castor::log::SyslogLogger::logMask() const throw() {
-  const char *const p = getconfent("LogMask", m_programName.c_str(), 0);
+  const std::string confEnt =  castor::common::CastorConfiguration::getConfig().
+    getConfEntString("LogMask", m_programName, 0);
 
   // If the configuration file defines the log mask to use
-  if (p != NULL) {
+  if (!confEnt.empty()) {
     // Try to find the corresponding integer priority value
     std::map<std::string, int>::const_iterator itor =
-      m_configTextToPriority.find(p);
+      m_configTextToPriority.find(confEnt);
 
     // Return the priority if it was found else return the default INFO level
     if(m_configTextToPriority.end() != itor) {

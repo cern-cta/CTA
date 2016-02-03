@@ -24,7 +24,6 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/utils/Timer.hpp"
-#include "serrno.h"
 
 namespace castor {
 namespace tape {
@@ -115,7 +114,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
               .add("BytesNotYetRead", migratingFileSize);
         lc.log(LOG_ERR, "Error while reading a file: memory block not filled up, but the file is not fully read yet");
         // Mark the block as failed
-        mb->markAsFailed(erroMsg,SEINTERNAL);
+        mb->markAsFailed(erroMsg,666);
         // Transmit to the tape write task, which will finish the session
         m_nextTask.pushDataBlock(mb);
         // Fail the disk side.

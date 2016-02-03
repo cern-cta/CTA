@@ -219,8 +219,7 @@ protected:
       default:
         {
           castor::exception::Exception ex;
-          ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc <<
-            " rmcRcStr=" << utils::serrnoToString(rmcRc);
+          ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc;
           if(!rmcErrorStream.str().empty()) {
             ex.getMessage() << " rmcErrorStream=" << rmcErrorStream.str();
           }

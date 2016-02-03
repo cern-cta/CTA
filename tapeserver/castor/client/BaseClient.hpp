@@ -245,22 +245,6 @@ namespace castor {
         ;
 
     public: // protected:
-
-      /// The request handler host
-      std::string m_rhHost;
-
-      /// The request handler port
-      int m_rhPort;
-
-      /// The request handler svc class
-      std::string m_rhSvcClass;
-
-      /// The callback socket
-      castor::io::ServerSocket* m_callbackSocket;
-
-      /// The request id, if returned by the request handler
-      std::string m_requestId;
-
       /// Timeout for the accept
       int m_acceptTimeout;
       int m_transferTimeout;

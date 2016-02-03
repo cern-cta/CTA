@@ -32,10 +32,6 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "Cns.h"
-#include "getconfent.h"
-#include "log.h"
-#include "serrno.h"
 
 #include <memory>
 

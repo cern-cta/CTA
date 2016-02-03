@@ -18,7 +18,6 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "common/exception/Exception.hpp"
-#include "nameserver/CastorNameServer.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "nameserver/NameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"

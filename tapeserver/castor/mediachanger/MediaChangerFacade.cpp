@@ -22,8 +22,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 
-#include <shift/Castor_limits.h>
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

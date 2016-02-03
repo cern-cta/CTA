@@ -24,7 +24,6 @@
 #include <attr/xattr.h>
 #include <limits>
 #include <memory>
-#include <shift/serrno.h>
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
@@ -331,20 +330,6 @@ std::string cta::Utils::errnoToString(const int errnoValue) throw() {
   }
 }
 
-//------------------------------------------------------------------------------
-// serrnoToString
-//------------------------------------------------------------------------------
-std::string cta::Utils::serrnoToString(const int serrnoValue) throw() {
-  char buf[100];
-  if(!sstrerror_r(serrnoValue, buf, sizeof(buf))) {;
-    return buf;
-  } else {
-    std::ostringstream oss;
-    oss << "Failed to convert serrnoValue to string"
-      ": sstrerror_r returned -1: serrnoValue=" << serrnoValue;
-    return oss.str();
-  }
-}
 
 //------------------------------------------------------------------------------
 // toUint16

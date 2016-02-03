@@ -26,9 +26,7 @@
 
 #include "castor/dlf/IPAddress.hpp"
 #include "castor/dlf/TimeStamp.hpp"
-#include "castor/IObject.hpp"
 
-#include <shift/dlf_api.h>
 #include <string.h>
 #include <stdlib.h>
 

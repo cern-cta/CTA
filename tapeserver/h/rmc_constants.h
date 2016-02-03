@@ -11,7 +11,7 @@
  */
 
 #pragma once
-#include <shift/Castor_limits.h>
+#include "h/Castor_limits.h"
 
 #define RMC_CHECKI  5   /* max interval to check for work to be done */
 #define RMC_PRTBUFSZ 180
@@ -63,4 +63,7 @@
 #define	RMC46	"RMC46 - request too large (max. %d)\n"
 #define	RMC92	"RMC92 - %s request by %d,%d from %s\n"
 #define	RMC98	"RMC98 - %s\n"
+
+#define WRITE_ENABLE 1
+#define WRITE_DISABLE 0
 

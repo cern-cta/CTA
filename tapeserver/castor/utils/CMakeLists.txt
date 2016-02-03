@@ -26,7 +26,25 @@ set (UTILS_LIB_SRC_FILES
   SmartFd.cpp
   SmartFILEPtr.cpp
   Timer.cpp
-  utils.cpp)
+  utils.cpp
+  ../common/CastorConfiguration.cpp
+  ../exception/Exception.cpp
+  ../exception/Backtrace.cpp
+  ../exception/NoEntry.cpp
+  ../exception/InvalidArgument.cpp
+  ../exception/Errnum.cpp
+  ../exception/NotAnOwner.cpp
+  ../exception/BadAlloc.cpp
+  ../exception/InvalidConfigEntry.cpp
+  ../exception/NoPortInRange.cpp
+  ../exception/TimeOut.cpp
+  ../exception/AcceptConnectionInterrupted.cpp
+  ../exception/CommandLineNotParsed.cpp
+  ../exception/OutOfMemory.cpp
+  ../BaseObject.cpp
+  ../Services.cpp
+  ../Factories.cpp
+  ../System.cpp)
 add_library (ctautils ${UTILS_LIB_SRC_FILES})
 
 add_library (ctautilsunittests SHARED

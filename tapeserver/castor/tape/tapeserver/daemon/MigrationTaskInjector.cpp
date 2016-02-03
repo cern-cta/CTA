@@ -52,9 +52,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::injectBulkMigrations(const std::vector<cta::ArchiveJob *>& jobs){
 
-    const u_signed64 blockCapacity = m_memManager.blockCapacity();
+    const uint64_t blockCapacity = m_memManager.blockCapacity();
     for(auto it= jobs.begin();it!=jobs.end();++it){
-      const u_signed64 fileSize = (*it)->archiveFile.size;
+      const uint64_t fileSize = (*it)->archiveFile.size;
       LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->archiveFile.nsHostName)),
       LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
@@ -63,7 +63,7 @@ namespace daemon {
       };
       tape::utils::suppresUnusedVariable(sp);      
       
-      const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
+      const uint64_t neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
       std::unique_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock, *it, m_memManager, m_errorFlag));
       std::unique_ptr<DiskReadTask> drt(new DiskReadTask(*twt, *it, neededBlock, m_errorFlag));

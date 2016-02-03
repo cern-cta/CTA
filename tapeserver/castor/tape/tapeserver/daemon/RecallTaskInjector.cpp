@@ -27,7 +27,6 @@
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "log.h"
 #include "scheduler/RetrieveJob.hpp"
 
 #include <stdint.h>

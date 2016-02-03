@@ -24,8 +24,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/utils/Timer.hpp"
-#include "log.h"
-#include "serrno.h"
+#include "castor/log/LogContext.hpp"
 
 #include <memory>
 #include <sstream>
@@ -188,7 +187,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       m_parentThreadPool.logWithStat(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
     }
     else{
-      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",SEINTERNAL);
+      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)",666);
       castor::log::ScopedParamContainer logParams(m_lc);
       logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);
       m_parentThreadPool.logWithStat(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");

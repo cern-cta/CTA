@@ -35,7 +35,7 @@ Serrnum::Serrnum(int err, std::string what):Exception("") {
 }
 
 void Serrnum::SerrnumConstructorBottomHalf(const std::string & what) {
-  m_strerror = Utils::serrnoToString(m_serrnum);
+  m_strerror = Utils::errnoToString(m_serrnum);
   std::stringstream w2;
   if (what.size())
     w2 << what << " ";

@@ -22,8 +22,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
-#include "serrno.h"
-#include "vmgr_constants.h"
+#include "h/Castor_limits.h"
 
 #include <errno.h>
 #include <gtest/gtest.h>
@@ -388,76 +387,6 @@ TEST_F(castor_utils, testErrnoToString) {
   
   const std::string str = errnoToString(EACCES);
   ASSERT_EQ(std::string("Permission denied"), str);
-}
-
-TEST_F(castor_utils, testSerrnoToString) {
-  using namespace castor::utils;
-
-  const std::string str = serrnoToString(SENOSHOST);
-  ASSERT_EQ(std::string("Host not known"), str);
-}
-
-TEST_F(castor_utils, tapeStatusToStringAllBitsCleared) {
-  using namespace castor::utils;
-
-  const uint32_t status = 0;
-  ASSERT_EQ(std::string(""), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringAllBitsSet) {
-  using namespace castor::utils;
-
-  const uint32_t status =
-    DISABLED    |
-    EXPORTED    |
-    TAPE_BUSY   |
-    TAPE_FULL   |
-    TAPE_RDONLY |
-    ARCHIVED;
-  ASSERT_EQ(std::string("DISABLED|EXPORTED|BUSY|FULL|RDONLY|ARCHIVED"),
-    tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringDISABLED) {
-  using namespace castor::utils;
-
-  const uint32_t status = DISABLED;
-  ASSERT_EQ(std::string("DISABLED"), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringEXPORTED) {
-  using namespace castor::utils;
-
-  const uint32_t status = EXPORTED;
-  ASSERT_EQ(std::string("EXPORTED"), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringTAPE_BUSY) {
-  using namespace castor::utils;
-
-  const uint32_t status = TAPE_BUSY;
-  ASSERT_EQ(std::string("BUSY"), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringTAPE_FULL) {
-  using namespace castor::utils;
-
-  const uint32_t status = TAPE_FULL;
-  ASSERT_EQ(std::string("FULL"), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringTAPE_RDONLY) {
-  using namespace castor::utils;
-
-  const uint32_t status = TAPE_RDONLY;
-  ASSERT_EQ(std::string("RDONLY"), tapeStatusToString(status));
-}
-
-TEST_F(castor_utils, tapeStatusToStringARCHIVED) {
-  using namespace castor::utils;
-
-  const uint32_t status = ARCHIVED;
-  ASSERT_EQ(std::string("ARCHIVED"), tapeStatusToString(status));
 }
 
 } // namespace unitTests

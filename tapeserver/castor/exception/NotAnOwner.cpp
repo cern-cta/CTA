@@ -22,12 +22,11 @@
  *****************************************************************************/
 
 #include "castor/exception/NotAnOwner.hpp"
-#include "serrno.h"
 
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::NotAnOwner::NotAnOwner():
-  castor::exception::Exception(SENOTANOWNER) {
+  castor::exception::Exception(666) {
 }

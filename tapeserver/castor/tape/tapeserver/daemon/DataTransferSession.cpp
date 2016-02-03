@@ -23,6 +23,7 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/System.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -37,8 +38,6 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "log.h"
-#include "serrno.h"
 #include "scheduler/RetrieveMount.hpp"
 
 #include <google/protobuf/stubs/common.h>
@@ -199,12 +198,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // will be deallocated automatically.
       lc.log(LOG_ERR, "Aborting recall mount startup: empty mount");
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
-      log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
         retrieveMount->abort();
         log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
         log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
-        log::LogContext::ScopedParam sp12(lc, log::Param("errorCode", SEINTERNAL));
         lc.log(LOG_ERR, "Notified client of end session with error");
       } catch(castor::exception::Exception & ex) {
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
@@ -282,11 +279,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       } catch (castor::exception::Exception & e) {
         log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
         lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
-        mrp.synchronousReportEndWithErrors(e.getMessageValue(), SEINTERNAL);
+        mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666);
         return MARK_DRIVE_AS_UP;
       } catch (...) {
         lc.log(LOG_INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
-        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", SEINTERNAL);
+        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666);
         return MARK_DRIVE_AS_UP;
       }
 
@@ -324,7 +321,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // will be deallocated automatically.
       lc.log(LOG_ERR, "Aborting migration mount startup: empty mount");
       log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty migration mount"));
-      log::LogContext::ScopedParam sp2(lc, log::Param("errorCode", SEINTERNAL));
       try {
         archiveMount->complete();
         log::LogContext::ScopedParam sp1(lc, log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
@@ -373,7 +369,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   } catch (castor::exception::Exception & e) {
@@ -387,7 +382,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     mount->abort();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
-    log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   } catch (...) {
@@ -400,7 +394,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   }
@@ -420,7 +413,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     mount->abort();
     log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
-    log::LogContext::ScopedParam sp15(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   } catch (...) {
@@ -433,7 +425,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     mount->abort();
     log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    log::LogContext::ScopedParam sp14(lc, log::Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   }

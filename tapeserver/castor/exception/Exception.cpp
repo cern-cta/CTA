@@ -24,7 +24,6 @@
 #define _XOPEN_SOURCE 600
 
 #include "castor/exception/Exception.hpp"
-#include "serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -36,7 +35,7 @@ castor::exception::Exception::Exception(int se, std::string context, bool embedB
 // constructor
 //------------------------------------------------------------------------------
 castor::exception::Exception::Exception(std::string context, bool embedBacktrace) : 
-  m_message(context), m_serrno(SEINTERNAL), m_backtrace(!embedBacktrace) {}
+  m_message(context), m_serrno(666), m_backtrace(!embedBacktrace) {}
 
 //------------------------------------------------------------------------------
 // copy constructor

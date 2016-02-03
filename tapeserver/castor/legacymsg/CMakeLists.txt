@@ -28,5 +28,5 @@ add_library (ctalegacymsgunittests SHARED
   GenericMarshalTest.cpp
   TapeMarshalTest.cpp)
 target_link_libraries (ctalegacymsgunittests
-  castorclient
-  ctamessages)
+  ctamessages
+  ctautils)
