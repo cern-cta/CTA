@@ -108,6 +108,7 @@ void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
       m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
         params);
     }
+    break;
   default:
     dispatchEventHandlers(fds.get(), nfds);
   }
