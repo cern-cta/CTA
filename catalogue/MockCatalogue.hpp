@@ -67,18 +67,13 @@ public:
   virtual void modifyStorageClassNbCopies(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
   virtual void modifyStorageClassComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createTapePool(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const uint64_t minFilesQueued, const uint64_t minBytesQueued, const uint64_t minRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment);
+  virtual void createTapePool(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment);
   virtual void deleteTapePool(const SecurityIdentity &requester, const std::string &name);
   virtual std::list<TapePool> getTapePools(const SecurityIdentity &requester) const;
   virtual void modifyTapePoolNbPartialTapes(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes);
-  virtual void modifyTapePoolMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minFilesQueued);
-  virtual void modifyTapePoolMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minBytesQueued);
-  virtual void modifyTapePoolMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minRequestAge);
-  virtual void modifyTapePoolMaxDrivesAllowed(const SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed);
   virtual void modifyTapePoolComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName,
-                                                                                                             const std::string &comment);
+  virtual void createArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment);
   virtual void deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb);
   virtual std::list<ArchiveRoute> getArchiveRoutes(const SecurityIdentity &requester) const;
   virtual void modifyArchiveRouteTapePoolName(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName);
@@ -89,49 +84,58 @@ public:
   virtual std::list<LogicalLibrary> getLogicalLibraries(const SecurityIdentity &requester) const;
   virtual void modifyLogicalLibraryComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-                                                                                                             const uint64_t capacityInBytes, const std::string &comment);
+  virtual void createTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
+                          const bool disabledValue, const bool fullValue, const std::string &comment);
   virtual void deleteTape(const SecurityIdentity &requester, const std::string &vid);
-  virtual Tape getTape(const SecurityIdentity &requester, const std::string &vid) const;
-  virtual std::list<Tape> getTapesByLogicalLibrary(const SecurityIdentity &requester, const std::string &logicalLibraryName) const;
-  virtual std::list<Tape> getTapesByPool(const SecurityIdentity &requester, const std::string &tapePoolName) const;
-  virtual std::list<Tape> getTapesByCapacity(const SecurityIdentity &requester, const uint64_t capacityInBytes) const;
-  virtual std::list<Tape> getAllTapes(const SecurityIdentity &requester) const;
+  virtual std::list<Tape> getTapes(const SecurityIdentity &requester, const std::map<std::string, std::string> &where); // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual void labelTape(const SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag);
   virtual void reclaimTape(const SecurityIdentity &requester, const std::string &vid);
   virtual void modifyTapeLogicalLibraryName(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName);
   virtual void modifyTapeTapePoolName(const SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName);
   virtual void modifyTapeCapacityInBytes(const SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes);
+  virtual void setTapeBusy(const SecurityIdentity &requester, const std::string &vid, const bool busyValue); // internal function not exposed to the Admin CLI
+  virtual void setTapeFull(const SecurityIdentity &requester, const std::string &vid, const bool fullValue);
+  virtual void setTapeDisabled(const SecurityIdentity &requester, const std::string &vid, const bool disabledValue);
   virtual void modifyTapeComment(const SecurityIdentity &requester, const std::string &vid, const std::string &comment);
 
-  virtual void createRetrieveUser(const SecurityIdentity &requester, const std::string &username, const std::string &usergroup, const std::string &retrieveGroup,
-                                                                                                             const std::string &comment);
-  virtual void deleteRetrieveUser(const SecurityIdentity &requester, const std::string &username, const std::string &usergroup);
-  virtual std::list<RetrieveUser> getRetrieveUsers(const SecurityIdentity &requester) const;
-  virtual void modifyRetrieveUserRetrieveGroup(const SecurityIdentity &requester, const std::string &username, const std::string &usergroup, const std::string &retrieveGroup);
-  virtual void modifyRetrieveUserComment(const SecurityIdentity &requester, const std::string &username, const std::string &usergroup, const std::string &comment);
+  virtual void createUser(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment);
+  virtual void deleteUser(const SecurityIdentity &requester, const std::string &name, const std::string &group);
+  virtual std::list<User> getUsers(const SecurityIdentity &requester) const;
+  virtual void modifyUserUserGroup(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup);
+  virtual void modifyUserComment(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment);
 
-  virtual void createRetrieveGroup(const SecurityIdentity &requester, const std::string &name, const uint64_t minFilesQueued, const uint64_t minBytesQueued, const uint64_t minRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment);
-  virtual void deleteRetrieveGroup(const SecurityIdentity &requester, const std::string &name);
-  virtual std::list<RetrieveGroup> getRetrieveGroups(const SecurityIdentity &requester) const;
-  virtual void modifyRetrieveGroupMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minFilesQueued);
-  virtual void modifyRetrieveGroupMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minBytesQueued);
-  virtual void modifyRetrieveGroupMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minRequestAge);
-  virtual void modifyRetrieveGroupMaxDrivesAllowed(const SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed);
-  virtual void modifyRetrieveGroupComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment);
+  virtual void createUserGroup(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
+                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
+                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment);
+  virtual void deleteUserGroup(const SecurityIdentity &requester, const std::string &name);
+  virtual std::list<UserGroup> getUserGroups(const SecurityIdentity &requester) const;
+  virtual void modifyUserGroupArchivePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority);
+  virtual void modifyUserGroupArchiveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued);
+  virtual void modifyUserGroupArchiveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued);
+  virtual void modifyUserGroupArchiveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge);
+  virtual void modifyUserGroupRetrievePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority);
+  virtual void modifyUserGroupRetrieveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued);
+  virtual void modifyUserGroupRetrieveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued);
+  virtual void modifyUserGroupRetrieveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge);
+  virtual void modifyUserGroupMaxDrivesAllowed(const SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed);
+  virtual void modifyUserGroupComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createDedication(const SecurityIdentity &requester, const std::string &drivename, const bool self, const bool readonly, const bool writeonly, const std::string &VO, const std::string &instanceName, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment);
+  virtual void createDedication(const SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
+ const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment);
   virtual void deleteDedication(const SecurityIdentity &requester, const std::string &drivename);
   virtual std::list<Dedication> getDedications(const SecurityIdentity &requester) const;
-  virtual void modifyDedicationSelf(const SecurityIdentity &requester, const std::string &drivename, const bool self);
   virtual void modifyDedicationReadonly(const SecurityIdentity &requester, const std::string &drivename, const bool readonly);
   virtual void modifyDedicationWriteonly(const SecurityIdentity &requester, const std::string &drivename, const bool writeonly);
-  virtual void modifyDedicationVO(const SecurityIdentity &requester, const std::string &drivename, const std::string &VO);
-  virtual void modifyDedicationInstance(const SecurityIdentity &requester, const std::string &drivename, const std::string &instanceName);
+  virtual void modifyDedicationUserGroup(const SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup);
+  virtual void modifyDedicationTag(const SecurityIdentity &requester, const std::string &drivename, const std::string &tag);
   virtual void modifyDedicationVid(const SecurityIdentity &requester, const std::string &drivename, const std::string &vid);
   virtual void modifyDedicationFrom(const SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp);
   virtual void modifyDedicationUntil(const SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp);
   virtual void modifyDedicationComment(const SecurityIdentity &requester, const std::string &drivename, const std::string &comment);
 
+  virtual std::list<ArchiveFile> getArchiveFiles(const SecurityIdentity &requester, const std::map<std::string, std::string> &where); // "where" is a map resembling an "and-ed" where clause in a SQL query
+
+  virtual void setDriveStatus(const SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force);
   /**
    * Returns the next identifier to be used for a new archive file.
    *
