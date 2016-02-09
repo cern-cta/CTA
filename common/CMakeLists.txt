@@ -3,6 +3,37 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(/usr/include/shift)
 
 set (COMMON_LIB_SRC_FILES
+  dataStructures/AdminHost.cpp
+  dataStructures/AdminUser.cpp
+  dataStructures/ArchiveFile.cpp
+  dataStructures/ArchiveJob.cpp
+  dataStructures/ArchiveMount.cpp
+  dataStructures/ArchiveRequest.cpp
+  dataStructures/ArchiveRoute.cpp
+  dataStructures/CancelRetrieveRequest.cpp
+  dataStructures/Dedication.cpp
+  dataStructures/DeleteArchiveRequest.cpp
+  dataStructures/DRData.cpp
+  dataStructures/EntryLog.cpp
+  dataStructures/ListStorageClassRequest.cpp
+  dataStructures/ReadTestResult.cpp
+  dataStructures/RepackInfo.cpp
+  dataStructures/Requester.cpp
+  dataStructures/RetrieveJob.cpp
+  dataStructures/RetrieveMount.cpp
+  dataStructures/RetrieveRequest.cpp
+  dataStructures/SecurityIdentity.cpp
+  dataStructures/StorageClass.cpp
+  dataStructures/Tape.cpp
+  dataStructures/TapeFileLocation.cpp
+  dataStructures/TapeMount.cpp
+  dataStructures/TapePool.cpp
+  dataStructures/UpdateFileInfoRequest.cpp
+  dataStructures/User.cpp
+  dataStructures/UserGroup.cpp
+  dataStructures/UserIdentity.cpp
+  dataStructures/VerifyInfo.cpp
+  dataStructures/WriteTestResult.cpp
   admin/AdminHost.cpp
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp

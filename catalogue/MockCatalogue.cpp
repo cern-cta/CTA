@@ -47,361 +47,361 @@ cta::catalogue::MockCatalogue::~MockCatalogue() {
 //------------------------------------------------------------------------------
 // createBootstrapAdminAndHostNoAuth
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createBootstrapAdminAndHostNoAuth(const SecurityIdentity &requester, const UserIdentity &user, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createBootstrapAdminAndHostNoAuth(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createAdminUser(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createAdminUser(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteAdminUser(const SecurityIdentity &requester, const UserIdentity &user) {}
+void cta::catalogue::MockCatalogue::deleteAdminUser(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user) {}
 
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::AdminUser> cta::catalogue::MockCatalogue::getAdminUsers(const SecurityIdentity &requester) const { return std::list<cta::AdminUser>();}
+std::list<cta::dataStructures::AdminUser> cta::catalogue::MockCatalogue::getAdminUsers(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::AdminUser>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyAdminUserComment(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyAdminUserComment(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createAdminHost(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteAdminHost(const SecurityIdentity &requester, const std::string &hostName) {}
+void cta::catalogue::MockCatalogue::deleteAdminHost(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName) {}
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::AdminHost> cta::catalogue::MockCatalogue::getAdminHosts(const SecurityIdentity &requester) const { return std::list<cta::AdminHost>();}
+std::list<cta::dataStructures::AdminHost> cta::catalogue::MockCatalogue::getAdminHosts(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::AdminHost>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyAdminHostComment(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyAdminHostComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createStorageClass(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteStorageClass(const SecurityIdentity &requester, const std::string &name) {}
+void cta::catalogue::MockCatalogue::deleteStorageClass(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::StorageClass> cta::catalogue::MockCatalogue::getStorageClasses(const SecurityIdentity &requester) const { return std::list<cta::StorageClass>();}
+std::list<cta::dataStructures::StorageClass> cta::catalogue::MockCatalogue::getStorageClasses(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::StorageClass>();}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyStorageClassNbCopies(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {}
+void cta::catalogue::MockCatalogue::modifyStorageClassNbCopies(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyStorageClassComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyStorageClassComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createTapePool(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createTapePool(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteTapePool(const SecurityIdentity &requester, const std::string &name) {}
+void cta::catalogue::MockCatalogue::deleteTapePool(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::TapePool> cta::catalogue::MockCatalogue::getTapePools(const SecurityIdentity &requester) const { return std::list<cta::TapePool>();}
+std::list<cta::dataStructures::TapePool> cta::catalogue::MockCatalogue::getTapePools(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::TapePool>();}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapePoolNbPartialTapes(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) {}
+void cta::catalogue::MockCatalogue::modifyTapePoolNbPartialTapes(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) {}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapePoolComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyTapePoolComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createArchiveRoute(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {}
+void cta::catalogue::MockCatalogue::deleteArchiveRoute(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {}
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveRoute> cta::catalogue::MockCatalogue::getArchiveRoutes(const SecurityIdentity &requester) const { return std::list<cta::ArchiveRoute>();}
+std::list<cta::dataStructures::ArchiveRoute> cta::catalogue::MockCatalogue::getArchiveRoutes(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::ArchiveRoute>();}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyArchiveRouteTapePoolName(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) {}
+void cta::catalogue::MockCatalogue::modifyArchiveRouteTapePoolName(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) {}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyArchiveRouteComment(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyArchiveRouteComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createLogicalLibrary(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createLogicalLibrary(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteLogicalLibrary(const SecurityIdentity &requester, const std::string &name) {}
+void cta::catalogue::MockCatalogue::deleteLogicalLibrary(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::LogicalLibrary> cta::catalogue::MockCatalogue::getLogicalLibraries(const SecurityIdentity &requester) const { return std::list<cta::LogicalLibrary>();}
+std::list<cta::dataStructures::LogicalLibrary> cta::catalogue::MockCatalogue::getLogicalLibraries(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::LogicalLibrary>();}
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyLogicalLibraryComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyLogicalLibraryComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
+void cta::catalogue::MockCatalogue::createTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
                           const bool disabledValue, const bool fullValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteTape(const SecurityIdentity &requester, const std::string &vid) {}
+void cta::catalogue::MockCatalogue::deleteTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::Tape> cta::catalogue::MockCatalogue::getTapes(const SecurityIdentity &requester, const std::map<std::string, std::string> &where) { return std::list<cta::Tape>();}
+std::list<cta::dataStructures::Tape> cta::catalogue::MockCatalogue::getTapes(const cta::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) { return std::list<cta::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::labelTape(const SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {}
+void cta::catalogue::MockCatalogue::labelTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {}
 
 //------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::reclaimTape(const SecurityIdentity &requester, const std::string &vid) {}
+void cta::catalogue::MockCatalogue::reclaimTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapeLogicalLibraryName(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) {}
+void cta::catalogue::MockCatalogue::modifyTapeLogicalLibraryName(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeTapePoolName
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapeTapePoolName(const SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName) {}
+void cta::catalogue::MockCatalogue::modifyTapeTapePoolName(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeCapacityInBytes
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapeCapacityInBytes(const SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes) {}
+void cta::catalogue::MockCatalogue::modifyTapeCapacityInBytes(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes) {}
 
 //------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::setTapeBusy(const SecurityIdentity &requester, const std::string &vid, const bool busyValue) {}
+void cta::catalogue::MockCatalogue::setTapeBusy(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool busyValue) {}
 
 //------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::setTapeFull(const SecurityIdentity &requester, const std::string &vid, const bool fullValue) {}
+void cta::catalogue::MockCatalogue::setTapeFull(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool fullValue) {}
 
 //------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::setTapeDisabled(const SecurityIdentity &requester, const std::string &vid, const bool disabledValue) {}
+void cta::catalogue::MockCatalogue::setTapeDisabled(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool disabledValue) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapeComment(const SecurityIdentity &requester, const std::string &vid, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyTapeComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createUser(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createUser(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUser
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteUser(const SecurityIdentity &requester, const std::string &name, const std::string &group) {}
+void cta::catalogue::MockCatalogue::deleteUser(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group) {}
 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
-std::list<cta::User> cta::catalogue::MockCatalogue::getUsers(const SecurityIdentity &requester) const { return std::list<cta::User>();}
+std::list<cta::dataStructures::User> cta::catalogue::MockCatalogue::getUsers(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::User>();}
 
 //------------------------------------------------------------------------------
 // modifyUserUserGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserUserGroup(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup) {}
+void cta::catalogue::MockCatalogue::modifyUserUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyUserComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserComment(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyUserComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createUserGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createUserGroup(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
+void cta::catalogue::MockCatalogue::createUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUserGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteUserGroup(const SecurityIdentity &requester, const std::string &name) {}
+void cta::catalogue::MockCatalogue::deleteUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getUserGroups
 //------------------------------------------------------------------------------
-std::list<cta::UserGroup> cta::catalogue::MockCatalogue::getUserGroups(const SecurityIdentity &requester) const { return std::list<cta::UserGroup>();}
+std::list<cta::dataStructures::UserGroup> cta::catalogue::MockCatalogue::getUserGroups(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::UserGroup>();}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupArchivePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupArchivePriority(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinFilesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinBytesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinRequestAge(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupRetrievePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupRetrievePriority(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinFilesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinBytesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinRequestAge(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupMaxDrivesAllowed(const SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupMaxDrivesAllowed(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createDedication(const SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
+void cta::catalogue::MockCatalogue::createDedication(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteDedication(const SecurityIdentity &requester, const std::string &drivename) {}
+void cta::catalogue::MockCatalogue::deleteDedication(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename) {}
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
-std::list<cta::Dedication> cta::catalogue::MockCatalogue::getDedications(const SecurityIdentity &requester) const { return std::list<cta::Dedication>();}
+std::list<cta::dataStructures::Dedication> cta::catalogue::MockCatalogue::getDedications(const cta::dataStructures::SecurityIdentity &requester) const { return std::list<cta::dataStructures::Dedication>();}
 
 //------------------------------------------------------------------------------
 // modifyDedicationReadonly
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationReadonly(const SecurityIdentity &requester, const std::string &drivename, const bool readonly) {}
+void cta::catalogue::MockCatalogue::modifyDedicationReadonly(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationWriteonly
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationWriteonly(const SecurityIdentity &requester, const std::string &drivename, const bool writeonly) {}
+void cta::catalogue::MockCatalogue::modifyDedicationWriteonly(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool writeonly) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationUserGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationUserGroup(const SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup) {}
+void cta::catalogue::MockCatalogue::modifyDedicationUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationTag(const SecurityIdentity &requester, const std::string &drivename, const std::string &tag) {}
+void cta::catalogue::MockCatalogue::modifyDedicationTag(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &tag) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationVid(const SecurityIdentity &requester, const std::string &drivename, const std::string &vid) {}
+void cta::catalogue::MockCatalogue::modifyDedicationVid(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationFrom
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationFrom(const SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp) {}
+void cta::catalogue::MockCatalogue::modifyDedicationFrom(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationUntil
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationUntil(const SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) {}
+void cta::catalogue::MockCatalogue::modifyDedicationUntil(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationComment(const SecurityIdentity &requester, const std::string &drivename, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyDedicationComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveFile> cta::catalogue::MockCatalogue::getArchiveFiles(const SecurityIdentity &requester, const std::map<std::string, std::string> &where) { return std::list<cta::ArchiveFile>();}
+std::list<cta::dataStructures::ArchiveFile> cta::catalogue::MockCatalogue::getArchiveFiles(const cta::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) { return std::list<cta::dataStructures::ArchiveFile>();}
 
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::setDriveStatus(const SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force) {}
+void cta::catalogue::MockCatalogue::setDriveStatus(const cta::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force) {}
 
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
@@ -414,8 +414,6 @@ uint64_t cta::catalogue::MockCatalogue::getNextArchiveFileId() {
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void cta::catalogue::MockCatalogue::fileWrittenToTape(
-  const ArchiveRequest &archiveRequest,
-  const std::string vid,
-  const uint64_t fSeq,
-  const uint64_t blockId) {
+  const cta::dataStructures::ArchiveRequest &archiveRequest,
+  const cta::dataStructures::TapeFileLocation tapeFileLocation) {
 }

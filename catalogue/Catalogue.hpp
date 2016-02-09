@@ -18,28 +18,48 @@
 
 #pragma once
 
-#include "common/ArchiveRequest.hpp"
-
 #include <list>
 #include <stdint.h>
 #include <string>
 #include <map>
 
-namespace cta {
+#include "common/dataStructures/AdminHost.hpp"
+#include "common/dataStructures/AdminUser.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/ArchiveMount.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
+#include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/CancelRetrieveRequest.hpp"
+#include "common/dataStructures/Dedication.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/ListStorageClassRequest.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/ReadTestResult.hpp"
+#include "common/dataStructures/RepackInfo.hpp"
+#include "common/dataStructures/RepackType.hpp"
+#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/RetrieveJob.hpp"
+#include "common/dataStructures/RetrieveMount.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/StorageClass.hpp"
+#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/Tape.hpp"
+#include "common/dataStructures/TapeMount.hpp"
+#include "common/dataStructures/TapePool.hpp"
+#include "common/dataStructures/UpdateFileInfoRequest.hpp"
+#include "common/dataStructures/UserGroup.hpp"
+#include "common/dataStructures/User.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/VerifyInfo.hpp"
+#include "common/dataStructures/VerifyType.hpp"
+#include "common/dataStructures/WriteTestResult.hpp"
 
-class AdminHost {};
-class AdminUser {};
-class ArchiveFile {};
-class ArchiveRoute {};
-class Dedication {};
-class LogicalLibrary {};
-class SecurityIdentity {};
-class StorageClass {};
-class Tape {};
-class TapePool {};
-class User {};
-class UserGroup {};
-class UserIdentity {};
+namespace cta {
 
 namespace catalogue {
 
@@ -55,93 +75,93 @@ public:
  */
   virtual ~Catalogue() = 0;
   
-  virtual void createBootstrapAdminAndHostNoAuth(const SecurityIdentity &requester, const UserIdentity &user, const std::string &hostName, const std::string &comment) = 0;
+  virtual void createBootstrapAdminAndHostNoAuth(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) = 0;
 
-  virtual void createAdminUser(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment) = 0;
-  virtual void deleteAdminUser(const SecurityIdentity &requester, const UserIdentity &user) = 0;
-  virtual std::list<AdminUser> getAdminUsers(const SecurityIdentity &requester) const = 0;
-  virtual void modifyAdminUserComment(const SecurityIdentity &requester, const UserIdentity &user, const std::string &comment) = 0;
+  virtual void createAdminUser(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &comment) = 0;
+  virtual void deleteAdminUser(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user) = 0;
+  virtual std::list<cta::dataStructures::AdminUser> getAdminUsers(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyAdminUserComment(const cta::dataStructures::SecurityIdentity &requester, const cta::dataStructures::UserIdentity &user, const std::string &comment) = 0;
 
-  virtual void createAdminHost(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment) = 0;
-  virtual void deleteAdminHost(const SecurityIdentity &requester, const std::string &hostName) = 0;
-  virtual std::list<AdminHost> getAdminHosts(const SecurityIdentity &requester) const = 0;
-  virtual void modifyAdminHostComment(const SecurityIdentity &requester, const std::string &hostName, const std::string &comment) = 0;
+  virtual void createAdminHost(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) = 0;
+  virtual void deleteAdminHost(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName) = 0;
+  virtual std::list<cta::dataStructures::AdminHost> getAdminHosts(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyAdminHostComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) = 0;
 
-  virtual void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) = 0;
-  virtual void deleteStorageClass(const SecurityIdentity &requester, const std::string &name) = 0;
-  virtual std::list<StorageClass> getStorageClasses(const SecurityIdentity &requester) const = 0;
-  virtual void modifyStorageClassNbCopies(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) = 0;
-  virtual void modifyStorageClassComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
+  virtual void createStorageClass(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) = 0;
+  virtual void deleteStorageClass(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) = 0;
+  virtual std::list<cta::dataStructures::StorageClass> getStorageClasses(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyStorageClassNbCopies(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) = 0;
+  virtual void modifyStorageClassComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createTapePool(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) = 0;
-  virtual void deleteTapePool(const SecurityIdentity &requester, const std::string &name) = 0;
-  virtual std::list<TapePool> getTapePools(const SecurityIdentity &requester) const = 0;
-  virtual void modifyTapePoolNbPartialTapes(const SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) = 0;
-  virtual void modifyTapePoolComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
+  virtual void createTapePool(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) = 0;
+  virtual void deleteTapePool(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) = 0;
+  virtual std::list<cta::dataStructures::TapePool> getTapePools(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyTapePoolNbPartialTapes(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) = 0;
+  virtual void modifyTapePoolComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) = 0;
-  virtual void deleteArchiveRoute(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) = 0;
-  virtual std::list<ArchiveRoute> getArchiveRoutes(const SecurityIdentity &requester) const = 0;
-  virtual void modifyArchiveRouteTapePoolName(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) = 0;
-  virtual void modifyArchiveRouteComment(const SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) = 0;
+  virtual void createArchiveRoute(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) = 0;
+  virtual void deleteArchiveRoute(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) = 0;
+  virtual std::list<cta::dataStructures::ArchiveRoute> getArchiveRoutes(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyArchiveRouteTapePoolName(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) = 0;
 
-  virtual void createLogicalLibrary(const SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
-  virtual void deleteLogicalLibrary(const SecurityIdentity &requester, const std::string &name) = 0;
-  virtual std::list<LogicalLibrary> getLogicalLibraries(const SecurityIdentity &requester) const = 0;
-  virtual void modifyLogicalLibraryComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
+  virtual void createLogicalLibrary(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
+  virtual void deleteLogicalLibrary(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) = 0;
+  virtual std::list<cta::dataStructures::LogicalLibrary> getLogicalLibraries(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyLogicalLibraryComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createTape(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
+  virtual void createTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
                           const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
-  virtual void deleteTape(const SecurityIdentity &requester, const std::string &vid) = 0;
-  virtual std::list<Tape> getTapes(const SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
-  virtual void labelTape(const SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) = 0;
-  virtual void reclaimTape(const SecurityIdentity &requester, const std::string &vid) = 0;
-  virtual void modifyTapeLogicalLibraryName(const SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) = 0;
-  virtual void modifyTapeTapePoolName(const SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName) = 0;
-  virtual void modifyTapeCapacityInBytes(const SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes) = 0;
-  virtual void setTapeBusy(const SecurityIdentity &requester, const std::string &vid, const bool busyValue) = 0; // internal function not exposed to the Admin CLI
-  virtual void setTapeFull(const SecurityIdentity &requester, const std::string &vid, const bool fullValue) = 0;
-  virtual void setTapeDisabled(const SecurityIdentity &requester, const std::string &vid, const bool disabledValue) = 0;
-  virtual void modifyTapeComment(const SecurityIdentity &requester, const std::string &vid, const std::string &comment) = 0;
+  virtual void deleteTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid) = 0;
+  virtual std::list<cta::dataStructures::Tape> getTapes(const cta::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual void labelTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) = 0;
+  virtual void reclaimTape(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid) = 0;
+  virtual void modifyTapeLogicalLibraryName(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) = 0;
+  virtual void modifyTapeTapePoolName(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName) = 0;
+  virtual void modifyTapeCapacityInBytes(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes) = 0;
+  virtual void setTapeBusy(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool busyValue) = 0; // internal function not exposed to the Admin CLI
+  virtual void setTapeFull(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool fullValue) = 0;
+  virtual void setTapeDisabled(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool disabledValue) = 0;
+  virtual void modifyTapeComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void createUser(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) = 0;
-  virtual void deleteUser(const SecurityIdentity &requester, const std::string &name, const std::string &group) = 0;
-  virtual std::list<User> getUsers(const SecurityIdentity &requester) const = 0;
-  virtual void modifyUserUserGroup(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup) = 0;
-  virtual void modifyUserComment(const SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment) = 0;
+  virtual void createUser(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) = 0;
+  virtual void deleteUser(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group) = 0;
+  virtual std::list<cta::dataStructures::User> getUsers(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyUserUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup) = 0;
+  virtual void modifyUserComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment) = 0;
 
-  virtual void createUserGroup(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
+  virtual void createUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) = 0;
-  virtual void deleteUserGroup(const SecurityIdentity &requester, const std::string &name) = 0;
-  virtual std::list<UserGroup> getUserGroups(const SecurityIdentity &requester) const = 0;
-  virtual void modifyUserGroupArchivePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) = 0;
-  virtual void modifyUserGroupArchiveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
-  virtual void modifyUserGroupArchiveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued) = 0;
-  virtual void modifyUserGroupArchiveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
-  virtual void modifyUserGroupRetrievePriority(const SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) = 0;
-  virtual void modifyUserGroupRetrieveMinFilesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued) = 0;
-  virtual void modifyUserGroupRetrieveMinBytesQueued(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued) = 0;
-  virtual void modifyUserGroupRetrieveMinRequestAge(const SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
-  virtual void modifyUserGroupMaxDrivesAllowed(const SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) = 0;
-  virtual void modifyUserGroupComment(const SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
+  virtual void deleteUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &name) = 0;
+  virtual std::list<cta::dataStructures::UserGroup> getUserGroups(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyUserGroupArchivePriority(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) = 0;
+  virtual void modifyUserGroupArchiveMinFilesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
+  virtual void modifyUserGroupArchiveMinBytesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued) = 0;
+  virtual void modifyUserGroupArchiveMinRequestAge(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
+  virtual void modifyUserGroupRetrievePriority(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) = 0;
+  virtual void modifyUserGroupRetrieveMinFilesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued) = 0;
+  virtual void modifyUserGroupRetrieveMinBytesQueued(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued) = 0;
+  virtual void modifyUserGroupRetrieveMinRequestAge(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
+  virtual void modifyUserGroupMaxDrivesAllowed(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) = 0;
+  virtual void modifyUserGroupComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createDedication(const SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
+  virtual void createDedication(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) = 0;
-  virtual void deleteDedication(const SecurityIdentity &requester, const std::string &drivename) = 0;
-  virtual std::list<Dedication> getDedications(const SecurityIdentity &requester) const = 0;
-  virtual void modifyDedicationReadonly(const SecurityIdentity &requester, const std::string &drivename, const bool readonly) = 0;
-  virtual void modifyDedicationWriteonly(const SecurityIdentity &requester, const std::string &drivename, const bool writeonly) = 0;
-  virtual void modifyDedicationUserGroup(const SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup) = 0;
-  virtual void modifyDedicationTag(const SecurityIdentity &requester, const std::string &drivename, const std::string &tag) = 0;
-  virtual void modifyDedicationVid(const SecurityIdentity &requester, const std::string &drivename, const std::string &vid) = 0;
-  virtual void modifyDedicationFrom(const SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp) = 0;
-  virtual void modifyDedicationUntil(const SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) = 0;
-  virtual void modifyDedicationComment(const SecurityIdentity &requester, const std::string &drivename, const std::string &comment) = 0;
+  virtual void deleteDedication(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename) = 0;
+  virtual std::list<cta::dataStructures::Dedication> getDedications(const cta::dataStructures::SecurityIdentity &requester) const = 0;
+  virtual void modifyDedicationReadonly(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly) = 0;
+  virtual void modifyDedicationWriteonly(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool writeonly) = 0;
+  virtual void modifyDedicationUserGroup(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup) = 0;
+  virtual void modifyDedicationTag(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &tag) = 0;
+  virtual void modifyDedicationVid(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &vid) = 0;
+  virtual void modifyDedicationFrom(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp) = 0;
+  virtual void modifyDedicationUntil(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) = 0;
+  virtual void modifyDedicationComment(const cta::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment) = 0;
 
-  virtual std::list<ArchiveFile> getArchiveFiles(const SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual std::list<cta::dataStructures::ArchiveFile> getArchiveFiles(const cta::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
 
-  virtual void setDriveStatus(const SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force) = 0;
+  virtual void setDriveStatus(const cta::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force) = 0;
 
   /**
    * Returns the next identifier to be used for a new archive file.
@@ -157,10 +177,8 @@ public:
    *
    */
   virtual void fileWrittenToTape(
- const ArchiveRequest &archiveRequest,
- const std::string vid,
- const uint64_t fSeq,
- const uint64_t blockId) = 0;
+ const cta::dataStructures::ArchiveRequest &archiveRequest,
+ const cta::dataStructures::TapeFileLocation tapeFileLocation) = 0;
 
 }; // class Catalogue
 
