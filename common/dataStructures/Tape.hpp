@@ -42,7 +42,7 @@ public:
    */
   ~Tape() throw();
 
-  void setBusy(const bool &busy);
+  void setBusy(const bool busy);
   bool getBusy() const;
 
   void setCapacityInBytes(const uint64_t capacityInBytes);
@@ -57,10 +57,10 @@ public:
   void setDataOnTapeInBytes(const uint64_t dataOnTapeInBytes);
   uint64_t getDataOnTapeInBytes() const;
 
-  void setDisabled(const bool &disabled);
+  void setDisabled(const bool disabled);
   bool getDisabled() const;
 
-  void setFull(const bool &full);
+  void setFull(const bool full);
   bool getFull() const;
 
   void setLastFSeq(const uint64_t lastFSeq);

@@ -57,7 +57,7 @@ public:
   void setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog);
   cta::dataStructures::EntryLog getLastModificationLog() const;
 
-  void setReadonly(const bool &readonly);
+  void setReadonly(const bool readonly);
   bool getReadonly() const;
 
   void setTag(const std::string &tag);
@@ -72,7 +72,7 @@ public:
   void setVid(const std::string &vid);
   std::string getVid() const;
 
-  void setWriteonly(const bool &writeonly);
+  void setWriteonly(const bool writeonly);
   bool getWriteonly() const;
   
 

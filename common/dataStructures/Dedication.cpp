@@ -152,7 +152,7 @@ cta::dataStructures::EntryLog cta::dataStructures::Dedication::getLastModificati
 //------------------------------------------------------------------------------
 // setReadonly
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setReadonly(const bool &readonly) {
+void cta::dataStructures::Dedication::setReadonly(const bool readonly) {
   m_readonly = readonly;
   m_readonlySet = true;
 }
@@ -242,7 +242,7 @@ std::string cta::dataStructures::Dedication::getVid() const {
 //------------------------------------------------------------------------------
 // setWriteonly
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setWriteonly(const bool &writeonly) {
+void cta::dataStructures::Dedication::setWriteonly(const bool writeonly) {
   m_writeonly = writeonly;
   m_writeonlySet = true;
 }

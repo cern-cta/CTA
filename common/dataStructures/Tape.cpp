@@ -64,7 +64,7 @@ bool cta::dataStructures::Tape::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setBusy
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setBusy(const bool &busy) {
+void cta::dataStructures::Tape::setBusy(const bool busy) {
   m_busy = busy;
   m_busySet = true;
 }
@@ -154,7 +154,7 @@ uint64_t cta::dataStructures::Tape::getDataOnTapeInBytes() const {
 //------------------------------------------------------------------------------
 // setDisabled
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setDisabled(const bool &disabled) {
+void cta::dataStructures::Tape::setDisabled(const bool disabled) {
   m_disabled = disabled;
   m_disabledSet = true;
 }
@@ -172,7 +172,7 @@ bool cta::dataStructures::Tape::getDisabled() const {
 //------------------------------------------------------------------------------
 // setFull
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setFull(const bool &full) {
+void cta::dataStructures::Tape::setFull(const bool full) {
   m_full = full;
   m_fullSet = true;
 }
