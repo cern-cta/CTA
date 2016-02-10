@@ -29,6 +29,7 @@
 #include "common/dataStructures/Dedication.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/ListStorageClassRequest.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
