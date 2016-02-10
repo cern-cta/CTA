@@ -380,7 +380,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
     int gid = 0;
     gid_ss >> gid;
     adminUser.gid = gid;
-    m_scheduler->createAdminUser(requester, adminUser, comment);
+//    m_scheduler->createAdminUser(requester, adminUser, comment);
   }
   else if("ch" == tokens[2]) {
     std::string uid_s = getOptionValue(tokens, "-u", "--uid");
@@ -417,10 +417,11 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::S
     int gid = 0;
     gid_ss >> gid;
     adminUser.gid = gid;
-    m_scheduler->deleteAdminUser(requester, adminUser);
+//    m_scheduler->deleteAdminUser(requester, adminUser);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getAdminUsers(requester);
+//    auto list = m_scheduler->getAdminUsers(requester);
+    std::list<common::admin::AdminUser> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -472,7 +473,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
       m_data = help.str();
       return;
     }
-    m_scheduler->createAdminHost(requester, name, comment);
+//    m_scheduler->createAdminHost(requester, name, comment);
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
@@ -489,10 +490,11 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
       m_data = help.str();
       return;
     }
-    m_scheduler->deleteAdminHost(requester, name);
+ //   m_scheduler->deleteAdminHost(requester, name);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getAdminHosts(requester);
+ //   auto list = m_scheduler->getAdminHosts(requester);
+    std::list<common::admin::AdminHost> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -546,7 +548,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     std::istringstream partialtapes_ss(partialtapes_s);
     int partialtapes = 0;
     partialtapes_ss >> partialtapes;    
-    m_scheduler->createTapePool(requester, name, partialtapes, comment);
+    //m_scheduler->createTapePool(requester, name, partialtapes, comment);
     
     //TODO: The following hardcoded parameters should really be given by the user from the CLI. However before doing this we must clarify the scheduler interface and change it accordingly
     cta::MountCriteria immediateMount;
@@ -554,7 +556,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     immediateMount.maxBytesQueued = 1;
     immediateMount.maxFilesQueued = 1;
     immediateMount.quota = 10;
-    m_scheduler->setTapePoolMountCriteria(name, cta::MountCriteriaByDirection(immediateMount, immediateMount));
+    //m_scheduler->setTapePoolMountCriteria(name, cta::MountCriteriaByDirection(immediateMount, immediateMount));
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
@@ -575,10 +577,11 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       m_data = help.str();
       return;
     }
-    m_scheduler->deleteTapePool(requester, name);
+   // m_scheduler->deleteTapePool(requester, name);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getTapePools(requester);
+    //auto list = m_scheduler->getTapePools(requester);
+    std::list<TapePool> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -635,7 +638,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-    m_scheduler->createArchiveRoute(requester, storageClass, copynb, tapePool, comment);
+    //m_scheduler->createArchiveRoute(requester, storageClass, copynb, tapePool, comment);
   }
   else if("ch" == tokens[2]) {
     std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
@@ -661,10 +664,11 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::istringstream copynb_ss(copynb_s);
     int copynb = 0;
     copynb_ss >> copynb;
-    m_scheduler->deleteArchiveRoute(requester, storageClass, copynb);
+    //m_scheduler->deleteArchiveRoute(requester, storageClass, copynb);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getArchiveRoutes(requester);
+    //auto list = m_scheduler->getArchiveRoutes(requester);
+    std::list<common::archiveRoute::ArchiveRoute> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -718,7 +722,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       m_data = help.str();
       return;
     }
-    m_scheduler->createLogicalLibrary(requester, name, comment);
+    //m_scheduler->createLogicalLibrary(requester, name, comment);
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
@@ -735,10 +739,11 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       m_data = help.str();
       return;
     }
-    m_scheduler->deleteLogicalLibrary(requester, name);
+    //m_scheduler->deleteLogicalLibrary(requester, name);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getLogicalLibraries(requester);
+    //auto list = m_scheduler->getLogicalLibraries(requester);
+    std::list<LogicalLibrary> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -797,7 +802,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
     std::istringstream capacity_ss(capacity_s);
     uint64_t capacity = 0;
     capacity_ss >> capacity;
-    m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
+    //m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
   }
   else if("ch" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid");
@@ -820,10 +825,11 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::Se
       m_data = help.str();
       return;
     }
-    m_scheduler->deleteTape(requester, vid);
+    //m_scheduler->deleteTape(requester, vid);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getTapes(requester);
+    //auto list = m_scheduler->getTapes(requester);
+    std::list<Tape> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -889,7 +895,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     std::istringstream id_ss(id_s);
     int id = 0;
     id_ss >> id;
-    m_scheduler->createStorageClass(requester, name, copynb, id, comment);
+    //m_scheduler->createStorageClass(requester, name, copynb, id, comment);
   }
   else if("ch" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name");
@@ -914,10 +920,11 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
       m_data = help.str();
       return;
     }
-    m_scheduler->deleteStorageClass(requester, name);
+    //m_scheduler->deleteStorageClass(requester, name);
   }
   else if("ls" == tokens[2]) {
-    auto list = m_scheduler->getStorageClasses(requester);
+    //auto list = m_scheduler->getStorageClasses(requester);
+    std::list<StorageClass> list;
     std::ostringstream responseSS;
     if(list.size()>0) {
       responseSS << "\x1b[31;1m"
@@ -958,7 +965,8 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
   bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
   if(tapePool.empty()) {
-    auto poolList = m_scheduler->getArchiveRequests(requester);
+    //auto poolList = m_scheduler->getArchiveRequests(requester);
+    std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > poolList;
     if(poolList.size()>0) {
       if(extended) {
         responseSS << "\x1b[31;1m"
@@ -1015,7 +1023,8 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
   else {
     uint64_t numberOfRequests=0;
     uint64_t totalSize=0;
-    auto requestList = m_scheduler->getArchiveRequests(requester, tapePool); 
+    //auto requestList = m_scheduler->getArchiveRequests(requester, tapePool); 
+    std::list<ArchiveToTapeCopyRequest> requestList;
     if(requestList.size()>0) {
       if(extended) {
         responseSS << "\x1b[31;1m"
@@ -1078,7 +1087,8 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   bool extended = hasOption(tokens, "-x", "--extended");
   std::ostringstream responseSS;
   if(tapeVid.empty()) {
-    auto vidList = m_scheduler->getRetrieveRequests(requester);
+    //auto vidList = m_scheduler->getRetrieveRequests(requester);
+    std::map<Tape, std::list<RetrieveRequestDump> > vidList;
     if(vidList.size()>0) {
       if(extended) {
         responseSS << "\x1b[31;1m"
@@ -1148,7 +1158,8 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   else {
     uint64_t numberOfRequests=0;
     uint64_t totalSize=0;    
-    auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);
+    //auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);
+    std::list<RetrieveRequestDump> requestList;
     if(requestList.size()>0) {
       if(extended) {
         responseSS << "\x1b[31;1m"
@@ -1273,7 +1284,8 @@ time_t getDurationSinceStatusBegin(const cta::common::DriveState &state) {
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates" << std::endl;
-  auto list = m_scheduler->getDriveStates(requester);
+  //auto list = m_scheduler->getDriveStates(requester);
+  std::list<cta::common::DriveState> list;
   std::ostringstream responseSS;
   if(list.size()>0) {
     responseSS << "\x1b[31;1m"
@@ -1315,7 +1327,8 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
     m_data = help.str();
     return;
   }
-  auto list = m_scheduler->getStorageClasses(requester);
+  //auto list = m_scheduler->getStorageClasses(requester);
+  std::list<StorageClass> list;
   std::ostringstream responseSS;
   if(list.size()>0) {
     responseSS << "\x1b[31;1m"
@@ -1342,7 +1355,7 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
     m_data = help.str();
     return;
   }
-  m_scheduler->setDirStorageClass(requester, tokens[2], tokens[3]);
+//  m_scheduler->setDirStorageClass(requester, tokens[2], tokens[3]);
 }
   
 //------------------------------------------------------------------------------
@@ -1358,7 +1371,7 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
   auto src_end = tokens.end() - 1; //exclude the destination
   const std::list<std::string> source_files(src_begin, src_end);
-  m_scheduler->queueArchiveRequest(requester, source_files, tokens[tokens.size()-1]);
+//  m_scheduler->queueArchiveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
   
 //------------------------------------------------------------------------------
@@ -1374,7 +1387,7 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
   auto src_end = tokens.end() - 1; //exclude the destination
   const std::list<std::string> source_files(src_begin, src_end);
-  m_scheduler->queueRetrieveRequest(requester, source_files, tokens[tokens.size()-1]);
+//  m_scheduler->queueRetrieveRequest(requester, source_files, tokens[tokens.size()-1]);
 }
   
 //------------------------------------------------------------------------------
@@ -1387,7 +1400,7 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
     m_data = help.str();
     return;
   }
-  m_scheduler->deleteArchiveRequest(requester, tokens[2]);
+//  m_scheduler->deleteArchiveRequest(requester, tokens[2]);
 }
   
 //------------------------------------------------------------------------------
@@ -1400,7 +1413,7 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
     m_data = help.str();
     return;
   }
-  m_scheduler->deleteRetrieveRequest(requester, tokens[2]);
+//  m_scheduler->deleteRetrieveRequest(requester, tokens[2]);
 }
 
 //------------------------------------------------------------------------------

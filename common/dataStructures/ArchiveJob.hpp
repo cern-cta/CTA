@@ -26,6 +26,7 @@
 #include "common/dataStructures/ArchiveRequest.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class ArchiveJob {
@@ -48,8 +49,8 @@ public:
   void setCopyNumber(const std::string &copyNumber);
   std::string getCopyNumber() const;
 
-  void setRequest(const cta::dataStructures::ArchiveRequest &request);
-  cta::dataStructures::ArchiveRequest getRequest() const;
+  void setRequest(const cta::common::dataStructures::ArchiveRequest &request);
+  cta::common::dataStructures::ArchiveRequest getRequest() const;
 
   void setTapePool(const std::string &tapePool);
   std::string getTapePool() const;
@@ -68,7 +69,7 @@ private:
   std::string m_copyNumber;
   bool m_copyNumberSet;
 
-  cta::dataStructures::ArchiveRequest m_request;
+  cta::common::dataStructures::ArchiveRequest m_request;
   bool m_requestSet;
 
   std::string m_tapePool;
@@ -77,4 +78,5 @@ private:
 }; // class ArchiveJob
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

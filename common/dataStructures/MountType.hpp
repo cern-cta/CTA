@@ -19,11 +19,13 @@
 #pragma once
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 enum MountType {
-  none,
-  read,
-  write
+  archive,
+  retrieve,
+  none
 };
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

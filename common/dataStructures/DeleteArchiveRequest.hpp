@@ -26,6 +26,7 @@
 #include "common/dataStructures/Requester.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class DeleteArchiveRequest {
@@ -45,8 +46,8 @@ public:
   void setArchiveFileID(const std::string &archiveFileID);
   std::string getArchiveFileID() const;
 
-  void setRequester(const cta::dataStructures::Requester &requester);
-  cta::dataStructures::Requester getRequester() const;
+  void setRequester(const cta::common::dataStructures::Requester &requester);
+  cta::common::dataStructures::Requester getRequester() const;
   
 
 private:
@@ -59,10 +60,11 @@ private:
   std::string m_archiveFileID;
   bool m_archiveFileIDSet;
 
-  cta::dataStructures::Requester m_requester;
+  cta::common::dataStructures::Requester m_requester;
   bool m_requesterSet;
 
 }; // class DeleteArchiveRequest
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

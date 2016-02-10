@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class Requester {
@@ -64,4 +65,5 @@ private:
 }; // class Requester
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

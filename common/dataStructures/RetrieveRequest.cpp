@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveRequest::RetrieveRequest() {  
+cta::common::dataStructures::RetrieveRequest::RetrieveRequest() {  
   m_archiveFileIDSet = false;
   m_diskpoolNameSet = false;
   m_diskpoolThroughputSet = false;
@@ -34,13 +34,13 @@ cta::dataStructures::RetrieveRequest::RetrieveRequest() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveRequest::~RetrieveRequest() throw() {
+cta::common::dataStructures::RetrieveRequest::~RetrieveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::RetrieveRequest::allFieldsSet() const {
+bool cta::common::dataStructures::RetrieveRequest::allFieldsSet() const {
   return m_archiveFileIDSet
       && m_diskpoolNameSet
       && m_diskpoolThroughputSet
@@ -52,7 +52,7 @@ bool cta::dataStructures::RetrieveRequest::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchiveFileID
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setArchiveFileID(const std::string &archiveFileID) {
+void cta::common::dataStructures::RetrieveRequest::setArchiveFileID(const std::string &archiveFileID) {
   m_archiveFileID = archiveFileID;
   m_archiveFileIDSet = true;
 }
@@ -60,7 +60,7 @@ void cta::dataStructures::RetrieveRequest::setArchiveFileID(const std::string &a
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RetrieveRequest::getArchiveFileID() const {
+std::string cta::common::dataStructures::RetrieveRequest::getArchiveFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
@@ -70,7 +70,7 @@ std::string cta::dataStructures::RetrieveRequest::getArchiveFileID() const {
 //------------------------------------------------------------------------------
 // setDiskpoolName
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
+void cta::common::dataStructures::RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
   m_diskpoolName = diskpoolName;
   m_diskpoolNameSet = true;
 }
@@ -78,7 +78,7 @@ void cta::dataStructures::RetrieveRequest::setDiskpoolName(const std::string &di
 //------------------------------------------------------------------------------
 // getDiskpoolName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RetrieveRequest::getDiskpoolName() const {
+std::string cta::common::dataStructures::RetrieveRequest::getDiskpoolName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
@@ -88,7 +88,7 @@ std::string cta::dataStructures::RetrieveRequest::getDiskpoolName() const {
 //------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
+void cta::common::dataStructures::RetrieveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
   m_diskpoolThroughput = diskpoolThroughput;
   m_diskpoolThroughputSet = true;
 }
@@ -96,7 +96,7 @@ void cta::dataStructures::RetrieveRequest::setDiskpoolThroughput(const std::stri
 //------------------------------------------------------------------------------
 // getDiskpoolThroughput
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RetrieveRequest::getDiskpoolThroughput() const {
+std::string cta::common::dataStructures::RetrieveRequest::getDiskpoolThroughput() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
@@ -106,7 +106,7 @@ std::string cta::dataStructures::RetrieveRequest::getDiskpoolThroughput() const 
 //------------------------------------------------------------------------------
 // setDrData
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setDrData(const cta::dataStructures::DRData &drData) {
+void cta::common::dataStructures::RetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
   m_drData = drData;
   m_drDataSet = true;
 }
@@ -114,7 +114,7 @@ void cta::dataStructures::RetrieveRequest::setDrData(const cta::dataStructures::
 //------------------------------------------------------------------------------
 // getDrData
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData cta::dataStructures::RetrieveRequest::getDrData() const {
+cta::common::dataStructures::DRData cta::common::dataStructures::RetrieveRequest::getDrData() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
@@ -124,7 +124,7 @@ cta::dataStructures::DRData cta::dataStructures::RetrieveRequest::getDrData() co
 //------------------------------------------------------------------------------
 // setDstURL
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setDstURL(const std::string &dstURL) {
+void cta::common::dataStructures::RetrieveRequest::setDstURL(const std::string &dstURL) {
   m_dstURL = dstURL;
   m_dstURLSet = true;
 }
@@ -132,7 +132,7 @@ void cta::dataStructures::RetrieveRequest::setDstURL(const std::string &dstURL) 
 //------------------------------------------------------------------------------
 // getDstURL
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RetrieveRequest::getDstURL() const {
+std::string cta::common::dataStructures::RetrieveRequest::getDstURL() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
@@ -142,7 +142,7 @@ std::string cta::dataStructures::RetrieveRequest::getDstURL() const {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveRequest::setRequester(const cta::dataStructures::Requester &requester) {
+void cta::common::dataStructures::RetrieveRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -150,7 +150,7 @@ void cta::dataStructures::RetrieveRequest::setRequester(const cta::dataStructure
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester cta::dataStructures::RetrieveRequest::getRequester() const {
+cta::common::dataStructures::Requester cta::common::dataStructures::RetrieveRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }

@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class DRData {
@@ -82,4 +83,5 @@ private:
 }; // class DRData
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

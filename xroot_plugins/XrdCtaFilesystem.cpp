@@ -271,43 +271,6 @@ XrdProFilesystem::XrdProFilesystem():
   try {
     dynamic_cast<cta::objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
   } catch (std::bad_cast &){}
-  const cta::SecurityIdentity bootstrap_requester;
-  try {
-    m_scheduler.createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(44446,1028), "Bootstrap operator");
-  } catch (cta::exception::Exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. CTA exception caught: " << ex.getMessageValue() << "\n";
-  } catch (std::exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Exception caught: " << ex.what() << "\n";
-  } catch (...) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Unknown exception caught!" << "\n";
-  }
-  try {
-    m_scheduler.createAdminUserWithoutAuthorizingRequester(bootstrap_requester, cta::UserIdentity(getuid(),getgid()), "Bootstrap operator");
-  } catch (cta::exception::Exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. CTA exception caught: " << ex.getMessageValue() << "\n";
-  } catch (std::exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Exception caught: " << ex.what() << "\n";
-  } catch (...) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Unknown exception caught!" << "\n";
-  }
-  try {
-    m_scheduler.createAdminHostWithoutAuthorizingRequester(bootstrap_requester, "tpsrv045.cern.ch", "Bootstrap operator host");
-  } catch (cta::exception::Exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. CTA exception caught: " << ex.getMessageValue() << "\n";
-  } catch (std::exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Exception caught: " << ex.what() << "\n";
-  } catch (...) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Unknown exception caught!" << "\n";
-  }
-  try {
-    m_scheduler.createAdminHostWithoutAuthorizingRequester(bootstrap_requester, "localhost", "Bootstrap operator host");
-  } catch (cta::exception::Exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. CTA exception caught: " << ex.getMessageValue() << "\n";
-  } catch (std::exception &ex) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Exception caught: " << ex.what() << "\n";
-  } catch (...) {
-    std::cout << "[WARNING] Could not create the admin user and admin host. Unknown exception caught!" << "\n";
-  }
 }
 
 //------------------------------------------------------------------------------

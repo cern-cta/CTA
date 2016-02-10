@@ -87,7 +87,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // 2a) Get initial information from the client
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
-    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
+    tapeMount.reset(m_scheduler._old_getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
   } catch (cta::exception::Exception & e) {
     log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());

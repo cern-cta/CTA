@@ -27,6 +27,7 @@
 #include "common/dataStructures/RepackType.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class RepackInfo {
@@ -43,8 +44,8 @@ public:
    */
   ~RepackInfo() throw();
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
   void setErrors(const std::map<int,std::string> &errors);
   std::map<int,std::string> getErrors() const;
@@ -64,8 +65,8 @@ public:
   void setRepackStatus(const std::string &repackStatus);
   std::string getRepackStatus() const;
 
-  void setRepackType(const cta::dataStructures::RepackType &repackType);
-  cta::dataStructures::RepackType getRepackType() const;
+  void setRepackType(const cta::common::dataStructures::RepackType &repackType);
+  cta::common::dataStructures::RepackType getRepackType() const;
 
   void setTag(const std::string &tag);
   std::string getTag() const;
@@ -87,7 +88,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
   std::map<int,std::string> m_errors;
@@ -108,7 +109,7 @@ private:
   std::string m_repackStatus;
   bool m_repackStatusSet;
 
-  cta::dataStructures::RepackType m_repackType;
+  cta::common::dataStructures::RepackType m_repackType;
   bool m_repackTypeSet;
 
   std::string m_tag;
@@ -126,4 +127,5 @@ private:
 }; // class RepackInfo
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

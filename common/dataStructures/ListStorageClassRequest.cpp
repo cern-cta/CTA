@@ -22,27 +22,27 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {  
+cta::common::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {  
   m_requesterSet = false;
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ListStorageClassRequest::~ListStorageClassRequest() throw() {
+cta::common::dataStructures::ListStorageClassRequest::~ListStorageClassRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::ListStorageClassRequest::allFieldsSet() const {
+bool cta::common::dataStructures::ListStorageClassRequest::allFieldsSet() const {
   return m_requesterSet;
 }
 
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::dataStructures::ListStorageClassRequest::setRequester(const cta::dataStructures::Requester &requester) {
+void cta::common::dataStructures::ListStorageClassRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -50,7 +50,7 @@ void cta::dataStructures::ListStorageClassRequest::setRequester(const cta::dataS
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester cta::dataStructures::ListStorageClassRequest::getRequester() const {
+cta::common::dataStructures::Requester cta::common::dataStructures::ListStorageClassRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ListStorageClassRequest have been set!");
   }

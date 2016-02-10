@@ -38,15 +38,14 @@ install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctascheduler ${SQLITE3_LIBRARY_RELEASE} ctacommon ctaobjectstore protobuf Utils ctautils)
 
-add_library (ctaschedulerutils SHARED
-  DummyScheduler.cpp)
+#add_library (ctaschedulerutils SHARED
+#  _old_prototype_DummyScheduler.cpp)
 
 add_library (ctaschedulerunittests SHARED
 #  mockDB/MockSchedulerDatabase.cpp
 #  mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
-  SchedulerDatabaseTest.cpp
-  SchedulerTest.cpp)
+  SchedulerDatabaseTest.cpp)
 
 target_link_libraries (ctaschedulerunittests ${SQLITE3_LIBRARY_RELEASE})
 

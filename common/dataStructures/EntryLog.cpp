@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog::EntryLog() {  
+cta::common::dataStructures::EntryLog::EntryLog() {  
   m_hostSet = false;
   m_timeSet = false;
   m_userSet = false;
@@ -31,13 +31,13 @@ cta::dataStructures::EntryLog::EntryLog() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog::~EntryLog() throw() {
+cta::common::dataStructures::EntryLog::~EntryLog() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::EntryLog::allFieldsSet() const {
+bool cta::common::dataStructures::EntryLog::allFieldsSet() const {
   return m_hostSet
       && m_timeSet
       && m_userSet;
@@ -46,7 +46,7 @@ bool cta::dataStructures::EntryLog::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setHost
 //------------------------------------------------------------------------------
-void cta::dataStructures::EntryLog::setHost(const std::string &host) {
+void cta::common::dataStructures::EntryLog::setHost(const std::string &host) {
   m_host = host;
   m_hostSet = true;
 }
@@ -54,7 +54,7 @@ void cta::dataStructures::EntryLog::setHost(const std::string &host) {
 //------------------------------------------------------------------------------
 // getHost
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::EntryLog::getHost() const {
+std::string cta::common::dataStructures::EntryLog::getHost() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
   }
@@ -64,7 +64,7 @@ std::string cta::dataStructures::EntryLog::getHost() const {
 //------------------------------------------------------------------------------
 // setTime
 //------------------------------------------------------------------------------
-void cta::dataStructures::EntryLog::setTime(const time_t &time) {
+void cta::common::dataStructures::EntryLog::setTime(const time_t &time) {
   m_time = time;
   m_timeSet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::EntryLog::setTime(const time_t &time) {
 //------------------------------------------------------------------------------
 // getTime
 //------------------------------------------------------------------------------
-time_t cta::dataStructures::EntryLog::getTime() const {
+time_t cta::common::dataStructures::EntryLog::getTime() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
   }
@@ -82,7 +82,7 @@ time_t cta::dataStructures::EntryLog::getTime() const {
 //------------------------------------------------------------------------------
 // setUser
 //------------------------------------------------------------------------------
-void cta::dataStructures::EntryLog::setUser(const cta::dataStructures::UserIdentity &user) {
+void cta::common::dataStructures::EntryLog::setUser(const cta::common::dataStructures::UserIdentity &user) {
   m_user = user;
   m_userSet = true;
 }
@@ -90,7 +90,7 @@ void cta::dataStructures::EntryLog::setUser(const cta::dataStructures::UserIdent
 //------------------------------------------------------------------------------
 // getUser
 //------------------------------------------------------------------------------
-cta::dataStructures::UserIdentity cta::dataStructures::EntryLog::getUser() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::EntryLog::getUser() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
   }

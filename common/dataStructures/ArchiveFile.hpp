@@ -27,6 +27,7 @@
 #include "common/dataStructures/TapeFileLocation.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class ArchiveFile {
@@ -52,8 +53,8 @@ public:
   void setChecksumValue(const std::string &checksumValue);
   std::string getChecksumValue() const;
 
-  void setDrData(const cta::dataStructures::DRData &drData);
-  cta::dataStructures::DRData getDrData() const;
+  void setDrData(const cta::common::dataStructures::DRData &drData);
+  cta::common::dataStructures::DRData getDrData() const;
 
   void setEosFileID(const std::string &eosFileID);
   std::string getEosFileID() const;
@@ -64,8 +65,8 @@ public:
   void setStorageClass(const std::string &storageClass);
   std::string getStorageClass() const;
 
-  void setTapeCopies(const std::map<int,cta::dataStructures::TapeFileLocation> &tapeCopies);
-  std::map<int,cta::dataStructures::TapeFileLocation> getTapeCopies() const;
+  void setTapeCopies(const std::map<int,cta::common::dataStructures::TapeFileLocation> &tapeCopies);
+  std::map<int,cta::common::dataStructures::TapeFileLocation> getTapeCopies() const;
   
 
 private:
@@ -84,7 +85,7 @@ private:
   std::string m_checksumValue;
   bool m_checksumValueSet;
 
-  cta::dataStructures::DRData m_drData;
+  cta::common::dataStructures::DRData m_drData;
   bool m_drDataSet;
 
   std::string m_eosFileID;
@@ -96,10 +97,11 @@ private:
   std::string m_storageClass;
   bool m_storageClassSet;
 
-  std::map<int,cta::dataStructures::TapeFileLocation> m_tapeCopies;
+  std::map<int,cta::common::dataStructures::TapeFileLocation> m_tapeCopies;
   bool m_tapeCopiesSet;
 
 }; // class ArchiveFile
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

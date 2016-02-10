@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapeFileLocation::TapeFileLocation() {  
+cta::common::dataStructures::TapeFileLocation::TapeFileLocation() {  
   m_blockIdSet = false;
   m_fSeqSet = false;
   m_vidSet = false;
@@ -31,13 +31,13 @@ cta::dataStructures::TapeFileLocation::TapeFileLocation() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapeFileLocation::~TapeFileLocation() throw() {
+cta::common::dataStructures::TapeFileLocation::~TapeFileLocation() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::TapeFileLocation::allFieldsSet() const {
+bool cta::common::dataStructures::TapeFileLocation::allFieldsSet() const {
   return m_blockIdSet
       && m_fSeqSet
       && m_vidSet;
@@ -46,7 +46,7 @@ bool cta::dataStructures::TapeFileLocation::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setBlockId
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeFileLocation::setBlockId(const uint64_t blockId) {
+void cta::common::dataStructures::TapeFileLocation::setBlockId(const uint64_t blockId) {
   m_blockId = blockId;
   m_blockIdSet = true;
 }
@@ -54,7 +54,7 @@ void cta::dataStructures::TapeFileLocation::setBlockId(const uint64_t blockId) {
 //------------------------------------------------------------------------------
 // getBlockId
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::TapeFileLocation::getBlockId() const {
+uint64_t cta::common::dataStructures::TapeFileLocation::getBlockId() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
   }
@@ -64,7 +64,7 @@ uint64_t cta::dataStructures::TapeFileLocation::getBlockId() const {
 //------------------------------------------------------------------------------
 // setFSeq
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeFileLocation::setFSeq(const uint64_t fSeq) {
+void cta::common::dataStructures::TapeFileLocation::setFSeq(const uint64_t fSeq) {
   m_fSeq = fSeq;
   m_fSeqSet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::TapeFileLocation::setFSeq(const uint64_t fSeq) {
 //------------------------------------------------------------------------------
 // getFSeq
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::TapeFileLocation::getFSeq() const {
+uint64_t cta::common::dataStructures::TapeFileLocation::getFSeq() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
   }
@@ -82,7 +82,7 @@ uint64_t cta::dataStructures::TapeFileLocation::getFSeq() const {
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeFileLocation::setVid(const std::string &vid) {
+void cta::common::dataStructures::TapeFileLocation::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -90,7 +90,7 @@ void cta::dataStructures::TapeFileLocation::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::TapeFileLocation::getVid() const {
+std::string cta::common::dataStructures::TapeFileLocation::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
   }

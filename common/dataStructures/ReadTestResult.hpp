@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class ReadTestResult {
@@ -100,4 +101,5 @@ private:
 }; // class ReadTestResult
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapePool::TapePool() {  
+cta::common::dataStructures::TapePool::TapePool() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_lastModificationLogSet = false;
@@ -33,13 +33,13 @@ cta::dataStructures::TapePool::TapePool() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapePool::~TapePool() throw() {
+cta::common::dataStructures::TapePool::~TapePool() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::TapePool::allFieldsSet() const {
+bool cta::common::dataStructures::TapePool::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_lastModificationLogSet
@@ -50,7 +50,7 @@ bool cta::dataStructures::TapePool::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapePool::setComment(const std::string &comment) {
+void cta::common::dataStructures::TapePool::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -58,7 +58,7 @@ void cta::dataStructures::TapePool::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::TapePool::getComment() const {
+std::string cta::common::dataStructures::TapePool::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }
@@ -68,7 +68,7 @@ std::string cta::dataStructures::TapePool::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapePool::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::TapePool::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -76,7 +76,7 @@ void cta::dataStructures::TapePool::setCreationLog(const cta::dataStructures::En
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::TapePool::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::TapePool::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }
@@ -86,7 +86,7 @@ cta::dataStructures::EntryLog cta::dataStructures::TapePool::getCreationLog() co
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapePool::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::TapePool::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -94,7 +94,7 @@ void cta::dataStructures::TapePool::setLastModificationLog(const cta::dataStruct
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::TapePool::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::TapePool::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }
@@ -104,7 +104,7 @@ cta::dataStructures::EntryLog cta::dataStructures::TapePool::getLastModification
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapePool::setName(const std::string &name) {
+void cta::common::dataStructures::TapePool::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -112,7 +112,7 @@ void cta::dataStructures::TapePool::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::TapePool::getName() const {
+std::string cta::common::dataStructures::TapePool::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }
@@ -122,7 +122,7 @@ std::string cta::dataStructures::TapePool::getName() const {
 //------------------------------------------------------------------------------
 // setNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapePool::setNbPartialTapes(const uint32_t nbPartialTapes) {
+void cta::common::dataStructures::TapePool::setNbPartialTapes(const uint32_t nbPartialTapes) {
   m_nbPartialTapes = nbPartialTapes;
   m_nbPartialTapesSet = true;
 }
@@ -130,7 +130,7 @@ void cta::dataStructures::TapePool::setNbPartialTapes(const uint32_t nbPartialTa
 //------------------------------------------------------------------------------
 // getNbPartialTapes
 //------------------------------------------------------------------------------
-uint32_t cta::dataStructures::TapePool::getNbPartialTapes() const {
+uint32_t cta::common::dataStructures::TapePool::getNbPartialTapes() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }

@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData::DRData() {  
+cta::common::dataStructures::DRData::DRData() {  
   m_drBlobSet = false;
   m_drGroupSet = false;
   m_drInstanceSet = false;
@@ -33,13 +33,13 @@ cta::dataStructures::DRData::DRData() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData::~DRData() throw() {
+cta::common::dataStructures::DRData::~DRData() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::DRData::allFieldsSet() const {
+bool cta::common::dataStructures::DRData::allFieldsSet() const {
   return m_drBlobSet
       && m_drGroupSet
       && m_drInstanceSet
@@ -50,7 +50,7 @@ bool cta::dataStructures::DRData::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setDrBlob
 //------------------------------------------------------------------------------
-void cta::dataStructures::DRData::setDrBlob(const std::string &drBlob) {
+void cta::common::dataStructures::DRData::setDrBlob(const std::string &drBlob) {
   m_drBlob = drBlob;
   m_drBlobSet = true;
 }
@@ -58,7 +58,7 @@ void cta::dataStructures::DRData::setDrBlob(const std::string &drBlob) {
 //------------------------------------------------------------------------------
 // getDrBlob
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::DRData::getDrBlob() const {
+std::string cta::common::dataStructures::DRData::getDrBlob() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
   }
@@ -68,7 +68,7 @@ std::string cta::dataStructures::DRData::getDrBlob() const {
 //------------------------------------------------------------------------------
 // setDrGroup
 //------------------------------------------------------------------------------
-void cta::dataStructures::DRData::setDrGroup(const std::string &drGroup) {
+void cta::common::dataStructures::DRData::setDrGroup(const std::string &drGroup) {
   m_drGroup = drGroup;
   m_drGroupSet = true;
 }
@@ -76,7 +76,7 @@ void cta::dataStructures::DRData::setDrGroup(const std::string &drGroup) {
 //------------------------------------------------------------------------------
 // getDrGroup
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::DRData::getDrGroup() const {
+std::string cta::common::dataStructures::DRData::getDrGroup() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
   }
@@ -86,7 +86,7 @@ std::string cta::dataStructures::DRData::getDrGroup() const {
 //------------------------------------------------------------------------------
 // setDrInstance
 //------------------------------------------------------------------------------
-void cta::dataStructures::DRData::setDrInstance(const std::string &drInstance) {
+void cta::common::dataStructures::DRData::setDrInstance(const std::string &drInstance) {
   m_drInstance = drInstance;
   m_drInstanceSet = true;
 }
@@ -94,7 +94,7 @@ void cta::dataStructures::DRData::setDrInstance(const std::string &drInstance) {
 //------------------------------------------------------------------------------
 // getDrInstance
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::DRData::getDrInstance() const {
+std::string cta::common::dataStructures::DRData::getDrInstance() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
   }
@@ -104,7 +104,7 @@ std::string cta::dataStructures::DRData::getDrInstance() const {
 //------------------------------------------------------------------------------
 // setDrOwner
 //------------------------------------------------------------------------------
-void cta::dataStructures::DRData::setDrOwner(const std::string &drOwner) {
+void cta::common::dataStructures::DRData::setDrOwner(const std::string &drOwner) {
   m_drOwner = drOwner;
   m_drOwnerSet = true;
 }
@@ -112,7 +112,7 @@ void cta::dataStructures::DRData::setDrOwner(const std::string &drOwner) {
 //------------------------------------------------------------------------------
 // getDrOwner
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::DRData::getDrOwner() const {
+std::string cta::common::dataStructures::DRData::getDrOwner() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
   }
@@ -122,7 +122,7 @@ std::string cta::dataStructures::DRData::getDrOwner() const {
 //------------------------------------------------------------------------------
 // setDrPath
 //------------------------------------------------------------------------------
-void cta::dataStructures::DRData::setDrPath(const std::string &drPath) {
+void cta::common::dataStructures::DRData::setDrPath(const std::string &drPath) {
   m_drPath = drPath;
   m_drPathSet = true;
 }
@@ -130,7 +130,7 @@ void cta::dataStructures::DRData::setDrPath(const std::string &drPath) {
 //------------------------------------------------------------------------------
 // getDrPath
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::DRData::getDrPath() const {
+std::string cta::common::dataStructures::DRData::getDrPath() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
   }

@@ -26,6 +26,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class LogicalLibrary {
@@ -45,11 +46,11 @@ public:
   void setComment(const std::string &comment);
   std::string getComment() const;
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
-  void setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog);
-  cta::dataStructures::EntryLog getLastModificationLog() const;
+  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
+  cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
   void setName(const std::string &name);
   std::string getName() const;
@@ -65,10 +66,10 @@ private:
   std::string m_comment;
   bool m_commentSet;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
-  cta::dataStructures::EntryLog m_lastModificationLog;
+  cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
   std::string m_name;
@@ -77,4 +78,5 @@ private:
 }; // class LogicalLibrary
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

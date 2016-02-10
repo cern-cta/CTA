@@ -19,10 +19,12 @@
 #pragma once
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 enum VerifyType {
   complete,
   partial
 };
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

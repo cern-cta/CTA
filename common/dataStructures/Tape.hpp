@@ -26,6 +26,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class Tape {
@@ -51,8 +52,8 @@ public:
   void setComment(const std::string &comment);
   std::string getComment() const;
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
   void setDataOnTapeInBytes(const uint64_t dataOnTapeInBytes);
   uint64_t getDataOnTapeInBytes() const;
@@ -66,8 +67,8 @@ public:
   void setLastFSeq(const uint64_t lastFSeq);
   uint64_t getLastFSeq() const;
 
-  void setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog);
-  cta::dataStructures::EntryLog getLastModificationLog() const;
+  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
+  cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
   void setLogicalLibraryName(const std::string &logicalLibraryName);
   std::string getLogicalLibraryName() const;
@@ -95,7 +96,7 @@ private:
   std::string m_comment;
   bool m_commentSet;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
   uint64_t m_dataOnTapeInBytes;
@@ -110,7 +111,7 @@ private:
   uint64_t m_lastFSeq;
   bool m_lastFSeqSet;
 
-  cta::dataStructures::EntryLog m_lastModificationLog;
+  cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
   std::string m_logicalLibraryName;
@@ -125,4 +126,5 @@ private:
 }; // class Tape
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

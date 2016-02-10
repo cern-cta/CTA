@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class WriteTestResult {
@@ -100,4 +101,5 @@ private:
 }; // class WriteTestResult
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

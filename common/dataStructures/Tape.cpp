@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Tape::Tape() {  
+cta::common::dataStructures::Tape::Tape() {  
   m_busySet = false;
   m_capacityInBytesSet = false;
   m_commentSet = false;
@@ -40,13 +40,13 @@ cta::dataStructures::Tape::Tape() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Tape::~Tape() throw() {
+cta::common::dataStructures::Tape::~Tape() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Tape::allFieldsSet() const {
+bool cta::common::dataStructures::Tape::allFieldsSet() const {
   return m_busySet
       && m_capacityInBytesSet
       && m_commentSet
@@ -64,7 +64,7 @@ bool cta::dataStructures::Tape::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setBusy
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setBusy(const bool busy) {
+void cta::common::dataStructures::Tape::setBusy(const bool busy) {
   m_busy = busy;
   m_busySet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::Tape::setBusy(const bool busy) {
 //------------------------------------------------------------------------------
 // getBusy
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Tape::getBusy() const {
+bool cta::common::dataStructures::Tape::getBusy() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -82,7 +82,7 @@ bool cta::dataStructures::Tape::getBusy() const {
 //------------------------------------------------------------------------------
 // setCapacityInBytes
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setCapacityInBytes(const uint64_t capacityInBytes) {
+void cta::common::dataStructures::Tape::setCapacityInBytes(const uint64_t capacityInBytes) {
   m_capacityInBytes = capacityInBytes;
   m_capacityInBytesSet = true;
 }
@@ -90,7 +90,7 @@ void cta::dataStructures::Tape::setCapacityInBytes(const uint64_t capacityInByte
 //------------------------------------------------------------------------------
 // getCapacityInBytes
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::Tape::getCapacityInBytes() const {
+uint64_t cta::common::dataStructures::Tape::getCapacityInBytes() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -100,7 +100,7 @@ uint64_t cta::dataStructures::Tape::getCapacityInBytes() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setComment(const std::string &comment) {
+void cta::common::dataStructures::Tape::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -108,7 +108,7 @@ void cta::dataStructures::Tape::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Tape::getComment() const {
+std::string cta::common::dataStructures::Tape::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -118,7 +118,7 @@ std::string cta::dataStructures::Tape::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::Tape::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -126,7 +126,7 @@ void cta::dataStructures::Tape::setCreationLog(const cta::dataStructures::EntryL
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::Tape::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::Tape::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -136,7 +136,7 @@ cta::dataStructures::EntryLog cta::dataStructures::Tape::getCreationLog() const 
 //------------------------------------------------------------------------------
 // setDataOnTapeInBytes
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setDataOnTapeInBytes(const uint64_t dataOnTapeInBytes) {
+void cta::common::dataStructures::Tape::setDataOnTapeInBytes(const uint64_t dataOnTapeInBytes) {
   m_dataOnTapeInBytes = dataOnTapeInBytes;
   m_dataOnTapeInBytesSet = true;
 }
@@ -144,7 +144,7 @@ void cta::dataStructures::Tape::setDataOnTapeInBytes(const uint64_t dataOnTapeIn
 //------------------------------------------------------------------------------
 // getDataOnTapeInBytes
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::Tape::getDataOnTapeInBytes() const {
+uint64_t cta::common::dataStructures::Tape::getDataOnTapeInBytes() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -154,7 +154,7 @@ uint64_t cta::dataStructures::Tape::getDataOnTapeInBytes() const {
 //------------------------------------------------------------------------------
 // setDisabled
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setDisabled(const bool disabled) {
+void cta::common::dataStructures::Tape::setDisabled(const bool disabled) {
   m_disabled = disabled;
   m_disabledSet = true;
 }
@@ -162,7 +162,7 @@ void cta::dataStructures::Tape::setDisabled(const bool disabled) {
 //------------------------------------------------------------------------------
 // getDisabled
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Tape::getDisabled() const {
+bool cta::common::dataStructures::Tape::getDisabled() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -172,7 +172,7 @@ bool cta::dataStructures::Tape::getDisabled() const {
 //------------------------------------------------------------------------------
 // setFull
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setFull(const bool full) {
+void cta::common::dataStructures::Tape::setFull(const bool full) {
   m_full = full;
   m_fullSet = true;
 }
@@ -180,7 +180,7 @@ void cta::dataStructures::Tape::setFull(const bool full) {
 //------------------------------------------------------------------------------
 // getFull
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Tape::getFull() const {
+bool cta::common::dataStructures::Tape::getFull() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -190,7 +190,7 @@ bool cta::dataStructures::Tape::getFull() const {
 //------------------------------------------------------------------------------
 // setLastFSeq
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setLastFSeq(const uint64_t lastFSeq) {
+void cta::common::dataStructures::Tape::setLastFSeq(const uint64_t lastFSeq) {
   m_lastFSeq = lastFSeq;
   m_lastFSeqSet = true;
 }
@@ -198,7 +198,7 @@ void cta::dataStructures::Tape::setLastFSeq(const uint64_t lastFSeq) {
 //------------------------------------------------------------------------------
 // getLastFSeq
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::Tape::getLastFSeq() const {
+uint64_t cta::common::dataStructures::Tape::getLastFSeq() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -208,7 +208,7 @@ uint64_t cta::dataStructures::Tape::getLastFSeq() const {
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::Tape::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -216,7 +216,7 @@ void cta::dataStructures::Tape::setLastModificationLog(const cta::dataStructures
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::Tape::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::Tape::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -226,7 +226,7 @@ cta::dataStructures::EntryLog cta::dataStructures::Tape::getLastModificationLog(
 //------------------------------------------------------------------------------
 // setLogicalLibraryName
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setLogicalLibraryName(const std::string &logicalLibraryName) {
+void cta::common::dataStructures::Tape::setLogicalLibraryName(const std::string &logicalLibraryName) {
   m_logicalLibraryName = logicalLibraryName;
   m_logicalLibraryNameSet = true;
 }
@@ -234,7 +234,7 @@ void cta::dataStructures::Tape::setLogicalLibraryName(const std::string &logical
 //------------------------------------------------------------------------------
 // getLogicalLibraryName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Tape::getLogicalLibraryName() const {
+std::string cta::common::dataStructures::Tape::getLogicalLibraryName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -244,7 +244,7 @@ std::string cta::dataStructures::Tape::getLogicalLibraryName() const {
 //------------------------------------------------------------------------------
 // setTapePoolName
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setTapePoolName(const std::string &tapePoolName) {
+void cta::common::dataStructures::Tape::setTapePoolName(const std::string &tapePoolName) {
   m_tapePoolName = tapePoolName;
   m_tapePoolNameSet = true;
 }
@@ -252,7 +252,7 @@ void cta::dataStructures::Tape::setTapePoolName(const std::string &tapePoolName)
 //------------------------------------------------------------------------------
 // getTapePoolName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Tape::getTapePoolName() const {
+std::string cta::common::dataStructures::Tape::getTapePoolName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }
@@ -262,7 +262,7 @@ std::string cta::dataStructures::Tape::getTapePoolName() const {
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::Tape::setVid(const std::string &vid) {
+void cta::common::dataStructures::Tape::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -270,7 +270,7 @@ void cta::dataStructures::Tape::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Tape::getVid() const {
+std::string cta::common::dataStructures::Tape::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Tape have been set!");
   }

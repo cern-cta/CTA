@@ -26,6 +26,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class UserGroup {
@@ -57,11 +58,11 @@ public:
   void setComment(const std::string &comment);
   std::string getComment() const;
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
-  void setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog);
-  cta::dataStructures::EntryLog getLastModificationLog() const;
+  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
+  cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
   void setMaxDrivesAllowed(const uint16_t maxDrivesAllowed);
   uint16_t getMaxDrivesAllowed() const;
@@ -104,10 +105,10 @@ private:
   std::string m_comment;
   bool m_commentSet;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
-  cta::dataStructures::EntryLog m_lastModificationLog;
+  cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
   uint16_t m_maxDrivesAllowed;
@@ -131,4 +132,5 @@ private:
 }; // class UserGroup
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

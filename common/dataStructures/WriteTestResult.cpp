@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::WriteTestResult::WriteTestResult() {  
+cta::common::dataStructures::WriteTestResult::WriteTestResult() {  
   m_checksumsSet = false;
   m_driveNameSet = false;
   m_errorsSet = false;
@@ -36,13 +36,13 @@ cta::dataStructures::WriteTestResult::WriteTestResult() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::WriteTestResult::~WriteTestResult() throw() {
+cta::common::dataStructures::WriteTestResult::~WriteTestResult() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::WriteTestResult::allFieldsSet() const {
+bool cta::common::dataStructures::WriteTestResult::allFieldsSet() const {
   return m_checksumsSet
       && m_driveNameSet
       && m_errorsSet
@@ -56,7 +56,7 @@ bool cta::dataStructures::WriteTestResult::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setChecksums
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setChecksums(const std::map<int,std::pair<std::string,std::string>> &checksums) {
+void cta::common::dataStructures::WriteTestResult::setChecksums(const std::map<int,std::pair<std::string,std::string>> &checksums) {
   m_checksums = checksums;
   m_checksumsSet = true;
 }
@@ -64,7 +64,7 @@ void cta::dataStructures::WriteTestResult::setChecksums(const std::map<int,std::
 //------------------------------------------------------------------------------
 // getChecksums
 //------------------------------------------------------------------------------
-std::map<int,std::pair<std::string,std::string>> cta::dataStructures::WriteTestResult::getChecksums() const {
+std::map<int,std::pair<std::string,std::string>> cta::common::dataStructures::WriteTestResult::getChecksums() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -74,7 +74,7 @@ std::map<int,std::pair<std::string,std::string>> cta::dataStructures::WriteTestR
 //------------------------------------------------------------------------------
 // setDriveName
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setDriveName(const std::string &driveName) {
+void cta::common::dataStructures::WriteTestResult::setDriveName(const std::string &driveName) {
   m_driveName = driveName;
   m_driveNameSet = true;
 }
@@ -82,7 +82,7 @@ void cta::dataStructures::WriteTestResult::setDriveName(const std::string &drive
 //------------------------------------------------------------------------------
 // getDriveName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::WriteTestResult::getDriveName() const {
+std::string cta::common::dataStructures::WriteTestResult::getDriveName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -92,7 +92,7 @@ std::string cta::dataStructures::WriteTestResult::getDriveName() const {
 //------------------------------------------------------------------------------
 // setErrors
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setErrors(const std::map<int,std::string> &errors) {
+void cta::common::dataStructures::WriteTestResult::setErrors(const std::map<int,std::string> &errors) {
   m_errors = errors;
   m_errorsSet = true;
 }
@@ -100,7 +100,7 @@ void cta::dataStructures::WriteTestResult::setErrors(const std::map<int,std::str
 //------------------------------------------------------------------------------
 // getErrors
 //------------------------------------------------------------------------------
-std::map<int,std::string> cta::dataStructures::WriteTestResult::getErrors() const {
+std::map<int,std::string> cta::common::dataStructures::WriteTestResult::getErrors() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -110,7 +110,7 @@ std::map<int,std::string> cta::dataStructures::WriteTestResult::getErrors() cons
 //------------------------------------------------------------------------------
 // setNoOfFilesWritten
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setNoOfFilesWritten(const uint64_t noOfFilesWritten) {
+void cta::common::dataStructures::WriteTestResult::setNoOfFilesWritten(const uint64_t noOfFilesWritten) {
   m_noOfFilesWritten = noOfFilesWritten;
   m_noOfFilesWrittenSet = true;
 }
@@ -118,7 +118,7 @@ void cta::dataStructures::WriteTestResult::setNoOfFilesWritten(const uint64_t no
 //------------------------------------------------------------------------------
 // getNoOfFilesWritten
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::WriteTestResult::getNoOfFilesWritten() const {
+uint64_t cta::common::dataStructures::WriteTestResult::getNoOfFilesWritten() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -128,7 +128,7 @@ uint64_t cta::dataStructures::WriteTestResult::getNoOfFilesWritten() const {
 //------------------------------------------------------------------------------
 // setTotalBytesWritten
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setTotalBytesWritten(const uint64_t totalBytesWritten) {
+void cta::common::dataStructures::WriteTestResult::setTotalBytesWritten(const uint64_t totalBytesWritten) {
   m_totalBytesWritten = totalBytesWritten;
   m_totalBytesWrittenSet = true;
 }
@@ -136,7 +136,7 @@ void cta::dataStructures::WriteTestResult::setTotalBytesWritten(const uint64_t t
 //------------------------------------------------------------------------------
 // getTotalBytesWritten
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::WriteTestResult::getTotalBytesWritten() const {
+uint64_t cta::common::dataStructures::WriteTestResult::getTotalBytesWritten() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -146,7 +146,7 @@ uint64_t cta::dataStructures::WriteTestResult::getTotalBytesWritten() const {
 //------------------------------------------------------------------------------
 // setTotalFilesWritten
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setTotalFilesWritten(const uint64_t totalFilesWritten) {
+void cta::common::dataStructures::WriteTestResult::setTotalFilesWritten(const uint64_t totalFilesWritten) {
   m_totalFilesWritten = totalFilesWritten;
   m_totalFilesWrittenSet = true;
 }
@@ -154,7 +154,7 @@ void cta::dataStructures::WriteTestResult::setTotalFilesWritten(const uint64_t t
 //------------------------------------------------------------------------------
 // getTotalFilesWritten
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::WriteTestResult::getTotalFilesWritten() const {
+uint64_t cta::common::dataStructures::WriteTestResult::getTotalFilesWritten() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -164,7 +164,7 @@ uint64_t cta::dataStructures::WriteTestResult::getTotalFilesWritten() const {
 //------------------------------------------------------------------------------
 // setTotalTimeInSeconds
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setTotalTimeInSeconds(const uint64_t totalTimeInSeconds) {
+void cta::common::dataStructures::WriteTestResult::setTotalTimeInSeconds(const uint64_t totalTimeInSeconds) {
   m_totalTimeInSeconds = totalTimeInSeconds;
   m_totalTimeInSecondsSet = true;
 }
@@ -172,7 +172,7 @@ void cta::dataStructures::WriteTestResult::setTotalTimeInSeconds(const uint64_t 
 //------------------------------------------------------------------------------
 // getTotalTimeInSeconds
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::WriteTestResult::getTotalTimeInSeconds() const {
+uint64_t cta::common::dataStructures::WriteTestResult::getTotalTimeInSeconds() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
@@ -182,7 +182,7 @@ uint64_t cta::dataStructures::WriteTestResult::getTotalTimeInSeconds() const {
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::WriteTestResult::setVid(const std::string &vid) {
+void cta::common::dataStructures::WriteTestResult::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -190,7 +190,7 @@ void cta::dataStructures::WriteTestResult::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::WriteTestResult::getVid() const {
+std::string cta::common::dataStructures::WriteTestResult::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }

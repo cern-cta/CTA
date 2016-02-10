@@ -568,7 +568,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
-  
   cta::Scheduler scheduler(mockNs, osdb, eosNs);
 
   castor::tape::System::realWrapper sysWrapper;

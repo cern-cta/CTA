@@ -26,6 +26,7 @@
 #include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class EntryLog {
@@ -48,8 +49,8 @@ public:
   void setTime(const time_t &time);
   time_t getTime() const;
 
-  void setUser(const cta::dataStructures::UserIdentity &user);
-  cta::dataStructures::UserIdentity getUser() const;
+  void setUser(const cta::common::dataStructures::UserIdentity &user);
+  cta::common::dataStructures::UserIdentity getUser() const;
   
 
 private:
@@ -65,10 +66,11 @@ private:
   time_t m_time;
   bool m_timeSet;
 
-  cta::dataStructures::UserIdentity m_user;
+  cta::common::dataStructures::UserIdentity m_user;
   bool m_userSet;
 
 }; // class EntryLog
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

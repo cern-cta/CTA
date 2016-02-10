@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::LogicalLibrary::LogicalLibrary() {  
+cta::common::dataStructures::LogicalLibrary::LogicalLibrary() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_lastModificationLogSet = false;
@@ -32,13 +32,13 @@ cta::dataStructures::LogicalLibrary::LogicalLibrary() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::LogicalLibrary::~LogicalLibrary() throw() {
+cta::common::dataStructures::LogicalLibrary::~LogicalLibrary() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::LogicalLibrary::allFieldsSet() const {
+bool cta::common::dataStructures::LogicalLibrary::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_lastModificationLogSet
@@ -48,7 +48,7 @@ bool cta::dataStructures::LogicalLibrary::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::LogicalLibrary::setComment(const std::string &comment) {
+void cta::common::dataStructures::LogicalLibrary::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -56,7 +56,7 @@ void cta::dataStructures::LogicalLibrary::setComment(const std::string &comment)
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::LogicalLibrary::getComment() const {
+std::string cta::common::dataStructures::LogicalLibrary::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the LogicalLibrary have been set!");
   }
@@ -66,7 +66,7 @@ std::string cta::dataStructures::LogicalLibrary::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::LogicalLibrary::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::LogicalLibrary::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -74,7 +74,7 @@ void cta::dataStructures::LogicalLibrary::setCreationLog(const cta::dataStructur
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::LogicalLibrary::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::LogicalLibrary::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the LogicalLibrary have been set!");
   }
@@ -84,7 +84,7 @@ cta::dataStructures::EntryLog cta::dataStructures::LogicalLibrary::getCreationLo
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::LogicalLibrary::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::LogicalLibrary::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -92,7 +92,7 @@ void cta::dataStructures::LogicalLibrary::setLastModificationLog(const cta::data
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::LogicalLibrary::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::LogicalLibrary::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the LogicalLibrary have been set!");
   }
@@ -102,7 +102,7 @@ cta::dataStructures::EntryLog cta::dataStructures::LogicalLibrary::getLastModifi
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::LogicalLibrary::setName(const std::string &name) {
+void cta::common::dataStructures::LogicalLibrary::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -110,7 +110,7 @@ void cta::dataStructures::LogicalLibrary::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::LogicalLibrary::getName() const {
+std::string cta::common::dataStructures::LogicalLibrary::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the LogicalLibrary have been set!");
   }

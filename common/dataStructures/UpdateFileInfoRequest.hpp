@@ -27,6 +27,7 @@
 #include "common/dataStructures/Requester.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class UpdateFileInfoRequest {
@@ -46,11 +47,11 @@ public:
   void setArchiveFileID(const std::string &archiveFileID);
   std::string getArchiveFileID() const;
 
-  void setDrData(const cta::dataStructures::DRData &drData);
-  cta::dataStructures::DRData getDrData() const;
+  void setDrData(const cta::common::dataStructures::DRData &drData);
+  cta::common::dataStructures::DRData getDrData() const;
 
-  void setRequester(const cta::dataStructures::Requester &requester);
-  cta::dataStructures::Requester getRequester() const;
+  void setRequester(const cta::common::dataStructures::Requester &requester);
+  cta::common::dataStructures::Requester getRequester() const;
 
   void setStorageClass(const std::string &storageClass);
   std::string getStorageClass() const;
@@ -66,10 +67,10 @@ private:
   std::string m_archiveFileID;
   bool m_archiveFileIDSet;
 
-  cta::dataStructures::DRData m_drData;
+  cta::common::dataStructures::DRData m_drData;
   bool m_drDataSet;
 
-  cta::dataStructures::Requester m_requester;
+  cta::common::dataStructures::Requester m_requester;
   bool m_requesterSet;
 
   std::string m_storageClass;
@@ -78,4 +79,5 @@ private:
 }; // class UpdateFileInfoRequest
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

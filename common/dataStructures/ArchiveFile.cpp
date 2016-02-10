@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ArchiveFile::ArchiveFile() {  
+cta::common::dataStructures::ArchiveFile::ArchiveFile() {  
   m_archiveFileIDSet = false;
   m_checksumTypeSet = false;
   m_checksumValueSet = false;
@@ -36,13 +36,13 @@ cta::dataStructures::ArchiveFile::ArchiveFile() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ArchiveFile::~ArchiveFile() throw() {
+cta::common::dataStructures::ArchiveFile::~ArchiveFile() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::ArchiveFile::allFieldsSet() const {
+bool cta::common::dataStructures::ArchiveFile::allFieldsSet() const {
   return m_archiveFileIDSet
       && m_checksumTypeSet
       && m_checksumValueSet
@@ -56,7 +56,7 @@ bool cta::dataStructures::ArchiveFile::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchiveFileID
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setArchiveFileID(const std::string &archiveFileID) {
+void cta::common::dataStructures::ArchiveFile::setArchiveFileID(const std::string &archiveFileID) {
   m_archiveFileID = archiveFileID;
   m_archiveFileIDSet = true;
 }
@@ -64,7 +64,7 @@ void cta::dataStructures::ArchiveFile::setArchiveFileID(const std::string &archi
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveFile::getArchiveFileID() const {
+std::string cta::common::dataStructures::ArchiveFile::getArchiveFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -74,7 +74,7 @@ std::string cta::dataStructures::ArchiveFile::getArchiveFileID() const {
 //------------------------------------------------------------------------------
 // setChecksumType
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setChecksumType(const std::string &checksumType) {
+void cta::common::dataStructures::ArchiveFile::setChecksumType(const std::string &checksumType) {
   m_checksumType = checksumType;
   m_checksumTypeSet = true;
 }
@@ -82,7 +82,7 @@ void cta::dataStructures::ArchiveFile::setChecksumType(const std::string &checks
 //------------------------------------------------------------------------------
 // getChecksumType
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveFile::getChecksumType() const {
+std::string cta::common::dataStructures::ArchiveFile::getChecksumType() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -92,7 +92,7 @@ std::string cta::dataStructures::ArchiveFile::getChecksumType() const {
 //------------------------------------------------------------------------------
 // setChecksumValue
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setChecksumValue(const std::string &checksumValue) {
+void cta::common::dataStructures::ArchiveFile::setChecksumValue(const std::string &checksumValue) {
   m_checksumValue = checksumValue;
   m_checksumValueSet = true;
 }
@@ -100,7 +100,7 @@ void cta::dataStructures::ArchiveFile::setChecksumValue(const std::string &check
 //------------------------------------------------------------------------------
 // getChecksumValue
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveFile::getChecksumValue() const {
+std::string cta::common::dataStructures::ArchiveFile::getChecksumValue() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -110,7 +110,7 @@ std::string cta::dataStructures::ArchiveFile::getChecksumValue() const {
 //------------------------------------------------------------------------------
 // setDrData
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setDrData(const cta::dataStructures::DRData &drData) {
+void cta::common::dataStructures::ArchiveFile::setDrData(const cta::common::dataStructures::DRData &drData) {
   m_drData = drData;
   m_drDataSet = true;
 }
@@ -118,7 +118,7 @@ void cta::dataStructures::ArchiveFile::setDrData(const cta::dataStructures::DRDa
 //------------------------------------------------------------------------------
 // getDrData
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData cta::dataStructures::ArchiveFile::getDrData() const {
+cta::common::dataStructures::DRData cta::common::dataStructures::ArchiveFile::getDrData() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -128,7 +128,7 @@ cta::dataStructures::DRData cta::dataStructures::ArchiveFile::getDrData() const 
 //------------------------------------------------------------------------------
 // setEosFileID
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setEosFileID(const std::string &eosFileID) {
+void cta::common::dataStructures::ArchiveFile::setEosFileID(const std::string &eosFileID) {
   m_eosFileID = eosFileID;
   m_eosFileIDSet = true;
 }
@@ -136,7 +136,7 @@ void cta::dataStructures::ArchiveFile::setEosFileID(const std::string &eosFileID
 //------------------------------------------------------------------------------
 // getEosFileID
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveFile::getEosFileID() const {
+std::string cta::common::dataStructures::ArchiveFile::getEosFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -146,7 +146,7 @@ std::string cta::dataStructures::ArchiveFile::getEosFileID() const {
 //------------------------------------------------------------------------------
 // setFileSize
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setFileSize(const uint64_t fileSize) {
+void cta::common::dataStructures::ArchiveFile::setFileSize(const uint64_t fileSize) {
   m_fileSize = fileSize;
   m_fileSizeSet = true;
 }
@@ -154,7 +154,7 @@ void cta::dataStructures::ArchiveFile::setFileSize(const uint64_t fileSize) {
 //------------------------------------------------------------------------------
 // getFileSize
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::ArchiveFile::getFileSize() const {
+uint64_t cta::common::dataStructures::ArchiveFile::getFileSize() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -164,7 +164,7 @@ uint64_t cta::dataStructures::ArchiveFile::getFileSize() const {
 //------------------------------------------------------------------------------
 // setStorageClass
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setStorageClass(const std::string &storageClass) {
+void cta::common::dataStructures::ArchiveFile::setStorageClass(const std::string &storageClass) {
   m_storageClass = storageClass;
   m_storageClassSet = true;
 }
@@ -172,7 +172,7 @@ void cta::dataStructures::ArchiveFile::setStorageClass(const std::string &storag
 //------------------------------------------------------------------------------
 // getStorageClass
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveFile::getStorageClass() const {
+std::string cta::common::dataStructures::ArchiveFile::getStorageClass() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
@@ -182,7 +182,7 @@ std::string cta::dataStructures::ArchiveFile::getStorageClass() const {
 //------------------------------------------------------------------------------
 // setTapeCopies
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveFile::setTapeCopies(const std::map<int,cta::dataStructures::TapeFileLocation> &tapeCopies) {
+void cta::common::dataStructures::ArchiveFile::setTapeCopies(const std::map<int,cta::common::dataStructures::TapeFileLocation> &tapeCopies) {
   m_tapeCopies = tapeCopies;
   m_tapeCopiesSet = true;
 }
@@ -190,7 +190,7 @@ void cta::dataStructures::ArchiveFile::setTapeCopies(const std::map<int,cta::dat
 //------------------------------------------------------------------------------
 // getTapeCopies
 //------------------------------------------------------------------------------
-std::map<int,cta::dataStructures::TapeFileLocation> cta::dataStructures::ArchiveFile::getTapeCopies() const {
+std::map<int,cta::common::dataStructures::TapeFileLocation> cta::common::dataStructures::ArchiveFile::getTapeCopies() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }

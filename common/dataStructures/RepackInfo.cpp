@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RepackInfo::RepackInfo() {  
+cta::common::dataStructures::RepackInfo::RepackInfo() {  
   m_creationLogSet = false;
   m_errorsSet = false;
   m_filesFailedSet = false;
@@ -40,13 +40,13 @@ cta::dataStructures::RepackInfo::RepackInfo() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RepackInfo::~RepackInfo() throw() {
+cta::common::dataStructures::RepackInfo::~RepackInfo() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::RepackInfo::allFieldsSet() const {
+bool cta::common::dataStructures::RepackInfo::allFieldsSet() const {
   return m_creationLogSet
       && m_errorsSet
       && m_filesFailedSet
@@ -64,7 +64,7 @@ bool cta::dataStructures::RepackInfo::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::RepackInfo::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::RepackInfo::setCreationLog(const cta::dataStructures::
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::RepackInfo::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::RepackInfo::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -82,7 +82,7 @@ cta::dataStructures::EntryLog cta::dataStructures::RepackInfo::getCreationLog() 
 //------------------------------------------------------------------------------
 // setErrors
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setErrors(const std::map<int,std::string> &errors) {
+void cta::common::dataStructures::RepackInfo::setErrors(const std::map<int,std::string> &errors) {
   m_errors = errors;
   m_errorsSet = true;
 }
@@ -90,7 +90,7 @@ void cta::dataStructures::RepackInfo::setErrors(const std::map<int,std::string> 
 //------------------------------------------------------------------------------
 // getErrors
 //------------------------------------------------------------------------------
-std::map<int,std::string> cta::dataStructures::RepackInfo::getErrors() const {
+std::map<int,std::string> cta::common::dataStructures::RepackInfo::getErrors() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -100,7 +100,7 @@ std::map<int,std::string> cta::dataStructures::RepackInfo::getErrors() const {
 //------------------------------------------------------------------------------
 // setFilesFailed
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setFilesFailed(const uint64_t filesFailed) {
+void cta::common::dataStructures::RepackInfo::setFilesFailed(const uint64_t filesFailed) {
   m_filesFailed = filesFailed;
   m_filesFailedSet = true;
 }
@@ -108,7 +108,7 @@ void cta::dataStructures::RepackInfo::setFilesFailed(const uint64_t filesFailed)
 //------------------------------------------------------------------------------
 // getFilesFailed
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getFilesFailed() const {
+uint64_t cta::common::dataStructures::RepackInfo::getFilesFailed() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -118,7 +118,7 @@ uint64_t cta::dataStructures::RepackInfo::getFilesFailed() const {
 //------------------------------------------------------------------------------
 // setFilesMigrated
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setFilesMigrated(const uint64_t filesMigrated) {
+void cta::common::dataStructures::RepackInfo::setFilesMigrated(const uint64_t filesMigrated) {
   m_filesMigrated = filesMigrated;
   m_filesMigratedSet = true;
 }
@@ -126,7 +126,7 @@ void cta::dataStructures::RepackInfo::setFilesMigrated(const uint64_t filesMigra
 //------------------------------------------------------------------------------
 // getFilesMigrated
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getFilesMigrated() const {
+uint64_t cta::common::dataStructures::RepackInfo::getFilesMigrated() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -136,7 +136,7 @@ uint64_t cta::dataStructures::RepackInfo::getFilesMigrated() const {
 //------------------------------------------------------------------------------
 // setFilesToMigr
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setFilesToMigr(const uint64_t filesToMigr) {
+void cta::common::dataStructures::RepackInfo::setFilesToMigr(const uint64_t filesToMigr) {
   m_filesToMigr = filesToMigr;
   m_filesToMigrSet = true;
 }
@@ -144,7 +144,7 @@ void cta::dataStructures::RepackInfo::setFilesToMigr(const uint64_t filesToMigr)
 //------------------------------------------------------------------------------
 // getFilesToMigr
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getFilesToMigr() const {
+uint64_t cta::common::dataStructures::RepackInfo::getFilesToMigr() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -154,7 +154,7 @@ uint64_t cta::dataStructures::RepackInfo::getFilesToMigr() const {
 //------------------------------------------------------------------------------
 // setFilesToRecall
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setFilesToRecall(const uint64_t filesToRecall) {
+void cta::common::dataStructures::RepackInfo::setFilesToRecall(const uint64_t filesToRecall) {
   m_filesToRecall = filesToRecall;
   m_filesToRecallSet = true;
 }
@@ -162,7 +162,7 @@ void cta::dataStructures::RepackInfo::setFilesToRecall(const uint64_t filesToRec
 //------------------------------------------------------------------------------
 // getFilesToRecall
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getFilesToRecall() const {
+uint64_t cta::common::dataStructures::RepackInfo::getFilesToRecall() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -172,7 +172,7 @@ uint64_t cta::dataStructures::RepackInfo::getFilesToRecall() const {
 //------------------------------------------------------------------------------
 // setRepackStatus
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setRepackStatus(const std::string &repackStatus) {
+void cta::common::dataStructures::RepackInfo::setRepackStatus(const std::string &repackStatus) {
   m_repackStatus = repackStatus;
   m_repackStatusSet = true;
 }
@@ -180,7 +180,7 @@ void cta::dataStructures::RepackInfo::setRepackStatus(const std::string &repackS
 //------------------------------------------------------------------------------
 // getRepackStatus
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RepackInfo::getRepackStatus() const {
+std::string cta::common::dataStructures::RepackInfo::getRepackStatus() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -190,7 +190,7 @@ std::string cta::dataStructures::RepackInfo::getRepackStatus() const {
 //------------------------------------------------------------------------------
 // setRepackType
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setRepackType(const cta::dataStructures::RepackType &repackType) {
+void cta::common::dataStructures::RepackInfo::setRepackType(const cta::common::dataStructures::RepackType &repackType) {
   m_repackType = repackType;
   m_repackTypeSet = true;
 }
@@ -198,7 +198,7 @@ void cta::dataStructures::RepackInfo::setRepackType(const cta::dataStructures::R
 //------------------------------------------------------------------------------
 // getRepackType
 //------------------------------------------------------------------------------
-cta::dataStructures::RepackType cta::dataStructures::RepackInfo::getRepackType() const {
+cta::common::dataStructures::RepackType cta::common::dataStructures::RepackInfo::getRepackType() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -208,7 +208,7 @@ cta::dataStructures::RepackType cta::dataStructures::RepackInfo::getRepackType()
 //------------------------------------------------------------------------------
 // setTag
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setTag(const std::string &tag) {
+void cta::common::dataStructures::RepackInfo::setTag(const std::string &tag) {
   m_tag = tag;
   m_tagSet = true;
 }
@@ -216,7 +216,7 @@ void cta::dataStructures::RepackInfo::setTag(const std::string &tag) {
 //------------------------------------------------------------------------------
 // getTag
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RepackInfo::getTag() const {
+std::string cta::common::dataStructures::RepackInfo::getTag() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -226,7 +226,7 @@ std::string cta::dataStructures::RepackInfo::getTag() const {
 //------------------------------------------------------------------------------
 // setTotalFiles
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setTotalFiles(const uint64_t totalFiles) {
+void cta::common::dataStructures::RepackInfo::setTotalFiles(const uint64_t totalFiles) {
   m_totalFiles = totalFiles;
   m_totalFilesSet = true;
 }
@@ -234,7 +234,7 @@ void cta::dataStructures::RepackInfo::setTotalFiles(const uint64_t totalFiles) {
 //------------------------------------------------------------------------------
 // getTotalFiles
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getTotalFiles() const {
+uint64_t cta::common::dataStructures::RepackInfo::getTotalFiles() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -244,7 +244,7 @@ uint64_t cta::dataStructures::RepackInfo::getTotalFiles() const {
 //------------------------------------------------------------------------------
 // setTotalSize
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setTotalSize(const uint64_t totalSize) {
+void cta::common::dataStructures::RepackInfo::setTotalSize(const uint64_t totalSize) {
   m_totalSize = totalSize;
   m_totalSizeSet = true;
 }
@@ -252,7 +252,7 @@ void cta::dataStructures::RepackInfo::setTotalSize(const uint64_t totalSize) {
 //------------------------------------------------------------------------------
 // getTotalSize
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::RepackInfo::getTotalSize() const {
+uint64_t cta::common::dataStructures::RepackInfo::getTotalSize() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }
@@ -262,7 +262,7 @@ uint64_t cta::dataStructures::RepackInfo::getTotalSize() const {
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::RepackInfo::setVid(const std::string &vid) {
+void cta::common::dataStructures::RepackInfo::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -270,7 +270,7 @@ void cta::dataStructures::RepackInfo::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::RepackInfo::getVid() const {
+std::string cta::common::dataStructures::RepackInfo::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
   }

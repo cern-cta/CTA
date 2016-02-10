@@ -19,6 +19,7 @@
 #pragma once
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 enum DriveStatus {
   Down,
@@ -32,5 +33,6 @@ enum DriveStatus {
   CleaningUp
 };
 } // namespace dataStructures
+} // namespace common
 } // namespace cta
 

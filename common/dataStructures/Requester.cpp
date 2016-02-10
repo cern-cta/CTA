@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester::Requester() {  
+cta::common::dataStructures::Requester::Requester() {  
   m_groupNameSet = false;
   m_userNameSet = false;
 }
@@ -30,13 +30,13 @@ cta::dataStructures::Requester::Requester() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester::~Requester() throw() {
+cta::common::dataStructures::Requester::~Requester() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Requester::allFieldsSet() const {
+bool cta::common::dataStructures::Requester::allFieldsSet() const {
   return m_groupNameSet
       && m_userNameSet;
 }
@@ -44,7 +44,7 @@ bool cta::dataStructures::Requester::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setGroupName
 //------------------------------------------------------------------------------
-void cta::dataStructures::Requester::setGroupName(const std::string &groupName) {
+void cta::common::dataStructures::Requester::setGroupName(const std::string &groupName) {
   m_groupName = groupName;
   m_groupNameSet = true;
 }
@@ -52,7 +52,7 @@ void cta::dataStructures::Requester::setGroupName(const std::string &groupName) 
 //------------------------------------------------------------------------------
 // getGroupName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Requester::getGroupName() const {
+std::string cta::common::dataStructures::Requester::getGroupName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Requester have been set!");
   }
@@ -62,7 +62,7 @@ std::string cta::dataStructures::Requester::getGroupName() const {
 //------------------------------------------------------------------------------
 // setUserName
 //------------------------------------------------------------------------------
-void cta::dataStructures::Requester::setUserName(const std::string &userName) {
+void cta::common::dataStructures::Requester::setUserName(const std::string &userName) {
   m_userName = userName;
   m_userNameSet = true;
 }
@@ -70,7 +70,7 @@ void cta::dataStructures::Requester::setUserName(const std::string &userName) {
 //------------------------------------------------------------------------------
 // getUserName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Requester::getUserName() const {
+std::string cta::common::dataStructures::Requester::getUserName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Requester have been set!");
   }

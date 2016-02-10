@@ -27,6 +27,7 @@
 #include "common/dataStructures/MountType.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class DriveState {
@@ -64,8 +65,8 @@ public:
   void setLogicalLibrary(const std::string &logicalLibrary);
   std::string getLogicalLibrary() const;
 
-  void setMountType(const cta::dataStructures::MountType &mountType);
-  cta::dataStructures::MountType getMountType() const;
+  void setMountType(const cta::common::dataStructures::MountType &mountType);
+  cta::common::dataStructures::MountType getMountType() const;
 
   void setName(const std::string &name);
   std::string getName() const;
@@ -76,8 +77,8 @@ public:
   void setSessionStartTime(const time_t &sessionStartTime);
   time_t getSessionStartTime() const;
 
-  void setStatus(const cta::dataStructures::DriveStatus &status);
-  cta::dataStructures::DriveStatus getStatus() const;
+  void setStatus(const cta::common::dataStructures::DriveStatus &status);
+  cta::common::dataStructures::DriveStatus getStatus() const;
   
 
 private:
@@ -108,7 +109,7 @@ private:
   std::string m_logicalLibrary;
   bool m_logicalLibrarySet;
 
-  cta::dataStructures::MountType m_mountType;
+  cta::common::dataStructures::MountType m_mountType;
   bool m_mountTypeSet;
 
   std::string m_name;
@@ -120,10 +121,11 @@ private:
   time_t m_sessionStartTime;
   bool m_sessionStartTimeSet;
 
-  cta::dataStructures::DriveStatus m_status;
+  cta::common::dataStructures::DriveStatus m_status;
   bool m_statusSet;
 
 }; // class DriveState
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

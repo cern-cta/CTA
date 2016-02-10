@@ -27,6 +27,7 @@
 #include "common/dataStructures/VerifyType.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class VerifyInfo {
@@ -43,8 +44,8 @@ public:
    */
   ~VerifyInfo() throw();
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
   void setFilesFailed(const uint64_t filesFailed);
   uint64_t getFilesFailed() const;
@@ -67,8 +68,8 @@ public:
   void setVerifyStatus(const std::string &verifyStatus);
   std::string getVerifyStatus() const;
 
-  void setVerifyType(const cta::dataStructures::VerifyType &verifyType);
-  cta::dataStructures::VerifyType getVerifyType() const;
+  void setVerifyType(const cta::common::dataStructures::VerifyType &verifyType);
+  cta::common::dataStructures::VerifyType getVerifyType() const;
 
   void setVid(const std::string &vid);
   std::string getVid() const;
@@ -81,7 +82,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
   uint64_t m_filesFailed;
@@ -105,7 +106,7 @@ private:
   std::string m_verifyStatus;
   bool m_verifyStatusSet;
 
-  cta::dataStructures::VerifyType m_verifyType;
+  cta::common::dataStructures::VerifyType m_verifyType;
   bool m_verifyTypeSet;
 
   std::string m_vid;
@@ -114,4 +115,5 @@ private:
 }; // class VerifyInfo
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

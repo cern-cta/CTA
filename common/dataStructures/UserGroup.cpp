@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::UserGroup::UserGroup() {  
+cta::common::dataStructures::UserGroup::UserGroup() {  
   m_archive_minBytesQueuedSet = false;
   m_archive_minFilesQueuedSet = false;
   m_archive_minRequestAgeSet = false;
@@ -41,13 +41,13 @@ cta::dataStructures::UserGroup::UserGroup() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::UserGroup::~UserGroup() throw() {
+cta::common::dataStructures::UserGroup::~UserGroup() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::UserGroup::allFieldsSet() const {
+bool cta::common::dataStructures::UserGroup::allFieldsSet() const {
   return m_archive_minBytesQueuedSet
       && m_archive_minFilesQueuedSet
       && m_archive_minRequestAgeSet
@@ -66,7 +66,7 @@ bool cta::dataStructures::UserGroup::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchive_minBytesQueued
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setArchive_minBytesQueued(const uint64_t archive_minBytesQueued) {
+void cta::common::dataStructures::UserGroup::setArchive_minBytesQueued(const uint64_t archive_minBytesQueued) {
   m_archive_minBytesQueued = archive_minBytesQueued;
   m_archive_minBytesQueuedSet = true;
 }
@@ -74,7 +74,7 @@ void cta::dataStructures::UserGroup::setArchive_minBytesQueued(const uint64_t ar
 //------------------------------------------------------------------------------
 // getArchive_minBytesQueued
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getArchive_minBytesQueued() const {
+uint64_t cta::common::dataStructures::UserGroup::getArchive_minBytesQueued() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -84,7 +84,7 @@ uint64_t cta::dataStructures::UserGroup::getArchive_minBytesQueued() const {
 //------------------------------------------------------------------------------
 // setArchive_minFilesQueued
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setArchive_minFilesQueued(const uint64_t archive_minFilesQueued) {
+void cta::common::dataStructures::UserGroup::setArchive_minFilesQueued(const uint64_t archive_minFilesQueued) {
   m_archive_minFilesQueued = archive_minFilesQueued;
   m_archive_minFilesQueuedSet = true;
 }
@@ -92,7 +92,7 @@ void cta::dataStructures::UserGroup::setArchive_minFilesQueued(const uint64_t ar
 //------------------------------------------------------------------------------
 // getArchive_minFilesQueued
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getArchive_minFilesQueued() const {
+uint64_t cta::common::dataStructures::UserGroup::getArchive_minFilesQueued() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -102,7 +102,7 @@ uint64_t cta::dataStructures::UserGroup::getArchive_minFilesQueued() const {
 //------------------------------------------------------------------------------
 // setArchive_minRequestAge
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setArchive_minRequestAge(const uint64_t archive_minRequestAge) {
+void cta::common::dataStructures::UserGroup::setArchive_minRequestAge(const uint64_t archive_minRequestAge) {
   m_archive_minRequestAge = archive_minRequestAge;
   m_archive_minRequestAgeSet = true;
 }
@@ -110,7 +110,7 @@ void cta::dataStructures::UserGroup::setArchive_minRequestAge(const uint64_t arc
 //------------------------------------------------------------------------------
 // getArchive_minRequestAge
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getArchive_minRequestAge() const {
+uint64_t cta::common::dataStructures::UserGroup::getArchive_minRequestAge() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -120,7 +120,7 @@ uint64_t cta::dataStructures::UserGroup::getArchive_minRequestAge() const {
 //------------------------------------------------------------------------------
 // setArchive_priority
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setArchive_priority(const uint32_t archive_priority) {
+void cta::common::dataStructures::UserGroup::setArchive_priority(const uint32_t archive_priority) {
   m_archive_priority = archive_priority;
   m_archive_prioritySet = true;
 }
@@ -128,7 +128,7 @@ void cta::dataStructures::UserGroup::setArchive_priority(const uint32_t archive_
 //------------------------------------------------------------------------------
 // getArchive_priority
 //------------------------------------------------------------------------------
-uint32_t cta::dataStructures::UserGroup::getArchive_priority() const {
+uint32_t cta::common::dataStructures::UserGroup::getArchive_priority() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -138,7 +138,7 @@ uint32_t cta::dataStructures::UserGroup::getArchive_priority() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setComment(const std::string &comment) {
+void cta::common::dataStructures::UserGroup::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -146,7 +146,7 @@ void cta::dataStructures::UserGroup::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::UserGroup::getComment() const {
+std::string cta::common::dataStructures::UserGroup::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -156,7 +156,7 @@ std::string cta::dataStructures::UserGroup::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::UserGroup::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -164,7 +164,7 @@ void cta::dataStructures::UserGroup::setCreationLog(const cta::dataStructures::E
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::UserGroup::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::UserGroup::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -174,7 +174,7 @@ cta::dataStructures::EntryLog cta::dataStructures::UserGroup::getCreationLog() c
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::UserGroup::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -182,7 +182,7 @@ void cta::dataStructures::UserGroup::setLastModificationLog(const cta::dataStruc
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::UserGroup::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::UserGroup::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -192,7 +192,7 @@ cta::dataStructures::EntryLog cta::dataStructures::UserGroup::getLastModificatio
 //------------------------------------------------------------------------------
 // setMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setMaxDrivesAllowed(const uint16_t maxDrivesAllowed) {
+void cta::common::dataStructures::UserGroup::setMaxDrivesAllowed(const uint16_t maxDrivesAllowed) {
   m_maxDrivesAllowed = maxDrivesAllowed;
   m_maxDrivesAllowedSet = true;
 }
@@ -200,7 +200,7 @@ void cta::dataStructures::UserGroup::setMaxDrivesAllowed(const uint16_t maxDrive
 //------------------------------------------------------------------------------
 // getMaxDrivesAllowed
 //------------------------------------------------------------------------------
-uint16_t cta::dataStructures::UserGroup::getMaxDrivesAllowed() const {
+uint16_t cta::common::dataStructures::UserGroup::getMaxDrivesAllowed() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -210,7 +210,7 @@ uint16_t cta::dataStructures::UserGroup::getMaxDrivesAllowed() const {
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setName(const std::string &name) {
+void cta::common::dataStructures::UserGroup::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -218,7 +218,7 @@ void cta::dataStructures::UserGroup::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::UserGroup::getName() const {
+std::string cta::common::dataStructures::UserGroup::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -228,7 +228,7 @@ std::string cta::dataStructures::UserGroup::getName() const {
 //------------------------------------------------------------------------------
 // setRetrieve_minBytesQueued
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setRetrieve_minBytesQueued(const uint64_t retrieve_minBytesQueued) {
+void cta::common::dataStructures::UserGroup::setRetrieve_minBytesQueued(const uint64_t retrieve_minBytesQueued) {
   m_retrieve_minBytesQueued = retrieve_minBytesQueued;
   m_retrieve_minBytesQueuedSet = true;
 }
@@ -236,7 +236,7 @@ void cta::dataStructures::UserGroup::setRetrieve_minBytesQueued(const uint64_t r
 //------------------------------------------------------------------------------
 // getRetrieve_minBytesQueued
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getRetrieve_minBytesQueued() const {
+uint64_t cta::common::dataStructures::UserGroup::getRetrieve_minBytesQueued() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -246,7 +246,7 @@ uint64_t cta::dataStructures::UserGroup::getRetrieve_minBytesQueued() const {
 //------------------------------------------------------------------------------
 // setRetrieve_minFilesQueued
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setRetrieve_minFilesQueued(const uint64_t retrieve_minFilesQueued) {
+void cta::common::dataStructures::UserGroup::setRetrieve_minFilesQueued(const uint64_t retrieve_minFilesQueued) {
   m_retrieve_minFilesQueued = retrieve_minFilesQueued;
   m_retrieve_minFilesQueuedSet = true;
 }
@@ -254,7 +254,7 @@ void cta::dataStructures::UserGroup::setRetrieve_minFilesQueued(const uint64_t r
 //------------------------------------------------------------------------------
 // getRetrieve_minFilesQueued
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getRetrieve_minFilesQueued() const {
+uint64_t cta::common::dataStructures::UserGroup::getRetrieve_minFilesQueued() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -264,7 +264,7 @@ uint64_t cta::dataStructures::UserGroup::getRetrieve_minFilesQueued() const {
 //------------------------------------------------------------------------------
 // setRetrieve_minRequestAge
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setRetrieve_minRequestAge(const uint64_t retrieve_minRequestAge) {
+void cta::common::dataStructures::UserGroup::setRetrieve_minRequestAge(const uint64_t retrieve_minRequestAge) {
   m_retrieve_minRequestAge = retrieve_minRequestAge;
   m_retrieve_minRequestAgeSet = true;
 }
@@ -272,7 +272,7 @@ void cta::dataStructures::UserGroup::setRetrieve_minRequestAge(const uint64_t re
 //------------------------------------------------------------------------------
 // getRetrieve_minRequestAge
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::UserGroup::getRetrieve_minRequestAge() const {
+uint64_t cta::common::dataStructures::UserGroup::getRetrieve_minRequestAge() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -282,7 +282,7 @@ uint64_t cta::dataStructures::UserGroup::getRetrieve_minRequestAge() const {
 //------------------------------------------------------------------------------
 // setRetrieve_priority
 //------------------------------------------------------------------------------
-void cta::dataStructures::UserGroup::setRetrieve_priority(const uint32_t retrieve_priority) {
+void cta::common::dataStructures::UserGroup::setRetrieve_priority(const uint32_t retrieve_priority) {
   m_retrieve_priority = retrieve_priority;
   m_retrieve_prioritySet = true;
 }
@@ -290,7 +290,7 @@ void cta::dataStructures::UserGroup::setRetrieve_priority(const uint32_t retriev
 //------------------------------------------------------------------------------
 // getRetrieve_priority
 //------------------------------------------------------------------------------
-uint32_t cta::dataStructures::UserGroup::getRetrieve_priority() const {
+uint32_t cta::common::dataStructures::UserGroup::getRetrieve_priority() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }

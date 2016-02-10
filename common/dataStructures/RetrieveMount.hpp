@@ -20,15 +20,18 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/RetrieveJob.hpp"
+#include "common/dataStructures/TapeMount.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
-class RetrieveMount {
+class RetrieveMount : public TapeMount {
 
 public:
 
@@ -42,9 +45,10 @@ public:
    */
   ~RetrieveMount() throw();
 
-  void setJobs(const std::list<cta::dataStructures::RetrieveJob> &jobs);
-  std::list<cta::dataStructures::RetrieveJob> getJobs() const;
+  std::unique_ptr<cta::common::dataStructures::RetrieveJob> getNextJob();
   
+  void diskComplete();
+  void tapeComplete();
 
 private:
   
@@ -53,10 +57,8 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::list<cta::dataStructures::RetrieveJob> m_jobs;
-  bool m_jobsSet;
-
 }; // class RetrieveMount
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

@@ -27,6 +27,7 @@
 #include "common/dataStructures/Requester.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class ArchiveRequest {
@@ -55,8 +56,8 @@ public:
   void setDiskpoolThroughput(const std::string &diskpoolThroughput);
   std::string getDiskpoolThroughput() const;
 
-  void setDrData(const cta::dataStructures::DRData &drData);
-  cta::dataStructures::DRData getDrData() const;
+  void setDrData(const cta::common::dataStructures::DRData &drData);
+  cta::common::dataStructures::DRData getDrData() const;
 
   void setEosFileID(const std::string &eosFileID);
   std::string getEosFileID() const;
@@ -64,8 +65,8 @@ public:
   void setFileSize(const uint64_t fileSize);
   uint64_t getFileSize() const;
 
-  void setRequester(const cta::dataStructures::Requester &requester);
-  cta::dataStructures::Requester getRequester() const;
+  void setRequester(const cta::common::dataStructures::Requester &requester);
+  cta::common::dataStructures::Requester getRequester() const;
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL() const;
@@ -93,7 +94,7 @@ private:
   std::string m_diskpoolThroughput;
   bool m_diskpoolThroughputSet;
 
-  cta::dataStructures::DRData m_drData;
+  cta::common::dataStructures::DRData m_drData;
   bool m_drDataSet;
 
   std::string m_eosFileID;
@@ -102,7 +103,7 @@ private:
   uint64_t m_fileSize;
   bool m_fileSizeSet;
 
-  cta::dataStructures::Requester m_requester;
+  cta::common::dataStructures::Requester m_requester;
   bool m_requesterSet;
 
   std::string m_srcURL;
@@ -114,4 +115,5 @@ private:
 }; // class ArchiveRequest
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

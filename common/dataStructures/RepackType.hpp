@@ -19,6 +19,7 @@
 #pragma once
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 enum RepackType {
   expandandrepack,
@@ -26,4 +27,5 @@ enum RepackType {
   justrepack
 };
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

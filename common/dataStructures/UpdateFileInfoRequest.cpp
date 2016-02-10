@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest() {  
+cta::common::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest() {  
   m_archiveFileIDSet = false;
   m_drDataSet = false;
   m_requesterSet = false;
@@ -32,13 +32,13 @@ cta::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::UpdateFileInfoRequest::~UpdateFileInfoRequest() throw() {
+cta::common::dataStructures::UpdateFileInfoRequest::~UpdateFileInfoRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::UpdateFileInfoRequest::allFieldsSet() const {
+bool cta::common::dataStructures::UpdateFileInfoRequest::allFieldsSet() const {
   return m_archiveFileIDSet
       && m_drDataSet
       && m_requesterSet
@@ -48,7 +48,7 @@ bool cta::dataStructures::UpdateFileInfoRequest::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchiveFileID
 //------------------------------------------------------------------------------
-void cta::dataStructures::UpdateFileInfoRequest::setArchiveFileID(const std::string &archiveFileID) {
+void cta::common::dataStructures::UpdateFileInfoRequest::setArchiveFileID(const std::string &archiveFileID) {
   m_archiveFileID = archiveFileID;
   m_archiveFileIDSet = true;
 }
@@ -56,7 +56,7 @@ void cta::dataStructures::UpdateFileInfoRequest::setArchiveFileID(const std::str
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::UpdateFileInfoRequest::getArchiveFileID() const {
+std::string cta::common::dataStructures::UpdateFileInfoRequest::getArchiveFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }
@@ -66,7 +66,7 @@ std::string cta::dataStructures::UpdateFileInfoRequest::getArchiveFileID() const
 //------------------------------------------------------------------------------
 // setDrData
 //------------------------------------------------------------------------------
-void cta::dataStructures::UpdateFileInfoRequest::setDrData(const cta::dataStructures::DRData &drData) {
+void cta::common::dataStructures::UpdateFileInfoRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
   m_drData = drData;
   m_drDataSet = true;
 }
@@ -74,7 +74,7 @@ void cta::dataStructures::UpdateFileInfoRequest::setDrData(const cta::dataStruct
 //------------------------------------------------------------------------------
 // getDrData
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData cta::dataStructures::UpdateFileInfoRequest::getDrData() const {
+cta::common::dataStructures::DRData cta::common::dataStructures::UpdateFileInfoRequest::getDrData() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }
@@ -84,7 +84,7 @@ cta::dataStructures::DRData cta::dataStructures::UpdateFileInfoRequest::getDrDat
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::dataStructures::UpdateFileInfoRequest::setRequester(const cta::dataStructures::Requester &requester) {
+void cta::common::dataStructures::UpdateFileInfoRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -92,7 +92,7 @@ void cta::dataStructures::UpdateFileInfoRequest::setRequester(const cta::dataStr
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester cta::dataStructures::UpdateFileInfoRequest::getRequester() const {
+cta::common::dataStructures::Requester cta::common::dataStructures::UpdateFileInfoRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }
@@ -102,7 +102,7 @@ cta::dataStructures::Requester cta::dataStructures::UpdateFileInfoRequest::getRe
 //------------------------------------------------------------------------------
 // setStorageClass
 //------------------------------------------------------------------------------
-void cta::dataStructures::UpdateFileInfoRequest::setStorageClass(const std::string &storageClass) {
+void cta::common::dataStructures::UpdateFileInfoRequest::setStorageClass(const std::string &storageClass) {
   m_storageClass = storageClass;
   m_storageClassSet = true;
 }
@@ -110,7 +110,7 @@ void cta::dataStructures::UpdateFileInfoRequest::setStorageClass(const std::stri
 //------------------------------------------------------------------------------
 // getStorageClass
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::UpdateFileInfoRequest::getStorageClass() const {
+std::string cta::common::dataStructures::UpdateFileInfoRequest::getStorageClass() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }

@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::User::User() {  
+cta::common::dataStructures::User::User() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_groupSet = false;
@@ -34,13 +34,13 @@ cta::dataStructures::User::User() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::User::~User() throw() {
+cta::common::dataStructures::User::~User() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::User::allFieldsSet() const {
+bool cta::common::dataStructures::User::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_groupSet
@@ -52,7 +52,7 @@ bool cta::dataStructures::User::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setComment(const std::string &comment) {
+void cta::common::dataStructures::User::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -60,7 +60,7 @@ void cta::dataStructures::User::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::User::getComment() const {
+std::string cta::common::dataStructures::User::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
@@ -70,7 +70,7 @@ std::string cta::dataStructures::User::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::User::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -78,7 +78,7 @@ void cta::dataStructures::User::setCreationLog(const cta::dataStructures::EntryL
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::User::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::User::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
@@ -88,7 +88,7 @@ cta::dataStructures::EntryLog cta::dataStructures::User::getCreationLog() const 
 //------------------------------------------------------------------------------
 // setGroup
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setGroup(const std::string &group) {
+void cta::common::dataStructures::User::setGroup(const std::string &group) {
   m_group = group;
   m_groupSet = true;
 }
@@ -96,7 +96,7 @@ void cta::dataStructures::User::setGroup(const std::string &group) {
 //------------------------------------------------------------------------------
 // getGroup
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::User::getGroup() const {
+std::string cta::common::dataStructures::User::getGroup() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
@@ -106,7 +106,7 @@ std::string cta::dataStructures::User::getGroup() const {
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::User::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -114,7 +114,7 @@ void cta::dataStructures::User::setLastModificationLog(const cta::dataStructures
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::User::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::User::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
@@ -124,7 +124,7 @@ cta::dataStructures::EntryLog cta::dataStructures::User::getLastModificationLog(
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setName(const std::string &name) {
+void cta::common::dataStructures::User::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -132,7 +132,7 @@ void cta::dataStructures::User::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::User::getName() const {
+std::string cta::common::dataStructures::User::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
@@ -142,7 +142,7 @@ std::string cta::dataStructures::User::getName() const {
 //------------------------------------------------------------------------------
 // setUserGroupName
 //------------------------------------------------------------------------------
-void cta::dataStructures::User::setUserGroupName(const std::string &userGroupName) {
+void cta::common::dataStructures::User::setUserGroupName(const std::string &userGroupName) {
   m_userGroupName = userGroupName;
   m_userGroupNameSet = true;
 }
@@ -150,7 +150,7 @@ void cta::dataStructures::User::setUserGroupName(const std::string &userGroupNam
 //------------------------------------------------------------------------------
 // getUserGroupName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::User::getUserGroupName() const {
+std::string cta::common::dataStructures::User::getUserGroupName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }

@@ -22,37 +22,49 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveMount::RetrieveMount() {  
-  m_jobsSet = false;
+cta::common::dataStructures::RetrieveMount::RetrieveMount() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveMount::~RetrieveMount() throw() {
+cta::common::dataStructures::RetrieveMount::~RetrieveMount() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::RetrieveMount::allFieldsSet() const {
-  return m_jobsSet;
+bool cta::common::dataStructures::RetrieveMount::allFieldsSet() const {
+  return true;
 }
 
 //------------------------------------------------------------------------------
-// setJobs
+// getNextJob
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveMount::setJobs(const std::list<cta::dataStructures::RetrieveJob> &jobs) {
-  m_jobs = jobs;
-  m_jobsSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getJobs
-//------------------------------------------------------------------------------
-std::list<cta::dataStructures::RetrieveJob> cta::dataStructures::RetrieveMount::getJobs() const {
+std::unique_ptr<cta::common::dataStructures::RetrieveJob> cta::common::dataStructures::RetrieveMount::getNextJob() {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveMount have been set!");
   }
-  return m_jobs;
+  throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not implemented!");
+  return std::unique_ptr<cta::common::dataStructures::RetrieveJob>();
+}
+
+//------------------------------------------------------------------------------
+// diskComplete
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::RetrieveMount::diskComplete() {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveMount have been set!");
+  }
+  throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not implemented!");
+}
+
+//------------------------------------------------------------------------------
+// tapeComplete
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::RetrieveMount::tapeComplete() {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveMount have been set!");
+  }
+  throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not implemented!");
 }

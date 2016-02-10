@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::SecurityIdentity::SecurityIdentity() {  
+cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {  
   m_gidSet = false;
   m_hostSet = false;
   m_uidSet = false;
@@ -31,13 +31,13 @@ cta::dataStructures::SecurityIdentity::SecurityIdentity() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::SecurityIdentity::~SecurityIdentity() throw() {
+cta::common::dataStructures::SecurityIdentity::~SecurityIdentity() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::SecurityIdentity::allFieldsSet() const {
+bool cta::common::dataStructures::SecurityIdentity::allFieldsSet() const {
   return m_gidSet
       && m_hostSet
       && m_uidSet;
@@ -46,7 +46,7 @@ bool cta::dataStructures::SecurityIdentity::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setGid
 //------------------------------------------------------------------------------
-void cta::dataStructures::SecurityIdentity::setGid(const gid_t &gid) {
+void cta::common::dataStructures::SecurityIdentity::setGid(const gid_t &gid) {
   m_gid = gid;
   m_gidSet = true;
 }
@@ -54,7 +54,7 @@ void cta::dataStructures::SecurityIdentity::setGid(const gid_t &gid) {
 //------------------------------------------------------------------------------
 // getGid
 //------------------------------------------------------------------------------
-gid_t cta::dataStructures::SecurityIdentity::getGid() const {
+gid_t cta::common::dataStructures::SecurityIdentity::getGid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
   }
@@ -64,7 +64,7 @@ gid_t cta::dataStructures::SecurityIdentity::getGid() const {
 //------------------------------------------------------------------------------
 // setHost
 //------------------------------------------------------------------------------
-void cta::dataStructures::SecurityIdentity::setHost(const std::string &host) {
+void cta::common::dataStructures::SecurityIdentity::setHost(const std::string &host) {
   m_host = host;
   m_hostSet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::SecurityIdentity::setHost(const std::string &host) {
 //------------------------------------------------------------------------------
 // getHost
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::SecurityIdentity::getHost() const {
+std::string cta::common::dataStructures::SecurityIdentity::getHost() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
   }
@@ -82,7 +82,7 @@ std::string cta::dataStructures::SecurityIdentity::getHost() const {
 //------------------------------------------------------------------------------
 // setUid
 //------------------------------------------------------------------------------
-void cta::dataStructures::SecurityIdentity::setUid(const uid_t &uid) {
+void cta::common::dataStructures::SecurityIdentity::setUid(const uid_t &uid) {
   m_uid = uid;
   m_uidSet = true;
 }
@@ -90,7 +90,7 @@ void cta::dataStructures::SecurityIdentity::setUid(const uid_t &uid) {
 //------------------------------------------------------------------------------
 // getUid
 //------------------------------------------------------------------------------
-uid_t cta::dataStructures::SecurityIdentity::getUid() const {
+uid_t cta::common::dataStructures::SecurityIdentity::getUid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
   }

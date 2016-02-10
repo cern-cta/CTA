@@ -70,7 +70,7 @@ add_library(ctaTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
@@ -85,7 +85,7 @@ add_library(ctatapeserverdaemonutils SHARED
 add_library(ctatapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
   CatalogueTest.cpp
-  DataTransferSessionTest.cpp
+#  DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
@@ -103,5 +103,5 @@ target_link_libraries(ctatapeserverdaemonunittests
   ctamediachangerutils
   ctamessagesutils
   ctaserverutils
-  ctatapeserverdaemonutils
-  ctaschedulerutils)
+  ctatapeserverdaemonutils)
+  #ctaschedulerutils

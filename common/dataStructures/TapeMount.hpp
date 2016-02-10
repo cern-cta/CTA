@@ -26,6 +26,7 @@
 #include "common/dataStructures/MountType.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class TapeMount {
@@ -42,27 +43,28 @@ public:
    */
   ~TapeMount() throw();
 
-  void setId(const uint64_t id);
-  uint64_t getId() const;
+  virtual void setId(const uint64_t id);
+  virtual uint64_t getId() const;
 
-  void setMountType(const cta::dataStructures::MountType &mountType);
-  cta::dataStructures::MountType getMountType() const;
+  virtual void setMountType(const cta::common::dataStructures::MountType &mountType);
+  virtual cta::common::dataStructures::MountType getMountType() const;
 
-  void setVid(const std::string &vid);
-  std::string getVid() const;
+  virtual void setVid(const std::string &vid);
+  virtual std::string getVid() const;
   
+  virtual void abort();  
 
-private:
+protected:
   
   /**
    * @return true if all fields have been set, false otherwise
    */
-  bool allFieldsSet() const;
+  virtual bool allFieldsSet() const;
 
   uint64_t m_id;
   bool m_idSet;
 
-  cta::dataStructures::MountType m_mountType;
+  cta::common::dataStructures::MountType m_mountType;
   bool m_mountTypeSet;
 
   std::string m_vid;
@@ -71,4 +73,5 @@ private:
 }; // class TapeMount
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

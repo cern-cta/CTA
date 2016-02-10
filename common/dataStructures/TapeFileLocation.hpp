@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class TapeFileLocation {
@@ -70,4 +71,5 @@ private:
 }; // class TapeFileLocation
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

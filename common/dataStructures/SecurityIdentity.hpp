@@ -25,6 +25,7 @@
 
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class SecurityIdentity {
@@ -70,4 +71,5 @@ private:
 }; // class SecurityIdentity
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

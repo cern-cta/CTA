@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::AdminHost::AdminHost() {  
+cta::common::dataStructures::AdminHost::AdminHost() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_lastModificationLogSet = false;
@@ -32,13 +32,13 @@ cta::dataStructures::AdminHost::AdminHost() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::AdminHost::~AdminHost() throw() {
+cta::common::dataStructures::AdminHost::~AdminHost() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::AdminHost::allFieldsSet() const {
+bool cta::common::dataStructures::AdminHost::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_lastModificationLogSet
@@ -48,7 +48,7 @@ bool cta::dataStructures::AdminHost::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::AdminHost::setComment(const std::string &comment) {
+void cta::common::dataStructures::AdminHost::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -56,7 +56,7 @@ void cta::dataStructures::AdminHost::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::AdminHost::getComment() const {
+std::string cta::common::dataStructures::AdminHost::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
   }
@@ -66,7 +66,7 @@ std::string cta::dataStructures::AdminHost::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::AdminHost::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::AdminHost::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -74,7 +74,7 @@ void cta::dataStructures::AdminHost::setCreationLog(const cta::dataStructures::E
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::AdminHost::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::AdminHost::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
   }
@@ -84,7 +84,7 @@ cta::dataStructures::EntryLog cta::dataStructures::AdminHost::getCreationLog() c
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::AdminHost::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::AdminHost::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -92,7 +92,7 @@ void cta::dataStructures::AdminHost::setLastModificationLog(const cta::dataStruc
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::AdminHost::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::AdminHost::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
   }
@@ -102,7 +102,7 @@ cta::dataStructures::EntryLog cta::dataStructures::AdminHost::getLastModificatio
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::AdminHost::setName(const std::string &name) {
+void cta::common::dataStructures::AdminHost::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -110,7 +110,7 @@ void cta::dataStructures::AdminHost::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::AdminHost::getName() const {
+std::string cta::common::dataStructures::AdminHost::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
   }

@@ -27,6 +27,7 @@
 #include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
 class AdminUser {
@@ -46,14 +47,14 @@ public:
   void setComment(const std::string &comment);
   std::string getComment() const;
 
-  void setCreationLog(const cta::dataStructures::EntryLog &creationLog);
-  cta::dataStructures::EntryLog getCreationLog() const;
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
 
-  void setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog);
-  cta::dataStructures::EntryLog getLastModificationLog() const;
+  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
+  cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
-  void setUser(const cta::dataStructures::UserIdentity &user);
-  cta::dataStructures::UserIdentity getUser() const;
+  void setUser(const cta::common::dataStructures::UserIdentity &user);
+  cta::common::dataStructures::UserIdentity getUser() const;
   
 
 private:
@@ -66,16 +67,17 @@ private:
   std::string m_comment;
   bool m_commentSet;
 
-  cta::dataStructures::EntryLog m_creationLog;
+  cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
-  cta::dataStructures::EntryLog m_lastModificationLog;
+  cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
-  cta::dataStructures::UserIdentity m_user;
+  cta::common::dataStructures::UserIdentity m_user;
   bool m_userSet;
 
 }; // class AdminUser
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta

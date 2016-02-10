@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ArchiveRequest::ArchiveRequest() {  
+cta::common::dataStructures::ArchiveRequest::ArchiveRequest() {  
   m_checksumTypeSet = false;
   m_checksumValueSet = false;
   m_diskpoolNameSet = false;
@@ -38,13 +38,13 @@ cta::dataStructures::ArchiveRequest::ArchiveRequest() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::ArchiveRequest::~ArchiveRequest() throw() {
+cta::common::dataStructures::ArchiveRequest::~ArchiveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::ArchiveRequest::allFieldsSet() const {
+bool cta::common::dataStructures::ArchiveRequest::allFieldsSet() const {
   return m_checksumTypeSet
       && m_checksumValueSet
       && m_diskpoolNameSet
@@ -60,7 +60,7 @@ bool cta::dataStructures::ArchiveRequest::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setChecksumType
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setChecksumType(const std::string &checksumType) {
+void cta::common::dataStructures::ArchiveRequest::setChecksumType(const std::string &checksumType) {
   m_checksumType = checksumType;
   m_checksumTypeSet = true;
 }
@@ -68,7 +68,7 @@ void cta::dataStructures::ArchiveRequest::setChecksumType(const std::string &che
 //------------------------------------------------------------------------------
 // getChecksumType
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getChecksumType() const {
+std::string cta::common::dataStructures::ArchiveRequest::getChecksumType() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -78,7 +78,7 @@ std::string cta::dataStructures::ArchiveRequest::getChecksumType() const {
 //------------------------------------------------------------------------------
 // setChecksumValue
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setChecksumValue(const std::string &checksumValue) {
+void cta::common::dataStructures::ArchiveRequest::setChecksumValue(const std::string &checksumValue) {
   m_checksumValue = checksumValue;
   m_checksumValueSet = true;
 }
@@ -86,7 +86,7 @@ void cta::dataStructures::ArchiveRequest::setChecksumValue(const std::string &ch
 //------------------------------------------------------------------------------
 // getChecksumValue
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getChecksumValue() const {
+std::string cta::common::dataStructures::ArchiveRequest::getChecksumValue() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -96,7 +96,7 @@ std::string cta::dataStructures::ArchiveRequest::getChecksumValue() const {
 //------------------------------------------------------------------------------
 // setDiskpoolName
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setDiskpoolName(const std::string &diskpoolName) {
+void cta::common::dataStructures::ArchiveRequest::setDiskpoolName(const std::string &diskpoolName) {
   m_diskpoolName = diskpoolName;
   m_diskpoolNameSet = true;
 }
@@ -104,7 +104,7 @@ void cta::dataStructures::ArchiveRequest::setDiskpoolName(const std::string &dis
 //------------------------------------------------------------------------------
 // getDiskpoolName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getDiskpoolName() const {
+std::string cta::common::dataStructures::ArchiveRequest::getDiskpoolName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -114,7 +114,7 @@ std::string cta::dataStructures::ArchiveRequest::getDiskpoolName() const {
 //------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
+void cta::common::dataStructures::ArchiveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
   m_diskpoolThroughput = diskpoolThroughput;
   m_diskpoolThroughputSet = true;
 }
@@ -122,7 +122,7 @@ void cta::dataStructures::ArchiveRequest::setDiskpoolThroughput(const std::strin
 //------------------------------------------------------------------------------
 // getDiskpoolThroughput
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getDiskpoolThroughput() const {
+std::string cta::common::dataStructures::ArchiveRequest::getDiskpoolThroughput() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -132,7 +132,7 @@ std::string cta::dataStructures::ArchiveRequest::getDiskpoolThroughput() const {
 //------------------------------------------------------------------------------
 // setDrData
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setDrData(const cta::dataStructures::DRData &drData) {
+void cta::common::dataStructures::ArchiveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
   m_drData = drData;
   m_drDataSet = true;
 }
@@ -140,7 +140,7 @@ void cta::dataStructures::ArchiveRequest::setDrData(const cta::dataStructures::D
 //------------------------------------------------------------------------------
 // getDrData
 //------------------------------------------------------------------------------
-cta::dataStructures::DRData cta::dataStructures::ArchiveRequest::getDrData() const {
+cta::common::dataStructures::DRData cta::common::dataStructures::ArchiveRequest::getDrData() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -150,7 +150,7 @@ cta::dataStructures::DRData cta::dataStructures::ArchiveRequest::getDrData() con
 //------------------------------------------------------------------------------
 // setEosFileID
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setEosFileID(const std::string &eosFileID) {
+void cta::common::dataStructures::ArchiveRequest::setEosFileID(const std::string &eosFileID) {
   m_eosFileID = eosFileID;
   m_eosFileIDSet = true;
 }
@@ -158,7 +158,7 @@ void cta::dataStructures::ArchiveRequest::setEosFileID(const std::string &eosFil
 //------------------------------------------------------------------------------
 // getEosFileID
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getEosFileID() const {
+std::string cta::common::dataStructures::ArchiveRequest::getEosFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -168,7 +168,7 @@ std::string cta::dataStructures::ArchiveRequest::getEosFileID() const {
 //------------------------------------------------------------------------------
 // setFileSize
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setFileSize(const uint64_t fileSize) {
+void cta::common::dataStructures::ArchiveRequest::setFileSize(const uint64_t fileSize) {
   m_fileSize = fileSize;
   m_fileSizeSet = true;
 }
@@ -176,7 +176,7 @@ void cta::dataStructures::ArchiveRequest::setFileSize(const uint64_t fileSize) {
 //------------------------------------------------------------------------------
 // getFileSize
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::ArchiveRequest::getFileSize() const {
+uint64_t cta::common::dataStructures::ArchiveRequest::getFileSize() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -186,7 +186,7 @@ uint64_t cta::dataStructures::ArchiveRequest::getFileSize() const {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setRequester(const cta::dataStructures::Requester &requester) {
+void cta::common::dataStructures::ArchiveRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -194,7 +194,7 @@ void cta::dataStructures::ArchiveRequest::setRequester(const cta::dataStructures
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::dataStructures::Requester cta::dataStructures::ArchiveRequest::getRequester() const {
+cta::common::dataStructures::Requester cta::common::dataStructures::ArchiveRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -204,7 +204,7 @@ cta::dataStructures::Requester cta::dataStructures::ArchiveRequest::getRequester
 //------------------------------------------------------------------------------
 // setSrcURL
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setSrcURL(const std::string &srcURL) {
+void cta::common::dataStructures::ArchiveRequest::setSrcURL(const std::string &srcURL) {
   m_srcURL = srcURL;
   m_srcURLSet = true;
 }
@@ -212,7 +212,7 @@ void cta::dataStructures::ArchiveRequest::setSrcURL(const std::string &srcURL) {
 //------------------------------------------------------------------------------
 // getSrcURL
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getSrcURL() const {
+std::string cta::common::dataStructures::ArchiveRequest::getSrcURL() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
@@ -222,7 +222,7 @@ std::string cta::dataStructures::ArchiveRequest::getSrcURL() const {
 //------------------------------------------------------------------------------
 // setStorageClass
 //------------------------------------------------------------------------------
-void cta::dataStructures::ArchiveRequest::setStorageClass(const std::string &storageClass) {
+void cta::common::dataStructures::ArchiveRequest::setStorageClass(const std::string &storageClass) {
   m_storageClass = storageClass;
   m_storageClassSet = true;
 }
@@ -230,7 +230,7 @@ void cta::dataStructures::ArchiveRequest::setStorageClass(const std::string &sto
 //------------------------------------------------------------------------------
 // getStorageClass
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::ArchiveRequest::getStorageClass() const {
+std::string cta::common::dataStructures::ArchiveRequest::getStorageClass() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }

@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::StorageClass::StorageClass() {  
+cta::common::dataStructures::StorageClass::StorageClass() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_lastModificationLogSet = false;
@@ -33,13 +33,13 @@ cta::dataStructures::StorageClass::StorageClass() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::StorageClass::~StorageClass() throw() {
+cta::common::dataStructures::StorageClass::~StorageClass() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::StorageClass::allFieldsSet() const {
+bool cta::common::dataStructures::StorageClass::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_lastModificationLogSet
@@ -50,7 +50,7 @@ bool cta::dataStructures::StorageClass::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::StorageClass::setComment(const std::string &comment) {
+void cta::common::dataStructures::StorageClass::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -58,7 +58,7 @@ void cta::dataStructures::StorageClass::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::StorageClass::getComment() const {
+std::string cta::common::dataStructures::StorageClass::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }
@@ -68,7 +68,7 @@ std::string cta::dataStructures::StorageClass::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::StorageClass::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::StorageClass::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -76,7 +76,7 @@ void cta::dataStructures::StorageClass::setCreationLog(const cta::dataStructures
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::StorageClass::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::StorageClass::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }
@@ -86,7 +86,7 @@ cta::dataStructures::EntryLog cta::dataStructures::StorageClass::getCreationLog(
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::StorageClass::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::StorageClass::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -94,7 +94,7 @@ void cta::dataStructures::StorageClass::setLastModificationLog(const cta::dataSt
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::StorageClass::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::StorageClass::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }
@@ -104,7 +104,7 @@ cta::dataStructures::EntryLog cta::dataStructures::StorageClass::getLastModifica
 //------------------------------------------------------------------------------
 // setName
 //------------------------------------------------------------------------------
-void cta::dataStructures::StorageClass::setName(const std::string &name) {
+void cta::common::dataStructures::StorageClass::setName(const std::string &name) {
   m_name = name;
   m_nameSet = true;
 }
@@ -112,7 +112,7 @@ void cta::dataStructures::StorageClass::setName(const std::string &name) {
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::StorageClass::getName() const {
+std::string cta::common::dataStructures::StorageClass::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }
@@ -122,7 +122,7 @@ std::string cta::dataStructures::StorageClass::getName() const {
 //------------------------------------------------------------------------------
 // setNbCopies
 //------------------------------------------------------------------------------
-void cta::dataStructures::StorageClass::setNbCopies(const uint16_t nbCopies) {
+void cta::common::dataStructures::StorageClass::setNbCopies(const uint16_t nbCopies) {
   m_nbCopies = nbCopies;
   m_nbCopiesSet = true;
 }
@@ -130,7 +130,7 @@ void cta::dataStructures::StorageClass::setNbCopies(const uint16_t nbCopies) {
 //------------------------------------------------------------------------------
 // getNbCopies
 //------------------------------------------------------------------------------
-uint16_t cta::dataStructures::StorageClass::getNbCopies() const {
+uint16_t cta::common::dataStructures::StorageClass::getNbCopies() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }

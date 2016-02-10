@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapeMount::TapeMount() {  
+cta::common::dataStructures::TapeMount::TapeMount() {  
   m_idSet = false;
   m_mountTypeSet = false;
   m_vidSet = false;
@@ -31,13 +31,13 @@ cta::dataStructures::TapeMount::TapeMount() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::TapeMount::~TapeMount() throw() {
+cta::common::dataStructures::TapeMount::~TapeMount() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::TapeMount::allFieldsSet() const {
+bool cta::common::dataStructures::TapeMount::allFieldsSet() const {
   return m_idSet
       && m_mountTypeSet
       && m_vidSet;
@@ -46,7 +46,7 @@ bool cta::dataStructures::TapeMount::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeMount::setId(const uint64_t id) {
+void cta::common::dataStructures::TapeMount::setId(const uint64_t id) {
   m_id = id;
   m_idSet = true;
 }
@@ -54,7 +54,7 @@ void cta::dataStructures::TapeMount::setId(const uint64_t id) {
 //------------------------------------------------------------------------------
 // getId
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::TapeMount::getId() const {
+uint64_t cta::common::dataStructures::TapeMount::getId() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeMount have been set!");
   }
@@ -64,7 +64,7 @@ uint64_t cta::dataStructures::TapeMount::getId() const {
 //------------------------------------------------------------------------------
 // setMountType
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeMount::setMountType(const cta::dataStructures::MountType &mountType) {
+void cta::common::dataStructures::TapeMount::setMountType(const cta::common::dataStructures::MountType &mountType) {
   m_mountType = mountType;
   m_mountTypeSet = true;
 }
@@ -72,7 +72,7 @@ void cta::dataStructures::TapeMount::setMountType(const cta::dataStructures::Mou
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::dataStructures::MountType cta::dataStructures::TapeMount::getMountType() const {
+cta::common::dataStructures::MountType cta::common::dataStructures::TapeMount::getMountType() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeMount have been set!");
   }
@@ -82,7 +82,7 @@ cta::dataStructures::MountType cta::dataStructures::TapeMount::getMountType() co
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::TapeMount::setVid(const std::string &vid) {
+void cta::common::dataStructures::TapeMount::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -90,9 +90,19 @@ void cta::dataStructures::TapeMount::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::TapeMount::getVid() const {
+std::string cta::common::dataStructures::TapeMount::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeMount have been set!");
   }
   return m_vid;
+}
+
+//------------------------------------------------------------------------------
+// abort
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::TapeMount::abort() {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeMount have been set!");
+  }
+  throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not implemented!");
 }

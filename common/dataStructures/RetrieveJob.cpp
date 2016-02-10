@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveJob::RetrieveJob() {  
+cta::common::dataStructures::RetrieveJob::RetrieveJob() {  
   m_requestSet = false;
   m_tapeCopiesSet = false;
 }
@@ -30,13 +30,13 @@ cta::dataStructures::RetrieveJob::RetrieveJob() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveJob::~RetrieveJob() throw() {
+cta::common::dataStructures::RetrieveJob::~RetrieveJob() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::RetrieveJob::allFieldsSet() const {
+bool cta::common::dataStructures::RetrieveJob::allFieldsSet() const {
   return m_requestSet
       && m_tapeCopiesSet;
 }
@@ -44,7 +44,7 @@ bool cta::dataStructures::RetrieveJob::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setRequest
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveJob::setRequest(const cta::dataStructures::RetrieveRequest &request) {
+void cta::common::dataStructures::RetrieveJob::setRequest(const cta::common::dataStructures::RetrieveRequest &request) {
   m_request = request;
   m_requestSet = true;
 }
@@ -52,7 +52,7 @@ void cta::dataStructures::RetrieveJob::setRequest(const cta::dataStructures::Ret
 //------------------------------------------------------------------------------
 // getRequest
 //------------------------------------------------------------------------------
-cta::dataStructures::RetrieveRequest cta::dataStructures::RetrieveJob::getRequest() const {
+cta::common::dataStructures::RetrieveRequest cta::common::dataStructures::RetrieveJob::getRequest() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveJob have been set!");
   }
@@ -62,7 +62,7 @@ cta::dataStructures::RetrieveRequest cta::dataStructures::RetrieveJob::getReques
 //------------------------------------------------------------------------------
 // setTapeCopies
 //------------------------------------------------------------------------------
-void cta::dataStructures::RetrieveJob::setTapeCopies(const std::map<std::string,std::pair<int,cta::dataStructures::TapeFileLocation>> &tapeCopies) {
+void cta::common::dataStructures::RetrieveJob::setTapeCopies(const std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> &tapeCopies) {
   m_tapeCopies = tapeCopies;
   m_tapeCopiesSet = true;
 }
@@ -70,7 +70,7 @@ void cta::dataStructures::RetrieveJob::setTapeCopies(const std::map<std::string,
 //------------------------------------------------------------------------------
 // getTapeCopies
 //------------------------------------------------------------------------------
-std::map<std::string,std::pair<int,cta::dataStructures::TapeFileLocation>> cta::dataStructures::RetrieveJob::getTapeCopies() const {
+std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> cta::common::dataStructures::RetrieveJob::getTapeCopies() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveJob have been set!");
   }

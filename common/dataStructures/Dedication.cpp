@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Dedication::Dedication() {  
+cta::common::dataStructures::Dedication::Dedication() {  
   m_commentSet = false;
   m_creationLogSet = false;
   m_driveNameSet = false;
@@ -39,13 +39,13 @@ cta::dataStructures::Dedication::Dedication() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::dataStructures::Dedication::~Dedication() throw() {
+cta::common::dataStructures::Dedication::~Dedication() throw() {
 }
 
 //------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Dedication::allFieldsSet() const {
+bool cta::common::dataStructures::Dedication::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
       && m_driveNameSet
@@ -62,7 +62,7 @@ bool cta::dataStructures::Dedication::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setComment
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setComment(const std::string &comment) {
+void cta::common::dataStructures::Dedication::setComment(const std::string &comment) {
   m_comment = comment;
   m_commentSet = true;
 }
@@ -70,7 +70,7 @@ void cta::dataStructures::Dedication::setComment(const std::string &comment) {
 //------------------------------------------------------------------------------
 // getComment
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Dedication::getComment() const {
+std::string cta::common::dataStructures::Dedication::getComment() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -80,7 +80,7 @@ std::string cta::dataStructures::Dedication::getComment() const {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setCreationLog(const cta::dataStructures::EntryLog &creationLog) {
+void cta::common::dataStructures::Dedication::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   m_creationLog = creationLog;
   m_creationLogSet = true;
 }
@@ -88,7 +88,7 @@ void cta::dataStructures::Dedication::setCreationLog(const cta::dataStructures::
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::Dedication::getCreationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::Dedication::getCreationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -98,7 +98,7 @@ cta::dataStructures::EntryLog cta::dataStructures::Dedication::getCreationLog() 
 //------------------------------------------------------------------------------
 // setDriveName
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setDriveName(const std::string &driveName) {
+void cta::common::dataStructures::Dedication::setDriveName(const std::string &driveName) {
   m_driveName = driveName;
   m_driveNameSet = true;
 }
@@ -106,7 +106,7 @@ void cta::dataStructures::Dedication::setDriveName(const std::string &driveName)
 //------------------------------------------------------------------------------
 // getDriveName
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Dedication::getDriveName() const {
+std::string cta::common::dataStructures::Dedication::getDriveName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -116,7 +116,7 @@ std::string cta::dataStructures::Dedication::getDriveName() const {
 //------------------------------------------------------------------------------
 // setFromTimestamp
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setFromTimestamp(const uint64_t fromTimestamp) {
+void cta::common::dataStructures::Dedication::setFromTimestamp(const uint64_t fromTimestamp) {
   m_fromTimestamp = fromTimestamp;
   m_fromTimestampSet = true;
 }
@@ -124,7 +124,7 @@ void cta::dataStructures::Dedication::setFromTimestamp(const uint64_t fromTimest
 //------------------------------------------------------------------------------
 // getFromTimestamp
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::Dedication::getFromTimestamp() const {
+uint64_t cta::common::dataStructures::Dedication::getFromTimestamp() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -134,7 +134,7 @@ uint64_t cta::dataStructures::Dedication::getFromTimestamp() const {
 //------------------------------------------------------------------------------
 // setLastModificationLog
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setLastModificationLog(const cta::dataStructures::EntryLog &lastModificationLog) {
+void cta::common::dataStructures::Dedication::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
   m_lastModificationLog = lastModificationLog;
   m_lastModificationLogSet = true;
 }
@@ -142,7 +142,7 @@ void cta::dataStructures::Dedication::setLastModificationLog(const cta::dataStru
 //------------------------------------------------------------------------------
 // getLastModificationLog
 //------------------------------------------------------------------------------
-cta::dataStructures::EntryLog cta::dataStructures::Dedication::getLastModificationLog() const {
+cta::common::dataStructures::EntryLog cta::common::dataStructures::Dedication::getLastModificationLog() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -152,7 +152,7 @@ cta::dataStructures::EntryLog cta::dataStructures::Dedication::getLastModificati
 //------------------------------------------------------------------------------
 // setReadonly
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setReadonly(const bool readonly) {
+void cta::common::dataStructures::Dedication::setReadonly(const bool readonly) {
   m_readonly = readonly;
   m_readonlySet = true;
 }
@@ -160,7 +160,7 @@ void cta::dataStructures::Dedication::setReadonly(const bool readonly) {
 //------------------------------------------------------------------------------
 // getReadonly
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Dedication::getReadonly() const {
+bool cta::common::dataStructures::Dedication::getReadonly() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -170,7 +170,7 @@ bool cta::dataStructures::Dedication::getReadonly() const {
 //------------------------------------------------------------------------------
 // setTag
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setTag(const std::string &tag) {
+void cta::common::dataStructures::Dedication::setTag(const std::string &tag) {
   m_tag = tag;
   m_tagSet = true;
 }
@@ -178,7 +178,7 @@ void cta::dataStructures::Dedication::setTag(const std::string &tag) {
 //------------------------------------------------------------------------------
 // getTag
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Dedication::getTag() const {
+std::string cta::common::dataStructures::Dedication::getTag() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -188,7 +188,7 @@ std::string cta::dataStructures::Dedication::getTag() const {
 //------------------------------------------------------------------------------
 // setUntilTimestamp
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setUntilTimestamp(const uint64_t untilTimestamp) {
+void cta::common::dataStructures::Dedication::setUntilTimestamp(const uint64_t untilTimestamp) {
   m_untilTimestamp = untilTimestamp;
   m_untilTimestampSet = true;
 }
@@ -196,7 +196,7 @@ void cta::dataStructures::Dedication::setUntilTimestamp(const uint64_t untilTime
 //------------------------------------------------------------------------------
 // getUntilTimestamp
 //------------------------------------------------------------------------------
-uint64_t cta::dataStructures::Dedication::getUntilTimestamp() const {
+uint64_t cta::common::dataStructures::Dedication::getUntilTimestamp() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -206,7 +206,7 @@ uint64_t cta::dataStructures::Dedication::getUntilTimestamp() const {
 //------------------------------------------------------------------------------
 // setUserGroup
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setUserGroup(const std::string &userGroup) {
+void cta::common::dataStructures::Dedication::setUserGroup(const std::string &userGroup) {
   m_userGroup = userGroup;
   m_userGroupSet = true;
 }
@@ -214,7 +214,7 @@ void cta::dataStructures::Dedication::setUserGroup(const std::string &userGroup)
 //------------------------------------------------------------------------------
 // getUserGroup
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Dedication::getUserGroup() const {
+std::string cta::common::dataStructures::Dedication::getUserGroup() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -224,7 +224,7 @@ std::string cta::dataStructures::Dedication::getUserGroup() const {
 //------------------------------------------------------------------------------
 // setVid
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setVid(const std::string &vid) {
+void cta::common::dataStructures::Dedication::setVid(const std::string &vid) {
   m_vid = vid;
   m_vidSet = true;
 }
@@ -232,7 +232,7 @@ void cta::dataStructures::Dedication::setVid(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::dataStructures::Dedication::getVid() const {
+std::string cta::common::dataStructures::Dedication::getVid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
@@ -242,7 +242,7 @@ std::string cta::dataStructures::Dedication::getVid() const {
 //------------------------------------------------------------------------------
 // setWriteonly
 //------------------------------------------------------------------------------
-void cta::dataStructures::Dedication::setWriteonly(const bool writeonly) {
+void cta::common::dataStructures::Dedication::setWriteonly(const bool writeonly) {
   m_writeonly = writeonly;
   m_writeonlySet = true;
 }
@@ -250,7 +250,7 @@ void cta::dataStructures::Dedication::setWriteonly(const bool writeonly) {
 //------------------------------------------------------------------------------
 // getWriteonly
 //------------------------------------------------------------------------------
-bool cta::dataStructures::Dedication::getWriteonly() const {
+bool cta::common::dataStructures::Dedication::getWriteonly() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }

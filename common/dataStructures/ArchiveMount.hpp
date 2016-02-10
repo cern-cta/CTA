@@ -20,15 +20,18 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/TapeMount.hpp"
 
 namespace cta {
+namespace common {
 namespace dataStructures {
 
-class ArchiveMount {
+class ArchiveMount : public TapeMount {
 
 public:
 
@@ -42,12 +45,12 @@ public:
    */
   ~ArchiveMount() throw();
 
-  void setJobs(const std::list<cta::dataStructures::ArchiveJob> &jobs);
-  std::list<cta::dataStructures::ArchiveJob> getJobs() const;
+  std::unique_ptr<cta::common::dataStructures::ArchiveJob> getNextJob();
 
   void setLastFSeq(const uint64_t lastFSeq);
   uint64_t getLastFSeq() const;
   
+  void complete();
 
 private:
   
@@ -56,13 +59,11 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::list<cta::dataStructures::ArchiveJob> m_jobs;
-  bool m_jobsSet;
-
   uint64_t m_lastFSeq;
   bool m_lastFSeqSet;
 
 }; // class ArchiveMount
 
 } // namespace dataStructures
+} // namespace common
 } // namespace cta
