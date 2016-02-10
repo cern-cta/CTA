@@ -20,10 +20,17 @@
 
 namespace cta {
 namespace dataStructures {
-enum MountType {
-  none,
-  read,
-  write
+enum DriveStatus {
+  Down,
+  Up,
+  Starting,
+  Mounting,
+  Transfering,
+  Unloading,
+  Unmounting,
+  DrainingToDisk,
+  CleaningUp
 };
 } // namespace dataStructures
 } // namespace cta
+

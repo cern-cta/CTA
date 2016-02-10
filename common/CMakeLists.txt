@@ -14,6 +14,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/Dedication.cpp
   dataStructures/DeleteArchiveRequest.cpp
   dataStructures/DRData.cpp
+  dataStructures/DriveState.cpp
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
   dataStructures/ReadTestResult.cpp
