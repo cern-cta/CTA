@@ -106,6 +106,26 @@ public:
    */
   static void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result);
+  
+
+  /**
+   * Returns the result of trimming both left and right white-space from the
+   * specified string.
+   *
+   * @param s The string to be trimmed.
+   * @return The result of trimming the string.
+   */
+  static std::string trimString(const std::string &s) throw();
+
+  /**
+   * Creates and returns an std::string which is the result of replacing each
+   * occurance of whitespace (a collection of on or more space and tab
+   * characters) with a single space character.
+   *
+   * @param str The original string.
+   * @return    The newly created string with single spaces.
+   */
+  static std::string singleSpaceString(const std::string &str) throw();
 
   /**
    * Returns uuid in the form of a string.
@@ -212,6 +232,24 @@ public:
    */
   static uint32_t getAdler32(const uint8_t *buf, const uint32_t len) throw();
 
+  /**
+   * Returns true if the attributes of the current process indicate that it will
+   * produce a core dump if it receives a signal whose behaviour is to produce a
+   * core dump.
+   *
+   * This method is implemented using prctl().
+   *
+   * @return true if the current program is dumpable.
+   */
+  static bool getDumpableProcessAttribute();
+
+  /**
+   * Sets the attributes of the current process to indicate hat it will produce a
+   * core dump if it receives a signal whose behaviour is to produce a core dump.
+   *
+   * @param dumpable true if the current program should be dumpable.
+   */
+  static void setDumpableProcessAttribute(const bool dumpable);
 }; // class Utils
 
 } // namespace cta

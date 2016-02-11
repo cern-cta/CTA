@@ -18,8 +18,8 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/strerror_r_wrapper.hpp"
-#include "common/Utils.hpp"
+#include "common/utils/strerror_r_wrapper.hpp"
+#include "common/utils/Utils.hpp"
 
 #include <attr/xattr.h>
 #include <limits>
@@ -32,6 +32,7 @@
 #include <uuid/uuid.h>
 #include <zlib.h>
 #include <sys/utsname.h>
+#include <sys/prctl.h>
 
 using cta::exception::Exception;
 
@@ -224,6 +225,33 @@ void cta::Utils::splitString(const std::string &str, const char separator,
   if(endIndex == std::string::npos) {
     result.push_back(str.substr(beginIndex, str.length()));
   }
+}
+
+//-----------------------------------------------------------------------------
+// trimString
+//-----------------------------------------------------------------------------
+std::string cta::Utils::trimString(const std::string &s) throw() {
+  const std::string& spaces="\t\n\v\f\r ";
+
+  // Find first non white character
+  size_t beginpos = s.find_first_not_of(spaces);
+  std::string::const_iterator it1;
+  if (std::string::npos != beginpos) {
+    it1 = beginpos + s.begin();
+  } else {
+    it1 = s.begin();
+  }
+
+  // Find last non white chararacter
+  std::string::const_iterator it2;
+  size_t endpos = s.find_last_not_of(spaces);
+  if (std::string::npos != endpos) {
+    it2 = endpos + 1 + s.begin();
+  } else {
+    it2 = s.end();
+  }
+
+  return std::string(it1, it2);
 }
 
 //-----------------------------------------------------------------------------
@@ -480,6 +508,60 @@ std::string cta::Utils::getShortHostname() {
   std::vector<std::string> snn;
   splitString(un.nodename, '.', snn);
   return snn.at(0);
+}
+
+//------------------------------------------------------------------------------
+// getDumpableProcessAttribute
+//------------------------------------------------------------------------------
+bool cta::Utils::getDumpableProcessAttribute() {
+  const int rc = prctl(PR_GET_DUMPABLE);
+  switch(rc) {
+  case -1:
+    {
+      const std::string errStr = errnoToString(errno);
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to get the dumpable attribute of the process: " << errStr;
+      throw ex;
+    }
+  case 0: return false;
+  case 1: return true;
+  case 2: return true;
+  default:
+    {
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to get the dumpable attribute of the process"
+        ": Unknown value returned by prctl(): rc=" << rc;
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// setDumpableProcessAttribute
+//------------------------------------------------------------------------------
+ void cta::Utils::setDumpableProcessAttribute(const bool dumpable) {
+  const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
+  switch(rc) {
+  case -1:
+    {
+      const std::string errStr = errnoToString(errno);
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to set the dumpable attribute of the process: " << errStr;
+      throw ex;
+    }
+  case 0: return;
+  default:
+    {
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to set the dumpable attribute of the process"
+        ": Unknown value returned by prctl(): rc=" << rc;
+      throw ex;
+    }
+  }
 }
 
 

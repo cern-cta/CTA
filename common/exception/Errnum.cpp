@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Errnum.hpp"
-#include "common/Utils.hpp"
+#include "common/utils/Utils.hpp"
 
 #include <errno.h>
 #include <string.h>

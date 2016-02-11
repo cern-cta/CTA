@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/Utils.hpp"
+#include "common/utils/Utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -466,5 +466,137 @@ TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
   ASSERT_EQ((uint32_t)0x320032, Utils::getAdler32(&buf, 1));
 }
 
+
+/**
+ * Tests the good day senario of passing a multi-column string to the
+ * splitString() method.
+ */
+TEST_F(cta_UtilsTest, testGoodDaySplitString) {
+  using cta::Utils;
+  const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
+  std::vector<std::string> columns;
+
+  ASSERT_NO_THROW(Utils::splitString(line, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
+  ASSERT_EQ(std::string("col0"), columns[0]);
+  ASSERT_EQ(std::string("col1"), columns[1]);
+  ASSERT_EQ(std::string("col2"), columns[2]);
+  ASSERT_EQ(std::string("col3"), columns[3]);
+  ASSERT_EQ(std::string("col4"), columns[4]);
+  ASSERT_EQ(std::string("col5"), columns[5]);
+  ASSERT_EQ(std::string("col6"), columns[6]);
+  ASSERT_EQ(std::string("col7"), columns[7]);
+}
+
+/**
+ * Test the case of an empty string being passed to the splitString() method.
+ */
+TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {
+  using cta::Utils;
+  const std::string emptyString;
+  std::vector<std::string> columns;
+
+  ASSERT_NO_THROW(Utils::splitString(emptyString, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
+}
+
+/**
+ * Test the case of a non-empty string containing no separator character
+ * passed to the splitString() method.
+ */
+TEST_F(cta_UtilsTest, testSplitStringWithNoSeparatorInString) {
+  using cta::Utils;
+  const std::string stringContainingNoSeparator =
+    "stringContainingNoSeparator";
+  std::vector<std::string> columns;
+
+  ASSERT_NO_THROW(Utils::splitString(stringContainingNoSeparator, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
+  ASSERT_EQ(stringContainingNoSeparator, columns[0]);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringWithEmptyString) {
+  using cta::Utils;
+  const std::string s;
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingNoSpaces) {
+  using cta::Utils;
+  const std::string s("NO_SPACES");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftSpace) {
+  using cta::Utils;
+  const std::string s(" VALUE");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingRightSpace) {
+  using cta::Utils;
+  const std::string s("VALUE ");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightSpace) {
+  using cta::Utils;
+  const std::string s(" VALUE ");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftTab) {
+  using cta::Utils;
+  const std::string s("\tVALUE");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingRightTab) {
+  using cta::Utils;
+  const std::string s("VALUE\t");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightTab) {
+  using cta::Utils;
+  const std::string s("\tVALUE\t");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftNewLine) {
+  using cta::Utils;
+  const std::string s("\nVALUE");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingRightNewLine) {
+  using cta::Utils;
+  const std::string s("VALUE\n");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightNewLine) {
+  using cta::Utils;
+  const std::string s("\nVALUE\n");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightWhiteSpace) {
+  using cta::Utils;
+  const std::string s("  \t\t\n\nVALUE  \t\t\n\n");
+  const std::string trimmedString = Utils::trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
 
 } // namespace unitTests

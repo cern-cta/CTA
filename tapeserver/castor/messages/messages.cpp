@@ -23,7 +23,7 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
-#include "common/strerror_r_wrapper.hpp"
+#include "common/utils/strerror_r_wrapper.hpp"
 #include "castor/legacymsg/TapeConstants.h"
 
 #include <string.h>

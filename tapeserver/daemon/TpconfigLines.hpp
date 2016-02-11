@@ -15,22 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "common/strerror_r_wrapper.hpp"
 
-/*
- * Undefine _GNU_SOURCE and define _XOPEN_SOURCE as being 600 so that the
- * XSI compliant version of strerror_r() will be used
+#pragma once
+
+#include "tapeserver/daemon/TpconfigLine.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <list>
+
+namespace cta { namespace tape { namespace daemon {
+
+/**
+ * A list of lines parsed from a TPCONFIG file.
  */
-#undef _GNU_SOURCE
-#define _XOPEN_SOURCE 600
+class TpconfigLines: public std::list<TpconfigLine> {
+public:
 
-#include <string.h>
-
-/*******************************************************************************
- * strerror_r_wrapper
- ******************************************************************************/
-int strerror_r_wrapper(int errnum, char *buf, size_t buflen) {
-  /* This function should be compiled using a C++ compiler and not a C compiler.
+  CTA_GENERATE_EXCEPTION_CLASS(InvalidArgument);
+  /**
+   * Parses the specified TPCONFIG file.
+   *
+   * @param filename The filename of the TPCONFIG file.
+   * @return The result of parsing the TPCONFIG file.
    */
-  return strerror_r(errnum, buf, buflen);
-}
+  static TpconfigLines parseFile(const std::string &filename);
+}; // class TpconfigLines
+
+}}} // namespace cta::tape::daemon

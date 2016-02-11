@@ -18,7 +18,7 @@
 
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/Utils.hpp"
+#include "common/utils/Utils.hpp"
 #include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
 
 #include <fstream>

@@ -25,7 +25,7 @@ namespace exception {
   class Errnum: public cta::exception::Exception {
   public:
     Errnum(std::string what = "");
-	  Errnum (int err, std::string what = "");
+    Errnum (int err, std::string what = "");
     virtual ~Errnum() throw() {};
     int errorNumber() const { return m_errnum; }
     std::string strError() const { return m_strerror; }

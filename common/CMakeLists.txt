@@ -45,30 +45,41 @@ set (COMMON_LIB_SRC_FILES
   archiveNS/StorageClass.cpp
   archiveNS/Tape.cpp
   archiveNS/TapeFileLocation.cpp
-  ArchiveRequest.cpp
-  CreationLog.cpp
   checksum/Checksum.cpp
   exception/Backtrace.cpp
   exception/DiskException.hpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/Serrnum.cpp
   exception/TapeException.cpp
+  log/DummyLogger.cpp
+  log/LogContext.cpp
+  log/Logger.cpp
+  log/Message.cpp
+  log/Param.cpp
+  log/StringLogger.cpp
+  log/SyslogLogger.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
+  processCap/ProcessCap.cpp
+  processCap/SmartCap.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
+  threading/ChildProcess.cpp
+  threading/Daemon.cpp
+  threading/Mutex.cpp
+  threading/System.cpp
+  threading/Threading.cpp
+  utils/Utils.cpp
+  utils/strerror_r_wrapper.cpp
+  ArchiveRequest.cpp
+  CreationLog.cpp
+  Configuration.cpp
   SecurityIdentity.cpp
-  strerror_r_wrapper.cpp
   TapePool.cpp
   Timer.cpp
-  threading/ChildProcess.cpp
-  threading/Mutex.cpp
-  threading/Threading.cpp
   UserIdentity.cpp
-  Utils.cpp
   VO.cpp)
 
 add_library (ctacommon SHARED
@@ -81,13 +92,18 @@ target_link_libraries (ctacommon
   ${SQLITE3_LIBRARY_RELEASE}
   uuid
   z
-  Utils)
+  Utils
+  cap)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
+  log/LogContextTest.cpp
+  log/ParamTest.cpp
+  log/SyslogLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
-  UserIdentityTest.cpp
-  UtilsTest.cpp)
+  threading/DaemonTest.cpp
+  utils/UtilsTest.cpp
+  UserIdentityTest.cpp)
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})

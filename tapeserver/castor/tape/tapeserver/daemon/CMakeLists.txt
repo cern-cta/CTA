@@ -70,13 +70,13 @@ add_library(ctaTapeServerDaemon
   TpconfigLine.cpp
   TpconfigLines.cpp)
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg ctaserverutils ctacatalogue)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
 target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
   File TapeDrive ctacommon ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} 
-  ctamessages zmq ctaio ctautils)
+  ctamessages zmq ctaio ctautils ctaserverutils)
 install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 
 add_library(ctatapeserverdaemonutils SHARED

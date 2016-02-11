@@ -11,6 +11,12 @@ set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
 set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x -fms-extensions -fstack-protector-all")
+#
+# A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
+# to be tested once we have a stable compilation on CC7:
+#-Wno-unused-parameter -Wlogical-op -Wfloat-equal -Wdeclaration-after- statement -Wundef -Wno-endif-labels -Wshadow -Wunsafe-loop- optimizations -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite- strings -Wconversion -Wmissing-field-initializers -Wredundant-decls -Wnested-externs -Wunreachable-code -Winline -Wvariadic-macros -Wtraditional -Wmissing-prototypes -Wmissing-declarations -Wold-style- definition -Wc++-compat -Wstrict-prototypes -Wpadded -Wcast-qual -Wnon-virtual-dtor -Wlogical-op -Wmissing-declarations -Wsign-conversion -Wredundant-decls -Wold-style-cast -Wshadow
+
+
 
 
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
@@ -77,6 +83,10 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(tapeserver)
   add_subdirectory(tests)
   add_subdirectory(xroot_plugins)
+  
+  #Generate version information
+  configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
+    ${CMAKE_BINARY_DIR}/version.h)
 ENDIF(DEFINED PackageOnly)
 
 ################################################################################

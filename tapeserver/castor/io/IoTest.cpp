@@ -23,7 +23,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "common/marshall.h"
+#include "castor/io/marshall.h"
 
 #include <fcntl.h>
 #include <gtest/gtest.h>

@@ -470,7 +470,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
   const messages::ForkCleaner &rqst) {
   try {
-    server::ProcessCap capUtils;
+    castor::server::ProcessCap capUtils;
 
     const DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;

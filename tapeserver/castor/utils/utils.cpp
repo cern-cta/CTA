@@ -20,7 +20,7 @@
  *****************************************************************************/
 
 #include "castor/utils/utils.hpp"
-#include "common/strerror_r_wrapper.hpp"
+#include "common/utils/strerror_r_wrapper.hpp"
 #include "h/Castor_limits.h"
 
 #include <algorithm>
@@ -391,7 +391,7 @@ bool castor::utils::getDumpableProcessAttribute() {
 //------------------------------------------------------------------------------
 // setDumpableProcessAttribute
 //------------------------------------------------------------------------------
-void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
+ void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
   const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
   switch(rc) {
   case -1:

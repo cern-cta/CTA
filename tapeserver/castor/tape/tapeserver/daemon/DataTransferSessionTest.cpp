@@ -41,7 +41,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/Utils.hpp"
+#include "common/utils/Utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "smc_struct.h"
 #include "nameserver/mockNS/MockNameServer.hpp"
