@@ -79,7 +79,7 @@ TEST_F(castor_server_DaemonTest, parseEmptyCmdLine) {
   castor::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
 
   ASSERT_NO_THROW(daemon.parseCommandLine(m_argc, m_argv));
-  ASSERT_EQ(false, daemon.getForeground());
+  ASSERT_FALSE(daemon.getForeground());
 }
 
 TEST_F(castor_server_DaemonTest, parseFOnCmdLine) {

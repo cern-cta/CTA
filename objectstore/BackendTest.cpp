@@ -29,7 +29,7 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
   const std::string testSecondValue = "1234";
   const std::string testObjectName = "testObject";
   // Check we can verify the absence of an object
-  ASSERT_EQ(false, m_os->exists(testObjectName));
+  ASSERT_FALSE(m_os->exists(testObjectName));
   // Check that an update attempt fails on a non-existing object
   ASSERT_THROW(m_os->atomicOverwrite(testObjectName, testSecondValue), cta::exception::Exception);
   // Check the creation of the object
@@ -48,7 +48,7 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
   // Check we can delete the object
   ASSERT_NO_THROW(m_os->remove(testObjectName));
   // Check that the object is actually gone
-  ASSERT_EQ(false, m_os->exists(testObjectName));
+  ASSERT_FALSE(m_os->exists(testObjectName));
 }
 
 TEST_P(BackendAbstractTest, LockingInterface) {

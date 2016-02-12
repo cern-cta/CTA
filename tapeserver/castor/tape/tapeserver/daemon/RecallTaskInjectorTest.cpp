@@ -230,7 +230,7 @@ namespace unitTests
 
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
-    ASSERT_EQ(false, rti.synchronousInjection());
+    ASSERT_FALSE(rti.synchronousInjection());
     ASSERT_EQ(0U, diskWrite.m_tasks.size());
     ASSERT_EQ(0U, tapeRead.m_tasks.size());
     ASSERT_EQ(1, trm.getJobs);

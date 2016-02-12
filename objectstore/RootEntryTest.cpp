@@ -65,7 +65,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
   re.fetch();
   re.removeAgentRegisterAndCommit();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST(ObjectStore, RootEntryAdminHosts) {
@@ -131,7 +131,7 @@ TEST(ObjectStore, RootEntryAdminHosts) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
   
 TEST(ObjectStore, RootEntryAdminUsers) {
@@ -209,7 +209,7 @@ TEST(ObjectStore, RootEntryAdminUsers) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST(ObjectStore, RootEntryStorageClassesAndArchiveRoutes) {
@@ -359,7 +359,7 @@ TEST(ObjectStore, RootEntryStorageClassesAndArchiveRoutes) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST(ObjectStore, RootEntryibraries) {
@@ -423,7 +423,7 @@ TEST(ObjectStore, RootEntryibraries) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST (ObjectStore, RootEntryTapePools) {
@@ -483,7 +483,7 @@ TEST (ObjectStore, RootEntryTapePools) {
   re.removeTapePoolAndCommit("tapePool1");
   ASSERT_FALSE(be.exists(tpAddr1));
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST (ObjectStore, RootEntryDriveRegister) {
@@ -537,7 +537,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
   re.fetch();
   re.removeAgentRegisterAndCommit();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST(ObjectStore, RootEntryAgentRegister) {
@@ -577,14 +577,14 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     // Remove it
     ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
     // Check that the object is gone
-    ASSERT_EQ(false, be.exists(arAddr));
+    ASSERT_FALSE(be.exists(arAddr));
   }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
@@ -638,7 +638,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   re.fetch();
   re.removeAgentRegisterAndCommit();
   re.removeIfEmpty();
-  ASSERT_EQ(false, re.exists());
+  ASSERT_FALSE(re.exists());
 }
 
 }

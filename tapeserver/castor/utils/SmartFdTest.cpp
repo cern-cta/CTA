@@ -57,7 +57,7 @@ TEST_F(castor_utils_SmartFdTest, testClosedCallback) {
   using namespace castor::utils;
 
   ASSERT_EQ(-1, s_fd);
-  ASSERT_EQ(false, s_closedCallbackWasCalled);
+  ASSERT_FALSE(s_closedCallbackWasCalled);
 
   int fd = socket(PF_LOCAL, SOCK_STREAM, 0);
   ASSERT_NE(-1, fd);

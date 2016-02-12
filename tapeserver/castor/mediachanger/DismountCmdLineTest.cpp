@@ -86,9 +86,9 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, acs) {
   std::unique_ptr<DismountCmdLine> cmdLine;
   ASSERT_NO_THROW(cmdLine.reset(new DismountCmdLine(args->argc, args->argv)));
 
-  ASSERT_EQ(false, cmdLine->getHelp());
-  ASSERT_EQ(false, cmdLine->getDebug());
-  ASSERT_EQ(false, cmdLine->getForce());
+  ASSERT_FALSE(cmdLine->getHelp());
+  ASSERT_FALSE(cmdLine->getDebug());
+  ASSERT_FALSE(cmdLine->getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine->getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs1,2,3,4"),
@@ -108,18 +108,18 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, copy_constructor) {
   args->argv[3] = NULL;
 
   DismountCmdLine cmdLine1(args->argc, args->argv);
-  ASSERT_EQ(false, cmdLine1.getHelp());
-  ASSERT_EQ(false, cmdLine1.getDebug());
-  ASSERT_EQ(false, cmdLine1.getForce());
+  ASSERT_FALSE(cmdLine1.getHelp());
+  ASSERT_FALSE(cmdLine1.getDebug());
+  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs1,2,3,4"),
     cmdLine1.getDriveLibrarySlot().str());
 
   DismountCmdLine cmdLine2(cmdLine1);
-  ASSERT_EQ(false, cmdLine2.getHelp());
-  ASSERT_EQ(false, cmdLine2.getDebug());
-  ASSERT_EQ(false, cmdLine2.getForce());
+  ASSERT_FALSE(cmdLine2.getHelp());
+  ASSERT_FALSE(cmdLine2.getDebug());
+  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs1,2,3,4"),
@@ -139,9 +139,9 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, assignment) {
   args1->argv[3] = NULL;
 
   DismountCmdLine cmdLine1(args1->argc, args1->argv);
-  ASSERT_EQ(false, cmdLine1.getHelp());
-  ASSERT_EQ(false, cmdLine1.getDebug());
-  ASSERT_EQ(false, cmdLine1.getForce());
+  ASSERT_FALSE(cmdLine1.getHelp());
+  ASSERT_FALSE(cmdLine1.getDebug());
+  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs1,2,3,4"),
@@ -157,9 +157,9 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, assignment) {
   args2->argv[3] = NULL;
 
   DismountCmdLine cmdLine2(args2->argc, args2->argv);
-  ASSERT_EQ(false, cmdLine2.getHelp());
-  ASSERT_EQ(false, cmdLine2.getDebug());
-  ASSERT_EQ(false, cmdLine2.getForce());
+  ASSERT_FALSE(cmdLine2.getHelp());
+  ASSERT_FALSE(cmdLine2.getDebug());
+  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs5,6,7,8"),
@@ -167,17 +167,17 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, assignment) {
 
   cmdLine1 = cmdLine2;
 
-  ASSERT_EQ(false, cmdLine1.getHelp());
-  ASSERT_EQ(false, cmdLine1.getDebug());
-  ASSERT_EQ(false, cmdLine1.getForce());
+  ASSERT_FALSE(cmdLine1.getHelp());
+  ASSERT_FALSE(cmdLine1.getDebug());
+  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs5,6,7,8"),
     cmdLine1.getDriveLibrarySlot().str());
 
-  ASSERT_EQ(false, cmdLine2.getHelp());
-  ASSERT_EQ(false, cmdLine2.getDebug());
-  ASSERT_EQ(false, cmdLine2.getForce());
+  ASSERT_FALSE(cmdLine2.getHelp());
+  ASSERT_FALSE(cmdLine2.getDebug());
+  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
     cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("acs5,6,7,8"),
@@ -199,9 +199,9 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, scsi) {
   std::unique_ptr<DismountCmdLine> cmdLine;
   ASSERT_NO_THROW(cmdLine.reset(new DismountCmdLine(args->argc, args->argv)));
 
-  ASSERT_EQ(false, cmdLine->getHelp());
-  ASSERT_EQ(false, cmdLine->getDebug());
-  ASSERT_EQ(false, cmdLine->getForce());
+  ASSERT_FALSE(cmdLine->getHelp());
+  ASSERT_FALSE(cmdLine->getDebug());
+  ASSERT_FALSE(cmdLine->getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI,
     cmdLine->getDriveLibrarySlot().getLibraryType());
 }

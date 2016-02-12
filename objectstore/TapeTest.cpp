@@ -48,6 +48,6 @@ TEST(ObjectStore, TapeBasicAccess) {
   cta::objectstore::ScopedExclusiveLock lock(t);
   t.fetch();
   t.removeIfEmpty();
-  ASSERT_EQ(false, t.exists());
+  ASSERT_FALSE(t.exists());
 }
 }

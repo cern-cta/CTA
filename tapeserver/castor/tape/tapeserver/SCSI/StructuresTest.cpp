@@ -522,9 +522,9 @@ namespace unitTests {
     buff[12] = 0x12;
     buff[13] = 0x34;
     ASSERT_EQ(true, sense.isCurrent());
-    ASSERT_EQ(false, sense.isDeferred());
+    ASSERT_FALSE(sense.isDeferred());
     ASSERT_EQ(true, sense.isFixedFormat());
-    ASSERT_EQ(false, sense.isDescriptorFormat());
+    ASSERT_FALSE(sense.isDescriptorFormat());
     ASSERT_EQ(0x12, sense.getASC());
     ASSERT_EQ(0x34, sense.getASCQ());
     ASSERT_EQ(0xE, sense.getSenseKey());
@@ -534,10 +534,10 @@ namespace unitTests {
     buff[2] = 0xFA;
     buff[12] = 0x12;
     buff[13] = 0x34;
-    ASSERT_EQ(false, sense.isCurrent());
+    ASSERT_FALSE(sense.isCurrent());
     ASSERT_EQ(true, sense.isDeferred());
     ASSERT_EQ(true, sense.isFixedFormat());
-    ASSERT_EQ(false, sense.isDescriptorFormat());
+    ASSERT_FALSE(sense.isDescriptorFormat());
     ASSERT_EQ(0x12, sense.getASC());
     ASSERT_EQ(0x34, sense.getASCQ());
     ASSERT_EQ(0xA, sense.getSenseKey());
@@ -548,8 +548,8 @@ namespace unitTests {
     buff[2] = 0x56;
     buff[3] = 0x78;
     ASSERT_EQ(true, sense.isCurrent());
-    ASSERT_EQ(false, sense.isDeferred());
-    ASSERT_EQ(false, sense.isFixedFormat());
+    ASSERT_FALSE(sense.isDeferred());
+    ASSERT_FALSE(sense.isFixedFormat());
     ASSERT_EQ(true, sense.isDescriptorFormat());
     ASSERT_EQ(0x56, sense.getASC());
     ASSERT_EQ(0x78, sense.getASCQ());
@@ -560,9 +560,9 @@ namespace unitTests {
     buff[1] = 0xFC;
     buff[2] = 0x0b;
     buff[3] = 0x08;
-    ASSERT_EQ(false, sense.isCurrent());
+    ASSERT_FALSE(sense.isCurrent());
     ASSERT_EQ(true, sense.isDeferred());
-    ASSERT_EQ(false, sense.isFixedFormat());
+    ASSERT_FALSE(sense.isFixedFormat());
     ASSERT_EQ(true, sense.isDescriptorFormat());
     ASSERT_EQ(0x0b, sense.getASC());
     ASSERT_EQ(0x08, sense.getASCQ());
