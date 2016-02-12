@@ -74,7 +74,7 @@ std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
   // Try and get a new job from the DB
   std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> dbJob(m_dbMount->getNextJob().release());
   if (!dbJob.get())
-    return std::unique_ptr<cta::RetrieveJob>(NULL);
+    return std::unique_ptr<cta::RetrieveJob>();
   // We have something to retrieve: prepare the response
   std::unique_ptr<cta::RetrieveJob> ret (new RetrieveJob(*this, 
     dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile, 
