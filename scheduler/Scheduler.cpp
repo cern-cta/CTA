@@ -92,7 +92,8 @@ void cta::Scheduler::listStorageClassRequest(const cta::common::dataStructures::
 //------------------------------------------------------------------------------
 // createBootstrapAdminAndHostNoAuth
 //------------------------------------------------------------------------------
-void cta::Scheduler::createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) {
+void cta::Scheduler::createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, 
+        const std::string &comment) {
 
 }
 
@@ -227,7 +228,7 @@ void cta::Scheduler::modifyTapePoolComment(const cta::common::dataStructures::Se
 // createArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName,
-   const std::string &comment) {
+        const std::string &comment) {
 
 }
 
@@ -291,7 +292,7 @@ void cta::Scheduler::modifyLogicalLibraryComment(const cta::common::dataStructur
 // createTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-   const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {
+        const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {
 
 }
 
@@ -376,7 +377,7 @@ void cta::Scheduler::modifyTapeComment(const cta::common::dataStructures::Securi
 // createUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::createUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup,
-   const std::string &comment) {
+        const std::string &comment) {
 
 }
 
@@ -411,9 +412,9 @@ void cta::Scheduler::modifyUserComment(const cta::common::dataStructures::Securi
 //------------------------------------------------------------------------------
 // createUserGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
-   const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-   const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) {
+void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued,
+        const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
+        const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) {
 
 }
 
@@ -505,7 +506,7 @@ void cta::Scheduler::modifyUserGroupComment(const cta::common::dataStructures::S
 // createDedication
 //------------------------------------------------------------------------------
 void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
-   const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
+        const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
 
 }
 
@@ -652,16 +653,16 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFi
 //------------------------------------------------------------------------------
 // readTest
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
-   const bool checkChecksum, const uint32_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const {
+cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
+        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const uint32_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const {
   return cta::common::dataStructures::ReadTestResult(); 
 }
 
 //------------------------------------------------------------------------------
 // writeTest
 //------------------------------------------------------------------------------
-cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
-   const bool randomSize, const bool devZero, const bool devURandom, const std::list<std::string> &inputFiles, const std::string &tag) const {
+cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
+        const uint64_t numberOfFiles, const uint64_t fileSize, const bool randomSize, const bool devZero, const bool devURandom, const std::list<std::string> &inputFiles, const std::string &tag) const {
   return cta::common::dataStructures::WriteTestResult(); 
 }
 
