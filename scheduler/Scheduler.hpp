@@ -187,14 +187,14 @@ public:
   virtual void modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp);
   virtual void modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment);
 
-  virtual void repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const RepackType);
+  virtual void repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType);
   virtual void cancelRepack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
   virtual std::list<cta::common::dataStructures::RepackInfo> getRepacks(const cta::common::dataStructures::SecurityIdentity &requester);
   virtual cta::common::dataStructures::RepackInfo getRepack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
 
   virtual void shrink(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapepool); // removes extra tape copies from a specific pool(usually an "_2" pool)
 
-  virtual void verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const VerifyType);
+  virtual void verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::VerifyType);
   virtual void cancelVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
   virtual std::list<cta::common::dataStructures::VerifyInfo> getVerifys(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual cta::common::dataStructures::VerifyInfo getVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;

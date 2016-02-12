@@ -16,14 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <exception>
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "tapeserver/castor/common/CastorConfiguration.hpp"
 #include "tapeserver/castor/log/DummyLogger.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "common/SecurityIdentity.hpp"
+
+#include <exception>
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
 
 int main(int argc, char ** argv) {
   try{

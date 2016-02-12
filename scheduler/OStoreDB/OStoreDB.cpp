@@ -1411,7 +1411,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     privateRet->m_tapePool = mountInfo.tapePool;
     return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
   }
-  return std::unique_ptr<SchedulerDatabase::ArchiveJob> (NULL);
+  return std::unique_ptr<SchedulerDatabase::ArchiveJob>();
 }
 
 void OStoreDB::ArchiveMount::complete(time_t completionTime) {
@@ -1536,7 +1536,7 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
     privateRet->m_jobOwned = true;
     return std::unique_ptr<SchedulerDatabase::RetrieveJob> (privateRet.release());
   }
-  return std::unique_ptr<SchedulerDatabase::RetrieveJob> (NULL);
+  return std::unique_ptr<SchedulerDatabase::RetrieveJob>();
 }
 
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {

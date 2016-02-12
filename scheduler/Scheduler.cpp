@@ -582,7 +582,7 @@ void cta::Scheduler::modifyDedicationComment(const cta::common::dataStructures::
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const RepackType) {
+void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType) {
 
 }
 
@@ -617,7 +617,7 @@ void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const VerifyType) {
+void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::VerifyType) {
 
 }
 
