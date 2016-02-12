@@ -27,6 +27,9 @@
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 
+#include <sys/types.h>
+#include <unistd.h>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {

@@ -41,7 +41,7 @@ public:
   /**
    * Destructor
    */
-  ~TapeMount() throw();
+  virtual ~TapeMount() throw();
 
   virtual void setId(const uint64_t id);
   virtual uint64_t getId() const;

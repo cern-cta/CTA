@@ -25,12 +25,33 @@ include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 
-add_library(File
+set(TAPESERVER_FILE_LIBRARY_SRCS
   File.cpp
   DiskFile.cpp
   Structures.cpp
   ../exception/XrootCl.cpp)
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(GCC_VERSION_GE_4_8_0)
+    foreach(TAPESERVER_FILE_LIBRARY_SRC ${TAPESERVER_FILE_LIBRARY_SRCS})
+      set_property(SOURCE ${TAPESERVER_FILE_LIBRARY_SRC}
+        PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+    endforeach(TAPESERVER_FILE_LIBRARY_SRC)
+  endif(GCC_VERSION_GE_4_8_0)
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_library(File
+  ${TAPESERVER_FILE_LIBRARY_SRCS})
 target_link_libraries (File XrdCl cryptopp ctaserverutils)
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(GCC_VERSION_GE_4_8_0)
+    set_property(SOURCE StructuresTest.cpp
+      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+    set_property(SOURCE FileTest.cpp
+      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+  endif(GCC_VERSION_GE_4_8_0)
+endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp

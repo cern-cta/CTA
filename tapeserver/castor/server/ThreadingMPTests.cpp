@@ -87,7 +87,7 @@ namespace threadedUnitTests {
     ts.tv_sec = 0;
     ts.tv_nsec = 100*1000*1000;
     nanosleep(&ts, NULL);
-    ASSERT_EQ(false, cp.running());
+    ASSERT_FALSE(cp.running());
     EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessWasKilled);
   }
 } // namespace threadedUnitTests

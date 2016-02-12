@@ -211,7 +211,7 @@ void DiskWriteTask::releaseAllBlock(){
       };
       tape::utils::suppresUnusedVariable(sp);
       std::string errorMsg;
-      int errCode;
+      //int errCode;
       if(mb->isFailed()){
         errorMsg=mb->errorMsg();
         
@@ -220,7 +220,7 @@ void DiskWriteTask::releaseAllBlock(){
       }
       else{
         errorMsg="Mismatch between expected and received filed or blockid";
-        errCode=666;
+        //errCode=666;
       }
       lc.log(LOG_ERR,errorMsg);
       throw castor::exception::Exception(errorMsg);

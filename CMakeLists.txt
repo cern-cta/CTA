@@ -1,3 +1,18 @@
+# The CERN Tape Archive (CTA) project
+# Copyright (C) 2015  CERN
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
 project(cta)
@@ -23,6 +38,29 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 # in order to prevent the -O2 flag from being used.
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
+
+set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wnon-virtual-dtor")
+
+# Switch on support for c++0x if the compiler is gcc 4.4.7 or clang
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -dumpversion
+  OUTPUT_VARIABLE GCC_VERSION)
+if (CMAKE_COMPILER_IS_GNUCC)
+  if (GCC_VERSION VERSION_GREATER 4.4.6)
+    message(STATUS "Detected gcc >= 4.4.7 - switching on support for c++0x")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  endif (GCC_VERSION VERSION_GREATER 4.4.6)
+endif (CMAKE_COMPILER_IS_GNUCC)
+
+set (GCC_VERSION_GE_4_8_0 FALSE)
+if (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
+  set (GCC_VERSION_GE_4_8_0 TRUE)
+endif (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  message(STATUS "Detected clang - switching on support for c++0x")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 
 # Generate the compilation variables, if needed
 if (NOT DEFINED SKIP_UNIT_TESTS)

@@ -64,21 +64,21 @@ namespace unitTests {
     castor::server::PosixSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
-    ASSERT_EQ(false, s.tryAcquire());
+    ASSERT_FALSE(s.tryAcquire());
   }
 
   TEST(castor_tape_threading, CondVarSemaphore_basic_counting) {
     castor::server::CondVarSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
-    ASSERT_EQ(false, s.tryAcquire());
+    ASSERT_FALSE(s.tryAcquire());
   }
 
   TEST(castor_tape_threading, Semaphore_basic_counting) {
     castor::server::Semaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
-    ASSERT_EQ(false, s.tryAcquire());
+    ASSERT_FALSE(s.tryAcquire());
   }
   
   class Thread_exception_throwing: public castor::server::Thread {

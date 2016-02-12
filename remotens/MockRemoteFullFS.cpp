@@ -18,7 +18,9 @@
 
 #include "MockRemoteFullFS.hpp"
 #include "common/exception/Errnum.hpp"
+
 #include <fcntl.h>
+#include <unistd.h>
 
 namespace cta {
   

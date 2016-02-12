@@ -28,6 +28,7 @@
 #include "castor/utils/utils.hpp"
 
 #include <errno.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // serializePayload

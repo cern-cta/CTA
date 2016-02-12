@@ -28,7 +28,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 find_package( ZLIB REQUIRED )
 
-add_library(ctaTapeServerDaemon
+set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   Catalogue.cpp
   CatalogueDrive.cpp
   CatalogueDriveState.cpp
@@ -69,6 +69,30 @@ add_library(ctaTapeServerDaemon
   TapeWriteTask.cpp
   TpconfigLine.cpp
   TpconfigLines.cpp)
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(GCC_VERSION_GE_4_8_0)
+    foreach(CTATAPESERVERDAEMON_LIBRARY_SRC
+       ${CTATAPESERVERDAEMON_LIBRARY_SRCS}
+       CatalogueTest.cpp
+       DiskReadTaskTest.cpp
+       DiskWriteTaskTest.cpp
+       DiskWriteTaskTest.cpp
+       DiskWriteThreadPoolTest.cpp
+       MigrationReportPackerTest.cpp
+       ProcessForkerProxyDummy.cpp
+       ProcessForkerTest.cpp
+       RecallTaskInjectorTest.cpp
+       TapeDaemon.cpp
+       TapeDaemonTest.cpp)
+      set_property(SOURCE ${CTATAPESERVERDAEMON_LIBRARY_SRC}
+        PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+    endforeach(CTATAPESERVERDAEMON_LIBRARY_SRC)
+  endif(GCC_VERSION_GE_4_8_0)
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_library(ctaTapeServerDaemon 
+  ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
 target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctanameserver ctaremotens protobuf ctascheduler ctalegacymsg ctaserverutils ctacatalogue)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)

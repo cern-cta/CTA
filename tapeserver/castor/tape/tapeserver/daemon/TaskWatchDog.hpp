@@ -33,6 +33,8 @@
 #include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
+#include <unistd.h>
+
 namespace castor {
 
 namespace tape {
@@ -143,7 +145,6 @@ protected:
    */
   void reportStats() {
     // Shortcut definitions
-    typedef castor::log::ParamDoubleSnprintf ParamDoubleSnprintf;
     typedef castor::log::Param Param;
     if (m_statsSet) {
       // Build the statistics to be logged
@@ -184,7 +185,6 @@ protected:
    */
   void run(){
     // Shortcut definitions
-    typedef castor::log::ParamDoubleSnprintf ParamDoubleSnprintf;
     typedef castor::log::Param Param;
     // reset timers as we don't know how long it took before the thread started
     m_reportTimer.reset();
