@@ -32,12 +32,12 @@ using ::testing::Return;
 using ::testing::_;
 
 namespace unitTests {
-castor::tape::System::mockWrapper sysWrapper;
 
 TEST(castor_tape_SCSI_DeviceList, TriesToFind) {
   /* Give minimal service output from mock system calls:
    * at least pretend there is a directory to scan */
   /* _ means anything goes */
+  castor::tape::System::mockWrapper sysWrapper;
   EXPECT_CALL(sysWrapper, opendir(_)).Times(1);
   EXPECT_CALL(sysWrapper, readdir(sysWrapper.m_DIR)).Times(1);
   EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(1);
@@ -46,6 +46,7 @@ TEST(castor_tape_SCSI_DeviceList, TriesToFind) {
 }
 
 TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
+  castor::tape::System::mockWrapper sysWrapper;
   /* Configure the mock to use fake */
   sysWrapper.delegateToFake();
   /* Populate the test harness */
