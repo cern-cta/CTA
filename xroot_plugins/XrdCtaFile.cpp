@@ -49,13 +49,13 @@ namespace cta { namespace xrootPlugins {
 //------------------------------------------------------------------------------
 // checkClient
 //------------------------------------------------------------------------------
-cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
+cta::common::dataStructures::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
 // TEMPORARILY commented out host check for demo purposes:
 //  if(!client || !client->host || strncmp(client->host, "localhost", 9))
 //  {
 //    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] operation possible only from localhost");
 //  }
-  cta::SecurityIdentity requester;
+  cta::common::dataStructures::SecurityIdentity requester;
   struct passwd pwd;
   struct passwd *result;
   long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
@@ -82,34 +82,45 @@ cta::SecurityIdentity XrdProFile::checkClient(const XrdSecEntity *client) {
   }
   std::cout << "Request received from client. Username: " << client->name <<
     " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
-  requester = cta::SecurityIdentity(cta::UserIdentity(pwd.pw_uid, pwd.pw_gid),
-    client->host);
+  requester.setUid(pwd.pw_uid);
+  requester.setGid(pwd.pw_gid);
+  requester.setHost(client->host);
   return requester;
 }
 
 //------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
-void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::string command(tokens[1]);
   
-  if     ("ad"    == command || "admin"                 == command) {xCom_admin(tokens, requester);}
-  else if("ah"    == command || "adminhost"             == command) {xCom_adminhost(tokens, requester);}
-  else if("tp"    == command || "tapepool"              == command) {xCom_tapepool(tokens, requester);}
-  else if("ar"    == command || "archiveroute"          == command) {xCom_archiveroute(tokens, requester);}
-  else if("ll"    == command || "logicallibrary"        == command) {xCom_logicallibrary(tokens, requester);}
-  else if("ta"    == command || "tape"                  == command) {xCom_tape(tokens, requester);}
-  else if("sc"    == command || "storageclass"          == command) {xCom_storageclass(tokens, requester);}
-  else if("lpa"   == command || "listpendingarchives"   == command) {xCom_listpendingarchives(tokens, requester);}
-  else if("lpr"   == command || "listpendingretrieves"  == command) {xCom_listpendingretrieves(tokens, requester);}
-  else if("lds"   == command || "listdrivestates"       == command) {xCom_listdrivestates(tokens, requester);}
-  
-  else if("lsc"   == command || "liststorageclass"      == command) {xCom_liststorageclass(tokens, requester);}
-  else if("ufi"   == command || "updatefileinfo"        == command) {xCom_updatefileinfo(tokens, requester);}
-  else if("a"     == command || "archive"               == command) {xCom_archive(tokens, requester);}
-  else if("r"     == command || "retrieve"              == command) {xCom_retrieve(tokens, requester);}
-  else if("da"    == command || "deletearchive"         == command) {xCom_deletearchive(tokens, requester);}
-  else if("cr"    == command || "cancelretrieve"        == command) {xCom_cancelretrieve(tokens, requester);}
+  if     ("bs"  == command || "bootstrap"            == command) {xCom_bootstrap(tokens, requester);}
+  else if("ad"  == command || "admin"                == command) {xCom_admin(tokens, requester);}
+  else if("ah"  == command || "adminhost"            == command) {xCom_adminhost(tokens, requester);}
+  else if("tp"  == command || "tapepool"             == command) {xCom_tapepool(tokens, requester);}
+  else if("ar"  == command || "archiveroute"         == command) {xCom_archiveroute(tokens, requester);}
+  else if("ll"  == command || "logicallibrary"       == command) {xCom_logicallibrary(tokens, requester);}
+  else if("ta"  == command || "tape"                 == command) {xCom_tape(tokens, requester);}
+  else if("sc"  == command || "storageclass"         == command) {xCom_storageclass(tokens, requester);}
+  else if("us"  == command || "user"                 == command) {xCom_user(tokens, requester);}
+  else if("ug"  == command || "usergroup"            == command) {xCom_usergroup(tokens, requester);}
+  else if("de"  == command || "dedication"           == command) {xCom_dedication(tokens, requester);}
+  else if("re"  == command || "repack"               == command) {xCom_repack(tokens, requester);}
+  else if("sh"  == command || "shrink"               == command) {xCom_shrink(tokens, requester);}
+  else if("ve"  == command || "verify"               == command) {xCom_verify(tokens, requester);}
+  else if("af"  == command || "archivefile"          == command) {xCom_archivefile(tokens, requester);}
+  else if("te"  == command || "test"                 == command) {xCom_test(tokens, requester);}
+  else if("dr"  == command || "drive"                == command) {xCom_drive(tokens, requester);}
+  else if("rc"  == command || "reconcile"            == command) {xCom_reconcile(tokens, requester);}
+  else if("lpa" == command || "listpendingarchives"  == command) {xCom_listpendingarchives(tokens, requester);}
+  else if("lpr" == command || "listpendingretrieves" == command) {xCom_listpendingretrieves(tokens, requester);}
+  else if("lds" == command || "listdrivestates"      == command) {xCom_listdrivestates(tokens, requester);}
+  else if("a"   == command || "archive"              == command) {xCom_archive(tokens, requester);}
+  else if("r"   == command || "retrieve"             == command) {xCom_retrieve(tokens, requester);}
+  else if("da"  == command || "deletearchive"        == command) {xCom_deletearchive(tokens, requester);}
+  else if("cr"  == command || "cancelretrieve"       == command) {xCom_cancelretrieve(tokens, requester);}
+  else if("ufi" == command || "updatefileinfo"       == command) {xCom_updatefileinfo(tokens, requester);}
+  else if("lsc" == command || "liststorageclass"     == command) {xCom_liststorageclass(tokens, requester);}
   
   else {m_data = getGenericHelp(tokens[0]);}
 }
@@ -128,7 +139,7 @@ std::string XrdProFile::decode(const std::string msg) const {
 //------------------------------------------------------------------------------
 int XrdProFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
   try {
-    const cta::SecurityIdentity requester = checkClient(client);
+    const cta::common::dataStructures::SecurityIdentity requester = checkClient(client);
 
     if(!strlen(fileName)) { //this should never happen
       m_data = getGenericHelp("");
@@ -350,1072 +361,498 @@ bool XrdProFile::hasOption(const std::vector<std::string> &tokens, const std::st
 }
 
 //------------------------------------------------------------------------------
-// xCom_admin
+// formatResponse
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+std::string XrdProFile::formatResponse(const std::vector<std::vector<std::string>> &responseTable) {
+  if(responseTable.empty()||responseTable.at(0).empty()) {
+    return "";
+  }
+  std::vector<int> columnSizes;
+  for(uint i=0; i<responseTable.at(0).size(); i++) {
+    uint columnSize=0;
+    for(uint j=0; j<responseTable.size(); j++) {
+      if(responseTable.at(i).at(j).size()>columnSize) {
+        columnSize=responseTable.at(i).at(j).size();
+      }
+    }
+    columnSize++; //add one space
+    columnSizes.push_back(columnSize);
+  }
+  std::stringstream responseSS;
+  for(auto row=responseTable.cbegin(); row!=responseTable.cend(); row++) {
+    if(row==responseTable.cbegin()) responseSS << "\x1b[31;1m";
+    for(uint i=0; i<row->size(); i++) {      
+      responseSS << " " << std::setw(columnSizes.at(i)) << row->at(i);      
+    }
+    if(row==responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
+  }
+  return responseSS.str();
+}
+
+//------------------------------------------------------------------------------
+// addLogInfoToResponseRow
+//------------------------------------------------------------------------------
+void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog) {
+  time_t creationTime = creationLog.getTime();
+  time_t lastModificationTime = lastModificationLog.getTime();
+  std::string creationTimeString(ctime(&creationTime));
+  std::string lastModificationTimeString(ctime(&lastModificationTime));
+  creationTimeString=creationTimeString.substr(0,24); //remove the newline
+  lastModificationTimeString=lastModificationTimeString.substr(0,24); //remove the newline
+  responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getUid()));
+  responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getGid()));
+  responseRow.push_back(creationLog.getHost());
+  responseRow.push_back(creationTimeString);
+  responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getUid()));
+  responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getGid()));
+  responseRow.push_back(lastModificationLog.getHost());
+  responseRow.push_back(lastModificationTimeString);
+}
+
+//------------------------------------------------------------------------------
+// xCom_bootstrap
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl;
-  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
+  help << tokens[0] << " bs/bootstrap --uid/-u <uid> --gid/-g <gid> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
+  std::string uid_s = getOptionValue(tokens, "-u", "--uid");
+  std::string gid_s = getOptionValue(tokens, "-g", "--gid");
+  std::string hostname = getOptionValue(tokens, "-h", "--hostname");
+  std::string comment = getOptionValue(tokens, "-m", "--comment");
+  if(uid_s.empty()||gid_s.empty()||hostname.empty()||comment.empty()) {
     m_data = help.str();
     return;
   }
-  if("add" == tokens[2]) {
-    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-    cta::UserIdentity adminUser;
-    std::istringstream uid_ss(uid_s);
-    int uid = 0;
-    uid_ss >> uid;
-    adminUser.uid = uid;
-    std::istringstream gid_ss(gid_s);
-    int gid = 0;
-    gid_ss >> gid;
-    adminUser.gid = gid;
-//    m_scheduler->createAdminUser(requester, adminUser, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-    cta::UserIdentity adminUser;
-    std::istringstream uid_ss(uid_s);
-    int uid = 0;
-    uid_ss >> uid;
-    adminUser.uid = uid;
-    std::istringstream gid_ss(gid_s);
-    int gid = 0;
-    gid_ss >> gid;
-    adminUser.gid = gid;
-    //m_scheduler->modifyAdminUser(requester, adminUser, comment);
-  }
-  else if("rm" == tokens[2]) {
+  cta::common::dataStructures::UserIdentity adminUser;
+  std::istringstream uid_ss(uid_s);
+  int uid = 0;
+  uid_ss >> uid;
+  adminUser.setUid(uid);
+  std::istringstream gid_ss(gid_s);
+  int gid = 0;
+  gid_ss >> gid;
+  adminUser.setGid(gid);
+  m_scheduler->createBootstrapAdminAndHostNoAuth(requester, adminUser, hostname, comment);
+}
+
+//------------------------------------------------------------------------------
+// xCom_admin
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl
+       << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
+       << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl
+       << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string uid_s = getOptionValue(tokens, "-u", "--uid");
     std::string gid_s = getOptionValue(tokens, "-g", "--gid");
     if(uid_s.empty()||gid_s.empty()) {
       m_data = help.str();
       return;
     }
-    cta::UserIdentity adminUser;
+    cta::common::dataStructures::UserIdentity adminUser;
     std::istringstream uid_ss(uid_s);
     int uid = 0;
     uid_ss >> uid;
-    adminUser.uid = uid;
+    adminUser.setUid(uid);
     std::istringstream gid_ss(gid_s);
     int gid = 0;
     gid_ss >> gid;
-    adminUser.gid = gid;
-//    m_scheduler->deleteAdminUser(requester, adminUser);
+    adminUser.setGid(gid);
+    if("add" == tokens[2] || "ch" == tokens[2]) {
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if("add" == tokens[2]) { //add
+        m_scheduler->createAdminUser(requester, adminUser, comment);
+      }
+      else { //ch
+        m_scheduler->modifyAdminUserComment(requester, adminUser, comment);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteAdminUser(requester, adminUser);
+    }
   }
-  else if("ls" == tokens[2]) {
-//    auto list = m_scheduler->getAdminUsers(requester);
-    std::list<common::admin::AdminUser> list;
-    std::ostringstream responseSS;
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::AdminUser> list= m_scheduler->getAdminUsers(requester);
     if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(8) << "uid" 
-                 << " " << std::setw(8) << "gid"
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"uid","gid","creator uid","creator gid","creation host","creation time","modifier uid","modifier gid","modification host","modification time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(std::to_string((unsigned long long)it->getUser().getUid()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getUser().getGid()));
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
     }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->getCreationLog().time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(8) << it->getUser().uid 
-                 << " " << std::setw(8) << it->getUser().gid 
-                 << " " << std::setw(18) << it->getCreationLog().user.uid 
-                 << " " << std::setw(18) << it->getCreationLog().user.gid 
-                 << " " << std::setw(30) << it->getCreationLog().host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->getCreationLog().comment << std::endl;
-    }
-    m_data = responseSS.str();
   }
   else {
     m_data = help.str();
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_adminhost
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ah/adminhost add/ch/rm/ls:" << std::endl;
-  help << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --name/-n <host_name>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(name.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-//    m_scheduler->createAdminHost(requester, name, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(name.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-    //m_scheduler->modifyAdminHost(requester, name, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    if(name.empty()) {
-      m_data = help.str();
-      return;
-    }
- //   m_scheduler->deleteAdminHost(requester, name);
-  }
-  else if("ls" == tokens[2]) {
- //   auto list = m_scheduler->getAdminHosts(requester);
-    std::list<common::admin::AdminHost> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(17) << "name" 
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(17) << it->name 
-                 << " " << std::setw(18) << it->creationLog.user.uid 
-                 << " " << std::setw(18) << it->creationLog.user.gid
-                 << " " << std::setw(30) << it->creationLog.host 
-                 << " " << std::setw(30) << timeString 
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }
+  help << tokens[0] << " ah/adminhost add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <host_name> [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <host_name>" << std::endl
+       << "\tls" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_tapepool
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " tp/tapepool add/ch/rm/ls:" << std::endl;
-  help << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --name/-n <tapepool_name>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string partialtapes_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
-    if(name.empty()||comment.empty()||partialtapes_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream partialtapes_ss(partialtapes_s);
-    int partialtapes = 0;
-    partialtapes_ss >> partialtapes;    
-    //m_scheduler->createTapePool(requester, name, partialtapes, comment);
-    
-    //TODO: The following hardcoded parameters should really be given by the user from the CLI. However before doing this we must clarify the scheduler interface and change it accordingly
-    cta::MountCriteria immediateMount;
-    immediateMount.maxAge = 0;
-    immediateMount.maxBytesQueued = 1;
-    immediateMount.maxFilesQueued = 1;
-    immediateMount.quota = 10;
-    //m_scheduler->setTapePoolMountCriteria(name, cta::MountCriteriaByDirection(immediateMount, immediateMount));
-  }
-  else if("ch" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string partialtapes_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
-    if(name.empty()||comment.empty()||partialtapes_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream partialtapes_ss(partialtapes_s);
-    int partialtapes = 0;
-    partialtapes_ss >> partialtapes;
-    //m_scheduler->modifyTapePool(requester, name, partialtapes, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    if(name.empty()) {
-      m_data = help.str();
-      return;
-    }
-   // m_scheduler->deleteTapePool(requester, name);
-  }
-  else if("ls" == tokens[2]) {
-    //auto list = m_scheduler->getTapePools(requester);
-    std::list<TapePool> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(18) << "name" 
-                 << " " << std::setw(25) << "# partially used tapes"
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(18) << it->name  
-                 << " " << std::setw(25) << it->nbPartialTapes
-                 << " " << std::setw(18) << it->creationLog.user.uid 
-                 << " " << std::setw(18) << it->creationLog.user.gid 
-                 << " " << std::setw(30) << it->creationLog.host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }  
+  help << tokens[0] << " tp/tapepool add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <tapepool_name>" << std::endl
+       << "\tls" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_archiveroute
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ar/archiveroute add/ch/rm/ls:" << std::endl;
-  help << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
-    std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    if(storageClass.empty()||tapePool.empty()||comment.empty()||copynb_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream copynb_ss(copynb_s);
-    int copynb = 0;
-    copynb_ss >> copynb;
-    //m_scheduler->createArchiveRoute(requester, storageClass, copynb, tapePool, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
-    std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    if(storageClass.empty()||tapePool.empty()||comment.empty()||copynb_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream copynb_ss(copynb_s);
-    int copynb = 0;
-    copynb_ss >> copynb;
-//    m_scheduler->modifyArchiveRoute(requester, storageClass, copynb, tapePool, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string storageClass = getOptionValue(tokens, "-s", "--storageclass");
-    std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    if(storageClass.empty()||copynb_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream copynb_ss(copynb_s);
-    int copynb = 0;
-    copynb_ss >> copynb;
-    //m_scheduler->deleteArchiveRoute(requester, storageClass, copynb);
-  }
-  else if("ls" == tokens[2]) {
-    //auto list = m_scheduler->getArchiveRoutes(requester);
-    std::list<common::archiveRoute::ArchiveRoute> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(18) << "name" 
-                 << " " << std::setw(8) << "copynb"
-                 << " " << std::setw(16) << "tapepool"
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(18) << it->storageClassName
-                 << " " << std::setw(8) << it->copyNb
-                 << " " << std::setw(16) << it->tapePoolName
-                 << " " << std::setw(18) << it->creationLog.user.uid
-                 << " " << std::setw(18) << it->creationLog.user.gid
-                 << " " << std::setw(30) << it->creationLog.host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }  
+  help << tokens[0] << " ar/archiveroute add/ch/rm/ls:" << std::endl
+       << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
+       << "\tls" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_logicallibrary
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl;
-  help << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --name/-n <logical_library_name>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(name.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-    //m_scheduler->createLogicalLibrary(requester, name, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(name.empty()||comment.empty()) {
-      m_data = help.str();
-      return;
-    }
-//    m_scheduler->modifyLogicalLibrary(requester, name, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    if(name.empty()) {
-      m_data = help.str();
-      return;
-    }
-    //m_scheduler->deleteLogicalLibrary(requester, name);
-  }
-  else if("ls" == tokens[2]) {
-    //auto list = m_scheduler->getLogicalLibraries(requester);
-    std::list<LogicalLibrary> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(17) << "name" 
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(17) << it->name
-                 << " " << std::setw(18) << it->creationLog.user.uid 
-                 << " " << std::setw(18) << it->creationLog.user.gid
-                 << " " << std::setw(30) << it->creationLog.host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }
+  help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <logical_library_name> [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <logical_library_name>" << std::endl
+       << "\tls" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_tape
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls:" << std::endl;
-  help << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> \\"<<std::endl
-       <<"\t\t--capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch      --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> \\"<<std::endl
-       <<"\t\t--capacity/-c <capacity_in_bytes> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm      --vid/-v <vid>" << std::endl;
-  help << "\treclaim --vid/-v <vid>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
-    std::string logicalLibrary = getOptionValue(tokens, "-l", "--logicallibrary");
-    std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream capacity_ss(capacity_s);
-    uint64_t capacity = 0;
-    capacity_ss >> capacity;
-    //m_scheduler->createTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
-    std::string logicalLibrary = getOptionValue(tokens, "-l", "--logicallibrary");
-    std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    if(logicalLibrary.empty()||tapePool.empty()||comment.empty()||capacity_s.empty()||vid.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream capacity_ss(capacity_s);
-    uint64_t capacity = 0;
-    capacity_ss >> capacity;
-//    m_scheduler->modifyTape(requester, vid, logicalLibrary, tapePool, capacity, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
-    if(vid.empty()) {
-      m_data = help.str();
-      return;
-    }
-    //m_scheduler->deleteTape(requester, vid);
-  }
-  else if("ls" == tokens[2]) {
-    //auto list = m_scheduler->getTapes(requester);
-    std::list<Tape> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(8) << "vid" 
-                 << " " << std::setw(18) << "logical library"
-                 << " " << std::setw(18) << "capacity in bytes" 
-                 << " " << std::setw(18) << "tapepool" 
-                 << " " << std::setw(18) << "used capacity"
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(8) << it->vid
-                 << " " << std::setw(18) << it->logicalLibraryName
-                 << " " << std::setw(18) << it->capacityInBytes
-                 << " " << std::setw(18) << it->tapePoolName
-                 << " " << std::setw(18) << it->dataOnTapeInBytes
-                 << " " << std::setw(18) << it->creationLog.user.uid 
-                 << " " << std::setw(18) << it->creationLog.user.gid 
-                 << " " << std::setw(30) << it->creationLog.host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }
+  help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
+       << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">] " << std::endl
+       << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm      --vid/-v <vid>" << std::endl
+       << "\treclaim --vid/-v <vid>" << std::endl
+       << "\tls      [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
+       << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_storageclass
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " sc/storageclass add/ch/rm/ls:" << std::endl;
-  help << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --id/-i <unique_class_id> --comment/-m <\"comment\">" << std::endl;
-  help << "\tch  --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --id/-i <unique_class_id> --comment/-m <\"comment\">" << std::endl;
-  help << "\trm  --name/-n <storage_class_name>" << std::endl;
-  help << "\tls" << std::endl;
-  if(tokens.size()<3){
-    m_data = help.str();
-    return;
-  }
-  if("add" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    std::string id_s = getOptionValue(tokens, "-i", "--id");
-    if(name.empty()||comment.empty()||copynb_s.empty()||id_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream copynb_ss(copynb_s);
-    int copynb = 0;
-    copynb_ss >> copynb;
-    std::istringstream id_ss(id_s);
-    int id = 0;
-    id_ss >> id;
-    //m_scheduler->createStorageClass(requester, name, copynb, id, comment);
-  }
-  else if("ch" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    std::string comment = getOptionValue(tokens, "-m", "--comment");
-    std::string copynb_s = getOptionValue(tokens, "-c", "--copynb");
-    std::string id_s = getOptionValue(tokens, "-i", "--id");
-    if(name.empty()||comment.empty()||copynb_s.empty()||id_s.empty()) {
-      m_data = help.str();
-      return;
-    }
-    std::istringstream copynb_ss(copynb_s);
-    int copynb = 0;
-    copynb_ss >> copynb;
-    std::istringstream id_ss(id_s);
-    int id = 0;
-    id_ss >> id;
-//    m_scheduler->modifyStorageClass(requester, name, copynb, id, comment);
-  }
-  else if("rm" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
-    if(name.empty()) {
-      m_data = help.str();
-      return;
-    }
-    //m_scheduler->deleteStorageClass(requester, name);
-  }
-  else if("ls" == tokens[2]) {
-    //auto list = m_scheduler->getStorageClasses(requester);
-    std::list<StorageClass> list;
-    std::ostringstream responseSS;
-    if(list.size()>0) {
-      responseSS << "\x1b[31;1m"
-                 << " " << std::setw(17) << "name" 
-                 << " " << std::setw(8) << "# copies"
-                 << " " << std::setw(18) << "creator uid" 
-                 << " " << std::setw(18) << "creator gid" 
-                 << " " << std::setw(30) << "creation host"
-                 << " " << std::setw(30) << "creation time"
-                 << " " << std::setw(30) << "comment"
-                 << "\x1b[0m" << std::endl;
-    }
-    for(auto it = list.begin(); it != list.end(); it++) {
-      std::string timeString(ctime(&(it->creationLog.time)));
-      timeString=timeString.substr(0,24);//remove the newline
-      responseSS << " " << std::setw(17) << it->name
-                 << " " << std::setw(8) << it->nbCopies
-                 << " " << std::setw(18) << it->creationLog.user.uid
-                 << " " << std::setw(18) << it->creationLog.user.gid
-                 << " " << std::setw(30) << it->creationLog.host
-                 << " " << std::setw(30) << timeString
-                 << " " << std::setw(30) << it->creationLog.comment << std::endl;
-    }
-    m_data = responseSS.str();
-  }
-  else {
-    m_data = help.str();
-  }
+  help << tokens[0] << " sc/storageclass add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <storage_class_name>" << std::endl
+       << "\tls" << std::endl;
 }
-  
+
+//------------------------------------------------------------------------------
+// xCom_user
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " us/user add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <user_name> --group/-g <group_name> --usergroup/-u <user_group_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <user_name> --group/-g <group_name> [--usergroup/-u <user_group_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
+       << "\tls" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_usergroup
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " ug/usergroup add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> --minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <usergroup_name>" << std::endl
+       << "\tls" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_dedication
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " de/dedication add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --name/-n <drive_name>" << std::endl
+       << "\tls" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_repack
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
+       << "\tadd [--vid/-v <vid>] [--file/-f <filename_with_vid_list>] [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
+       << "\trm  [--vid/-v <vid>] [--file/-f <filename_with_vid_list>]" << std::endl
+       << "\tls  [--vid/-v <vid>]" << std::endl
+       << "\terr --vid/-v <vid>" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_shrink
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_verify
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " ve/verify add/rm/ls/err:" << std::endl
+       << "\tadd [--vid/-v <vid>] [--file/-f <filename_with_vid_list>] [--complete/-c] [--partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
+       << "\trm  [--vid/-v <vid>] [--file/-f <filename_with_vid_list>]" << std::endl
+       << "\tls  [--vid/-v <vid>]" << std::endl
+       << "\terr --vid/-v <vid>" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_archivefile
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] [--owner/-o <owner>] [--group/-g <owner>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_test
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors):" << std::endl
+       << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir>] [--null/-n] [--tag/-t <tag_name>]" << std::endl
+       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size>] [--randomsize/-r] [--zero/-z] [--urandom/-u] [--file/-f <filename>] [--filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_drive
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_drive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " dr/drive up/down (it is a synchronous command):" << std::endl
+       << "\tup   --drive/-d <drive_name>" << std::endl
+       << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_reconcile
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
+}
+
 //------------------------------------------------------------------------------
 // xCom_listpendingarchives
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpa/listpendingarchives [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
-  std::string tapePool = getOptionValue(tokens, "-t", "--tapepool");
-  bool extended = hasOption(tokens, "-x", "--extended");
-  std::ostringstream responseSS;
-  if(tapePool.empty()) {
-    //auto poolList = m_scheduler->getArchiveRequests(requester);
-    std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > poolList;
-    if(poolList.size()>0) {
-      if(extended) {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(18) << "tapepool" 
-                   << " " << std::setw(30) << "remote filepath" 
-                   << " " << std::setw(16) << "size"
-                   << " " << std::setw(30) << "cta filepath"
-                   << " " << std::setw(8) << "copynb"
-                   << " " << std::setw(8) << "priority"
-                   << " " << std::setw(18) << "creator uid" 
-                   << " " << std::setw(18) << "creator gid" 
-                   << " " << std::setw(30) << "creation host"
-                   << " " << std::setw(30) << "creation time"
-                   << " " << std::setw(30) << "comment"
-                   << "\x1b[0m" << std::endl;
-      }
-      else {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(18) << "tapepool" 
-                   << " " << std::setw(25) << "number of requests" 
-                   << " " << std::setw(16) << "total size"
-                   << "\x1b[0m" << std::endl;
-      }
-    }  
-    for(auto pool = poolList.begin(); pool != poolList.end(); pool++) {
-      uint64_t numberOfRequests=0;
-      uint64_t totalSize=0;
-      for(auto request = pool->second.begin(); request!=pool->second.end(); request++) {
-        if(extended) {
-          std::string timeString(ctime(&(request->creationLog.time)));
-          timeString=timeString.substr(0,24);//remove the newline
-          responseSS << " " << std::setw(18) << pool->first.name
-                     << " " << std::setw(30) << request->remoteFile.path.getRaw()
-                     << " " << std::setw(16) << request->remoteFile.status.size
-                     << " " << std::setw(30) << request->archiveFile
-                     << " " << std::setw(8) << request->copyNb
-                     << " " << std::setw(8) << request->priority
-                     << " " << std::setw(18) << request->creationLog.user.uid
-                     << " " << std::setw(18) << request->creationLog.user.gid
-                     << " " << std::setw(30) << request->creationLog.host
-                     << " " << std::setw(30) << timeString 
-                     << " " << std::setw(30) << request->creationLog.comment << std::endl;
-        }
-        numberOfRequests++;
-        totalSize+=request->remoteFile.status.size;
-      }
-      if(!extended) {
-        responseSS << " " << std::setw(18) << pool->first.name
-                   << " " << std::setw(25) << numberOfRequests 
-                   << " " << std::setw(16) << totalSize << std::endl;
-      }
-    }  
-  }
-  else {
-    uint64_t numberOfRequests=0;
-    uint64_t totalSize=0;
-    //auto requestList = m_scheduler->getArchiveRequests(requester, tapePool); 
-    std::list<ArchiveToTapeCopyRequest> requestList;
-    if(requestList.size()>0) {
-      if(extended) {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(18) << "tapepool" 
-                   << " " << std::setw(30) << "remote filepath" 
-                   << " " << std::setw(16) << "size"
-                   << " " << std::setw(30) << "cta filepath"
-                   << " " << std::setw(8) << "copynb"
-                   << " " << std::setw(8) << "priority"
-                   << " " << std::setw(18) << "creator uid" 
-                   << " " << std::setw(18) << "creator gid" 
-                   << " " << std::setw(30) << "creation host"
-                   << " " << std::setw(30) << "creation time"
-                   << " " << std::setw(30) << "comment"
-                   << "\x1b[0m" << std::endl;
-      }
-      else {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(18) << "tapepool" 
-                   << " " << std::setw(25) << "number of requests" 
-                   << " " << std::setw(16) << "total size"
-                   << "\x1b[0m" << std::endl;
-      }
-    }     
-    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
-      if(extended) {
-        std::string timeString(ctime(&(request->creationLog.time)));
-        timeString=timeString.substr(0,24);//remove the newline
-        responseSS << " " << std::setw(18) << tapePool
-                   << " " << std::setw(30) << request->remoteFile.path.getRaw()
-                   << " " << std::setw(16) << request->remoteFile.status.size
-                   << " " << std::setw(30) << request->archiveFile
-                   << " " << std::setw(8) << request->copyNb
-                   << " " << std::setw(8) << request->priority
-                   << " " << std::setw(18) << request->creationLog.user.uid
-                   << " " << std::setw(18) << request->creationLog.user.gid
-                   << " " << std::setw(30) << request->creationLog.host
-                   << " " << std::setw(30) << timeString 
-                   << " " << std::setw(30) << request->creationLog.comment << std::endl;
-      }
-      numberOfRequests++;
-      totalSize+=request->remoteFile.status.size;
-    }
-    if(!extended) {
-      responseSS << " " << std::setw(18) << tapePool
-                 << " " << std::setw(25) << numberOfRequests 
-                 << " " << std::setw(16) << totalSize << std::endl;
-    }
-  }
-  m_data = responseSS.str();
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_listpendingretrieves
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpr/listpendingretrieves [--vid/-v <vid>] [--extended/-x]" << std::endl;
-  std::string tapeVid = getOptionValue(tokens, "-v", "--vid");
-  bool extended = hasOption(tokens, "-x", "--extended");
-  std::ostringstream responseSS;
-  if(tapeVid.empty()) {
-    //auto vidList = m_scheduler->getRetrieveRequests(requester);
-    std::map<Tape, std::list<RetrieveRequestDump> > vidList;
-    if(vidList.size()>0) {
-      if(extended) {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(8) << "vid" 
-                   << " " << std::setw(30) << "cta filepath" 
-                   << " " << std::setw(16) << "size"
-                   << " " << std::setw(50) << "remote filepath"
-                   << " " << std::setw(8) << "copynb"
-                   << " " << std::setw(8) << "block id"
-                   << " " << std::setw(8) << "fseq"
-                   << " " << std::setw(8) << "priority"
-                   << " " << std::setw(18) << "creator uid" 
-                   << " " << std::setw(18) << "creator gid" 
-                   << " " << std::setw(30) << "creation host"
-                   << " " << std::setw(30) << "creation time"
-                   << " " << std::setw(30) << "comment"
-                   << "\x1b[0m" << std::endl;
-      }
-      else {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(8) << "vid" 
-                   << " " << std::setw(25) << "number of requests" 
-                   << " " << std::setw(16) << "total size"
-                   << "\x1b[0m" << std::endl;
-      }
-    }  
-    for(auto vid = vidList.begin(); vid != vidList.end(); vid++) {
-      uint64_t numberOfRequests=0;
-      uint64_t totalSize=0;
-      for(auto request = vid->second.begin(); request!=vid->second.end(); request++) {
-        if(extended) {
-          std::stringstream blockIdSS;
-          std::stringstream fseqSS;
-          // Find the tape copy for the active copy number
-          for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
-            if (l->copyNb == request->activeCopyNb) {
-              blockIdSS << l->blockId;
-              fseqSS << l->fSeq;
-            }
-          }
-          std::string timeString(ctime(&(request->creationLog.time)));
-          timeString=timeString.substr(0,24);//remove the newline
-          responseSS << " " << std::setw(8) << vid->first.vid
-                     << " " << std::setw(30) << request->archiveFile.path
-                     << " " << std::setw(16) << request->archiveFile.size
-                     << " " << std::setw(50) << request->remoteFile
-                     << " " << std::setw(8) << request->activeCopyNb
-                     << " " << std::setw(8) << blockIdSS.str()
-                     << " " << std::setw(8) << fseqSS.str()
-                     << " " << std::setw(8) << request->priority
-                     << " " << std::setw(18) << request->creationLog.user.uid
-                     << " " << std::setw(18) << request->creationLog.user.gid
-                     << " " << std::setw(30) << request->creationLog.host
-                     << " " << std::setw(30) << timeString 
-                     << " " << std::setw(30) << request->creationLog.comment << std::endl;
-        }
-        numberOfRequests++;
-        totalSize+=request->archiveFile.size;
-      }
-      if(!extended) {
-        responseSS << " " << std::setw(8) << vid->first.vid
-                   << " " << std::setw(25) << numberOfRequests
-                   << " " << std::setw(16) << totalSize << std::endl;
-      }
-    }  
-  }
-  else {
-    uint64_t numberOfRequests=0;
-    uint64_t totalSize=0;    
-    //auto requestList = m_scheduler->getRetrieveRequests(requester, tapeVid);
-    std::list<RetrieveRequestDump> requestList;
-    if(requestList.size()>0) {
-      if(extended) {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(8) << "vid" 
-                   << " " << std::setw(30) << "cta filepath" 
-                   << " " << std::setw(16) << "size"
-                   << " " << std::setw(50) << "remote filepath"
-                   << " " << std::setw(8) << "copynb"
-                   << " " << std::setw(8) << "block id"
-                   << " " << std::setw(8) << "fseq"
-                   << " " << std::setw(8) << "priority"
-                   << " " << std::setw(18) << "creator uid" 
-                   << " " << std::setw(18) << "creator gid" 
-                   << " " << std::setw(30) << "creation host"
-                   << " " << std::setw(30) << "creation time"
-                   << " " << std::setw(30) << "comment"
-                   << "\x1b[0m" << std::endl;
-      }
-      else {
-        responseSS << "\x1b[31;1m"
-                   << " " << std::setw(8) << "vid" 
-                   << " " << std::setw(25) << "number of requests" 
-                   << " " << std::setw(16) << "total size"
-                   << "\x1b[0m" << std::endl;
-      }
-    }
-    for(auto request = requestList.begin(); request!=requestList.end(); request++) {
-      if(extended) {
-        std::stringstream blockIdSS;
-        std::stringstream fseqSS;
-        // Find the tape copy for the active copy number
-        for (auto l=request->tapeCopies.begin(); l!=request->tapeCopies.end(); l++) {
-          if (l->copyNb == request->activeCopyNb) {
-            blockIdSS << l->blockId;
-            fseqSS << l->fSeq;
-          }
-        }
-        std::string timeString(ctime(&(request->creationLog.time)));
-        timeString=timeString.substr(0,24);//remove the newline
-        responseSS << " " << std::setw(8) << tapeVid
-                   << " " << std::setw(30) << request->archiveFile.path
-                   << " " << std::setw(16) << request->archiveFile.size
-                   << " " << std::setw(50) << request->remoteFile
-                   << " " << std::setw(8) << request->activeCopyNb
-                   << " " << std::setw(8) << blockIdSS.str()
-                   << " " << std::setw(8) << fseqSS.str()
-                   << " " << std::setw(8) << request->priority
-                   << " " << std::setw(18) << request->creationLog.user.uid
-                   << " " << std::setw(18) << request->creationLog.user.gid
-                   << " " << std::setw(30) << request->creationLog.host
-                   << " " << std::setw(30) << timeString 
-                   << " " << std::setw(30) << request->creationLog.comment << std::endl;
-      }
-      numberOfRequests++;
-      totalSize+=request->archiveFile.size;
-    }
-    if(!extended) {
-      responseSS << " " << std::setw(8) << tapeVid
-                 << " " << std::setw(25) << numberOfRequests
-                 << " " << std::setw(16) << totalSize << std::endl;
-    }
-  }
-  m_data = responseSS.str();
 }
 
-std::string fromDriveStatusToString(cta::common::DriveStatus status) {
-  using cta::common::DriveStatus;
-  switch(status) {
-    case DriveStatus::CleaningUp:
-      return "CleaningUp";
-    case DriveStatus::Down:
-      return "Down";
-    case DriveStatus::DrainingToDisk:
-      return "DrainingToDisk";
-    case DriveStatus::Mounting:
-      return "Mounting";
-    case DriveStatus::Starting:
-      return "Starting";
-    case DriveStatus::Transfering:
-      return "Transferring";
-    case DriveStatus::Unloading:
-      return "Unloading";
-    case DriveStatus::Unmounting:
-      return "Unmounting";
-    case DriveStatus::Up:
-      return "Up";
-    default:
-      return "UnknownState";
-  }
-}
-
-time_t getDurationSinceStatusBegin(const cta::common::DriveState &state) {
-  time_t now = time(0);
-  switch(state.status) {
-  using cta::common::DriveStatus;
-    case DriveStatus::CleaningUp:
-      return now-state.cleanupStartTime;
-    case DriveStatus::Down:
-      return now-state.downOrUpStartTime;
-    case DriveStatus::DrainingToDisk:
-      return now-state.drainingStartTime;
-    case DriveStatus::Mounting:
-      return now-state.mountStartTime;
-    case DriveStatus::Starting:
-      return now-state.startStartTime;
-    case DriveStatus::Transfering:
-      return now-state.transferStartTime;
-    case DriveStatus::Unloading:
-      return now-state.unloadStartTime;
-    case DriveStatus::Unmounting:
-      return now-state.unmountStartTime;
-    case DriveStatus::Up:
-      return now-state.downOrUpStartTime;
-    default:
-      return 0;
-  }
-}
-  
 //------------------------------------------------------------------------------
 // xCom_listdrivestates
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates" << std::endl;
-  //auto list = m_scheduler->getDriveStates(requester);
-  std::list<cta::common::DriveState> list;
-  std::ostringstream responseSS;
-  if(list.size()>0) {
-    responseSS << "\x1b[31;1m"
-               << " " << std::setw(18) << "logical library"
-               << " " << std::setw(15) << "drive name"
-               << " " << std::setw(15) << "status"
-               << " " << std::setw(10) << "#secs"
-               << " " << std::setw(12) << "mount type"
-               << " " << std::setw(8) << "vid"
-//               << " " << std::setw(18) << "bytes transfered"
-//               << " " << std::setw(18) << "files transfered"
-//               << " " << std::setw(15) << "bandwidth"
-//               << " " << std::setw(12) << "session id"
-               << "\x1b[0m" << std::endl;
-  }
-  for(auto it = list.begin(); it != list.end(); it++) {
-    responseSS << " " << std::setw(18) << it->logicalLibrary
-               << " " << std::setw(15) << it->name  
-               << " " << std::setw(15) << fromDriveStatusToString(it->status)
-               << " " << std::setw(10) << getDurationSinceStatusBegin(*it)
-               << " " << std::setw(12) << cta::MountType::toString(it->mountType)
-               << " " << std::setw(8) << it->currentVid
-//               << " " << std::setw(18) << it->bytesTransferedInSession
-//               << " " << std::setw(18) << it->filesTransferedInSession
-//               << " " << std::setw(15) << it->latestBandwidth
-//               << " " << std::setw(12) << it->sessionId 
-               << std::endl;
-  }
-  m_data = responseSS.str();
 }
-  
-//------------------------------------------------------------------------------
-// xCom_liststorageclass
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " lsc/liststorageclass <VO>" << std::endl;
-  if(tokens.size()!=3){
-    m_data = help.str();
-    return;
-  }
-  //auto list = m_scheduler->getStorageClasses(requester);
-  std::list<StorageClass> list;
-  std::ostringstream responseSS;
-  if(list.size()>0) {
-    responseSS << "\x1b[31;1m"
-               << " " << std::setw(17) << "name" 
-               << " " << std::setw(8) << "# copies"
-               << "\x1b[0m" << std::endl;
-  }
-  for(auto it = list.begin(); it != list.end(); it++) {
-    std::string timeString(ctime(&(it->creationLog.time)));
-    timeString=timeString.substr(0,24);//remove the newline
-    responseSS << " " << std::setw(17) << it->name
-               << " " << std::setw(8) << it->nbCopies << std::endl;
-  }
-  m_data = responseSS.str();
-}
-  
-//------------------------------------------------------------------------------
-// xCom_setstorageclass
-//------------------------------------------------------------------------------
-void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
-  std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] <CTA_ArchiveFileID> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
-  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
-    m_data = help.str();
-    return;
-  }
-//  m_scheduler->setDirStorageClass(requester, tokens[2], tokens[3]);
-}
-  
+
 //------------------------------------------------------------------------------
 // xCom_archive
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " a/archive [--noencoding/-n] <src_URL> <size> <checksum> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
-  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=12) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=11)){
-    m_data = help.str();
-    return;
-  }
-  auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
-  auto src_end = tokens.end() - 1; //exclude the destination
-  const std::list<std::string> source_files(src_begin, src_end);
-//  m_scheduler->queueArchiveRequest(requester, source_files, tokens[tokens.size()-1]);
+  help << tokens[0] << " a/archive [--noencoding/-n] username groupname EOS_unique_id src_URL size checksum_type checksum_value storage_class DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_retrieve
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve [--noencoding/-n] <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
-  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
-    m_data = help.str();
-    return;
-  }
-  auto src_begin = tokens.begin() + 2; //exclude the program name and the archive command
-  auto src_end = tokens.end() - 1; //exclude the destination
-  const std::list<std::string> source_files(src_begin, src_end);
-//  m_scheduler->queueRetrieveRequest(requester, source_files, tokens[tokens.size()-1]);
+  help << tokens[0] << " r/retrieve [--noencoding/-n] username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_deletearchive
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " da/deletearchive <CTA_ArchiveFileID>" << std::endl;
-  if(tokens.size()!=3){
-    m_data = help.str();
-    return;
-  }
-//  m_scheduler->deleteArchiveRequest(requester, tokens[2]);
+  help << tokens[0] << " da/deletearchive username groupname CTA_ArchiveFileID" << std::endl;
 }
-  
+
 //------------------------------------------------------------------------------
 // xCom_cancelretrieve
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester) {
+void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve [--noencoding/-n] <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
-  if((hasOption(tokens, "-n", "--noencoding") && tokens.size()!=10) || (!hasOption(tokens, "-n", "--noencoding") && tokens.size()!=9)){
-    m_data = help.str();
-    return;
-  }
-//  m_scheduler->deleteRetrieveRequest(requester, tokens[2]);
+  help << tokens[0] << " cr/cancelretrieve [--noencoding/-n] username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
 }
 
+//------------------------------------------------------------------------------
+// xCom_updatefileinfo
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] username groupname CTA_ArchiveFileID storage_class DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_liststorageclass
+//------------------------------------------------------------------------------
+void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+  std::stringstream help;
+  help << tokens[0] << " lsc/liststorageclass username groupname" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// xCom_admin
+//------------------------------------------------------------------------------
+//void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
+//  std::stringstream help;
+//  help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl;
+//  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+//  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
+//  help << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl;
+//  help << "\tls" << std::endl;
+//  if(tokens.size()<3){
+//    m_data = help.str();
+//    return;
+//  }
+//  if("add" == tokens[2]) {
+//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
+//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
+//    std::string comment = getOptionValue(tokens, "-m", "--comment");
+//    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
+//      m_data = help.str();
+//      return;
+//    }
+//    cta::UserIdentity adminUser;
+//    std::istringstream uid_ss(uid_s);
+//    int uid = 0;
+//    uid_ss >> uid;
+//    adminUser.uid = uid;
+//    std::istringstream gid_ss(gid_s);
+//    int gid = 0;
+//    gid_ss >> gid;
+//    adminUser.gid = gid;
+////    m_scheduler->createAdminUser(requester, adminUser, comment);
+//  }
+//  else if("ch" == tokens[2]) {
+//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
+//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
+//    std::string comment = getOptionValue(tokens, "-m", "--comment");
+//    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
+//      m_data = help.str();
+//      return;
+//    }
+//    cta::UserIdentity adminUser;
+//    std::istringstream uid_ss(uid_s);
+//    int uid = 0;
+//    uid_ss >> uid;
+//    adminUser.uid = uid;
+//    std::istringstream gid_ss(gid_s);
+//    int gid = 0;
+//    gid_ss >> gid;
+//    adminUser.gid = gid;
+//    //m_scheduler->modifyAdminUser(requester, adminUser, comment);
+//  }
+//  else if("rm" == tokens[2]) {
+//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
+//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
+//    if(uid_s.empty()||gid_s.empty()) {
+//      m_data = help.str();
+//      return;
+//    }
+//    cta::UserIdentity adminUser;
+//    std::istringstream uid_ss(uid_s);
+//    int uid = 0;
+//    uid_ss >> uid;
+//    adminUser.uid = uid;
+//    std::istringstream gid_ss(gid_s);
+//    int gid = 0;
+//    gid_ss >> gid;
+//    adminUser.gid = gid;
+////    m_scheduler->deleteAdminUser(requester, adminUser);
+//  }
+//  else if("ls" == tokens[2]) {
+////    auto list = m_scheduler->getAdminUsers(requester);
+//    std::list<common::admin::AdminUser> list;
+//    std::ostringstream responseSS;
+//    if(list.size()>0) {
+//      responseSS << "\x1b[31;1m"
+//                 << " " << std::setw(8) << "uid" 
+//                 << " " << std::setw(8) << "gid"
+//                 << " " << std::setw(18) << "creator uid" 
+//                 << " " << std::setw(18) << "creator gid" 
+//                 << " " << std::setw(30) << "creation host"
+//                 << " " << std::setw(30) << "creation time"
+//                 << " " << std::setw(30) << "comment"
+//                 << "\x1b[0m" << std::endl;
+//    }
+//    for(auto it = list.begin(); it != list.end(); it++) {
+//      std::string timeString(ctime(&(it->getCreationLog().time)));
+//      timeString=timeString.substr(0,24);//remove the newline
+//      responseSS << " " << std::setw(8) << it->getUser().uid 
+//                 << " " << std::setw(8) << it->getUser().gid 
+//                 << " " << std::setw(18) << it->getCreationLog().user.uid 
+//                 << " " << std::setw(18) << it->getCreationLog().user.gid 
+//                 << " " << std::setw(30) << it->getCreationLog().host
+//                 << " " << std::setw(30) << timeString
+//                 << " " << std::setw(30) << it->getCreationLog().comment << std::endl;
+//    }
+//    m_data = responseSS.str();
+//  }
+//  else {
+//    m_data = help.str();
+//  }
+//}
+  
 //------------------------------------------------------------------------------
 // getGenericHelp
 //------------------------------------------------------------------------------

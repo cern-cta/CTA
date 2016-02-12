@@ -79,7 +79,7 @@ protected:
    * @param req     parsed request
    * @return The requester structure
    */
-  cta::SecurityIdentity checkClient(const XrdSecEntity *client);
+  cta::common::dataStructures::SecurityIdentity checkClient(const XrdSecEntity *client);
   
   /**
    * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
@@ -95,7 +95,7 @@ protected:
    * 
    * @param tokens The command line tokens
    */
-  void dispatchCommand(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
   
   /**
    * Given the command line string vector it returns the value of the specified option or an empty string if absent
@@ -117,124 +117,50 @@ protected:
    */
   bool hasOption(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
   
-  /**
-   * Executes the admin command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_admin(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_adminhost(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_archiveroute(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_usergroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_drive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
+  void xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
   
   /**
-   * Executes the adminhost command
+   * Returns the response string properly formatted in a table
    * 
-   * @param tokens The command line tokens
+   * @param  responseTable The response 2-D matrix
+   * @return the response string properly formatted in a table
    */
-  void xCom_adminhost(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable);
   
   /**
-   * Executes the user command
+   * Adds the creation log and the last modification log to the current response row
    * 
-   * @param tokens The command line tokens
+   * @param  responseRow The current response row to modify
+   * @param  creationLog the creation log
+   * @param  lastModificationLog the last modification log
    */
-  void xCom_user(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the tapepool command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_tapepool(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the archiveroute command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_archiveroute(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the logicallibrary command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the tape command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_tape(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the storageclass command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_storageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the listongoingarchives command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the listpendingretrieves command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the listdrivestates command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the liststorageclass command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the updatefileinfo command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the archive command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_archive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the retrieve command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_retrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the deletearchive command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_deletearchive(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
-  
-  /**
-   * Executes the cancelretrieve command
-   * 
-   * @param tokens The command line tokens
-   */
-  void xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::SecurityIdentity &requester);
+  void addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog);
   
   /**
    * Returns the help string
