@@ -80,8 +80,7 @@ cta::common::dataStructures::SecurityIdentity XrdProFile::checkClient(const XrdS
       throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] getpwnam_r failed");
     }
   }
-  std::cout << "Request received from client. Username: " << client->name <<
-    " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   requester.setUid(pwd.pw_uid);
   requester.setGid(pwd.pw_gid);
   requester.setHost(client->host);
@@ -793,12 +792,12 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
 void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " ug/usergroup add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl <<
-              "\t--minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> " << std::endl <<
-              "\t--minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl <<
-             "\t[--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl <<
-             "\t[--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl
+       << "\t    --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> " << std::endl
+       << "\t    --minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl
+       << "\t   [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl
+       << "\t   [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <usergroup_name>" << std::endl
        << "\tls" << std::endl;
 }
