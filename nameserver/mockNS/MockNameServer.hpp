@@ -23,7 +23,13 @@
 #include "nameserver/NameServer.hpp"
 #include "common/SecurityIdentity.hpp"
 
-#include <cstdatomic>
+// The header file for atomic was is actually called cstdatomic in gcc 4.4
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
+    #include <cstdatomic>
+#else
+  #include <atomic>
+#endif
+
 #include <list>
 #include <mutex>
 #include <string>
