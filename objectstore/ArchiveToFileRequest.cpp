@@ -164,7 +164,7 @@ cta::common::archiveNS::ArchiveFile cta::objectstore::ArchiveToFileRequest::getA
   checkPayloadReadable();
   auto checksum = m_payload.archivefile().checksum();
   auto fileId = m_payload.archivefile().fileid();
-  auto lastModificationTime = m_payload.archivefile().lastmodificationtime();
+  const time_t lastModificationTime = m_payload.archivefile().lastmodificationtime();
   auto nsHostName = m_payload.archivefile().nshostname();
   auto path = m_payload.archivefile().path();
   auto size = m_payload.archivefile().size();
