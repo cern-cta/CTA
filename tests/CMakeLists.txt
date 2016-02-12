@@ -44,5 +44,6 @@ target_link_libraries(unitTests
   ctaremotensunittests
   ctaschedulerunittests
   ctaio
+  ${GMOCK_LIB}
   gtest
   pthread)
