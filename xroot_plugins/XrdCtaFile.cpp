@@ -482,7 +482,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
     std::list<cta::common::dataStructures::AdminUser> list= m_scheduler->getAdminUsers(requester);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"uid","gid","creator uid","creator gid","creation host","creation time","modifier uid","modifier gid","modification host","modification time","comment"};
+      std::vector<std::string> header = {"uid","gid","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
       for(auto it = list.begin(); it != list.end(); it++) {
         std::vector<std::string> currentRow;
@@ -507,9 +507,51 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
   std::stringstream help;
   help << tokens[0] << " ah/adminhost add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <host_name> [--comment/-m <\"comment\">]" << std::endl
+       << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <host_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string hostname = getOptionValue(tokens, "-n", "--name");
+    if(hostname.empty()) {
+      m_data = help.str();
+      return;
+    }
+    if("add" == tokens[2] || "ch" == tokens[2]) {
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if("add" == tokens[2]) { //add
+        m_scheduler->createAdminHost(requester, hostname, comment);
+      }
+      else { //ch
+        m_scheduler->modifyAdminHostComment(requester, hostname, comment);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteAdminHost(requester, hostname);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::AdminHost> list= m_scheduler->getAdminHosts(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"hostname","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -522,6 +564,65 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string name = getOptionValue(tokens, "-n", "--name");
+    if(name.empty()) {
+      m_data = help.str();
+      return;
+    }
+    if("add" == tokens[2]) { //add
+      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()||ptn_s.empty()) {
+        m_data = help.str();
+        return;
+      }
+      std::istringstream ptn_ss(ptn_s);
+      uint32_t ptn = 0;
+      ptn_ss >> ptn;
+      m_scheduler->createTapePool(requester, name, ptn, comment);
+    }
+    else if("ch" == tokens[2]) { //ch
+      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()&&ptn_s.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if(!comment.empty()) {
+        m_scheduler->modifyTapePoolComment(requester, name, comment);
+      }
+      if(!ptn_s.empty()) {
+        std::istringstream ptn_ss(ptn_s);
+        uint32_t ptn = 0;
+        ptn_ss >> ptn;
+        m_scheduler->modifyTapePoolNbPartialTapes(requester, name, ptn);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteTapePool(requester, name);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::TapePool> list= m_scheduler->getTapePools(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"name","# partial tapes","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        currentRow.push_back(std::to_string((unsigned long long)it->getNbPartialTapes()));
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -534,6 +635,64 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
        << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string scn = getOptionValue(tokens, "-s", "--storageclass");
+    std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
+    if(scn.empty()||cn_s.empty()) {
+      m_data = help.str();
+      return;
+    }    
+    std::istringstream cn_ss(cn_s);
+    uint32_t cn = 0;
+    cn_ss >> cn;
+    if("add" == tokens[2]) { //add
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()||tapepool.empty()) {
+        m_data = help.str();
+        return;
+      }
+      m_scheduler->createArchiveRoute(requester, scn, cn, tapepool, comment);
+    }
+    else if("ch" == tokens[2]) { //ch
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()&&tapepool.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if(!comment.empty()) {
+        m_scheduler->modifyArchiveRouteComment(requester, scn, cn, comment);
+      }
+      if(!tapepool.empty()) {
+        m_scheduler->modifyArchiveRouteTapePoolName(requester, scn, cn, tapepool);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteArchiveRoute(requester, scn, cn);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::ArchiveRoute> list= m_scheduler->getArchiveRoutes(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"storage class","copy number","tapepool","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getStorageClassName());
+        currentRow.push_back(std::to_string((unsigned long long)it->getCopyNb()));
+        currentRow.push_back(it->getTapePoolName());
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -543,9 +702,51 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
   std::stringstream help;
   help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <logical_library_name> [--comment/-m <\"comment\">]" << std::endl
+       << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string hostname = getOptionValue(tokens, "-n", "--name");
+    if(hostname.empty()) {
+      m_data = help.str();
+      return;
+    }
+    if("add" == tokens[2] || "ch" == tokens[2]) {
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if("add" == tokens[2]) { //add
+        m_scheduler->createLogicalLibrary(requester, hostname, comment);
+      }
+      else { //ch
+        m_scheduler->modifyLogicalLibraryComment(requester, hostname, comment);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteLogicalLibrary(requester, hostname);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::LogicalLibrary> list= m_scheduler->getLogicalLibraries(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"name","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -592,8 +793,12 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
 void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " ug/usergroup add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> --minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl <<
+              "\t--minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> " << std::endl <<
+              "\t--minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl <<
+             "\t[--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl <<
+             "\t[--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <usergroup_name>" << std::endl
        << "\tls" << std::endl;
 }
@@ -749,109 +954,6 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
   std::stringstream help;
   help << tokens[0] << " lsc/liststorageclass username groupname" << std::endl;
 }
-
-//------------------------------------------------------------------------------
-// xCom_admin
-//------------------------------------------------------------------------------
-//void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
-//  std::stringstream help;
-//  help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl;
-//  help << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
-//  help << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl;
-//  help << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl;
-//  help << "\tls" << std::endl;
-//  if(tokens.size()<3){
-//    m_data = help.str();
-//    return;
-//  }
-//  if("add" == tokens[2]) {
-//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-//    std::string comment = getOptionValue(tokens, "-m", "--comment");
-//    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
-//      m_data = help.str();
-//      return;
-//    }
-//    cta::UserIdentity adminUser;
-//    std::istringstream uid_ss(uid_s);
-//    int uid = 0;
-//    uid_ss >> uid;
-//    adminUser.uid = uid;
-//    std::istringstream gid_ss(gid_s);
-//    int gid = 0;
-//    gid_ss >> gid;
-//    adminUser.gid = gid;
-////    m_scheduler->createAdminUser(requester, adminUser, comment);
-//  }
-//  else if("ch" == tokens[2]) {
-//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-//    std::string comment = getOptionValue(tokens, "-m", "--comment");
-//    if(uid_s.empty()||gid_s.empty()||comment.empty()) {
-//      m_data = help.str();
-//      return;
-//    }
-//    cta::UserIdentity adminUser;
-//    std::istringstream uid_ss(uid_s);
-//    int uid = 0;
-//    uid_ss >> uid;
-//    adminUser.uid = uid;
-//    std::istringstream gid_ss(gid_s);
-//    int gid = 0;
-//    gid_ss >> gid;
-//    adminUser.gid = gid;
-//    //m_scheduler->modifyAdminUser(requester, adminUser, comment);
-//  }
-//  else if("rm" == tokens[2]) {
-//    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-//    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-//    if(uid_s.empty()||gid_s.empty()) {
-//      m_data = help.str();
-//      return;
-//    }
-//    cta::UserIdentity adminUser;
-//    std::istringstream uid_ss(uid_s);
-//    int uid = 0;
-//    uid_ss >> uid;
-//    adminUser.uid = uid;
-//    std::istringstream gid_ss(gid_s);
-//    int gid = 0;
-//    gid_ss >> gid;
-//    adminUser.gid = gid;
-////    m_scheduler->deleteAdminUser(requester, adminUser);
-//  }
-//  else if("ls" == tokens[2]) {
-////    auto list = m_scheduler->getAdminUsers(requester);
-//    std::list<common::admin::AdminUser> list;
-//    std::ostringstream responseSS;
-//    if(list.size()>0) {
-//      responseSS << "\x1b[31;1m"
-//                 << " " << std::setw(8) << "uid" 
-//                 << " " << std::setw(8) << "gid"
-//                 << " " << std::setw(18) << "creator uid" 
-//                 << " " << std::setw(18) << "creator gid" 
-//                 << " " << std::setw(30) << "creation host"
-//                 << " " << std::setw(30) << "creation time"
-//                 << " " << std::setw(30) << "comment"
-//                 << "\x1b[0m" << std::endl;
-//    }
-//    for(auto it = list.begin(); it != list.end(); it++) {
-//      std::string timeString(ctime(&(it->getCreationLog().time)));
-//      timeString=timeString.substr(0,24);//remove the newline
-//      responseSS << " " << std::setw(8) << it->getUser().uid 
-//                 << " " << std::setw(8) << it->getUser().gid 
-//                 << " " << std::setw(18) << it->getCreationLog().user.uid 
-//                 << " " << std::setw(18) << it->getCreationLog().user.gid 
-//                 << " " << std::setw(30) << it->getCreationLog().host
-//                 << " " << std::setw(30) << timeString
-//                 << " " << std::setw(30) << it->getCreationLog().comment << std::endl;
-//    }
-//    m_data = responseSS.str();
-//  }
-//  else {
-//    m_data = help.str();
-//  }
-//}
   
 //------------------------------------------------------------------------------
 // getGenericHelp
@@ -860,29 +962,40 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   std::stringstream help;
   help << "CTA ADMIN commands:" << std::endl;
   help << "" << std::endl;
-  help << "For each command there is a short version and a long one, example: op/operator. Subcommands (add/rm/ls/ch/reclaim) do not have short versions." << std::endl;
+  help << "For each command there is a short version and a long one. Subcommands (add/rm/ls/ch/reclaim) do not have short versions." << std::endl;
   help << "" << std::endl;
-  help << programName << " ad/admin          add/rm/ls/ch" << std::endl;
-  help << programName << " ah/adminhost      add/rm/ls/ch" << std::endl;
-  help << programName << " tp/tapepool       add/rm/ls/ch" << std::endl;
-  help << programName << " ar/archiveroute   add/rm/ls/ch" << std::endl;
-  help << programName << " ll/logicallibrary add/rm/ls/ch" << std::endl;
-  help << programName << " ta/tape           add/rm/ls/ch/reclaim" << std::endl;
-  help << programName << " sc/storageclass   add/rm/ls/ch" << std::endl;
-  help << programName << " lpa/listpendingarchives" << std::endl;
-  help << programName << " lpr/listpendingretrieves" << std::endl;
-  help << programName << " lds/listdrivestates" << std::endl;
+  help << programName << " admin/ad          add/ch/rm/ls"               << std::endl;
+  help << programName << " adminhost/ah      add/ch/rm/ls"               << std::endl;
+  help << programName << " archivefile/af    ls"                         << std::endl;
+  help << programName << " archiveroute/ar   add/ch/rm/ls"               << std::endl;
+  help << programName << " bootstrap/bs"                                 << std::endl;
+  help << programName << " dedication/de     add/ch/rm/ls"               << std::endl;
+  help << programName << " drive/dr          up/down"                    << std::endl;
+  help << programName << " listdrivestates/lds"                          << std::endl;
+  help << programName << " listpendingarchives/lpa"                      << std::endl;
+  help << programName << " listpendingretrieves/lpr"                     << std::endl;
+  help << programName << " logicallibrary/ll add/ch/rm/ls"               << std::endl;
+  help << programName << " reconcile/rc"                                 << std::endl;
+  help << programName << " repack/re         add/rm/ls/err"              << std::endl;
+  help << programName << " shrink/sh"                                    << std::endl;
+  help << programName << " storageclass/sc   add/ch/rm/ls"               << std::endl;
+  help << programName << " tape/ta           add/ch/rm/reclaim/ls/label" << std::endl;
+  help << programName << " tapepool/tp       add/ch/rm/ls"               << std::endl;
+  help << programName << " test/te           read/write"                 << std::endl;
+  help << programName << " user/us           add/ch/rm/ls"               << std::endl;
+  help << programName << " usergroup/ug      add/ch/rm/ls"               << std::endl;
+  help << programName << " verify/ve         add/rm/ls/err"              << std::endl;
   help << "" << std::endl;
   help << "CTA EOS commands:" << std::endl;
   help << "" << std::endl;
-  help << "For most commands there is a short version and a long one." << std::endl;
+  help << "For each command there is a short version and a long one." << std::endl;
   help << "" << std::endl;
-  help << programName << " lsc/liststorageclass" << std::endl;
-  help << programName << " ufi/updatefileinfo" << std::endl;
-  help << programName << " a/archive" << std::endl;
-  help << programName << " r/retrieve" << std::endl;
-  help << programName << " da/deletearchive" << std::endl;
-  help << programName << " cr/cancelretrieve" << std::endl;
+  help << programName << " archive/a"                                    << std::endl;
+  help << programName << " cancelretrieve/cr"                            << std::endl;
+  help << programName << " deletearchive/da"                             << std::endl;
+  help << programName << " liststorageclass/lsc"                         << std::endl;
+  help << programName << " retrieve/r"                                   << std::endl;
+  help << programName << " updatefileinfo/ufi"                           << std::endl;
   return help.str();
 }
 
