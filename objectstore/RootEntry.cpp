@@ -25,7 +25,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry

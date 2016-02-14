@@ -20,7 +20,7 @@
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
 #include "objectstore/cta.pb.h"
-#include <json/json.h>
+#include <json-c/json.h>
 
 cta::objectstore::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string& address, Backend& os): 

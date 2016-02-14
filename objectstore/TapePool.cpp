@@ -22,7 +22,7 @@
 #include "CreationLog.hpp"
 #include "Tape.hpp"
 #include "RootEntry.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 
 cta::objectstore::TapePool::TapePool(const std::string& address, Backend& os):
   ObjectOps<serializers::TapePool>(os, address) { }

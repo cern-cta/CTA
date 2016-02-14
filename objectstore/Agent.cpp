@@ -29,7 +29,7 @@
 #include <ctime>
 #include <cxxabi.h>
 #include <unistd.h>
-#include <json/json.h>
+#include <json-c/json.h>
 
 cta::objectstore::Agent::Agent(Backend & os): 
   ObjectOps<serializers::Agent>(os), m_nextId(0) {}

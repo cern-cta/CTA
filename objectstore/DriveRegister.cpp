@@ -22,7 +22,7 @@
 #include "RootEntry.hpp"
 #include "common/DriveState.hpp"
 #include <set>
-#include <json/json.h>
+#include <json-c/json.h>
 #include <iostream>
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):

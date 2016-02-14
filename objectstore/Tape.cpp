@@ -19,7 +19,7 @@
 #include "Tape.hpp"
 #include "GenericObject.hpp"
 #include "CreationLog.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 
 cta::objectstore::Tape::Tape(const std::string& address, Backend& os):
   ObjectOps<serializers::Tape>(os, address) { }

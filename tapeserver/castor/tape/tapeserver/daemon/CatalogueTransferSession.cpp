@@ -121,7 +121,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage()));
+      params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }
@@ -173,7 +173,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage()));
+      params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }
@@ -206,7 +206,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage()));
+      params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
   }

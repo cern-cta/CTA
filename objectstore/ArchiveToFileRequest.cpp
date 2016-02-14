@@ -21,7 +21,7 @@
 #include "CreationLog.hpp"
 #include "TapePool.hpp"
 #include "UserIdentity.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
   const std::string& address, Backend& os): 

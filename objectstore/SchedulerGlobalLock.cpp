@@ -19,7 +19,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 
 namespace cta { namespace objectstore { 
 

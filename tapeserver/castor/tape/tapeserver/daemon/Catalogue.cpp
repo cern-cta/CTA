@@ -215,7 +215,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
   if(NULL == itor->second) {
     // Should never get here
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
+    ex.getMessage() << "Failed to " << task.str() <<
       ": Pointer to drive entry is unexpectedly NULL";
     throw ex;
   }
@@ -227,7 +227,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
   if(unitName != driveConfig.getUnitName()) {
     // Should never get here
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
+    ex.getMessage() << "Failed to " << task.str() <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: actual=" << driveConfig.getUnitName();
     throw ex;
@@ -255,7 +255,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
   if(NULL == itor->second) {
     // Should never get here
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
+    ex.getMessage() << "Failed to " << task.str() <<
       ": Pointer to drive entry is unexpectedly NULL";
     throw ex;
   }
@@ -267,7 +267,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
   if(unitName != driveConfig.getUnitName()) {
     // This should never happen
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
+    ex.getMessage() << "Failed to " << task.str() <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: expected=" << unitName <<
       " actual=" << driveConfig.getUnitName();

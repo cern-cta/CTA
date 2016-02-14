@@ -45,7 +45,7 @@ castor::mediachanger::LibrarySlot *castor::mediachanger::LibrarySlotParser::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to parse library slot from string"
-      " representation: " << ne.getMessage();
+      " representation: " << ne.getMessage().str();
     throw ex;
   }
 }

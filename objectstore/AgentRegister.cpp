@@ -19,7 +19,7 @@
 #include "AgentRegister.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
-#include <json/json_object.h>
+#include <json-c/json_object.h>
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):
 ObjectOps<serializers::AgentRegister>(os) {}

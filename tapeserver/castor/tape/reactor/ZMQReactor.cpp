@@ -70,7 +70,7 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
   std::ostringstream socketInHex;
   socketInHex << std::hex << item.socket;
   log::Param params[] = {log::Param("fd", item.fd),
-    log::Param("socket", socketInHex)};
+    log::Param("socket", socketInHex.str())};
   m_log(LOG_DEBUG, "ZMQReactor registering a new handler", params);
 
   checkDoubleRegistration(item);

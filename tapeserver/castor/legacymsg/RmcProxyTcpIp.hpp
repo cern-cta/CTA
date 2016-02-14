@@ -265,7 +265,7 @@ protected:
           ex.getMessage() <<
             "Reply from rmcd contains too many ERR_MSG messages"
             ": maxERR_MSG=" << maxERR_MSG << " rmcErrorStream=" <<
-            rmcErrorStream;
+            rmcErrorStream.str();
           throw ex;
         }
 
