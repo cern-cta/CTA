@@ -92,7 +92,7 @@ void cta::catalogue::MockCatalogue::modifyAdminHostComment(const cta::common::da
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
@@ -107,7 +107,7 @@ std::list<cta::common::dataStructures::StorageClass> cta::catalogue::MockCatalog
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {}
+void cta::catalogue::MockCatalogue::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies) {}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
@@ -117,7 +117,7 @@ void cta::catalogue::MockCatalogue::modifyStorageClassComment(const cta::common:
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
@@ -132,7 +132,7 @@ std::list<cta::common::dataStructures::TapePool> cta::catalogue::MockCatalogue::
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) {}
+void cta::catalogue::MockCatalogue::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes) {}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
@@ -142,12 +142,12 @@ void cta::catalogue::MockCatalogue::modifyTapePoolComment(const cta::common::dat
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {}
+void cta::catalogue::MockCatalogue::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb) {}
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
@@ -157,12 +157,12 @@ std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::MockCatalog
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) {}
+void cta::catalogue::MockCatalogue::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
@@ -275,9 +275,9 @@ void cta::catalogue::MockCatalogue::modifyUserComment(const cta::common::dataStr
 //------------------------------------------------------------------------------
 // createUserGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued, 
-                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) {}
+void cta::catalogue::MockCatalogue::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
+                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
+                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUserGroup
@@ -292,7 +292,7 @@ std::list<cta::common::dataStructures::UserGroup> cta::catalogue::MockCatalogue:
 //------------------------------------------------------------------------------
 // modifyUserGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinFilesQueued
@@ -312,7 +312,7 @@ void cta::catalogue::MockCatalogue::modifyUserGroupArchiveMinRequestAge(const ct
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t retrievePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinFilesQueued
@@ -332,7 +332,7 @@ void cta::catalogue::MockCatalogue::modifyUserGroupRetrieveMinRequestAge(const c
 //------------------------------------------------------------------------------
 // modifyUserGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) {}
+void cta::catalogue::MockCatalogue::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t maxDrivesAllowed) {}
 
 //------------------------------------------------------------------------------
 // modifyUserGroupComment

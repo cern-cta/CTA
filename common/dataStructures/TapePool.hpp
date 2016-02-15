@@ -55,8 +55,8 @@ public:
   void setName(const std::string &name);
   std::string getName() const;
 
-  void setNbPartialTapes(const uint32_t nbPartialTapes);
-  uint32_t getNbPartialTapes() const;
+  void setNbPartialTapes(const uint64_t nbPartialTapes);
+  uint64_t getNbPartialTapes() const;
   
 
 private:
@@ -78,7 +78,7 @@ private:
   std::string m_name;
   bool m_nameSet;
 
-  uint32_t m_nbPartialTapes;
+  uint64_t m_nbPartialTapes;
   bool m_nbPartialTapesSet;
 
 }; // class TapePool

@@ -55,8 +55,8 @@ public:
   void setName(const std::string &name);
   std::string getName() const;
 
-  void setNbCopies(const uint16_t nbCopies);
-  uint16_t getNbCopies() const;
+  void setNbCopies(const uint64_t nbCopies);
+  uint64_t getNbCopies() const;
   
 
 private:
@@ -78,7 +78,7 @@ private:
   std::string m_name;
   bool m_nameSet;
 
-  uint16_t m_nbCopies;
+  uint64_t m_nbCopies;
   bool m_nbCopiesSet;
 
 }; // class StorageClass

@@ -122,7 +122,7 @@ std::string cta::common::dataStructures::StorageClass::getName() const {
 //------------------------------------------------------------------------------
 // setNbCopies
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setNbCopies(const uint16_t nbCopies) {
+void cta::common::dataStructures::StorageClass::setNbCopies(const uint64_t nbCopies) {
   m_nbCopies = nbCopies;
   m_nbCopiesSet = true;
 }
@@ -130,7 +130,7 @@ void cta::common::dataStructures::StorageClass::setNbCopies(const uint16_t nbCop
 //------------------------------------------------------------------------------
 // getNbCopies
 //------------------------------------------------------------------------------
-uint16_t cta::common::dataStructures::StorageClass::getNbCopies() const {
+uint64_t cta::common::dataStructures::StorageClass::getNbCopies() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
   }

@@ -320,10 +320,10 @@ void XrdProFile::replaceAll(std::string& str, const std::string& from, const std
 // getOptionValue
 //------------------------------------------------------------------------------
 std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName) {
-  for(auto it=tokens.begin(); it!=tokens.end(); it++) {
+  for(auto it=tokens.cbegin(); it!=tokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       auto it_next=it+1;
-      if(it_next!=tokens.end() && it_next->find("-")!=0) {
+      if(it_next!=tokens.cend() && it_next->find("-")!=0) {
         return *it_next;
       }
       else {
@@ -338,7 +338,7 @@ std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, c
 // hasOption
 //------------------------------------------------------------------------------
 bool XrdProFile::hasOption(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName) {
-  for(auto it=tokens.begin(); it!=tokens.end(); it++) {
+  for(auto it=tokens.cbegin(); it!=tokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       return true;
     }
@@ -410,11 +410,11 @@ void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const ct
     return;
   }
   cta::common::dataStructures::UserIdentity adminUser;
-  std::istringstream uid_ss(uid_s);
+  std::stringstream uid_ss(uid_s);
   int uid = 0;
   uid_ss >> uid;
   adminUser.setUid(uid);
-  std::istringstream gid_ss(gid_s);
+  std::stringstream gid_ss(gid_s);
   int gid = 0;
   gid_ss >> gid;
   adminUser.setGid(gid);
@@ -439,11 +439,11 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       return;
     }
     cta::common::dataStructures::UserIdentity adminUser;
-    std::istringstream uid_ss(uid_s);
+    std::stringstream uid_ss(uid_s);
     int uid = 0;
     uid_ss >> uid;
     adminUser.setUid(uid);
-    std::istringstream gid_ss(gid_s);
+    std::stringstream gid_ss(gid_s);
     int gid = 0;
     gid_ss >> gid;
     adminUser.setGid(gid);
@@ -470,7 +470,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"uid","gid","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(std::to_string((unsigned long long)it->getUser().getUid()));
         currentRow.push_back(std::to_string((unsigned long long)it->getUser().getGid()));
@@ -525,7 +525,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"hostname","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
@@ -563,8 +563,8 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         m_data = help.str();
         return;
       }
-      std::istringstream ptn_ss(ptn_s);
-      uint32_t ptn = 0;
+      std::stringstream ptn_ss(ptn_s);
+      uint64_t ptn = 0;
       ptn_ss >> ptn;
       m_scheduler->createTapePool(requester, name, ptn, comment);
     }
@@ -579,8 +579,8 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         m_scheduler->modifyTapePoolComment(requester, name, comment);
       }
       if(!ptn_s.empty()) {
-        std::istringstream ptn_ss(ptn_s);
-        uint32_t ptn = 0;
+        std::stringstream ptn_ss(ptn_s);
+        uint64_t ptn = 0;
         ptn_ss >> ptn;
         m_scheduler->modifyTapePoolNbPartialTapes(requester, name, ptn);
       }
@@ -595,7 +595,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","# partial tapes","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
         currentRow.push_back(std::to_string((unsigned long long)it->getNbPartialTapes()));
@@ -628,8 +628,8 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       m_data = help.str();
       return;
     }    
-    std::istringstream cn_ss(cn_s);
-    uint32_t cn = 0;
+    std::stringstream cn_ss(cn_s);
+    uint64_t cn = 0;
     cn_ss >> cn;
     if("add" == tokens[2]) { //add
       std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
@@ -664,7 +664,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"storage class","copy number","tapepool","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getStorageClassName());
         currentRow.push_back(std::to_string((unsigned long long)it->getCopyNb()));
@@ -720,7 +720,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
@@ -761,7 +761,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      std::istringstream capacity_ss(capacity_s);
+      std::stringstream capacity_ss(capacity_s);
       int capacity = 0;
       capacity_ss >> capacity;
       std::string comment = getOptionValue(tokens, "-m", "--comment");
@@ -796,7 +796,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
         m_scheduler->modifyTapeTapePoolName(requester, vid, tapepool);
       }
       if(!capacity_s.empty()) {
-        std::istringstream capacity_ss(capacity_s);
+        std::stringstream capacity_ss(capacity_s);
         uint64_t capacity = 0;
         capacity_ss >> capacity;
         m_scheduler->modifyTapeCapacityInBytes(requester, vid, capacity);
@@ -864,7 +864,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","capacity","occupancy","last fseq","busy","full","disabled","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
       responseTable.push_back(header);    
-      for(auto it = list.begin(); it != list.end(); it++) {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getVid());
         currentRow.push_back(it->getLogicalLibraryName());
@@ -897,6 +897,65 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
        << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <storage_class_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string scn = getOptionValue(tokens, "-n", "--name");
+    if(scn.empty()) {
+      m_data = help.str();
+      return;
+    }  
+    if("add" == tokens[2]) { //add
+      std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()||cn_s.empty()) {
+        m_data = help.str();
+        return;
+      }  
+      std::stringstream cn_ss(cn_s);
+      uint64_t cn = 0;
+      cn_ss >> cn;
+      m_scheduler->createStorageClass(requester, scn, cn, comment);
+    }
+    else if("ch" == tokens[2]) { //ch
+      std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()&&cn_s.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if(!comment.empty()) {
+        m_scheduler->modifyStorageClassComment(requester, scn, comment);
+      }
+      if(!cn_s.empty()) {  
+        std::stringstream cn_ss(cn_s);
+        uint64_t cn = 0;
+        cn_ss >> cn;
+        m_scheduler->modifyStorageClassNbCopies(requester, scn, cn);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteStorageClass(requester, scn);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::StorageClass> list= m_scheduler->getStorageClasses(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"storage class","number of copies","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        currentRow.push_back(std::to_string((unsigned long long)it->getNbCopies()));
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -909,6 +968,61 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
        << "\tch  --name/-n <user_name> --group/-g <group_name> [--usergroup/-u <user_group_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string user = getOptionValue(tokens, "-n", "--name");
+    std::string group = getOptionValue(tokens, "-g", "--group");
+    if(user.empty()||group.empty()) {
+      m_data = help.str();
+      return;
+    }  
+    if("add" == tokens[2]) { //add
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()||usergroup.empty()) {
+        m_data = help.str();
+        return;
+      }
+      m_scheduler->createUser(requester, user, group, usergroup, comment);
+    }
+    else if("ch" == tokens[2]) { //ch
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty()&&usergroup.empty()) {
+        m_data = help.str();
+        return;
+      }
+      if(!comment.empty()) {
+        m_scheduler->modifyUserComment(requester, user, group, comment);
+      }
+      if(!usergroup.empty()) {
+        m_scheduler->modifyUserUserGroup(requester, user, group, usergroup);
+      }
+    }
+    else { //rm
+      m_scheduler->deleteUser(requester, user, group);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::User> list= m_scheduler->getUsers(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"user","group","cta group","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        currentRow.push_back(it->getGroup());
+        currentRow.push_back(it->getUserGroupName());
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -925,6 +1039,119 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
        << "\t   [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <usergroup_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string group = getOptionValue(tokens, "-n", "--name");
+    if(group.empty()) {
+      m_data = help.str();
+      return;
+    }
+    if("add" == tokens[2] || "ch" == tokens[2]) {      
+      std::string archivepriority_s = getOptionValue(tokens, "--ap", "--archivepriority");
+      std::string minarchivefilesqueued_s = getOptionValue(tokens, "--af", "--minarchivefilesqueued");
+      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued");
+      std::string minarchiverequestage_s = getOptionValue(tokens, "--aa", "--minarchiverequestage");
+      std::string retrievepriority_s = getOptionValue(tokens, "--rp", "--retrievepriority");
+      std::string minretrievefilesqueued_s = getOptionValue(tokens, "--rf", "--minretrievefilesqueued");
+      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued");
+      std::string minretrieverequestage_s = getOptionValue(tokens, "--ra", "--minretrieverequestage");
+      std::string maxdrivesallowed_s = getOptionValue(tokens, "-d", "--maxdrivesallowed");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if("add" == tokens[2]) { //add
+        if(archivepriority_s.empty()||minarchivefilesqueued_s.empty()||minarchivebytesqueued_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
+                ||minretrievefilesqueued_s.empty()||minretrievebytesqueued_s.empty()||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
+          m_data = help.str();
+          return;
+        }
+        uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
+        uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
+        uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
+        uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
+        uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
+        uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
+        uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+        uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
+        uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
+        m_scheduler->createUserGroup(requester, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
+      }
+      else if("ch" == tokens[2]) { //ch
+        if(archivepriority_s.empty()&&minarchivefilesqueued_s.empty()&&minarchivebytesqueued_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
+                &&minretrievefilesqueued_s.empty()&&minretrievebytesqueued_s.empty()&&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
+          m_data = help.str();
+          return;
+        }
+        if(!archivepriority_s.empty()) {
+          uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
+          m_scheduler->modifyUserGroupArchivePriority(requester, group, archivepriority);
+        }
+        if(!minarchivefilesqueued_s.empty()) {
+          uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
+          m_scheduler->modifyUserGroupArchiveMinFilesQueued(requester, group, minarchivefilesqueued);
+        }
+        if(!minarchivebytesqueued_s.empty()) {
+          uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
+          m_scheduler->modifyUserGroupArchiveMinBytesQueued(requester, group, minarchivebytesqueued);
+        }
+        if(!minarchiverequestage_s.empty()) {
+          uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
+          m_scheduler->modifyUserGroupArchiveMinRequestAge(requester, group, minarchiverequestage);
+        }
+        if(!retrievepriority_s.empty()) {
+          uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
+          m_scheduler->modifyUserGroupRetrievePriority(requester, group, retrievepriority);
+        }
+        if(!minretrievefilesqueued_s.empty()) {
+          uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
+          m_scheduler->modifyUserGroupRetrieveMinFilesQueued(requester, group, minretrievefilesqueued);
+        }
+        if(!minretrievebytesqueued_s.empty()) {
+          uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+          m_scheduler->modifyUserGroupRetrieveMinBytesQueued(requester, group, minretrievebytesqueued);
+        }
+        if(!minretrieverequestage_s.empty()) {
+          uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
+          m_scheduler->modifyUserGroupRetrieveMinRequestAge(requester, group, minretrieverequestage);
+        }
+        if(!maxdrivesallowed_s.empty()) {
+          uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
+          m_scheduler->modifyUserGroupMaxDrivesAllowed(requester, group, maxdrivesallowed);
+        }
+        if(!comment.empty()) {
+          m_scheduler->modifyUserGroupComment(requester, group, comment);
+        }
+      }
+    }
+    else { //rm
+      m_scheduler->deleteUserGroup(requester, group);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::UserGroup> list= m_scheduler->getUserGroups(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getName());
+        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_priority()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minFilesQueued()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minBytesQueued()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minRequestAge()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_priority()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minFilesQueued()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minBytesQueued()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minRequestAge()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getMaxDrivesAllowed()));
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -46,8 +46,8 @@ public:
   void setComment(const std::string &comment);
   std::string getComment() const;
 
-  void setCopyNb(const uint32_t copyNb);
-  uint32_t getCopyNb() const;
+  void setCopyNb(const uint64_t copyNb);
+  uint64_t getCopyNb() const;
 
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog() const;
@@ -72,7 +72,7 @@ private:
   std::string m_comment;
   bool m_commentSet;
 
-  uint32_t m_copyNb;
+  uint64_t m_copyNb;
   bool m_copyNbSet;
 
   cta::common::dataStructures::EntryLog m_creationLog;

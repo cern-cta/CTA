@@ -157,7 +157,7 @@ void cta::Scheduler::modifyAdminHostComment(const cta::common::dataStructures::S
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::Scheduler::createStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const std::string &comment) {
+void cta::Scheduler::createStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies, const std::string &comment) {
 
 }
 
@@ -178,7 +178,7 @@ std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::getStorageC
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies) {
+void cta::Scheduler::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies) {
 
 }
 
@@ -192,7 +192,7 @@ void cta::Scheduler::modifyStorageClassComment(const cta::common::dataStructures
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes, const std::string &comment) {
+void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {
 
 }
 
@@ -213,7 +213,7 @@ std::list<cta::common::dataStructures::TapePool> cta::Scheduler::getTapePools(co
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t nbPartialTapes) {
+void cta::Scheduler::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes) {
 
 }
 
@@ -227,7 +227,7 @@ void cta::Scheduler::modifyTapePoolComment(const cta::common::dataStructures::Se
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName,
+void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName,
         const std::string &comment) {
 
 }
@@ -235,7 +235,7 @@ void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::Secur
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb) {
+void cta::Scheduler::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb) {
 
 }
 
@@ -249,14 +249,14 @@ std::list<cta::common::dataStructures::ArchiveRoute> cta::Scheduler::getArchiveR
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &tapePoolName) {
+void cta::Scheduler::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
 
 }
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint16_t copyNb, const std::string &comment) {
+void cta::Scheduler::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
 
 }
 
@@ -414,9 +414,9 @@ void cta::Scheduler::modifyUserComment(const cta::common::dataStructures::Securi
 //------------------------------------------------------------------------------
 // createUserGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority, const uint64_t minArchiveFilesQueued,
-        const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint32_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-        const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint16_t maxDrivesAllowed, const std::string &comment) {
+void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued,
+        const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
+        const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {
 
 }
 
@@ -437,7 +437,7 @@ std::list<cta::common::dataStructures::UserGroup> cta::Scheduler::getUserGroups(
 //------------------------------------------------------------------------------
 // modifyUserGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t archivePriority) {
+void cta::Scheduler::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority) {
 
 }
 
@@ -465,7 +465,7 @@ void cta::Scheduler::modifyUserGroupArchiveMinRequestAge(const cta::common::data
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint32_t retrievePriority) {
+void cta::Scheduler::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t retrievePriority) {
 
 }
 
@@ -493,7 +493,7 @@ void cta::Scheduler::modifyUserGroupRetrieveMinRequestAge(const cta::common::dat
 //------------------------------------------------------------------------------
 // modifyUserGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint16_t maxDrivesAllowed) {
+void cta::Scheduler::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t maxDrivesAllowed) {
 
 }
 
@@ -665,7 +665,7 @@ cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSu
 // readTest
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
-        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const uint32_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const {
+        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const uint64_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const {
   return cta::common::dataStructures::ReadTestResult(); 
 }
 

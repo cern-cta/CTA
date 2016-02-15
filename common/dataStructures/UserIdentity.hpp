@@ -42,11 +42,11 @@ public:
    */
   ~UserIdentity() throw();
 
-  void setGid(const uint32_t gid);
-  uint32_t getGid() const;
+  void setGid(const uint64_t gid);
+  uint64_t getGid() const;
 
-  void setUid(const uint32_t uid);
-  uint32_t getUid() const;
+  void setUid(const uint64_t uid);
+  uint64_t getUid() const;
   
 
 private:
@@ -56,10 +56,10 @@ private:
    */
   bool allFieldsSet() const;
 
-  uint32_t m_gid;
+  uint64_t m_gid;
   bool m_gidSet;
 
-  uint32_t m_uid;
+  uint64_t m_uid;
   bool m_uidSet;
 
 }; // class UserIdentity

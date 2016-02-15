@@ -122,7 +122,7 @@ std::string cta::common::dataStructures::TapePool::getName() const {
 //------------------------------------------------------------------------------
 // setNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setNbPartialTapes(const uint32_t nbPartialTapes) {
+void cta::common::dataStructures::TapePool::setNbPartialTapes(const uint64_t nbPartialTapes) {
   m_nbPartialTapes = nbPartialTapes;
   m_nbPartialTapesSet = true;
 }
@@ -130,7 +130,7 @@ void cta::common::dataStructures::TapePool::setNbPartialTapes(const uint32_t nbP
 //------------------------------------------------------------------------------
 // getNbPartialTapes
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::TapePool::getNbPartialTapes() const {
+uint64_t cta::common::dataStructures::TapePool::getNbPartialTapes() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
   }

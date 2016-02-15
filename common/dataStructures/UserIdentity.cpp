@@ -44,7 +44,7 @@ bool cta::common::dataStructures::UserIdentity::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setGid
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setGid(const uint32_t gid) {
+void cta::common::dataStructures::UserIdentity::setGid(const uint64_t gid) {
   m_gid = gid;
   m_gidSet = true;
 }
@@ -52,7 +52,7 @@ void cta::common::dataStructures::UserIdentity::setGid(const uint32_t gid) {
 //------------------------------------------------------------------------------
 // getGid
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::UserIdentity::getGid() const {
+uint64_t cta::common::dataStructures::UserIdentity::getGid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
   }
@@ -62,7 +62,7 @@ uint32_t cta::common::dataStructures::UserIdentity::getGid() const {
 //------------------------------------------------------------------------------
 // setUid
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setUid(const uint32_t uid) {
+void cta::common::dataStructures::UserIdentity::setUid(const uint64_t uid) {
   m_uid = uid;
   m_uidSet = true;
 }
@@ -70,7 +70,7 @@ void cta::common::dataStructures::UserIdentity::setUid(const uint32_t uid) {
 //------------------------------------------------------------------------------
 // getUid
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::UserIdentity::getUid() const {
+uint64_t cta::common::dataStructures::UserIdentity::getUid() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
   }

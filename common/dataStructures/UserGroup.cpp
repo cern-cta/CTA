@@ -120,7 +120,7 @@ uint64_t cta::common::dataStructures::UserGroup::getArchive_minRequestAge() cons
 //------------------------------------------------------------------------------
 // setArchive_priority
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserGroup::setArchive_priority(const uint32_t archive_priority) {
+void cta::common::dataStructures::UserGroup::setArchive_priority(const uint64_t archive_priority) {
   m_archive_priority = archive_priority;
   m_archive_prioritySet = true;
 }
@@ -128,7 +128,7 @@ void cta::common::dataStructures::UserGroup::setArchive_priority(const uint32_t 
 //------------------------------------------------------------------------------
 // getArchive_priority
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::UserGroup::getArchive_priority() const {
+uint64_t cta::common::dataStructures::UserGroup::getArchive_priority() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -192,7 +192,7 @@ cta::common::dataStructures::EntryLog cta::common::dataStructures::UserGroup::ge
 //------------------------------------------------------------------------------
 // setMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserGroup::setMaxDrivesAllowed(const uint16_t maxDrivesAllowed) {
+void cta::common::dataStructures::UserGroup::setMaxDrivesAllowed(const uint64_t maxDrivesAllowed) {
   m_maxDrivesAllowed = maxDrivesAllowed;
   m_maxDrivesAllowedSet = true;
 }
@@ -200,7 +200,7 @@ void cta::common::dataStructures::UserGroup::setMaxDrivesAllowed(const uint16_t 
 //------------------------------------------------------------------------------
 // getMaxDrivesAllowed
 //------------------------------------------------------------------------------
-uint16_t cta::common::dataStructures::UserGroup::getMaxDrivesAllowed() const {
+uint64_t cta::common::dataStructures::UserGroup::getMaxDrivesAllowed() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }
@@ -282,7 +282,7 @@ uint64_t cta::common::dataStructures::UserGroup::getRetrieve_minRequestAge() con
 //------------------------------------------------------------------------------
 // setRetrieve_priority
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserGroup::setRetrieve_priority(const uint32_t retrieve_priority) {
+void cta::common::dataStructures::UserGroup::setRetrieve_priority(const uint64_t retrieve_priority) {
   m_retrieve_priority = retrieve_priority;
   m_retrieve_prioritySet = true;
 }
@@ -290,7 +290,7 @@ void cta::common::dataStructures::UserGroup::setRetrieve_priority(const uint32_t
 //------------------------------------------------------------------------------
 // getRetrieve_priority
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::UserGroup::getRetrieve_priority() const {
+uint64_t cta::common::dataStructures::UserGroup::getRetrieve_priority() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserGroup have been set!");
   }

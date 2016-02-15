@@ -70,7 +70,7 @@ std::string cta::common::dataStructures::ArchiveRoute::getComment() const {
 //------------------------------------------------------------------------------
 // setCopyNb
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setCopyNb(const uint32_t copyNb) {
+void cta::common::dataStructures::ArchiveRoute::setCopyNb(const uint64_t copyNb) {
   m_copyNb = copyNb;
   m_copyNbSet = true;
 }
@@ -78,7 +78,7 @@ void cta::common::dataStructures::ArchiveRoute::setCopyNb(const uint32_t copyNb)
 //------------------------------------------------------------------------------
 // getCopyNb
 //------------------------------------------------------------------------------
-uint32_t cta::common::dataStructures::ArchiveRoute::getCopyNb() const {
+uint64_t cta::common::dataStructures::ArchiveRoute::getCopyNb() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
   }

@@ -52,8 +52,8 @@ public:
   void setArchive_minRequestAge(const uint64_t archive_minRequestAge);
   uint64_t getArchive_minRequestAge() const;
 
-  void setArchive_priority(const uint32_t archive_priority);
-  uint32_t getArchive_priority() const;
+  void setArchive_priority(const uint64_t archive_priority);
+  uint64_t getArchive_priority() const;
 
   void setComment(const std::string &comment);
   std::string getComment() const;
@@ -64,8 +64,8 @@ public:
   void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
   cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
-  void setMaxDrivesAllowed(const uint16_t maxDrivesAllowed);
-  uint16_t getMaxDrivesAllowed() const;
+  void setMaxDrivesAllowed(const uint64_t maxDrivesAllowed);
+  uint64_t getMaxDrivesAllowed() const;
 
   void setName(const std::string &name);
   std::string getName() const;
@@ -79,8 +79,8 @@ public:
   void setRetrieve_minRequestAge(const uint64_t retrieve_minRequestAge);
   uint64_t getRetrieve_minRequestAge() const;
 
-  void setRetrieve_priority(const uint32_t retrieve_priority);
-  uint32_t getRetrieve_priority() const;
+  void setRetrieve_priority(const uint64_t retrieve_priority);
+  uint64_t getRetrieve_priority() const;
   
 
 private:
@@ -99,7 +99,7 @@ private:
   uint64_t m_archive_minRequestAge;
   bool m_archive_minRequestAgeSet;
 
-  uint32_t m_archive_priority;
+  uint64_t m_archive_priority;
   bool m_archive_prioritySet;
 
   std::string m_comment;
@@ -111,7 +111,7 @@ private:
   cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
-  uint16_t m_maxDrivesAllowed;
+  uint64_t m_maxDrivesAllowed;
   bool m_maxDrivesAllowedSet;
 
   std::string m_name;
@@ -126,7 +126,7 @@ private:
   uint64_t m_retrieve_minRequestAge;
   bool m_retrieve_minRequestAgeSet;
 
-  uint32_t m_retrieve_priority;
+  uint64_t m_retrieve_priority;
   bool m_retrieve_prioritySet;
 
 }; // class UserGroup
