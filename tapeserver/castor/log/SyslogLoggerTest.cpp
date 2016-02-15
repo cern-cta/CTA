@@ -26,7 +26,6 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <sys/time.h>
 
 namespace unitTests {
 
@@ -45,63 +44,6 @@ protected:
   castor::log::TestingSyslogLogger m_log;
 }; // class SyslogLoggerTest
 
-TEST_F(castor_log_SyslogLoggerTest, logMsgParamsVectorAndTimeStamp) {
-  using namespace castor::log;
-  std::vector<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "castor_log_SyslogLoggerTest logMsgParamsVectorAndTimeStamp",
-    params,
-    timeStamp));
-}
-
-TEST_F(castor_log_SyslogLoggerTest, logMsgParamsListAndTimeStamp) {
-  using namespace castor::log;
-  std::list<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "castor_log_SyslogLoggerTest logMsgParamsListAndTimeStamp",
-    params,
-    timeStamp));
-}
-
-TEST_F(castor_log_SyslogLoggerTest, logMsgParamsArrayAndTimeStamp) {
-  using namespace castor::log;
-  const int numParams = 1;
-  const Param params[1] = {Param("testParam", "value of test param")};
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "castor_log_SyslogLoggerTest logMsgParamsArrayAndTimeStamp",
-    numParams,
-    params,
-    timeStamp));
-}
-
-TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsVector) {
-  using namespace castor::log;
-  std::vector<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-
-  ASSERT_NO_THROW(m_log(
-      LOG_INFO,
-      "castor_log_SyslogLoggerTest logMsgAndParamsVector",
-      params));
-}
-
 TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsList) {
   using namespace castor::log;
   std::list<Param> params;
@@ -114,24 +56,11 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsList) {
       params));
 }
 
-TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsArray) {
-  using namespace castor::log;
-  const int numParams = 1;
-  const Param params[1] = {Param("testParam", "value of test param")};
-
-  ASSERT_NO_THROW(
-    m_log(
-      LOG_INFO,
-      "castor_log_SyslogLoggerTest logMsgAndParamsArray",
-      numParams,
-      params));
-}
-
 TEST_F(castor_log_SyslogLoggerTest, logMsg) {
   using namespace castor::log;
 
   ASSERT_NO_THROW(
-    m_log(LOG_INFO, "Calling logger without parameters or time stamp"));
+    m_log(LOG_INFO, "Calling logger without parameters"));
 }   
 
 TEST_F(castor_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {

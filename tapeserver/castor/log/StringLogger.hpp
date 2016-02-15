@@ -75,65 +75,6 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::vector<Param> &params,
-    const struct timeval &timeStamp) throw();
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const struct timeval &timeStamp) throw();
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[],
-    const struct timeval &timeStamp) throw();
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
    * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
@@ -144,59 +85,8 @@ public:
   void operator() (
     const int priority,
     const std::string &msg,
-    const std::vector<Param> &params) throw();
+    const std::list<Param> &params = std::list<Param>()) throw();
 
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params) throw();
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[]) throw();
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg) throw();
-  
   /**
    * Extractor for the resulting logs.
    */

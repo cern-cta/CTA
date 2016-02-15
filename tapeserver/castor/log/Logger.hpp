@@ -29,11 +29,9 @@
 #include "castor/log/Param.hpp"
 
 #include <list>
-#include <map>
 #include <pthread.h>
 #include <syslog.h>
 #include <sys/time.h>
-#include <vector>
 
 /**
  * It is a convention of CASTOR to use syslog level of LOG_NOTICE to label
@@ -123,65 +121,6 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::vector<Param> &params,
-    const struct timeval &timeStamp) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const struct timeval &timeStamp) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[],
-    const struct timeval &timeStamp) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
    * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
@@ -192,99 +131,7 @@ public:
   virtual void operator() (
     const int priority,
     const std::string &msg,
-    const std::vector<Param> &params) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[]) throw() = 0;
-
-  /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg) throw() = 0;
-
-  /**
-   * A template function that wraps operator() in order to get the compiler
-   * to automatically determine the size of the params parameter, therefore
-   *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog
-   * API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  template<int numParams> void operator() (
-    const int priority,
-    const std::string &msg,
-    const log::Param(&params)[numParams],
-    const struct timeval &timeStamp) throw() {
-    operator() (priority, msg, numParams, params, timeStamp);
-  }
-
-  /**
-   * A template function that wraps operator() in order to get the compiler
-   * to automatically determine the size of the params parameter, therefore
-   * removing the need for the devloper to provide it explicity.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog
-   * API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  template<int numParams> void operator() (
-    const int priority,
-    const std::string &msg,
-    const log::Param(&params)[numParams]) throw() {
-    operator() (priority, msg, numParams, params);
-  }
+    const std::list<Param> &params = std::list<Param>()) throw() = 0;
 
 protected:
 

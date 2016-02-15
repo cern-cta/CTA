@@ -33,6 +33,7 @@
 #include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
+#include <map>
 #include <unistd.h>
 
 namespace castor {

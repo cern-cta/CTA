@@ -52,11 +52,6 @@ void castor::log::LogContext::log(const int priority, const std::string& msg) th
   m_log(priority, msg, m_params);
 }
 
-void castor::log::LogContext::log(const int priority, const std::string& msg, 
-    const timeval& timeStamp) throw() {
-  m_log(priority, msg, m_params, timeStamp);
-}
-
 void castor::log::LogContext::logBacktrace(const int priority, 
     const std::string& backtrace) throw() {
   // Sanity check to prevent substr from throwing exceptions

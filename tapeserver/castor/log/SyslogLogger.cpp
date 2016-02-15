@@ -276,40 +276,6 @@ void castor::log::SyslogLogger::closeLog() throw() {
 }
 
 //-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::vector<Param> &params,
-  const struct timeval &timeStamp) throw() {
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const struct timeval &timeStamp) throw() {
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[],
-  const struct timeval &timeStamp) throw() {
-  operator() (priority, msg, params, params+numParams, timeStamp);
-}
-
-//-----------------------------------------------------------------------------
 // buildSyslogHeader
 //-----------------------------------------------------------------------------
 std::string castor::log::SyslogLogger::buildSyslogHeader(
@@ -420,52 +386,12 @@ void castor::log::SyslogLogger::reducedSyslog(std::string msg) throw() {
 void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
-  const std::vector<Param> &params) throw() {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
   const std::list<Param> &params) throw() {
 
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);
 
   operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[]) throw() {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, numParams, params, timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg) throw() {
-
-  Param *emptyParams = NULL;
-  operator() (priority, msg, 0, emptyParams);
 }
 
 //------------------------------------------------------------------------------
