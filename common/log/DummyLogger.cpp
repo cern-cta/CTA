@@ -37,59 +37,7 @@ void cta::log::DummyLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // operator() 
 //------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator()(
-    const int priority,
-    const std::string &msg,
-    const std::vector<Param> &params,
-    const struct timeval &timeStamp) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const struct timeval &timeStamp) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[],
-  const struct timeval &timeStamp) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::vector<Param> &params) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
 void cta::log::DummyLogger::operator() (
   const int priority,
   const std::string &msg,
   const std::list<Param> &params) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[]) {}
-
-//------------------------------------------------------------------------------
-// operator() 
-//------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg) {}

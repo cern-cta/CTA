@@ -97,20 +97,6 @@ public:
   size_t size() const { return m_params.size(); }
 
   /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   * 
-   * All the parameters present in the context will be added to the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   */
-  virtual void log(
-    const int priority,
-    const std::string &msg,
-    const struct timeval &timeStamp);
-  /**
    * Helper class to find parameters by name.
    */
   class ParamNameMatcher {
@@ -142,8 +128,8 @@ class ScopedParamContainer{
   public:
     ScopedParamContainer(LogContext & context):m_context(context) {}
     ~ScopedParamContainer() {
-      for(std::vector<std::string>::const_iterator it=m_names.begin();it!=m_names.end();++it)
-      {  m_context.erase(*it);
+      for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
+        m_context.erase(*it);
       }
     }
 
@@ -155,7 +141,7 @@ class ScopedParamContainer{
   private:
         
     LogContext & m_context;
-    std::vector<std::string> m_names;
+    std::list<std::string> m_names;
 };
 
 std::ostream & operator << (std::ostream & os , const LogContext & lc);

@@ -130,40 +130,6 @@ void cta::log::StringLogger::prepareForFork() {
 }
 
 //-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::vector<Param> &params,
-  const struct timeval &timeStamp) {
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const struct timeval &timeStamp) {
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[],
-  const struct timeval &timeStamp) {
-  operator() (priority, msg, params, params+numParams, timeStamp);
-}
-
-//-----------------------------------------------------------------------------
 // buildSyslogHeader
 //-----------------------------------------------------------------------------
 std::string cta::log::StringLogger::buildSyslogHeader(
@@ -275,50 +241,10 @@ void cta::log::StringLogger::reducedSyslog(std::string msg) {
 void cta::log::StringLogger::operator() (
   const int priority,
   const std::string &msg,
-  const std::vector<Param> &params) {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
   const std::list<Param> &params) {
 
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);
 
   operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[]) {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, numParams, params, timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg) {
-
-  Param *emptyParams = NULL;
-  operator() (priority, msg, 0, emptyParams);
 }

@@ -52,11 +52,6 @@ void cta::log::LogContext::log(const int priority, const std::string& msg) {
   m_log(priority, msg, m_params);
 }
 
-void cta::log::LogContext::log(const int priority, const std::string& msg, 
-    const timeval& timeStamp) {
-  m_log(priority, msg, m_params, timeStamp);
-}
-
 void cta::log::LogContext::logBacktrace(const int priority, 
     const std::string& backtrace) {
   // Sanity check to prevent substr from throwing exceptions

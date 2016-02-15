@@ -66,91 +66,11 @@ public:
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
    */
   void operator() (
     const int priority,
     const std::string &msg,
-    const std::vector<Param> &params,
-    const struct timeval &timeStamp);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const struct timeval &timeStamp);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[],
-    const struct timeval &timeStamp);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::vector<Param> &params);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param numParams the number of parameters in the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const int numParams,
-    const Param params[]);
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg);
+    const std::list<Param> &params = std::list<Param>());
 
 }; // class DummyLogger
 

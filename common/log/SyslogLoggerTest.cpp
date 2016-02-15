@@ -26,7 +26,6 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include <sys/time.h>
 
 namespace unitTests {
 
@@ -45,63 +44,6 @@ protected:
   cta::log::TestingSyslogLogger m_log;
 }; // class SyslogLoggerTest
 
-TEST_F(cta_log__SyslogLoggerTest, logMsgParamsVectorAndTimeStamp) {
-  using namespace cta::log;
-  std::vector<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "cta_log__SyslogLoggerTest logMsgParamsVectorAndTimeStamp",
-    params,
-    timeStamp));
-}
-
-TEST_F(cta_log__SyslogLoggerTest, logMsgParamsListAndTimeStamp) {
-  using namespace cta::log;
-  std::list<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "cta_log__SyslogLoggerTest logMsgParamsListAndTimeStamp",
-    params,
-    timeStamp));
-}
-
-TEST_F(cta_log__SyslogLoggerTest, logMsgParamsArrayAndTimeStamp) {
-  using namespace cta::log;
-  const int numParams = 1;
-  const Param params[1] = {Param("testParam", "value of test param")};
-  struct timeval timeStamp;
-
-  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
-
-  ASSERT_NO_THROW(m_log(
-    LOG_INFO,
-    "cta_log__SyslogLoggerTest logMsgParamsArrayAndTimeStamp",
-    numParams,
-    params,
-    timeStamp));
-}
-
-TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsVector) {
-  using namespace cta::log;
-  std::vector<Param> params;
-  params.push_back(Param("testParam", "value of test param"));
-
-  ASSERT_NO_THROW(m_log(
-      LOG_INFO,
-      "cta_log__SyslogLoggerTest logMsgAndParamsVector",
-      params));
-}
-
 TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsList) {
   using namespace cta::log;
   std::list<Param> params;
@@ -114,24 +56,11 @@ TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsList) {
       params));
 }
 
-TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsArray) {
-  using namespace cta::log;
-  const int numParams = 1;
-  const Param params[1] = {Param("testParam", "value of test param")};
-
-  ASSERT_NO_THROW(
-    m_log(
-      LOG_INFO,
-      "cta_log__SyslogLoggerTest logMsgAndParamsArray",
-      numParams,
-      params));
-}
-
 TEST_F(cta_log__SyslogLoggerTest, logMsg) {
   using namespace cta::log;
 
   ASSERT_NO_THROW(
-    m_log(LOG_INFO, "Calling logger without parameters or time stamp"));
+    m_log(LOG_INFO, "Calling logger without parameters"));
 }   
 
 TEST_F(cta_log__SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
