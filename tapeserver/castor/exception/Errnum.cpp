@@ -40,7 +40,7 @@ Errnum::Errnum(int err, std::string what):Exception("") {
 }
 
 void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
-  m_strerror = cta::Utils::errnoToString(m_errnum);
+  m_strerror = cta::utils::errnoToString(m_errnum);
   std::stringstream w2;
   if (what.size())
     w2 << what << " ";

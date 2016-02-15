@@ -111,8 +111,8 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
 // setDumpable
 //------------------------------------------------------------------------------
 void cta::tape::daemon::TapeDaemon::setDumpable() {
-  cta::Utils::setDumpableProcessAttribute(true);
-  const bool dumpable = cta::Utils::getDumpableProcessAttribute();
+  cta::utils::setDumpableProcessAttribute(true);
+  const bool dumpable = cta::utils::getDumpableProcessAttribute();
   std::list<log::Param> params = {
     log::Param("dumpable", dumpable ? "true" : "false")};
   m_log(log::INFO, "Got dumpable attribute of process", params);

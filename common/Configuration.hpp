@@ -142,7 +142,7 @@ namespace cta { namespace common {
           return defaultValue;
         }
 
-        if (!Utils::isValidUInt(strValue.c_str())) {
+        if (!utils::isValidUInt(strValue.c_str())) {
           InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<
@@ -184,7 +184,7 @@ namespace cta { namespace common {
         const std::string &key, log::Logger *const log = NULL)  {
         const std::string strValue = getConfEntString(category, key);
 
-        if (!Utils::isValidUInt(strValue.c_str())) {
+        if (!utils::isValidUInt(strValue.c_str())) {
           InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<

@@ -75,7 +75,7 @@ protected:
   void SetUp() {
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if(!mkdtemp(m_tmpDir)) {
-      const std::string errMsg = cta::Utils::errnoToString(errno);
+      const std::string errMsg = cta::utils::errnoToString(errno);
       std::ostringstream msg;
       msg << "Failed to create directory with template"
         " /tmp/DataTransferSessionTestXXXXXX: " << errMsg;
@@ -86,7 +86,7 @@ protected:
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
     if(stat(m_tmpDir, &statBuf)) {
-      const std::string errMsg = cta::Utils::errnoToString(errno);
+      const std::string errMsg = cta::utils::errnoToString(errno);
       std::ostringstream msg;
       msg << "Failed to stat directory " << m_tmpDir << ": " << errMsg;
       throw cta::exception::Exception(msg.str());
@@ -105,7 +105,7 @@ protected:
       std::unique_ptr<DIR, std::function<int(DIR*)>>
         dir(opendir(m_tmpDir), closedir);
       if(NULL == dir.get()) {
-        const std::string errMsg = cta::Utils::errnoToString(errno);
+        const std::string errMsg = cta::utils::errnoToString(errno);
         std::ostringstream msg;
         msg << "Failed to open directory " << m_tmpDir << ": " << errMsg;
         throw cta::exception::Exception(msg.str());
@@ -118,7 +118,7 @@ protected:
         if(entryName != "." && entryName != "..") {
           const std::string entryPath = std::string(m_tmpDir) + "/" + entryName;
           if(unlink(entryPath.c_str())) {
-            const std::string errMsg = cta::Utils::errnoToString(errno);
+            const std::string errMsg = cta::utils::errnoToString(errno);
             std::ostringstream msg;
             msg << "Failed to unlink " << entryPath;
             throw cta::exception::Exception(msg.str());
@@ -128,7 +128,7 @@ protected:
 
       // Delete the now empty directory
       if(rmdir(m_tmpDir)) {
-        const std::string errMsg = cta::Utils::errnoToString(errno);
+        const std::string errMsg = cta::utils::errnoToString(errno);
         std::ostringstream msg;
         msg << "Failed to delete directory " << m_tmpDir << ": " << errMsg;
         throw cta::exception::Exception(msg.str());
@@ -222,7 +222,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data)),
         archiveFileSize));
       std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> status = ns.statFile(requester, archiveFilePath.str());
       
@@ -253,7 +253,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -385,7 +385,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data)),
         archiveFileSize));
 
       // Write the file to tape
@@ -416,7 +416,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -539,7 +539,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         requester,
         archiveFilePath.str(),
         archiveFileMode,
-        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data)),
+        cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data)),
         archiveFileSize));
 
       // Write the file to tape
@@ -570,7 +570,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,
@@ -714,7 +714,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       tapeFile.tapeFileLocation.copyNb = 1;
       tapeFile.size = archiveFileSize;
       tapeFile.compressedSize = archiveFileSize; // No compression
-      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::Utils::getAdler32(data, sizeof data));
+      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data));
       tapeFile.checksum = tapeFileChecksum;
       ASSERT_NO_THROW(ns.addTapeFile(
         requester,

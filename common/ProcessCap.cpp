@@ -55,7 +55,7 @@ cap_t castor::server::ProcessCap::getProc() {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to get the capabilities of the process: " 
-        << cta::Utils::errnoToString(errno);
+        << cta::utils::errnoToString(errno);
     throw ex;
   }
   return cap;
@@ -72,7 +72,7 @@ std::string castor::server::ProcessCap::toText(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create string representation of capability state: " 
-        << cta::Utils::errnoToString(errno);
+        << cta::utils::errnoToString(errno);
     throw ex;
   }
   std::string result(text);
@@ -82,7 +82,7 @@ std::string castor::server::ProcessCap::toText(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to free string representation of capability state: " 
-        << cta::Utils::errnoToString(errno);
+        << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -114,7 +114,7 @@ cap_t castor::server::ProcessCap::fromText(const std::string &text) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create capability state from string representation"
-      ": text='" << text << "': " << cta::Utils::errnoToString(errno);
+      ": text='" << text << "': " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -129,7 +129,7 @@ void castor::server::ProcessCap::setProc(const cap_t cap) {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to set the capabilities of the process: " 
-        << cta::Utils::errnoToString(errno);
+        << cta::utils::errnoToString(errno);
     throw ex;
   }
 }

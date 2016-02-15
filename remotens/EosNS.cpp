@@ -81,8 +81,8 @@ void cta::EosNS::rename(const RemotePath &remoteFile, const RemotePath &newRemot
 //------------------------------------------------------------------------------
 std::string cta::EosNS::getFilename(const RemotePath &remoteFile) const {
   const std::string afterScheme = remoteFile.getAfterScheme();
-  const std::string afterSchemeTrimmed = Utils::trimSlashes(afterScheme);
-  return Utils::getEnclosedName(afterSchemeTrimmed);
+  const std::string afterSchemeTrimmed = utils::trimSlashes(afterScheme);
+  return utils::getEnclosedName(afterSchemeTrimmed);
 }
 
 //------------------------------------------------------------------------------

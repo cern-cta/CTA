@@ -40,7 +40,7 @@ void setXattr(const std::string &path, const std::string &name, const std::strin
   if(setxattr(path.c_str(), name.c_str(), value.c_str(), value.length(), 0)) {
     const int savedErrno = errno;
     std::ostringstream msg;
-    msg << "Call to setxattr() failed: path=" << path << " name=" << name << " value=" << value << ": " << cta::Utils::errnoToString(savedErrno);
+    msg << "Call to setxattr() failed: path=" << path << " name=" << name << " value=" << value << ": " << cta::utils::errnoToString(savedErrno);
     throw cta::exception::Exception(msg.str());
   }
 }

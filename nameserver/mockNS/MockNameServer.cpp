@@ -60,7 +60,7 @@ void cta::MockNameServer::assertFsDirExists(const std::string &path) const {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " stat error. Reason: " <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
@@ -82,7 +82,7 @@ void cta::MockNameServer::assertFsFileExists(const std::string &path) const {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path.substr(m_fsDir.size()) << " stat error. Reason: " <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
@@ -100,10 +100,10 @@ void cta::MockNameServer::assertChecksumOrSetIfMissing(const std::string &path, 
   // We suppose the file path is valid. getXattr will nevertheless fail on us 
   // if not
   // Get the existing checksum
-  auto ec = Utils::getXattr(path, "user.CTAChecksum");
+  auto ec = utils::getXattr(path, "user.CTAChecksum");
   if (ec.empty() || ec == "-") {
     // Checksum not set: set it.
-    Utils::setXattr(path, "user.CTAChecksum", checksum);
+    utils::setXattr(path, "user.CTAChecksum", checksum);
   } else if (ec != checksum) {
     // Checksum set: assert it matches
     std::ostringstream msg;
@@ -187,7 +187,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - opendir " << fsPath << " error."
-      " Reason: \n" << Utils::errnoToString(savedErrno);
+      " Reason: \n" << utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
  
@@ -251,15 +251,15 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
 //------------------------------------------------------------------------------
 void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {
   std::lock_guard<std::mutex> lock(m_mutex);
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);
   assertChecksumOrSetIfMissing(fsPath, tapeFile.checksum.str());
   if(tapeFile.tapeFileLocation.copyNb==1) {
-    Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
+    utils::setXattr(fsPath, "user.CTATapeFileCopyOne", fromNameServerTapeFileToString(tapeFile));
   }
   else if(tapeFile.tapeFileLocation.copyNb==2) {
-    Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", fromNameServerTapeFileToString(tapeFile));
+    utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", fromNameServerTapeFileToString(tapeFile));
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
   }
@@ -270,12 +270,12 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);  
   std::list<cta::NameServerTapeFile> tapeFileList;
-  std::string copyOne = Utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
-  std::string copyTwo = Utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
+  std::string copyOne = utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
+  std::string copyTwo = utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
   if(copyOne!="") {
     tapeFileList.push_back(fromStringToNameServerTapeFile(copyOne));
   }
@@ -291,15 +291,15 @@ std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const Secur
 void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) {
 
   std::lock_guard<std::mutex> lock(m_mutex);
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);
   switch(copyNb) {
     case 1:
-      Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
+      utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
       break;
     case 2:
-      Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
+      utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
       break;
     default:
       throw exception::Exception(std::string(__FUNCTION__) + ": Invalid copyNb (only supporting 1 and 2 in the MockNameServer)");
@@ -312,11 +312,11 @@ void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, cons
 //------------------------------------------------------------------------------
 uint64_t cta::MockNameServer::getNextFileID() {  
   //lock not needed as it is already taken by the two calling methods  
-  std::string counterString = Utils::getXattr(m_fsDir, "user.CTAFileIDCounter");
+  std::string counterString = utils::getXattr(m_fsDir, "user.CTAFileIDCounter");
   uint64_t newValue = atol(counterString.c_str())+1;
   std::stringstream newValueString;
   newValueString << newValue;
-  Utils::setXattr(m_fsDir, "user.CTAFileIDCounter", newValueString.str());
+  utils::setXattr(m_fsDir, "user.CTAFileIDCounter", newValueString.str());
   return newValue;
 }
 
@@ -335,7 +335,7 @@ cta::MockNameServer::MockNameServer(): m_deleteOnExit(true) {
   const UserIdentity initialOwner;
   setDirStorageClass(initialRequester, "/", "");
   setOwner(initialRequester, "/", initialOwner);
-  Utils::setXattr(m_fsDir, "user.CTAFileIDCounter", "0");
+  utils::setXattr(m_fsDir, "user.CTAFileIDCounter", "0");
   assertBasePathAccessible();
 }
 
@@ -345,7 +345,7 @@ cta::MockNameServer::MockNameServer(): m_deleteOnExit(true) {
 cta::MockNameServer::MockNameServer(const std::string &path): m_fsDir(path), m_deleteOnExit(false) {
   umask(0);
   assertBasePathAccessible();
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   assertFsDirExists(path);
 }
 
@@ -367,10 +367,10 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
   const std::string &path, const std::string &storageClassName) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
-  Utils::setXattr(fsPath, "user.CTAStorageClass", storageClassName);
+  utils::setXattr(fsPath, "user.CTAStorageClass", storageClassName);
 }  
 
 //------------------------------------------------------------------------------
@@ -390,11 +390,11 @@ std::string cta::MockNameServer::getDirStorageClass(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   assertFsDirExists(fsPath);
 
-  return Utils::getXattr(fsPath, "user.CTAStorageClass");
+  return utils::getXattr(fsPath, "user.CTAStorageClass");
 }  
 
 //------------------------------------------------------------------------------
@@ -409,8 +409,8 @@ void cta::MockNameServer::createFile(
   {
     std::lock_guard<std::mutex> lock(m_mutex);
   
-    Utils::assertAbsolutePathSyntax(path);  
-    const std::string dir = Utils::getEnclosingPath(path);
+    utils::assertAbsolutePathSyntax(path);  
+    const std::string dir = utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + dir);
     assertIsOwner(requester, requester.getUser(), dir);
 
@@ -422,7 +422,7 @@ void cta::MockNameServer::createFile(
       const int savedErrno = errno;
       std::ostringstream msg;
       msg << __FUNCTION__ << " - " << fsPath << " open error. Reason: " <<
-        Utils::errnoToString(savedErrno);
+        utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
     fd.reset();
@@ -431,21 +431,21 @@ void cta::MockNameServer::createFile(
       const int savedErrno = errno;
       std::ostringstream msg;
       msg << __FUNCTION__ << " - " << fsPath << " utimensat error. Reason: "
-        << Utils::errnoToString(savedErrno);
+        << utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
-    Utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
-    Utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
+    utils::setXattr(fsPath, "user.CTATapeFileCopyOne", "");
+    utils::setXattr(fsPath, "user.CTATapeFileCopyTwo", "");
     std::stringstream sizeString;
     sizeString << size;
-    Utils::setXattr(fsPath, "user.CTASize", sizeString.str());
+    utils::setXattr(fsPath, "user.CTASize", sizeString.str());
     std::stringstream fileIDString;
     fileIDString << getNextFileID();
-    Utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
+    utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
     std::stringstream modeString;
     modeString << std::oct << mode;
-    Utils::setXattr(fsPath, "user.CTAMode", modeString.str());
-    Utils::setXattr(fsPath, "user.CTAChecksum", checksum.str());
+    utils::setXattr(fsPath, "user.CTAMode", modeString.str());
+    utils::setXattr(fsPath, "user.CTAChecksum", checksum.str());
   }
   setOwner(requester, path, requester.getUser());
 }
@@ -458,7 +458,7 @@ void cta::MockNameServer::assertIsOwner(
   const UserIdentity &user,
   const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const UserIdentity owner = getOwner(requester, path);
 
   if(user != owner) {
@@ -478,13 +478,13 @@ void cta::MockNameServer::setOwner(
   const UserIdentity &owner) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  Utils::assertAbsolutePathSyntax(path);
-  const std::string uidStr = Utils::toString(owner.uid);
-  const std::string gidStr = Utils::toString(owner.gid);
+  utils::assertAbsolutePathSyntax(path);
+  const std::string uidStr = utils::toString(owner.uid);
+  const std::string gidStr = utils::toString(owner.gid);
   const std::string fsPath = m_fsDir + path;
 
-  Utils::setXattr(fsPath, "user.CTAuid", uidStr);
-  Utils::setXattr(fsPath, "user.CTAgid", gidStr);
+  utils::setXattr(fsPath, "user.CTAuid", uidStr);
+  utils::setXattr(fsPath, "user.CTAgid", gidStr);
 }
 
 //------------------------------------------------------------------------------
@@ -494,10 +494,10 @@ cta::UserIdentity cta::MockNameServer::getOwner(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
-  const std::string uidStr = Utils::getXattr(fsPath, "user.CTAuid");
-  const std::string gidStr = Utils::getXattr(fsPath, "user.CTAgid");
+  const std::string uidStr = utils::getXattr(fsPath, "user.CTAuid");
+  const std::string gidStr = utils::getXattr(fsPath, "user.CTAgid");
 
   if(uidStr.empty() || gidStr.empty()) {
     std::ostringstream msg;
@@ -505,8 +505,8 @@ cta::UserIdentity cta::MockNameServer::getOwner(
     throw exception::Exception(msg.str());
   }
 
-  const uid_t uid = Utils::toUid(uidStr);
-  const gid_t gid = Utils::toGid(gidStr);
+  const uid_t uid = utils::toUid(uidStr);
+  const gid_t gid = utils::toGid(gidStr);
 
   return UserIdentity(uid, gid);
 }
@@ -520,8 +520,8 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
   {
     std::lock_guard<std::mutex> lock(m_mutex); 
    
-    Utils::assertAbsolutePathSyntax(path);  
-    const std::string enclosingPath = Utils::getEnclosingPath(path);
+    utils::assertAbsolutePathSyntax(path);  
+    const std::string enclosingPath = utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + enclosingPath);
     assertIsOwner(requester, requester.getUser(), enclosingPath);
 
@@ -531,15 +531,15 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
       const int savedErrno = errno;
       std::ostringstream msg;
       msg << __FUNCTION__ << " - mkdir " << path << " error. Reason: \n" <<
-        Utils::errnoToString(savedErrno);
+        utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
     std::stringstream fileIDString;
     fileIDString << getNextFileID();
-    Utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
+    utils::setXattr(fsPath, "user.CTAFileID", fileIDString.str());
     std::stringstream modeString;
     modeString << std::oct << mode;
-    Utils::setXattr(fsPath, "user.CTAMode", modeString.str());
+    utils::setXattr(fsPath, "user.CTAMode", modeString.str());
   }
   setDirStorageClass(requester, path, inheritedStorageClass);
   setOwner(requester, path, requester.getUser());
@@ -551,14 +551,14 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
 void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const std::string &path) { 
   std::lock_guard<std::mutex> lock(m_mutex); 
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
   if(unlink(fsPath.c_str())) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - unlink " << path << " error. Reason: \n" <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }  
 }  
@@ -575,14 +575,14 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
     msg << __FUNCTION__ << " - Cannot delete root directory";
     throw(exception::Exception(msg.str()));
   }
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
   
   if(rmdir(fsPath.c_str())) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - rmdir " << path << " error. Reason: \n" <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }  
 }  
@@ -594,9 +594,9 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
-  const std::string name = Utils::getEnclosedName(path);
-  const std::string enclosingPath = Utils::getEnclosingPath(path);
+  utils::assertAbsolutePathSyntax(path);
+  const std::string name = utils::getEnclosedName(path);
+  const std::string enclosingPath = utils::getEnclosingPath(path);
   const std::string fsPath = m_fsDir + path;
 
   struct stat statResult;
@@ -608,7 +608,7 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::
 
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
@@ -631,7 +631,7 @@ std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEn
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
   if(S_ISDIR(statResult.st_mode)) {
@@ -640,7 +640,7 @@ std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEn
       const int savedErrno = errno;
       std::ostringstream msg;
       msg << __FUNCTION__ << " - opendir " << path << " error. Reason: \n"
-        << Utils::errnoToString(savedErrno);
+        << utils::errnoToString(savedErrno);
       throw(exception::Exception(msg.str()));
     }
     std::list<common::archiveNS::ArchiveDirEntry> entries;
@@ -675,7 +675,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const SecurityIdentity &requester,
   const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
 
   struct stat statResult;
@@ -683,7 +683,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << __FUNCTION__ << " - " << path << " stat error. Reason: " <<
-      Utils::errnoToString(savedErrno);
+      utils::errnoToString(savedErrno);
     throw(exception::Exception(msg.str()));
   }
 
@@ -698,9 +698,9 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   const std::string &path,
   const struct stat statResult) const {
 
-  Utils::assertAbsolutePathSyntax(path);
-  const std::string enclosingPath = Utils::getEnclosingPath(path);
-  const std::string name = Utils::getEnclosedName(path);
+  utils::assertAbsolutePathSyntax(path);
+  const std::string enclosingPath = utils::getEnclosingPath(path);
+  const std::string name = utils::getEnclosedName(path);
   common::archiveNS::ArchiveDirEntry::EntryType entryType;
   std::string storageClassName;
   std::list<NameServerTapeFile> tapeCopies;
@@ -725,12 +725,12 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   uint64_t size = 0;
   Checksum checksum;
   if (common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE == entryType) {
-    size = atol(Utils::getXattr(fsPath, "user.CTASize").c_str());
-    checksum = Checksum(Utils::getXattr(fsPath, "user.CTAChecksum"));
+    size = atol(utils::getXattr(fsPath, "user.CTASize").c_str());
+    checksum = Checksum(utils::getXattr(fsPath, "user.CTAChecksum"));
   }
-  const uint64_t fileId = atol(Utils::getXattr(fsPath, "user.CTAFileID").c_str());
+  const uint64_t fileId = atol(utils::getXattr(fsPath, "user.CTAFileID").c_str());
   std::stringstream modeStrTr;
-  std::string modeStr = Utils::getXattr(fsPath, "user.CTAMode");
+  std::string modeStr = utils::getXattr(fsPath, "user.CTAMode");
   modeStrTr <<  modeStr;
   mode_t mode;
   modeStrTr >> std::oct >> mode;
@@ -745,7 +745,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 cta::common::archiveNS::ArchiveDirIterator cta::MockNameServer::getDirContents(
   const SecurityIdentity &requester, const std::string &path) const {
 
-  Utils::assertAbsolutePathSyntax(path);
+  utils::assertAbsolutePathSyntax(path);
   return getDirEntries(requester, path);
 }
 
@@ -765,8 +765,8 @@ std::string cta::MockNameServer::getVidOfFile(
   const std::string fsPath = m_fsDir + path;
   assertFsFileExists(fsPath);  
   std::list<cta::NameServerTapeFile> tapeFileList;
-  std::string copyOne = Utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
-  std::string copyTwo = Utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
+  std::string copyOne = utils::getXattr(fsPath, "user.CTATapeFileCopyOne");
+  std::string copyTwo = utils::getXattr(fsPath, "user.CTATapeFileCopyTwo");
   if(copyNb==1) {
     return fromStringToNameServerTapeFile(copyOne).tapeFileLocation.vid;
   }

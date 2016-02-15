@@ -27,11 +27,7 @@
 
 namespace cta {
 
-/**
- * Class of utility methods.
- */
-class Utils {
-public:
+namespace utils {
 
   /**
    * Throws an exception if the specified absolute path constains a
@@ -39,7 +35,7 @@ public:
    *
    * @param path The Absolute path.
    */
-  static void assertAbsolutePathSyntax(const std::string &path);
+  void assertAbsolutePathSyntax(const std::string &path);
 
   /**
    * Returns the path of the enclosing directory of the specified path.
@@ -54,7 +50,7 @@ public:
    * @param path The path.
    * @return The path of the enclosing directory.
    */
-  static std::string getEnclosingPath(const std::string &path);
+  std::string getEnclosingPath(const std::string &path);
 
   /**
    * Returns the name of the enclosed file or directory of the specified path.
@@ -62,7 +58,7 @@ public:
    * @param path The path.
    * @return The name of the enclosed file or directory.
    */
-  static std::string getEnclosedName(const std::string &path);
+  std::string getEnclosedName(const std::string &path);
 
   /**
    * Returns the names of the enclosed file or directory of each of the
@@ -72,7 +68,7 @@ public:
    * @return The names of the enclosed file or directory of each of the
    * specified paths.
    */
-  static std::list<std::string> getEnclosedNames(
+  std::list<std::string> getEnclosedNames(
     const std::list<std::string> &paths);
 
   /**
@@ -82,7 +78,7 @@ public:
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  static std::string trimSlashes(const std::string &s);
+  std::string trimSlashes(const std::string &s);
   
   /**
    * Returns the result of trimming right slashes from the
@@ -91,7 +87,7 @@ public:
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  static std::string trimFinalSlashes(const std::string &s);
+  std::string trimFinalSlashes(const std::string &s);
 
   /**
    * Splits the specified string into a vector of strings using the specified
@@ -104,7 +100,7 @@ public:
    * @param result The vector when the result of spliting the string will be
    * stored.
    */
-  static void splitString(const std::string &str, const char separator,
+  void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result);
   
 
@@ -115,7 +111,7 @@ public:
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  static std::string trimString(const std::string &s) throw();
+  std::string trimString(const std::string &s) throw();
 
   /**
    * Creates and returns an std::string which is the result of replacing each
@@ -125,14 +121,14 @@ public:
    * @param str The original string.
    * @return    The newly created string with single spaces.
    */
-  static std::string singleSpaceString(const std::string &str) throw();
+  std::string singleSpaceString(const std::string &str) throw();
 
   /**
    * Returns uuid in the form of a string.
    *
    * @return uuid in the form of a string.
    */
-  static std::string generateUuid();
+  std::string generateUuid();
 
   /**
    * Returns true if the specified string ends with the specifie character.
@@ -141,7 +137,7 @@ public:
    * @param c The character to be looked for at the end of the string.
    * @return True if the specified string ends with the specified character.
    */
-  static bool endsWith(const std::string &str, const char c);
+  bool endsWith(const std::string &str, const char c);
 
   /**
    * Returns the string reprsentation of the specified value.
@@ -149,7 +145,7 @@ public:
    * @param value The value whose string representation is to be returned.
    * @return The string reprsentation of the specified value.
    */
-  template <typename T> static std::string toString(const T& value) {
+  template <typename T> std::string toString(const T& value) {
     std::ostringstream oss;
     oss << value;
     return oss.str();
@@ -162,7 +158,7 @@ public:
    * @param name The name of the extended attribute.
    * @param value The value of the extended attribute.
    */
-  static void setXattr(const std::string &path, const std::string &name,
+  void setXattr(const std::string &path, const std::string &name,
     const std::string &value);
 
   /**
@@ -172,7 +168,7 @@ public:
    * @param name The name of the extended attribute.
    * @return The value of the extended attribute.
    */
-  static std::string getXattr(const std::string &path, const std::string &name);
+  std::string getXattr(const std::string &path, const std::string &name);
 
   /**
    * Determines the string representation of the specified error number.
@@ -182,7 +178,7 @@ public:
    * @param errnoValue The errno value.
    * @return The string representation.
    */
-  static std::string errnoToString(const int errnoValue) throw();
+  std::string errnoToString(const int errnoValue) throw();
 
   /**
    * Converts the specified string to an unsigned integer.
@@ -190,7 +186,7 @@ public:
    * @param str The string.
    * @return The unisgned integer.
    */
-  static uint16_t toUint16(const std::string &str);
+  uint16_t toUint16(const std::string &str);
 
   /**
    * Converts the specified string to a uid.
@@ -198,7 +194,7 @@ public:
    * @param str The string.
    * @return The uid.
    */
-  static uid_t toUid(const std::string &str);
+  uid_t toUid(const std::string &str);
 
   /**
    * Converts the specified string to a gid.
@@ -206,7 +202,7 @@ public:
    * @param str The string.
    * @return The gid.
    */
-  static gid_t toGid(const std::string &str);
+  gid_t toGid(const std::string &str);
 
   /**
    * Checks if the specified string is a valid unsigned integer.
@@ -214,14 +210,14 @@ public:
    * @param str The string to be checked.
    * @returns true if the string is a valid unsigned integer, else false.
    */
-  static bool isValidUInt(const std::string &str) throw();
+  bool isValidUInt(const std::string &str) throw();
   
   /**
    * Gets the short host name from the system
    * 
    * @return the short host name
    */
-  static std::string getShortHostname();
+  std::string getShortHostname();
 
   /**
    * Returns the alder32 checksum of the specified buffer.
@@ -230,7 +226,7 @@ public:
    * @param len The length of the buffer in bytes.
    * @return the alder32 checksum of the specified buffer.
    */
-  static uint32_t getAdler32(const uint8_t *buf, const uint32_t len) throw();
+  uint32_t getAdler32(const uint8_t *buf, const uint32_t len) throw();
 
   /**
    * Returns true if the attributes of the current process indicate that it will
@@ -241,7 +237,7 @@ public:
    *
    * @return true if the current program is dumpable.
    */
-  static bool getDumpableProcessAttribute();
+  bool getDumpableProcessAttribute();
 
   /**
    * Sets the attributes of the current process to indicate hat it will produce a
@@ -249,7 +245,8 @@ public:
    *
    * @param dumpable true if the current program should be dumpable.
    */
-  static void setDumpableProcessAttribute(const bool dumpable);
-}; // class Utils
+  void setDumpableProcessAttribute(const bool dumpable);
+
+} // namespace utils
 
 } // namespace cta

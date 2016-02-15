@@ -36,7 +36,7 @@ TEST_F(cta_UtilsTest, trimSlashes_emptyString) {
   using namespace cta;
 
   const std::string s;
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(s, trimmedString);
 }
 
@@ -44,7 +44,7 @@ TEST_F(cta_UtilsTest, trimSlashes_noSlashes) {
   using namespace cta;
 
   const std::string s("NO_SLASHES");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(s, trimmedString);
 }
 
@@ -52,7 +52,7 @@ TEST_F(cta_UtilsTest, trimSlashes_oneLeftSlash) {
   using namespace cta;
 
   const std::string s("/VALUE");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -60,7 +60,7 @@ TEST_F(cta_UtilsTest, trimSlashes_twoLeftSlashes) {
   using namespace cta;
 
   const std::string s("//VALUE");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -68,7 +68,7 @@ TEST_F(cta_UtilsTest, trimSlashes_oneRightSlash) {
   using namespace cta;
 
   const std::string s("VALUE/");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -76,7 +76,7 @@ TEST_F(cta_UtilsTest, trimSlashes_twoRightSlashes) {
   using namespace cta;
 
   const std::string s("VALUE//");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -85,7 +85,7 @@ TEST_F(cta_UtilsTest,
   using namespace cta;
 
   const std::string s("/VALUE/");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -94,7 +94,7 @@ TEST_F(cta_UtilsTest,
   using namespace cta;
 
   const std::string s("//VALUE//");
-  const std::string trimmedString = Utils::trimSlashes(s);
+  const std::string trimmedString = utils::trimSlashes(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
@@ -103,7 +103,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_empty_string) {
     
   const std::string dirPath = "";
 
-  ASSERT_THROW(Utils::getEnclosingPath(dirPath), std::exception);
+  ASSERT_THROW(utils::getEnclosingPath(dirPath), std::exception);
 }
 
 TEST_F(cta_UtilsTest, getEnclosingPath_root) {
@@ -112,7 +112,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_root) {
   const std::string dirPath = "/";
 
   std::string enclosingPath;
-  ASSERT_THROW(enclosingPath = Utils::getEnclosingPath(dirPath),
+  ASSERT_THROW(enclosingPath = utils::getEnclosingPath(dirPath),
     std::exception);
 }
 
@@ -122,7 +122,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_grandparent) {
   const std::string dirPath = "/grandparent";
     
   std::string enclosingPath;
-  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_NO_THROW(enclosingPath = utils::getEnclosingPath(dirPath));
   ASSERT_EQ(std::string("/"), enclosingPath);
 }
 
@@ -133,7 +133,7 @@ TEST_F(cta_UtilsTest,
   const std::string dirPath = "/grandparent/parent";
 
   std::string enclosingPath;
-  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_NO_THROW(enclosingPath = utils::getEnclosingPath(dirPath));
   ASSERT_EQ(std::string("/grandparent/"), enclosingPath);
 }
 
@@ -144,7 +144,7 @@ TEST_F(cta_UtilsTest,
   const std::string dirPath = "/grandparent/parent/child";
 
   std::string enclosingPath;
-  ASSERT_NO_THROW(enclosingPath = Utils::getEnclosingPath(dirPath));
+  ASSERT_NO_THROW(enclosingPath = utils::getEnclosingPath(dirPath));
   ASSERT_EQ(std::string("/grandparent/parent/"), enclosingPath);
 }
 
@@ -153,7 +153,7 @@ TEST_F(cta_UtilsTest, getEnclosedName_just_enclosed_name) {
 
   const std::string enclosedName = "child";
   std::string result;
-  ASSERT_NO_THROW(result = Utils::getEnclosedName(enclosedName));
+  ASSERT_NO_THROW(result = utils::getEnclosedName(enclosedName));
   ASSERT_EQ(enclosedName, result);
 }
 
@@ -164,7 +164,7 @@ TEST_F(cta_UtilsTest, getEnclosedName) {
   const std::string enclosedName = "child";
   const std::string absoluteFilePath = enclosingPath + enclosedName;
   std::string result;
-  ASSERT_NO_THROW(result = Utils::getEnclosedName(absoluteFilePath));
+  ASSERT_NO_THROW(result = utils::getEnclosedName(absoluteFilePath));
   ASSERT_EQ(enclosedName, result);
 }
 
@@ -182,7 +182,7 @@ TEST_F(cta_UtilsTest, getEnclosedNames) {
   absoluteFilePaths.push_back(enclosingPath + enclosedName3);
   absoluteFilePaths.push_back(enclosingPath + enclosedName4);
   std::list<std::string> results;
-  ASSERT_NO_THROW(results = Utils::getEnclosedNames(absoluteFilePaths));
+  ASSERT_NO_THROW(results = utils::getEnclosedNames(absoluteFilePaths));
   ASSERT_EQ(4, results.size());
   std::set<std::string> resultSet;
   for(std::list<std::string>::const_iterator itor = results.begin();
@@ -201,7 +201,7 @@ TEST_F(cta_UtilsTest, splitString_goodDay) {
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(Utils::splitString(line, ' ', columns));
+  ASSERT_NO_THROW(utils::splitString(line, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
   ASSERT_EQ(std::string("col0"), columns[0]);
   ASSERT_EQ(std::string("col1"), columns[1]);
@@ -219,7 +219,7 @@ TEST_F(cta_UtilsTest, splitString_emptyString) {
   std::vector<std::string> columns;
 
 
-  ASSERT_NO_THROW(Utils::splitString(emptyString, ' ', columns));
+  ASSERT_NO_THROW(utils::splitString(emptyString, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
 }
 
@@ -229,7 +229,7 @@ TEST_F(cta_UtilsTest, splitString_noSeparatorInString) {
     "stringContainingNoSeparator";
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(Utils::splitString(stringContainingNoSeparator, ' ',
+  ASSERT_NO_THROW(utils::splitString(stringContainingNoSeparator, ' ',
     columns));
   ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
@@ -239,39 +239,39 @@ TEST_F(cta_UtilsTest, generateUuid) {
   using namespace cta;
   std::string uuid1;
   std::string uuid2;
-  ASSERT_NO_THROW(uuid1 = Utils::generateUuid());
-  ASSERT_NO_THROW(uuid2 = Utils::generateUuid());
+  ASSERT_NO_THROW(uuid1 = utils::generateUuid());
+  ASSERT_NO_THROW(uuid2 = utils::generateUuid());
   ASSERT_NE(uuid1, uuid2);
 }
 
 TEST_F(cta_UtilsTest, endsWith_slash_empty_string) {
   using namespace cta;
   const std::string str = "";
-  ASSERT_FALSE(Utils::endsWith(str, '/'));
+  ASSERT_FALSE(utils::endsWith(str, '/'));
 }
 
 TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_without_terminating_slash) {
   using namespace cta;
   const std::string str = "abcde";
-  ASSERT_FALSE(Utils::endsWith(str, '/'));
+  ASSERT_FALSE(utils::endsWith(str, '/'));
 } 
 
 TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_with_terminating_slash) {
   using namespace cta;
   const std::string str = "abcde/";
-  ASSERT_TRUE(Utils::endsWith(str, '/'));
+  ASSERT_TRUE(utils::endsWith(str, '/'));
 }
 
 TEST_F(cta_UtilsTest, endsWith_slash_just_a_slash) {
   using namespace cta;
   const std::string str = "/";
-  ASSERT_TRUE(Utils::endsWith(str, '/'));
+  ASSERT_TRUE(utils::endsWith(str, '/'));
 } 
 
 TEST_F(cta_UtilsTest, errnoToString_EACCESS) {
   using namespace cta;
 
-  const std::string str = Utils::errnoToString(EACCES);
+  const std::string str = utils::errnoToString(EACCES);
   ASSERT_EQ(std::string("Permission denied"), str);
 }
 
@@ -280,7 +280,7 @@ TEST_F(cta_UtilsTest, toUint16_12345) {
 
   uint16_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUint16("12345"));
+  ASSERT_NO_THROW(i = utils::toUint16("12345"));
   ASSERT_EQ((uint16_t)12345, i);
 }
 
@@ -289,7 +289,7 @@ TEST_F(cta_UtilsTest, toUint16_zero) {
 
   uint16_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUint16("0"));
+  ASSERT_NO_THROW(i = utils::toUint16("0"));
   ASSERT_EQ((uint16_t)0, i);
 }
 
@@ -298,26 +298,26 @@ TEST_F(cta_UtilsTest, toUint16_65535) {
 
   uint16_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUint16("65535"));
+  ASSERT_NO_THROW(i = utils::toUint16("65535"));
   ASSERT_EQ((uint16_t)65535, i);
 }
 
 TEST_F(cta_UtilsTest, toUint16_empty_string) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toUint16(""), std::exception);
+  ASSERT_THROW(utils::toUint16(""), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toUint16_negative) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toUint16("-12345"), std::exception);
+  ASSERT_THROW(utils::toUint16("-12345"), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toUint16_too_big) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toUint16("65536"), std::exception);
+  ASSERT_THROW(utils::toUint16("65536"), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toUid_12345) {
@@ -325,7 +325,7 @@ TEST_F(cta_UtilsTest, toUid_12345) {
 
   uid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUid("12345"));
+  ASSERT_NO_THROW(i = utils::toUid("12345"));
   ASSERT_EQ((uid_t)12345, i);
 }
 
@@ -334,7 +334,7 @@ TEST_F(cta_UtilsTest, toUid_zero) {
 
   uid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUid("0"));
+  ASSERT_NO_THROW(i = utils::toUid("0"));
   ASSERT_EQ((uid_t)0, i);
 }
 
@@ -346,20 +346,20 @@ TEST_F(cta_UtilsTest, toUid_max) {
 
   uid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toUid(oss.str()));
+  ASSERT_NO_THROW(i = utils::toUid(oss.str()));
   ASSERT_EQ(std::numeric_limits<uid_t>::max(), i);
 }
 
 TEST_F(cta_UtilsTest, toUid_empty_string) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toUid(""), std::exception);
+  ASSERT_THROW(utils::toUid(""), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toUid_negative) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toUid("-12345"), std::exception);
+  ASSERT_THROW(utils::toUid("-12345"), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toUid_too_big) {
@@ -371,7 +371,7 @@ TEST_F(cta_UtilsTest, toUid_too_big) {
   std::ostringstream oss;
   oss << tooBig;
 
-  ASSERT_THROW(Utils::toUid(oss.str()), std::exception);
+  ASSERT_THROW(utils::toUid(oss.str()), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toGid_12345) {
@@ -379,7 +379,7 @@ TEST_F(cta_UtilsTest, toGid_12345) {
 
   gid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toGid("12345"));
+  ASSERT_NO_THROW(i = utils::toGid("12345"));
   ASSERT_EQ((gid_t)12345, i);
 }
 
@@ -388,7 +388,7 @@ TEST_F(cta_UtilsTest, toGid_zero) {
 
   gid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toGid("0"));
+  ASSERT_NO_THROW(i = utils::toGid("0"));
   ASSERT_EQ((gid_t)0, i);
 }
 
@@ -400,20 +400,20 @@ TEST_F(cta_UtilsTest, toGid_max) {
 
   gid_t i = 0;
 
-  ASSERT_NO_THROW(i = Utils::toGid(oss.str()));
+  ASSERT_NO_THROW(i = utils::toGid(oss.str()));
   ASSERT_EQ(std::numeric_limits<gid_t>::max(), i);
 }
 
 TEST_F(cta_UtilsTest, toGid_empty_string) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toGid(""), std::exception);
+  ASSERT_THROW(utils::toGid(""), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toGid_negative) {
   using namespace cta;
 
-  ASSERT_THROW(Utils::toGid("-12345"), std::exception);
+  ASSERT_THROW(utils::toGid("-12345"), std::exception);
 }
 
 TEST_F(cta_UtilsTest, toGid_too_big) {
@@ -425,45 +425,45 @@ TEST_F(cta_UtilsTest, toGid_too_big) {
   std::ostringstream oss;
   oss << tooBig;
 
-  ASSERT_THROW(Utils::toGid(oss.str()), std::exception);
+  ASSERT_THROW(utils::toGid(oss.str()), std::exception);
 }
 
 TEST_F(cta_UtilsTest, isValidUInt_unsigned_int) {
   using namespace cta;
 
-  ASSERT_TRUE(Utils::isValidUInt("12345"));
+  ASSERT_TRUE(utils::isValidUInt("12345"));
 }
 
 TEST_F(cta_UtilsTest, isValidUInt_empty_string) {
   using namespace cta;
 
-  ASSERT_FALSE(Utils::isValidUInt(""));
+  ASSERT_FALSE(utils::isValidUInt(""));
 }
 
 TEST_F(cta_UtilsTest, isValidUInt_signed_int) {
   using namespace cta;
 
-  ASSERT_FALSE(Utils::isValidUInt("-12345"));
+  ASSERT_FALSE(utils::isValidUInt("-12345"));
 }
 
 TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
   using namespace cta;
 
-  ASSERT_FALSE(Utils::isValidUInt("one"));
+  ASSERT_FALSE(utils::isValidUInt("one"));
 }
 
 TEST_F(cta_UtilsTest, adler32_empty_buf) {
   using namespace cta;
 
   // The adler32 of an empty buffer is 1
-  ASSERT_EQ((uint32_t)1, Utils::getAdler32(NULL, 0));
+  ASSERT_EQ((uint32_t)1, utils::getAdler32(NULL, 0));
 }
 
 TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
   using namespace cta;
 
   const uint8_t buf = '1';
-  ASSERT_EQ((uint32_t)0x320032, Utils::getAdler32(&buf, 1));
+  ASSERT_EQ((uint32_t)0x320032, utils::getAdler32(&buf, 1));
 }
 
 
@@ -472,11 +472,11 @@ TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
  * splitString() method.
  */
 TEST_F(cta_UtilsTest, testGoodDaySplitString) {
-  using cta::Utils;
+  using namespace cta;
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(Utils::splitString(line, ' ', columns));
+  ASSERT_NO_THROW(utils::splitString(line, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
   ASSERT_EQ(std::string("col0"), columns[0]);
   ASSERT_EQ(std::string("col1"), columns[1]);
@@ -492,11 +492,11 @@ TEST_F(cta_UtilsTest, testGoodDaySplitString) {
  * Test the case of an empty string being passed to the splitString() method.
  */
 TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {
-  using cta::Utils;
+  using namespace cta;
   const std::string emptyString;
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(Utils::splitString(emptyString, ' ', columns));
+  ASSERT_NO_THROW(utils::splitString(emptyString, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
 }
 
@@ -505,97 +505,97 @@ TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {
  * passed to the splitString() method.
  */
 TEST_F(cta_UtilsTest, testSplitStringWithNoSeparatorInString) {
-  using cta::Utils;
+  using namespace cta;
   const std::string stringContainingNoSeparator =
     "stringContainingNoSeparator";
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(Utils::splitString(stringContainingNoSeparator, ' ', columns));
+  ASSERT_NO_THROW(utils::splitString(stringContainingNoSeparator, ' ', columns));
   ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringWithEmptyString) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s;
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(s, trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingNoSpaces) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("NO_SPACES");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(s, trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftSpace) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s(" VALUE");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingRightSpace) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("VALUE ");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightSpace) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s(" VALUE ");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftTab) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("\tVALUE");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingRightTab) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("VALUE\t");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightTab) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("\tVALUE\t");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftNewLine) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("\nVALUE");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingRightNewLine) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("VALUE\n");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightNewLine) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("\nVALUE\n");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
 TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightWhiteSpace) {
-  using cta::Utils;
+  using namespace cta;
   const std::string s("  \t\t\n\nVALUE  \t\t\n\n");
-  const std::string trimmedString = Utils::trimString(s);
+  const std::string trimmedString = utils::trimString(s);
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 

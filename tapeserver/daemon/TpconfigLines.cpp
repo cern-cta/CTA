@@ -49,7 +49,7 @@ cta::tape::daemon::TpconfigLines::parseFile(const std::string &filename) {
         "Failed to parse TPCONFIG file"
         ": Failed to open file"
         ": filename='" << filename << "'"
-        ": " << cta::Utils::errnoToString(savedErrno);
+        ": " << cta::utils::errnoToString(savedErrno);
 
       throw ex;
     }
@@ -85,17 +85,17 @@ cta::tape::daemon::TpconfigLines::parseFile(const std::string &filename) {
     }
 
     // Left and right trim the line of whitespace
-    line = cta::Utils::trimString(std::string(line));
+    line = cta::utils::trimString(std::string(line));
 
     // If the line is not empty
     if(line != "") {
 
       // Replace each occurance of whitespace with a single space
-      line = cta::Utils::singleSpaceString(line);
+      line = cta::utils::singleSpaceString(line);
 
       // Split the line into its component data-columns
       std::vector<std::string> columns;
-      cta::Utils::splitString(line, ' ', columns);
+      cta::utils::splitString(line, ' ', columns);
 
       // The expected number of data-columns in a TPCONFIG data-line is 4:
       //   unitName dgn devFilename librarySlot

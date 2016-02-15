@@ -133,7 +133,7 @@ int castor::io::createListenerSock(
   if(sock.get() < 0) {
     castor::exception::Exception ex;
     ex.getMessage() << ": Failed to create socket: " 
-      << cta::Utils::errnoToString(errno);
+      << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -149,7 +149,7 @@ int castor::io::createListenerSock(
         " level=SOL_SOCKET"
         " optname=SO_REUSEADDR"
         " optval=" << reuseaddrOptval <<
-        ": " << cta::Utils::errnoToString(errno);
+        ": " << cta::utils::errnoToString(errno);
       throw ex;
     }
   }
@@ -182,7 +182,7 @@ int castor::io::createListenerSock(
         ex.getMessage() <<
           ": Failed to mark socket as being a listener"
           ": listenSocketFd=" << sock.get() <<
-          ": " << cta::Utils::errnoToString(errno);
+          ": " << cta::utils::errnoToString(errno);
         throw ex;
       }
 
@@ -202,7 +202,7 @@ int castor::io::createListenerSock(
         ex.getMessage() <<
           ": Failed to bind listener socket"
           ": listenSocketFd=" << sock.get() <<
-          ": " << cta::Utils::errnoToString(bindErrno);
+          ": " << cta::utils::errnoToString(bindErrno);
         throw ex;
       }
     }
@@ -275,7 +275,7 @@ int castor::io::acceptConnection(const int listenSocketFd)
     if(savedErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
     } else {
-      reason << ": " << cta::Utils::errnoToString(savedErrno);
+      reason << ": " << cta::utils::errnoToString(savedErrno);
     }
 
     castor::exception::Exception ex;
@@ -339,7 +339,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     } else {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection: Select failed: " <<
-        cta::Utils::errnoToString(selectErrno);
+        cta::utils::errnoToString(selectErrno);
       throw ex;
     }
     break;
@@ -370,7 +370,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     if(acceptErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
     } else {
-      reason << ": " << cta::Utils::errnoToString(acceptErrno);
+      reason << ": " << cta::utils::errnoToString(acceptErrno);
     }
 
     castor::exception::Exception ex;
@@ -403,7 +403,7 @@ castor::io::IpAndPort castor::io::getSockIpPort(
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get socket name: socketFd=" << socketFd <<
-      ": " << cta::Utils::errnoToString(errno);
+      ": " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -432,7 +432,7 @@ castor::io::IpAndPort  castor::io::getPeerIpPort(
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
     castor::exception::Exception ex;
     ex.getMessage() << ": Failed to get peer name: socketFd=" << socketFd <<
-      ": " << cta::Utils::errnoToString(errno);
+      ": " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -459,7 +459,7 @@ std::string castor::io::getSockHostName(const int socketFd) {
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to get socket hostname"
-      ": socketFd=" << socketFd << ": " << cta::Utils::errnoToString(errno);
+      ": socketFd=" << socketFd << ": " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -508,7 +508,7 @@ void castor::io::getSockIpHostnamePort(
     ex.getMessage() <<
       ": Failed to get socket name"
       ": socketFd=" << socketFd <<
-      ": " << cta::Utils::errnoToString(errno);
+      ": " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -552,7 +552,7 @@ std::string castor::io::getPeerHostName(const int socketFd) {
     ex.getMessage() <<
       ": Failed to get peer name"
       ": socketFd=" << socketFd <<
-      ": " << cta::Utils::errnoToString(errno);
+      ": " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -879,7 +879,7 @@ int castor::io::connectWithTimeout(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create socket for new connection"
-      ": Call to socket() failed: " << cta::Utils::errnoToString(errno);
+      ": Call to socket() failed: " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -889,7 +889,7 @@ int castor::io::connectWithTimeout(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to get the original file-control flags of the socket"
-      ": Call to fcntl() failed: " << cta::Utils::errnoToString(errno);
+      ": Call to fcntl() failed: " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -899,7 +899,7 @@ int castor::io::connectWithTimeout(
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to set the O_NONBLOCK file-control flag"
-      ": Call to fcntl() failed: " << cta::Utils::errnoToString(errno);
+      ": Call to fcntl() failed: " << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -914,7 +914,7 @@ int castor::io::connectWithTimeout(
       castor::exception::Exception ex;
       ex.getMessage() <<
         "Failed to restore the file-control flags of the socket"
-        ": " << cta::Utils::errnoToString(errno);
+        ": " << cta::utils::errnoToString(errno);
       throw ex;
     }
     return smartSock.release();
@@ -925,7 +925,7 @@ int castor::io::connectWithTimeout(
   if(EINPROGRESS != connectErrno) {
     castor::exception::Exception ex;
     ex.getMessage() << "Call to connect() failed: " 
-      << cta::Utils::errnoToString(connectErrno);
+      << cta::utils::errnoToString(connectErrno);
     throw ex;
   }
 
@@ -945,7 +945,7 @@ int castor::io::connectWithTimeout(
   if(-1 == selectRc) {
     castor::exception::Exception ex;
     ex.getMessage() << "Call to select() failed: "
-      << cta::Utils::errnoToString(errno);
+      << cta::utils::errnoToString(errno);
     throw ex;
   }
 
@@ -982,7 +982,7 @@ int castor::io::connectWithTimeout(
     castor::exception::Exception ex;
     ex.getMessage() 
       << "In io::connectWithTimeout: Connection did not complete successfully: " 
-      << cta::Utils::errnoToString(sockoptError);
+      << cta::utils::errnoToString(sockoptError);
     throw ex;
   }
 

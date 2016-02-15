@@ -55,7 +55,7 @@ cta::log::SyslogLogger::SyslogLogger(const std::string &socketName,
   struct stat fileStatus;
   bzero(&fileStatus, sizeof(fileStatus));
   if(stat(socketName.c_str(), &fileStatus)) {
-    const std::string errMsg = cta::Utils::errnoToString(errno);
+    const std::string errMsg = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate syslog logger: Failed to stat"
       " socket \"" << socketName << "\"" ": " << errMsg;
@@ -378,7 +378,7 @@ void cta::log::SyslogLogger::writeHeader(
 std::string cta::log::SyslogLogger::cleanString(const std::string &s,
   const bool replaceUnderscores) {
   // Trim both left and right white-space
-  std::string result = Utils::trimString(s);
+  std::string result = utils::trimString(s);
   
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
 

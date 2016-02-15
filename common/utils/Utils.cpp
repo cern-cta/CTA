@@ -101,7 +101,7 @@ static void assertPathContainsValidChars(const std::string &path) {
 //------------------------------------------------------------------------------
 // assertAbsolutePathSyntax
 //------------------------------------------------------------------------------
-void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
+void cta::utils::assertAbsolutePathSyntax(const std::string &path) {
   try {
     assertPathStartsWithASlash(path);
     assertPathContainsValidChars(path);
@@ -117,7 +117,7 @@ void cta::Utils::assertAbsolutePathSyntax(const std::string &path) {
 //------------------------------------------------------------------------------
 // getEnclosingPath
 //------------------------------------------------------------------------------
-std::string cta::Utils::getEnclosingPath(const std::string &path) {
+std::string cta::utils::getEnclosingPath(const std::string &path) {
   if(path == "/") {
     throw Exception("Root directory does not have a parent");
   }
@@ -132,7 +132,7 @@ std::string cta::Utils::getEnclosingPath(const std::string &path) {
 //------------------------------------------------------------------------------
 // getEnclosedName
 //------------------------------------------------------------------------------
-std::string cta::Utils::getEnclosedName(const std::string &path) {
+std::string cta::utils::getEnclosedName(const std::string &path) {
   const std::string::size_type last_slash_idx = path.find_last_of('/');
   if(std::string::npos == last_slash_idx) {
     return path;
@@ -148,7 +148,7 @@ std::string cta::Utils::getEnclosedName(const std::string &path) {
 //-----------------------------------------------------------------------------
 // getEnclosedNames
 //-----------------------------------------------------------------------------
-std::list<std::string> cta::Utils::getEnclosedNames(
+std::list<std::string> cta::utils::getEnclosedNames(
   const std::list<std::string> &paths) {
   std::list<std::string> names;
 
@@ -163,7 +163,7 @@ std::list<std::string> cta::Utils::getEnclosedNames(
 //-----------------------------------------------------------------------------
 // trimSlashes
 //-----------------------------------------------------------------------------
-std::string cta::Utils::trimSlashes(const std::string &s) {
+std::string cta::utils::trimSlashes(const std::string &s) {
   // Find first non slash character
   size_t beginpos = s.find_first_not_of("/");
   std::string::const_iterator it1;
@@ -188,7 +188,7 @@ std::string cta::Utils::trimSlashes(const std::string &s) {
 //-----------------------------------------------------------------------------
 // trimFinalSlashes
 //-----------------------------------------------------------------------------
-std::string cta::Utils::trimFinalSlashes(const std::string &s) {
+std::string cta::utils::trimFinalSlashes(const std::string &s) {
   // Find last non slash chararacter
   std::string::const_iterator it2;
   size_t endpos = s.find_last_not_of("/");
@@ -204,7 +204,7 @@ std::string cta::Utils::trimFinalSlashes(const std::string &s) {
 //-----------------------------------------------------------------------------
 // splitString
 //-----------------------------------------------------------------------------
-void cta::Utils::splitString(const std::string &str, const char separator,
+void cta::utils::splitString(const std::string &str, const char separator,
   std::vector<std::string> &result) {
 
   if(str.empty()) {
@@ -230,7 +230,7 @@ void cta::Utils::splitString(const std::string &str, const char separator,
 //-----------------------------------------------------------------------------
 // trimString
 //-----------------------------------------------------------------------------
-std::string cta::Utils::trimString(const std::string &s) throw() {
+std::string cta::utils::trimString(const std::string &s) throw() {
   const std::string& spaces="\t\n\v\f\r ";
 
   // Find first non white character
@@ -257,7 +257,7 @@ std::string cta::Utils::trimString(const std::string &s) throw() {
 //-----------------------------------------------------------------------------
 // generateUuid
 //-----------------------------------------------------------------------------
-std::string cta::Utils::generateUuid() {
+std::string cta::utils::generateUuid() {
   uuid_t uuid;
   char str[36 + 1];
 
@@ -270,7 +270,7 @@ std::string cta::Utils::generateUuid() {
 //-----------------------------------------------------------------------------
 // endsWith
 //-----------------------------------------------------------------------------
-bool cta::Utils::endsWith(const std::string &str, const char c) {
+bool cta::utils::endsWith(const std::string &str, const char c) {
   if(str.empty()) {
     return false;
   } else {
@@ -281,13 +281,13 @@ bool cta::Utils::endsWith(const std::string &str, const char c) {
 //------------------------------------------------------------------------------
 // setXattr
 //------------------------------------------------------------------------------
-void cta::Utils::setXattr(const std::string &path, const std::string &name,
+void cta::utils::setXattr(const std::string &path, const std::string &name,
   const std::string &value) {
   if(setxattr(path.c_str(), name.c_str(), value.c_str(), value.length(), 0)) {
     const int savedErrno = errno;
     std::ostringstream msg;
     msg << "Call to setxattr() failed: path=" << path << " name=" << name <<
-      " value=" << value << ": " << Utils::errnoToString(savedErrno);
+      " value=" << value << ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 }
@@ -295,14 +295,14 @@ void cta::Utils::setXattr(const std::string &path, const std::string &name,
 //------------------------------------------------------------------------------
 // getXattr
 //------------------------------------------------------------------------------
-std::string cta::Utils::getXattr(const std::string &path,
+std::string cta::utils::getXattr(const std::string &path,
   const std::string &name) {
   const auto sizeOfValue = getxattr(path.c_str(), name.c_str(), NULL, 0);
   if(0 > sizeOfValue) {
     const int savedErrno = errno;
     std::stringstream msg;
     msg << "Call to getxattr() failed: path=" << path << " name=" << name <<
-      ": " << Utils::errnoToString(savedErrno);
+      ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
@@ -318,7 +318,7 @@ std::string cta::Utils::getXattr(const std::string &path,
     const int savedErrno = errno;
     std::stringstream msg;      
     msg << "Call to getxattr() failed: path=" << path << " name=" << name << 
-      ": " << Utils::errnoToString(savedErrno);
+      ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
 
@@ -328,7 +328,7 @@ std::string cta::Utils::getXattr(const std::string &path,
 //------------------------------------------------------------------------------
 // errnoToString
 //------------------------------------------------------------------------------
-std::string cta::Utils::errnoToString(const int errnoValue) throw() {
+std::string cta::utils::errnoToString(const int errnoValue) throw() {
   char buf[100];
 
   if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
@@ -362,7 +362,7 @@ std::string cta::Utils::errnoToString(const int errnoValue) throw() {
 //------------------------------------------------------------------------------
 // toUint16
 //------------------------------------------------------------------------------
-uint16_t cta::Utils::toUint16(const std::string &str) {
+uint16_t cta::utils::toUint16(const std::string &str) {
   if(str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint16_t: An empty string is not"
@@ -398,7 +398,7 @@ uint16_t cta::Utils::toUint16(const std::string &str) {
 //------------------------------------------------------------------------------
 // toUid
 //------------------------------------------------------------------------------
-uid_t cta::Utils::toUid(const std::string &str) {
+uid_t cta::utils::toUid(const std::string &str) {
   if(str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uid_t: An empty string is not"
@@ -434,7 +434,7 @@ uid_t cta::Utils::toUid(const std::string &str) {
 //------------------------------------------------------------------------------
 // toGid
 //------------------------------------------------------------------------------
-gid_t cta::Utils::toGid(const std::string &str) {
+gid_t cta::utils::toGid(const std::string &str) {
   if(str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to gid_t: An empty string is not"
@@ -470,7 +470,7 @@ gid_t cta::Utils::toGid(const std::string &str) {
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool cta::Utils::isValidUInt(const std::string &str)
+bool cta::utils::isValidUInt(const std::string &str)
   throw() {
   // An empty string is not a valid unsigned integer
   if(str.empty()) {
@@ -493,7 +493,7 @@ bool cta::Utils::isValidUInt(const std::string &str)
 //------------------------------------------------------------------------------
 // getAdler32
 //------------------------------------------------------------------------------
-uint32_t cta::Utils::getAdler32(const uint8_t *buf, const uint32_t len)
+uint32_t cta::utils::getAdler32(const uint8_t *buf, const uint32_t len)
   throw() {
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
   return adler32(checksum, (const Bytef*)buf, len);
@@ -502,7 +502,7 @@ uint32_t cta::Utils::getAdler32(const uint8_t *buf, const uint32_t len)
 //------------------------------------------------------------------------------
 // getShortHostname
 //------------------------------------------------------------------------------
-std::string cta::Utils::getShortHostname() {
+std::string cta::utils::getShortHostname() {
   struct utsname un;
   exception::Errnum::throwOnMinusOne(uname (&un));
   std::vector<std::string> snn;
@@ -513,7 +513,7 @@ std::string cta::Utils::getShortHostname() {
 //------------------------------------------------------------------------------
 // getDumpableProcessAttribute
 //------------------------------------------------------------------------------
-bool cta::Utils::getDumpableProcessAttribute() {
+bool cta::utils::getDumpableProcessAttribute() {
   const int rc = prctl(PR_GET_DUMPABLE);
   switch(rc) {
   case -1:
@@ -541,7 +541,7 @@ bool cta::Utils::getDumpableProcessAttribute() {
 //------------------------------------------------------------------------------
 // setDumpableProcessAttribute
 //------------------------------------------------------------------------------
- void cta::Utils::setDumpableProcessAttribute(const bool dumpable) {
+ void cta::utils::setDumpableProcessAttribute(const bool dumpable) {
   const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
   switch(rc) {
   case -1:
@@ -563,5 +563,3 @@ bool cta::Utils::getDumpableProcessAttribute() {
     }
   }
 }
-
-
