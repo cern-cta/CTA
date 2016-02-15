@@ -306,7 +306,9 @@ void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape> cta::Scheduler::getTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) {
+std::list<cta::common::dataStructures::Tape> cta::Scheduler::getTapes(const cta::common::dataStructures::SecurityIdentity &requester,
+        const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) {
   return std::list<cta::common::dataStructures::Tape>(); 
 }
 
@@ -646,8 +648,17 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) {
+std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool,
+        const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileSummary
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
+          const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+  return cta::common::dataStructures::ArchiveFileSummary(); 
 }
 
 //------------------------------------------------------------------------------

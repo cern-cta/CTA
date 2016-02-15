@@ -26,6 +26,7 @@
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveMount.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -114,7 +115,9 @@ public:
   virtual void createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
                           const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
   virtual void deleteTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) = 0;
-  virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &requester,
+        const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) = 0;
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) = 0;
   virtual void reclaimTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) = 0;
   virtual void modifyTapeLogicalLibraryName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) = 0;
@@ -160,8 +163,11 @@ public:
   virtual void modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) = 0;
   virtual void modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment) = 0;
 
-  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where) = 0; // "where" is a map resembling an "and-ed" where clause in a SQL query
-
+  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
+   const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;
+  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
+   const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;
+  
   virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force) = 0;
 
   /**

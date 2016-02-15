@@ -6,6 +6,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
+  dataStructures/ArchiveFileSummary.cpp
   dataStructures/ArchiveJob.cpp
   dataStructures/ArchiveMount.cpp
   dataStructures/ArchiveRequest.cpp

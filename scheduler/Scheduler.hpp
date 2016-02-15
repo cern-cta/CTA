@@ -23,6 +23,7 @@
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveMount.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -140,7 +141,9 @@ public:
   virtual void createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
    const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment);
   virtual void deleteTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
-  virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where); // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &requester,
+        const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue);
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag);
   virtual void reclaimTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
   virtual void modifyTapeLogicalLibraryName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName);
@@ -199,7 +202,10 @@ public:
   virtual std::list<cta::common::dataStructures::VerifyInfo> getVerifys(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual cta::common::dataStructures::VerifyInfo getVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;
 
-  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::map<std::string, std::string> &where); // "where" is a map resembling an "and-ed" where clause in a SQL query
+  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
+   const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
+  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
+   const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
 
   virtual cta::common::dataStructures::ReadTestResult readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
    const bool checkChecksum, const uint32_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const;

@@ -17,19 +17,6 @@
  */
 
 #include "cmdline/CTACmd.hpp"
-#include "common/admin/AdminHost.hpp"
-#include "common/admin/AdminUser.hpp"
-#include "common/archiveNS/ArchiveDirIterator.hpp"
-#include "common/archiveNS/StorageClass.hpp"
-#include "common/archiveNS/Tape.hpp"
-#include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/SecurityIdentity.hpp"
-#include "common/TapePool.hpp"
-#include "common/UserIdentity.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
 
@@ -760,6 +747,144 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
        << "\treclaim --vid/-v <vid>" << std::endl
        << "\tls      [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2] || "reclaim" == tokens[2] || "label" == tokens[2]) {
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    if(vid.empty()) {
+      m_data = help.str();
+      return;
+    }
+    if("add" == tokens[2]) { //add
+      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
+      if(logicallibrary.empty()||tapepool.empty()||capacity_s.empty()) {
+        m_data = help.str();
+        return;
+      }
+      std::istringstream capacity_ss(capacity_s);
+      int capacity = 0;
+      capacity_ss >> capacity;
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      bool disabled=false;
+      bool full=false;
+      if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full"))) {
+        m_data = help.str();
+        return;
+      }
+      disabled=hasOption(tokens, "-d", "--disabled");
+      full=hasOption(tokens, "-F", "--full");
+      m_scheduler->createTape(requester, vid, logicallibrary, tapepool, capacity, disabled, full, comment);
+    }
+    else if("ch" == tokens[2]) { //ch
+      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && !hasOption(tokens, "-e", "--enabled")
+              && !hasOption(tokens, "-d", "--disabled") && !hasOption(tokens, "-f", "--free") && !hasOption(tokens, "-F", "--full")) {
+        m_data = help.str();
+        return;
+      }
+      if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full"))) {
+        m_data = help.str();
+        return;
+      }
+      if(!logicallibrary.empty()) {
+        m_scheduler->modifyTapeLogicalLibraryName(requester, vid, logicallibrary);
+      }
+      if(!tapepool.empty()) {
+        m_scheduler->modifyTapeTapePoolName(requester, vid, tapepool);
+      }
+      if(!capacity_s.empty()) {
+        std::istringstream capacity_ss(capacity_s);
+        uint64_t capacity = 0;
+        capacity_ss >> capacity;
+        m_scheduler->modifyTapeCapacityInBytes(requester, vid, capacity);
+      }
+      if(!comment.empty()) {
+        m_scheduler->modifyTapeComment(requester, vid, comment);
+      }
+      if(hasOption(tokens, "-e", "--enabled")) {
+        m_scheduler->setTapeDisabled(requester, vid, false);
+      }
+      if(hasOption(tokens, "-d", "--disabled")) {
+        m_scheduler->setTapeDisabled(requester, vid, true);
+      }
+      if(hasOption(tokens, "-f", "--free")) {
+        m_scheduler->setTapeFull(requester, vid, false);
+      }
+      if(hasOption(tokens, "-F", "--full")) {
+        m_scheduler->setTapeFull(requester, vid, true);
+      }
+    }
+    else if("reclaim" == tokens[2]) { //reclaim
+      m_scheduler->reclaimTape(requester, vid);
+    }
+    else if("label" == tokens[2]) { //label
+      m_scheduler->labelTape(requester, vid, hasOption(tokens, "-f", "--force"), hasOption(tokens, "-l", "--lbp"), getOptionValue(tokens, "-t", "--tag"));
+    }
+    else { //rm
+      m_scheduler->deleteTape(requester, vid);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
+    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+    std::string capacity = getOptionValue(tokens, "-c", "--capacity");
+    if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) 
+            || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full")) 
+            || (hasOption(tokens, "-b", "--busy") && hasOption(tokens, "-n", "--notbusy"))) {
+      m_data = help.str();
+      return;
+    }
+    std::string disabled="";
+    std::string full="";
+    std::string busy="";
+    if(hasOption(tokens, "-e", "--enabled")) {
+      disabled = "false";
+    }
+    if(hasOption(tokens, "-d", "--disabled")) {
+      disabled = "true";
+    }
+    if(hasOption(tokens, "-f", "--free")) {
+      full = "false";
+    }
+    if(hasOption(tokens, "-F", "--full")) {
+      full = "true";
+    }
+    if(hasOption(tokens, "-b", "--busy")) {
+      busy = "false";
+    }
+    if(hasOption(tokens, "-n", "--notbusy")) {
+      busy = "true";
+    }
+    std::list<cta::common::dataStructures::Tape> list= m_scheduler->getTapes(requester, vid, logicallibrary, tapepool, capacity, disabled, full, busy);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","logical library","tapepool","capacity","occupancy","last fseq","busy","full","disabled","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.begin(); it != list.end(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getVid());
+        currentRow.push_back(it->getLogicalLibraryName());
+        currentRow.push_back(it->getTapePoolName());
+        currentRow.push_back(std::to_string((unsigned long long)it->getCapacityInBytes()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getDataOnTapeInBytes()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getLastFSeq()));
+        if(it->getBusy()) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->getFull()) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->getDisabled()) currentRow.push_back("true"); else currentRow.push_back("false");
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -851,7 +976,64 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] [--owner/-o <owner>] [--group/-g <owner>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
+  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
+          "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
+  if("ls" == tokens[2]) { //ls
+    std::string id = getOptionValue(tokens, "-I", "--id");
+    std::string copynb = getOptionValue(tokens, "-c", "--copynb");
+    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string owner = getOptionValue(tokens, "-o", "--owner");
+    std::string group = getOptionValue(tokens, "-g", "--group");
+    std::string storageclass = getOptionValue(tokens, "-s", "--storageclass");
+    std::string path = getOptionValue(tokens, "-p", "--path");
+    bool summary = hasOption(tokens, "-S", "--summary");
+    bool all = hasOption(tokens, "-a", "--all");
+    if(!all && (id.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
+      m_data = help.str();
+      return;
+    }
+    if(!summary) {
+      std::list<cta::common::dataStructures::ArchiveFile> list=m_scheduler->getArchiveFiles(requester, id, copynb, tapepool, vid, owner, group, storageclass, path);
+      if(list.size()>0) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
+        responseTable.push_back(header);    
+        for(auto it = list.cbegin(); it != list.cend(); it++) {
+          for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
+            std::vector<std::string> currentRow;
+            currentRow.push_back(it->getArchiveFileID());
+            currentRow.push_back(std::to_string((unsigned long long)jt->first));
+            currentRow.push_back(jt->second.getVid());
+            currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));
+            currentRow.push_back(std::to_string((unsigned long long)jt->second.getBlockId()));
+            currentRow.push_back(it->getEosFileID());
+            currentRow.push_back(std::to_string((unsigned long long)it->getFileSize()));
+            currentRow.push_back(it->getChecksumType());
+            currentRow.push_back(it->getChecksumValue());
+            currentRow.push_back(it->getStorageClass());
+            currentRow.push_back(it->getDrData().getDrOwner());
+            currentRow.push_back(it->getDrData().getDrGroup());
+            currentRow.push_back(it->getDrData().getDrInstance());
+            currentRow.push_back(it->getDrData().getDrPath());          
+            responseTable.push_back(currentRow);
+          }
+        }
+        m_data = formatResponse(responseTable);
+      }
+    }
+    else { //summary
+      cta::common::dataStructures::ArchiveFileSummary summary=m_scheduler->getArchiveFileSummary(requester, id, copynb, tapepool, vid, owner, group, storageclass, path);
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"total number of files","total size"};
+      std::vector<std::string> row = {std::to_string((unsigned long long)summary.getTotalFiles()),std::to_string((unsigned long long)summary.getTotalBytes())};
+      responseTable.push_back(header);
+      responseTable.push_back(row);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
