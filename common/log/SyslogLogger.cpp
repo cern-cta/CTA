@@ -21,15 +21,18 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "common/exception/Exception.hpp"
 #include "common/log/SyslogLogger.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/Utils.hpp"
-#include "common/Configuration.hpp"
 
 #include <errno.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
@@ -40,21 +43,32 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::log::SyslogLogger::SyslogLogger(
-  const std::string &programName):
+cta::log::SyslogLogger::SyslogLogger(const std::string &socketName,
+  const std::string &programName, const int logMask):
   Logger(programName),
+  m_socketName(socketName),
+  m_logMask(logMask),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
   m_priorityToText(generatePriorityToTextMap()),
   m_configTextToPriority(generateConfigTextToPriorityMap()) {
-  initMutex();
+  struct stat fileStatus;
+  bzero(&fileStatus, sizeof(fileStatus));
+  if(stat(socketName.c_str(), &fileStatus)) {
+    const std::string errMsg = cta::Utils::errnoToString(errno);
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to instantiate syslog logger: Failed to stat"
+      " socket \"" << socketName << "\"" ": " << errMsg;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
-size_t cta::log::SyslogLogger::determineMaxMsgLen() const{
+size_t cta::log::SyslogLogger::determineMaxMsgLen() {
   size_t msgSize = 0;
+
   // Determine the size automatically, this is not guaranteed to work!
   FILE *const fp = fopen("/etc/rsyslog.conf", "r");
   if(fp) {
@@ -75,6 +89,7 @@ size_t cta::log::SyslogLogger::determineMaxMsgLen() const{
     }
     fclose(fp);
   }
+
   // If the /etc/rsyslog.conf file is missing which implies that we are
   // running on a stock syslogd system, therefore the message size is
   // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
@@ -91,7 +106,7 @@ size_t cta::log::SyslogLogger::determineMaxMsgLen() const{
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
 std::map<int, std::string>
-  cta::log::SyslogLogger::generatePriorityToTextMap() const {
+  cta::log::SyslogLogger::generatePriorityToTextMap() {
   std::map<int, std::string> m;
 
   try {
@@ -104,7 +119,7 @@ std::map<int, std::string>
     m[LOG_INFO]    = "Info";
     m[LOG_DEBUG]   = "Debug";
   } catch(std::exception &se) {
-    cta::exception::Exception ex;
+    exception::Exception ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<
       se.what();
     throw ex;
@@ -117,7 +132,7 @@ std::map<int, std::string>
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
 std::map<std::string, int>
-  cta::log::SyslogLogger::generateConfigTextToPriorityMap() const {
+  cta::log::SyslogLogger::generateConfigTextToPriorityMap() {
   std::map<std::string, int> m;
 
   try {
@@ -130,7 +145,7 @@ std::map<std::string, int>
     m["LOG_INFO"]    = LOG_INFO;
     m["LOG_DEBUG"]   = LOG_DEBUG;
   } catch(std::exception &se) {
-    cta::exception::Exception ex;
+    exception::Exception ex;
     ex.getMessage() <<
       "Failed to generate configuration text to priority mapping: " <<
       se.what();
@@ -138,42 +153,6 @@ std::map<std::string, int>
   }
 
   return m;
-}
-
-//------------------------------------------------------------------------------
-// initMutex
-//------------------------------------------------------------------------------
-void cta::log::SyslogLogger::initMutex() {
-  pthread_mutexattr_t attr;
-  int rc = pthread_mutexattr_init(&attr);
-  if(0 != rc) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
-  rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-  if(0 != rc) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
-  rc = pthread_mutex_init(&m_mutex, NULL);
-   if(0 != rc) {
-     cta::exception::Exception ex;
-     ex.getMessage() << "Failed to initialize m_mutex: " <<
-       Utils::errnoToString(rc);
-     throw ex;
-   }
-  rc = pthread_mutexattr_destroy(&attr);
-  if(0 != rc) {
-    pthread_mutex_destroy(&m_mutex);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -187,29 +166,8 @@ cta::log::SyslogLogger::~SyslogLogger() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void cta::log::SyslogLogger::prepareForFork() {
-  // Enter critical section
-  {
-    const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
-    if(0 != mutex_lock_rc) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
-        << Utils::errnoToString(mutex_lock_rc);
-      throw ex;
-    }
-  }
-
+  threading::MutexLocker lock(m_mutex);
   closeLog();
-
-  // Leave critical section.
-  {
-    const int mutex_unlock_rc = pthread_mutex_unlock(&m_mutex);
-    if(0 != mutex_unlock_rc) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
-        << Utils::errnoToString(mutex_unlock_rc);
-      throw ex;
-    }
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -223,7 +181,8 @@ void cta::log::SyslogLogger::openLog() {
   {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
-    strncpy(syslogAddr.sun_path, _PATH_LOG, sizeof(syslogAddr.sun_path));
+    strncpy(syslogAddr.sun_path, m_socketName.c_str(),
+      sizeof(syslogAddr.sun_path));
     m_logFile = socket(AF_UNIX, SOCK_DGRAM, 0);
   }
   if(-1 == m_logFile) {
@@ -239,7 +198,8 @@ void cta::log::SyslogLogger::openLog() {
   {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
-    strncpy(syslogAddr.sun_path, _PATH_LOG, sizeof(syslogAddr.sun_path));
+    strncpy(syslogAddr.sun_path, m_socketName.c_str(),
+      sizeof(syslogAddr.sun_path));
     if(-1 == connect(m_logFile, (struct sockaddr *)&syslogAddr,
       sizeof(syslogAddr))) {
       close(m_logFile);
@@ -275,18 +235,128 @@ void cta::log::SyslogLogger::closeLog() {
 }
 
 //-----------------------------------------------------------------------------
-// buildSyslogHeader
+// operator() 
 //-----------------------------------------------------------------------------
-std::string cta::log::SyslogLogger::buildSyslogHeader(
+void cta::log::SyslogLogger::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::list<Param> &params) {
+
+  const std::string rawParams;
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, NULL);
+  const int pid = getpid();
+
+  //-------------------------------------------------------------------------
+  // Note that we do here part of the work of the real syslog call, by
+  // building the message ourselves. We then only call a reduced version of
+  // syslog (namely reducedSyslog). The reason behind it is to be able to set
+  // the message timestamp ourselves, in case we log messages asynchronously,
+  // as we do when retrieving logs from the DB
+  //-------------------------------------------------------------------------
+
+  // Ignore messages whose priority is not of interest
+  if(priority > m_logMask) {
+    return;
+  }
+
+  // Try to find the textual representation of the syslog priority
+  std::map<int, std::string>::const_iterator priorityTextPair =
+    m_priorityToText.find(priority);
+
+  // Do nothing if the log priority is not valid
+  if(m_priorityToText.end() == priorityTextPair) {
+    return;
+  }
+
+  // Safe to get a reference to the textual representation of the priority
+  const std::string &priorityText = priorityTextPair->second;
+
+  std::ostringstream os;
+
+  writeLogMsg(
+    os,
+    priority,
+    priorityText,
+    msg,
+    params,
+    rawParams,
+    timeStamp,
+    m_programName,
+    pid);
+
+  reducedSyslog(os.str());
+}
+
+//-----------------------------------------------------------------------------
+// writeLogMsg
+//-----------------------------------------------------------------------------
+void cta::log::SyslogLogger::writeLogMsg(
+  std::ostringstream &os,
+  const int priority,
+  const std::string &priorityText,
+  const std::string &msg,
+  const std::list<Param> &params,
+  const std::string &rawParams,
+  const struct timeval &timeStamp,
+  const std::string &programName,
+  const int pid) {
+
+  //-------------------------------------------------------------------------
+  // Note that we do here part of the work of the real syslog call, by
+  // building the message ourselves. We then only call a reduced version of
+  // syslog (namely reducedSyslog). The reason behind it is to be able to set
+  // the message timestamp ourselves, in case we log messages asynchronously,
+  // as we do when retrieving logs from the DB
+  //-------------------------------------------------------------------------
+
+  // Start message with priority, time, program and PID (syslog standard
+  // format)
+  writeHeader(os, priority | LOG_LOCAL3, timeStamp, programName, pid);
+
+  const int tid = syscall(__NR_gettid);
+
+  // Append the log level, the thread id and the message text
+  os << "LVL=\"" << priorityText << "\" TID=\"" << tid << "\" MSG=\"" <<
+    msg << "\" ";
+
+  // Process parameters
+  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
+    const Param &param = *itor;
+
+    // Check the parameter name, if it's an empty string set the value to
+    // "Undefined".
+    const std::string name = param.getName() == "" ? "Undefined" :
+      cleanString(param.getName(), true);
+
+    // Process the parameter value
+    const std::string value = cleanString(param.getValue(), false);
+
+    // Write the name and value to the buffer
+    os << name << "=\"" << value << "\" ";
+  }
+
+  // Append raw parameters
+  os << rawParams;
+
+  // Terminate the string
+  os << "\n";
+}
+
+//-----------------------------------------------------------------------------
+// writeHeader
+//-----------------------------------------------------------------------------
+void cta::log::SyslogLogger::writeHeader(
+  std::ostringstream &os,
   const int priority,
   const struct timeval &timeStamp,
-  const int pid) const {
+  const std::string &programName,
+  const int pid) {
   char buf[80];
   int bufLen = sizeof(buf);
   int len = 0;
-  std::ostringstream oss;
 
-  oss << "<" << priority << ">";
+  os << "<" << priority << ">";
 
   struct tm localTime;
   localtime_r(&(timeStamp.tv_sec), &localTime);
@@ -299,15 +369,14 @@ std::string cta::log::SyslogLogger::buildSyslogHeader(
   buf[len-3] = buf[len-4];
   buf[len-4] = ':';
   buf[sizeof(buf) - 1] = '\0';
-  oss << buf << m_programName.c_str() << "[" << pid << "]: ";
-  return oss.str();
+  os << buf << programName << "[" << pid << "]: ";
 }
 
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
 std::string cta::log::SyslogLogger::cleanString(const std::string &s,
-  const bool replaceUnderscores) const {
+  const bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = Utils::trimString(s);
   
@@ -342,18 +411,10 @@ void cta::log::SyslogLogger::reducedSyslog(std::string msg) {
     msg[msg.length() - 1] = '\n';
   }
 
-  int send_flags = 0;
-#ifndef __APPLE__
-  // MAC has has no MSG_NOSIGNAL
-  // but >= 10.2 comes with SO_NOSIGPIPE
-  send_flags = MSG_NOSIGNAL;
-#endif
+  int send_flags = MSG_NOSIGNAL;
+
   // enter critical section
-  const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
-  // Do nothing if we failed to enter the critical section
-  if(0 != mutex_lock_rc) {
-    return;
-  }
+  threading::MutexLocker lock(m_mutex);
 
   // Try to connect if not already connected
   openLog();
@@ -374,46 +435,4 @@ void cta::log::SyslogLogger::reducedSyslog(std::string msg) {
       }
     }
   }
-
-  // Leave critical section.
-  pthread_mutex_unlock(&m_mutex);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::SyslogLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
-}
-
-//------------------------------------------------------------------------------
-// logMask
-//------------------------------------------------------------------------------
-int cta::log::SyslogLogger::logMask() const {
-  cta::common::Configuration conf;
-  const std::string confEnt =  conf.getConfEntString("LogMask", m_programName, 0);
-
-  // If the configuration file defines the log mask to use
-  if (!confEnt.empty()) {
-    // Try to find the corresponding integer priority value
-    std::map<std::string, int>::const_iterator itor =
-      m_configTextToPriority.find(confEnt);
-
-    // Return the priority if it was found else return the default INFO level
-    if(m_configTextToPriority.end() != itor) {
-      return itor->second;
-    } else {
-      return LOG_INFO;
-    }
-  }
-
-  // If the priority wasn't found, default is INFO level
-  return LOG_INFO;
 }

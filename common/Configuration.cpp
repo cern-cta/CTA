@@ -118,7 +118,7 @@ const std::string& cta::common::Configuration::getConfEntString(
             log::Param("key", key),
             log::Param("value", entIt->second),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Configuration entry", params);
+          (*log)(log::INFO, "Configuration entry", params);
         }
         return entIt->second;
       }
@@ -130,7 +130,7 @@ const std::string& cta::common::Configuration::getConfEntString(
         log::Param("key", key),
         log::Param("value", defaultValue),
         log::Param("source", "DEFAULT")};
-      (*log)(LOG_INFO, "Configuration entry", params);
+      (*log)(log::INFO, "Configuration entry", params);
     }
     // Unlock and return default
     pthread_rwlock_unlock(&m_lock);
@@ -144,7 +144,7 @@ const std::string& cta::common::Configuration::getConfEntString(
         log::Param("key", key),
         log::Param("value", defaultValue),
         log::Param("source", "DEFAULT")};
-      (*log)(LOG_INFO, "Configuration entry", params);
+      (*log)(log::INFO, "Configuration entry", params);
     }
   } catch (...) {
     // release the lock
@@ -196,7 +196,7 @@ const std::string& cta::common::Configuration::getConfEntString(
         log::Param("key", key),
         log::Param("value", entIt->second),
         log::Param("source", m_fileName)};
-      (*log)(LOG_INFO, "Configuration entry", params);
+      (*log)(log::INFO, "Configuration entry", params);
     }
 
     // release the lock

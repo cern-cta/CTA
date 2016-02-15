@@ -137,7 +137,7 @@ namespace cta { namespace common {
               log::Param("key", key),
               log::Param("value", defaultValue),
               log::Param("source", "DEFAULT")};
-            (*log)(LOG_INFO, "Configuration entry", params);
+            (*log)(log::INFO, "Configuration entry", params);
           }
           return defaultValue;
         }
@@ -162,7 +162,7 @@ namespace cta { namespace common {
             log::Param("key", key),
             log::Param("value", value),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Configuration entry", params);
+          (*log)(log::INFO, "Configuration entry", params);
         }
 
         return value;
@@ -204,7 +204,7 @@ namespace cta { namespace common {
             log::Param("key", key),
             log::Param("value", value),
             log::Param("source", m_fileName)};
-          (*log)(LOG_INFO, "Configuration entry", params);
+          (*log)(log::INFO, "Configuration entry", params);
         }
 
         return value;

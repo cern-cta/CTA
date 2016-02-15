@@ -25,20 +25,17 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
+#include "common/threading/Mutex.hpp"
 
 #include <map>
-#include <pthread.h>
 #include <syslog.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifdef __APPLE__
-#include <mach/mach.h>
-#endif
-
-namespace cta { namespace log {
+namespace cta {
+namespace log {
 
 /**
  * Class implementaing the API of the CASTOR logging system.
@@ -49,10 +46,13 @@ public:
   /**
    * Constructor
    *
+   * @param socketName The socket to which the logging system should write.
    * @param programName The name of the program to be prepended to every log
    * message.
+   * @param logMask The log mask.
    */
-  SyslogLogger(const std::string &programName);
+  SyslogLogger(const std::string &socketName, const std::string &programName,
+    const int logMask);
 
   /**
    * Destructor.
@@ -65,7 +65,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork();
+  void prepareForFork() ;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -84,7 +84,30 @@ public:
     const std::string &msg,
     const std::list<Param> &params = std::list<Param>());
 
-protected:
+  /**
+   * Writes a log message to the specified output stream.
+   *
+   * This public static (class) permitts other loggers such as the StringLogger to use the same log message format
+   *
+   * @param logMsg The output stream to which the log message is to be written.
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   * @param rawParams preprocessed parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   * @param programName the program name of the log message.
+   * @param pid the pid of the log message.
+   */
+  static void writeLogMsg(
+    std::ostringstream &os,
+    const int priority,
+    const std::string &priorityText,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const std::string &rawParams,
+    const struct timeval &timeStamp,
+    const std::string &programName,
+    const int pid);
 
   /**
    * Default size of a syslog message.
@@ -97,19 +120,43 @@ protected:
   static const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
 
   /**
-   * Maximum length of a parameter name.
-   */
-  static const size_t LOG_MAX_PARAMNAMELEN = 20;
-
-  /**
-   * Maximum length of a string value.
-   */
-  static const size_t LOG_MAX_PARAMSTRLEN = 1024;
-
-  /**
    * Maximum length of a log message.
    */
   static const size_t LOG_MAX_LINELEN = 8192;
+
+  /**
+   * Determines the maximum message length that the client syslog server can
+   * handle.
+   *
+   * @return The maximum message length that the client syslog server can
+   * handle.
+   */
+  static size_t determineMaxMsgLen();
+
+  /**
+   * Generates and returns the mapping between syslog priorities and their
+   * textual representations.
+   */
+  static std::map<int, std::string> generatePriorityToTextMap();
+
+  /**
+   * Generates and returns the mapping between the possible string values
+   * of the LogMask parameters of /etc/castor.conf and their equivalent
+   * syslog priorities.
+   */
+  static std::map<std::string, int> generateConfigTextToPriorityMap();
+
+protected:
+
+  /**
+   * The socket to which the logging system should write.
+   */
+  std::string m_socketName;
+
+  /**
+   * The log mask.
+   */
+  int m_logMask;
 
   /**
    * The maximum message length that the client syslog server can handle.
@@ -120,7 +167,7 @@ protected:
    * Mutex used to protect the critical section of the SyslogLogger
    * object.
    */
-  pthread_mutex_t m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The file descriptor of the socket used to send messages to syslog.
@@ -139,41 +186,6 @@ protected:
   const std::map<std::string, int> m_configTextToPriority;
 
   /**
-   * Returns the log mask for the program.
-   */
-  int logMask() const ;
-
-  /**
-   * Determines the maximum message length that the client syslog server can
-   * handle.
-   *
-   * @return The maximum message length that the client syslog server can
-   * handle.
-   */
-  size_t determineMaxMsgLen() const;
-
-  /**
-   * Generates and returns the mapping between syslog priorities and their
-   * textual representations.
-   */
-  std::map<int, std::string> generatePriorityToTextMap() const
-    ;
-
-  /**
-   * Generates and returns the mapping between the possible string values
-   * of the LogMask parameters of /etc/castor.conf and their equivalent
-   * syslog priorities.
-   */
-  std::map<std::string, int> generateConfigTextToPriorityMap() const
-    ;
-
-  /**
-   * Initializes the mutex used to protect the critical section of the
-   * SyslogLogger object.
-   */
-  void initMutex() ;
-
-  /**
    * Connects to syslog.
    *
    * Please note that this method must be called from within the critical
@@ -189,101 +201,21 @@ protected:
   void openLog();
 
   /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
+   * Writes the header of a syslog message to teh specifed output stream.
    *
-   * Note that this version of operator() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param paramsBegin the first parameters of the message.
-   * @param paramsEnd one past the end of the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  template<typename ParamIterator> void operator() (
-    const int priority,
-    const std::string &msg,
-    ParamIterator paramsBegin,
-    ParamIterator paramsEnd,
-    const struct timeval &timeStamp) {
-    //-------------------------------------------------------------------------
-    // Note that we do here part of the work of the real syslog call, by
-    // building the message ourselves. We then only call a reduced version of
-    // syslog (namely reducedSyslog). The reason behind it is to be able to set
-    // the message timestamp ourselves, in case we log messages asynchronously,
-    // as we do when retrieving logs from the DB
-    //-------------------------------------------------------------------------
-
-    // Ignore messages whose priority is not of interest
-    if(priority > logMask()) {
-      return;
-    }
-
-    // Try to find the textual representation of the syslog priority
-    std::map<int, std::string>::const_iterator priorityTextPair =
-      m_priorityToText.find(priority);
-
-    // Do nothing if the log priority is not valid
-    if(m_priorityToText.end() == priorityTextPair) {
-      return;
-    }
-
-    // Safe to get a reference to the textual representation of the priority
-    const std::string &priorityText = priorityTextPair->second;
-
-    std::ostringstream logMsg;
-
-    // Start message with priority, time, program and PID (syslog standard
-    // format)
-    logMsg << buildSyslogHeader(priority | LOG_LOCAL3, timeStamp, getpid());
-
-    // Determine the thread id
-#ifdef __APPLE__
-    const int tid = mach_thread_self();
-#else
-    const int tid = syscall(__NR_gettid);
-#endif
-
-    // Append the log level, the thread id and the message text
-    logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg <<
-      "\" ";
-
-    // Process parameters
-    for(ParamIterator itor = paramsBegin; itor != paramsEnd; itor++) {
-      const Param &param = *itor;
-
-      // Check the parameter name, if it's an empty string set the value to
-      // "Undefined".
-      const std::string name = (param.getName() == "" ? "Undefined" :
-        cleanString(param.getName(), true));
-
-      // Process the parameter value
-      const std::string value = cleanString(param.getValue(), false);
-
-      // Write the name and value to the buffer
-      logMsg << name << "=\"" << value << "\" ";
-    }
-
-    // Terminate the string
-    logMsg << "\n";
-
-    reducedSyslog(logMsg.str());
-  }
-
-  /**
-   * Build the header of a syslog message.
-   *
+   * @param os The output stream to which the header will be written.
    * @param priority The priority of the message.
    * @param timeStamp The time stamp of the message.
+   * @param programName the program name of the log message.
    * @param pid The process ID of the process logging the message.
    * @return The header of the syslog message.
    */
-  std::string buildSyslogHeader(
+  static void writeHeader(
+    std::ostringstream &os,
     const int priority,
     const struct timeval &timeStamp,
-    const int pid) const ;
+    const std::string &programName,
+    const int pid);
 
   /**
    * Creates a clean version of the specified string ready for use with syslog.
@@ -293,8 +225,8 @@ protected:
    * underscores.
    * @return A cleaned version of the string.
    */
-  std::string cleanString(const std::string &s, const bool replaceUnderscores)
-    const ;
+  static std::string cleanString(const std::string &s,
+    const bool replaceUnderscores);
 
   /**
    * A reduced version of syslog.  This method is able to set the message
@@ -319,5 +251,5 @@ protected:
 }; // class SyslogLogger
 
 } // namespace log
-} // namespace castor
+} // namespace cta
 

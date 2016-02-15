@@ -48,30 +48,33 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
+  using namespace cta;
+
   // Try to instantiate the logging system API
-  std::unique_ptr<cta::log::SyslogLogger> logPtr;
+  std::unique_ptr<log::SyslogLogger> logPtr;
   try {
-    logPtr.reset(new cta::log::SyslogLogger("tapeserverd"));
-  } catch(cta::exception::Exception &ex) {
+    logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "tapeserverd",
+      log::DEBUG));
+  } catch(exception::Exception &ex) {
     std::cerr <<
       "Failed to instantiate object representing CTA logging system: " <<
       ex.getMessage().str() << std::endl;
     return 1;
   }
-  cta::log::Logger &log = *logPtr;
+  log::Logger &log = *logPtr;
 
   int programRc = 1; // Be pessimistic
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
-  } catch(cta::exception::Exception &ex) {
-    std::list<cta::log::Param> params = {
-      cta::log::Param("message", ex.getMessage().str())};
-    log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
+  } catch(exception::Exception &ex) {
+    std::list<log::Param> params = {
+      log::Param("message", ex.getMessage().str())};
+    log(log::ERR, "Caught an unexpected CASTOR exception", params);
   } catch(std::exception &se) {
-    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
-    log(LOG_ERR, "Caught an unexpected standard exception", params);
+    std::list<log::Param> params = {log::Param("what", se.what())};
+    log(log::ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
-    log(LOG_ERR, "Caught an unexpected and unknown exception");
+    log(log::ERR, "Caught an unexpected and unknown exception");
   }
 
   google::protobuf::ShutdownProtobufLibrary();
@@ -146,12 +149,13 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 //------------------------------------------------------------------------------
 static void logStartOfDaemon(cta::log::Logger &log, const int argc,
   const char *const *const argv) {
+  using namespace cta;
 
   const std::string concatenatedArgs = argvToString(argc, argv);
-  std::list<cta::log::Param> params = {
-    cta::log::Param("version", CTA_VERSION),
-    cta::log::Param("argv", concatenatedArgs)};
-  log(LOG_INFO, "tapeserverd started", params);
+  std::list<log::Param> params = {
+    log::Param("version", CTA_VERSION),
+    log::Param("argv", concatenatedArgs)};
+  log(log::INFO, "tapeserverd started", params);
 }
 
 //------------------------------------------------------------------------------
@@ -193,5 +197,5 @@ static std::string argvToString(const int argc, const char *const *const argv) {
 //    cta::log::Param("logicalLibrary", line.logicalLibrary),
 //    cta::log::Param("devFilename", line.devFilename),
 //    cta::log::Param("librarySlot", line.librarySlot)};
-//  log(LOG_INFO, "TPCONFIG line", params);
+//  log(log::INFO, "TPCONFIG line", params);
 //}

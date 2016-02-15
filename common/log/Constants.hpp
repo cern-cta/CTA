@@ -16,32 +16,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- * Container for a CASTOR log message
+ * Interface to the CASTOR logging system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-// Include Files
 #include <string>
 
 namespace cta {
+namespace log {
 
-  namespace log {
+/**
+ * The default path of the socket to which the logging system should write.
+ */
+const std::string SOCKET_NAME = "/var/run/ctalog.sock";
 
-    /**
-     * Container for a CASTOR log message
-     */
-    struct Message {
-      /// Message number
-      int number;
-      /// Message text
-      std::string text;
-    }; 
-    
-  } // end of namespace log
+const int EMERG   = 0; // system is unusable
+const int ALERT   = 1; // action must be taken immediately
+const int CRIT    = 2; // critical conditions
+const int ERR     = 3; // error conditions
+const int WARNING = 4; // warning conditions
+const int NOTICE  = 5; // normal but signification condition
+const int INFO    = 6; // informational
+const int DEBUG   = 7; // debug-level messages
 
-} // end of namespace cta
+/**
+ * It is a convention of CTA to use syslog level of LOG_NOTICE to label
+ * user errors.
+ */
+const int USERERR = NOTICE;
 
+} // namespace log
+} // namespace cta

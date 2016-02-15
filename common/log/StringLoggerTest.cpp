@@ -25,12 +25,12 @@
 
 #include <gtest/gtest.h>
 
-using namespace castor::log;
+using namespace cta::log;
 
 namespace unitTests {
-  TEST(castor_log_StringLogger, basicTest) {
+  TEST(cta_log_StringLogger, basicTest) {
     std::string jat = "Just a test";
-    StringLogger sl("castor_log_StringLogger");
+    StringLogger sl("cta_log_StringLogger");
     sl(LOG_INFO, jat);
     ASSERT_NE(std::string::npos, sl.getLog().find(jat));
   }

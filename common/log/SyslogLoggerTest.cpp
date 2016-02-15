@@ -26,12 +26,14 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <sys/time.h>
 
 namespace unitTests {
 
-class cta_log__SyslogLoggerTest: public ::testing::Test {
+class cta_log_SyslogLoggerTest: public ::testing::Test {
 public:
-  cta_log__SyslogLoggerTest(): m_log("unitttests") {
+  cta_log_SyslogLoggerTest(): m_log(cta::log::SOCKET_NAME, "unitttests",
+    cta::log::DEBUG) {
   }
 protected:
 
@@ -44,7 +46,7 @@ protected:
   cta::log::TestingSyslogLogger m_log;
 }; // class SyslogLoggerTest
 
-TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsList) {
+TEST_F(cta_log_SyslogLoggerTest, logMsgAndParamsList) {
   using namespace cta::log;
   std::list<Param> params;
   params.push_back(Param("testParam", "value of test param"));
@@ -52,24 +54,24 @@ TEST_F(cta_log__SyslogLoggerTest, logMsgAndParamsList) {
   ASSERT_NO_THROW(
     m_log(
       LOG_INFO,
-      "cta_log__SyslogLoggerTest logMsgAndParamsList",
+      "cta_log_SyslogLoggerTest logMsgAndParamsList",
       params));
 }
 
-TEST_F(cta_log__SyslogLoggerTest, logMsg) {
+TEST_F(cta_log_SyslogLoggerTest, logMsg) {
   using namespace cta::log;
 
   ASSERT_NO_THROW(
-    m_log(LOG_INFO, "Calling logger without parameters"));
+    m_log(LOG_INFO, "Calling logger without parameters or time stamp"));
 }   
 
-TEST_F(cta_log__SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
+TEST_F(cta_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
   const std::string cleaned = m_log.cleanString(s, false);
   ASSERT_EQ(std::string("'Hello there World'"), cleaned);
 }
 
-TEST_F(cta_log__SyslogLoggerTest, cleanStringReplacingUnderscores) {
+TEST_F(cta_log_SyslogLoggerTest, cleanStringReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
   const std::string cleaned = m_log.cleanString(s, true);
   ASSERT_EQ(std::string("'Hello_there_World'"), cleaned);

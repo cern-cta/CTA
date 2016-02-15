@@ -29,10 +29,10 @@
 #include <algorithm>
 #include <bfd.h>
 
-cta::log::LogContext::LogContext(cta::log::Logger& logger):
+cta::log::LogContext::LogContext(Logger& logger) throw():
 m_log(logger) {}
 
-void cta::log::LogContext::pushOrReplace(const Param& param) {
+void cta::log::LogContext::pushOrReplace(const Param& param) throw() {
   ParamNameMatcher match(param.getName());
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -43,17 +43,17 @@ void cta::log::LogContext::pushOrReplace(const Param& param) {
   }
 }
 
-void cta::log::LogContext::erase(const std::string& paramName) {
+void cta::log::LogContext::erase(const std::string& paramName) throw() {
   ParamNameMatcher match(paramName);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
 
-void cta::log::LogContext::log(const int priority, const std::string& msg) {
+void cta::log::LogContext::log(const int priority, const std::string& msg) throw() {
   m_log(priority, msg, m_params);
 }
 
 void cta::log::LogContext::logBacktrace(const int priority, 
-    const std::string& backtrace) {
+    const std::string& backtrace) throw() {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;
@@ -84,12 +84,12 @@ void cta::log::LogContext::logBacktrace(const int priority,
 
 cta::log::LogContext::ScopedParam::ScopedParam(
     LogContext& context, 
-    const Param& param) : 
+    const Param& param) throw(): 
     m_context(context), m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
 
-cta::log::LogContext::ScopedParam::~ScopedParam() {
+cta::log::LogContext::ScopedParam::~ScopedParam() throw() {
    m_context.erase(m_name);
 }
 

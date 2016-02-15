@@ -53,7 +53,7 @@ int TapeDaemon::main() {
     // Log the error
     std::list<log::Param> params = {
       log::Param("Message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Aborting", params);
+    m_log(log::ERR, "Aborting", params);
 
     return 1;
   }
@@ -115,7 +115,7 @@ void cta::tape::daemon::TapeDaemon::setDumpable() {
   const bool dumpable = cta::Utils::getDumpableProcessAttribute();
   std::list<log::Param> params = {
     log::Param("dumpable", dumpable ? "true" : "false")};
-  m_log(LOG_INFO, "Got dumpable attribute of process", params);
+  m_log(log::INFO, "Got dumpable attribute of process", params);
   if(!dumpable) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set dumpable attribute of process to true";
@@ -132,7 +132,7 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
     m_capUtils.setProcText(text);
     std::list<log::Param> params =
       {log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(LOG_INFO, "Set process capabilities", params);
+    m_log(log::INFO, "Set process capabilities", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set process capabilities to '" << text <<

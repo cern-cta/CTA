@@ -16,13 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * Interface to the CASTOR logging system, with string output.
+ * Interface to the CASTOR logging system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "common/log/StringLogger.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/log/SyslogLogger.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 #include <errno.h>
 #include <sstream>
@@ -39,82 +40,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::log::StringLogger::StringLogger(
-  const std::string &programName):
+cta::log::StringLogger::StringLogger(const std::string &programName,
+  const int logMask):
   Logger(programName),
-  m_maxMsgLen(determineMaxMsgLen()),
-  m_priorityToText(generatePriorityToTextMap()) {
-  initMutex();
-}
-
-//------------------------------------------------------------------------------
-// determineMaxMsgLen
-//------------------------------------------------------------------------------
-size_t cta::log::StringLogger::determineMaxMsgLen() const {
-  return DEFAULT_SYSLOG_MSGLEN;
-}
-
-//------------------------------------------------------------------------------
-// generatePriorityToTextMap
-//------------------------------------------------------------------------------
-std::map<int, std::string>
-  cta::log::StringLogger::generatePriorityToTextMap() const 
-   {
-  std::map<int, std::string> m;
-
-  try {
-    m[LOG_EMERG]   = "Emerg";
-    m[LOG_ALERT]   = "Alert";
-    m[LOG_CRIT]    = "Crit";
-    m[LOG_ERR]     = "Error";
-    m[LOG_WARNING] = "Warn";
-    m[LOG_NOTICE]  = "Notice";
-    m[LOG_INFO]    = "Info";
-    m[LOG_DEBUG]   = "Debug";
-  } catch(std::exception &se) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to generate priority to text mapping: " <<
-      se.what();
-    throw ex;
-  }
-
-  return m;
-}
-
-//------------------------------------------------------------------------------
-// initMutex
-//------------------------------------------------------------------------------
-void cta::log::StringLogger::initMutex() {
-  pthread_mutexattr_t attr;
-  int rc = pthread_mutexattr_init(&attr);
-  if(0 != rc) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
-  rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-  if(0 != rc) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
-  rc = pthread_mutex_init(&m_mutex, NULL);
-   if(0 != rc) {
-     cta::exception::Exception ex;
-     ex.getMessage() << "Failed to initialize m_mutex: " <<
-       Utils::errnoToString(rc);
-     throw ex;
-   }
-  rc = pthread_mutexattr_destroy(&attr);
-  if(0 != rc) {
-    pthread_mutex_destroy(&m_mutex);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
-      Utils::errnoToString(rc);
-    throw ex;
-  }
+  m_logMask(logMask),
+  m_maxMsgLen(SyslogLogger::determineMaxMsgLen()),
+  m_priorityToText(SyslogLogger::generatePriorityToTextMap()) {
 }
 
 //------------------------------------------------------------------------------
@@ -130,82 +61,57 @@ void cta::log::StringLogger::prepareForFork() {
 }
 
 //-----------------------------------------------------------------------------
-// buildSyslogHeader
+// operator() 
 //-----------------------------------------------------------------------------
-std::string cta::log::StringLogger::buildSyslogHeader(
+void cta::log::StringLogger::operator() (
   const int priority,
-  const struct timeval &timeStamp,
-  const int pid) const throw() {
-  char buf[80];
-  int bufLen = sizeof(buf);
-  int len = 0;
-  std::ostringstream oss;
+  const std::string &msg,
+  const std::list<Param> &params) {
 
-  oss << "<" << priority << ">";
+  const std::string rawParams;
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, NULL);
+  const int pid = getpid();
 
-  struct tm localTime;
-  localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%Y-%m-%dT%T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06ld",
-    (unsigned long)timeStamp.tv_usec);
-  len += strftime(buf + len, bufLen - len, "%z: ", &localTime);
-  // dirty trick to have the proper timezone format (':' between hh and mm)
-  buf[len-2] = buf[len-3];
-  buf[len-3] = buf[len-4];
-  buf[len-4] = ':';
-  buf[sizeof(buf) - 1] = '\0';
-  oss << buf << m_programName.c_str() << "[" << pid << "]: ";
-  return oss.str();
-}
+  //-------------------------------------------------------------------------
+  // Note that we do here part of the work of the real syslog call, by
+  // building the message ourselves. We then only call a reduced version of
+  // syslog (namely reducedSyslog). The reason behind it is to be able to set
+  // the message timestamp ourselves, in case we log messages asynchronously,
+  // as we do when retrieving logs from the DB
+  //-------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-// cleanString
-//-----------------------------------------------------------------------------
-std::string cta::log::StringLogger::cleanString(const std::string &s,
-  const bool replaceSpaces) {
-
-  //find first non white char
-  const std::string& spaces="\t\n\v\f\r ";
-  size_t beginpos = s.find_first_not_of(spaces);
-  std::string::const_iterator it1;
-  if (std::string::npos != beginpos)
-    it1 = beginpos + s.begin();
-  else
-    it1 = s.begin();
-  
-  //find last non white char
-  std::string::const_iterator it2;
-  size_t endpos = s.find_last_not_of(spaces);
-  if (std::string::npos != endpos) 
-    it2 = endpos + 1 + s.begin();
-  else 
-    it2 = s.end();
-  
-  std::string result(it1, it2);
-  
-//  if (s.begin() == it1 && it2 == s.end()) 
-//    result="";
-  
-  for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
-
-    // Replace newline and tab with a space
-    if (replaceSpaces) {
-      if ('\t' == *it) 
-        *it = ' ';
-      
-      if ('\n' == *it) 
-        *it = ' ';
-      
-      // Replace spaces with underscore
-      if (' ' == *it) 
-        *it = '_';
-    }
-    // Replace double quotes with single quotes
-    if ('"' == *it) 
-      *it = '\'';
+  // Ignore messages whose priority is not of interest
+  if(priority > m_logMask) {
+    return;
   }
-  return result;
-   
+
+  // Try to find the textual representation of the syslog priority
+  std::map<int, std::string>::const_iterator priorityTextPair =
+    m_priorityToText.find(priority);
+
+  // Do nothing if the log priority is not valid
+  if(m_priorityToText.end() == priorityTextPair) {
+    return;
+  }
+
+  // Safe to get a reference to the textual representation of the priority
+  const std::string &priorityText = priorityTextPair->second;
+
+  std::ostringstream os;
+
+  SyslogLogger::writeLogMsg(
+    os,
+    priority,
+    priorityText,
+    msg,
+    params,
+    rawParams,
+    timeStamp,
+    m_programName,
+    pid);
+
+  reducedSyslog(os.str());
 }
 
 //-----------------------------------------------------------------------------
@@ -219,32 +125,11 @@ void cta::log::StringLogger::reducedSyslog(std::string msg) {
   }
 
   // enter critical section
-  const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
-  // Do nothing if we failed to enter the critical section
-  if(0 != mutex_lock_rc) {
-    return;
-  }
+  threading::MutexLocker lock(m_mutex);
 
   // Append the message to the log
   m_log << msg << std::endl;
-  
+
   // Temporary hack: also print them out:
   printf (msg.c_str());
-
-  // Leave critical section.
-  pthread_mutex_unlock(&m_mutex);
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) {
-
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-
-  operator() (priority, msg, params.begin(), params.end(), timeStamp);
 }
