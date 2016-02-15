@@ -48,7 +48,7 @@ castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   ~ProcessForkerConnectionHandler() throw() {
-  log::Param params[] = {log::Param("fd", m_fd)};
+  std::list<log::Param> params = {log::Param("fd", m_fd)};
   m_log(LOG_DEBUG, "Closing incoming connection from the ProcessForker",
     params);
   close(m_fd);
@@ -90,7 +90,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   logConnectionEvent(const zmq_pollitem_t &fd)  {
-  log::Param params[] = {
+  std::list<log::Param> params = {
   log::Param("fd", fd.fd),
   log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
   log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
@@ -122,7 +122,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     const int timeout = 10; // Timeout in seconds
     frame = ProcessForkerUtils::readFrame(m_fd, timeout);
   } catch(castor::exception::Exception &ne) {
-    log::Param params[] = {log::Param("message", ne.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
     m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message"
       ": Failed to read frame", params);
 
@@ -131,7 +131,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     return true; // Ask reactor to remove and delete this event handler
   }
 
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("type", messages::msgTypeToString(frame.type)),
     log::Param("payloadLen", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForkerConnectionHandler handling a message", params);
@@ -139,7 +139,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   try {
     dispatchMsgHandler(frame);
   } catch(castor::exception::Exception &ne) {
-    log::Param params[] = {log::Param("message", ne.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
     m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
       params);
 
@@ -163,7 +163,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       return handleProcessExitedMsg(frame);
     default:
       {
-        log::Param params[] = {
+        std::list<log::Param> params = {
           log::Param("type", frame.type),
           log::Param("typeStr", messages::msgTypeToString(frame.type))};
         m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to dispatch"

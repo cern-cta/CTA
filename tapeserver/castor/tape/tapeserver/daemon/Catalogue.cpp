@@ -174,7 +174,7 @@ void castor::tape::tapeserver::daemon::Catalogue::shutdown() {
     try {
       drive->shutdown();
     } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "Failed to shutdown session", params);
     }
   }
@@ -190,7 +190,7 @@ void castor::tape::tapeserver::daemon::Catalogue::killSessions() {
     try {
       drive->killSession();
     } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "Failed to kill session", params);
     }
   }

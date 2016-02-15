@@ -66,7 +66,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   
   try {
     m_socket.bind(endpoint.str().c_str());
-    log::Param params[] = {log::Param("endpoint", endpoint.str())};
+    std::list<log::Param> params = {log::Param("endpoint", endpoint.str())};
     m_log(LOG_INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
       params);
   } catch(castor::exception::Exception &ne){
@@ -127,11 +127,11 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     m_socket.recv(empty);
     rqst = messages::recvFrame(m_socket);
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
     return false; // Give up and stay registered with the reactor
   }
-  log::Param params[] = {
+  std::list<log::Param> params = {
       log::Param("sender identity", 
               castor::utils::hexDump(adress.getData(),adress.size()))
      };
@@ -159,7 +159,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     
     messages::sendFrame(m_socket, reply);
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to send reply to client", params);
   }
 
@@ -262,7 +262,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   try {
     castor::messages::LabelError rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("message", rqstBody.message())};
     m_log(LOG_INFO, "Received LabelError", params);
 

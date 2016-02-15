@@ -63,7 +63,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
 
   // Reaching this point means the cleaner failed and an exception was thrown
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("TPVID", m_vid),
     log::Param("unitName", m_driveConfig.getUnitName()),
     log::Param("message", errorMessage)};
@@ -133,7 +133,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
       std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
       for (std::vector<std::string>::iterator ta=tapeAlerts.begin(); ta!=tapeAlerts.end();ta++)
       {
-        log::Param params[] = {
+        std::list<log::Param> params = {
           log::Param("tapeAlert",*ta),
           log::Param("tapeAlertNumber", alertNumber++),
           log::Param("tapeAlertCount", tapeAlerts.size())};
@@ -150,7 +150,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
   }
 
   // Reaching this point means it failed and an exception was thrown (because of the "return" above)
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("TPVID", m_vid),
     log::Param("unitName", m_driveConfig.getUnitName()),
     log::Param("message", errorMessage)};
@@ -164,7 +164,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
   const std::string &capabilities) {
   m_capUtils.setProcText(capabilities);
   {
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("capabilities", m_capUtils.getProcText())};
     m_log(LOG_INFO, "Cleaner set process capabilities for using tape",
       params);

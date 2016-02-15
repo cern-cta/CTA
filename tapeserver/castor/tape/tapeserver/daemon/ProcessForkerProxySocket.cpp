@@ -46,7 +46,7 @@ castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ~ProcessForkerProxySocket() throw() {
   if(-1 == close(m_socketFd)) {
     const std::string message = castor::utils::errnoToString(errno);
-    log::Param params[] = {log::Param("socketFd", m_socketFd), 
+    std::list<log::Param> params = {log::Param("socketFd", m_socketFd), 
       log::Param("message", message)};
     m_log(LOG_ERR,
       "Failed to close proxy side of ProcessForker socket pair", params);
@@ -106,7 +106,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  log::Param params[] = {log::Param("pid", reply.pid())};
+  std::list<log::Param> params = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO,
     "Got process ID of the data-transfer session from the ProcessForker",
     params);
@@ -143,7 +143,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  log::Param params[] = {log::Param("pid", reply.pid())};
+  std::list<log::Param> params = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO, "Got process ID of the label session from the ProcessForker",
     params);
 
@@ -185,7 +185,7 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  log::Param params[] = {log::Param("pid", reply.pid())};
+  std::list<log::Param> params = {log::Param("pid", reply.pid())};
   m_log(LOG_INFO,
     "Got process ID of the cleaner session from the ProcessForker", params);
 

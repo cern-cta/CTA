@@ -138,7 +138,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::destroyZmqContext() throw() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
       const std::string message = castor::utils::errnoToString(errno);
-      castor::log::Param params[] = {castor::log::Param("message", message)};
+      std::list<castor::log::Param> params = {castor::log::Param("message", message)};
       m_log(LOG_ERR, "Failed to destroy ZMQ context", params);
     } else {
       m_zmqContext = NULL;
@@ -161,7 +161,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
       << std::endl;
 
     // Log the error
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("Message", ex.getMessage().str()),
       log::Param("Code"   , ex.code())};
     m_log(LOG_ERR, "Aborting", params);
@@ -229,7 +229,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 void castor::tape::tapeserver::daemon::TapeDaemon::setDumpable() {
   castor::utils::setDumpableProcessAttribute(true);
   const bool dumpable = castor::utils::getDumpableProcessAttribute();
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("dumpable", dumpable ? "true" : "false")};
   m_log(LOG_INFO, "Got dumpable attribute of process", params);
   if(!dumpable) {
@@ -246,7 +246,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setProcessCapabilities(
   const std::string &text) {
   try {
     m_capUtils.setProcText(text);
-    log::Param params[] =
+    std::list<log::Param> params =
       {log::Param("capabilities", m_capUtils.getProcText())};
     m_log(LOG_INFO, "Set process capabilities", params);
   } catch(castor::exception::Exception &ne) {
@@ -280,7 +280,7 @@ pid_t castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker(
   // Else if this is the parent process
   } else if(0 < forkRc) {
     {
-      log::Param params[] = {
+      std::list<log::Param> params = {
         log::Param("processForkerPid", forkRc)};
       m_log(LOG_INFO, "Successfully forked the ProcessForker", params);
     }
@@ -320,7 +320,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::ForkerCmdPair
   }
 
   {
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("cmdPair.tapeDaemon", cmdPair.tapeDaemon),
       log::Param("cmdPair.processForker", cmdPair.processForker)};
     m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
@@ -349,7 +349,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::ForkerReaperPair
   }
 
   {
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("reaperPair.tapeDaemon", reaperPair.tapeDaemon),
       log::Param("reaperPair.processForker", reaperPair.processForker)};
     m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
@@ -493,10 +493,10 @@ int castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
     processForker.execute();
     return 0;
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
   } catch(std::exception &se) {
-    log::Param params[] = {log::Param("message", se.what())};
+    std::list<log::Param> params = {log::Param("message", se.what())};
     m_log(LOG_ERR, "ProcessForker threw an unexpected exception", params);
   } catch(...) {
     m_log(LOG_ERR, "ProcessForker threw an unknown and unexpected exception");
@@ -626,7 +626,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleIOEvents() throw() {
     m_reactor.handleEvents(timeout);
   } catch(castor::exception::Exception &ex) {
     // Log exception and continue
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("message", ex.getMessage().str()),
       log::Param("backtrace", ex.backtrace())
     };
@@ -634,7 +634,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleIOEvents() throw() {
       " event", params);
   } catch(std::exception &se) {
     // Log exception and continue
-    log::Param params[] = {log::Param("message", se.what())};
+    std::list<log::Param> params = {log::Param("message", se.what())};
     m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
       params);
   } catch(...) {
@@ -661,7 +661,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
     const time_t timeSpentShuttingDown = now - m_startOfShutdown;
     const time_t shutdownTimeout = 9*60; // 9 minutes
     if(shutdownTimeout <= timeSpentShuttingDown) {
-      log::Param params[] = {log::Param("shutdownTimeout", shutdownTimeout)};
+      std::list<log::Param> params = {log::Param("shutdownTimeout", shutdownTimeout)};
       m_log(LOG_WARNING, "Tape-server parent-process ending main loop because"
         " shutdown timeout has been reached", params);
       return false; // Do not continue the main event loop
@@ -672,7 +672,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
     return m_catalogue->handleTick();
   } catch(castor::exception::Exception &ex) {
     // Log exception and continue
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("message", ex.getMessage().str()),
       log::Param("backtrace", ex.backtrace())
     };
@@ -680,7 +680,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleTick() throw() {
       " in time", params);
   } catch(std::exception &se) {
     // Log exception and continue
-    log::Param params[] = {log::Param("message", se.what())};
+    std::list<log::Param> params = {log::Param("message", se.what())};
     m_log(LOG_ERR, "Unexpected exception thrown when handling a tick in time",
       params);
   } catch(...) {
@@ -714,7 +714,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
     }
   } catch(castor::exception::Exception &ex) {
     // Log exception and continue
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("message", ex.getMessage().str()),
       log::Param("backtrace", ex.backtrace())
     };
@@ -722,7 +722,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
       " pending signal", params);
   } catch(std::exception &se) {
     // Log exception and continue
-    log::Param params[] = {log::Param("message", se.what())};
+    std::list<log::Param> params = {log::Param("message", se.what())};
     m_log(LOG_ERR, "Unexpected exception thrown when handling a pending signal",
       params);
   } catch(...) {
@@ -745,7 +745,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleSignal(const int sig,
   case SIGCHLD: return handleSIGCHLD(sigInfo);
   default:
     {
-      log::Param params[] = {log::Param("signal", sig)};
+      std::list<log::Param> params = {log::Param("signal", sig)};
       m_log(LOG_INFO, "Ignoring signal", params);
       return true; // Continue the main event loop
     }
@@ -821,7 +821,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
   if(pid == m_processForkerPid) {
     return handleReapedProcessForker(pid, waitpidStat);
   } else {
-    log::Param params[] = {log::Param("pid", pid)};
+    std::list<log::Param> params = {log::Param("pid", pid)};
     m_log(LOG_ERR, "Reaped process was unknown", params);
     return true; // Continue the main event loop
   }
@@ -832,7 +832,7 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
   const pid_t pid, const int waitpidStat) throw() {
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("processForkerPid", pid)};
   m_log(LOG_WARNING, "Tape-server parent-process stopping gracefully because"
     " ProcessForker has terminated", params);

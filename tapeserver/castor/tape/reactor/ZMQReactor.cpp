@@ -69,7 +69,7 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
 
   std::ostringstream socketInHex;
   socketInHex << std::hex << item.socket;
-  log::Param params[] = {log::Param("fd", item.fd),
+  std::list<log::Param> params = {log::Param("fd", item.fd),
     log::Param("socket", socketInHex.str())};
   m_log(LOG_DEBUG, "ZMQReactor registering a new handler", params);
 
@@ -114,7 +114,7 @@ void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
     }
   } else if(0 > pollRc) {
     const std::string message = utils::errnoToString(errno);
-    log::Param params[] = {log::Param("message", message)};
+    std::list<log::Param> params = {log::Param("message", message)};
     m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
   }
 }

@@ -64,11 +64,11 @@ int main(const int argc, char **const argv) {
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
   } catch(cta::exception::Exception &ex) {
-    cta::log::Param params[] = {
+    std::list<cta::log::Param> params = {
       cta::log::Param("message", ex.getMessage().str())};
     log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
   } catch(std::exception &se) {
-    cta::log::Param params[] = {cta::log::Param("what", se.what())};
+    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(LOG_ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
     log(LOG_ERR, "Caught an unexpected and unknown exception");
@@ -148,7 +148,7 @@ static void logStartOfDaemon(cta::log::Logger &log, const int argc,
   const char *const *const argv) {
 
   const std::string concatenatedArgs = argvToString(argc, argv);
-  cta::log::Param params[] = {
+  std::list<cta::log::Param> params = {
     cta::log::Param("version", CTA_VERSION),
     cta::log::Param("argv", concatenatedArgs)};
   log(LOG_INFO, "tapeserverd started", params);
@@ -188,7 +188,7 @@ static std::string argvToString(const int argc, const char *const *const argv) {
 ////------------------------------------------------------------------------------
 //static void logTpconfigLine(cta::log::Logger &log,
 //  const cta::tape::daemon::TpconfigLine &line) {
-//  cta::log::Param params[] = {
+//  std::list<cta::log::Param> params = {
 //    cta::log::Param("unitName", line.unitName),
 //    cta::log::Param("logicalLibrary", line.logicalLibrary),
 //    cta::log::Param("devFilename", line.devFilename),

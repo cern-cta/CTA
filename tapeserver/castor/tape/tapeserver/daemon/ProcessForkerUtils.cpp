@@ -268,7 +268,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
     writeUint32(fd, payloadLen);
 
     if(NULL != log) {
-      log::Param params[] = {log::Param("type", messages::msgTypeToString(type)),
+      std::list<log::Param> params = {log::Param("type", messages::msgTypeToString(type)),
         log::Param("payloadLen", payloadLen)};
       (*log)(LOG_DEBUG, "ProcessForkerUtils wrote frame header", params);
     }
@@ -318,7 +318,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
     writeString(fd, msgStr, log);
 
     if(NULL != log) {
-      log::Param params[] = {log::Param("payloadLen", msgStr.length())};
+      std::list<log::Param> params = {log::Param("payloadLen", msgStr.length())};
       (*log)(LOG_DEBUG, "ProcessForkerUtils wrote frame payload", params);
     }
   } catch(castor::exception::Exception &ne) {
@@ -384,7 +384,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   }
 
   if(NULL != log) {
-    log::Param params[] = {log::Param("length",  str.length())};
+    std::list<log::Param> params = {log::Param("length",  str.length())};
     (*log)(LOG_DEBUG, "ProcessForkerUtils wrote string", params);
   }
 }

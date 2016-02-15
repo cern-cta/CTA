@@ -157,7 +157,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
         // release the lock
         pthread_rwlock_unlock(&m_lock);
         if(NULL != log) {           
-          log::Param params[] = {   
+          std::list<log::Param> params = {   
             log::Param("category", category),
             log::Param("key", key),
             log::Param("value", entIt->second),
@@ -169,7 +169,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     }
     // no entry found
     if(NULL != log) {
-      log::Param params[] = {
+      std::list<log::Param> params = {
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", defaultValue),
@@ -183,7 +183,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     pthread_rwlock_unlock(&m_lock);
     // log the exception
     if(NULL != log) {
-      log::Param params[] = {
+      std::list<log::Param> params = {
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", defaultValue),
@@ -235,7 +235,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     }
 
     if(NULL != log) {
-      log::Param params[] = {
+      std::list<log::Param> params = {
         log::Param("category", category),
         log::Param("key", key),
         log::Param("value", entIt->second),

@@ -52,7 +52,7 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
   }
 
   // Reaching this point means the probe failed and an exception was thrown
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("unitName", m_driveConfig.getUnitName()),
     log::Param("message", errorMessage)};
   m_log(LOG_ERR, "Probe failed", params);

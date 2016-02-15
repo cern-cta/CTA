@@ -124,13 +124,13 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
   try {
     return handlePendingMsgs() && handlePendingSignals();
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
   } catch(std::exception &se) {
-    log::Param params[] = {log::Param("message", se.what())};
+    std::list<log::Param> params = {log::Param("message", se.what())};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
   } catch(...) {
-    log::Param params[] =
+    std::list<log::Param> params =
       {log::Param("message", "Caught an unknown exception")};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
   }
@@ -171,7 +171,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
   case -1: // Error
     {
       const std::string message = castor::utils::errnoToString(errno);
-      log::Param params[] = {log::Param("message", message)};
+      std::list<log::Param> params = {log::Param("message", message)};
       m_log(LOG_ERR,
         "Error detected when checking for a pending ProcessForker message",
         params);
@@ -184,7 +184,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
       std::ostringstream message;
       message << "poll returned an unexpected value"
         ": expected=0 or 1 actual=" << pollRc;
-      log::Param params[] = {log::Param("message", message.str())};
+      std::list<log::Param> params = {log::Param("message", message.str())};
       m_log(LOG_ERR,
         "Error detected when checking for a pending ProcessForker message",
         params);
@@ -207,7 +207,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     throw ex;
   }
 
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("type", messages::msgTypeToString(frame.type)),
     log::Param("len", frame.payload.length())};
   m_log(LOG_INFO, "ProcessForker handling a ProcessForker message", params);
@@ -245,7 +245,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
 
   ProcessForkerUtils::writeFrame(m_cmdSocket, result.reply);
   {
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("payloadType",
         messages::msgTypeToString(result.reply.type)),
       log::Param("payloadLen", result.reply.payload.length())};
@@ -310,7 +310,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    log::Param params[] = {log::Param("pid", forkRc)};
+    std::list<log::Param> params = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked cleaner session", params);
 
     return createForkSucceededResult(forkRc, true);
@@ -324,13 +324,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runCleanerSession(rqst));
     } catch(castor::exception::Exception &ne) {
-      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Cleaner session failed", params);
     } catch(std::exception &ne) {
-      log::Param params[] = {log::Param("message", ne.what())};
+      std::list<log::Param> params = {log::Param("message", ne.what())};
       m_log(LOG_ERR, "Cleaner session failed", params);
     } catch(...) {
-      log::Param params[] = {log::Param("message",
+      std::list<log::Param> params = {log::Param("message",
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Cleaner session failed", params);
     }
@@ -363,7 +363,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       "Failed to fork data-transfer session for tape drive", true);
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    log::Param params[] = {log::Param("pid", forkRc)};
+    std::list<log::Param> params = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked data-transfer session", params);
 
     return createForkSucceededResult(forkRc, true);
@@ -377,13 +377,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runDataTransferSession(rqst));
     } catch(castor::exception::Exception &ne) {
-      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Data-transfer session failed", params);
     } catch(std::exception &ne) {
-      log::Param params[] = {log::Param("message", ne.what())};
+      std::list<log::Param> params = {log::Param("message", ne.what())};
       m_log(LOG_ERR, "Data-transfer session failed", params);
     } catch(...) {
-      log::Param params[] = {log::Param("message",
+      std::list<log::Param> params = {log::Param("message",
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Data-transfer session failed", params);
     }
@@ -417,7 +417,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    log::Param params[] = {log::Param("pid", forkRc)};
+    std::list<log::Param> params = {log::Param("pid", forkRc)};
     m_log(LOG_INFO, "ProcessForker forked label session", params);
 
     return createForkSucceededResult(forkRc, true);
@@ -431,13 +431,13 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runLabelSession(rqst));
     } catch(castor::exception::Exception &ne) {
-      log::Param params[] = {log::Param("message", ne.getMessage().str())};
+      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Label session failed", params);
     } catch(std::exception &ne) {
-      log::Param params[] = {log::Param("message", ne.what())};
+      std::list<log::Param> params = {log::Param("message", ne.what())};
       m_log(LOG_ERR, "Label session failed", params);
     } catch(...) {
-      log::Param params[] = {log::Param("message",
+      std::list<log::Param> params = {log::Param("message",
         "Caught an unknown exception")};
       m_log(LOG_ERR, "Label session failed", params);
     }
@@ -457,7 +457,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   ProcessForkerUtils::parsePayload(frame, rqst);
 
   // Log the fact that the ProcessForker will not gracefully stop
-  log::Param params[] = {log::Param("reason", rqst.reason())};
+  std::list<log::Param> params = {log::Param("reason", rqst.reason())};
   m_log(LOG_INFO, "Gracefully stopping ProcessForker", params);
 
   return createReturnValueResult(0, false);
@@ -627,7 +627,7 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
 
   std::ostringstream contextAddr;
   contextAddr << std::hex << zmqContext;
-  log::Param params[] = {log::Param("contextAddr", contextAddr.str())};
+  std::list<log::Param> params = {log::Param("contextAddr", contextAddr.str())};
   m_log(LOG_INFO, "Child of ProcessForker instantiated a ZMQ context", params);
 
   return zmqContext;
@@ -757,7 +757,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     msg.set_pid(pid);
     msg.set_exitcode(WEXITSTATUS(waitpidStat));
 
-    log::Param params[] = {
+    std::list<log::Param> params = {
       log::Param("pid", msg.pid()),
       log::Param("exitCode", msg.exitcode()),
       log::Param("payloadLen", msg.ByteSize())};
@@ -793,7 +793,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     msg.set_pid(pid);
     msg.set_signal(WTERMSIG(waitpidStat));
 
-    log::Param params[] = {log::Param("pid", msg.pid()),
+    std::list<log::Param> params = {log::Param("pid", msg.pid()),
       log::Param("signal", msg.signal())};
     m_log(LOG_WARNING, "ProcessForker notifying TapeDaemon of process crash",
       params);

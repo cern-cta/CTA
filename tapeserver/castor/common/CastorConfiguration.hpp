@@ -143,7 +143,7 @@ namespace castor {
           strValue = getConfEntString(category, key);
         } catch(castor::exception::Exception &ex) {
           if(NULL != log) {
-            log::Param params[] = {
+            std::list<log::Param> params = {
               log::Param("category", category),
               log::Param("key", key),
               log::Param("value", defaultValue),
@@ -168,7 +168,7 @@ namespace castor {
         ss >> value;
 
         if(NULL != log) {
-          log::Param params[] = {
+          std::list<log::Param> params = {
             log::Param("category", category),
             log::Param("key", key),
             log::Param("value", value),
@@ -210,7 +210,7 @@ namespace castor {
         ss >> value;
 
         if(NULL != log) {
-          log::Param params[] = {
+          std::list<log::Param> params = {
             log::Param("category", category),
             log::Param("key", key),
             log::Param("value", value),

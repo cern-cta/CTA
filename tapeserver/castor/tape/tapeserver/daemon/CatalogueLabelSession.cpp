@@ -128,7 +128,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
         666, "Unknown error");
     }
   } catch(castor::exception::Exception &we) {
-    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send failure reply-message to label command",
       params);
   }
@@ -142,7 +142,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   try {
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
   } catch(castor::exception::Exception &we) { 
-    log::Param params[] = {log::Param("message", we.getMessage().str())};
+    std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send success reply-message to label command",
       params);
   }

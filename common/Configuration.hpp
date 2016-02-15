@@ -132,7 +132,7 @@ namespace cta { namespace common {
           strValue = getConfEntString(category, key);
         } catch(cta::exception::Exception &ex) {
           if(NULL != log) {
-            log::Param params[] = {
+            std::list<log::Param> params = {
               log::Param("category", category),
               log::Param("key", key),
               log::Param("value", defaultValue),
@@ -157,7 +157,7 @@ namespace cta { namespace common {
         ss >> value;
 
         if(NULL != log) {
-          log::Param params[] = {
+          std::list<log::Param> params = {
             log::Param("category", category),
             log::Param("key", key),
             log::Param("value", value),
@@ -199,7 +199,7 @@ namespace cta { namespace common {
         ss >> value;
 
         if(NULL != log) {
-          log::Param params[] = {
+          std::list<log::Param> params = {
             log::Param("category", category),
             log::Param("key", key),
             log::Param("value", value),

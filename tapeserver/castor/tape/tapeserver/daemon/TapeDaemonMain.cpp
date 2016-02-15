@@ -74,11 +74,11 @@ int main(const int argc, char **const argv) {
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
   } catch(castor::exception::Exception &ex) {
-    castor::log::Param params[] = {
+    std::list<castor::log::Param> params = {
       castor::log::Param("message", ex.getMessage().str())};
     log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
   } catch(std::exception &se) {
-    castor::log::Param params[] = {castor::log::Param("what", se.what())};
+    std::list<castor::log::Param> params = {castor::log::Param("what", se.what())};
     log(LOG_ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
     log(LOG_ERR, "Caught an unexpected and unknown exception");
@@ -176,7 +176,7 @@ static void logStartOfDaemon(castor::log::Logger &log, const int argc,
   std::ostringstream version;
   version << MAJORVERSION << "." << MINORVERSION << "." << MAJORRELEASE << "-"
     << MINORRELEASE;
-  log::Param params[] = {
+  std::list<log::Param> params = {
     log::Param("version", version.str()),
     log::Param("argv", concatenatedArgs)};
   log(LOG_INFO, "tapeserverd started", params);
@@ -216,7 +216,7 @@ static void logTpconfigLines(castor::log::Logger &log,
 //------------------------------------------------------------------------------
 static void logTpconfigLine(castor::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLine &line) throw() {
-  castor::log::Param params[] = {
+  std::list<castor::log::Param> params = {
     castor::log::Param("unitName", line.unitName),
     castor::log::Param("logicalLibrary", line.logicalLibrary),
     castor::log::Param("devFilename", line.devFilename),

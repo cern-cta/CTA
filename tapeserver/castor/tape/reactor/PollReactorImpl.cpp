@@ -102,7 +102,7 @@ void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
     {
       const int pollErrno = errno;
 
-      log::Param params[] = {
+      std::list<log::Param> params = {
         log::Param("errno", pollErrno),
         log::Param("message", utils::errnoToString(pollErrno))};
       m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
