@@ -29,7 +29,6 @@
 #include "castor/exception/SErrnum.hpp"
 #include "castor/server/MutexLocker.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
-#include <radosstriper/libradosstriper.hpp>
 #include <uuid/uuid.h>
 #include <algorithm>
 #include <cryptopp/base64.h>
