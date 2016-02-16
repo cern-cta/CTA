@@ -1527,7 +1527,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
     std::string path = getOptionValue(tokens, "-p", "--path");
     bool summary = hasOption(tokens, "-S", "--summary");
     bool all = hasOption(tokens, "-a", "--all");
-    if(!all && (id.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
+    if(!all && (id.empty() && eosid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
       m_data = help.str();
       return;
     }
