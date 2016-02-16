@@ -1310,8 +1310,8 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
 void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
-       << "\tadd [--vid/-v <vid>] [--file/-f <filename_with_vid_list>] [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
-       << "\trm  [--vid/-v <vid>] [--file/-f <filename_with_vid_list>]" << std::endl
+       << "\tadd [--vid/-v <vid>] [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
+       << "\trm  [--vid/-v <vid>]" << std::endl
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
 }
@@ -1330,8 +1330,8 @@ void XrdProFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::
 void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " ve/verify add/rm/ls/err:" << std::endl
-       << "\tadd [--vid/-v <vid>] [--file/-f <filename_with_vid_list>] [--complete/-c] [--partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
-       << "\trm  [--vid/-v <vid>] [--file/-f <filename_with_vid_list>]" << std::endl
+       << "\tadd [--vid/-v <vid>] [--complete/-c] [--partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
+       << "\trm  [--vid/-v <vid>]" << std::endl
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
 }
