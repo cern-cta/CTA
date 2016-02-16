@@ -613,7 +613,7 @@ void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::VerifyType) {
+void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles) {
 
 }
 

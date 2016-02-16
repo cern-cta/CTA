@@ -47,20 +47,20 @@ public:
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog() const;
 
-  void setErrors(const std::map<int,std::string> &errors);
-  std::map<int,std::string> getErrors() const;
+  void setErrors(const std::map<uint64_t,std::string> &errors);
+  std::map<uint64_t,std::string> getErrors() const;
 
   void setFilesFailed(const uint64_t filesFailed);
   uint64_t getFilesFailed() const;
 
-  void setFilesMigrated(const uint64_t filesMigrated);
-  uint64_t getFilesMigrated() const;
+  void setFilesArchived(const uint64_t filesArchived);
+  uint64_t getFilesArchived() const;
 
-  void setFilesToMigr(const uint64_t filesToMigr);
-  uint64_t getFilesToMigr() const;
+  void setFilesToArchive(const uint64_t filesToArchive);
+  uint64_t getFilesToArchive() const;
 
-  void setFilesToRecall(const uint64_t filesToRecall);
-  uint64_t getFilesToRecall() const;
+  void setFilesToRetrieve(const uint64_t filesToRetrieve);
+  uint64_t getFilesToRetrieve() const;
 
   void setRepackStatus(const std::string &repackStatus);
   std::string getRepackStatus() const;
@@ -91,20 +91,20 @@ private:
   cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
-  std::map<int,std::string> m_errors;
+  std::map<uint64_t,std::string> m_errors;
   bool m_errorsSet;
 
   uint64_t m_filesFailed;
   bool m_filesFailedSet;
 
-  uint64_t m_filesMigrated;
-  bool m_filesMigratedSet;
+  uint64_t m_filesArchived;
+  bool m_filesArchivedSet;
 
-  uint64_t m_filesToMigr;
-  bool m_filesToMigrSet;
+  uint64_t m_filesToArchive;
+  bool m_filesToArchiveSet;
 
-  uint64_t m_filesToRecall;
-  bool m_filesToRecallSet;
+  uint64_t m_filesToRetrieve;
+  bool m_filesToRetrieveSet;
 
   std::string m_repackStatus;
   bool m_repackStatusSet;

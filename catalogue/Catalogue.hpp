@@ -59,7 +59,6 @@
 #include "common/dataStructures/User.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
-#include "common/dataStructures/VerifyType.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 
 namespace cta {

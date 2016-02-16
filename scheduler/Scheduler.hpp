@@ -56,7 +56,6 @@
 #include "common/dataStructures/User.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
-#include "common/dataStructures/VerifyType.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 
 #include "common/exception/Exception.hpp"
@@ -197,7 +196,7 @@ public:
 
   virtual void shrink(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapepool); // removes extra tape copies from a specific pool(usually an "_2" pool)
 
-  virtual void verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::VerifyType);
+  virtual void verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles); //if last argument is 0, all files are verified
   virtual void cancelVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
   virtual std::list<cta::common::dataStructures::VerifyInfo> getVerifys(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual cta::common::dataStructures::VerifyInfo getVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;

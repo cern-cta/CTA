@@ -1272,26 +1272,19 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
             type_s = "readwrite";
             break;
         }
-        char timebuffer[100];
-        time_t fromtimeStamp=it->getFromTimestamp();
-        time_t untiltimeStamp=it->getUntilTimestamp();
-        struct tm *tm = localtime(&fromtimeStamp);
-        if(strftime(timebuffer, 100, "%d/%m/%Y", tm)==0) {
-          m_data = "Error converting \"from\" date!\n";
-        }
-        std::string fromTime_s(timebuffer);
-        tm = localtime(&untiltimeStamp);
-        if(strftime(timebuffer, 100, "%d/%m/%Y", tm)==0) {
-          m_data = "Error converting \"to\" date!\n";
-        }
-        std::string untilTime_s(timebuffer);        
+        time_t fromTime = it->getFromTimestamp();
+        time_t untilTime = it->getUntilTimestamp();
+        std::string fromTimeString(ctime(&fromTime));
+        std::string untilTimeString(ctime(&untilTime));
+        fromTimeString=fromTimeString.substr(0,24); //remove the newline
+        untilTimeString=untilTimeString.substr(0,24); //remove the newline      
         currentRow.push_back(it->getDriveName());
         currentRow.push_back(type_s);
         currentRow.push_back(it->getVid());
         currentRow.push_back(it->getUserGroup());
         currentRow.push_back(it->getTag());
-        currentRow.push_back(fromTime_s);
-        currentRow.push_back(untilTime_s);
+        currentRow.push_back(fromTimeString);
+        currentRow.push_back(untilTimeString);
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
         currentRow.push_back(it->getComment());
         responseTable.push_back(currentRow);
@@ -1310,10 +1303,104 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
 void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
-       << "\tadd --vid/-v <vid> [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
+       << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
+  if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    if(vid.empty()) {
+      m_data = help.str();
+      return;
+    }  
+    if("add" == tokens[2]) { //add
+      std::string tag = getOptionValue(tokens, "-t", "--tag");
+      bool justexpand = hasOption(tokens, "-e", "--justexpand");
+      bool justrepack = hasOption(tokens, "-r", "--justrepack");
+      if(justexpand&&justrepack) {
+        m_data = help.str();
+        return;
+      }
+      cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
+      if(justexpand) {
+        type=cta::common::dataStructures::RepackType::justexpand;
+      }
+      if(justrepack) {
+        type=cta::common::dataStructures::RepackType::justrepack;
+      }
+      m_scheduler->repack(requester, vid, tag, type);
+    }
+    else if("err" == tokens[2]) { //err
+      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(requester, vid);
+      if(info.getErrors().size()>0) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"fseq","error message"};
+        responseTable.push_back(header);    
+        for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(it->second);
+          responseTable.push_back(currentRow);
+        }
+        m_data = formatResponse(responseTable);
+      }
+    }
+    else { //rm
+      m_scheduler->cancelRepack(requester, vid);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::RepackInfo> list;
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    if(vid.empty()) {      
+      list = m_scheduler->getRepacks(requester);
+    }
+    else {
+      list.push_back(m_scheduler->getRepack(requester, vid));
+    }
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","uid","gid","host","time"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::string type_s;
+        switch(it->getRepackType()) {
+          case cta::common::dataStructures::RepackType::expandandrepack:
+            type_s = "expandandrepack";
+            break;
+          case cta::common::dataStructures::RepackType::justexpand:
+            type_s = "justexpand";
+            break;
+          case cta::common::dataStructures::RepackType::justrepack:
+            type_s = "justrepack";
+            break;
+        }
+        time_t creationTime = it->getCreationLog().getTime();
+        std::string creationTimeString(ctime(&creationTime));
+        creationTimeString=creationTimeString.substr(0,24); //remove the newline
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getVid());
+        currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getTotalSize()));
+        currentRow.push_back(type_s);
+        currentRow.push_back(it->getTag());
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToRetrieve()));//change names
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToArchive()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesArchived()));
+        currentRow.push_back(it->getRepackStatus());
+        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
+        currentRow.push_back(it->getCreationLog().getHost());        
+        currentRow.push_back(creationTimeString);
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1322,6 +1409,12 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
 void XrdProFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
+  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+  if(tapepool.empty()) {
+    m_data = help.str();
+    return;
+  }
+  m_scheduler->shrink(requester, tapepool);
 }
 
 //------------------------------------------------------------------------------
@@ -1330,10 +1423,89 @@ void XrdProFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::
 void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " ve/verify add/rm/ls/err:" << std::endl
-       << "\tadd [--vid/-v <vid>] [--complete/-c] [--partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
+       << "\tadd [--vid/-v <vid>] [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  [--vid/-v <vid>]" << std::endl
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
+  if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    if(vid.empty()) {
+      m_data = help.str();
+      return;
+    }  
+    if("add" == tokens[2]) { //add
+      std::string tag = getOptionValue(tokens, "-t", "--tag");
+      std::string numberOfFiles_s = getOptionValue(tokens, "-p", "--partial");
+      bool complete = hasOption(tokens, "-c", "--complete");
+      if(complete&&!numberOfFiles_s.empty()) {
+        m_data = help.str();
+        return;
+      }
+      uint64_t numberOfFiles=0; //0 means do a complete verification
+      if(!numberOfFiles_s.empty()) {
+        std::stringstream numberOfFiles_ss;
+        numberOfFiles_ss << numberOfFiles_s;
+        numberOfFiles_ss >> numberOfFiles;
+      }
+      m_scheduler->verify(requester, vid, tag, numberOfFiles);
+    }
+    else if("err" == tokens[2]) { //err
+      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(requester, vid);
+      if(info.getErrors().size()>0) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"fseq","error message"};
+        responseTable.push_back(header);    
+        for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(it->second);
+          responseTable.push_back(currentRow);
+        }
+        m_data = formatResponse(responseTable);
+      }
+    }
+    else { //rm
+      m_scheduler->cancelVerify(requester, vid);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::VerifyInfo> list;
+    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    if(vid.empty()) {      
+      list = m_scheduler->getVerifys(requester);
+    }
+    else {
+      list.push_back(m_scheduler->getVerify(requester, vid));
+    }
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","uid","gid","host","time"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        time_t creationTime = it->getCreationLog().getTime();
+        std::string creationTimeString(ctime(&creationTime));
+        creationTimeString=creationTimeString.substr(0,24); //remove the newline
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getVid());
+        currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getTotalSize()));
+        currentRow.push_back(it->getTag());
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToVerify()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getFilesVerified()));
+        currentRow.push_back(it->getVerifyStatus());
+        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
+        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
+        currentRow.push_back(it->getCreationLog().getHost());        
+        currentRow.push_back(creationTimeString);
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1408,8 +1580,8 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
   std::stringstream help;
   help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir> or --null/-n] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
+       << "\twrite_rand --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
+       << "\twrite_def --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
 }
 
 //------------------------------------------------------------------------------

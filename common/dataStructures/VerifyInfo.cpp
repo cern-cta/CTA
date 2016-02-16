@@ -24,6 +24,7 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::VerifyInfo::VerifyInfo() {  
   m_creationLogSet = false;
+  m_errorsSet = false;
   m_filesFailedSet = false;
   m_filesToVerifySet = false;
   m_filesVerifiedSet = false;
@@ -31,7 +32,6 @@ cta::common::dataStructures::VerifyInfo::VerifyInfo() {
   m_totalFilesSet = false;
   m_totalSizeSet = false;
   m_verifyStatusSet = false;
-  m_verifyTypeSet = false;
   m_vidSet = false;
 }
 
@@ -46,6 +46,7 @@ cta::common::dataStructures::VerifyInfo::~VerifyInfo() throw() {
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::VerifyInfo::allFieldsSet() const {
   return m_creationLogSet
+      && m_errorsSet
       && m_filesFailedSet
       && m_filesToVerifySet
       && m_filesVerifiedSet
@@ -53,7 +54,6 @@ bool cta::common::dataStructures::VerifyInfo::allFieldsSet() const {
       && m_totalFilesSet
       && m_totalSizeSet
       && m_verifyStatusSet
-      && m_verifyTypeSet
       && m_vidSet;
 }
 
@@ -73,6 +73,24 @@ cta::common::dataStructures::EntryLog cta::common::dataStructures::VerifyInfo::g
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
   }
   return m_creationLog;
+}
+
+//------------------------------------------------------------------------------
+// setErrors
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::VerifyInfo::setErrors(const std::map<uint64_t,std::string> &errors) {
+  m_errors = errors;
+  m_errorsSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getErrors
+//------------------------------------------------------------------------------
+std::map<uint64_t,std::string> cta::common::dataStructures::VerifyInfo::getErrors() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
+  }
+  return m_errors;
 }
 
 //------------------------------------------------------------------------------
@@ -199,24 +217,6 @@ std::string cta::common::dataStructures::VerifyInfo::getVerifyStatus() const {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
   }
   return m_verifyStatus;
-}
-
-//------------------------------------------------------------------------------
-// setVerifyType
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setVerifyType(const cta::common::dataStructures::VerifyType &verifyType) {
-  m_verifyType = verifyType;
-  m_verifyTypeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getVerifyType
-//------------------------------------------------------------------------------
-cta::common::dataStructures::VerifyType cta::common::dataStructures::VerifyInfo::getVerifyType() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_verifyType;
 }
 
 //------------------------------------------------------------------------------
