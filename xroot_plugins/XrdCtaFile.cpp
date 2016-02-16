@@ -1408,7 +1408,7 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
   std::stringstream help;
   help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir> or --null/-n] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl;
+       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
 }
 
