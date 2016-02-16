@@ -1310,8 +1310,8 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
 void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
-       << "\tadd [--vid/-v <vid>] [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
-       << "\trm  [--vid/-v <vid>]" << std::endl
+       << "\tadd --vid/-v <vid> [--expandandrepack/-d or --justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
+       << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
 }
@@ -1406,9 +1406,10 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors):" << std::endl
-       << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir>] [--null/-n] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size>] [--randomsize/-r] [--zero/-z] [--urandom/-u] [--file/-f <filename>] [--filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
+  help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
+       << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir> or --null/-n] [--tag/-t <tag_name>]" << std::endl
+       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl;
+       << "\twrite --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
 }
 
 //------------------------------------------------------------------------------
