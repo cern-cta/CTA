@@ -641,16 +641,16 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool,
-        const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
-          const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
 

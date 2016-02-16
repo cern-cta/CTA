@@ -1513,10 +1513,11 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
+  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
   if("ls" == tokens[2]) { //ls
     std::string id = getOptionValue(tokens, "-I", "--id");
+    std::string eosid = getOptionValue(tokens, "-e", "--eosid");
     std::string copynb = getOptionValue(tokens, "-c", "--copynb");
     std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
     std::string vid = getOptionValue(tokens, "-v", "--vid");
@@ -1531,7 +1532,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       return;
     }
     if(!summary) {
-      std::list<cta::common::dataStructures::ArchiveFile> list=m_scheduler->getArchiveFiles(requester, id, copynb, tapepool, vid, owner, group, storageclass, path);
+      std::list<cta::common::dataStructures::ArchiveFile> list=m_scheduler->getArchiveFiles(requester, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       if(list.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
@@ -1560,7 +1561,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_scheduler->getArchiveFileSummary(requester, id, copynb, tapepool, vid, owner, group, storageclass, path);
+      cta::common::dataStructures::ArchiveFileSummary summary=m_scheduler->getArchiveFileSummary(requester, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.getTotalFiles()),std::to_string((unsigned long long)summary.getTotalBytes())};
@@ -1578,9 +1579,9 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " te/test read/write (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
+  help << tokens[0] << " te/test read/write_rand/write_def (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir> or --null/-n] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite_rand --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> [--size/-s <file_size> or --randomsize/-r] [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
+       << "\twrite_rand --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
        << "\twrite_def --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
 }
 

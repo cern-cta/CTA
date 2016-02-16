@@ -393,16 +393,16 @@ void cta::catalogue::MockCatalogue::modifyDedicationComment(const cta::common::d
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::MockCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool,
-        const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::MockCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::catalogue::MockCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &copynb, const std::string &tapepool, 
-          const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+cta::common::dataStructures::ArchiveFileSummary cta::catalogue::MockCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
           
