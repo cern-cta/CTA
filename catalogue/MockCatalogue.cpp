@@ -342,7 +342,7 @@ void cta::catalogue::MockCatalogue::modifyUserGroupComment(const cta::common::da
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
+void cta::catalogue::MockCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {}
 
 //------------------------------------------------------------------------------
@@ -356,14 +356,9 @@ void cta::catalogue::MockCatalogue::deleteDedication(const cta::common::dataStru
 std::list<cta::common::dataStructures::Dedication> cta::catalogue::MockCatalogue::getDedications(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::Dedication>();}
 
 //------------------------------------------------------------------------------
-// modifyDedicationReadonly
+// modifyDedicationType
 //------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationReadonly(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly) {}
-
-//------------------------------------------------------------------------------
-// modifyDedicationWriteonly
-//------------------------------------------------------------------------------
-void cta::catalogue::MockCatalogue::modifyDedicationWriteonly(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool writeonly) {}
+void cta::catalogue::MockCatalogue::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationUserGroup

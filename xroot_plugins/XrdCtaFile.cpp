@@ -30,6 +30,7 @@
 #include <pwd.h>
 #include <sstream>
 #include <string>
+#include <time.h>
 
 namespace cta { namespace xrootPlugins {
 
@@ -1164,6 +1165,143 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
        << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls" << std::endl;
+  if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
+    std::string drive = getOptionValue(tokens, "-n", "--name");
+    if(drive.empty()) {
+      m_data = help.str();
+      return;
+    } 
+    if("add" == tokens[2] || "ch" == tokens[2]) {
+      bool readonly = hasOption(tokens, "-r", "--readonly");
+      bool writeonly = hasOption(tokens, "-w", "--writeonly");
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
+      std::string vid = getOptionValue(tokens, "-v", "--vid");
+      std::string tag = getOptionValue(tokens, "-t", "--tag");
+      std::string from_s = getOptionValue(tokens, "-f", "--from");
+      std::string until_s = getOptionValue(tokens, "-u", "--until");
+      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      if("add" == tokens[2]) { //add
+        if(comment.empty()||from_s.empty()||until_s.empty()||(usergroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+          m_data = help.str();
+          return;
+        }
+        struct tm time;
+        if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
+          m_data = help.str();
+          return;
+        }
+        time_t from = mktime(&time);  // timestamp in current timezone
+        if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
+          m_data = help.str();
+          return;
+        }
+        time_t until = mktime(&time);  // timestamp in current timezone
+        cta::common::dataStructures::DedicationType type=cta::common::dataStructures::DedicationType::readwrite;
+        if(readonly) {
+          type=cta::common::dataStructures::DedicationType::readonly;
+        }
+        else if(writeonly) {
+          type=cta::common::dataStructures::DedicationType::writeonly;
+        }
+        m_scheduler->createDedication(requester, drive, type, usergroup, tag, vid, from, until, comment);
+      }
+      else if("ch" == tokens[2]) { //ch
+        if((comment.empty()&&from_s.empty()&&until_s.empty()&&usergroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+          m_data = help.str();
+          return;
+        }
+        if(!comment.empty()) {
+          m_scheduler->modifyDedicationComment(requester, drive, comment);
+        }
+        if(!from_s.empty()) {
+          struct tm time;
+          if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
+            m_data = help.str();
+            return;
+          }
+          time_t from = mktime(&time);  // timestamp in current timezone
+          m_scheduler->modifyDedicationFrom(requester, drive, from);
+        }
+        if(!until_s.empty()) {
+          struct tm time;
+          if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
+            m_data = help.str();
+            return;
+          }
+          time_t until = mktime(&time);  // timestamp in current timezone
+          m_scheduler->modifyDedicationUntil(requester, drive, until);
+        }
+        if(!usergroup.empty()) {
+          m_scheduler->modifyDedicationUserGroup(requester, drive, usergroup);
+        }
+        if(!vid.empty()) {
+          m_scheduler->modifyDedicationVid(requester, drive, vid);
+        }
+        if(!tag.empty()) {
+          m_scheduler->modifyDedicationTag(requester, drive, tag);
+        }
+        if(readonly) {
+          m_scheduler->modifyDedicationType(requester, drive, cta::common::dataStructures::DedicationType::readonly);          
+        }
+        if(writeonly) {
+          m_scheduler->modifyDedicationType(requester, drive, cta::common::dataStructures::DedicationType::writeonly);
+        }
+      }
+    }
+    else { //rm
+      m_scheduler->deleteDedication(requester, drive);
+    }
+  }
+  else if("ls" == tokens[2]) { //ls
+    std::list<cta::common::dataStructures::Dedication> list= m_scheduler->getDedications(requester);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        std::string type_s;
+        switch(it->getDedicationType()) {
+          case cta::common::dataStructures::DedicationType::readonly:
+            type_s = "readonly";
+            break;
+          case cta::common::dataStructures::DedicationType::writeonly:
+            type_s = "writeonly";
+            break;
+          default:
+            type_s = "readwrite";
+            break;
+        }
+        char timebuffer[100];
+        time_t fromtimeStamp=it->getFromTimestamp();
+        time_t untiltimeStamp=it->getUntilTimestamp();
+        struct tm *tm = localtime(&fromtimeStamp);
+        if(strftime(timebuffer, 100, "%d/%m/%Y", tm)==0) {
+          m_data = "Error converting \"from\" date!\n";
+        }
+        std::string fromTime_s(timebuffer);
+        tm = localtime(&untiltimeStamp);
+        if(strftime(timebuffer, 100, "%d/%m/%Y", tm)==0) {
+          m_data = "Error converting \"to\" date!\n";
+        }
+        std::string untilTime_s(timebuffer);        
+        currentRow.push_back(it->getDriveName());
+        currentRow.push_back(type_s);
+        currentRow.push_back(it->getVid());
+        currentRow.push_back(it->getUserGroup());
+        currentRow.push_back(it->getTag());
+        currentRow.push_back(fromTime_s);
+        currentRow.push_back(untilTime_s);
+        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
+        currentRow.push_back(it->getComment());
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------

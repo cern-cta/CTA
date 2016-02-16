@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "common/dataStructures/DedicationType.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
@@ -49,6 +50,9 @@ public:
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog() const;
 
+  void setDedicationType(const cta::common::dataStructures::DedicationType &dedicationType);
+  cta::common::dataStructures::DedicationType getDedicationType() const;
+
   void setDriveName(const std::string &driveName);
   std::string getDriveName() const;
 
@@ -57,9 +61,6 @@ public:
 
   void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
   cta::common::dataStructures::EntryLog getLastModificationLog() const;
-
-  void setReadonly(const bool readonly);
-  bool getReadonly() const;
 
   void setTag(const std::string &tag);
   std::string getTag() const;
@@ -72,9 +73,6 @@ public:
 
   void setVid(const std::string &vid);
   std::string getVid() const;
-
-  void setWriteonly(const bool writeonly);
-  bool getWriteonly() const;
   
 
 private:
@@ -90,6 +88,9 @@ private:
   cta::common::dataStructures::EntryLog m_creationLog;
   bool m_creationLogSet;
 
+  cta::common::dataStructures::DedicationType m_dedicationType;
+  bool m_dedicationTypeSet;
+
   std::string m_driveName;
   bool m_driveNameSet;
 
@@ -98,9 +99,6 @@ private:
 
   cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
-
-  bool m_readonly;
-  bool m_readonlySet;
 
   std::string m_tag;
   bool m_tagSet;
@@ -113,9 +111,6 @@ private:
 
   std::string m_vid;
   bool m_vidSet;
-
-  bool m_writeonly;
-  bool m_writeonlySet;
 
 }; // class Dedication
 

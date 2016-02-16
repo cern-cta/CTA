@@ -507,7 +507,7 @@ void cta::Scheduler::modifyUserGroupComment(const cta::common::dataStructures::S
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly, const bool writeonly, const std::string &userGroup,
+void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
         const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
 
 }
@@ -527,16 +527,9 @@ std::list<cta::common::dataStructures::Dedication> cta::Scheduler::getDedication
 }
 
 //------------------------------------------------------------------------------
-// modifyDedicationReadonly
+// modifyDedicationType
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyDedicationReadonly(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool readonly) {
-
-}
-
-//------------------------------------------------------------------------------
-// modifyDedicationWriteonly
-//------------------------------------------------------------------------------
-void cta::Scheduler::modifyDedicationWriteonly(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const bool writeonly) {
+void cta::Scheduler::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {
 
 }
 

@@ -25,15 +25,14 @@
 cta::common::dataStructures::Dedication::Dedication() {  
   m_commentSet = false;
   m_creationLogSet = false;
+  m_dedicationTypeSet = false;
   m_driveNameSet = false;
   m_fromTimestampSet = false;
   m_lastModificationLogSet = false;
-  m_readonlySet = false;
   m_tagSet = false;
   m_untilTimestampSet = false;
   m_userGroupSet = false;
   m_vidSet = false;
-  m_writeonlySet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -48,15 +47,14 @@ cta::common::dataStructures::Dedication::~Dedication() throw() {
 bool cta::common::dataStructures::Dedication::allFieldsSet() const {
   return m_commentSet
       && m_creationLogSet
+      && m_dedicationTypeSet
       && m_driveNameSet
       && m_fromTimestampSet
       && m_lastModificationLogSet
-      && m_readonlySet
       && m_tagSet
       && m_untilTimestampSet
       && m_userGroupSet
-      && m_vidSet
-      && m_writeonlySet;
+      && m_vidSet;
 }
 
 //------------------------------------------------------------------------------
@@ -93,6 +91,24 @@ cta::common::dataStructures::EntryLog cta::common::dataStructures::Dedication::g
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
   return m_creationLog;
+}
+
+//------------------------------------------------------------------------------
+// setDedicationType
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::Dedication::setDedicationType(const cta::common::dataStructures::DedicationType &dedicationType) {
+  m_dedicationType = dedicationType;
+  m_dedicationTypeSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getDedicationType
+//------------------------------------------------------------------------------
+cta::common::dataStructures::DedicationType cta::common::dataStructures::Dedication::getDedicationType() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
+  }
+  return m_dedicationType;
 }
 
 //------------------------------------------------------------------------------
@@ -147,24 +163,6 @@ cta::common::dataStructures::EntryLog cta::common::dataStructures::Dedication::g
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
   return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setReadonly
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::Dedication::setReadonly(const bool readonly) {
-  m_readonly = readonly;
-  m_readonlySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getReadonly
-//------------------------------------------------------------------------------
-bool cta::common::dataStructures::Dedication::getReadonly() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
-  }
-  return m_readonly;
 }
 
 //------------------------------------------------------------------------------
@@ -237,22 +235,4 @@ std::string cta::common::dataStructures::Dedication::getVid() const {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
   return m_vid;
-}
-
-//------------------------------------------------------------------------------
-// setWriteonly
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::Dedication::setWriteonly(const bool writeonly) {
-  m_writeonly = writeonly;
-  m_writeonlySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getWriteonly
-//------------------------------------------------------------------------------
-bool cta::common::dataStructures::Dedication::getWriteonly() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
-  }
-  return m_writeonly;
 }
