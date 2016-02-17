@@ -75,6 +75,7 @@ set (COMMON_LIB_SRC_FILES
   ArchiveRequest.cpp
   CreationLog.cpp
   Configuration.cpp
+  QtCoreAppSingleton.cpp
   SecurityIdentity.cpp
   TapePool.cpp
   Timer.cpp
@@ -88,6 +89,7 @@ install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 target_link_libraries (ctacommon
   ctautils
   pthread
+  QtCore
   ${SQLITE3_LIBRARY_RELEASE}
   uuid
   z
@@ -100,6 +102,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
+  QtCoreAppSingletonTest.cpp
   remoteFS/RemotePathTest.cpp
   threading/DaemonTest.cpp
   utils/UtilsTest.cpp
