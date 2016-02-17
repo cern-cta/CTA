@@ -52,7 +52,7 @@ public:
   /**
    * Destructor.
    */
-  ~DummyLogger() throw();
+  virtual ~DummyLogger();
 
   /**
    * Prepares the logger object for a call to fork().
@@ -61,18 +61,9 @@ public:
    * method until the call to fork() has completed.
    */
   void prepareForFork() ;
-
-  /**
-   * Dummy operator() method that does nothing.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params = std::list<Param>()) throw();
+  
+protected:
+  virtual void reducedSyslog(std::string msg);
 
 }; // class DummyLogger
 

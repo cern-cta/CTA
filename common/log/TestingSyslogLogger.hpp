@@ -48,8 +48,6 @@ public:
     SyslogLogger(socketName, programName, logMask)  {
   }
 
-  using SyslogLogger::cleanString;
-
 }; // class TestingSyslogLogger
 
 } // namespace log

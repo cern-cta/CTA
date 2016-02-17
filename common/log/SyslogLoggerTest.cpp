@@ -67,13 +67,13 @@ protected:
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = cta::log::TestingSyslogLogger::cleanString(s, false);
+  const std::string cleaned = cta::log::Logger::cleanString(s, false);
   ASSERT_EQ(std::string("'Hello there World'"), cleaned);
 }
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = cta::log::TestingSyslogLogger::cleanString(s, true);
+  const std::string cleaned = cta::log::Logger::cleanString(s, true);
   ASSERT_EQ(std::string("'Hello_there_World'"), cleaned);
 }
 

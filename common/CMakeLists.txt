@@ -57,6 +57,7 @@ set (COMMON_LIB_SRC_FILES
   log/Param.cpp
   log/StringLogger.cpp
   log/SyslogLogger.cpp
+  log/StdoutLogger.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp

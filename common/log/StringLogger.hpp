@@ -27,13 +27,6 @@
 #include "common/log/Logger.hpp"
 #include "common/threading/Mutex.hpp"
 
-#include <map>
-#include <sstream>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 namespace cta {
 namespace log {
 
@@ -66,38 +59,11 @@ public:
   void prepareForFork() ;
 
   /**
-   * Writes a message into the CASTOR logging system. Note that no exception
-   * will ever be thrown in case of failure. Failures will actually be
-   * silently ignored in order to not impact the processing.
-   *
-   * Note that this version of operator() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params = std::list<Param>());
-
-  /**
    * Extractor for the resulting logs.
    */
   std::string getLog() { return m_log.str(); }
 
 protected:
-
-  /**
-   * The log mask.
-   */
-  int m_logMask;
-
-  /**
-   * The maximum message length that the client syslog server can handle.
-   */
-  const size_t m_maxMsgLen;
 
   /**
    * Mutex used to protect the critical section of the StringLogger
@@ -109,11 +75,6 @@ protected:
    * The file descriptor of the socket used to send messages to syslog.
    */
   std::stringstream m_log;
-
-  /**
-   * Map from syslog integer priority to textual representation.
-   */
-  const std::map<int, std::string> m_priorityToText;
 
   /**
    * A reduced version of syslog.  This method is able to set the message

@@ -27,26 +27,22 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::log::DummyLogger::DummyLogger(const std::string &programName):
-  Logger(programName) {
+  Logger(programName, DEBUG) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::log::DummyLogger::~DummyLogger() throw() {
+cta::log::DummyLogger::~DummyLogger() {
 }
 
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void cta::log::DummyLogger::prepareForFork() {
-}
+void cta::log::DummyLogger::prepareForFork() {}
 
 //------------------------------------------------------------------------------
-// operator() 
+// reducedSyslog
 //------------------------------------------------------------------------------
-void cta::log::DummyLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) throw() {
-}
+void cta::log::DummyLogger::reducedSyslog(std::string msg) {}
+

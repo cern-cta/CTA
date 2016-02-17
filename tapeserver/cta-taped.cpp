@@ -53,7 +53,7 @@ int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
   std::unique_ptr<log::SyslogLogger> logPtr;
   try {
-    logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "tapeserverd",
+    logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-taped",
       log::DEBUG));
   } catch(exception::Exception &ex) {
     std::cerr <<

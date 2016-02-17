@@ -25,28 +25,12 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
 
-#include <errno.h>
-#include <sstream>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::log::StringLogger::StringLogger(const std::string &programName,
   const int logMask):
-  Logger(programName),
-  m_logMask(logMask),
-  m_maxMsgLen(SyslogLogger::determineMaxMsgLen()),
-  m_priorityToText(SyslogLogger::generatePriorityToTextMap()) {
-}
+  Logger(programName, logMask) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -58,60 +42,6 @@ cta::log::StringLogger::~StringLogger() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void cta::log::StringLogger::prepareForFork() {
-}
-
-//-----------------------------------------------------------------------------
-// operator() 
-//-----------------------------------------------------------------------------
-void cta::log::StringLogger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) {
-
-  const std::string rawParams;
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
-  const int pid = getpid();
-
-  //-------------------------------------------------------------------------
-  // Note that we do here part of the work of the real syslog call, by
-  // building the message ourselves. We then only call a reduced version of
-  // syslog (namely reducedSyslog). The reason behind it is to be able to set
-  // the message timestamp ourselves, in case we log messages asynchronously,
-  // as we do when retrieving logs from the DB
-  //-------------------------------------------------------------------------
-
-  // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) {
-    return;
-  }
-
-  // Try to find the textual representation of the syslog priority
-  std::map<int, std::string>::const_iterator priorityTextPair =
-    m_priorityToText.find(priority);
-
-  // Do nothing if the log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) {
-    return;
-  }
-
-  // Safe to get a reference to the textual representation of the priority
-  const std::string &priorityText = priorityTextPair->second;
-
-  std::ostringstream os;
-
-  SyslogLogger::writeLogMsg(
-    os,
-    priority,
-    priorityText,
-    msg,
-    params,
-    rawParams,
-    timeStamp,
-    m_programName,
-    pid);
-
-  reducedSyslog(os.str());
 }
 
 //-----------------------------------------------------------------------------
