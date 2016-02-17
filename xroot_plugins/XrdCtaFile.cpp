@@ -1688,6 +1688,20 @@ void XrdProFile::xCom_drive(const std::vector<std::string> &tokens, const cta::c
   help << tokens[0] << " dr/drive up/down (it is a synchronous command):" << std::endl
        << "\tup   --drive/-d <drive_name>" << std::endl
        << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;
+  std::string drive = getOptionValue(tokens, "-d", "--drive");
+  if(drive.empty()) {
+    m_data = help.str();
+    return;
+  }
+  if("up" == tokens[2]) {
+    m_scheduler->setDriveStatus(requester, drive, true, false);
+  }
+  else if("down" == tokens[2]) {
+    m_scheduler->setDriveStatus(requester, drive, false, hasOption(tokens, "-f", "--force"));
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1696,6 +1710,33 @@ void XrdProFile::xCom_drive(const std::vector<std::string> &tokens, const cta::c
 void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
+  std::list<cta::common::dataStructures::ArchiveFile> list = m_scheduler->reconcile(requester);  
+  if(list.size()>0) {
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
+    responseTable.push_back(header);    
+    for(auto it = list.cbegin(); it != list.cend(); it++) {
+      for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->getArchiveFileID());
+        currentRow.push_back(std::to_string((unsigned long long)jt->first));
+        currentRow.push_back(jt->second.getVid());
+        currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));
+        currentRow.push_back(std::to_string((unsigned long long)jt->second.getBlockId()));
+        currentRow.push_back(it->getEosFileID());
+        currentRow.push_back(std::to_string((unsigned long long)it->getFileSize()));
+        currentRow.push_back(it->getChecksumType());
+        currentRow.push_back(it->getChecksumValue());
+        currentRow.push_back(it->getStorageClass());
+        currentRow.push_back(it->getDrData().getDrOwner());
+        currentRow.push_back(it->getDrData().getDrGroup());
+        currentRow.push_back(it->getDrData().getDrInstance());
+        currentRow.push_back(it->getDrData().getDrPath());          
+        responseTable.push_back(currentRow);
+      }
+    }
+    m_data = formatResponse(responseTable);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1704,6 +1745,63 @@ void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
 void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpa/listpendingarchives [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
+  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+  bool extended = hasOption(tokens, "-x", "--extended");
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
+  if(tapepool.empty()) {
+    result = m_scheduler->getPendingArchiveJobs(requester);
+  }
+  else {
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(requester, tapepool);
+    if(list.size()>0) {
+      result[tapepool] = list;
+    }
+  }
+  if(result.size()>0) {
+    if(extended) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","EOS id","checksum type","checksum value","size","user","group","instance","path","diskpool","diskpool throughput"};
+      responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(it->first);
+          currentRow.push_back(jt->getArchiveFileID());
+          currentRow.push_back(jt->getRequest().getStorageClass());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getCopyNumber()));
+          currentRow.push_back(jt->getRequest().getEosFileID());
+          currentRow.push_back(jt->getRequest().getChecksumType());
+          currentRow.push_back(jt->getRequest().getChecksumValue());         
+          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getFileSize()));
+          currentRow.push_back(jt->getRequest().getRequester().getUserName());
+          currentRow.push_back(jt->getRequest().getRequester().getGroupName());
+          currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
+          currentRow.push_back(jt->getRequest().getDrData().getDrPath());
+          currentRow.push_back(jt->getRequest().getDiskpoolName());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getDiskpoolThroughput()));
+          responseTable.push_back(currentRow);
+        }
+      }
+      m_data = formatResponse(responseTable);
+    }
+    else {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"tapepool","total files","total size"};
+      responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->first);
+        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+        uint64_t size=0;
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          size += jt->getRequest().getFileSize();
+        }
+        currentRow.push_back(std::to_string((unsigned long long)size));
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1727,7 +1825,7 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " a/archive [--noencoding/-n] username groupname EOS_unique_id src_URL size checksum_type checksum_value storage_class DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
+  help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> username groupname EOS_unique_id src_URL size checksum_type checksum_value storage_class DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1735,7 +1833,7 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve [--noencoding/-n] username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
+  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1751,7 +1849,7 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve [--noencoding/-n] username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
+  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1759,7 +1857,7 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo [--noencoding/-n] username groupname CTA_ArchiveFileID storage_class DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
+  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID storage_class DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
 }
 
 //------------------------------------------------------------------------------

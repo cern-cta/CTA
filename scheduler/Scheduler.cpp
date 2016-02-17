@@ -699,8 +699,8 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::reconcile(co
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::map<cta::common::dataStructures::TapePool, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::map<cta::common::dataStructures::TapePool, std::list<cta::common::dataStructures::ArchiveJob> >(); 
+std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const {
+  return std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> >(); 
 }
 
 //------------------------------------------------------------------------------
@@ -713,8 +713,8 @@ std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArc
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::map<cta::common::dataStructures::Tape, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::map<cta::common::dataStructures::Tape, std::list<cta::common::dataStructures::RetrieveJob> >(); 
+std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const {
+  return std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> >(); 
 }
 
 //------------------------------------------------------------------------------

@@ -66,7 +66,7 @@ std::string cta::common::dataStructures::ArchiveJob::getArchiveFileID() const {
 //------------------------------------------------------------------------------
 // setCopyNumber
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveJob::setCopyNumber(const std::string &copyNumber) {
+void cta::common::dataStructures::ArchiveJob::setCopyNumber(const uint64_t copyNumber) {
   m_copyNumber = copyNumber;
   m_copyNumberSet = true;
 }
@@ -74,7 +74,7 @@ void cta::common::dataStructures::ArchiveJob::setCopyNumber(const std::string &c
 //------------------------------------------------------------------------------
 // getCopyNumber
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveJob::getCopyNumber() const {
+uint64_t cta::common::dataStructures::ArchiveJob::getCopyNumber() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveJob have been set!");
   }

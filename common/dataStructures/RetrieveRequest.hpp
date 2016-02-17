@@ -50,8 +50,8 @@ public:
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName() const;
 
-  void setDiskpoolThroughput(const std::string &diskpoolThroughput);
-  std::string getDiskpoolThroughput() const;
+  void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
+  uint64_t getDiskpoolThroughput() const;
 
   void setDrData(const cta::common::dataStructures::DRData &drData);
   cta::common::dataStructures::DRData getDrData() const;
@@ -76,7 +76,7 @@ private:
   std::string m_diskpoolName;
   bool m_diskpoolNameSet;
 
-  std::string m_diskpoolThroughput;
+  uint64_t m_diskpoolThroughput;
   bool m_diskpoolThroughputSet;
 
   cta::common::dataStructures::DRData m_drData;

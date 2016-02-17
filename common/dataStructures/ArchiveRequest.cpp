@@ -114,7 +114,7 @@ std::string cta::common::dataStructures::ArchiveRequest::getDiskpoolName() const
 //------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
+void cta::common::dataStructures::ArchiveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
   m_diskpoolThroughput = diskpoolThroughput;
   m_diskpoolThroughputSet = true;
 }
@@ -122,7 +122,7 @@ void cta::common::dataStructures::ArchiveRequest::setDiskpoolThroughput(const st
 //------------------------------------------------------------------------------
 // getDiskpoolThroughput
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveRequest::getDiskpoolThroughput() const {
+uint64_t cta::common::dataStructures::ArchiveRequest::getDiskpoolThroughput() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }

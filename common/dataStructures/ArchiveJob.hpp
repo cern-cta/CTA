@@ -46,8 +46,8 @@ public:
   void setArchiveFileID(const std::string &archiveFileID);
   std::string getArchiveFileID() const;
 
-  void setCopyNumber(const std::string &copyNumber);
-  std::string getCopyNumber() const;
+  void setCopyNumber(const uint64_t copyNumber);
+  uint64_t getCopyNumber() const;
 
   void setRequest(const cta::common::dataStructures::ArchiveRequest &request);
   cta::common::dataStructures::ArchiveRequest getRequest() const;
@@ -66,7 +66,7 @@ private:
   std::string m_archiveFileID;
   bool m_archiveFileIDSet;
 
-  std::string m_copyNumber;
+  uint64_t m_copyNumber;
   bool m_copyNumberSet;
 
   cta::common::dataStructures::ArchiveRequest m_request;

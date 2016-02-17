@@ -221,9 +221,9 @@ public:
 
   virtual std::list<cta::common::dataStructures::ArchiveFile> reconcile(const cta::common::dataStructures::SecurityIdentity &requester); // returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks
 
-  virtual std::map<cta::common::dataStructures::TapePool, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
+  virtual std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapePoolName) const;
-  virtual std::map<cta::common::dataStructures::Tape, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
+  virtual std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;
 
   virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(const cta::common::dataStructures::SecurityIdentity &requester) const;

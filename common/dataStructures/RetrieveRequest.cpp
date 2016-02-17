@@ -88,7 +88,7 @@ std::string cta::common::dataStructures::RetrieveRequest::getDiskpoolName() cons
 //------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setDiskpoolThroughput(const std::string &diskpoolThroughput) {
+void cta::common::dataStructures::RetrieveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
   m_diskpoolThroughput = diskpoolThroughput;
   m_diskpoolThroughputSet = true;
 }
@@ -96,7 +96,7 @@ void cta::common::dataStructures::RetrieveRequest::setDiskpoolThroughput(const s
 //------------------------------------------------------------------------------
 // getDiskpoolThroughput
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::RetrieveRequest::getDiskpoolThroughput() const {
+uint64_t cta::common::dataStructures::RetrieveRequest::getDiskpoolThroughput() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
