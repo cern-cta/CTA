@@ -47,6 +47,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/RootEntry.hpp"
@@ -568,7 +569,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
-  cta::Scheduler scheduler(mockNs, osdb, eosNs);
+  cta::catalogue::DummyCatalogue catalogue;
+  cta::Scheduler scheduler(catalogue, mockNs, osdb, eosNs);
 
   castor::tape::System::realWrapper sysWrapper;
 

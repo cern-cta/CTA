@@ -32,7 +32,11 @@
 //------------------------------------------------------------------------------
 // deprecated constructor
 //------------------------------------------------------------------------------
-cta::Scheduler::Scheduler(NameServer &ns, SchedulerDatabase &db, RemoteNS &remoteNS) {
+cta::Scheduler::Scheduler(
+  catalogue::Catalogue &catalogue,
+  NameServer &ns,
+  SchedulerDatabase &db,
+  RemoteNS &remoteNS) {
 }
 
 //------------------------------------------------------------------------------

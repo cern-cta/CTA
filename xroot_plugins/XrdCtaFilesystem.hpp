@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "catalogue/DummyCatalogue.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "remotens/EosNS.hpp"
@@ -80,6 +81,11 @@ protected:
    * The object used to populate the backend
    */
   cta::objectstore::BackendPopulator m_backendPopulator;
+
+  /**
+   * The CTA catalogue of tapes and tape files.
+   */
+  cta::catalogue::DummyCatalogue m_catalogue;
   
   /**
    * The database or object store holding all CTA persistent objects
@@ -90,6 +96,6 @@ protected:
    * The scheduler.
    */
   cta::Scheduler m_scheduler; 
-};
+}; // XrdProFilesystem
 
 }}

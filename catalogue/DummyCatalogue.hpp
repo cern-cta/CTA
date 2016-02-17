@@ -1,11 +1,11 @@
 /*
- * The CERN Tape Archive(CTA) project
- * Copyright(C) 2015  CERN
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- *(at your option) any later version.
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,93 +19,35 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/SQLiteDatabase.hpp"
 
-#include "common/dataStructures/AdminHost.hpp"
-#include "common/dataStructures/AdminUser.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/ArchiveFileSummary.hpp"
-#include "common/dataStructures/ArchiveJob.hpp"
-#include "common/dataStructures/ArchiveMount.hpp"
-#include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/dataStructures/ArchiveRoute.hpp"
-#include "common/dataStructures/CancelRetrieveRequest.hpp"
-#include "common/dataStructures/Dedication.hpp"
-#include "common/dataStructures/DedicationType.hpp"
-#include "common/dataStructures/DeleteArchiveRequest.hpp"
-#include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/DriveState.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/ListStorageClassRequest.hpp"
-#include "common/dataStructures/LogicalLibrary.hpp"
-#include "common/dataStructures/MountType.hpp"
-#include "common/dataStructures/ReadTestResult.hpp"
-#include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/RepackType.hpp"
-#include "common/dataStructures/Requester.hpp"
-#include "common/dataStructures/RetrieveJob.hpp"
-#include "common/dataStructures/RetrieveMount.hpp"
-#include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "common/dataStructures/StorageClass.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
-#include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/TapeMount.hpp"
-#include "common/dataStructures/TapePool.hpp"
-#include "common/dataStructures/TestSourceType.hpp"
-#include "common/dataStructures/UpdateFileInfoRequest.hpp"
-#include "common/dataStructures/UserGroup.hpp"
-#include "common/dataStructures/User.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
-#include "common/dataStructures/VerifyInfo.hpp"
-#include "common/dataStructures/WriteTestResult.hpp"
+// The header file for atomic was is actually called cstdatomic in gcc 4.4
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
+    #include <cstdatomic>
+#else
+  #include <atomic>
+#endif
 
-#include "common/exception/Exception.hpp"
-#include "scheduler/TapeMount.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
-
-#include "common/forwardDeclarations.hpp"
-#include "catalogue/MockCatalogue.hpp"
-
-#include <list>
-#include <map>
-#include <memory>
-#include <stdint.h>
 #include <string>
 
 namespace cta {
+namespace catalogue {
 
 /**
- * Class implementing a tape resource scheduler.
+ * Dummy CTA catalogue to facilitate unit testing.
  */
-class Scheduler {
-  
+class DummyCatalogue: public Catalogue {
 public:
-  
-  /**
-   * Deprecated Constructor.
-   */
-  Scheduler(
-    cta::catalogue::Catalogue &catalogue,
-    NameServer &ns,
-    SchedulerDatabase &db,
-    RemoteNS &remoteNS);
-  
+
   /**
    * Constructor.
    */
-  Scheduler();
+  DummyCatalogue();
 
   /**
    * Destructor.
    */
-  virtual ~Scheduler() throw();
-
-  virtual void queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ArchiveRequest &request);
-  virtual void queueRetrieveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::RetrieveRequest &request);
-  virtual void deleteArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::DeleteArchiveRequest &request);
-  virtual void cancelRetrieveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::CancelRetrieveRequest &request);
-  virtual void updateFileInfoRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::UpdateFileInfoRequest &request);
-  virtual void listStorageClassRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ListStorageClassRequest &request);
+  virtual ~DummyCatalogue();
 
   virtual void createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment);
 
@@ -131,8 +73,7 @@ public:
   virtual void modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes);
   virtual void modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName,
-   const std::string &comment);
+  virtual void createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment);
   virtual void deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb);
   virtual std::list<cta::common::dataStructures::ArchiveRoute> getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual void modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName);
@@ -143,8 +84,8 @@ public:
   virtual std::list<cta::common::dataStructures::LogicalLibrary> getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual void modifyLogicalLibraryComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment);
 
-  virtual void createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-   const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment);
+  virtual void createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
+                          const bool disabledValue, const bool fullValue, const std::string &comment);
   virtual void deleteTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
   virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &requester,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
@@ -159,16 +100,15 @@ public:
   virtual void setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool disabledValue);
   virtual void modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &comment);
 
-  virtual void createUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup,
-   const std::string &comment);
+  virtual void createUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment);
   virtual void deleteUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group);
   virtual std::list<cta::common::dataStructures::User> getUsers(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual void modifyUserUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup);
   virtual void modifyUserComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment);
 
   virtual void createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
-   const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-   const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment);
+                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
+                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment);
   virtual void deleteUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name);
   virtual std::list<cta::common::dataStructures::UserGroup> getUserGroups(const cta::common::dataStructures::SecurityIdentity &requester) const;
   virtual void modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority);
@@ -194,46 +134,42 @@ public:
   virtual void modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp);
   virtual void modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment);
 
-  virtual void repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType);
-  virtual void cancelRepack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
-  virtual std::list<cta::common::dataStructures::RepackInfo> getRepacks(const cta::common::dataStructures::SecurityIdentity &requester);
-  virtual cta::common::dataStructures::RepackInfo getRepack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
-
-  virtual void shrink(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapepool); // removes extra tape copies from a specific pool(usually an "_2" pool)
-
-  virtual void verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles); //if last argument is 0, all files are verified
-  virtual void cancelVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid);
-  virtual std::list<cta::common::dataStructures::VerifyInfo> getVerifys(const cta::common::dataStructures::SecurityIdentity &requester) const;
-  virtual cta::common::dataStructures::VerifyInfo getVerify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;
-
   virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
   virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
-
-  virtual cta::common::dataStructures::ReadTestResult readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
-   const bool checkChecksum, const std::string &output, const std::string &tag) const; //when output=="null" discard the data read
-  virtual cta::common::dataStructures::WriteTestResult writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const std::string &inputFile, const std::string &tag) const;
-  virtual cta::common::dataStructures::WriteTestResult write_autoTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
-   const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const;
-
-  virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force);
-
-  virtual std::list<cta::common::dataStructures::ArchiveFile> reconcile(const cta::common::dataStructures::SecurityIdentity &requester); // returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks
-
-  virtual std::map<cta::common::dataStructures::TapePool, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
-  virtual std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapePoolName) const;
-  virtual std::map<cta::common::dataStructures::Tape, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester) const;
-  virtual std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) const;
-
-  virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(const cta::common::dataStructures::SecurityIdentity &requester) const;
-
-  virtual std::unique_ptr<cta::common::dataStructures::TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
   
-  virtual std::unique_ptr<TapeMount> _old_getNextMount(const std::string &logicalLibraryName, const std::string & driveName);
+  virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force);
+  /**
+   * Returns the next identifier to be used for a new archive file.
+   *
+   * @return The next identifier to be used for a new archive file.
+   */
+  virtual uint64_t getNextArchiveFileId();
+
+  /**
+   * Notifies the catalogue that a file has been written to tape.
+   *
+   * @param archiveRequest The identifier of the archive file.
+   *
+   */
+  virtual void fileWrittenToTape(
+    const cta::common::dataStructures::ArchiveRequest &archiveRequest,
+    const cta::common::dataStructures::TapeFileLocation tapeFileLocation);
 
 private:
 
-}; // class Scheduler
+  /**
+   * SQLite database handle.
+   */
+  SQLiteDatabase m_db;
 
+  /**
+   * The next identifier to be used for a new archive file.
+   */
+  std::atomic<uint64_t> m_nextArchiveFileId;
+
+}; // class DummyCatalogue
+
+} // namespace catalogue
 } // namespace cta
