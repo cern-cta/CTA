@@ -19,16 +19,6 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/SQLiteDatabase.hpp"
-
-// The header file for atomic was is actually called cstdatomic in gcc 4.4
-#if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
-    #include <cstdatomic>
-#else
-  #include <atomic>
-#endif
-
-#include <string>
 
 namespace cta {
 namespace catalogue {
@@ -38,11 +28,6 @@ namespace catalogue {
  */
 class DummyCatalogue: public Catalogue {
 public:
-
-  /**
-   * Constructor.
-   */
-  DummyCatalogue();
 
   /**
    * Destructor.
@@ -157,18 +142,6 @@ public:
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
     const cta::common::dataStructures::TapeFileLocation tapeFileLocation);
-
-private:
-
-  /**
-   * SQLite database handle.
-   */
-  SQLiteDatabase m_db;
-
-  /**
-   * The next identifier to be used for a new archive file.
-   */
-  std::atomic<uint64_t> m_nextArchiveFileId;
 
 }; // class DummyCatalogue
 

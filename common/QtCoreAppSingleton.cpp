@@ -19,8 +19,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/QtCoreAppSingleton.hpp"
 
-#include <iostream>
-
 #include <string.h>
 #include <strings.h>
 
@@ -45,7 +43,6 @@ cta::common::QtCoreAppSingleton::QtCoreAppSingleton() {
 // destructor
 //------------------------------------------------------------------------------
 cta::common::QtCoreAppSingleton::~QtCoreAppSingleton() {
-  std::cout << "Deleting Qt core application object" << std::endl;
   delete m_app;
 }
 

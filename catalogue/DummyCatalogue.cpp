@@ -17,26 +17,7 @@
  */
 
 #include "catalogue/DummyCatalogue.hpp"
-#include "common/exception/Exception.hpp"
 
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::catalogue::DummyCatalogue::DummyCatalogue():
-  m_db(":memory:"),
-  m_nextArchiveFileId(0) {
-
-  char *zErrMsg = 0;
-  if(SQLITE_OK != sqlite3_exec(m_db.getHandle(), "PRAGMA foreign_keys = ON;",
-    0, 0, &zErrMsg)) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to turn on foreign key support in SQLite: " <<
-      zErrMsg;
-    sqlite3_free(zErrMsg);
-    throw(ex);
-  }
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -422,7 +403,7 @@ void cta::catalogue::DummyCatalogue::setDriveStatus(const cta::common::dataStruc
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t cta::catalogue::DummyCatalogue::getNextArchiveFileId() {
-  return m_nextArchiveFileId++;
+  return 0;
 }
 
 //------------------------------------------------------------------------------
