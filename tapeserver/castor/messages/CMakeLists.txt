@@ -59,7 +59,7 @@ add_dependencies(ctamessages ctamessagesprotobuf)
 
 target_link_libraries(ctamessages
   ctamessagesprotobuf
-  ctalog
+  castorlog
   ctamediachanger
   ctautils
   protobuf

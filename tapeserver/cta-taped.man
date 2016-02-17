@@ -1,36 +1,39 @@
-.\" Copyright (C) 2003  CERN
-.\" This program is free software; you can redistribute it and/or
-.\" modify it under the terms of the GNU General Public License
-.\" as published by the Free Software Foundation; either version 2
-.\" of the License, or (at your option) any later version.
+.\" The CERN Tape Archive (CTA) project
+.\" Copyright (C) 2015  CERN
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
 .\" This program is distributed in the hope that it will be useful,
 .\" but WITHOUT ANY WARRANTY; without even the implied warranty of
 .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .\" GNU General Public License for more details.
+.\"
 .\" You should have received a copy of the GNU General Public License
-.\" along with this program; if not, write to the Free Software
-.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH TAPESERVERD "8castor" "$Date: 2014/03/24 14:44:00 $" CASTOR "CASTOR"
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH CTA-TAPED "8cta" "$Date: 2014/03/24 14:44:00 $" CTA "CTA"
 .SH NAME
-tapeserverd \- Tape server daemon
+cta-taped \- Tape server daemon
 .SH SYNOPSIS
-.BI "tapeserverd [OPTIONS]"
+.BI "cta-taped [OPTIONS]"
 
 .SH DESCRIPTION
-\fBtapeserverd\fP is the daemon responsible for controlling one or more tape
+\fBcta-taped\fP is the daemon responsible for controlling one or more tape
 drives.
 .P
-When \fBtapeserverd\fP is executed it immediately forks with the parent
+When \fBcta-taped\fP is executed it immediately forks with the parent
 terminating and the child running in the background.  If required the
-\fB\-f, \-\-foreground\fP option can be used to stop \fBtapeserverd\fP from
+\fB\-f, \-\-foreground\fP option can be used to stop \fBcta-taped\fP from
 forking and keep the parent process in the foreground.
 
 .SH TAPE LIBRARY SUPPORT
 
-CASTOR supports two types of tape libraries, SCSI compatible ones and Oracle
-Automatic Cartridge System (ACS) ones.  The tapeserverd daemon requires a tape
+CTA supports two types of tape libraries, SCSI compatible ones and Oracle
+Automatic Cartridge System (ACS) ones.  The cta-taped daemon requires a tape
 library daemon to be installed and run on the same tape server as itself.
-There are two types of CASTOR tape library daemons, one for SCSI compatible tape
+There are two types of CTA tape library daemons, one for SCSI compatible tape
 libraries and one for ACS tape libraries.
 
 A SCSI compatible tape library requires the following daemon:
@@ -39,45 +42,45 @@ A SCSI compatible tape library requires the following daemon:
 
 The installation RPM for the \fBrmcd\fP daemon and its manual page is:
 
-\fBcastor-rmc-server-2.1.15-XX.slc6.x86_64\fP
+\fBcta-rmc-server-0.0-XX.slc6.x86_64\fP
 
-The \fBrmcd\fP daemon can be started, stopped and its status queried using
+The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
 the usual service commands:
 
-\fBservice rmcd start\fP
+\fBservice cta-rmcd start\fP
 .br
-\fBservice rmcd status\fP
+\fBservice cta-rmcd status\fP
 .br
-\fBservice rmcd stop\fP
+\fBservice cta-rmcd stop\fP
 
 An ACS tape library requires the following daemon:
 
-\fBacsd\fP
+\fBcta-acsd\fP
 
-The installation RPM for the \fBacsd\fP daemon and its manual page is:
+The installation RPM for the \fBcta-acsd\fP daemon and its manual page is:
 
-\fBcastor-acs-server-2.1.15-17.slc6.x86_64\fP
+\fBcta-acs-server-0.0.slc6.x86_64\fP
 
-The \fBacsd\fP daemon can be started, stopped and its status queried using
+The \fBcta-acsd\fP daemon can be started, stopped and its status queried using
 the usual service commands:
 
-\fBservice acsd start\fP
+\fBservice cta-acsd start\fP
 .br
-\fBservice acsd status\fP
+\fBservice cta-acsd status\fP
 .br
-\fBservice acsd stop\fP
+\fBservice cta-acsd stop\fP
 
 Even though there is a separate daemon for each of the supported tape library
 types, there is a single generic set of command-line tools for mounting and
 un-mounting tapes:
 
-\fBcastor-tape-mediachanger-mount\fP
+\fBcta-tape-mediachanger-mount\fP
 .br
-\fBcastor-tape-mediachanger-dismount\fP
+\fBcta-tape-mediachanger-dismount\fP
 
 The installation RPM for these command-line tools and their manual pages is:
 
-\fBcastor-tape-developer-tools-2.1.15-XX.slc6.x86_64\fP
+\fBcta-tape-developer-tools-2.1.15-XX.slc6.x86_64\fP
 
 .SH OPTIONS
 .TP
@@ -88,17 +91,12 @@ Remain in the foreground.
 Prints the usage message.
 .TP
 \fB\-c, \-\-config <config-file>
-Set the location of the CASTOR configuration file (castor.conf).  The default location is /etc/castor/castor.conf.
+Set the location of the CTA configuration file (cta.conf).  The default location is /etc/cta/cta.conf.
 
-.SH CASTOR CONFIGURATION PARAMETERS
-The tapeserver daemon reads and uses the following CASTOR configuration
-parameters which are specified within the CASTOR configuration file (the
-default location is /etc/castor/castor.conf).
-
-.TP
-\fBDiskManager MoverHandlerPort
-The port on which the disk manager daemon listens to movers for their metadata
-operations.
+.SH CTA CONFIGURATION PARAMETERS
+The cta-taped daemon reads and uses the following CTA configuration
+parameters which are specified within the CTA configuration file (the
+default location is /etc/cta/cta.conf).
 
 .TP
 \fBRMC HOST
@@ -107,11 +105,6 @@ The host on which the rmcd daemon is running.
 .TP
 \fBRMC MAXRQSTATTEMPTS
 Maximum number of attempts a retriable RMC request should be issued.
-
-.TP
-\fBTapeServer AdminPort
-The TCP/IP port on which the tape server daemon listens for incoming
-connections from the tpconfig admin command.
 
 .TP
 \fBTapeServer BlkMoveTimeout
@@ -148,21 +141,6 @@ files to recall from tape, this parameter defines the maximum number of files
 the set may contain.
 
 .TP
-\fBTapeServer InternalPort 54322;
-The TCP/IP port on which ZMQ sockets will bind for internal communication
-between forked sessions and the parent tapeserverd process.
-
-.TP
-\fBTapeServer JobPort
-The TCP/IP port on which the tape server daemon listens for incoming
-connections and jobs from the VDQM server.
-
-.TP
-\fBTapeServer LabelPort
-The TCP/IP port on which the tape server daemon listens for incoming
-connections from the tape labeling command.
-
-.TP
 \fBTapeServer MaxBytesBeforeFlush
 The value of this parameter defines the maximum number of bytes to be written
 to tape before a flush to tape (synchronised tape-mark).  Please note that a
@@ -188,36 +166,9 @@ Number of memory buffers in the data-transfer cache.
 The number of disk I/O threads.
 
 .TP
-\fBTapeServer VdqmHosts host host2 host3 ...
-The list of trusted vdqm hosts.
-
-.TP
 \fBTapeServer RemoteFileProtocol
 The protocol to be used when transfering files to and from disk servers.
 Possible values are RFIO or XROOT.  The value is not case sensitive.
-
-.TP
-\fBTapeServer VdqmDriveSyncInterval
-The time interval in seconds to wait between attempts to keep the vdqmd
-daemon synchronized with the state of a tape drive within the catalogue of the
-tapeserverd daemon.
-
-.TP
-\fBTapeServer WaitJobTimeout
-The maximum time in seconds that the data-transfer session can take to get the
-transfer job from the client.
-
-.TP
-\fBUPV HOST
-The host on which the cupvd daemon is running.
-
-.TP
-\fBVDQM HOST
-The host on which the vdqmd daemon is running.
-
-.TP
-\fBVMGR HOST
-The host on which the vmgrd daemon is running.
 
 .TP
 \fBXROOT PrivateKey
@@ -225,17 +176,17 @@ The file hosting the Xroot private key, needed to sign Xroot URLs.
 
 .SH FILES
 .TP
-.B /etc/castor/TPCONFIG
+.B /etc/cta/TPCONFIG
 The tape drive configuration file.
 .TP
-.B /etc/castor/castor.conf
-The CASTOR configuration file.
+.B /etc/cta/cta.conf
+The CTA configuration file.
 .TP
-.B /var/log/castor/tapeserverd.log
+.B /var/log/cta/cta-tapeserverd.log
 The tape tapeserver log file.
 
 .SH TRADEMARKS
 Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
 
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@cern.ch>
+\fBCTA\fP Team

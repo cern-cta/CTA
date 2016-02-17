@@ -1,7 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
 
-include_directories(/usr/include/shift)
-
 set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp
@@ -101,6 +99,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LogContextTest.cpp
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp
+  log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
   threading/DaemonTest.cpp
   utils/UtilsTest.cpp

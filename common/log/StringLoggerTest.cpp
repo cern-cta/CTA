@@ -30,8 +30,8 @@ using namespace cta::log;
 namespace unitTests {
   TEST(cta_log_StringLogger, basicTest) {
     std::string jat = "Just a test";
-    StringLogger sl("cta_log_StringLogger");
-    sl(LOG_INFO, jat);
+    StringLogger sl("cta_log_StringLogger", DEBUG);
+    sl(INFO, jat);
     ASSERT_NE(std::string::npos, sl.getLog().find(jat));
   }
 }

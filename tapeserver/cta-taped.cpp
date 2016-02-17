@@ -63,13 +63,13 @@ int main(const int argc, char **const argv) {
   }
   log::Logger &log = *logPtr;
 
-  int programRc = 1; // Be pessimistic
+  int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
   } catch(exception::Exception &ex) {
     std::list<log::Param> params = {
       log::Param("message", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CASTOR exception", params);
+    log(log::ERR, "Caught an unexpected CTA exception", params);
   } catch(std::exception &se) {
     std::list<log::Param> params = {log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception", params);
@@ -100,7 +100,7 @@ static std::string argvToString(const int argc, const char *const *const argv);
 //// Writes the specified TPCONFIG lines to the specified logging system.
 ////
 //// @param log The logging system.
-//// @param lines The lines parsed from /etc/castor/TPCONFIG.
+//// @param lines The lines parsed from /etc/cta/TPCONFIG.
 ////------------------------------------------------------------------------------
 //static void logTpconfigLines(cta::log::Logger &log,
 //  const cta::tape::daemon::TpconfigLines &lines);
@@ -109,7 +109,7 @@ static std::string argvToString(const int argc, const char *const *const argv);
 //// Writes the specified TPCONFIG lines to the logging system.
 ////
 //// @param log The logging system.
-//// @param line The line parsed from /etc/castor/TPCONFIG.
+//// @param line The line parsed from /etc/cta/TPCONFIG.
 ////------------------------------------------------------------------------------
 //static void logTpconfigLine(cta::log::Logger &log,
 //  const cta::tape::daemon::TpconfigLine &line);

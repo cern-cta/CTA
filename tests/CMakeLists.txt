@@ -26,7 +26,6 @@ target_link_libraries(unitTests
   ctaexceptionunittests
   ctaiounittests
   ctalegacymsgunittests
-  ctalogunittests
   ctamessagesunittests
   ctaserverunittests
   ctatapereactorunittests

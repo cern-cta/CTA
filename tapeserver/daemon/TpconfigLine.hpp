@@ -24,7 +24,7 @@ namespace cta { namespace tape { namespace daemon {
 
 /**
  * The data stored in a data-line (as opposed to a comment-line) from a
- * TPCONFIG file (/etc/castor/TPCONFIG).
+ * TPCONFIG file (/etc/cta/TPCONFIG).
  */
 struct TpconfigLine {
   /**

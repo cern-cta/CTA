@@ -14,9 +14,9 @@ set (LOG_LIB_SRC_FILES
   LogContext.cpp
   Message.cpp
   Param.cpp)
-add_library (ctalog ${LOG_LIB_SRC_FILES})
+add_library (castorlog ${LOG_LIB_SRC_FILES})
 
-add_library (ctalogunittests SHARED
+add_library (castorlogunittests SHARED
   ParamTest.cpp
   LogContextTest.cpp
   StringLoggerTest.cpp

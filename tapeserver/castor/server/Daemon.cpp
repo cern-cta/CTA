@@ -70,10 +70,15 @@ void castor::server::Daemon::parseCommandLine(int argc,
   longopts[2].flag = NULL;
   longopts[2].val = 'h';
 
-  longopts[3].name = 0;
+  memset(&longopts[3], 0, sizeof(struct ::option));
 
   char c;
-  while ((c = getopt_long(argc, argv, "fc:h", longopts, NULL)) != -1) {
+  // Reset getopt's global variables to make sure we start fresh
+  optind=0;
+  // Prevent getopt from printing out errors on stdout
+  opterr=0;
+  // We ask getopt to not reshuffle argv ('+')
+  while ((c = getopt_long(argc, argv, "+fc:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -105,7 +110,6 @@ void castor::server::Daemon::help(const std::string &programName)
     "\n"
     "\t--foreground            or -f         \tRemain in the Foreground\n"
     "\t--config <config-file>  or -c         \tConfiguration file\n"
-    "\t--metrics               or -m         \tEnable metrics collection\n"
     "\t--help                  or -h         \tPrint this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";

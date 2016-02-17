@@ -1,6 +1,6 @@
 # Arguments for the tape server daemon
 #   -f             keep process in the foreground, do not fork
 #   -h             display help and exit
-#   -c             config file location (castor.conf)
+#   -c             config file location (cta.conf)
 #
-#TAPEBRIDGED_OPTIONS=
+#CTA_TAPED_OPTIONS=
