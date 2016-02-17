@@ -26,7 +26,6 @@ cta::common::dataStructures::WriteTestResult::WriteTestResult() {
   m_checksumsSet = false;
   m_driveNameSet = false;
   m_errorsSet = false;
-  m_noOfFilesWrittenSet = false;
   m_totalBytesWrittenSet = false;
   m_totalFilesWrittenSet = false;
   m_totalTimeInSecondsSet = false;
@@ -46,7 +45,6 @@ bool cta::common::dataStructures::WriteTestResult::allFieldsSet() const {
   return m_checksumsSet
       && m_driveNameSet
       && m_errorsSet
-      && m_noOfFilesWrittenSet
       && m_totalBytesWrittenSet
       && m_totalFilesWrittenSet
       && m_totalTimeInSecondsSet
@@ -105,24 +103,6 @@ std::map<int,std::string> cta::common::dataStructures::WriteTestResult::getError
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
   }
   return m_errors;
-}
-
-//------------------------------------------------------------------------------
-// setNoOfFilesWritten
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::WriteTestResult::setNoOfFilesWritten(const uint64_t noOfFilesWritten) {
-  m_noOfFilesWritten = noOfFilesWritten;
-  m_noOfFilesWrittenSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getNoOfFilesWritten
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::WriteTestResult::getNoOfFilesWritten() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the WriteTestResult have been set!");
-  }
-  return m_noOfFilesWritten;
 }
 
 //------------------------------------------------------------------------------

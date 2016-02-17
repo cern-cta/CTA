@@ -51,6 +51,7 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeMount.hpp"
 #include "common/dataStructures/TapePool.hpp"
+#include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserGroup.hpp"
 #include "common/dataStructures/User.hpp"
@@ -207,9 +208,10 @@ public:
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
 
   virtual cta::common::dataStructures::ReadTestResult readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
-   const bool checkChecksum, const uint64_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const;
-  virtual cta::common::dataStructures::WriteTestResult writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
-   const bool randomSize, const bool devZero, const bool devURandom, const std::list<std::string> &inputFiles, const std::string &tag) const;
+   const bool checkChecksum, const std::string &output, const std::string &tag) const; //when output=="null" discard the data read
+  virtual cta::common::dataStructures::WriteTestResult writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const std::string &inputFile, const std::string &tag) const;
+  virtual cta::common::dataStructures::WriteTestResult write_autoTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
+   const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const;
 
   virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const bool up, const bool force);
 

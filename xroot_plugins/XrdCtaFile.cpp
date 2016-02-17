@@ -1579,10 +1579,105 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " te/test read/write_rand/write_def (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
-       << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --retries_per_file/-r <number_of_retries_per_file> [--outputdir/-o <output_dir> or --null/-n] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite_rand --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> [--zero/-z or --urandom/-u] [--tag/-t <tag_name>]" << std::endl
-       << "\twrite_def --drive/-d <drive_name> --vid/-v <vid> [--file/-f <filename> or --filelist/-f <filename_with_file_list>] [--tag/-t <tag_name>]" << std::endl;
+  help << tokens[0] << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
+       << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
+       << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
+       << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;
+  std::string drive = getOptionValue(tokens, "-d", "--drive");
+  std::string vid = getOptionValue(tokens, "-v", "--vid");
+  if(vid.empty() || drive.empty()) {
+    m_data = help.str();
+    return;
+  }
+  std::string tag = getOptionValue(tokens, "-t", "--tag");
+  if("read" == tokens[2]) {
+    std::string firstfseq_s = getOptionValue(tokens, "-f", "--firstfseq");
+    std::string lastfseq_s = getOptionValue(tokens, "-l", "--lastfseq");
+    std::string output = getOptionValue(tokens, "-o", "--output");
+    if(firstfseq_s.empty() || lastfseq_s.empty() || output.empty()) {
+      m_data = help.str();
+      return;
+    }    
+    bool checkchecksum = hasOption(tokens, "-c", "--checkchecksum");
+    uint64_t firstfseq; std::stringstream firstfseq_ss; firstfseq_ss << firstfseq_s; firstfseq_ss >> firstfseq;
+    uint64_t lastfseq; std::stringstream lastfseq_ss; lastfseq_ss << lastfseq_s; lastfseq_ss >> lastfseq;
+    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(requester, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag);   
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    responseTable.push_back(header);
+    for(auto it = res.getChecksums().cbegin(); it != res.getChecksums().cend(); it++) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.getErrors().find(it->first) != res.getErrors().cend()) {
+        currentRow.push_back(res.getErrors().at(it->first));
+      }
+      else {
+        currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+    }
+    m_data = formatResponse(responseTable);
+    std::stringstream ss;
+    ss << std::endl << "Drive: " << res.getDriveName() << " Vid: " << res.getVid() << " #Files: " << res.getTotalFilesRead() << " #Bytes: " << res.getTotalBytesRead() 
+       << " Time: " << res.getTotalTimeInSeconds() << " s Speed(avg): " << (long double)res.getTotalBytesRead()/(long double)res.getTotalTimeInSeconds() << " B/s" <<std::endl;
+    m_data += ss.str();   
+  }
+  else if("write" == tokens[2] || "write_auto" == tokens[2]) {
+    cta::common::dataStructures::WriteTestResult res;
+    if("write" == tokens[2]) { //write
+      std::string file = getOptionValue(tokens, "-f", "--file");
+      if(file.empty()) {
+        m_data = help.str();
+        return;
+      }  
+      res = m_scheduler->writeTest(requester, drive, vid, file, tag);
+    }
+    else { //write_auto
+      std::string number_s = getOptionValue(tokens, "-n", "--number");
+      std::string size_s = getOptionValue(tokens, "-s", "--size");
+      std::string input = getOptionValue(tokens, "-i", "--input");
+      if(number_s.empty()||size_s.empty()||(input!="zero"&&input!="urandom")) {
+        m_data = help.str();
+        return;
+      }
+      uint64_t number; std::stringstream number_ss; number_ss << number_s; number_ss >> number;
+      uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
+      cta::common::dataStructures::TestSourceType type;
+      if(input=="zero") { //zero
+        type = cta::common::dataStructures::TestSourceType::devzero;
+      }
+      else { //urandom
+        type = cta::common::dataStructures::TestSourceType::devurandom;
+      }
+      res = m_scheduler->write_autoTest(requester, drive, vid, number, size, type, tag);
+    }
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    responseTable.push_back(header);
+    for(auto it = res.getChecksums().cbegin(); it != res.getChecksums().cend(); it++) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.getErrors().find(it->first) != res.getErrors().cend()) {
+        currentRow.push_back(res.getErrors().at(it->first));
+      }
+      else {
+        currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+    }
+    m_data = formatResponse(responseTable);
+    std::stringstream ss;
+    ss << std::endl << "Drive: " << res.getDriveName() << " Vid: " << res.getVid() << " #Files: " << res.getTotalFilesWritten() << " #Bytes: " << res.getTotalBytesWritten() 
+       << " Time: " << res.getTotalTimeInSeconds() << " s Speed(avg): " << (long double)res.getTotalBytesWritten()/(long double)res.getTotalTimeInSeconds() << " B/s" <<std::endl;
+    m_data += ss.str();    
+  }
+  else {
+    m_data = help.str();
+  }
 }
 
 //------------------------------------------------------------------------------

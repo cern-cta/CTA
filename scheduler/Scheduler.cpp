@@ -658,7 +658,7 @@ cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSu
 // readTest
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
-        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const uint64_t retriesPerFile, const std::string &outputDir, const bool redirectToDevNull, const std::string &tag) const {
+        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output, const std::string &tag) const {
   return cta::common::dataStructures::ReadTestResult(); 
 }
 
@@ -666,7 +666,15 @@ cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::
 // writeTest
 //------------------------------------------------------------------------------
 cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
-        const uint64_t numberOfFiles, const uint64_t fileSize, const bool randomSize, const bool devZero, const bool devURandom, const std::list<std::string> &inputFiles, const std::string &tag) const {
+        const std::string &inputFile, const std::string &tag) const {
+  return cta::common::dataStructures::WriteTestResult(); 
+}
+
+//------------------------------------------------------------------------------
+// write_autoTest
+//------------------------------------------------------------------------------
+cta::common::dataStructures::WriteTestResult cta::Scheduler::write_autoTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,
+        const uint64_t numberOfFiles, const uint64_t fileSize, const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const {
   return cta::common::dataStructures::WriteTestResult(); 
 }
 

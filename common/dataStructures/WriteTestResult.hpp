@@ -51,9 +51,6 @@ public:
   void setErrors(const std::map<int,std::string> &errors);
   std::map<int,std::string> getErrors() const;
 
-  void setNoOfFilesWritten(const uint64_t noOfFilesWritten);
-  uint64_t getNoOfFilesWritten() const;
-
   void setTotalBytesWritten(const uint64_t totalBytesWritten);
   uint64_t getTotalBytesWritten() const;
 
@@ -82,9 +79,6 @@ private:
 
   std::map<int,std::string> m_errors;
   bool m_errorsSet;
-
-  uint64_t m_noOfFilesWritten;
-  bool m_noOfFilesWrittenSet;
 
   uint64_t m_totalBytesWritten;
   bool m_totalBytesWrittenSet;

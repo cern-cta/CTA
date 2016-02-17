@@ -26,7 +26,6 @@ cta::common::dataStructures::ReadTestResult::ReadTestResult() {
   m_checksumsSet = false;
   m_driveNameSet = false;
   m_errorsSet = false;
-  m_noOfFilesReadSet = false;
   m_totalBytesReadSet = false;
   m_totalFilesReadSet = false;
   m_totalTimeInSecondsSet = false;
@@ -46,7 +45,6 @@ bool cta::common::dataStructures::ReadTestResult::allFieldsSet() const {
   return m_checksumsSet
       && m_driveNameSet
       && m_errorsSet
-      && m_noOfFilesReadSet
       && m_totalBytesReadSet
       && m_totalFilesReadSet
       && m_totalTimeInSecondsSet
@@ -105,24 +103,6 @@ std::map<int,std::string> cta::common::dataStructures::ReadTestResult::getErrors
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ReadTestResult have been set!");
   }
   return m_errors;
-}
-
-//------------------------------------------------------------------------------
-// setNoOfFilesRead
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ReadTestResult::setNoOfFilesRead(const uint64_t noOfFilesRead) {
-  m_noOfFilesRead = noOfFilesRead;
-  m_noOfFilesReadSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getNoOfFilesRead
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ReadTestResult::getNoOfFilesRead() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ReadTestResult have been set!");
-  }
-  return m_noOfFilesRead;
 }
 
 //------------------------------------------------------------------------------
