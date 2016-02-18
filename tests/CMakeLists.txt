@@ -46,3 +46,25 @@ target_link_libraries(unitTests
   ${GMOCK_LIB}
   gtest
   pthread)
+
+add_library(systemTestHelper
+  Subprocess.cpp)
+
+add_library(systemTestHelperTests SHARED
+  SubprocessSystemTests.cpp)
+
+target_link_libraries(systemTestHelperTests
+  systemTestHelper
+  ctacommon)
+
+add_executable(systemTests
+  system_tests.cpp
+  ${GMOCK_SRC})
+
+target_link_libraries(systemTests
+  systemTestHelper
+  systemTestHelperTests
+  gtest
+  pthread)
+
+
