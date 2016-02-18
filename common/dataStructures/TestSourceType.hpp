@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <string>
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -25,6 +26,8 @@ enum TestSourceType {
   devzero,
   devurandom
 };
+
+std::string toString(TestSourceType type);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

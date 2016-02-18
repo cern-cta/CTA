@@ -11,13 +11,17 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/ArchiveRoute.cpp
   dataStructures/CancelRetrieveRequest.cpp
   dataStructures/Dedication.cpp
+  dataStructures/DedicationType.cpp
   dataStructures/DeleteArchiveRequest.cpp
   dataStructures/DRData.cpp
   dataStructures/DriveState.cpp
+  dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
+  dataStructures/MountType.cpp
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
+  dataStructures/RepackType.cpp
   dataStructures/Requester.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveMount.cpp
@@ -28,6 +32,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TapeFileLocation.cpp
   dataStructures/TapeMount.cpp
   dataStructures/TapePool.cpp
+  dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/User.cpp
   dataStructures/UserGroup.cpp

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -26,6 +28,8 @@ enum MountType {
   retrieve,
   none
 };
+
+std::string toString(MountType type);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -32,6 +34,8 @@ enum DriveStatus {
   DrainingToDisk,
   CleaningUp
 };
+
+std::string toString(DriveStatus type);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

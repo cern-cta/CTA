@@ -154,6 +154,14 @@ protected:
   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable);
   
   /**
+   * Returns a string representation of the time
+   * 
+   * @param  time The input time
+   * @return a string representation of the time
+   */
+  std::string timeToString(const time_t &time);
+  
+  /**
    * Adds the creation log and the last modification log to the current response row
    * 
    * @param  responseRow The current response row to modify

@@ -348,6 +348,15 @@ bool XrdProFile::hasOption(const std::vector<std::string> &tokens, const std::st
 }
 
 //------------------------------------------------------------------------------
+// timeToString
+//------------------------------------------------------------------------------
+std::string XrdProFile::timeToString(const time_t &time) {
+  std::string timeString(ctime(&time));
+  timeString=timeString.substr(0,timeString.size()-1); //remove newline
+  return timeString;
+}
+
+//------------------------------------------------------------------------------
 // formatResponse
 //------------------------------------------------------------------------------
 std::string XrdProFile::formatResponse(const std::vector<std::vector<std::string>> &responseTable) {
@@ -380,20 +389,14 @@ std::string XrdProFile::formatResponse(const std::vector<std::vector<std::string
 // addLogInfoToResponseRow
 //------------------------------------------------------------------------------
 void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  time_t creationTime = creationLog.getTime();
-  time_t lastModificationTime = lastModificationLog.getTime();
-  std::string creationTimeString(ctime(&creationTime));
-  std::string lastModificationTimeString(ctime(&lastModificationTime));
-  creationTimeString=creationTimeString.substr(0,24); //remove the newline
-  lastModificationTimeString=lastModificationTimeString.substr(0,24); //remove the newline
   responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getUid()));
   responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getGid()));
   responseRow.push_back(creationLog.getHost());
-  responseRow.push_back(creationTimeString);
+  responseRow.push_back(timeToString(creationLog.getTime()));
   responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getUid()));
   responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getGid()));
   responseRow.push_back(lastModificationLog.getHost());
-  responseRow.push_back(lastModificationTimeString);
+  responseRow.push_back(timeToString(lastModificationLog.getTime()));
 }
 
 //------------------------------------------------------------------------------
@@ -1271,20 +1274,14 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           default:
             type_s = "readwrite";
             break;
-        }
-        time_t fromTime = it->getFromTimestamp();
-        time_t untilTime = it->getUntilTimestamp();
-        std::string fromTimeString(ctime(&fromTime));
-        std::string untilTimeString(ctime(&untilTime));
-        fromTimeString=fromTimeString.substr(0,24); //remove the newline
-        untilTimeString=untilTimeString.substr(0,24); //remove the newline      
+        }     
         currentRow.push_back(it->getDriveName());
         currentRow.push_back(type_s);
         currentRow.push_back(it->getVid());
         currentRow.push_back(it->getUserGroup());
         currentRow.push_back(it->getTag());
-        currentRow.push_back(fromTimeString);
-        currentRow.push_back(untilTimeString);
+        currentRow.push_back(timeToString(it->getFromTimestamp()));
+        currentRow.push_back(timeToString(it->getUntilTimestamp()));
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
         currentRow.push_back(it->getComment());
         responseTable.push_back(currentRow);
@@ -1375,9 +1372,6 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
             type_s = "justrepack";
             break;
         }
-        time_t creationTime = it->getCreationLog().getTime();
-        std::string creationTimeString(ctime(&creationTime));
-        creationTimeString=creationTimeString.substr(0,24); //remove the newline
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getVid());
         currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
@@ -1392,7 +1386,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
         currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
         currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
         currentRow.push_back(it->getCreationLog().getHost());        
-        currentRow.push_back(creationTimeString);
+        currentRow.push_back(timeToString(it->getCreationLog().getTime()));
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1482,9 +1476,6 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
       std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","uid","gid","host","time"};
       responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
-        time_t creationTime = it->getCreationLog().getTime();
-        std::string creationTimeString(ctime(&creationTime));
-        creationTimeString=creationTimeString.substr(0,24); //remove the newline
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getVid());
         currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
@@ -1496,8 +1487,8 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
         currentRow.push_back(it->getVerifyStatus());
         currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
         currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
-        currentRow.push_back(it->getCreationLog().getHost());        
-        currentRow.push_back(creationTimeString);
+        currentRow.push_back(it->getCreationLog().getHost());       
+        currentRow.push_back(timeToString(it->getCreationLog().getTime()));
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1875,6 +1866,30 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates" << std::endl;
+  std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(requester);  
+  if(result.size()>0) {
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","instance","path","diskpool","diskpool throughput"};
+    responseTable.push_back(header);    
+    for(auto it = result.cbegin(); it != result.cend(); it++) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(it->getLogicalLibrary());
+      currentRow.push_back(it->getHost());
+      currentRow.push_back(it->getName());
+      currentRow.push_back(cta::common::dataStructures::toString(it->getStatus()));
+      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->getCurrentStateStartTime())));
+      currentRow.push_back(cta::common::dataStructures::toString(it->getMountType()));
+      currentRow.push_back(it->getCurrentVid());
+      currentRow.push_back(it->getCurrentTapePool());
+      currentRow.push_back(std::to_string((unsigned long long)it->getSessionId()));
+      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->getSessionStartTime())));
+      currentRow.push_back(std::to_string((unsigned long long)it->getFilesTransferedInSession()));
+      currentRow.push_back(std::to_string((unsigned long long)it->getBytesTransferedInSession()));
+      currentRow.push_back(std::to_string((long double)it->getLatestBandwidth()));
+      responseTable.push_back(currentRow);
+    }
+    m_data = formatResponse(responseTable);
+  }
 }
 
 //------------------------------------------------------------------------------

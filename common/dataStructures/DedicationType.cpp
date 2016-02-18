@@ -16,21 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "common/dataStructures/DedicationType.hpp"
 
-#include <string>
-
-namespace cta {
-namespace common {
-namespace dataStructures {
-enum DedicationType {
-  readonly,
-  writeonly,
-  readwrite
-};
-
-std::string toString(DedicationType type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
-
+std::string cta::common::dataStructures::toString(cta::common::dataStructures::DedicationType type) {
+  switch(type) {
+    case cta::common::dataStructures::DedicationType::readonly:
+      return "readonly";
+    case cta::common::dataStructures::DedicationType::writeonly:
+      return "writeonly";
+    case cta::common::dataStructures::DedicationType::readwrite:
+      return "readwrite";
+    default:
+      return "UNKNOWN";
+  }
+}

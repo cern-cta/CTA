@@ -16,21 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "common/dataStructures/MountType.hpp"
 
-#include <string>
-
-namespace cta {
-namespace common {
-namespace dataStructures {
-enum DedicationType {
-  readonly,
-  writeonly,
-  readwrite
-};
-
-std::string toString(DedicationType type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
-
+std::string cta::common::dataStructures::toString(cta::common::dataStructures::MountType type) {
+  switch(type) {
+    case cta::common::dataStructures::MountType::archive:
+      return "archive";
+    case cta::common::dataStructures::MountType::retrieve:
+      return "retrieve";
+    case cta::common::dataStructures::MountType::none:
+      return "none";
+    default:
+      return "UNKNOWN";
+  }
+}

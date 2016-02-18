@@ -71,6 +71,9 @@ public:
   void setName(const std::string &name);
   std::string getName() const;
 
+  void setHost(const std::string &host);
+  std::string getHost() const;
+
   void setSessionId(const uint64_t sessionId);
   uint64_t getSessionId() const;
 
@@ -114,6 +117,9 @@ private:
 
   std::string m_name;
   bool m_nameSet;
+
+  std::string m_host;
+  bool m_hostSet;
 
   uint64_t m_sessionId;
   bool m_sessionIdSet;

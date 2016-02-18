@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -26,6 +28,8 @@ enum RepackType {
   justexpand,
   justrepack
 };
+
+std::string toString(RepackType type);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
