@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/QtCoreAppSingleton.hpp"
-
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -26,9 +24,6 @@ int main(int argc, char** argv) {
   // (and Google Test) before running the tests.
   ::testing::InitGoogleMock(&argc, argv);
   int ret = RUN_ALL_TESTS();
-
-  // Clean up any memory allocated for the Qt Core application object
-  cta::common::QtCoreAppSingleton::destroy();
 
   // Close standard in, out and error so that valgrind can be used with the
   // following command-line to track open file-descriptors:
