@@ -53,8 +53,8 @@ cta::Scheduler::~Scheduler() throw() {
 //------------------------------------------------------------------------------
 // queueArchiveRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ArchiveRequest &request) {
-
+uint64_t cta::Scheduler::queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ArchiveRequest &request) {
+  return 0;
 }
 
 //------------------------------------------------------------------------------

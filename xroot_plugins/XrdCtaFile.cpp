@@ -21,6 +21,7 @@
 #include "xroot_plugins/XrdCtaFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
+#include "common/Configuration.hpp"
 
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
@@ -1869,7 +1870,7 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
   std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(requester);  
   if(result.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","instance","path","diskpool","diskpool throughput"};
+    std::vector<std::string> header = {"logical library","host","drive","status","since","mount","vid","tapepool","session id","since","files","bytes","latest speed"};
     responseTable.push_back(header);    
     for(auto it = result.cbegin(); it != result.cend(); it++) {
       std::vector<std::string> currentRow;
@@ -1897,7 +1898,53 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> username groupname EOS_unique_id src_URL size checksum_type checksum_value storage_class DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
+  help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --eosid <EOS_unique_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
+                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --dr_instance <DR_instance> --dr_path <DR_path> --dr_owner <DR_owner>" << std::endl
+                    << "\t--dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
+  std::string encoded = getOptionValue(tokens, "", "--encoded");
+  std::string user = getOptionValue(tokens, "", "--user");
+  std::string group = getOptionValue(tokens, "", "--group");
+  std::string eosid = getOptionValue(tokens, "", "--eosid");
+  std::string srcurl = getOptionValue(tokens, "", "--srcurl");
+  std::string size_s = getOptionValue(tokens, "", "--size");
+  std::string checksumtype = getOptionValue(tokens, "", "--checksumtype");
+  std::string checksumvalue = getOptionValue(tokens, "", "--checksumvalue");
+  std::string storageclass = getOptionValue(tokens, "", "--storageclass");
+  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance");
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path");
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner");
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup");
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob");
+  std::string diskpool = getOptionValue(tokens, "", "--diskpool");
+  std::string throughput_s = getOptionValue(tokens, "", "--throughput");
+  if((encoded!="true" && encoded!="false") || user.empty() || group.empty() || eosid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
+          || storageclass.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
+  uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::DRData drData;
+  drData.setDrBlob(dr_blob);
+  drData.setDrGroup(dr_ownergroup);
+  drData.setDrInstance(dr_instance);
+  drData.setDrOwner(dr_owner);
+  drData.setDrPath(dr_path);
+  cta::common::dataStructures::ArchiveRequest request;
+  request.setChecksumType(checksumtype);
+  request.setChecksumValue(checksumvalue);
+  request.setDiskpoolName(diskpool);
+  request.setDiskpoolThroughput(throughput);
+  request.setDrData(drData);
+  request.setEosFileID(eosid);
+  request.setFileSize(size);
+  request.setRequester(originator);
+  request.setSrcURL(srcurl);
+  request.setStorageClass(storageclass);  
+  m_scheduler->queueArchiveRequest(requester, request);
 }
 
 //------------------------------------------------------------------------------
@@ -1905,7 +1952,7 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob diskpool_name diskpool_throughput" << std::endl;
+  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob> <diskpool_name> <diskpool_throughput>" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1913,7 +1960,7 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " da/deletearchive username groupname CTA_ArchiveFileID" << std::endl;
+  help << tokens[0] << " da/deletearchive <username> <groupname> <CTA_ArchiveFileID>" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1921,7 +1968,7 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID dst_URL DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
+  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1929,7 +1976,7 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> username groupname CTA_ArchiveFileID storage_class DR_instance DR_path DR_owner DR_group DR_blob" << std::endl;
+  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -1937,7 +1984,7 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lsc/liststorageclass username groupname" << std::endl;
+  help << tokens[0] << " lsc/liststorageclass <username> <groupname>" << std::endl;
 }
   
 //------------------------------------------------------------------------------
