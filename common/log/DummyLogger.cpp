@@ -44,5 +44,5 @@ void cta::log::DummyLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // reducedSyslog
 //------------------------------------------------------------------------------
-void cta::log::DummyLogger::reducedSyslog(std::string msg) {}
+void cta::log::DummyLogger::reducedSyslog(const std::string & msg) {}
 

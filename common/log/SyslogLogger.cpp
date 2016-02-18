@@ -143,12 +143,9 @@ void cta::log::SyslogLogger::closeLog() {
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void cta::log::SyslogLogger::reducedSyslog(std::string msg) {
+void cta::log::SyslogLogger::reducedSyslog(const std::string& msg) {
   // Truncate the log message if it exceeds the permitted maximum
-  if(msg.length() > m_maxMsgLen) {
-    msg.resize(m_maxMsgLen);
-    msg[msg.length() - 1] = '\n';
-  }
+  std::string truncatedMsg = msg.substr(0, m_maxMsgLen);
 
   int send_flags = MSG_NOSIGNAL;
 
@@ -162,13 +159,13 @@ void cta::log::SyslogLogger::reducedSyslog(std::string msg) {
   if(-1 != m_logFile) {
     // If sending the log message fails then try to reopen the syslog
     // connection and try again
-    if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
+    if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
       closeLog();
       openLog();
       if (-1 != m_logFile) {
         // If the second attempt to send the log message fails then give up and
         // attempt re-open next time
-        if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
+        if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
           closeLog();
         }
       }

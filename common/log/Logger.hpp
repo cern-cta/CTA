@@ -173,7 +173,7 @@ protected:
    *
    * @param msg The message to be logged.
    */
-  virtual void reducedSyslog(std::string msg) = 0;
+  virtual void reducedSyslog(const std::string & msg) = 0;
 
   /**
    * The log mask.

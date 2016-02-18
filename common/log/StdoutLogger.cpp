@@ -39,6 +39,6 @@ void cta::log::StdoutLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // reducedSyslog
 //------------------------------------------------------------------------------
-void cta::log::StdoutLogger::reducedSyslog(std::string msg) {
-  printf("%s", msg.c_str());
+void cta::log::StdoutLogger::reducedSyslog(const std::string & msg) {
+  printf("%s", msg.substr(0,m_maxMsgLen).c_str());
 }

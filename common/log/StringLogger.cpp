@@ -47,19 +47,13 @@ void cta::log::StringLogger::prepareForFork() {
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void cta::log::StringLogger::reducedSyslog(std::string msg) {
-  // Truncate the log message if it exceeds the permitted maximum
-  if(msg.length() > m_maxMsgLen) {
-    msg.resize(m_maxMsgLen);
-    msg[msg.length() - 1] = '\n';
-  }
-
+void cta::log::StringLogger::reducedSyslog(const std::string & msg) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 
-  // Append the message to the log
-  m_log << msg << std::endl;
+  // Append the message to the log (truncated to the maximum length)
+  m_log << msg.substr(0, m_maxMsgLen) << std::endl;
 
-  // Temporary hack: also print them out:
-  printf (msg.c_str());
+  // Uncomment this to get the logs printed to stdout during unit tests.
+  // printf (msg.substr(0, m_maxMsgLen).c_str());
 }

@@ -63,7 +63,7 @@ public:
   void prepareForFork() ;
   
 protected:
-  virtual void reducedSyslog(std::string msg);
+  virtual void reducedSyslog(const std::string & msg);
 
 }; // class DummyLogger
 

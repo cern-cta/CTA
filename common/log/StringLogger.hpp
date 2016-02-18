@@ -83,7 +83,7 @@ protected:
    *
    * @param msg The message to be logged.
    */
-  void reducedSyslog(std::string msg);
+  void reducedSyslog(const std::string & msg);
 
 }; // class StringLogger
 
