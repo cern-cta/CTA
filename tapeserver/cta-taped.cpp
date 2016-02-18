@@ -17,8 +17,10 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/GlobalConfiguration.hpp"
 #include "tapeserver/daemon/TpconfigLines.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -30,6 +32,8 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+
+namespace cta { namespace taped {
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -45,41 +49,19 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   cta::log::Logger &log);
 
 //------------------------------------------------------------------------------
-// main
+// The help string
 //------------------------------------------------------------------------------
-int main(const int argc, char **const argv) {
-  using namespace cta;
-
-  // Try to instantiate the logging system API
-  std::unique_ptr<log::SyslogLogger> logPtr;
-  try {
-    logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-taped",
-      log::DEBUG));
-  } catch(exception::Exception &ex) {
-    std::cerr <<
-      "Failed to instantiate object representing CTA logging system: " <<
-      ex.getMessage().str() << std::endl;
-    return 1;
-  }
-  log::Logger &log = *logPtr;
-
-  int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
-  try {
-    programRc = exceptionThrowingMain(argc, argv, log);
-  } catch(exception::Exception &ex) {
-    std::list<log::Param> params = {
-      log::Param("message", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception", params);
-  } catch(std::exception &se) {
-    std::list<log::Param> params = {log::Param("what", se.what())};
-    log(log::ERR, "Caught an unexpected standard exception", params);
-  } catch(...) {
-    log(log::ERR, "Caught an unexpected and unknown exception");
-  }
-
-  google::protobuf::ShutdownProtobufLibrary();
-  return programRc;
-}
+std::string gHelpString = 
+    "Usage: cta-taped [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--foreground            or -f         \tRemain in the Foreground\n"
+    "\t--stdout                or -s         \tPrint logs to standard output. Required --foreground\n"
+    "\t--config <config-file>  or -c         \tConfiguration file\n"
+    "\t--help                  or -h         \tPrint this help and exit\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch\n";
 
 //------------------------------------------------------------------------------
 // Logs the start of the daemon.
@@ -199,3 +181,62 @@ static std::string argvToString(const int argc, const char *const *const argv) {
 //    cta::log::Param("librarySlot", line.librarySlot)};
 //  log(log::INFO, "TPCONFIG line", params);
 //}
+
+}} // namespace cta::taped
+
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(const int argc, char **const argv) {
+  using namespace cta;
+  
+  // Interpret the command line
+  std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
+  try {
+    commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
+  } catch (exception::Exception &ex) {
+    std::cerr <<
+      "Failed to interpret the command line parameters: " <<
+      ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  }
+  
+  if(commandLine->helpRequested) {
+    std::cout << cta::taped::gHelpString << std::endl;
+    return EXIT_SUCCESS;
+  }
+
+  // Try to instantiate the logging system API
+  std::unique_ptr<log::Logger> logPtr;
+  try {
+    if (commandLine->logToStdout) {
+      logPtr.reset(new log::StdoutLogger("cta-taped"));
+    } else {
+      logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-taped",
+        log::DEBUG));
+    }
+  } catch(exception::Exception &ex) {
+    std::cerr <<
+      "Failed to instantiate object representing CTA logging system: " <<
+      ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  }
+  log::Logger &log = *logPtr;
+
+  int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
+  try {
+    programRc = cta::taped::exceptionThrowingMain(argc, argv, log);
+  } catch(exception::Exception &ex) {
+    std::list<log::Param> params = {
+      log::Param("message", ex.getMessage().str())};
+    log(log::ERR, "Caught an unexpected CTA exception", params);
+  } catch(std::exception &se) {
+    std::list<log::Param> params = {log::Param("what", se.what())};
+    log(log::ERR, "Caught an unexpected standard exception", params);
+  } catch(...) {
+    log(log::ERR, "Caught an unexpected and unknown exception");
+  }
+
+  google::protobuf::ShutdownProtobufLibrary();
+  return programRc;
+}
