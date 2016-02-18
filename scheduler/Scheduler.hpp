@@ -210,6 +210,7 @@ public:
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
   virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
+  virtual cta::common::dataStructures::ArchiveFile getArchiveFileById(const std::string &id);
 
   virtual cta::common::dataStructures::ReadTestResult readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
    const bool checkChecksum, const std::string &output, const std::string &tag) const; //when output=="null" discard the data read

@@ -659,6 +659,13 @@ cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSu
 }
 
 //------------------------------------------------------------------------------
+// getArchiveFileById
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveFile cta::Scheduler::getArchiveFileById(const std::string &id){
+  return cta::common::dataStructures::ArchiveFile();
+}
+
+//------------------------------------------------------------------------------
 // readTest
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &driveName, const std::string &vid,

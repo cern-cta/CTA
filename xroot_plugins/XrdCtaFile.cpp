@@ -1810,6 +1810,63 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
 void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpr/listpendingretrieves [--vid/-v <vid>] [--extended/-x]" << std::endl;
+  std::string vid = getOptionValue(tokens, "-v", "--vid");
+  bool extended = hasOption(tokens, "-x", "--extended");
+  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
+  if(vid.empty()) {
+    result = m_scheduler->getPendingRetrieveJobs(requester);
+  }
+  else {
+    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(requester, vid);
+    if(list.size()>0) {
+      result[vid] = list;
+    }
+  }
+  if(result.size()>0) {
+    if(extended) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","instance","path","diskpool","diskpool throughput"};
+      responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(it->first);
+          currentRow.push_back(jt->getRequest().getArchiveFileID());
+          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->getRequest().getArchiveFileID());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].first));
+          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getFSeq()));
+          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getBlockId()));
+          currentRow.push_back(std::to_string((unsigned long long)file.getFileSize()));
+          currentRow.push_back(jt->getRequest().getRequester().getUserName());
+          currentRow.push_back(jt->getRequest().getRequester().getGroupName());
+          currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
+          currentRow.push_back(jt->getRequest().getDrData().getDrPath());
+          currentRow.push_back(jt->getRequest().getDiskpoolName());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getDiskpoolThroughput()));
+          responseTable.push_back(currentRow);
+        }
+      }
+      m_data = formatResponse(responseTable);
+    }
+    else {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","total files","total size"};
+      responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->first);
+        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+        uint64_t size=0;
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->getRequest().getArchiveFileID());
+          size += file.getFileSize();
+        }
+        currentRow.push_back(std::to_string((unsigned long long)size));
+        responseTable.push_back(currentRow);
+      }
+      m_data = formatResponse(responseTable);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

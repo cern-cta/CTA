@@ -405,6 +405,13 @@ cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
+
+//------------------------------------------------------------------------------
+// getArchiveFileById
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveFile cta::catalogue::DummyCatalogue::getArchiveFileById(const std::string &id){
+  return cta::common::dataStructures::ArchiveFile();
+}
           
 //------------------------------------------------------------------------------
 // setDriveStatus
