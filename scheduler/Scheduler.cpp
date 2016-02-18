@@ -20,7 +20,6 @@
 
 
 #include "scheduler/Scheduler.hpp"
-#include "catalogue/MockCatalogue.hpp"
 
 #include <iostream>
 #include <sstream>

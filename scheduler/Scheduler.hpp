@@ -64,7 +64,6 @@
 #include "scheduler/SchedulerDatabase.hpp"
 
 #include "common/forwardDeclarations.hpp"
-#include "catalogue/MockCatalogue.hpp"
 
 #include <list>
 #include <map>
