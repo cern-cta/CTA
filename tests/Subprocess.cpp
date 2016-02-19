@@ -23,6 +23,7 @@
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 namespace systemTests {
 Subprocess::Subprocess(const std::string & executable, const std::list<std::string>& argv) {
@@ -39,7 +40,7 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
       "In Subprocess::Subprocess failed to create the stdout pipe");
   cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK), 
       "In Subprocess::Subprocess failed to create the stderr pipe");
-  cta::exception::Errnum::throwOnMinusOne(m_child = fork(),
+  cta::exception::Errnum::throwOnMinusOne(m_child = ::fork(),
       "In Subprocess::Subprocess failed to fork");
   if (m_child) {
     // We are the parent process. Close the write sides of pipes.
