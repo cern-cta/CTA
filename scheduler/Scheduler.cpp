@@ -35,13 +35,7 @@ cta::Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
   NameServer &ns,
   SchedulerDatabase &db,
-  RemoteNS &remoteNS) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::Scheduler::Scheduler() {
+  RemoteNS &remoteNS): m_catalogue(catalogue) {
 }
 
 //------------------------------------------------------------------------------
@@ -97,63 +91,63 @@ void cta::Scheduler::listStorageClassRequest(const cta::common::dataStructures::
 //------------------------------------------------------------------------------
 void cta::Scheduler::createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, 
         const std::string &comment) {
-
+  m_catalogue.createBootstrapAdminAndHostNoAuth(requester, user, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::createAdminUser(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {
-
+  m_catalogue.createAdminUser(requester, user, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminUser(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user) {
-
+  m_catalogue.deleteAdminUser(requester, user);
 }
 
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::AdminUser> cta::Scheduler::getAdminUsers(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::AdminUser>();
+  return m_catalogue.getAdminUsers(requester);
 }
 
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyAdminUserComment(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {
-
+  m_catalogue.modifyAdminUserComment(requester, user, comment);
 }
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler::createAdminHost(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {
-
+  m_catalogue.createAdminHost(requester, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminHost(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &hostName) {
-
+  m_catalogue.deleteAdminHost(requester, hostName);
 }
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::AdminHost> cta::Scheduler::getAdminHosts(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::AdminHost>(); 
+  return m_catalogue.getAdminHosts(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyAdminHostComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &hostName, const std::string &comment) {
-
+  m_catalogue.modifyAdminHostComment(requester, hostName, comment);
 }
 
 
@@ -161,70 +155,70 @@ void cta::Scheduler::modifyAdminHostComment(const cta::common::dataStructures::S
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::createStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies, const std::string &comment) {
-
+  m_catalogue.createStorageClass(requester, name, nbCopies, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteStorageClass(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name) {
-
+  m_catalogue.deleteStorageClass(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::getStorageClasses(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::StorageClass>(); 
+  return m_catalogue.getStorageClasses(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbCopies) {
-
+  m_catalogue.modifyStorageClassNbCopies(requester, name, nbCopies);
 }
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyStorageClassComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {
-
+  m_catalogue.modifyStorageClassComment(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
 void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {
-
+  m_catalogue.createTapePool(requester, name, nbPartialTapes, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteTapePool(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name) {
-
+  m_catalogue.deleteTapePool(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::TapePool> cta::Scheduler::getTapePools(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::TapePool>(); 
+  return m_catalogue.getTapePools(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t nbPartialTapes) {
-
+  m_catalogue.modifyTapePoolNbPartialTapes(requester, name, nbPartialTapes);
 }
 
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {
-
+  m_catalogue.modifyTapePoolComment(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -232,63 +226,63 @@ void cta::Scheduler::modifyTapePoolComment(const cta::common::dataStructures::Se
 //------------------------------------------------------------------------------
 void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName,
         const std::string &comment) {
-
+  m_catalogue.createArchiveRoute(requester, storageClassName, copyNb, tapePoolName, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb) {
-
+  m_catalogue.deleteArchiveRoute(requester, storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveRoute> cta::Scheduler::getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::ArchiveRoute>(); 
+  return m_catalogue.getArchiveRoutes(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
-
+  m_catalogue.modifyArchiveRouteTapePoolName(requester, storageClassName, copyNb, tapePoolName);
 }
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
-
+  m_catalogue.modifyArchiveRouteComment(requester, storageClassName, copyNb, comment);
 }
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::Scheduler::createLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {
-
+  m_catalogue.createLogicalLibrary(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name) {
-
+  m_catalogue.deleteLogicalLibrary(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::LogicalLibrary> cta::Scheduler::getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::LogicalLibrary>(); 
+  return m_catalogue.getLogicalLibraries(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyLogicalLibraryComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {
-
+  m_catalogue.modifyLogicalLibraryComment(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -296,14 +290,14 @@ void cta::Scheduler::modifyLogicalLibraryComment(const cta::common::dataStructur
 //------------------------------------------------------------------------------
 void cta::Scheduler::createTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {
-
+  m_catalogue.createTape(requester, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) {
-
+  m_catalogue.deleteTape(requester, vid);
 }
 
 //------------------------------------------------------------------------------
@@ -312,70 +306,69 @@ void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdent
 std::list<cta::common::dataStructures::Tape> cta::Scheduler::getTapes(const cta::common::dataStructures::SecurityIdentity &requester,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) {
-  return std::list<cta::common::dataStructures::Tape>(); 
+  return m_catalogue.getTapes(requester, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, busyValue); 
 }
 
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {
-
 }
 
 //------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::reclaimTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) {
-
+  m_catalogue.reclaimTape(requester, vid);
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapeLogicalLibraryName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &logicalLibraryName) {
-
+  m_catalogue.modifyTapeLogicalLibraryName(requester, vid, logicalLibraryName);
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeTapePoolName
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapeTapePoolName(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tapePoolName) {
-
+  m_catalogue.modifyTapeTapePoolName(requester, vid, tapePoolName);
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeCapacityInBytes
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapeCapacityInBytes(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const uint64_t capacityInBytes) {
-
+  m_catalogue.modifyTapeCapacityInBytes(requester, vid, capacityInBytes);
 }
 
 //------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool busyValue) {
-
+  m_catalogue.setTapeBusy(requester, vid, busyValue);
 }
 
 //------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeFull(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool fullValue) {
-
+  m_catalogue.setTapeFull(requester, vid, fullValue);
 }
 
 //------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool disabledValue) {
-
+  m_catalogue.setTapeDisabled(requester, vid, disabledValue);
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &comment) {
-
+  m_catalogue.modifyTapeComment(requester, vid, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -383,35 +376,35 @@ void cta::Scheduler::modifyTapeComment(const cta::common::dataStructures::Securi
 //------------------------------------------------------------------------------
 void cta::Scheduler::createUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup,
         const std::string &comment) {
-
+  m_catalogue.createUser(requester, name, group, userGroup, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteUser(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group) {
-
+  m_catalogue.deleteUser(requester, name, group);
 }
 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::User> cta::Scheduler::getUsers(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::User>(); 
+  return m_catalogue.getUsers(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyUserUserGroup
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &userGroup) {
-
+  m_catalogue.modifyUserUserGroup(requester, name, group, userGroup);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &group, const std::string &comment) {
-
+  m_catalogue.modifyUserComment(requester, name, group, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -420,91 +413,91 @@ void cta::Scheduler::modifyUserComment(const cta::common::dataStructures::Securi
 void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued,
         const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
         const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {
-
+  m_catalogue.createUserGroup(requester, name, archivePriority, minArchiveFilesQueued, minArchiveBytesQueued, minArchiveRequestAge, retrievePriority, minRetrieveFilesQueued, minRetrieveBytesQueued, minRetrieveRequestAge, maxDrivesAllowed, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteUserGroup
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name) {
-
+  m_catalogue.deleteUserGroup(requester, name);
 }
 
 //------------------------------------------------------------------------------
 // getUserGroups
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::UserGroup> cta::Scheduler::getUserGroups(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::UserGroup>(); 
+  return m_catalogue.getUserGroups(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchivePriority
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t archivePriority) {
-
+  m_catalogue.modifyUserGroupArchivePriority(requester, name, archivePriority);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveFilesQueued) {
-
+  m_catalogue.modifyUserGroupArchiveMinFilesQueued(requester, name, minArchiveFilesQueued);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveBytesQueued) {
-
+  m_catalogue.modifyUserGroupArchiveMinBytesQueued(requester, name, minArchiveBytesQueued);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minArchiveRequestAge) {
-
+  m_catalogue.modifyUserGroupArchiveMinRequestAge(requester, name, minArchiveRequestAge);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrievePriority
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t retrievePriority) {
-
+  m_catalogue.modifyUserGroupRetrievePriority(requester, name, retrievePriority);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveFilesQueued) {
-
+  m_catalogue.modifyUserGroupRetrieveMinFilesQueued(requester, name, minRetrieveFilesQueued);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveBytesQueued) {
-
+  m_catalogue.modifyUserGroupRetrieveMinBytesQueued(requester, name, minRetrieveBytesQueued);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t minRetrieveRequestAge) {
-
+  m_catalogue.modifyUserGroupRetrieveMinRequestAge(requester, name, minRetrieveRequestAge);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const uint64_t maxDrivesAllowed) {
-
+  m_catalogue.modifyUserGroupMaxDrivesAllowed(requester, name, maxDrivesAllowed);
 }
 
 //------------------------------------------------------------------------------
 // modifyUserGroupComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyUserGroupComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &name, const std::string &comment) {
-
+  m_catalogue.modifyUserGroupComment(requester, name, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -512,84 +505,82 @@ void cta::Scheduler::modifyUserGroupComment(const cta::common::dataStructures::S
 //------------------------------------------------------------------------------
 void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
         const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
-
+  m_catalogue.createDedication(requester, drivename, dedicationType, userGroup, tag, vid, fromTimestamp, untilTimestamp, comment);
 }
 
 //------------------------------------------------------------------------------
 // deleteDedication
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteDedication(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename) {
-
+  m_catalogue.deleteDedication(requester, drivename);
 }
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::Dedication> cta::Scheduler::getDedications(const cta::common::dataStructures::SecurityIdentity &requester) const {
-  return std::list<cta::common::dataStructures::Dedication>(); 
+  return m_catalogue.getDedications(requester); 
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationType
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {
-
+  m_catalogue.modifyDedicationType(requester, drivename, dedicationType);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationUserGroup
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationUserGroup(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &userGroup) {
-
+  m_catalogue.modifyDedicationUserGroup(requester, drivename, userGroup);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationTag(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &tag) {
-
+  m_catalogue.modifyDedicationTag(requester, drivename, tag);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationVid(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &vid) {
-
+  m_catalogue.modifyDedicationVid(requester, drivename, vid);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationFrom
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationFrom(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t fromTimestamp) {
-
+  m_catalogue.modifyDedicationFrom(requester, drivename, fromTimestamp);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationUntil
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const uint64_t untilTimestamp) {
-
+  m_catalogue.modifyDedicationUntil(requester, drivename, untilTimestamp);
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationComment
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &drivename, const std::string &comment) {
-
+  m_catalogue.modifyDedicationComment(requester, drivename, comment);
 }
 
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
 void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType) {
-
 }
 
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
 void cta::Scheduler::cancelRepack(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) {
-
 }
 
 //------------------------------------------------------------------------------
@@ -610,14 +601,12 @@ cta::common::dataStructures::RepackInfo cta::Scheduler::getRepack(const cta::com
 // shrink
 //------------------------------------------------------------------------------
 void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &tapepool) {
-
 }
 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
 void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles) {
-
 }
 
 //------------------------------------------------------------------------------
@@ -646,7 +635,7 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return std::list<cta::common::dataStructures::ArchiveFile>(); 
+  return m_catalogue.getArchiveFiles(requester, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path); 
 }
 
 //------------------------------------------------------------------------------
@@ -654,14 +643,14 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFi
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return cta::common::dataStructures::ArchiveFileSummary(); 
+  return m_catalogue.getArchiveFileSummary(requester, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFile cta::Scheduler::getArchiveFileById(const uint64_t id){
-  return cta::common::dataStructures::ArchiveFile();
+  return m_catalogue.getArchiveFileById(id);
 }
 
 //------------------------------------------------------------------------------

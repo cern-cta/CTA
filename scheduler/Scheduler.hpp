@@ -81,18 +81,13 @@ class Scheduler {
 public:
   
   /**
-   * Deprecated Constructor.
+   * Constructor.
    */
   Scheduler(
     cta::catalogue::Catalogue &catalogue,
     NameServer &ns,
     SchedulerDatabase &db,
     RemoteNS &remoteNS);
-  
-  /**
-   * Constructor.
-   */
-  Scheduler();
 
   /**
    * Destructor.
@@ -234,6 +229,7 @@ public:
 
 private:
 
+  cta::catalogue::Catalogue &m_catalogue;
 }; // class Scheduler
 
 } // namespace cta

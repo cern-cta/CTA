@@ -184,11 +184,6 @@ std::list<cta::common::dataStructures::Tape> cta::catalogue::DummyCatalogue::get
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) { return std::list<cta::common::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
-// labelTape
-//------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::labelTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {}
-
-//------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::reclaimTape(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &vid) {}
