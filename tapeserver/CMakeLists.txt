@@ -10,3 +10,4 @@ add_subdirectory (daemon)
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped
   ctatapedaemon ctacommon protobuf)
+install (TARGETS cta-taped DESTINATION usr/bin)

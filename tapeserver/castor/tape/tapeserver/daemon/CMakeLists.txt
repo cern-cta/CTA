@@ -101,10 +101,12 @@ add_executable(cta-tapeserverd TapeDaemon.cpp)
 target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
   File TapeDrive ctacommon ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} 
   ctamessages zmq ctaio ctautils ctaserverutils)
-install (TARGETS cta-tapeserverd DESTINATION usr/bin)
+#install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 
 add_library(ctatapeserverdaemonutils SHARED
   ProcessForkerProxyDummy.cpp)
+
+install(TARGETS ctatapeserverdaemonutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library(ctatapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
@@ -129,3 +131,5 @@ target_link_libraries(ctatapeserverdaemonunittests
   ctaserverutils
   ctatapeserverdaemonutils)
   #ctaschedulerutils
+
+install(TARGETS ctatapeserverdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

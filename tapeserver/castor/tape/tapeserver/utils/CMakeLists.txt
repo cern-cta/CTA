@@ -27,3 +27,6 @@ add_library (ctatapeserverutilsunittests SHARED
 
 target_link_libraries (ctatapeserverutilsunittests
   Utils)
+
+install(TARGETS ctatapeserverutilsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+

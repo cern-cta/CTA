@@ -150,10 +150,17 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 #                    COMMENT "Not running the unit tests" VERBATIM)
 
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
-add_custom_target(unittests
-  tests/unitTests
-  COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/unitTests
-  COMMAND valgrind --tool=helgrind -v --demangle=no --conflict-cache-size=30000000 --error-exitcode=1 tests/unitTests 
+configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
+add_custom_target(fullunittests
+  tests/cta-unitTests
+  COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
+  COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
+  
+  DEPENDS tests/cta-unitTests tests/valgrind.suppr tests/helgrind.suppr
+  COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
-  DEPENDS tests/unittests tests/valgrind.suppr
+add_custom_target(shortunittests
+  tests/cta-unitTests
+  
+  DEPENDS tests/cta-unitTests
   COMMENT "Running unit tests" VERBATIM)

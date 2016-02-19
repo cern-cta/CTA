@@ -47,7 +47,8 @@ add_library (ctaschedulerunittests SHARED
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp)
 
-target_link_libraries (ctaschedulerunittests ${SQLITE3_LIBRARY_RELEASE})
-
-target_link_libraries(ctaschedulerunittests
+target_link_libraries (ctaschedulerunittests 
+  ${SQLITE3_LIBRARY_RELEASE}
   ctascheduler)
+
+install(TARGETS ctaschedulerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

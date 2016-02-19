@@ -25,3 +25,5 @@ add_library (ctaremotensunittests SHARED
 target_link_libraries(ctaremotensunittests
   ctaremotens
   ctautils)
+
+install(TARGETS ctaremotensunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

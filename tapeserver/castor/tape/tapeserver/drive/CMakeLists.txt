@@ -73,3 +73,5 @@ target_link_libraries(ctatapeserverdriveunittests
   System
   TapeDrive
   ctautils)
+
+install(TARGETS ctatapeserverdriveunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

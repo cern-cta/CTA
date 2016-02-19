@@ -37,3 +37,5 @@ add_library(SCSI Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 add_library(ctatapeserverscsiunittests SHARED
   DeviceTest.cpp
   StructuresTest.cpp)
+
+install(TARGETS ctatapeserverscsiunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

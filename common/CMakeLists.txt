@@ -113,3 +113,5 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
+
+install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

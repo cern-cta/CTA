@@ -59,3 +59,6 @@ add_library(ctatapeserverfileunittests SHARED
 
 target_link_libraries(ctatapeserverfileunittests
   File)
+
+install(TARGETS ctatapeserverfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+

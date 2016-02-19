@@ -72,7 +72,8 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
       }
       cargv[argv.size()] = NULL;
       cta::exception::Errnum::throwOnMinusOne(
-          execvp(executable.c_str(), cargv));
+          execvp(executable.c_str(), cargv),
+          "In Subprocess::Subprocess execv failed: ");
       // We should never get here.
       throw cta::exception::Exception(
           "In Subprocess::Subprocess execv failed without returning -1!");
@@ -81,7 +82,7 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
       exit(EXIT_FAILURE);
     }
   }
-  }
+}
 
 void Subprocess::kill(int signal) {
   ::kill(m_child, signal);
@@ -128,4 +129,4 @@ Subprocess::~Subprocess() {
 }
 
 
-}
+} // namespace systemTests

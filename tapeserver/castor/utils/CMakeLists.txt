@@ -51,3 +51,5 @@ add_library (ctautilsunittests SHARED
   SmartArrayPtrTest.cpp
   SmartFdTest.cpp
   UtilsTest.cpp)
+
+install(TARGETS ctautilsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

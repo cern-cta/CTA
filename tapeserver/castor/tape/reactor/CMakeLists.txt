@@ -38,9 +38,13 @@ add_library (ctatapereactorutils SHARED
   DummyPollReactor.cpp
   DummyZMQReactor.cpp)
 
+install(TARGETS ctatapereactorutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 add_library (ctatapereactorunittests SHARED
   PollReactorImplTest.cpp
   ZMQReactorTest.cpp)
+
+install(TARGETS ctatapereactorunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctatapereactorunittests
   ctatapereactor

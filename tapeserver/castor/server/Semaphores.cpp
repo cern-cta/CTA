@@ -106,7 +106,8 @@ castor::server::CondVarSemaphore::~CondVarSemaphore() {
       pthread_mutex_lock(&m_mutex);
       pthread_mutex_unlock(&m_mutex);
       /* Cleanup */
-      pthread_cond_destroy(&m_cond);
+      int rc=pthread_cond_destroy(&m_cond);
+      rc=rc;
       pthread_mutex_destroy(&m_mutex);
     }
 //------------------------------------------------------------------------------

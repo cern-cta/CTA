@@ -17,11 +17,11 @@ cmake_minimum_required (VERSION 2.6)
 
 find_package(gmock REQUIRED)
 
-add_executable(unitTests
+add_executable(cta-unitTests
   unit_tests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(unitTests
+target_link_libraries(cta-unitTests
   ctacatalogueunittests
   ctaexceptionunittests
   ctaiounittests
@@ -57,14 +57,21 @@ target_link_libraries(systemTestHelperTests
   systemTestHelper
   ctacommon)
 
-add_executable(systemTests
+add_executable(cta-systemTests
   system_tests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(systemTests
+target_link_libraries(cta-systemTests
   systemTestHelper
   systemTestHelperTests
   gtest
   pthread)
 
+install(TARGETS cta-unitTests cta-systemTests DESTINATION usr/bin)
 
+install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+configure_file(cta-valgrindUnitTests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh DESTINATION usr/bin)
+install(FILES valgrind.suppr helgrind.suppr DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)

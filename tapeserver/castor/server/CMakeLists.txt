@@ -24,3 +24,5 @@ add_library (ctaserverunittests SHARED
   ThreadingTests.cpp)
 
 target_link_libraries (ctaserverunittests)
+
+install(TARGETS ctaserverunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

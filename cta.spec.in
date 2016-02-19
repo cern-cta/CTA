@@ -26,7 +26,7 @@ Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/cta
 BuildRoot: %{_builddir}/%{name}-%{version}-root
-BuildRequires: cmake >= 2.6 redhat-rpm-config spaceMonkey2000-devel
+BuildRequires: cmake >= 2.6 redhat-rpm-config
 # only build debug info if you're building the whole code
 
 %description
@@ -58,25 +58,25 @@ cd build
 %check
 %if "%{skip_unit_tests}" == "0"
 cd build
-%{__make} test
+%{__make} shortunittests
 %endif
 
 # The packages will be cta-tapeserver, cta-frontend, cta-cli
 
-%package -n cta-tapeserver
-Summary: CERN Tape Archive
+%package -n cta-taped
+Summary: CERN Tape Archive: tape daemon
 Group: Application/CTA
 requires: cta-lib
-%description -n cta-tapeserver
+%description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
-%files -n cta-tapeserver
+%files -n cta-taped
 %defattr(-,root,root)
-%attr(0755,root,root) %{_bindir}/cta-tapeserverd
+%attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0755,root,root) %{_libdir}/libctamessages.so
 
 %package -n cta-frontend
-Summary: CERN Tape Archive
+Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 requires: cta-lib
 %description -n cta-frontend
@@ -88,7 +88,7 @@ The xroot plugin
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/xrd.cf.cta
 
 %package -n cta-cli
-Summary: CERN Tape Archive
+Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
 %description -n cta-cli
 CERN Tape Archive:
@@ -97,6 +97,7 @@ The xroot plugin
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta
 %attr(0755,root,root) %{_bindir}/ctaAddAdminUser
+
 
 %package -n cta-lib
 Summary: CERN Tape Archive
@@ -111,3 +112,48 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctaremotens.so
 %attr(0755,root,root) %{_libdir}/libctascheduler.so
 %attr(0755,root,root) %{_libdir}/libctaobjectstore.so
+%attr(0755,root,root) %{_libdir}/libctamediachangerutils.so
+%attr(0755,root,root) %{_libdir}/libctamessages.so
+%attr(0755,root,root) %{_libdir}/libctamessagesutils.so
+%attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverdaemonutils.so
+
+%package -n cta-unittests
+Summary: CERN Tape Archive: unit tests
+Group: Application/CTA
+%description -n cta-unittests
+CERN Tape Archive:
+unit tests
+%files -n cta-unittests
+%attr(0755,root,root) %{_bindir}/cta-unitTests
+%attr(0755,root,root) %{_bindir}/cta-valgrindUnitTests.sh
+%attr(0755,root,root) %{_libdir}/libctacatalogueunittests.so
+%attr(0755,root,root) %{_libdir}/libctacommonunittests.so
+%attr(0755,root,root) %{_libdir}/libctaexceptionunittests.so
+%attr(0755,root,root) %{_libdir}/libctaiounittests.so
+%attr(0755,root,root) %{_libdir}/libctalegacymsgunittests.so
+%attr(0755,root,root) %{_libdir}/libctamessagesunittests.so
+%attr(0755,root,root) %{_libdir}/libctanameserverunittests.so
+%attr(0755,root,root) %{_libdir}/libctaobjectstoreunittests.so
+%attr(0755,root,root) %{_libdir}/libctaremotensunittests.so
+%attr(0755,root,root) %{_libdir}/libctaschedulerunittests.so
+%attr(0755,root,root) %{_libdir}/libctaserverunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapereactorunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverdaemonunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverdriveunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverfileunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverscsiunittests.so
+%attr(0755,root,root) %{_libdir}/libctatapeserverutilsunittests.so
+%attr(0755,root,root) %{_libdir}/libctautilsunittests.so
+%attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
+
+
+%package -n cta-systemtests
+Summary: CERN Tape Archive: system tests with virtual tape drives
+Group: Application/CTA
+%description -n cta-systemtests
+CERN Tape Archive:
+system tests with virtual tape drives
+%files -n cta-systemtests
+%attr(0755,root,root) %{_bindir}/cta-systemTests
+%attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so

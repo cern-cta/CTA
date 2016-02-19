@@ -65,6 +65,7 @@ set(ObjectStoreUnitTests
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
   protobuf rados ctacommon gtest ctaobjectstore)
+install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(makeMinimalVFS makeMinimalVFS.cpp)
 target_link_libraries(makeMinimalVFS

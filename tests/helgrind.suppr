@@ -1,0 +1,99 @@
+{
+   liblttnq1
+   Helgrind:Race
+   fun:lttng_ust_init
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+   obj:/usr/lib64/liblttng-ust.so.0.0.0
+}
+
+{
+   pthread_tests1
+   Helgrind:Misc
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_tape_threading*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_tests2
+   Helgrind:UnlockUnlocked
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_tape_threading*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_tests3
+   Helgrind:PthAPIerror
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_tape_threading*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_tests4
+   Helgrind:Misc
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_messages_Mutex*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_tests5
+   Helgrind:PthAPIerror
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_messages_Mutex*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_tests6
+   Helgrind:UnlockUnlocked
+   fun:pthread_mutex_*
+   ...
+   fun:*unitTests*castor_messages_Mutex*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+{
+   pthread_test7
+   Helgrind:Misc
+   fun:pthread_cond_*
+   ...
+   fun:_ZN9unitTests*castor_tape_threading_*
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+

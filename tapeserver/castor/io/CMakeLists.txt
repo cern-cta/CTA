@@ -11,3 +11,5 @@ add_library (ctaiounittests SHARED
   IoTest.cpp)
 target_link_libraries (ctaiounittests
   ctaio)
+
+install(TARGETS ctaiounittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

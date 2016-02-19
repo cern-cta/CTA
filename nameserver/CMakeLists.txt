@@ -21,5 +21,7 @@ add_library (ctanameserverunittests SHARED
 target_link_libraries(ctanameserverunittests
   ctanameserver)
 
+install(TARGETS ctanameserverunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 add_executable(makeMockNameServerBasePath mockNS/makeMockNameServerBasePath.cpp)
 target_link_libraries(makeMockNameServerBasePath ctacommon)

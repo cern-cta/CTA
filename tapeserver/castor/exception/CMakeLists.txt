@@ -4,3 +4,5 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 add_library (ctaexceptionunittests SHARED
   ExceptionTest.cpp)
+
+install(TARGETS ctaexceptionunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

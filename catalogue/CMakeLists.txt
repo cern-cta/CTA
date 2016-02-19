@@ -27,3 +27,5 @@ add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
 
 target_link_libraries (ctacatalogueunittests ctacatalogue)
+
+install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

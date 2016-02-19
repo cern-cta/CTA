@@ -30,3 +30,4 @@ add_library (ctalegacymsgunittests SHARED
 target_link_libraries (ctalegacymsgunittests
   ctamessages
   ctautils)
+install(TARGETS ctalegacymsgunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -36,3 +36,4 @@ add_library(ctamediachanger ${MEDIA_CHANGER_LIB_SRC_FILES})
 
 add_library(ctamediachangerutils SHARED
   MmcProxyDummy.cpp)
+install(TARGETS ctamediachangerutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
