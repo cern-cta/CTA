@@ -52,7 +52,7 @@ bool cta::common::dataStructures::RetrieveRequest::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchiveFileID
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setArchiveFileID(const std::string &archiveFileID) {
+void cta::common::dataStructures::RetrieveRequest::setArchiveFileID(const uint64_t archiveFileID) {
   m_archiveFileID = archiveFileID;
   m_archiveFileIDSet = true;
 }
@@ -60,7 +60,7 @@ void cta::common::dataStructures::RetrieveRequest::setArchiveFileID(const std::s
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::RetrieveRequest::getArchiveFileID() const {
+uint64_t cta::common::dataStructures::RetrieveRequest::getArchiveFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }

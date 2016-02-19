@@ -44,7 +44,7 @@ bool cta::common::dataStructures::DeleteArchiveRequest::allFieldsSet() const {
 //------------------------------------------------------------------------------
 // setArchiveFileID
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::DeleteArchiveRequest::setArchiveFileID(const std::string &archiveFileID) {
+void cta::common::dataStructures::DeleteArchiveRequest::setArchiveFileID(const uint64_t archiveFileID) {
   m_archiveFileID = archiveFileID;
   m_archiveFileIDSet = true;
 }
@@ -52,7 +52,7 @@ void cta::common::dataStructures::DeleteArchiveRequest::setArchiveFileID(const s
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DeleteArchiveRequest::getArchiveFileID() const {
+uint64_t cta::common::dataStructures::DeleteArchiveRequest::getArchiveFileID() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DeleteArchiveRequest have been set!");
   }

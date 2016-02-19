@@ -43,8 +43,8 @@ public:
    */
   ~ArchiveJob() throw();
 
-  void setArchiveFileID(const std::string &archiveFileID);
-  std::string getArchiveFileID() const;
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID() const;
 
   void setCopyNumber(const uint64_t copyNumber);
   uint64_t getCopyNumber() const;
@@ -63,7 +63,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::string m_archiveFileID;
+  uint64_t m_archiveFileID;
   bool m_archiveFileIDSet;
 
   uint64_t m_copyNumber;

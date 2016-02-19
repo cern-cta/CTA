@@ -374,7 +374,7 @@ void cta::catalogue::DummyCatalogue::modifyDedicationComment(const cta::common::
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
@@ -382,7 +382,7 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalog
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
@@ -390,7 +390,7 @@ cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile cta::catalogue::DummyCatalogue::getArchiveFileById(const std::string &id){
+cta::common::dataStructures::ArchiveFile cta::catalogue::DummyCatalogue::getArchiveFileById(const uint64_t id){
   return cta::common::dataStructures::ArchiveFile();
 }
           

@@ -44,8 +44,8 @@ public:
    */
   ~UpdateFileInfoRequest() throw();
 
-  void setArchiveFileID(const std::string &archiveFileID);
-  std::string getArchiveFileID() const;
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID() const;
 
   void setDrData(const cta::common::dataStructures::DRData &drData);
   cta::common::dataStructures::DRData getDrData() const;
@@ -64,7 +64,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::string m_archiveFileID;
+  uint64_t m_archiveFileID;
   bool m_archiveFileIDSet;
 
   cta::common::dataStructures::DRData m_drData;

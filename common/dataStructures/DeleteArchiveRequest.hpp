@@ -43,8 +43,8 @@ public:
    */
   ~DeleteArchiveRequest() throw();
 
-  void setArchiveFileID(const std::string &archiveFileID);
-  std::string getArchiveFileID() const;
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID() const;
 
   void setRequester(const cta::common::dataStructures::Requester &requester);
   cta::common::dataStructures::Requester getRequester() const;
@@ -57,7 +57,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::string m_archiveFileID;
+  uint64_t m_archiveFileID;
   bool m_archiveFileIDSet;
 
   cta::common::dataStructures::Requester m_requester;

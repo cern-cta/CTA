@@ -105,7 +105,7 @@ protected:
    * @param optionLongName  The long name of the required option
    * @return the value of the option or an empty string if absent
    */
-  std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
+  std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
   
   /**
    * Given the command line string vector it returns true if the specified option is present, false otherwise

@@ -644,7 +644,7 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
@@ -652,7 +652,7 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFi
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const std::string &id, const std::string &eosid,
+cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &requester, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
@@ -660,7 +660,7 @@ cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSu
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile cta::Scheduler::getArchiveFileById(const std::string &id){
+cta::common::dataStructures::ArchiveFile cta::Scheduler::getArchiveFileById(const uint64_t id){
   return cta::common::dataStructures::ArchiveFile();
 }
 

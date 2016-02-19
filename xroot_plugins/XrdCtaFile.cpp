@@ -321,12 +321,13 @@ void XrdProFile::replaceAll(std::string& str, const std::string& from, const std
 //------------------------------------------------------------------------------
 // getOptionValue
 //------------------------------------------------------------------------------
-std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName) {
+std::string XrdProFile::getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
   for(auto it=tokens.cbegin(); it!=tokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       auto it_next=it+1;
-      if(it_next!=tokens.cend() && it_next->find("-")!=0) {
-        return *it_next;
+      if(it_next!=tokens.cend()) {
+        if(!encoded) return *it_next;
+        else return decode(*it_next);
       }
       else {
         return "";
@@ -406,10 +407,10 @@ void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, 
 void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " bs/bootstrap --uid/-u <uid> --gid/-g <gid> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-  std::string gid_s = getOptionValue(tokens, "-g", "--gid");
-  std::string hostname = getOptionValue(tokens, "-h", "--hostname");
-  std::string comment = getOptionValue(tokens, "-m", "--comment");
+  std::string uid_s = getOptionValue(tokens, "-u", "--uid", false);
+  std::string gid_s = getOptionValue(tokens, "-g", "--gid", false);
+  std::string hostname = getOptionValue(tokens, "-h", "--hostname", false);
+  std::string comment = getOptionValue(tokens, "-m", "--comment", false);
   if(uid_s.empty()||gid_s.empty()||hostname.empty()||comment.empty()) {
     m_data = help.str();
     return;
@@ -437,8 +438,8 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
        << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string uid_s = getOptionValue(tokens, "-u", "--uid");
-    std::string gid_s = getOptionValue(tokens, "-g", "--gid");
+    std::string uid_s = getOptionValue(tokens, "-u", "--uid", false);
+    std::string gid_s = getOptionValue(tokens, "-g", "--gid", false);
     if(uid_s.empty()||gid_s.empty()) {
       m_data = help.str();
       return;
@@ -453,7 +454,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
     gid_ss >> gid;
     adminUser.setGid(gid);
     if("add" == tokens[2] || "ch" == tokens[2]) {
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
         m_data = help.str();
         return;
@@ -502,13 +503,13 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
        << "\trm  --name/-n <host_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string hostname = getOptionValue(tokens, "-n", "--name");
+    std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
       m_data = help.str();
       return;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
         m_data = help.str();
         return;
@@ -556,14 +557,14 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string name = getOptionValue(tokens, "-n", "--name");
+    std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
       m_data = help.str();
       return;
     }
     if("add" == tokens[2]) { //add
-      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||ptn_s.empty()) {
         m_data = help.str();
         return;
@@ -574,8 +575,8 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       m_scheduler->createTapePool(requester, name, ptn, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&ptn_s.empty()) {
         m_data = help.str();
         return;
@@ -627,8 +628,8 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
        << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string scn = getOptionValue(tokens, "-s", "--storageclass");
-    std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
+    std::string scn = getOptionValue(tokens, "-s", "--storageclass", false);
+    std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
     if(scn.empty()||cn_s.empty()) {
       m_data = help.str();
       return;
@@ -637,8 +638,8 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     uint64_t cn = 0;
     cn_ss >> cn;
     if("add" == tokens[2]) { //add
-      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||tapepool.empty()) {
         m_data = help.str();
         return;
@@ -646,8 +647,8 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       m_scheduler->createArchiveRoute(requester, scn, cn, tapepool, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&tapepool.empty()) {
         m_data = help.str();
         return;
@@ -697,13 +698,13 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string hostname = getOptionValue(tokens, "-n", "--name");
+    std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
       m_data = help.str();
       return;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
         m_data = help.str();
         return;
@@ -753,15 +754,15 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
        << "\tls      [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2] || "reclaim" == tokens[2] || "label" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
       return;
     }
     if("add" == tokens[2]) { //add
-      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
-      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
+      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity", false);
       if(logicallibrary.empty()||tapepool.empty()||capacity_s.empty()) {
         m_data = help.str();
         return;
@@ -769,7 +770,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       std::stringstream capacity_ss(capacity_s);
       int capacity = 0;
       capacity_ss >> capacity;
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       bool disabled=false;
       bool full=false;
       if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full"))) {
@@ -781,10 +782,10 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       m_scheduler->createTape(requester, vid, logicallibrary, tapepool, capacity, disabled, full, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
-      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
+      std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+      std::string capacity_s = getOptionValue(tokens, "-c", "--capacity", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && !hasOption(tokens, "-e", "--enabled")
               && !hasOption(tokens, "-d", "--disabled") && !hasOption(tokens, "-f", "--free") && !hasOption(tokens, "-F", "--full")) {
         m_data = help.str();
@@ -826,17 +827,17 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       m_scheduler->reclaimTape(requester, vid);
     }
     else if("label" == tokens[2]) { //label
-      m_scheduler->labelTape(requester, vid, hasOption(tokens, "-f", "--force"), hasOption(tokens, "-l", "--lbp"), getOptionValue(tokens, "-t", "--tag"));
+      m_scheduler->labelTape(requester, vid, hasOption(tokens, "-f", "--force"), hasOption(tokens, "-l", "--lbp"), getOptionValue(tokens, "-t", "--tag", false));
     }
     else { //rm
       m_scheduler->deleteTape(requester, vid);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
-    std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary");
-    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string capacity = getOptionValue(tokens, "-c", "--capacity");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
+    std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
+    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+    std::string capacity = getOptionValue(tokens, "-c", "--capacity", false);
     if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) 
             || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full")) 
             || (hasOption(tokens, "-b", "--busy") && hasOption(tokens, "-n", "--notbusy"))) {
@@ -903,14 +904,14 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
        << "\trm  --name/-n <storage_class_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string scn = getOptionValue(tokens, "-n", "--name");
+    std::string scn = getOptionValue(tokens, "-n", "--name", false);
     if(scn.empty()) {
       m_data = help.str();
       return;
     }  
     if("add" == tokens[2]) { //add
-      std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||cn_s.empty()) {
         m_data = help.str();
         return;
@@ -921,8 +922,8 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
       m_scheduler->createStorageClass(requester, scn, cn, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string cn_s = getOptionValue(tokens, "-c", "--copynb");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&cn_s.empty()) {
         m_data = help.str();
         return;
@@ -974,15 +975,15 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string user = getOptionValue(tokens, "-n", "--name");
-    std::string group = getOptionValue(tokens, "-g", "--group");
+    std::string user = getOptionValue(tokens, "-n", "--name", false);
+    std::string group = getOptionValue(tokens, "-g", "--group", false);
     if(user.empty()||group.empty()) {
       m_data = help.str();
       return;
     }  
     if("add" == tokens[2]) { //add
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||usergroup.empty()) {
         m_data = help.str();
         return;
@@ -990,8 +991,8 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
       m_scheduler->createUser(requester, user, group, usergroup, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&usergroup.empty()) {
         m_data = help.str();
         return;
@@ -1045,22 +1046,22 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
        << "\trm  --name/-n <usergroup_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string group = getOptionValue(tokens, "-n", "--name");
+    std::string group = getOptionValue(tokens, "-n", "--name", false);
     if(group.empty()) {
       m_data = help.str();
       return;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {      
-      std::string archivepriority_s = getOptionValue(tokens, "--ap", "--archivepriority");
-      std::string minarchivefilesqueued_s = getOptionValue(tokens, "--af", "--minarchivefilesqueued");
-      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued");
-      std::string minarchiverequestage_s = getOptionValue(tokens, "--aa", "--minarchiverequestage");
-      std::string retrievepriority_s = getOptionValue(tokens, "--rp", "--retrievepriority");
-      std::string minretrievefilesqueued_s = getOptionValue(tokens, "--rf", "--minretrievefilesqueued");
-      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued");
-      std::string minretrieverequestage_s = getOptionValue(tokens, "--ra", "--minretrieverequestage");
-      std::string maxdrivesallowed_s = getOptionValue(tokens, "-d", "--maxdrivesallowed");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string archivepriority_s = getOptionValue(tokens, "--ap", "--archivepriority", false);
+      std::string minarchivefilesqueued_s = getOptionValue(tokens, "--af", "--minarchivefilesqueued", false);
+      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued", false);
+      std::string minarchiverequestage_s = getOptionValue(tokens, "--aa", "--minarchiverequestage", false);
+      std::string retrievepriority_s = getOptionValue(tokens, "--rp", "--retrievepriority", false);
+      std::string minretrievefilesqueued_s = getOptionValue(tokens, "--rf", "--minretrievefilesqueued", false);
+      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued", false);
+      std::string minretrieverequestage_s = getOptionValue(tokens, "--ra", "--minretrieverequestage", false);
+      std::string maxdrivesallowed_s = getOptionValue(tokens, "-d", "--maxdrivesallowed", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
         if(archivepriority_s.empty()||minarchivefilesqueued_s.empty()||minarchivebytesqueued_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
                 ||minretrievefilesqueued_s.empty()||minretrievebytesqueued_s.empty()||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
@@ -1170,7 +1171,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string drive = getOptionValue(tokens, "-n", "--name");
+    std::string drive = getOptionValue(tokens, "-n", "--name", false);
     if(drive.empty()) {
       m_data = help.str();
       return;
@@ -1178,12 +1179,12 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     if("add" == tokens[2] || "ch" == tokens[2]) {
       bool readonly = hasOption(tokens, "-r", "--readonly");
       bool writeonly = hasOption(tokens, "-w", "--writeonly");
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup");
-      std::string vid = getOptionValue(tokens, "-v", "--vid");
-      std::string tag = getOptionValue(tokens, "-t", "--tag");
-      std::string from_s = getOptionValue(tokens, "-f", "--from");
-      std::string until_s = getOptionValue(tokens, "-u", "--until");
-      std::string comment = getOptionValue(tokens, "-m", "--comment");
+      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string vid = getOptionValue(tokens, "-v", "--vid", false);
+      std::string tag = getOptionValue(tokens, "-t", "--tag", false);
+      std::string from_s = getOptionValue(tokens, "-f", "--from", false);
+      std::string until_s = getOptionValue(tokens, "-u", "--until", false);
+      std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
         if(comment.empty()||from_s.empty()||until_s.empty()||(usergroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
@@ -1306,13 +1307,13 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
       return;
     }  
     if("add" == tokens[2]) { //add
-      std::string tag = getOptionValue(tokens, "-t", "--tag");
+      std::string tag = getOptionValue(tokens, "-t", "--tag", false);
       bool justexpand = hasOption(tokens, "-e", "--justexpand");
       bool justrepack = hasOption(tokens, "-r", "--justrepack");
       if(justexpand&&justrepack) {
@@ -1349,7 +1350,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
   }
   else if("ls" == tokens[2]) { //ls
     std::list<cta::common::dataStructures::RepackInfo> list;
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {      
       list = m_scheduler->getRepacks(requester);
     }
@@ -1404,7 +1405,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
 void XrdProFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
-  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
   if(tapepool.empty()) {
     m_data = help.str();
     return;
@@ -1423,14 +1424,14 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
        << "\tls  [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
       return;
     }  
     if("add" == tokens[2]) { //add
-      std::string tag = getOptionValue(tokens, "-t", "--tag");
-      std::string numberOfFiles_s = getOptionValue(tokens, "-p", "--partial");
+      std::string tag = getOptionValue(tokens, "-t", "--tag", false);
+      std::string numberOfFiles_s = getOptionValue(tokens, "-p", "--partial", false);
       bool complete = hasOption(tokens, "-c", "--complete");
       if(complete&&!numberOfFiles_s.empty()) {
         m_data = help.str();
@@ -1465,7 +1466,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
   }
   else if("ls" == tokens[2]) { //ls
     std::list<cta::common::dataStructures::VerifyInfo> list;
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {      
       list = m_scheduler->getVerifys(requester);
     }
@@ -1508,21 +1509,22 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
   help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
   if("ls" == tokens[2]) { //ls
-    std::string id = getOptionValue(tokens, "-I", "--id");
-    std::string eosid = getOptionValue(tokens, "-e", "--eosid");
-    std::string copynb = getOptionValue(tokens, "-c", "--copynb");
-    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
-    std::string vid = getOptionValue(tokens, "-v", "--vid");
-    std::string owner = getOptionValue(tokens, "-o", "--owner");
-    std::string group = getOptionValue(tokens, "-g", "--group");
-    std::string storageclass = getOptionValue(tokens, "-s", "--storageclass");
-    std::string path = getOptionValue(tokens, "-p", "--path");
+    std::string id_s = getOptionValue(tokens, "-I", "--id", false);
+    std::string eosid = getOptionValue(tokens, "-e", "--eosid", false);
+    std::string copynb = getOptionValue(tokens, "-c", "--copynb", false);
+    std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
+    std::string vid = getOptionValue(tokens, "-v", "--vid", false);
+    std::string owner = getOptionValue(tokens, "-o", "--owner", false);
+    std::string group = getOptionValue(tokens, "-g", "--group", false);
+    std::string storageclass = getOptionValue(tokens, "-s", "--storageclass", false);
+    std::string path = getOptionValue(tokens, "-p", "--path", false);
     bool summary = hasOption(tokens, "-S", "--summary");
     bool all = hasOption(tokens, "-a", "--all");
-    if(!all && (id.empty() && eosid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
+    if(!all && (id_s.empty() && eosid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
       m_data = help.str();
       return;
     }
+    uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
     if(!summary) {
       std::list<cta::common::dataStructures::ArchiveFile> list=m_scheduler->getArchiveFiles(requester, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       if(list.size()>0) {
@@ -1575,17 +1577,17 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
        << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;
-  std::string drive = getOptionValue(tokens, "-d", "--drive");
-  std::string vid = getOptionValue(tokens, "-v", "--vid");
+  std::string drive = getOptionValue(tokens, "-d", "--drive", false);
+  std::string vid = getOptionValue(tokens, "-v", "--vid", false);
   if(vid.empty() || drive.empty()) {
     m_data = help.str();
     return;
   }
-  std::string tag = getOptionValue(tokens, "-t", "--tag");
+  std::string tag = getOptionValue(tokens, "-t", "--tag", false);
   if("read" == tokens[2]) {
-    std::string firstfseq_s = getOptionValue(tokens, "-f", "--firstfseq");
-    std::string lastfseq_s = getOptionValue(tokens, "-l", "--lastfseq");
-    std::string output = getOptionValue(tokens, "-o", "--output");
+    std::string firstfseq_s = getOptionValue(tokens, "-f", "--firstfseq", false);
+    std::string lastfseq_s = getOptionValue(tokens, "-l", "--lastfseq", false);
+    std::string output = getOptionValue(tokens, "-o", "--output", false);
     if(firstfseq_s.empty() || lastfseq_s.empty() || output.empty()) {
       m_data = help.str();
       return;
@@ -1619,7 +1621,7 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
   else if("write" == tokens[2] || "write_auto" == tokens[2]) {
     cta::common::dataStructures::WriteTestResult res;
     if("write" == tokens[2]) { //write
-      std::string file = getOptionValue(tokens, "-f", "--file");
+      std::string file = getOptionValue(tokens, "-f", "--file", false);
       if(file.empty()) {
         m_data = help.str();
         return;
@@ -1627,9 +1629,9 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
       res = m_scheduler->writeTest(requester, drive, vid, file, tag);
     }
     else { //write_auto
-      std::string number_s = getOptionValue(tokens, "-n", "--number");
-      std::string size_s = getOptionValue(tokens, "-s", "--size");
-      std::string input = getOptionValue(tokens, "-i", "--input");
+      std::string number_s = getOptionValue(tokens, "-n", "--number", false);
+      std::string size_s = getOptionValue(tokens, "-s", "--size", false);
+      std::string input = getOptionValue(tokens, "-i", "--input", false);
       if(number_s.empty()||size_s.empty()||(input!="zero"&&input!="urandom")) {
         m_data = help.str();
         return;
@@ -1680,7 +1682,7 @@ void XrdProFile::xCom_drive(const std::vector<std::string> &tokens, const cta::c
   help << tokens[0] << " dr/drive up/down (it is a synchronous command):" << std::endl
        << "\tup   --drive/-d <drive_name>" << std::endl
        << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;
-  std::string drive = getOptionValue(tokens, "-d", "--drive");
+  std::string drive = getOptionValue(tokens, "-d", "--drive", false);
   if(drive.empty()) {
     m_data = help.str();
     return;
@@ -1737,7 +1739,7 @@ void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
 void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpa/listpendingarchives [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
-  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool");
+  std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
   if(tapepool.empty()) {
@@ -1758,7 +1760,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
-          currentRow.push_back(jt->getArchiveFileID());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getArchiveFileID()));
           currentRow.push_back(jt->getRequest().getStorageClass());
           currentRow.push_back(std::to_string((unsigned long long)jt->getCopyNumber()));
           currentRow.push_back(jt->getRequest().getEosFileID());
@@ -1802,7 +1804,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
 void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
   help << tokens[0] << " lpr/listpendingretrieves [--vid/-v <vid>] [--extended/-x]" << std::endl;
-  std::string vid = getOptionValue(tokens, "-v", "--vid");
+  std::string vid = getOptionValue(tokens, "-v", "--vid", false);
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
   if(vid.empty()) {
@@ -1823,7 +1825,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
-          currentRow.push_back(jt->getRequest().getArchiveFileID());
+          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getArchiveFileID()));
           cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->getRequest().getArchiveFileID());
           currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].first));
           currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getFSeq()));
@@ -1901,23 +1903,28 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --eosid <EOS_unique_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --dr_instance <DR_instance> --dr_path <DR_path> --dr_owner <DR_owner>" << std::endl
                     << "\t--dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
-  std::string encoded = getOptionValue(tokens, "", "--encoded");
-  std::string user = getOptionValue(tokens, "", "--user");
-  std::string group = getOptionValue(tokens, "", "--group");
-  std::string eosid = getOptionValue(tokens, "", "--eosid");
-  std::string srcurl = getOptionValue(tokens, "", "--srcurl");
-  std::string size_s = getOptionValue(tokens, "", "--size");
-  std::string checksumtype = getOptionValue(tokens, "", "--checksumtype");
-  std::string checksumvalue = getOptionValue(tokens, "", "--checksumvalue");
-  std::string storageclass = getOptionValue(tokens, "", "--storageclass");
-  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance");
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path");
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner");
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup");
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob");
-  std::string diskpool = getOptionValue(tokens, "", "--diskpool");
-  std::string throughput_s = getOptionValue(tokens, "", "--throughput");
-  if((encoded!="true" && encoded!="false") || user.empty() || group.empty() || eosid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  std::string eosid = getOptionValue(tokens, "", "--eosid", encoded);
+  std::string srcurl = getOptionValue(tokens, "", "--srcurl", encoded);
+  std::string size_s = getOptionValue(tokens, "", "--size", encoded);
+  std::string checksumtype = getOptionValue(tokens, "", "--checksumtype", encoded);
+  std::string checksumvalue = getOptionValue(tokens, "", "--checksumvalue", encoded);
+  std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
+  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
+  std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
+  if(user.empty() || group.empty() || eosid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
           || storageclass.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
     return;
@@ -1944,7 +1951,10 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   request.setRequester(originator);
   request.setSrcURL(srcurl);
   request.setStorageClass(storageclass);  
-  m_scheduler->queueArchiveRequest(requester, request);
+  uint64_t archiveFileId = m_scheduler->queueArchiveRequest(requester, request);
+  std::stringstream res_ss;
+  res_ss << archiveFileId << std::endl;
+  m_data = res_ss.str();
 }
 
 //------------------------------------------------------------------------------
@@ -1952,7 +1962,48 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob> <diskpool_name> <diskpool_throughput>" << std::endl;
+  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --dr_instance <DR_instance> --dr_path <DR_path>" << std::endl
+                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  std::string id_s = getOptionValue(tokens, "", "--id", encoded);
+  std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
+  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
+  std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::DRData drData;
+  drData.setDrBlob(dr_blob);
+  drData.setDrGroup(dr_ownergroup);
+  drData.setDrInstance(dr_instance);
+  drData.setDrOwner(dr_owner);
+  drData.setDrPath(dr_path);
+  cta::common::dataStructures::RetrieveRequest request;
+  request.setDiskpoolName(diskpool);
+  request.setDiskpoolThroughput(throughput);
+  request.setDrData(drData);
+  request.setArchiveFileID(id);
+  request.setRequester(originator);
+  request.setDstURL(dsturl);
+  m_scheduler->queueRetrieveRequest(requester, request);
 }
 
 //------------------------------------------------------------------------------
@@ -1960,7 +2011,28 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " da/deletearchive <username> <groupname> <CTA_ArchiveFileID>" << std::endl;
+  help << tokens[0] << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  std::string id_s = getOptionValue(tokens, "", "--id", encoded);
+  if(user.empty() || group.empty() || id_s.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::DeleteArchiveRequest request;
+  request.setArchiveFileID(id);
+  request.setRequester(originator);
+  m_scheduler->deleteArchiveRequest(requester, request);
 }
 
 //------------------------------------------------------------------------------
@@ -1968,7 +2040,43 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <dst_URL> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --dr_instance <DR_instance> --dr_path <DR_path>" << std::endl
+                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  std::string id_s = getOptionValue(tokens, "", "--id", encoded);
+  std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
+  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::DRData drData;
+  drData.setDrBlob(dr_blob);
+  drData.setDrGroup(dr_ownergroup);
+  drData.setDrInstance(dr_instance);
+  drData.setDrOwner(dr_owner);
+  drData.setDrPath(dr_path);
+  cta::common::dataStructures::CancelRetrieveRequest request;
+  request.setDrData(drData);
+  request.setArchiveFileID(id);
+  request.setRequester(originator);
+  request.setDstURL(dsturl);
+  m_scheduler->cancelRetrieveRequest(requester, request);
 }
 
 //------------------------------------------------------------------------------
@@ -1976,7 +2084,43 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> <username> <groupname> <CTA_ArchiveFileID> <storage_class> <DR_instance> <DR_path> <DR_owner> <DR_group> <DR_blob>" << std::endl;
+  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --dr_instance <DR_instance> --dr_path <DR_path>" << std::endl
+                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  std::string id_s = getOptionValue(tokens, "", "--id", encoded);
+  std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
+  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::DRData drData;
+  drData.setDrBlob(dr_blob);
+  drData.setDrGroup(dr_ownergroup);
+  drData.setDrInstance(dr_instance);
+  drData.setDrOwner(dr_owner);
+  drData.setDrPath(dr_path);
+  cta::common::dataStructures::UpdateFileInfoRequest request;
+  request.setDrData(drData);
+  request.setArchiveFileID(id);
+  request.setRequester(originator);
+  request.setStorageClass(storageclass);
+  m_scheduler->updateFileInfoRequest(requester, request);
 }
 
 //------------------------------------------------------------------------------
@@ -1984,7 +2128,25 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lsc/liststorageclass <username> <groupname>" << std::endl;
+  help << tokens[0] << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string user = getOptionValue(tokens, "", "--user", encoded);
+  std::string group = getOptionValue(tokens, "", "--group", encoded);
+  if(user.empty() || group.empty()) {
+    m_data = help.str();
+    return;
+  }
+  cta::common::dataStructures::Requester originator;
+  originator.setUserName(user);
+  originator.setGroupName(group);
+  cta::common::dataStructures::ListStorageClassRequest request;
+  request.setRequester(originator);
+  m_scheduler->listStorageClassRequest(requester, request);
 }
   
 //------------------------------------------------------------------------------

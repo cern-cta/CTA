@@ -8,9 +8,3 @@ add_executable (cta CTACmdMain.cpp CTACmd.cpp)
 target_link_libraries (cta ${XROOTD_XRDCL_LIB} ctacommon cryptopp ctautils)
 
 include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
-add_executable (ctaAddAdminUser CTAAddAdminUser.cpp )
-target_link_libraries (ctaAddAdminUser ctacommon castorlog
-  ctautils protobuf ctascheduler ctanameserver)
-
-install (TARGETS cta ctaAddAdminUser DESTINATION usr/bin)
-
