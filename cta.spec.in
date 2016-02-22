@@ -96,7 +96,6 @@ The xroot plugin
 %files -n cta-cli
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta
-%attr(0755,root,root) %{_bindir}/ctaAddAdminUser
 
 
 %package -n cta-lib
