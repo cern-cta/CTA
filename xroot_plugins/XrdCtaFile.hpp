@@ -34,7 +34,9 @@ namespace cta { namespace xrootPlugins {
  * documentation can be found in XrdSfs/XrdSfsInterface.hh.
  */
 class XrdProFile : public XrdSfsFile {
+  
 public:
+  
   XrdOucErrInfo  error;
   virtual int open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int close();
@@ -53,6 +55,7 @@ public:
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
   XrdProFile(cta::Scheduler *scheduler, const char *user=0, int MonID=0);
   ~XrdProFile();
+  
 protected:
   
   /**
@@ -76,8 +79,8 @@ protected:
   /**
    * Checks whether client has correct permissions and returns the corresponding SecurityIdentity structure
    * 
-   * @param req     parsed request
-   * @return The requester structure
+   * @param client  The client security entity
+   * @return        The requester cta structure
    */
   cta::common::dataStructures::SecurityIdentity checkClient(const XrdSecEntity *client);
   
@@ -93,7 +96,8 @@ protected:
   /**
    * Parses the command line and dispatches it to the relevant function
    * 
-   * @param tokens The command line tokens
+   * @param tokens     The command line tokens
+   * @param requester  The requester identity
    */
   void dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester);
   
@@ -103,6 +107,7 @@ protected:
    * @param tokens          The command line tokens 
    * @param optionShortName The short name of the required option
    * @param optionLongName  The long name of the required option
+   * @param encoded         True if the argument is encoded, false otherwise
    * @return the value of the option or an empty string if absent
    */
   std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName, const bool encoded);

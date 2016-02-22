@@ -229,7 +229,15 @@ public:
 
 private:
 
+  /**
+   * The catalogue.
+   */
   cta::catalogue::Catalogue &m_catalogue;
+
+  /**
+   * The scheduler database.
+   */
+  SchedulerDatabase &m_db;
 }; // class Scheduler
 
 } // namespace cta
