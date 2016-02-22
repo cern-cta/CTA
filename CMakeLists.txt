@@ -71,6 +71,9 @@ else (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
 endif (NOT DEFINED SKIP_UNIT_TESTS)
 
+#Load version information in all cases.
+include(cmake/CTAVersions.cmake)
+
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
    set(COMPILE_PACKAGING "1") 
@@ -104,7 +107,6 @@ ELSE(DEFINED PackageOnly)
   set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
   list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
   include(cmake/CTAInstallationFunctions.cmake)
-  include(cmake/CTAVersions.cmake)
   include(GNUInstallDirs)
   set(CMAKE_INSTALL_PREFIX "/")
 
