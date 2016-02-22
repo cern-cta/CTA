@@ -27,6 +27,9 @@ License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/cta
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: cmake >= 2.6 redhat-rpm-config
+BuildRequires: xrootd-client-devel >= 4.2.3 xrootd-devel >= 4.2
+BuildRequires: xrootd-server-devel >= 4.2 xrootd-private-devel >= 4.2
+BuildRequires: ceph-devel-compat >= 9
 # only build debug info if you're building the whole code
 
 %description
