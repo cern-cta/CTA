@@ -131,15 +131,18 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverdaemonutils.so
 
-%package -n cta-unittests
-Summary: CERN Tape Archive: unit tests
+%package -n cta-systemtests
+Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
-%description -n cta-unittests
+%description -n cta-systemtests
 CERN Tape Archive:
-unit tests
-%files -n cta-unittests
+Unit tests and system tests with virtual tape drives
+%files -n cta-systemtests
+%attr(0755,root,root) %{_bindir}/cta-systemTests
+%attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so
 %attr(0755,root,root) %{_bindir}/cta-unitTests
 %attr(0755,root,root) %{_bindir}/cta-valgrindUnitTests.sh
+%attr(0755,root,root) %{_bindir}/cta-unitPlusSystemTests.sh
 %attr(0755,root,root) %{_libdir}/libctacatalogueunittests.so
 %attr(0755,root,root) %{_libdir}/libctacommonunittests.so
 %attr(0755,root,root) %{_libdir}/libctaexceptionunittests.so
@@ -159,14 +162,3 @@ unit tests
 %attr(0755,root,root) %{_libdir}/libctatapeserverutilsunittests.so
 %attr(0755,root,root) %{_libdir}/libctautilsunittests.so
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
-
-
-%package -n cta-systemtests
-Summary: CERN Tape Archive: system tests with virtual tape drives
-Group: Application/CTA
-%description -n cta-systemtests
-CERN Tape Archive:
-system tests with virtual tape drives
-%files -n cta-systemtests
-%attr(0755,root,root) %{_bindir}/cta-systemTests
-%attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so

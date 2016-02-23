@@ -73,5 +73,5 @@ install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 configure_file(cta-valgrindUnitTests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh DESTINATION usr/bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh cta-unitPlusSystemTests.sh DESTINATION usr/bin)
 install(FILES valgrind.suppr helgrind.suppr DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
