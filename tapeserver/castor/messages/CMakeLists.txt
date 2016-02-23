@@ -36,6 +36,27 @@ add_library(ctamessagesutils SHARED
   TapeserverProxyDummy.cpp)
 install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+set (CtaMessageHdrs
+  AcsProxy.hpp
+  AcsProxyZmq.hpp
+  Constants.hpp
+  Frame.hpp
+  messages.hpp
+  Mutex.hpp
+  SmartZmqContext.hpp
+  TapeserverProxy.hpp
+  TapeserverProxyZmq.hpp
+  ZmqMsg.hpp
+  ZmqSocket.hpp
+  ZmqSocketMT.hpp
+  ZmqSocketST.hpp)
+
+SET_SOURCE_FILES_PROPERTIES(${CtaMessageHdrs} PROPERTIES HEADER_FILE_ONLY TRUE)
+FOREACH(MsgHdr ${CtaMessageHdrs})
+  SET_SOURCE_FILES_PROPERTIES(${CtaMessageHdrs} 
+    PROPERTIES OBJECT_DEPENDS ${MsgHdr})
+ENDFOREACH(MsgHdr)
+
 set(CtaMessageSrcs
   AcsProxy.cpp
   AcsProxyZmq.cpp
