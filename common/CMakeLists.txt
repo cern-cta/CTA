@@ -51,7 +51,6 @@ set (COMMON_LIB_SRC_FILES
   exception/DiskException.hpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/TapeException.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
