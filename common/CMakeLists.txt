@@ -48,7 +48,6 @@ set (COMMON_LIB_SRC_FILES
   archiveNS/TapeFileLocation.cpp
   checksum/Checksum.cpp
   exception/Backtrace.cpp
-  exception/DiskException.hpp
   exception/Errnum.cpp
   exception/Exception.cpp
   log/DummyLogger.cpp
