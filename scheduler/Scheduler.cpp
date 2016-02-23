@@ -82,8 +82,8 @@ void cta::Scheduler::updateFileInfoRequest(const cta::common::dataStructures::Se
 //------------------------------------------------------------------------------
 // listStorageClassRequest
 //------------------------------------------------------------------------------
-void cta::Scheduler::listStorageClassRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ListStorageClassRequest &request) {
-
+std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClassRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ListStorageClassRequest &request) {
+  return std::list<cta::common::dataStructures::StorageClass>();
 }
 
 //------------------------------------------------------------------------------

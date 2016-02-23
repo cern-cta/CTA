@@ -96,7 +96,7 @@ public:
   virtual void deleteArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::DeleteArchiveRequest &request);
   virtual void cancelRetrieveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::CancelRetrieveRequest &request);
   virtual void updateFileInfoRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::UpdateFileInfoRequest &request);
-  virtual void listStorageClassRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ListStorageClassRequest &request);
+  virtual std::list<cta::common::dataStructures::StorageClass> listStorageClassRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ListStorageClassRequest &request);
 
   virtual void createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &requester, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment);
 
