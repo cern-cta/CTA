@@ -24,7 +24,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/processCap/SmartCap.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 
 #include <errno.h>
 

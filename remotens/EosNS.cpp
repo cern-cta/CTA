@@ -25,7 +25,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePath.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include "remotens/EosNS.hpp"
 
 #include "XrdCl/XrdClFileSystem.hh"

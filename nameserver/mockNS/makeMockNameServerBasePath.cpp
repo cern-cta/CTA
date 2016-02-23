@@ -29,7 +29,7 @@
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 
 namespace {
 

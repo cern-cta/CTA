@@ -73,7 +73,7 @@ set (COMMON_LIB_SRC_FILES
   threading/Mutex.cpp
   threading/System.cpp
   threading/Threading.cpp
-  utils/Utils.cpp
+  utils/utils.cpp
   utils/strerror_r_wrapper.cpp
   ArchiveRequest.cpp
   CreationLog.cpp

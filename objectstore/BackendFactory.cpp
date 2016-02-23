@@ -19,7 +19,7 @@
 #include "BackendFactory.hpp"
 #include "BackendRados.hpp"
 #include "BackendVFS.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
 
 auto cta::objectstore::BackendFactory::createBackend(const std::string& URL)

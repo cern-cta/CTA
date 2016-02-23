@@ -24,7 +24,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 
 #include <errno.h>
 #include <sstream>

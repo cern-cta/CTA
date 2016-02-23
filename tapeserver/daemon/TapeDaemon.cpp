@@ -18,7 +18,7 @@
 
 #include "TapeDaemon.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include <google/protobuf/service.h>
 
 namespace cta { namespace tape { namespace daemon {

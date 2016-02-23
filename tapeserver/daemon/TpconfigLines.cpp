@@ -17,7 +17,7 @@
  */
 
 #include "tapeserver/daemon/TpconfigLines.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/exception/Errnum.hpp"
 
 #include <errno.h>

@@ -27,7 +27,7 @@
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 

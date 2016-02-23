@@ -30,7 +30,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "nameserver/mockNS/SmartFd.hpp"
-#include "common/utils/Utils.hpp"
+#include "common/utils/utils.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 
 //------------------------------------------------------------------------------
