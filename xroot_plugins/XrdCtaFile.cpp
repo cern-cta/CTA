@@ -436,7 +436,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
        << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
        << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
        << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string uid_s = getOptionValue(tokens, "-u", "--uid", false);
     std::string gid_s = getOptionValue(tokens, "-g", "--gid", false);
@@ -475,7 +475,7 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"uid","gid","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(std::to_string((unsigned long long)it->getUser().getUid()));
@@ -501,7 +501,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <host_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
@@ -530,7 +530,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"hostname","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -555,7 +555,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
        << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
@@ -600,7 +600,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","# partial tapes","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -626,7 +626,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
        << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string scn = getOptionValue(tokens, "-s", "--storageclass", false);
     std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
@@ -669,7 +669,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"storage class","copy number","tapepool","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getStorageClassName());
@@ -696,7 +696,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
@@ -725,7 +725,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -751,7 +751,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
        << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">]" << std::endl
        << "\trm      --vid/-v <vid>" << std::endl
        << "\treclaim --vid/-v <vid>" << std::endl
-       << "\tls      [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
+       << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2] || "reclaim" == tokens[2] || "label" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
@@ -869,7 +869,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","capacity","occupancy","last fseq","busy","full","disabled","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getVid());
@@ -902,7 +902,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
        << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <storage_class_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string scn = getOptionValue(tokens, "-n", "--name", false);
     if(scn.empty()) {
@@ -947,7 +947,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"storage class","number of copies","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -973,7 +973,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
        << "\tadd --name/-n <user_name> --group/-g <group_name> --usergroup/-u <user_group_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <user_name> --group/-g <group_name> [--usergroup/-u <user_group_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string user = getOptionValue(tokens, "-n", "--name", false);
     std::string group = getOptionValue(tokens, "-g", "--group", false);
@@ -1013,7 +1013,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","group","cta group","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -1044,7 +1044,7 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
        << "\t   [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl
        << "\t   [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <usergroup_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string group = getOptionValue(tokens, "-n", "--name", false);
     if(group.empty()) {
@@ -1135,7 +1135,7 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
@@ -1169,7 +1169,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
        << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
-       << "\tls" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string drive = getOptionValue(tokens, "-n", "--name", false);
     if(drive.empty()) {
@@ -1262,7 +1262,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         std::string type_s;
@@ -1304,7 +1304,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
   help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
        << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
-       << "\tls  [--vid/-v <vid>]" << std::endl
+       << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
@@ -1334,7 +1334,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
       if(info.getErrors().size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
-        responseTable.push_back(header);    
+        if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
@@ -1360,7 +1360,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","uid","gid","host","time"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
         switch(it->getRepackType()) {
@@ -1421,7 +1421,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
   help << tokens[0] << " ve/verify add/rm/ls/err:" << std::endl
        << "\tadd [--vid/-v <vid>] [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  [--vid/-v <vid>]" << std::endl
-       << "\tls  [--vid/-v <vid>]" << std::endl
+       << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
@@ -1450,7 +1450,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
       if(info.getErrors().size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
-        responseTable.push_back(header);    
+        if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
@@ -1476,7 +1476,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","uid","gid","host","time"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getVid());
@@ -1506,7 +1506,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " af/archivefile ls [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
+  help << tokens[0] << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
   if("ls" == tokens[2]) { //ls
     std::string id_s = getOptionValue(tokens, "-I", "--id", false);
@@ -1530,7 +1530,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       if(list.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
-        responseTable.push_back(header);    
+        if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = list.cbegin(); it != list.cend(); it++) {
           for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
             std::vector<std::string> currentRow;
@@ -1559,7 +1559,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.getTotalFiles()),std::to_string((unsigned long long)summary.getTotalBytes())};
-      responseTable.push_back(header);
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);
       responseTable.push_back(row);
     }
   }
@@ -1738,7 +1738,7 @@ void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpa/listpendingarchives [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
+  help << tokens[0] << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
   std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
@@ -1755,7 +1755,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"tapepool","id","storage class","copy no.","EOS id","checksum type","checksum value","size","user","group","instance","path","diskpool","diskpool throughput"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
@@ -1781,7 +1781,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
     else {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"tapepool","total files","total size"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->first);
@@ -1803,7 +1803,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lpr/listpendingretrieves [--vid/-v <vid>] [--extended/-x]" << std::endl;
+  help << tokens[0] << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
   std::string vid = getOptionValue(tokens, "-v", "--vid", false);
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
@@ -1820,7 +1820,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","instance","path","diskpool","diskpool throughput"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
@@ -1845,7 +1845,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
     else {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","total files","total size"};
-      responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->first);
@@ -1868,12 +1868,12 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &requester) {
   std::stringstream help;
-  help << tokens[0] << " lds/listdrivestates" << std::endl;
+  help << tokens[0] << " lds/listdrivestates [--header/-h]" << std::endl;
   std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(requester);  
   if(result.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"logical library","host","drive","status","since","mount","vid","tapepool","session id","since","files","bytes","latest speed"};
-    responseTable.push_back(header);    
+    if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
     for(auto it = result.cbegin(); it != result.cend(); it++) {
       std::vector<std::string> currentRow;
       currentRow.push_back(it->getLogicalLibrary());
