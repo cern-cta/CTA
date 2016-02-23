@@ -52,18 +52,6 @@ public:
   OStoreDBWrapper(const std::string &context, const std::string &URL = "");
   
   ~OStoreDBWrapper() throw () {}
-  
-  virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const {
-    m_OStoreDB.assertIsAdminOnAdminHost(id);
-  }
-
-  virtual void createAdminHost(const std::string& hostName, const cta::CreationLog& creationLog) {
-    m_OStoreDB.createAdminHost(hostName, creationLog);
-  }
-
-  virtual void createAdminUser(const SecurityIdentity& requester, const UserIdentity& user, const std::string& comment) {
-    m_OStoreDB.createAdminUser(requester, user, comment);
-  }
 
   virtual void createArchiveRoute(const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const CreationLog& creationLog) {
     m_OStoreDB.createArchiveRoute(storageClassName, copyNb, tapePoolName, creationLog);
@@ -87,14 +75,6 @@ public:
   
   virtual void setTapePoolMountCriteria(const std::string& tapePool, const MountCriteriaByDirection& mountCriteriaByDirection) {
     m_OStoreDB.setTapePoolMountCriteria(tapePool, mountCriteriaByDirection);
-  }
-
-  virtual void deleteAdminHost(const SecurityIdentity& requester, const std::string& hostName) {
-    m_OStoreDB.deleteAdminHost(requester, hostName);
-  }
-
-  virtual void deleteAdminUser(const SecurityIdentity& requester, const UserIdentity& user) {
-    m_OStoreDB.deleteAdminUser(requester, user);
   }
 
   virtual void deleteArchiveRoute(const SecurityIdentity& requester, const std::string& storageClassName, const uint16_t copyNb) {
@@ -128,16 +108,6 @@ public:
   virtual void deleteTapePool(const SecurityIdentity& requester, const std::string& name) {
     m_OStoreDB.deleteTapePool(requester, name);
   }
-
-  virtual std::list<common::admin::AdminHost> getAdminHosts() const {
-    return m_OStoreDB.getAdminHosts();
-  }
-
-
-  virtual std::list<common::admin::AdminUser> getAdminUsers() const {
-    return m_OStoreDB.getAdminUsers();
-  }
-
 
   virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {
     return m_OStoreDB.getArchiveRoutes(storageClassName);

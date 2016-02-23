@@ -145,32 +145,7 @@ public:
     std::map<std::string, std::string> m_vidToAddress; /**< Cache of tape objects
                                                         *  addresses filled up at queuing time */
   };
-
-  /* === Admin host handling ================================================ */
-  virtual void createAdminHost(const std::string& hostName, 
-    const CreationLog& creationLog);
-
-
-    virtual std::list<common::admin::AdminHost> getAdminHosts() const;
-
   
-  virtual void deleteAdminHost(const SecurityIdentity& requester,
-    const std::string& hostName);
-  
-  /* === Admin host handling ================================================ */
-  virtual void createAdminUser(const SecurityIdentity& requester, 
-    const UserIdentity& user, const std::string& comment);
-    
-
-    virtual std::list<common::admin::AdminUser> getAdminUsers() const;
-
-
-  virtual void deleteAdminUser(const SecurityIdentity& requester,
-    const UserIdentity& user);
-
-  /* === Admin access handling ============================================== */
-  virtual void assertIsAdminOnAdminHost(const SecurityIdentity& id) const;
-
   /* === Storage class handling  ============================================ */
   virtual void createStorageClass(const std::string& name,
     const uint16_t nbCopies, const CreationLog& creationLog);
