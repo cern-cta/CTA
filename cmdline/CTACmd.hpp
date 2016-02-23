@@ -25,12 +25,12 @@ namespace cta { namespace cmdline {
 /**
  * Class implementing the business logic of the archive command-line tool.
  */
-class CTACopyCmd {
+class CTACmd {
 public:
   /**
    * Constructor.
    */
-  CTACopyCmd() throw();
+  CTACmd() throw();
 
   /**
    * The entry function of the command.
@@ -84,7 +84,7 @@ private:
    */
   std::string encode(const std::string msg) const;
 
-}; // class CTACopyCmd
+}; // class CTACmd
 
 }}
 

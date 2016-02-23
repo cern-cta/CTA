@@ -23,7 +23,7 @@
 //------------------------------------------------------------------------------
 int main(const int argc, const char **argv) {
 
-  cta::cmdline::CTACopyCmd command;
+  cta::cmdline::CTACmd command;
   
   return command.main(argc, argv);
 }

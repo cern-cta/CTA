@@ -30,13 +30,13 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::cmdline::CTACopyCmd::CTACopyCmd() throw() {
+cta::cmdline::CTACmd::CTACmd() throw() {
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int cta::cmdline::CTACopyCmd::main(const int argc, const char **argv) const throw() {
+int cta::cmdline::CTACmd::main(const int argc, const char **argv) const throw() {
   try {
     return sendCommand(argc, argv);
   } catch(cta::exception::Exception &ex) {
@@ -54,7 +54,7 @@ int cta::cmdline::CTACopyCmd::main(const int argc, const char **argv) const thro
 //------------------------------------------------------------------------------
 // sendCommand
 //------------------------------------------------------------------------------
-int cta::cmdline::CTACopyCmd::sendCommand(const int argc, const char **argv) const {
+int cta::cmdline::CTACmd::sendCommand(const int argc, const char **argv) const {
   XrdCl::PropertyList properties;
   properties.Set("source", formatCommandPath(argc, argv));
   properties.Set("target", "-"); //destination is stdout
@@ -85,7 +85,7 @@ int cta::cmdline::CTACopyCmd::sendCommand(const int argc, const char **argv) con
 //------------------------------------------------------------------------------
 // formatCommandPath
 //------------------------------------------------------------------------------
-std::string cta::cmdline::CTACopyCmd::formatCommandPath(const int argc, const char **argv) const {
+std::string cta::cmdline::CTACmd::formatCommandPath(const int argc, const char **argv) const {
   std::string cmdPath = "root://"+castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "CTAFrontendHostAndPort")+"//";
   for(int i=0; i<argc; i++) {
     if(i) cmdPath += "&";
@@ -97,7 +97,7 @@ std::string cta::cmdline::CTACopyCmd::formatCommandPath(const int argc, const ch
 //------------------------------------------------------------------------------
 // replaceAll
 //------------------------------------------------------------------------------
-void cta::cmdline::CTACopyCmd::replaceAll(std::string& str, const std::string& from, const std::string& to) const {
+void cta::cmdline::CTACmd::replaceAll(std::string& str, const std::string& from, const std::string& to) const {
   if(from.empty() || str.empty())
     return;
   size_t start_pos = 0;
@@ -110,7 +110,7 @@ void cta::cmdline::CTACopyCmd::replaceAll(std::string& str, const std::string& f
 //------------------------------------------------------------------------------
 // encode
 //------------------------------------------------------------------------------
-std::string cta::cmdline::CTACopyCmd::encode(const std::string msg) const {
+std::string cta::cmdline::CTACmd::encode(const std::string msg) const {
   std::string ret;
   const bool noNewLineInBase64Output = false;
   CryptoPP::StringSource ss1(msg, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(ret), noNewLineInBase64Output));
