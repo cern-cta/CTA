@@ -729,8 +729,8 @@ std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveState
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::common::dataStructures::TapeMount> cta::Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
-  return std::unique_ptr<cta::common::dataStructures::TapeMount>();
+std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
+  return std::unique_ptr<TapeMount>();
 }
 
 //------------------------------------------------------------------------------

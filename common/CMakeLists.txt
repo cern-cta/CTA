@@ -6,7 +6,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/ArchiveFile.cpp
   dataStructures/ArchiveFileSummary.cpp
   dataStructures/ArchiveJob.cpp
-  dataStructures/ArchiveMount.cpp
   dataStructures/ArchiveRequest.cpp
   dataStructures/ArchiveRoute.cpp
   dataStructures/CancelRetrieveRequest.cpp
@@ -24,13 +23,11 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RepackType.cpp
   dataStructures/Requester.cpp
   dataStructures/RetrieveJob.cpp
-  dataStructures/RetrieveMount.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp
   dataStructures/StorageClass.cpp
   dataStructures/Tape.cpp
   dataStructures/TapeFileLocation.cpp
-  dataStructures/TapeMount.cpp
   dataStructures/TapePool.cpp
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp

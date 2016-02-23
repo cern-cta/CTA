@@ -25,7 +25,6 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
-#include "common/dataStructures/ArchiveMount.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
@@ -43,13 +42,11 @@
 #include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/Requester.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
-#include "common/dataStructures/RetrieveMount.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/TapeMount.hpp"
 #include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
@@ -223,7 +220,7 @@ public:
 
   virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(const cta::common::dataStructures::SecurityIdentity &requester) const;
 
-  virtual std::unique_ptr<cta::common::dataStructures::TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
+  virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
   
   virtual std::unique_ptr<TapeMount> _old_getNextMount(const std::string &logicalLibraryName, const std::string & driveName);
 
