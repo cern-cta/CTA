@@ -1,2 +1,28 @@
+
+#Default values
 set(CTA_VERSION 0)
 set(CTA_RELEASE 0)
+
+#Get version number from environment if set.
+if(NOT $ENV{CTA_VERSION} STREQUAL "")
+  set(CTA_VERSION $ENV{CTA_VERSION})
+  message(STATUS "Got CTA_VERSION from environment: ${CTA_VERSION}")
+else(NOT $ENV{CTA_VERSION} STREQUAL "")
+  message(STATUS "Using default CTA_VERSION: ${CTA_VERSION}")
+endif(NOT $ENV{CTA_VERSION} STREQUAL "")
+
+#Get release number from environment if set
+if(NOT $ENV{CTA_RELEASE} STREQUAL "")
+  set(CTA_RELEASE $ENV{CTA_RELEASE})
+  message(STATUS "Got CTA_RELEASE from environment: ${CTA_RELEASE}")
+else(NOT $ENV{CTA_RELEASE} STREQUAL "")
+  message(STATUS "Using default CTA_RELEASE: ${CTA_RELEASE}")
+endif(NOT $ENV{CTA_RELEASE} STREQUAL "")
+
+# Change the release number if VCS version is provided
+if(DEFINED VCS_VERSION)
+  set(CTA_RELEASE ${VCS_VERSION})
+  message(STATUS "Replaced CTA_RELEASE with VCS_VERSION: ${CTA_RELEASE}")
+endif(DEFINED VCS_VERSION)
+
+message(STATUS "CTA version is ${CTA_VERSION}-${CTA_RELEASE}")
