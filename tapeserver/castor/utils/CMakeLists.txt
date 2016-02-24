@@ -26,6 +26,7 @@ set (UTILS_LIB_SRC_FILES
   SmartFd.cpp
   SmartFILEPtr.cpp
   Timer.cpp
+  CRC.cpp
   utils.cpp
   ../common/CastorConfiguration.cpp
   ../exception/Exception.cpp
