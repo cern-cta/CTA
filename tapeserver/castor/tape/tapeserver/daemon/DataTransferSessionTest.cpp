@@ -195,7 +195,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345");
+        "V12345", false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -357,7 +357,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345");
+        "V12345", false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -511,7 +511,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-        "V12345");
+        "V12345", false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;

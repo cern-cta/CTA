@@ -67,9 +67,12 @@ namespace unitTests {
       fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq = 1;
       volInfo.vid= label;
       //Label
-      castor::tape::tapeFile::LabelSession *ls;
-      ls = new castor::tape::tapeFile::LabelSession(d, label);
-      delete ls;      
+      castor::tape::tapeFile::LabelSession *lsWithoutLbp;
+      lsWithoutLbp = new castor::tape::tapeFile::LabelSession(d, label, false);
+      delete lsWithoutLbp;   
+      castor::tape::tapeFile::LabelSession *lsWithout;
+      lsWithout = new castor::tape::tapeFile::LabelSession(d, label, true);
+      delete lsWithout;  
     }
     virtual void TearDown() {
       

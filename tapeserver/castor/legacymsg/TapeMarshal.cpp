@@ -303,6 +303,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Calculate the length of the message body
   const uint32_t bodyLen =
+    sizeof(src.lbp) + // lbp
     sizeof(src.force) + // force
     sizeof(src.uid) + // uid
     sizeof(src.gid) + // gid
@@ -342,6 +343,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Marshal message body
   try {
+    io::marshalUint16(src.lbp, p);
     io::marshalUint16(src.force, p);
     io::marshalUint32(src.uid, p);
     io::marshalUint32(src.gid, p);
@@ -421,6 +423,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigR
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst)  {
   try {
+    io::unmarshalUint16(src, srcLen, dst.lbp);
     io::unmarshalUint16(src, srcLen, dst.force);
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);

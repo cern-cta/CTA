@@ -33,6 +33,7 @@ namespace legacymsg {
  * The body of a TPLABEL message.
  */
 struct TapeLabelRqstMsgBody {
+  uint16_t lbp;   // set to 1 if lbp==true, 0 otherwise
   uint16_t force; // set to 1 if force==true, 0 otherwise
   uint32_t uid;
   uint32_t gid;

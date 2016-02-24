@@ -864,7 +864,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_log,
       sWrapper,
       driveConfig,
-      rqst.force());
+      rqst.force(),
+      rqst.lbp(),
+      m_config.labelSession);
     return labelsession.execute();
   } catch(castor::exception::Exception &ex) {
     throw ex;
@@ -886,6 +888,7 @@ castor::legacymsg::TapeLabelRqstMsgBody
   castor::tape::tapeserver::daemon::ProcessForker::getLabelJob(
   const messages::ForkLabel &msg) {
   castor::legacymsg::TapeLabelRqstMsgBody job;
+  job.lbp = msg.lbp() ? 1 : 0;
   job.force = msg.force() ? 1 : 0;
   job.uid = msg.uid();
   job.gid = msg.gid();

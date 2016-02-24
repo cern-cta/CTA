@@ -28,8 +28,9 @@ message ForkLabel {
   required string libraryslot = 4;
 
   // Description of the label job
-  required bool force = 5;
-  required uint32 uid = 6;
-  required uint32 gid = 7;
-  required string vid = 8;
+  required bool lbp   = 5;
+  required bool force = 6;
+  required uint32 uid = 7;
+  required uint32 gid = 8;
+  required string vid = 9;
 }

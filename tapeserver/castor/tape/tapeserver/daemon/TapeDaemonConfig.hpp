@@ -27,6 +27,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -91,6 +92,11 @@ struct TapeDaemonConfig {
    */
   DataTransferConfig dataTransfer;
 
+  /**
+   * The configuration parameters required by a label session.
+   */
+  LabelSessionConfig labelSession;
+  
   /**
    * Constructor.
    *

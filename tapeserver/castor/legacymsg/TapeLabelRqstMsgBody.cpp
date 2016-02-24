@@ -29,6 +29,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() throw():
+  lbp(0),
   force(0),
   uid(0),
   gid(0) {

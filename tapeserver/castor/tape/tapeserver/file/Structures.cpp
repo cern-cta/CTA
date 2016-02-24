@@ -38,7 +38,7 @@ void tapeFile::VOL1::fill(std::string VSN,
   setString(m_ownerID, "CASTOR");
   std::stringstream hexLBP; 
   hexLBP << std::setfill('0') << std::setw(2) << std::hex
-      << std::noshowbase << LBPMethod;
+      << std::noshowbase << static_cast<int>(LBPMethod);
   setString(m_LBPMethod, hexLBP.str());
 }
 

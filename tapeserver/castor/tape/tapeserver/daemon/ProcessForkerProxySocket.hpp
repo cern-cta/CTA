@@ -180,6 +180,7 @@ private:
    */
   template <typename T> void fillMsgWithLabelJob(T &msg,
     const legacymsg::TapeLabelRqstMsgBody &labelJob) {
+    msg.set_lbp(labelJob.lbp);
     msg.set_force(labelJob.force);
     msg.set_uid(labelJob.uid);
     msg.set_gid(labelJob.gid);

@@ -39,6 +39,7 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   CatalogueConfig.cpp
   CleanerSession.cpp
   DataTransferConfig.cpp
+  LabelSessionConfig.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp

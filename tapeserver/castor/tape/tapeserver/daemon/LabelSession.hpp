@@ -35,6 +35,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 
 #include <memory>
 
@@ -63,6 +64,9 @@ public:
    * label a tape.
    * @param force The flag that, if set to true, allows labeling a non-blank
    * tape.
+   * @param lbp The flag that, if set to true, allows labeling a tape with 
+   *            logical block protection. This parameter comes from
+   *            castor-tape-label command line tool.
    */
   LabelSession(
     server::ProcessCap &capUtils,
@@ -72,7 +76,9 @@ public:
     castor::log::Logger &log,
     System::virtualWrapper &sysWrapper,
     const DriveConfig &driveConfig,
-    const bool force);
+    const bool force,
+    const bool lbp,
+    const LabelSessionConfig &labelSessionConfig);
   
   /** 
    * Execute the session and return the type of action to be performed
@@ -121,9 +127,20 @@ private:
   const DriveConfig m_driveConfig;
   
   /**
+   * The configuration parameters from castor.conf specific for of the tape drive to be used to label a tape.
+   */
+  const LabelSessionConfig m_labelSessionConfig;
+  
+  /**
    * The flag that, if set to true, allows labeling a non-blank tape
    */
   const bool m_force;
+  
+  /**
+   * The flag that, if set to true, allows labeling a tape with logical 
+   * block protection
+   */
+  const bool m_lbp;
 
   /** 
    * Execute the session and return the type of action to be performed
@@ -199,6 +216,15 @@ private:
    * @param drive The tape drive.
    */
   void writeLabelToTape(drive::DriveInterface &drive);
+
+  /**
+   * Writes the label file with logical block protection to the tape.
+   *
+   * This method assumes the tape has been rewound.
+   *
+   * @param drive The tape drive.
+   */
+  void writeLabelWithLbpToTape(drive::DriveInterface &drive);
 
   /**
    * Unloads the specified tape from the specified tape drive.

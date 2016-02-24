@@ -52,18 +52,23 @@ namespace unitTests {
     });
     ASSERT_EQ("test  ", vol1Label.getVSN());
     /* Validate that parser understands correctly values for LBP */
+    uint8_t *buf =(uint8_t *) &vol1Label;
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'0');
     vol1Label.backdoorSetLBPMethodString("  ");
     ASSERT_NO_THROW(vol1Label.getLBPMethod());
     ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1Label.getLBPMethod());
+    ASSERT_EQ(buf[77],' ');  ASSERT_EQ(buf[78],' ');
     vol1Label.backdoorSetLBPMethodString("01");
     ASSERT_NO_THROW(vol1Label.getLBPMethod());
     ASSERT_EQ((int)LBPM::ReedSolomon, (int)vol1Label.getLBPMethod());
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'1');
     vol1Label.backdoorSetLBPMethodString("00");
     ASSERT_NO_THROW(vol1Label.getLBPMethod());
     ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1Label.getLBPMethod());
     vol1Label.backdoorSetLBPMethodString("02");
     ASSERT_NO_THROW(vol1Label.getLBPMethod());
     ASSERT_EQ((int)LBPM::CRC32C, (int)vol1Label.getLBPMethod());
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'2');
     vol1Label.backdoorSetLBPMethodString("03");
     ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
     vol1Label.backdoorSetLBPMethodString("XY");

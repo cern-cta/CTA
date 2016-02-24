@@ -68,7 +68,7 @@ namespace tape {
       char m_implID[13];       // The Implementation Identifier - spaces.
       char m_ownerID[14];      // CASTOR or stagesuperuser name padded with spaces.
       char m_reserved2[26];    // Reserved
-      char m_LBPMethod[2];    // Logic block protection checksum type.
+      char m_LBPMethod[2];     // Logic block protection checksum type.
                                // This field is a CASTOR variation from the ECMA 013/ISO1001
                                // standard. It contains 2 spaces or '00'. Otherwise, contains
                                // the ASCII representation of the hexadecimal value of the

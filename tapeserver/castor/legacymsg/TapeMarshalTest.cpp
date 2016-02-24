@@ -137,11 +137,12 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
 
 TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
   using namespace castor::legacymsg;
-  char buf[45]; // Expect message (header + body) to occupy exactly 27 bytes
+  char buf[47]; // Expect message (header + body) to occupy exactly 45 bytes
   TapeLabelRqstMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
   {
+    srcMsgBody.lbp = 0xABCD;
     srcMsgBody.force = 0;
     srcMsgBody.uid = 3;
     srcMsgBody.gid = 4;
@@ -153,7 +154,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     size_t totalLen = 0; // Total length of message (header + body)
 
     ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
-    ASSERT_EQ((uint32_t)45, totalLen);
+    ASSERT_EQ((uint32_t)47, totalLen);
   }
 
   // Unmarshall message header
@@ -167,7 +168,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
 
     ASSERT_EQ((uint32_t)TPMAGIC, dstHeader.magic);
     ASSERT_EQ((uint32_t)TPLABEL, dstHeader.reqType);
-    ASSERT_EQ((uint32_t)45, dstHeader.lenOrStatus);
+    ASSERT_EQ((uint32_t)47, dstHeader.lenOrStatus);
   }
 
   // Unmarshall message body
@@ -175,11 +176,12 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     TapeLabelRqstMsgBody dstMsgBody;
 
     const char *bufPtr = buf + 12; // Point at beginning of message body
-    size_t bufLen = 33; // Length of the message body
+    size_t bufLen = 35; // Length of the message body
     ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
-    ASSERT_EQ(buf + 45, bufPtr);
+    ASSERT_EQ(buf + 47, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
+    ASSERT_EQ((uint16_t)0xABCD, dstMsgBody.lbp);
     ASSERT_EQ((uint16_t)0, dstMsgBody.force);
     ASSERT_EQ((uint32_t)3, dstMsgBody.uid);
     ASSERT_EQ((uint32_t)4, dstMsgBody.gid);

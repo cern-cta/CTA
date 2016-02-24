@@ -163,8 +163,13 @@ namespace castor {
          * labeled is already mounted and rewound.
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
+         * @param lbp The boolean variable for logical block protection mode.
+         *            If it is true than the label will be written with LBP or 
+         *            without otherwise.
+         *
          */
-        LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid);
+        LabelSession(tapeserver::drive::DriveInterface & drive, 
+          const std::string &vid, const bool lbp);
       };
 
       /**

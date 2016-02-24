@@ -28,6 +28,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/System.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
@@ -46,7 +47,9 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
   const DriveConfig &driveConfig,
-  const bool force):
+  const bool force,
+  const bool lbp,
+  const LabelSessionConfig &labelSessionConfig):
   m_capUtils(capUtils),
   m_tapeserver(tapeserver),
   m_mc(mc),
@@ -54,7 +57,9 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   m_log(log),
   m_sysWrapper(sysWrapper),
   m_driveConfig(driveConfig),
-  m_force(force) {
+  m_labelSessionConfig (labelSessionConfig),
+  m_force(force),
+  m_lbp(lbp){
 }
 
 //------------------------------------------------------------------------------
@@ -83,6 +88,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
   params.push_back(log::Param("message", errorMessage));
   m_log(LOG_ERR, "Label session failed", params);
 
@@ -96,15 +102,36 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 // exceptionThrowingExecute
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::LabelSession::exceptionThrowingExecute() {
-
+  castor::tape::tapeserver::daemon::LabelSession::exceptionThrowingExecute() { 
+  if (!m_labelSessionConfig.useLbp && m_lbp) {
+    const std::string message = "Tapeserver configuration does not allow label "
+    "a tape with logical block protection.";
+    notifyTapeserverOfUserError(message);
+    return MARK_DRIVE_AS_UP;
+  }
+  if (!m_lbp && m_labelSessionConfig.useLbp) {
+    std::list<log::Param> params;
+    params.push_back(log::Param("uid", m_request.uid));
+    params.push_back(log::Param("gid", m_request.gid));
+    params.push_back(log::Param("TPVID", m_request.vid));
+    params.push_back(log::Param("unitName", m_request.drive));
+    params.push_back(log::Param("dgn", m_request.dgn));
+    params.push_back(log::Param("force", boolToStr(m_force)));
+    params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+    m_log(LOG_WARNING, "Label session configured to use LBP but lbp parameter "
+      "is not set", params);
+  }
   setProcessCapabilities("cap_sys_rawio+ep");
-
-  mountTape();
-
+   
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
+  if(m_lbp) {
+    // only crc32c lbp mode is supported
+    drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  }
+  
+  mountTape();
   waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
   
   if(drive.isWriteProtected()) {
@@ -122,7 +149,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     // Else the labeling can go ahead
     } else {
-      writeLabelToTape(drive);
+        if (m_lbp) {
+          writeLabelWithLbpToTape(drive);
+        } else {
+          writeLabelToTape(drive);
+        }
     }
   }
   unloadTape(m_request.vid, drive);
@@ -143,6 +174,7 @@ void castor::tape::tapeserver::daemon::LabelSession::setProcessCapabilities(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
   m_capUtils.setProcText(capabilities);
   params.push_back(log::Param("capabilities", m_capUtils.getProcText()));
@@ -183,6 +215,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
   params.push_back(log::Param("librarySlot", librarySlot.str()));
 
   m_log(LOG_INFO, "Label session mounting tape", params);
@@ -207,6 +240,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
   try {
     drive.waitUntilReady(timeoutSecond);
@@ -231,6 +265,7 @@ void castor::tape::tapeserver::daemon::LabelSession::rewindDrive(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
   m_log(LOG_INFO, "Label session rewinding tape", params);
   drive.rewind();
@@ -249,6 +284,7 @@ void castor::tape::tapeserver::daemon::LabelSession::
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
   params.push_back(log::Param("message", message));
 
   m_log(LOG_ERR, "Label session encountered user error", params);
@@ -267,10 +303,36 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
+  if(m_lbp) {
+    m_log(LOG_WARNING, "LBP mode mismatch. Force labeling without lbp.", params);
+  }
   m_log(LOG_INFO, "Label session is writing label to tape", params);
-  tapeFile::LabelSession ls(drive, m_request.vid);
+  tapeFile::LabelSession ls(drive, m_request.vid, false);
   m_log(LOG_INFO, "Label session has written label to tape", params);
+}
+
+//------------------------------------------------------------------------------
+// writeLabelWithLbpToTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::LabelSession::writeLabelWithLbpToTape(
+  drive::DriveInterface &drive) {
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("TPVID", m_request.vid));
+  params.push_back(log::Param("unitName", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+
+  if(!m_lbp) {
+    m_log(LOG_WARNING, "LBP mode mismatch. Force labeling with lbp.", params);
+  }
+  m_log(LOG_INFO, "Label session is writing label with LBP to tape", params);
+  tapeFile::LabelSession ls(drive, m_request.vid, true);
+  m_log(LOG_INFO, "Label session has written label with LBP to tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -285,6 +347,7 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
@@ -320,6 +383,7 @@ void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   params.push_back(log::Param("unitName", m_request.drive));
   params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
+  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
   params.push_back(log::Param("librarySlot", librarySlot.str()));
 
   try {

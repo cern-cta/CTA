@@ -65,6 +65,7 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
     TAPESERVER_INTERNAL_PORT, log);
 
   config.dataTransfer = DataTransferConfig::createFromCastorConf(log);
+  config.labelSession = LabelSessionConfig::createFromCastorConf(log);
   
   return config;
 }
