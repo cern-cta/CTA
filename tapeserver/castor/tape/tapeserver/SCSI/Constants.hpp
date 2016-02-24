@@ -388,7 +388,7 @@ namespace SCSI {
       CRC32C      = 0x02  // CRC32C polynomial as specified for iSCSI 
     };
     enum {
-      ReedSolomonLegth = 4, // Reed-Solomon CRC length in bytes
+      ReedSolomonLength = 4, // Reed-Solomon CRC length in bytes
       CRC32CLength = 4      // CRC32C length in bytes
     };
   };    

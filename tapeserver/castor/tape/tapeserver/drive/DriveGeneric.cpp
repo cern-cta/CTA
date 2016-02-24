@@ -443,7 +443,7 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadOnly() {
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::ReedSolomon,
-    SCSI::logicBlockProtectionMethod::ReedSolomonLegth,true,false);
+    SCSI::logicBlockProtectionMethod::ReedSolomonLength,true,false);
 }
 
 //------------------------------------------------------------------------------
@@ -451,7 +451,7 @@ void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadOnly() {
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadWrite() {
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::ReedSolomon,
-    SCSI::logicBlockProtectionMethod::ReedSolomonLegth,true,true);
+    SCSI::logicBlockProtectionMethod::ReedSolomonLength,true,true);
 }
 
 //------------------------------------------------------------------------------
