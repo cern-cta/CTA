@@ -24,6 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/io/marshall.h"
+#include "castor/exception/Errnum.hpp"
 
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -81,21 +82,9 @@ protected:
       strncpy(listenAddr.sun_path, listenSockPath,
         sizeof(listenAddr.sun_path) - 1);
 
-      if(0 != bind(smartListenSock.get(), (const struct sockaddr *)&listenAddr,
-        sizeof(listenAddr))) {
-        char strErrBuf[256];
-        if(0 != strerror_r(errno, strErrBuf, sizeof(strErrBuf))) {
-          memset(strErrBuf, '\0', sizeof(strErrBuf));
-          strncpy(strErrBuf, "Unknown", sizeof(strErrBuf) - 1);
-        }
-
-        std::string errorMessage("Call to bind() failed: ");
-        errorMessage += strErrBuf;
-
-        castor::exception::Exception ex(ECANCELED);
-        ex.getMessage() << errorMessage;
-        throw ex;
-      }
+      castor::exception::Errnum::throwOnNonZero(
+        bind(smartListenSock.get(), (const struct sockaddr *)&listenAddr,
+        sizeof(listenAddr)), "Call to bind() failed: ");
     }
 
     // Make the socket listen

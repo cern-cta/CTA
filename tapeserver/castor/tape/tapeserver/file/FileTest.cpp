@@ -227,17 +227,51 @@ namespace unitTests {
     EXPECT_NO_THROW(ws.validateNextFSeq(2));
     EXPECT_THROW(ws.validateNextFSeq(1), castor::exception::Exception);
   }
-    
+ 
+  // Class creating a temporary file of 1kB and deleting it 
+  // automatically
+  class TempFile {
+  public:
+    TempFile() {
+      char path[]="/tmp/testCTA-XXXXXX";
+      int fd=::mkstemp(path);
+      castor::exception::Errnum::throwOnMinusOne(fd, "In TempFile::TempFile: failed to mkstemp: ");
+      ::close(fd);
+      m_path=path;
+    }
+    TempFile(const std::string& path): m_path(path) {}
+    std::string path() { return m_path; }
+    void randomFill(size_t size) {
+      std::ofstream out(m_path,std::ios::out | std::ios::binary);
+      std::ifstream in("/dev/urandom", std::ios::in|std::ios::binary);
+      std::unique_ptr<char[]> buff(new char[size]);
+      in.read(buff.get(),size);
+      out.write(buff.get(),size);
+    }
+    ~TempFile() {
+      if (m_path.size()) {
+        ::unlink(m_path.c_str());
+      }
+    }
+  private:
+    std::string m_path;
+  };
+  
   TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
     castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","");
+    TempFile sourceFile;
+    sourceFile.randomFill(1000);
+    TempFile destinationFile(sourceFile.path()+"_dst");
+    // host part of file location
+    std::string lh = "localhost:";
     {
       std::unique_ptr<castor::tape::diskFile::ReadFile> rf(
-        fileFactory.createReadFile("localhost:/etc/fstab"));
+        fileFactory.createReadFile(lh + sourceFile.path()));
       std::unique_ptr<castor::tape::diskFile::WriteFile> wf(
-        fileFactory.createWriteFile("localhost:/tmp/fstab"));
+        fileFactory.createWriteFile(lh + destinationFile.path()));
       size_t res=0;
       do {
         res = rf->read(data1, block_size);
@@ -246,9 +280,9 @@ namespace unitTests {
       wf->close();
     }
     std::unique_ptr<castor::tape::diskFile::ReadFile> src(
-        fileFactory.createReadFile("localhost:/tmp/fstab"));
+        fileFactory.createReadFile(sourceFile.path()));
     std::unique_ptr<castor::tape::diskFile::ReadFile> dst(
-        fileFactory.createReadFile("localhost:/etc/fstab"));
+        fileFactory.createReadFile(destinationFile.path()));
     size_t res1=0;
     size_t res2=0;
     do {
