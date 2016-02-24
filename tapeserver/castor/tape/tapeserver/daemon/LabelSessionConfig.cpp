@@ -43,7 +43,7 @@ castor::tape::tapeserver::daemon::LabelSessionConfig
   LabelSessionConfig config;
 
   const std::string useLBP = castorConf.getConfEntString(
-    "TapeServer", "UseLogicalBlockProtection", "no", log);
+    "TapeServer", "UseLogicalBlockProtection", "no");
 
   if (!strcasecmp(useLBP.c_str(), "yes") || !strcmp(useLBP.c_str(), "1")) {
     config.useLbp = true;
