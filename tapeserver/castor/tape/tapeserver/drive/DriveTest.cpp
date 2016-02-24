@@ -376,8 +376,8 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);         
       LBPdata = drive->getLBPInfo();
 
-      ASSERT_EQ(castor::tape::SCSI::LBPMethods::CRC32C,LBPdata.method);
-      ASSERT_EQ(castor::tape::SCSI::LBPMethods::CRC32CLength,LBPdata.methodLength);
+      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,LBPdata.method);
+      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,LBPdata.methodLength);
       ASSERT_TRUE(LBPdata.enableLBPforRead);
       ASSERT_TRUE(LBPdata.enableLBPforWrite);
     }

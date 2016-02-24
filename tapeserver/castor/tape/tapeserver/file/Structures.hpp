@@ -81,8 +81,9 @@ namespace tape {
       /**
        * Fills up all fields of the VOL1 structure with proper values and data provided.
        * @param VSN the tape serial number
+       * @param LBPMethod The logical block protection method.
        */
-      void fill(std::string VSN, SCSI::logicBlockProtectionMethod LBPMethod);
+      void fill(std::string VSN, unsigned char LBPMethod);
 
       /**
        * @return VSN the tape serial number
@@ -94,14 +95,14 @@ namespace tape {
       /**
        * @return the logic block protection method as parsed from the header
        */
-      inline SCSI::logicBlockProtectionMethod getLBPMethod() const {
+      inline unsigned char getLBPMethod() const {
         if (!::strncmp(m_LBPMethod, "  ", sizeof(m_LBPMethod)))
           return SCSI::logicBlockProtectionMethod::DoNotUse;
         // Generate a proper string for the next steps, as otherwise functions
         // get confused by the lack of zero-termination.
         std::string LBPMethod;
         LBPMethod.append(m_LBPMethod, sizeof (m_LBPMethod));
-        int hexValue;
+        unsigned char hexValue;
         try {
           hexValue = std::stoi(LBPMethod, 0, 16);
         } catch (std::invalid_argument &) {
@@ -115,7 +116,7 @@ namespace tape {
           case SCSI::logicBlockProtectionMethod::DoNotUse:
           case SCSI::logicBlockProtectionMethod::CRC32C:
           case SCSI::logicBlockProtectionMethod::ReedSolomon:
-            return static_cast<SCSI::logicBlockProtectionMethod> (hexValue);
+            return hexValue;
           default:
             throw exception::InvalidArgument(
               std::string("In VOL1::getLBPMethod(): unexpected value: ") + LBPMethod);

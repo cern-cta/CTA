@@ -1110,11 +1110,11 @@ const char * const castor::tape::SCSI::senseKeys::senseKeysText[] = {
 std::string castor::tape::SCSI::LBPMethodToString(const unsigned char LBPMethod)
 {
   switch (LBPMethod) {
-    case LBPMethods::Disabled:
-      return "Disabled";
-    case LBPMethods::ReedSolomon:
+    case logicBlockProtectionMethod::DoNotUse:
+      return "DoNotUse";
+    case logicBlockProtectionMethod::ReedSolomon:
       return "Reed-Solomon";
-    case LBPMethods::CRC32C:
+    case logicBlockProtectionMethod::CRC32C:
       return "CRC32C";
     default:
       return "Unknown";

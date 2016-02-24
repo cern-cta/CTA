@@ -105,8 +105,8 @@ System::stDeviceFile::stDeviceFile()
   blockID = 0xFFFFFFFF; // Logical Object ID - position on tape 
   
   clearCompressionStats = false;
-  m_LBPInfoMethod = SCSI::LBPMethods::CRC32C;
-  m_LBPInfoLength = SCSI::LBPMethods::CRC32CLength;
+  m_LBPInfoMethod = SCSI::logicBlockProtectionMethod::CRC32C;
+  m_LBPInfoLength = SCSI::logicBlockProtectionMethod::CRC32CLength;
   m_LBPInfo_R = 1;
   m_LBPInfo_W = 1;
 }

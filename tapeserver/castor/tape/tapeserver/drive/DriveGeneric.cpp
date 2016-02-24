@@ -426,32 +426,32 @@ void drive::DriveGeneric::setLogicalBlockProtection(
 // enableCRC32CLogicalBlockProtectionReadOnly
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
-  setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
-    SCSI::LBPMethods::CRC32CLength,true,false);
+  setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
+    SCSI::logicBlockProtectionMethod::CRC32CLength,true,false);
 }
 
 //------------------------------------------------------------------------------
 // enableCRC32CLogicalBlockProtectionReadWrite
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
-  setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
-    SCSI::LBPMethods::CRC32CLength,true,true);
+  setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
+    SCSI::logicBlockProtectionMethod::CRC32CLength,true,true);
 }
 
 //------------------------------------------------------------------------------
 // enableReedSolomonLogicalBlockProtectionReadOnly
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadOnly() {
-  setLogicalBlockProtection(SCSI::LBPMethods::ReedSolomon,
-    SCSI::LBPMethods::ReedSolomonLegth,true,false);
+  setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::ReedSolomon,
+    SCSI::logicBlockProtectionMethod::ReedSolomonLegth,true,false);
 }
 
 //------------------------------------------------------------------------------
 // enableReedSolomonLogicalBlockProtectionReadWrite
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadWrite() {
-  setLogicalBlockProtection(SCSI::LBPMethods::ReedSolomon,
-    SCSI::LBPMethods::ReedSolomonLegth,true,true);
+  setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::ReedSolomon,
+    SCSI::logicBlockProtectionMethod::ReedSolomonLegth,true,true);
 }
 
 //------------------------------------------------------------------------------
