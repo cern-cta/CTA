@@ -158,6 +158,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
   unloadTape(m_request.vid, drive);
   dismountTape(m_request.vid);
+  drive.disableLogicalBlockProtection();
 
   return MARK_DRIVE_AS_UP;
 }

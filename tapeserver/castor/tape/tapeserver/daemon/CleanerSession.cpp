@@ -118,6 +118,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
   unloadTape(volumeLabelVSN, drive);
 
   dismountTape(volumeLabelVSN);
+  drive.disableLogicalBlockProtection();
 }
 
 //------------------------------------------------------------------------------
