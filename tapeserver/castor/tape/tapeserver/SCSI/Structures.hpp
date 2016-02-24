@@ -697,6 +697,60 @@ namespace SCSI {
       modePageDeviceConfiguration_t modePage;
     };
     
+    /**
+     * MODE SENSE(6) or MODE SENSE(10) mode page 0Ah: Control Data Protection.
+     * as described in SSC-5.
+     */
+    class modePageControlDataProtection_t {
+    public:
+      // byte 0
+      unsigned char pageCode :6;       // Page code (0Ah)
+      unsigned char SPF      :1;       // SubPage Format (1b)
+      unsigned char PS       :1;       // Parameters Savable 
+                                       // 0b required for MODE SELECT IBM,LTO
+                                       // 1b returned in MODE SENSE IBM, LTO
+                                       // 0b Not supported for T10000
+      
+      // byte 1 
+      unsigned char subpageCode;       // SubPage code (F0h)  
+      
+      // bytes 2-3
+      unsigned char pageLength[2];     // Page length (n - 3) 1Ch for IBM,LTO
+      
+      // byte 4
+      unsigned char LBPMethod;         // LBP method
+      
+      // byte 5
+      unsigned char LBPInformationLength : 6; // LBP information length 
+      unsigned char                      : 2; // Reserved
+      
+      // byte 6
+      unsigned char : 5;               // Reserved
+      unsigned char RBDP : 1;          // Recover Buffered Data Protected
+      unsigned char LBP_R : 1;         // Logical blocks protected during read
+      unsigned char LBP_W : 1;         // Logical blocks protected during write
+      
+      // byte 7
+      unsigned char : 4;               // Reserved
+      unsigned char T10PIexponent : 4; // T1000 only for T10 PI mode
+      
+      // bytes 8-31
+      unsigned char reserved[24];      // Reserved. Added for IBM, LTO and do  
+                                       // not used by T10000
+    };
+  
+    /**
+     * MODE SENSE(6) structure for mode page 0Ah: Control Data Protection.
+     * as described in SSC-5.
+     */
+    class modeSenseControlDataProtection_t {
+    public:
+      modeSenseControlDataProtection_t() { zeroStruct(this); }
+      modeParameterHeader6_t header;
+      modeParameterBlockDecriptor_t blockDescriptor;
+      modePageControlDataProtection_t modePage;
+    };    
+    
      /**
      * MODE SELECT(6) CDB as described in SPC-4.
      */

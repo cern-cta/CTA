@@ -245,10 +245,24 @@ namespace SCSI {
     };
   };
   
+  /**
+   * Constants for used MODE SENSE/SELECT pages
+   */
   class modeSensePages {
   public:
     enum {
-      deviceConfiguration = 0x10
+      controlDataProtection = 0x0A,
+      deviceConfiguration   = 0x10
+    };
+  };
+  
+  /**
+   * The value for subpage code for the Control Data Protection  MODE PAGE
+   */
+  class modePageControlDataProtection {
+  public:
+    enum {
+      subpageCode = 0xF0
     };
   };
   
@@ -370,6 +384,22 @@ namespace SCSI {
     };
     static const char * const senseKeysText[];      
   }; 
+ 
+  /**
+   * Logical block protection methods 
+   */
+  class LBPMethods {
+  public:
+    enum {
+      ReedSolomon = 0x01, // Reed-Solomon CRC as specified in ECMA-319
+      CRC32C      = 0x02  // CRC32C polynomial as specified for iSCSI 
+    };
+    enum {
+      ReedSolomonLeght = 4, // Reed-Solomon CRC length in bytes
+      CRC32CLenght = 4      // CRC32C length in bytes
+    };
+    static const char * const LBPMethodsName[];
+  };      
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

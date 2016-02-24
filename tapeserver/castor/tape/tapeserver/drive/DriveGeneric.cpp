@@ -351,7 +351,99 @@ void drive::DriveGeneric::setDensityAndCompression(bool compression,
   }
 }
 
+//------------------------------------------------------------------------------
+// setLogicalBlockProtection
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::setLogicalBlockProtection(
+  const unsigned char method, const unsigned char methodLength,
+  const bool enableLBPforRead, const bool enableLBPforWrite) {
 
+  SCSI::Structures::modeSenseControlDataProtection_t controlDataProtection;
+  {
+    /* fetch Control Data Protection */
+    SCSI::Structures::modeSense6CDB_t cdb;
+    SCSI::Structures::senseData_t<255> senseBuff;
+    SCSI::Structures::LinuxSGIO_t sgh;
+
+    cdb.pageCode = SCSI::modeSensePages::controlDataProtection;
+    cdb.subPageCode = SCSI::modePageControlDataProtection::subpageCode;
+    cdb.allocationLength = sizeof (controlDataProtection);
+
+    sgh.setCDB(&cdb);
+    sgh.setDataBuffer(&controlDataProtection);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+      "Failed SG_IO ioctl"  );     
+    SCSI::ExceptionLauncher(sgh,
+      std::string("SCSI error fetching data in setLogicalBlockProtection: ") +
+      SCSI::statusToString(sgh.status));
+  }
+
+  {
+    /* Use the previously fetched page, modify fields and submit it */
+    SCSI::Structures::modeSelect6CDB_t cdb;
+    SCSI::Structures::senseData_t<255> senseBuff;
+    SCSI::Structures::LinuxSGIO_t sgh;
+
+    cdb.PF = 0; // required for IBM, LTO, not supported for T10000
+    cdb.paramListLength = sizeof (controlDataProtection);
+    controlDataProtection.header.modeDataLength = 0; // must be 0 for IBM, LTO 
+                                                     // ignored by T10000
+    controlDataProtection.modePage.LBPMethod = method;
+    controlDataProtection.modePage.LBPInformationLength = methodLength;
+    if (enableLBPforWrite) {
+      controlDataProtection.modePage.LBP_W = 1;
+    } else {
+      controlDataProtection.modePage.LBP_W = 0;
+    }
+    if (enableLBPforRead) {
+      controlDataProtection.modePage.LBP_R = 1;
+    } else {
+      controlDataProtection.modePage.LBP_R = 0;
+    }
+
+    sgh.setCDB(&cdb);
+    sgh.setDataBuffer(&controlDataProtection);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.dxfer_direction = SG_DXFER_TO_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    castor::exception::Errnum::throwOnMinusOne(   
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl"  );     
+    SCSI::ExceptionLauncher(sgh,
+            std::string("SCSI error setting data in setDataProtection : ") +
+            SCSI::statusToString(sgh.status));
+  }
+}
+
+//------------------------------------------------------------------------------
+// enableCRC32CLogicalBlockProtectionReadOnly
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
+  setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
+    SCSI::LBPMethods::CRC32CLenght,true,false);
+}
+
+//------------------------------------------------------------------------------
+// enableCRC32CLogicalBlockProtectionReadWrite
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
+  setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
+    SCSI::LBPMethods::CRC32CLenght,true,true);
+}
+
+//------------------------------------------------------------------------------
+// disableLogicalBlockProtection
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::disableLogicalBlockProtection() {
+  setLogicalBlockProtection(0,0,false,false);      
+}
+  
 /**
  * Function that checks if a tape is blank (contains no records) 
  * @return true if tape is blank, false otherwise

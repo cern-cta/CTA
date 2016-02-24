@@ -1102,3 +1102,9 @@ const char * const castor::tape::SCSI::senseKeys::senseKeysText[] = {
   "Miscompare"        /* E: Source data and data on the medium
                             do not agree */
 }; 
+
+/* names for the logical block protection methods  */
+const char * const castor::tape::SCSI::LBPMethods::LBPMethodsName[] = {        
+  "Reed-Solomon", 
+  "CRC32C"        
+}; 

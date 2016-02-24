@@ -351,6 +351,21 @@ namespace drive {
 
     void SCSI_inquiry();
     
+    /**
+     * TOFILL
+     */
+    virtual void enableCRC32CLogicalBlockProtectionReadOnly();
+    
+    /**
+     * TOFILL
+     */
+    virtual void enableCRC32CLogicalBlockProtectionReadWrite();
+    
+    /**
+     * TOFILL
+     */
+    virtual void disableLogicalBlockProtection();
+    
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
@@ -367,6 +382,13 @@ namespace drive {
      * Time based loop around "test unit ready" command
      */
     void waitTestUnitReady(const uint32_t timeoutSecond);
+    
+    /**
+     * TOFILL
+     */
+    virtual void setLogicalBlockProtection(const unsigned char method,
+      unsigned char methodLength, const bool enableLPBforRead, 
+      const bool enableLBBforWrite);
   };
 
   class DriveT10000 : public DriveGeneric {
