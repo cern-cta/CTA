@@ -63,6 +63,7 @@ castor::tape::tapeserver::drive::deviceInfo castor::tape::tapeserver::drive::Fak
   devInfo.productRevisionLevel = "0.1";
   devInfo.vendor = "ACME Ind";
   devInfo.serialNumber = "123456";
+  devInfo.isPIsupported = true;
   return devInfo;
 }
 std::string castor::tape::tapeserver::drive::FakeDrive::getSerialNumber()  {
@@ -104,6 +105,29 @@ void castor::tape::tapeserver::drive::FakeDrive::setDensityAndCompression(bool c
 }
 castor::tape::tapeserver::drive::driveStatus castor::tape::tapeserver::drive::FakeDrive::getDriveStatus()  {
   throw castor::exception::Exception("FakeDrive::getDriveStatus Not implemented");
+}
+void castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly()  {
+  throw castor::exception::Exception("FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly Not implemented");
+}
+void  castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite()  {
+  throw castor::exception::Exception("FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite Not implemented");
+}
+void castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly()  {
+  throw castor::exception::Exception("FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly Not implemented");
+}
+void  castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockProtectionReadWrite()  {
+  throw castor::exception::Exception("FakeDrive::enableCReedSolomonLogicalBlockProtectionReadWrite Not implemented");
+}
+void  castor::tape::tapeserver::drive::FakeDrive::disableLogicalBlockProtection()  {
+  throw castor::exception::Exception("FakeDrive::disableLogicalBlockProtection Not implemented");
+}
+castor::tape::tapeserver::drive::LBPInfo  castor::tape::tapeserver::drive::FakeDrive::getLBPInfo()  {
+  throw castor::exception::Exception("FakeDrive::dgetLBPInfo Not implemented");
+}
+void  castor::tape::tapeserver::drive::FakeDrive::setLogicalBlockProtection(const unsigned char method,
+      unsigned char methodLength, const bool enableLPBforRead, 
+      const bool enableLBBforWrite)  {
+  throw castor::exception::Exception("FakeDrive::setLogicalBlockProtection Not implemented");
 }
 castor::tape::tapeserver::drive::tapeError castor::tape::tapeserver::drive::FakeDrive::getTapeError()  {
   throw castor::exception::Exception("FakeDrive::getTapeError Not implemented");

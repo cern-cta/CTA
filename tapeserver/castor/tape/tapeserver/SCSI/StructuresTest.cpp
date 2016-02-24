@@ -474,7 +474,38 @@ namespace unitTests {
     buff[26] |= 0xEF;
     ASSERT_EQ(0xEFU, devConfig.modePage.selectDataComprAlgorithm);
   }  
-  
+  TEST(castor_tape_SCSI_Structures, modeSenseControlDataProtection_t) {
+    castor::tape::SCSI::Structures::modeSenseControlDataProtection_t dataProt;
+    unsigned char *buff = (unsigned char *)&dataProt;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(44U, sizeof(dataProt));
+    ASSERT_EQ(4U, sizeof(dataProt.header));
+    ASSERT_EQ(8U, sizeof(dataProt.blockDescriptor));
+    ASSERT_EQ(32U, sizeof(dataProt.modePage));
+    
+    /* We will only check used by us parameters */
+    ASSERT_EQ(0U, dataProt.header.modeDataLength);
+    buff[0] |= 0xAC;
+    ASSERT_EQ(0xACU, dataProt.header.modeDataLength);
+    
+    for(int i=1;i<=15;i++) buff[i] = 0xFF; // fill the space
+    ASSERT_EQ(0U, dataProt.modePage.LBPMethod );
+    buff[16] |= 0xEF;
+    ASSERT_EQ(0xEFU, dataProt.modePage.LBPMethod );
+    ASSERT_EQ(0U, dataProt.modePage.LBPInformationLength );
+    buff[17] |= 0xDF;
+    ASSERT_EQ(0x1FU, dataProt.modePage.LBPInformationLength );
+    ASSERT_EQ(0U, dataProt.modePage.LBP_W );
+    buff[18] |= 0x8F;
+    ASSERT_EQ(0x1U, dataProt.modePage.LBP_W );
+    ASSERT_EQ(0U, dataProt.modePage.LBP_R );
+    buff[18] |= 0x4F;
+    ASSERT_EQ(0x1U, dataProt.modePage.LBP_R );
+  }  
+    
   TEST(castor_tape_SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
     castor::tape::SCSI::Structures::tapeAlertLogPage_t<12> tal;
     unsigned char * buff = (unsigned char *) & tal;

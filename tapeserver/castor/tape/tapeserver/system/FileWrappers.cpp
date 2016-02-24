@@ -105,6 +105,10 @@ System::stDeviceFile::stDeviceFile()
   blockID = 0xFFFFFFFF; // Logical Object ID - position on tape 
   
   clearCompressionStats = false;
+  m_LBPInfoMethod = SCSI::LBPMethods::CRC32C;
+  m_LBPInfoLength = SCSI::LBPMethods::CRC32CLength;
+  m_LBPInfo_R = 1;
+  m_LBPInfo_W = 1;
 }
 
 int System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)
@@ -419,6 +423,20 @@ int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
   }
   SCSI::Structures::modeSense6CDB_t & cdb =
           *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
+    
+  switch (cdb.pageCode) {
+    case SCSI::modeSensePages::deviceConfiguration:
+      return modeSenseDeviceConfiguration(sgio_h);
+    case SCSI::modeSensePages::controlDataProtection:
+      return modeSenseControlDataProtection(sgio_h);
+  }
+  errno = EINVAL;
+  return -1;
+}
+
+int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t * sgio_h) {
+  SCSI::Structures::modeSense6CDB_t & cdb =
+          *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
   if (SCSI::modeSensePages::deviceConfiguration != cdb.pageCode) {
     errno = EINVAL;
     return -1;
@@ -433,6 +451,38 @@ int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
   /* fill the replay with random data */
   srandom(SCSI::Commands::MODE_SENSE_6);
   memset(sgio_h->dxferp, random(), sizeof (devConfig));
+  return 0;
+}
+
+int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t * sgio_h) {
+  SCSI::Structures::modeSense6CDB_t & cdb =
+          *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
+  if (SCSI::modeSensePages::controlDataProtection != cdb.pageCode) {
+    errno = EINVAL;
+    return -1;
+  }  
+ 
+  if (cdb.subPageCode != SCSI::modePageControlDataProtection::subpageCode) {
+    errno = EINVAL;
+    return -1;
+  }        
+  
+  SCSI::Structures::modeSenseControlDataProtection_t & controlDataProtection =
+    *(SCSI::Structures::modeSenseControlDataProtection_t *) sgio_h->dxferp;
+
+  if (sizeof (controlDataProtection) > sgio_h->dxfer_len) {
+    errno = EINVAL;
+    return -1;
+  }
+  /* fill the replay with random data */
+  srandom(SCSI::Commands::MODE_SENSE_6);
+  memset(sgio_h->dxferp, random(), sizeof (controlDataProtection));
+  
+  controlDataProtection.modePage.LBPMethod = m_LBPInfoMethod;
+  controlDataProtection.modePage.LBPInformationLength = m_LBPInfoLength;
+  controlDataProtection.modePage.LBP_R = m_LBPInfo_R;
+  controlDataProtection.modePage.LBP_W = m_LBPInfo_W;
+  
   return 0;
 }
 
@@ -494,6 +544,7 @@ int System::stDeviceFile::ioctlInquiry(sg_io_hdr_t * sgio_h) {
     memcpy(inqData.prodRevLvl, prodRevLvl, sizeof (inqData.prodRevLvl));
     const char *T10Vendor = "STK                        ";
     memcpy(inqData.T10Vendor, T10Vendor, sizeof (inqData.T10Vendor));
+    inqData.protect = 1;
   } else if (1 == cdb.EVPD && SCSI::inquiryVPDPages::unitSerialNumber == cdb.pageCode) {
     /* the unit serial number VPD page is returned*/
     SCSI::Structures::inquiryUnitSerialNumberData_t & inqSerialData =

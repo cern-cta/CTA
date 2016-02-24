@@ -352,19 +352,44 @@ namespace drive {
     void SCSI_inquiry();
     
     /**
-     * TOFILL
+     * Enable Logical Block Protection on the drive for reading only. 
+     * Set method CRC32C to be used.
      */
     virtual void enableCRC32CLogicalBlockProtectionReadOnly();
     
     /**
-     * TOFILL
+     * Enable Logical Block Protection on the drive for reading and writing. 
+     * Set method CRC32C to be used.
      */
     virtual void enableCRC32CLogicalBlockProtectionReadWrite();
+        
+    /**
+     * Enable Logical Block Protection on the drive for reading only. 
+     * Set method Reed-Solomon to be used.
+     */
+    virtual void enableReedSolomonLogicalBlockProtectionReadOnly();
     
     /**
-     * TOFILL
+     * Enable Logical Block Protection on the drive for reading and writing. 
+     * Set method Reed-Solomon to be used.
+     */
+    virtual void enableReedSolomonLogicalBlockProtectionReadWrite();
+    /**
+     * Disable Logical Block Protection on the drive.
      */
     virtual void disableLogicalBlockProtection();
+    
+    /**
+     * Return Logical Block Protection Information of the drive.
+     * 
+     * We use MODE SENSE Control Data Protection (0Ah) mode page as 
+     * described in SSC-5. 
+     * 
+     * @return LBPInfo class. This contains the LBP method to be used for 
+     * Logical Block Protection, the method length, the status if LBP enabled
+     * for reading and the status if LBP enabled for writing.
+     */
+    virtual LBPInfo getLBPInfo();
     
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
@@ -384,7 +409,15 @@ namespace drive {
     void waitTestUnitReady(const uint32_t timeoutSecond);
     
     /**
-     * TOFILL
+     * Set the tape Logical Block Protection. 
+     * We use MODE SENSE/SELECT Control Data Protection (0Ah) mode page as 
+     * described in SSC-5.
+     * 
+     * @param method            The LBP method to be set.
+     * @param methodLength      The method length in bytes.
+     * @param enableLPBforRead  Should be LBP set for reading.
+     * @param enableLBBforWrite Should be LBP set for writing.
+     *                                
      */
     virtual void setLogicalBlockProtection(const unsigned char method,
       unsigned char methodLength, const bool enableLPBforRead, 

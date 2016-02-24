@@ -1103,8 +1103,20 @@ const char * const castor::tape::SCSI::senseKeys::senseKeysText[] = {
                             do not agree */
 }; 
 
-/* names for the logical block protection methods  */
-const char * const castor::tape::SCSI::LBPMethods::LBPMethodsName[] = {        
-  "Reed-Solomon", 
-  "CRC32C"        
-}; 
+
+//------------------------------------------------------------------------------
+// LBPMethodToString
+//------------------------------------------------------------------------------
+std::string castor::tape::SCSI::LBPMethodToString(const unsigned char LBPMethod)
+{
+  switch (LBPMethod) {
+    case LBPMethods::Disabled:
+      return "Disabled";
+    case LBPMethods::ReedSolomon:
+      return "Reed-Solomon";
+    case LBPMethods::CRC32C:
+      return "CRC32C";
+    default:
+      return "Unknown";
+  }
+}

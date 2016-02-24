@@ -391,15 +391,27 @@ namespace SCSI {
   class LBPMethods {
   public:
     enum {
+      Disabled    = 0x00, // do not use logical block protection
       ReedSolomon = 0x01, // Reed-Solomon CRC as specified in ECMA-319
       CRC32C      = 0x02  // CRC32C polynomial as specified for iSCSI 
     };
     enum {
-      ReedSolomonLeght = 4, // Reed-Solomon CRC length in bytes
-      CRC32CLenght = 4      // CRC32C length in bytes
+      ReedSolomonLegth = 4, // Reed-Solomon CRC length in bytes
+      CRC32CLength = 4      // CRC32C length in bytes
     };
-    static const char * const LBPMethodsName[];
-  };      
+  };    
+  /**
+   * Turn a LBP method code into a string
+   * @param LBPmethod  The integer presentation of Logical Block Protection method
+   * @return           The string presentation for LBP method or Unknown if method 
+   *                   unknown.
+   */
+  std::string LBPMethodToString(const unsigned char LBPMethod);  
+  
+  /**
+   * Addition for the mode page Length for the Control Data Protection Mode Page
+   */
+  const unsigned char controlDataProtectionModePageLengthAddition = 4; 
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

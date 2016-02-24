@@ -235,13 +235,15 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       
-      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
+      devInfo.isPIsupported = false;
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);   
       devInfo = drive->getDeviceInfo();
 
       ASSERT_EQ("STK     ",devInfo.vendor);
       ASSERT_EQ("T10000B         ",devInfo.product);
       ASSERT_EQ("0104",devInfo.productRevisionLevel );
       ASSERT_EQ("XYZZY_A2  ",devInfo.serialNumber );
+      ASSERT_TRUE(devInfo.isPIsupported);
     }
   }
 }
@@ -339,6 +341,45 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
 
           delete drive;
         }
+    }
+  }
+}
+
+TEST(castor_tape_drive_Drive, getLBPInfo) {
+  /* Prepare the test harness */
+  castor::tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
+  
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
+  
+  /* Test: detect devices, then open the device files */
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
+      i != dl.end(); i++) {
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);         
+      LBPdata = drive->getLBPInfo();
+
+      ASSERT_EQ(castor::tape::SCSI::LBPMethods::CRC32C,LBPdata.method);
+      ASSERT_EQ(castor::tape::SCSI::LBPMethods::CRC32CLength,LBPdata.methodLength);
+      ASSERT_TRUE(LBPdata.enableLBPforRead);
+      ASSERT_TRUE(LBPdata.enableLBPforWrite);
     }
   }
 }

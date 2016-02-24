@@ -75,6 +75,7 @@ namespace drive {
     std::string product;
     std::string productRevisionLevel;
     std::string serialNumber;
+    bool isPIsupported;
   };
 
   /**
@@ -90,6 +91,17 @@ namespace drive {
     uint32_t dirtyBytesCount;
   };
 
+  /**
+   * Logical block protection nformation, returned by getLBPInfo()
+   */
+  class LBPInfo {
+  public:
+    unsigned char method;
+    unsigned char methodLength;
+    bool enableLBPforRead;
+    bool enableLBPforWrite;
+  };
+  
   /**
    * 
    */
@@ -160,6 +172,15 @@ namespace drive {
     virtual std::vector<std::string> getTapeAlertsCompact (const std::vector<uint16_t>&) = 0;
     virtual void setDensityAndCompression(bool compression = true,
     unsigned char densityCode = 0)  = 0;
+    virtual void enableCRC32CLogicalBlockProtectionReadOnly() = 0;
+    virtual void enableCRC32CLogicalBlockProtectionReadWrite() = 0;
+    virtual void enableReedSolomonLogicalBlockProtectionReadOnly() = 0;
+    virtual void enableReedSolomonLogicalBlockProtectionReadWrite() = 0;
+    virtual void disableLogicalBlockProtection() = 0;
+    virtual drive::LBPInfo getLBPInfo() = 0;
+    virtual void setLogicalBlockProtection(const unsigned char method,
+      unsigned char methodLength, const bool enableLPBforRead, 
+      const bool enableLBBforWrite) = 0; 
     virtual driveStatus getDriveStatus()  = 0;
     virtual tapeError getTapeError()  = 0;
     virtual void setSTBufferWrite(bool bufWrite)  = 0;

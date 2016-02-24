@@ -116,7 +116,7 @@ drive::deviceInfo drive::DriveGeneric::getDeviceInfo()  {
   devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl);
   devInfo.vendor = SCSI::Structures::toString(inquiryData.T10Vendor);
   devInfo.serialNumber = getSerialNumber();
-
+  devInfo.isPIsupported = inquiryData.protect;
   return devInfo;
 }
 
@@ -389,22 +389,23 @@ void drive::DriveGeneric::setLogicalBlockProtection(
     SCSI::Structures::senseData_t<255> senseBuff;
     SCSI::Structures::LinuxSGIO_t sgh;
 
-    cdb.PF = 0; // required for IBM, LTO, not supported for T10000
-    cdb.paramListLength = sizeof (controlDataProtection);
+    cdb.PF = 1; // means nothing for IBM, LTO, T10000
+    cdb.paramListLength = sizeof (controlDataProtection.header) +
+      sizeof (controlDataProtection.blockDescriptor) +
+      SCSI::controlDataProtectionModePageLengthAddition + 
+      SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);    
+    if (cdb.paramListLength > sizeof(controlDataProtection)) {
+      // should never happen 
+      throw castor::exception::Exception(
+        std::string("cdb.paramListLength greater then size "
+                    "of controlDataProtection in setLogicalBlockProtection"));
+    }
     controlDataProtection.header.modeDataLength = 0; // must be 0 for IBM, LTO 
                                                      // ignored by T10000
     controlDataProtection.modePage.LBPMethod = method;
     controlDataProtection.modePage.LBPInformationLength = methodLength;
-    if (enableLBPforWrite) {
-      controlDataProtection.modePage.LBP_W = 1;
-    } else {
-      controlDataProtection.modePage.LBP_W = 0;
-    }
-    if (enableLBPforRead) {
-      controlDataProtection.modePage.LBP_R = 1;
-    } else {
-      controlDataProtection.modePage.LBP_R = 0;
-    }
+    controlDataProtection.modePage.LBP_W = enableLBPforWrite;
+    controlDataProtection.modePage.LBP_R = enableLBPforRead;
 
     sgh.setCDB(&cdb);
     sgh.setDataBuffer(&controlDataProtection);
@@ -426,7 +427,7 @@ void drive::DriveGeneric::setLogicalBlockProtection(
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
   setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
-    SCSI::LBPMethods::CRC32CLenght,true,false);
+    SCSI::LBPMethods::CRC32CLength,true,false);
 }
 
 //------------------------------------------------------------------------------
@@ -434,7 +435,23 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
   setLogicalBlockProtection(SCSI::LBPMethods::CRC32C,
-    SCSI::LBPMethods::CRC32CLenght,true,true);
+    SCSI::LBPMethods::CRC32CLength,true,true);
+}
+
+//------------------------------------------------------------------------------
+// enableReedSolomonLogicalBlockProtectionReadOnly
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadOnly() {
+  setLogicalBlockProtection(SCSI::LBPMethods::ReedSolomon,
+    SCSI::LBPMethods::ReedSolomonLegth,true,false);
+}
+
+//------------------------------------------------------------------------------
+// enableReedSolomonLogicalBlockProtectionReadWrite
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadWrite() {
+  setLogicalBlockProtection(SCSI::LBPMethods::ReedSolomon,
+    SCSI::LBPMethods::ReedSolomonLegth,true,true);
 }
 
 //------------------------------------------------------------------------------
@@ -443,7 +460,44 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
 void drive::DriveGeneric::disableLogicalBlockProtection() {
   setLogicalBlockProtection(0,0,false,false);      
 }
+
+//------------------------------------------------------------------------------
+// getLBPInfo
+//------------------------------------------------------------------------------
+drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
+  SCSI::Structures::modeSenseControlDataProtection_t controlDataProtection;
+  drive::LBPInfo LBPdata;
   
+  /* fetch Control Data Protection */
+  SCSI::Structures::modeSense6CDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+
+  cdb.pageCode = SCSI::modeSensePages::controlDataProtection;
+  cdb.subPageCode = SCSI::modePageControlDataProtection::subpageCode;
+  cdb.allocationLength = sizeof (controlDataProtection);
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&controlDataProtection);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  castor::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl"  );     
+  SCSI::ExceptionLauncher(sgh,
+    std::string("SCSI error fetching data in getLBPInfo: ") +
+    SCSI::statusToString(sgh.status));
+
+  LBPdata.method = controlDataProtection.modePage.LBPMethod;
+  LBPdata.methodLength = controlDataProtection.modePage.LBPInformationLength;  
+  LBPdata.enableLBPforRead = (1 == controlDataProtection.modePage.LBP_R);
+  LBPdata.enableLBPforWrite = (1 == controlDataProtection.modePage.LBP_W);
+
+  return LBPdata;
+}
+
 /**
  * Function that checks if a tape is blank (contains no records) 
  * @return true if tape is blank, false otherwise
