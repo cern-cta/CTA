@@ -137,7 +137,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
 
 TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
   using namespace castor::legacymsg;
-  char buf[47]; // Expect message (header + body) to occupy exactly 45 bytes
+  char buf[47]; // Expect message (header + body) to occupy exactly 47 bytes
   TapeLabelRqstMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)

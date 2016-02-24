@@ -34,12 +34,14 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   castor::server::ProcessCap& capUtils,
   RecallWatchDog& watchdog,
   castor::log::LogContext& lc,
-  RecallReportPacker &rrp) :
+  RecallReportPacker &rrp,
+  const bool useLbp) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
-  m_rrp(rrp){}
+  m_rrp(rrp),
+  m_useLbp(useLbp) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -150,7 +152,7 @@ std::unique_ptr<castor::tape::tapeFile::ReadSession>
 castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
     std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
-    new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
+    new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
     m_logContext.log(LOG_DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
@@ -226,7 +228,25 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("positionTime", m_stats.positionTime);
-        m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+        scoped.add("useLbp", m_useLbp);
+        scoped.add("detectedLbp", rs->isTapeWithLbp());
+        if (rs->isTapeWithLbp() && !m_useLbp) {
+          m_logContext.log(LOG_WARNING, "Tapserver started without LBP support"
+          " but the tape with LBP label mounted");
+        }
+        switch(m_drive.getLbpToUse()) {
+          case drive::lbpToUse::crc32cReadOnly:
+            m_logContext.log(LOG_INFO, "Tape read session session with LBP "
+              "crc32c in ReadOnly mode successfully started");
+            break;
+          case drive::lbpToUse::disabled:
+            m_logContext.log(LOG_INFO, "Tape read session session without LBP "
+            "successfully started");
+            break;
+          default:
+            m_logContext.log(LOG_ERR, "Tape read session session with "
+            "unsupported LBP started");
+        }
       }
       m_initialProcess.tapeMountedForRead();
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);

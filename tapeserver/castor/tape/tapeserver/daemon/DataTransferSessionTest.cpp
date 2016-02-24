@@ -201,7 +201,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid="V12345";
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true);
+       volInfo , 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -363,7 +363,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid="V12345";
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true);
+       volInfo , 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -517,7 +517,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid="V12345";
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true);
+       volInfo , 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync

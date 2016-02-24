@@ -36,7 +36,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         castor::log::LogContext & lc,
         MigrationReportPacker & repPacker,
         castor::server::ProcessCap &capUtils,
-        uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
+        uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
+        const bool useLbp): 
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo,capUtils, lc),
         m_filesBeforeFlush(filesBeforeFlush),
         m_bytesBeforeFlush(bytesBeforeFlush),
@@ -44,6 +45,7 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_reportPacker(repPacker),
         m_lastFseq(-1),
         m_compress(true),
+        m_useLbp(useLbp),
         m_watchdog(mwd){}
 //------------------------------------------------------------------------------
 //setlastFseq
@@ -66,12 +68,14 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   ScopedParam sp[]={
     ScopedParam(m_logContext, Param("TPVID",m_vid)),
     ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
-    ScopedParam(m_logContext, Param("compression", m_compress)) 
+    ScopedParam(m_logContext, Param("compression", m_compress)),
+    ScopedParam(m_logContext, Param("useLbp", m_useLbp))
   };
   tape::utils::suppresUnusedVariable(sp);
   try {
     writeSession.reset(
-    new castor::tape::tapeFile::WriteSession(m_drive,m_volInfo,m_lastFseq,m_compress)
+    new castor::tape::tapeFile::WriteSession(m_drive, m_volInfo, m_lastFseq,
+      m_compress, m_useLbp)
     );
     m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
   }
@@ -196,9 +200,30 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("positionTime", m_stats.positionTime);
-        m_logContext.log(LOG_INFO, "Write session initialised, tape VID checked and drive positioned for writing");
+        scoped.add("useLbp", m_useLbp);
+        scoped.add("detectedLbp", writeSession->isTapeWithLbp());
+
+        if (!writeSession->isTapeWithLbp() && m_useLbp) {
+          m_logContext.log(LOG_INFO, "Tapserver started with LBP support but "
+            "the tape without LBP label mounted");
+        }
+        switch(m_drive.getLbpToUse()) {
+          case drive::lbpToUse::crc32cReadWrite:
+            m_logContext.log(LOG_INFO, "Write session initialised with LBP"
+              " crc32c in ReadWrite mode, tape VID checked and drive positioned"
+              " for writing");
+            break;
+          case drive::lbpToUse::disabled:
+            m_logContext.log(LOG_INFO, "Write session initialised without LBP"
+              ", tape VID checked and drive positioned for writing");
+            break;
+          default:
+            m_logContext.log(LOG_ERR, "Write session initialised with "
+              "unsupported LBP method, tape VID checked and drive positioned"
+              " for writing");
+        }
       }
-      
+
       m_initialProcess.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;

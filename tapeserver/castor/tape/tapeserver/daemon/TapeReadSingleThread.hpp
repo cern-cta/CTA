@@ -65,7 +65,8 @@ public:
           castor::server::ProcessCap &capUtils,
           RecallWatchDog& watchdog,
           castor::log::LogContext & lc,
-          RecallReportPacker &rrp);
+          RecallReportPacker &rrp,
+          const bool useLbp);
    
    /**
     * Set the task injector. Has to be done that way (and not in the constructor)
@@ -138,6 +139,12 @@ private:
   /// Reference to the RecallReportPacker, used to update tape/drive state during recall
   RecallReportPacker & m_rrp;
   
+  /**
+   * The boolean variable describing to use on not to use Logical
+   * Block Protection.
+   */
+  const bool m_useLbp;
+
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 
     m_watchdog.addToErrorCount(error);

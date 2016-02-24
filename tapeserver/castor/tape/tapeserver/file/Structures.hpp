@@ -129,6 +129,11 @@ namespace tape {
       void verify();
     };
 
+    class VOL1withCrc : public VOL1 {
+    protected:
+      uint32_t m_crc;          // 32bit crc addition for VOL1
+    };
+
     // The common part of the HDR1, EOF1 and PRELEBEL HDR1 labels
 
     class HDR1EOF1 {

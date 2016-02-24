@@ -50,9 +50,11 @@ namespace castor {
       }
 
       ReadSession::ReadSession(tapeserver::drive::DriveInterface & drive,
-              tapeserver::daemon::VolumeInfo volInfo)  : 
-      m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
-      m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
+              tapeserver::daemon::VolumeInfo volInfo,
+              const bool useLbp) : 
+      m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_corrupted(false),
+      m_locked(false), m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo),
+      m_detectedLbp(false) { 
 
         if(!m_vid.compare("")) {
           throw castor::exception::InvalidArgument();
@@ -63,7 +65,27 @@ namespace castor {
           ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
           throw ex;
         }
-        
+
+        // this readBlock only for mhvtl workaround
+        m_drive.rewind();
+        m_drive.disableLogicalBlockProtection();
+        VOL1withCrc vol1WithCrc;
+        const ssize_t res = m_drive.readBlock((void * )&vol1WithCrc,
+          sizeof(vol1WithCrc));
+        if (res >= (ssize_t)(sizeof(VOL1withCrc) - sizeof(VOL1))) {
+          switch(vol1WithCrc.getLBPMethod()) {
+            case SCSI::logicBlockProtectionMethod::CRC32C:
+              m_detectedLbp = true;
+              if (m_useLbp) {
+                m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+              }
+              break;
+            default:
+              m_detectedLbp = false;
+          }
+        }
+   
+        // from this point the right LBP mode should be set or not set
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
@@ -344,9 +366,11 @@ namespace castor {
 
       WriteSession::WriteSession(tapeserver::drive::DriveInterface & drive, 
               const tapeserver::daemon::VolumeInfo& volInfo, 
-              const uint32_t last_fSeq, const bool compression)  
+              const uint32_t last_fSeq, const bool compression,
+              const bool useLbp)  
       : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),
-              m_corrupted(false), m_locked(false),m_volInfo(volInfo) {
+              m_useLbp(useLbp), m_corrupted(false), m_locked(false),
+              m_volInfo(volInfo), m_detectedLbp(false) {
 
         if(!m_vid.compare("")) {
           throw castor::exception::InvalidArgument();
@@ -358,6 +382,32 @@ namespace castor {
           throw ex;
         }
 
+        // this readBlock only for mhvtl workaround
+        m_drive.rewind();
+        m_drive.disableLogicalBlockProtection();
+        VOL1withCrc vol1WithCrc;
+        const ssize_t res = m_drive.readBlock((void * )&vol1WithCrc,
+          sizeof(vol1WithCrc));
+        if (res >= (ssize_t)(sizeof(VOL1withCrc) - sizeof(VOL1))) {
+          switch(vol1WithCrc.getLBPMethod()) {
+            case SCSI::logicBlockProtectionMethod::CRC32C:
+              m_detectedLbp = true;
+              if (m_useLbp) {
+                m_drive.enableCRC32CLogicalBlockProtectionReadWrite();
+              } else {
+                castor::exception::Exception ex;
+                ex.getMessage() << "[WriteSession::WriteSession()] - Tape is "
+                  "labeled with crc32c logical block protection but tapserverd "
+                  "started without LBP support";
+                throw ex;
+              }
+              break;
+            default:
+              m_detectedLbp = false;
+          }
+        }
+
+        // from this point the right LBP mode should be set or not set
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[WriteSession::WriteSession()] - Reading VOL1");

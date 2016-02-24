@@ -188,9 +188,11 @@ namespace castor {
          * volId value. Throws an exception in case of mismatch.
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
+         * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
          */
         ReadSession(tapeserver::drive::DriveInterface & drive, 
-                tapeserver::daemon::VolumeInfo volInfo);
+                tapeserver::daemon::VolumeInfo volInfo,
+                const bool useLbp);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
@@ -202,6 +204,12 @@ namespace castor {
          */
         const std::string m_vid;
         
+        /**
+        * The boolean variable describing to use on not to use Logical
+        * Block Protection.
+        */
+        const bool m_useLbp;
+
         void setCorrupted() throw() {
           m_corrupted = true;
         }
@@ -210,6 +218,10 @@ namespace castor {
           return m_corrupted;
         }
         
+        bool isTapeWithLbp() throw() {
+          return m_detectedLbp;
+        }
+
         void lock()  {
           if(m_locked) {
             throw SessionAlreadyInUse();
@@ -269,6 +281,11 @@ namespace castor {
         PartOfFile m_currentFilePart;
         
         const tapeserver::daemon::VolumeInfo m_volInfo;
+
+        /**
+        * The boolean variable indicates that the tape has VOL1 with enabled LBP
+        */
+        bool m_detectedLbp;
       };
       
       class ReadFile{
@@ -363,10 +380,12 @@ namespace castor {
          * @param volId: volume name of the tape we would like to write to
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
+         * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
          */
         WriteSession(tapeserver::drive::DriveInterface & drive, 
                 const tapeserver::daemon::VolumeInfo& volInfo, 
-                const uint32_t last_fseq, const bool compression) ;
+                const uint32_t last_fseq, const bool compression,
+                const bool useLbp) ;
         
         /**
          * DriveGeneric object referencing the drive used during this write session
@@ -383,6 +402,12 @@ namespace castor {
          */
         bool m_compressionEnabled;
         
+        /**
+        * The boolean variable describing to use on not to use Logical
+        * Block Protection.
+        */
+        const bool m_useLbp;
+
         std::string getSiteName() throw() {
           return m_siteName;
         }
@@ -399,6 +424,10 @@ namespace castor {
           return m_corrupted;
         }
         
+        bool isTapeWithLbp() throw() {
+          return m_detectedLbp;
+        }
+
         void lock()  {
           if(m_locked) {
             throw SessionAlreadyInUse();
@@ -489,6 +518,11 @@ namespace castor {
         bool m_locked;
         
         const tapeserver::daemon::VolumeInfo m_volInfo;
+
+        /**
+        * The boolean variable indicates that the tape has VOL1 with enabled LBP
+        */
+        bool m_detectedLbp;
       };
       
       class WriteFile {        

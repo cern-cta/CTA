@@ -32,7 +32,8 @@ namespace {
 castor::tape::tapeserver::drive::FakeDrive::FakeDrive(uint64_t capacity,
     FailureMoment failureMoment, bool failToMount) throw(): 
   m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
-  m_failureMoment(failureMoment), m_tapeOverflow(false), m_failToMount(failToMount)
+  m_failureMoment(failureMoment), m_tapeOverflow(false),
+  m_failToMount(failToMount), m_lbpToUse(lbpToUse::disabled)
 {
   m_tape.reserve(max_fake_drive_record_length);
 }
@@ -107,10 +108,10 @@ castor::tape::tapeserver::drive::driveStatus castor::tape::tapeserver::drive::Fa
   throw castor::exception::Exception("FakeDrive::getDriveStatus Not implemented");
 }
 void castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly()  {
-  throw castor::exception::Exception("FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly Not implemented");
+  m_lbpToUse = lbpToUse::crc32cReadOnly;
 }
 void  castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite()  {
-  throw castor::exception::Exception("FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite Not implemented");
+  m_lbpToUse = lbpToUse::crc32cReadWrite;
 }
 void castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly()  {
   throw castor::exception::Exception("FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly Not implemented");
@@ -119,7 +120,7 @@ void  castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockP
   throw castor::exception::Exception("FakeDrive::enableCReedSolomonLogicalBlockProtectionReadWrite Not implemented");
 }
 void  castor::tape::tapeserver::drive::FakeDrive::disableLogicalBlockProtection()  {
-  throw castor::exception::Exception("FakeDrive::disableLogicalBlockProtection Not implemented");
+  m_lbpToUse = lbpToUse::disabled;
 }
 castor::tape::tapeserver::drive::LBPInfo  castor::tape::tapeserver::drive::FakeDrive::getLBPInfo()  {
   throw castor::exception::Exception("FakeDrive::dgetLBPInfo Not implemented");
@@ -274,6 +275,11 @@ bool castor::tape::tapeserver::drive::FakeDrive::isAtEOD()  {
 
 bool castor::tape::tapeserver::drive::FakeDrive::isTapeBlank() {
   return m_tape.empty();
+}
+
+castor::tape::tapeserver::drive::lbpToUse
+  castor::tape::tapeserver::drive::FakeDrive::getLbpToUse() {
+    return m_lbpToUse;
 }
 
 bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {

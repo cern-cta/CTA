@@ -151,7 +151,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     tsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
-        m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp);
+        m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,m_castorConf.useLbp);
 
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
@@ -244,7 +244,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         mrp,
         m_capUtils,    
         m_castorConf.maxFilesBeforeFlush,
-        m_castorConf.maxBytesBeforeFlush);
+        m_castorConf.maxBytesBeforeFlush,
+        m_castorConf.useLbp);
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,
         m_castorConf.bulkRequestMigrationMaxBytes,

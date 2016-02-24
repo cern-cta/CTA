@@ -218,6 +218,7 @@ namespace drive {
     virtual bool isAtBOT()  = 0;
     virtual bool isAtEOD()  = 0;
     virtual bool isTapeBlank() = 0;
+    virtual lbpToUse getLbpToUse() = 0;
     virtual bool hasTapeInPlace() = 0;
     
     /**

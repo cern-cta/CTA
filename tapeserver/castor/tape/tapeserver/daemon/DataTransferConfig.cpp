@@ -39,7 +39,8 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   bulkRequestRecallMaxFiles(0),
   maxBytesBeforeFlush(0),
   maxFilesBeforeFlush(0),
-  nbDiskThreads(0) {
+  nbDiskThreads(0),
+  useLbp(false) {
 }
 
 //------------------------------------------------------------------------------
@@ -82,6 +83,14 @@ castor::tape::tapeserver::daemon::DataTransferConfig
     "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
     "TapeServer", "XrootPrivateKey", "/etc/castor/xrd_tape_key.pem", log);
+  const std::string useLBP = castorConf.getConfEntString(
+    "TapeServer", "UseLogicalBlockProtection", "no", log);
+
+  if (!strcasecmp(useLBP.c_str(), "yes") || !strcmp(useLBP.c_str(), "1")) {
+    config.useLbp = true;
+  } else {
+    config.useLbp = false;
+  }
 
   return config;
 }

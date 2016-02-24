@@ -115,6 +115,12 @@ struct DataTransferConfig {
   std::string xrootPrivateKey;
 
   /**
+   * The boolean variable describing to use on not to use Logical
+   * Block Protection.
+   */
+  bool useLbp;
+
+  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */

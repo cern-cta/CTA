@@ -49,6 +49,7 @@ namespace drive {
     const enum FailureMoment m_failureMoment;
     bool m_tapeOverflow;
     bool m_failToMount;
+    lbpToUse m_lbpToUse;
   public:
     std::string contentToString() throw();
 
@@ -98,6 +99,7 @@ namespace drive {
     virtual bool isAtBOT() ;
     virtual bool isAtEOD() ;
     virtual bool isTapeBlank();
+    virtual lbpToUse getLbpToUse();
     virtual bool hasTapeInPlace();
   };
   

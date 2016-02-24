@@ -68,8 +68,8 @@ public:
     castor::log::LogContext & lc,
     MigrationReportPacker & repPacker,
     castor::server::ProcessCap &capUtils,
-    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush);
-    
+    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp);
+  
   /**
    * 
    * @param lastFseq
@@ -243,6 +243,12 @@ private:
    * Should the compression be enabled ? This is currently hard coded to true 
    */
   const bool m_compress;
+  
+  /**
+   * The boolean variable describing to use on not to use Logical
+   * Block Protection.
+   */
+  const bool m_useLbp;
   
   /**
    * Reference to the watchdog, used in run()

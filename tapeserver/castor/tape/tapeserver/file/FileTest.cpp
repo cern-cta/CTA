@@ -87,7 +87,7 @@ namespace unitTests {
   
   TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {    
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);    
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     ASSERT_NE((long int)rs, 0);
     fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
@@ -109,7 +109,7 @@ namespace unitTests {
     }
     delete ws;
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     {
       fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);
@@ -120,7 +120,7 @@ namespace unitTests {
   
   TEST_F(castorTapeFileTest, throwsWhenWritingAnEmptyFileOrSessionCorrupted) {
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
@@ -137,7 +137,7 @@ namespace unitTests {
   TEST_F(castorTapeFileTest, throwsWhenClosingTwice) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
       ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
@@ -151,7 +151,7 @@ namespace unitTests {
   TEST_F(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
       ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
@@ -161,7 +161,7 @@ namespace unitTests {
     delete ws;
     
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     {
       fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
@@ -177,7 +177,7 @@ namespace unitTests {
   TEST_F(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {    
     //Verify label
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     ASSERT_NE((long int)rs, 0);
     ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
     ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
@@ -188,8 +188,9 @@ namespace unitTests {
     //Write AULFile with Hello World
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, true);
     ASSERT_EQ(ws->m_compressionEnabled, true);
+    ASSERT_EQ(ws->m_useLbp, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
@@ -201,12 +202,13 @@ namespace unitTests {
     delete ws;
     
     //Read it back and compare
-    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo, true);
     ASSERT_NE((long int)rs, 0);
     ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
     ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
     ASSERT_EQ(rs->isCorrupted(), false);
     ASSERT_EQ(rs->m_vid.compare(label), 0);
+    ASSERT_EQ(rs->m_useLbp, true);
     {
       fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
@@ -223,7 +225,7 @@ namespace unitTests {
   }
   
   TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
-    castor::tape::tapeFile::WriteSession ws(d, volInfo, 0, true);
+    castor::tape::tapeFile::WriteSession ws(d, volInfo, 0, true, false);
     EXPECT_NO_THROW(ws.validateNextFSeq(1));
     EXPECT_THROW(ws.reportWrittenFSeq(2),castor::exception::Exception);
     EXPECT_NO_THROW(ws.reportWrittenFSeq(1));

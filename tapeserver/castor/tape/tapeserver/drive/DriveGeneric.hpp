@@ -215,6 +215,15 @@ namespace drive {
     virtual bool isTapeBlank();
 
     /**
+     * Function that returns internal status of the logical block protection
+     * method to be used for read/write from/to the tape drive.
+     * @return The lbp to be used for read/write from/to the tape drive.
+     */
+    virtual lbpToUse getLbpToUse() {
+      return m_lbpToUse;
+    }
+
+    /**
      * getTapeError: get SENSE buffer from patched version of the driver
      * or fall back to other information and report tape statuses.
      * Statuses were in CAStor struct sk_info sk_codmsg[] = { 
