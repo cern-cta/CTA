@@ -64,6 +64,7 @@ add_executable(cta-systemTests
 target_link_libraries(cta-systemTests
   systemTestHelper
   systemTestHelperTests
+  cta-tapedSystemTests
   gtest
   pthread)
 
