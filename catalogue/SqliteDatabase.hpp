@@ -27,7 +27,7 @@ namespace catalogue {
 /**
  * A C++ wrapper around an SQLite database handle.
  */
-class SQLiteDatabase {
+class SqliteDatabase {
 public:
 
   /**
@@ -35,12 +35,12 @@ public:
    *
    * @param filename The filename to be passed to the sqlit3_open() function.
    */
-  SQLiteDatabase(const std::string &filename);
+  SqliteDatabase(const std::string &filename);
 
   /**
    * Destructor.
    */
-  ~SQLiteDatabase();
+  ~SqliteDatabase();
 
   /**
    * Returns the underlying database handle.
@@ -52,7 +52,7 @@ public:
 private:
 
   /**
-   * SQLite database handle.
+   * The database handle.
    */
   sqlite3 *m_dbHandle;
 
