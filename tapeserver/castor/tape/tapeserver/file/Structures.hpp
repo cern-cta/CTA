@@ -23,7 +23,9 @@
 #pragma once
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include <string>
+#include <stdexcept>
 
 namespace castor {
 namespace tape {
@@ -58,27 +60,66 @@ namespace tape {
       VOL1() {
         spaceStruct(this);
       }
-    private:
+    protected:
       char m_label[4];         // The characters VOL1. 
       char m_VSN[6];           // The Volume Serial Number. 
       char m_accessibility[1]; // A space indicates that the volume is authorized.
       char m_reserved1[13];    // Reserved.
       char m_implID[13];       // The Implementation Identifier - spaces.
       char m_ownerID[14];      // CASTOR or stagesuperuser name padded with spaces.
-      char m_reserved2[28];    // Reserved
+      char m_reserved2[26];    // Reserved
+      char m_LBPMethod[2];    // Logic block protection checksum type.
+                               // This field is a CASTOR variation from the ECMA 013/ISO1001
+                               // standard. It contains 2 spaces or '00'. Otherwise, contains
+                               // the ASCII representation of the hexadecimal value of the
+                               // Logical block protection method, as defined in the SSC-5 (latest drafts)
+                               // In practice we intend to use "  " (double space) or "00" 
+                               // for no LBP, "02" for CRC32C where possible (enterprise drives)
+                               // and "01" for ECMA-319 Reed-Solomon where not (LTO drives).
       char m_lblStandard[1];   // The label standard level - ASCII 3 for the CASTOR
     public:
       /**
        * Fills up all fields of the VOL1 structure with proper values and data provided.
        * @param VSN the tape serial number
        */
-      void fill(std::string VSN);
+      void fill(std::string VSN, SCSI::logicBlockProtectionMethod LBPMethod);
 
       /**
        * @return VSN the tape serial number
        */
       inline std::string getVSN() const {
         return toString(m_VSN);
+      }
+      
+      /**
+       * @return the logic block protection method as parsed from the header
+       */
+      inline SCSI::logicBlockProtectionMethod getLBPMethod() const {
+        if (!::strncmp(m_LBPMethod, "  ", sizeof(m_LBPMethod)))
+          return SCSI::logicBlockProtectionMethod::DoNotUse;
+        // Generate a proper string for the next steps, as otherwise functions
+        // get confused by the lack of zero-termination.
+        std::string LBPMethod;
+        LBPMethod.append(m_LBPMethod, sizeof (m_LBPMethod));
+        int hexValue;
+        try {
+          hexValue = std::stoi(LBPMethod, 0, 16);
+        } catch (std::invalid_argument &) {
+          throw exception::InvalidArgument(
+            std::string("In VOL1::getLBPMethod(): syntax error for numeric value: ") + LBPMethod);
+        } catch (std::out_of_range &) {
+          throw exception::InvalidArgument(
+            std::string("In VOL1::getLBPMethod(): out of range value: ") + LBPMethod);
+        }
+        switch (hexValue) {
+          case SCSI::logicBlockProtectionMethod::DoNotUse:
+          case SCSI::logicBlockProtectionMethod::CRC32C:
+          case SCSI::logicBlockProtectionMethod::ReedSolomon:
+            return static_cast<SCSI::logicBlockProtectionMethod> (hexValue);
+          default:
+            throw exception::InvalidArgument(
+              std::string("In VOL1::getLBPMethod(): unexpected value: ") + LBPMethod);
+        }
       }
 
       /**

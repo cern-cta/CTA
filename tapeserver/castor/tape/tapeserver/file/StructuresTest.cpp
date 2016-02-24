@@ -26,9 +26,17 @@
 #include <gmock/gmock-cardinalities.h>
 
 namespace unitTests {
+  
+  class testVOL1: public castor::tape::tapeFile::VOL1 {
+  public:
+    void backdoorSetLBPMethodString(const std::string & LBPString) {
+      ::strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+    }
+  };
 
   TEST(castor_tape_AULFile, VOL1) {
-    castor::tape::tapeFile::VOL1 vol1Label;
+    typedef castor::tape::SCSI::logicBlockProtectionMethod LBPM;
+    testVOL1 vol1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -38,11 +46,28 @@ namespace unitTests {
     EXPECT_ANY_THROW({
       vol1Label.verify();
     });
-    vol1Label.fill("test");
+    vol1Label.fill("test", LBPM::DoNotUse);
     ASSERT_NO_THROW({
       vol1Label.verify();
     });
     ASSERT_EQ("test  ", vol1Label.getVSN());
+    /* Validate that parser understands correctly values for LBP */
+    vol1Label.backdoorSetLBPMethodString("  ");
+    ASSERT_NO_THROW(vol1Label.getLBPMethod());
+    ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1Label.getLBPMethod());
+    vol1Label.backdoorSetLBPMethodString("01");
+    ASSERT_NO_THROW(vol1Label.getLBPMethod());
+    ASSERT_EQ((int)LBPM::ReedSolomon, (int)vol1Label.getLBPMethod());
+    vol1Label.backdoorSetLBPMethodString("00");
+    ASSERT_NO_THROW(vol1Label.getLBPMethod());
+    ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1Label.getLBPMethod());
+    vol1Label.backdoorSetLBPMethodString("02");
+    ASSERT_NO_THROW(vol1Label.getLBPMethod());
+    ASSERT_EQ((int)LBPM::CRC32C, (int)vol1Label.getLBPMethod());
+    vol1Label.backdoorSetLBPMethodString("03");
+    ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
+    vol1Label.backdoorSetLBPMethodString("XY");
+    ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
   }
 
   TEST(castor_tape_AULFile, HDR1) {

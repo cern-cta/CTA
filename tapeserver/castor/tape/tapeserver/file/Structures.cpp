@@ -30,11 +30,16 @@ using namespace castor::tape;
 
 #define BASEVERSION "2.1.15"
 
-void tapeFile::VOL1::fill(std::string VSN) {
+void tapeFile::VOL1::fill(std::string VSN, 
+  SCSI::logicBlockProtectionMethod LBPMethod) {
   setString(m_label, "VOL1");
   setString(m_VSN, VSN);
   setString(m_lblStandard, "3");
-  setString(m_ownerID, "CASTOR"); 
+  setString(m_ownerID, "CASTOR");
+  std::stringstream hexLBP; 
+  hexLBP << std::setfill('0') << std::setw(2) << std::hex
+      << std::noshowbase << static_cast<int>(LBPMethod);
+  setString(m_LBPMethod, hexLBP.str());
 }
 
 void tapeFile::VOL1::verify() {

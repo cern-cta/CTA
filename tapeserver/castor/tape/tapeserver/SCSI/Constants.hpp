@@ -317,6 +317,16 @@ namespace SCSI {
       bytesWrittenToTape         = 0x0009  // a signed number and may be negative
     };
   };
+  
+  /**
+   * Logic block protection as defined in SSC-5 (latest drafts) 
+   * 8.4.9 Control Data Protection mode page
+   */
+  enum class logicBlockProtectionMethod {
+    DoNotUse    = 0x00,
+    ReedSolomon = 0x01,
+    CRC32C      = 0x02
+  };
 
   class senseConstants {
   public:

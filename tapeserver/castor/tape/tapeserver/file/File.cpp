@@ -41,7 +41,7 @@ namespace castor {
       
       LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid)  {
         VOL1 vol1;
-        vol1.fill(vid);
+        vol1.fill(vid, SCSI::logicBlockProtectionMethod::DoNotUse);
         drive.writeBlock(&vol1, sizeof(vol1));
         HDR1PRELABEL prelabel;
         prelabel.fill(vid);
