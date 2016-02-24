@@ -118,7 +118,9 @@ int main ()
                     << "----------------------------------------------" << std::endl;
           continue;  
         }
-      
+
+        drive->enableCRC32CLogicalBlockProtectionReadWrite();
+
         try {
           /** 
            * We will write on the tape, so prepare 2 blocks

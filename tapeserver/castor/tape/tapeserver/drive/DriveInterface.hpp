@@ -101,6 +101,15 @@ namespace drive {
     bool enableLBPforRead;
     bool enableLBPforWrite;
   };
+
+  /**
+   * enum class to be used for specifying LBP method to use on the drive.
+   */
+  enum class lbpToUse {
+    disabled,
+    crc32cReadWrite,
+    crc32cReadOnly
+  };
   
   /**
    * 

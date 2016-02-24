@@ -389,7 +389,11 @@ namespace SCSI {
     };
     enum {
       ReedSolomonLength = 4, // Reed-Solomon CRC length in bytes
-      CRC32CLength = 4      // CRC32C length in bytes
+      CRC32CLength = 4       // CRC32C length in bytes
+    };
+    enum {
+      ReedSolomonSeed = 0x0,        // The default seed for Read-Solomon CRC
+      CRC32CSeed      = 0xFFFFFFFF  // The default seed for CRC32C
     };
   };    
   /**

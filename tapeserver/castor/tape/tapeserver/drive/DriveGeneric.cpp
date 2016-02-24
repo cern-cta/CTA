@@ -26,6 +26,8 @@
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
 #include "castor/utils/Timer.hpp"
+#include "castor/utils/CRC.hpp"
+#include "castor/exception/MemException.hpp"
 
 namespace castor {
 namespace tape {
@@ -54,7 +56,7 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
 }
 
 drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
-m_tapeFD(-1),  m_sysWrapper(sw) {
+m_tapeFD(-1),  m_sysWrapper(sw), m_lbpToUse(lbpToUse::disabled) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
    * will fail after a long timeout when no tape is present (at least with mhvtl) 
@@ -426,6 +428,7 @@ void drive::DriveGeneric::setLogicalBlockProtection(
 // enableCRC32CLogicalBlockProtectionReadOnly
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
+  m_lbpToUse=lbpToUse::crc32cReadOnly;
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
     SCSI::logicBlockProtectionMethod::CRC32CLength,true,false);
 }
@@ -434,6 +437,7 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
 // enableCRC32CLogicalBlockProtectionReadWrite
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
+  m_lbpToUse=lbpToUse::crc32cReadWrite;
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
     SCSI::logicBlockProtectionMethod::CRC32CLength,true,true);
 }
@@ -458,6 +462,7 @@ void drive::DriveGeneric::enableReedSolomonLogicalBlockProtectionReadWrite() {
 // disableLogicalBlockProtection
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::disableLogicalBlockProtection() {
+  m_lbpToUse=lbpToUse::disabled;
   setLogicalBlockProtection(0,0,false,false);      
 }
 
@@ -701,9 +706,41 @@ void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
  * @param count size of the data block
  */
 void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.write(m_tapeFD, data, count),
-      "Failed ST write in DriveGeneric::writeBlock");
+  switch (m_lbpToUse) {
+    case lbpToUse::crc32cReadWrite:
+      {
+        uint8_t * dataWithCrc32c =(new (std::nothrow)
+          uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
+        if(NULL == dataWithCrc32c) {
+          throw castor::exception::MemException("Failed to allocate memory "
+            " for a new MemBlock in DriveGeneric::writeBlock!");
+        }
+        memcpy(dataWithCrc32c, data, count);
+        const size_t countWithCrc32c =
+          castor::utils::CRC::addCrc32cToMemoryBlock(
+            SCSI::logicBlockProtectionMethod::CRC32CSeed,
+            count, dataWithCrc32c);
+        if (countWithCrc32c !=
+          count+SCSI::logicBlockProtectionMethod::CRC32CLength) {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(-1,
+            "Failed in DriveGeneric::writeBlock: incorrect length for block"
+            " with crc32c");
+        }
+        if (-1 == m_sysWrapper.write(m_tapeFD, dataWithCrc32c,
+          countWithCrc32c)) {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(-1,
+            "Failed ST write in DriveGeneric::writeBlock");
+        }
+        delete[] dataWithCrc32c;
+        break;
+      }
+    default:
+      castor::exception::Errnum::throwOnMinusOne(
+        m_sysWrapper.write(m_tapeFD, data, count),
+        "Failed ST write in DriveGeneric::writeBlock");
+  }
 }
 
 /**
@@ -713,10 +750,60 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
  * @return the actual size of read data
  */
 ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
-  ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
-  castor::exception::Errnum::throwOnMinusOne(res, 
-      "Failed ST read in DriveGeneric::readBlock");
-  return res;
+  switch (m_lbpToUse) {
+    case lbpToUse::crc32cReadWrite:
+    case lbpToUse::crc32cReadOnly:
+      {
+        uint8_t * dataWithCrc32c =(new (std::nothrow)
+          uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
+        if(NULL == dataWithCrc32c) {
+          throw castor::exception::MemException("Failed to allocate memory "
+            " for a new MemBlock in DriveGeneric::readBlock!");
+        }
+        ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
+          count+SCSI::logicBlockProtectionMethod::CRC32CLength);
+        if ( -1 == res ) {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(res,
+            "Failed ST read in DriveGeneric::readBlock");
+        }
+        if ( 0 == res ) {
+          delete[] dataWithCrc32c;
+          return 0;
+        }
+        const size_t dataLenWithoutCrc32c = res -
+          SCSI::logicBlockProtectionMethod::CRC32CLength;
+        if ( 0>= dataLenWithoutCrc32c) {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(res,
+            "Failed ST read in DriveGeneric::readBlock: wrong data block");
+        }
+        if (castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed,
+          res, dataWithCrc32c)) {
+            // everything is fine here do mem copy
+            memcpy(data, dataWithCrc32c, dataLenWithoutCrc32c);
+            delete[] dataWithCrc32c;
+            return dataLenWithoutCrc32c;
+        } else {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(-1,
+            "DriveGeneric::readBlock"
+            "Failed checksum verification for ST read in ");
+        }
+        break;
+      }
+    default:
+      {
+        ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
+        castor::exception::Errnum::throwOnMinusOne(res,
+          "Failed ST read in DriveGeneric::readBlock");
+        return res;
+      }
+  }
+  castor::exception::Errnum::throwOnMinusOne(-1,
+    "Failed in DriveGeneric::readBlock: unknown lpb mode");
+  return -1; // dummy for compiler
 }
 
 /**
@@ -727,16 +814,64 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
  * @return the actual size of read data
  */
 void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string context)  {
-  ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
-  // First handle block too big
-  if (-1 == res && ENOSPC == errno)
-    throw UnexpectedSize(context);
-  // Generic handling of other errors
-  castor::exception::Errnum::throwOnMinusOne(res, 
-      context+": Failed ST read in DriveGeneric::readExactBlock");
-  // Handle block too small
-  if ((size_t) res != count)
-    throw UnexpectedSize(context);
+  switch (m_lbpToUse) {
+    case lbpToUse::crc32cReadWrite:
+    case lbpToUse::crc32cReadOnly:
+      {
+        uint8_t * dataWithCrc32c =(new (std::nothrow)
+          uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
+        if(NULL == dataWithCrc32c) {
+          throw castor::exception::MemException("Failed to allocate memory "
+            " for a new MemBlock in DriveGeneric::readBlock!");
+        }
+        ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
+          count+SCSI::logicBlockProtectionMethod::CRC32CLength);
+
+        // First handle block too big
+        if (-1 == res && ENOSPC == errno) {
+          delete[] dataWithCrc32c;
+          throw UnexpectedSize(context);
+        }
+        // Generic handling of other errors
+        if (-1 == res) {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(res,
+            context+": Failed ST read in DriveGeneric::readExactBlock");
+        }
+        // Handle mismatch
+        if ((size_t) (res - SCSI::logicBlockProtectionMethod::CRC32CLength)
+          != count) {
+          delete[] dataWithCrc32c;
+          throw UnexpectedSize(context);
+        }
+        if (castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+          SCSI::logicBlockProtectionMethod::CRC32CSeed,
+          res, dataWithCrc32c)) {
+            // everything is fine here do mem copy
+            memcpy(data,dataWithCrc32c,count);
+            delete[] dataWithCrc32c;
+        } else {
+          delete[] dataWithCrc32c;
+          castor::exception::Errnum::throwOnMinusOne(-1,
+            context+"Failed checksum verification for ST read"
+            " in DriveGeneric::readBlock");
+        }
+        break;
+      }
+    default:
+      {
+        ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
+        // First handle block too big
+        if (-1 == res && ENOSPC == errno)
+          throw UnexpectedSize(context);
+        // Generic handling of other errors
+        castor::exception::Errnum::throwOnMinusOne(res,
+            context+": Failed ST read in DriveGeneric::readExactBlock");
+        // Handle block too small
+        if ((size_t) res != count)
+          throw UnexpectedSize(context);
+      }
+  }
 }
 
 /**

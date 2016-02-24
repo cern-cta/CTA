@@ -91,8 +91,8 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
   } while (0)
 
 /**
- * Compute a CRC32C (iSCSI). If the crc32 processor's instruction is available,
- * use the hardware version. Otherwise, use the software version. 
+ * Compute the CRC32C (iSCSI). If the crc32 processor's instruction is
+ * available than use the hardware version. Otherwise use the software version.
  *
  * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
  * @param cnt      The number of data bytes to compute CRC for.
@@ -101,6 +101,34 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
  */
 uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt, 
   const void *const start);
+
+/**
+ * Compute the CRC32C (iSCSI) and append it to the memory block.
+ * If the crc32 processor's instruction is available
+ * use the hardware version. Otherwise use the software version.
+ *
+ * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
+ * @param cnt      The number of data bytes in the memory block.
+ * @param start    The starting address of the data bytes (e.g., data buffer).
+ *                 The memory block must be big enough to save additional
+ *                 4 bytes at the end.
+ * @return The length of the memory block with crc32c added.
+ */
+uint32_t addCrc32cToMemoryBlock(const uint32_t crcInit,
+  const uint32_t cnt, uint8_t *start);
+
+/**
+ * Compute the CRC32C (iSCSI) and check it for the memory block with CRC32C
+ * addition. If the crc32 processor's instruction is available
+ * use the hardware version. Otherwise use the software version.
+ *
+ * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
+ * @param cnt      The number of data bytes in the memory block.
+ * @param start    The starting address of the data bytes (e.g., data buffer).
+ * @return True if CRC32C is correct and False otherwise.
+ */
+bool verifyCrc32cForMemoryBlockWithCrc32c(
+  const uint32_t crcInit, const uint32_t cnt, const uint8_t *start);
 
 } // namespace CRC
 } // namespace utils

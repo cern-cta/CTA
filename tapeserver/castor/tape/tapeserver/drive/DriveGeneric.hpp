@@ -395,6 +395,8 @@ namespace drive {
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
     castor::tape::System::virtualWrapper & m_sysWrapper;
+    lbpToUse m_lbpToUse;
+
     /**
      * Set the MTFastEOM option of the ST driver. This function is used only internally in 
      * mounttape (in CAStor), so it could be a private function, not visible to 

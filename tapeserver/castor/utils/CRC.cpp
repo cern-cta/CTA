@@ -224,3 +224,39 @@ uint32_t castor::utils::CRC::crc32c(const uint32_t crcInit, const uint32_t cnt,
   SSE42(sse42);
   return sse42 ? crc32c_hw(crcInit, cnt, start): crc32c_sw(crcInit, cnt, start);
 }
+
+//-----------------------------------------------------------------------------
+// addCrc32cToMemoryBlock
+//-----------------------------------------------------------------------------
+uint32_t castor::utils::CRC::addCrc32cToMemoryBlock(const uint32_t crcInit,
+  const uint32_t cnt, uint8_t *start ) {
+  if (cnt == 0)
+    return 0; //no such thing as a zero length block in SSC (write NOP)
+  const uint32_t crc = crc32c(crcInit, cnt, start);
+
+  //append CRC in proper byte order (regardless of system endian-ness)
+  start[cnt+0] = (crc >>  0) & 0xFF;
+  start[cnt+1] = (crc >>  8) & 0xFF;
+  start[cnt+2] = (crc >> 16) & 0xFF;
+  start[cnt+3] = (crc >> 24) & 0xFF;
+  return (cnt+4); //size of block to be written includes CRC
+}
+
+//-----------------------------------------------------------------------------
+// verifyCrc32cForMemoryBlockWithCrc32c
+//-----------------------------------------------------------------------------
+bool castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+  const uint32_t crcInit, const uint32_t cnt, const uint8_t *start) {
+  if (cnt <= 4)
+    return false; //block is too small to be valid, cannot check CRC
+
+  const uint32_t crccmp = crc32c(crcInit, cnt-4, start);
+  const uint32_t crcblk= (start[cnt-4] << 0) |
+    (start[cnt-3] << 8) |
+    (start[cnt-2] << 16) |
+    (start[cnt-1] << 24);
+
+  if (crccmp != crcblk)
+    return false; //block CRC is incorrect
+  return true;
+}
