@@ -21,7 +21,9 @@
 #include <getopt.h>
 #include <string.h>
 
-cta::daemon::CommandLineParams::CommandLineParams(int argc, char** argv):
+namespace cta { namespace daemon {
+
+CommandLineParams::CommandLineParams(int argc, char** argv):
   foreground(false), logToStdout(false), 
   configFileLocation("/etc/cta/cta.conf"),
   helpRequested(false){
@@ -77,3 +79,15 @@ cta::daemon::CommandLineParams::CommandLineParams(int argc, char** argv):
     throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
   }
 }
+
+std::list<log::Param> CommandLineParams::toLogParams() const {
+  std::list<log::Param> ret;
+  ret.push_back(log::Param("foreground", foreground));
+  ret.push_back(log::Param("logToStdout", logToStdout));
+  ret.push_back(log::Param("configFileLocation", configFileLocation));
+  ret.push_back(log::Param("helpRequested", helpRequested));
+  return ret;
+}
+
+}} //  namespace cta::daemon
+

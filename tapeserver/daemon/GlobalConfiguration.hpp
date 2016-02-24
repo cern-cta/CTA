@@ -34,7 +34,6 @@ struct GlobalConfiguration {
           cta::log::Logger &log = gDummyLogger);
   static GlobalConfiguration createFromCtaConf(
           const std::string & generalConfigPath,
-          const std::string & tapeConfigFile,
           cta::log::Logger & log = gDummyLogger);
   std::map<std::string, DriveConfiguration> driveConfigs;
 private:

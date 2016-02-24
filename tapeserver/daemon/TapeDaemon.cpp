@@ -19,17 +19,16 @@
 #include "TapeDaemon.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
+#include "tapeserver/daemon/CommandLineParams.hpp"
 #include <google/protobuf/service.h>
 
 namespace cta { namespace tape { namespace daemon {
 
-TapeDaemon::TapeDaemon(const int argc, char* * const argv, 
-    std::ostream& stdOut, std::ostream& stdErr, 
+TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine, 
     log::Logger& log, 
     const GlobalConfiguration& globalConfig, 
     cta::server::ProcessCap& capUtils): 
-    cta::server::Daemon(stdOut, stdErr, log),
-    m_argc(argc), m_argv(argv),
+    cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
     m_programName("cta-taped"), m_hostName(getHostName()) { }
 
@@ -42,19 +41,12 @@ TapeDaemon::~TapeDaemon() {
 //------------------------------------------------------------------------------
 int TapeDaemon::main() {
   try {
-
-    exceptionThrowingMain(m_argc, m_argv);
-
+    exceptionThrowingMain();
   } catch (cta::exception::Exception &ex) {
-    // Write the error to standard error
-    m_stdErr << std::endl << "Aborting: " << ex.getMessage().str() << std::endl
-      << std::endl;
-
     // Log the error
     std::list<log::Param> params = {
       log::Param("Message", ex.getMessage().str())};
     m_log(log::ERR, "Aborting", params);
-
     return 1;
   }
 
@@ -74,12 +66,9 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain(
-  const int argc, char **const argv)  {
-  parseCommandLine(argc, argv);
-
+void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   if(m_globalConfiguration.driveConfigs.empty())
-    throw cta::exception::Exception("/etc/cta/TPCONFIG is empty");
+    throw cta::exception::Exception("No drive found in configuration");
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future

@@ -33,5 +33,12 @@ TEST(cta_taped, InvocationTests) {
   ASSERT_NE(std::string::npos, spHelpLong.stdout().find("Usage: cta-taped [options]"));
   ASSERT_TRUE(spHelpLong.stderr().empty());
   ASSERT_EQ(EXIT_SUCCESS, spHelpLong.exitValue());
+  
+  // Does the tape server complain about absence of drive configuration?
+  Subprocess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s"}));
+  spNoDrive.wait();
+  ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting\" Message=\"No drive found in configuration\""));
+  ASSERT_TRUE(spNoDrive.stderr().empty());
+  ASSERT_EQ(EXIT_FAILURE, spNoDrive.exitValue());
 }
 }

@@ -21,12 +21,11 @@
 namespace cta { namespace tape { namespace daemon {
   
 GlobalConfiguration GlobalConfiguration::createFromCtaConf(cta::log::Logger& log) {
-  return createFromCtaConf("/etc/cta/cta.conf", "/etc/cta/TPCONFIG", log);
+  return createFromCtaConf("/etc/cta/cta.conf", log);
 }
 
 GlobalConfiguration GlobalConfiguration::createFromCtaConf(
-  const std::string& generalConfigPath, 
-  const std::string& tapeConfigFile, cta::log::Logger& log) {
+  const std::string& generalConfigPath, cta::log::Logger& log) {
   GlobalConfiguration ret;
   return ret;
 }

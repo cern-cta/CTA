@@ -32,10 +32,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
-  log::Logger &log) throw():
-  m_stdOut(stdOut),
-  m_stdErr(stdErr),
+cta::server::Daemon::Daemon(log::Logger &log) throw():
   m_log(log),
   m_foreground(false),
   m_commandLineHasBeenParsed(false) {
@@ -45,69 +42,6 @@ cta::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
 // destructor
 //------------------------------------------------------------------------------
 cta::server::Daemon::~Daemon() {
-}
-
-//------------------------------------------------------------------------------
-// parseCommandLine
-//------------------------------------------------------------------------------
-void cta::server::Daemon::parseCommandLine(int argc,
-  char *argv[])  {
-  struct ::option longopts[4];
-
-  longopts[0].name = "foreground";
-  longopts[0].has_arg = no_argument;
-  longopts[0].flag = NULL;
-  longopts[0].val = 'f';
-
-  longopts[1].name = "config";
-  longopts[1].has_arg = required_argument;
-  longopts[1].flag = NULL;
-  longopts[1].val = 'c';
-
-  longopts[2].name = "help";
-  longopts[2].has_arg = no_argument;
-  longopts[2].flag = NULL;
-  longopts[2].val = 'h';
-
-  longopts[3].name = 0;
-
-  char c;
-  while ((c = getopt_long(argc, argv, "fc:h", longopts, NULL)) != -1) {
-    switch (c) {
-    case 'f':
-      m_foreground = true;
-      break;
-    case 'c':
-      setenv("PATH_CONFIG", optarg, 1);
-      m_stdOut << "Using configuration file " << optarg << std::endl;
-      break;
-    case 'h':
-      help(argv[0]);
-      exit(0);
-      break;
-    default:
-      break;
-    }
-  }
-
-  m_commandLineHasBeenParsed = true;
-}
-
-//------------------------------------------------------------------------------
-// help
-//------------------------------------------------------------------------------
-void cta::server::Daemon::help(const std::string &programName)
-  throw() {
-  m_stdOut << "Usage: " << programName << " [options]\n"
-    "\n"
-    "where options can be:\n"
-    "\n"
-    "\t--foreground            or -f         \tRemain in the Foreground\n"
-    "\t--config <config-file>  or -c         \tConfiguration file\n"
-    "\t--metrics               or -m         \tEnable metrics collection\n"
-    "\t--help                  or -h         \tPrint this help and exit\n"
-    "\n"
-    "Comments to: Castor.Support@cern.ch\n";
 }
 
 //------------------------------------------------------------------------------

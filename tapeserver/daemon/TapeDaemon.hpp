@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/threading/Daemon.hpp"
+#include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/GlobalConfiguration.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
@@ -34,18 +35,12 @@ class TapeDaemon : public cta::server::Daemon {
 public:
 
   /** Constructor.
-   * @param argc The argc of main().
-   * @param argv The argv of main().
-   * @param stdOut Stream representing standard out.
-   * @param stdErr Stream representing standard error.
+   * @param commandLine The parameters extracted from the command line.
    * @param log The object representing the API of the CTA logging system.
    * @param globalConfig The configuration of the tape server.
    * @param capUtils Object providing utilities for working UNIX capabilities. */
   TapeDaemon(
-    const int argc,
-    char **const argv,
-    std::ostream &stdOut,
-    std::ostream &stdErr,
+    const cta::daemon::CommandLineParams & commandLine,
     log::Logger &log,
     const GlobalConfiguration &globalConfig,
     cta::server::ProcessCap &capUtils);
@@ -77,10 +72,8 @@ protected:
   /** Returns the name of the host on which the daemon is running. */
   std::string getHostName() const;
 
-  /** Exception throwing main() function.
-   * @param argc The number of command-line arguments.
-   * @param argv The array of command-line arguments. */
-  void exceptionThrowingMain(const int argc, char **const argv);
+  /** Exception throwing main() function. */
+  void exceptionThrowingMain();
 
   /** Sets the dumpable attribute of the current process to true. */
   void setDumpable();
@@ -231,16 +224,6 @@ protected:
    */
   void logChildProcessTerminated(const pid_t pid, const int waitpidStat)
     throw();
-  
-  /**
-   * The argc of main().
-   */
-  const int m_argc;
-
-  /**
-   * The argv of main().
-   */
-  char **const m_argv;
   
   /** The tape server's configuration */
   const GlobalConfiguration& m_globalConfiguration;
