@@ -134,6 +134,7 @@ The shared libraries
 %package -n cta-systemtests
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
+Requires: valgrind >= 3.8.1
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
