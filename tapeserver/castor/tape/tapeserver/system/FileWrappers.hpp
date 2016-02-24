@@ -230,6 +230,24 @@ namespace System {
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSenseControlDataProtection(sg_io_hdr_t * sgio_h);
+     /**
+     * This function only checks the corectness of the parameters in sg_io_hdr_t
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int modeSelectDeviceConfiguration(sg_io_hdr_t * sgio_h);
+    /**
+     * This function only checks the corectness of the parameters in sg_io_hdr_t
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int modeSelectControlDataProtection(sg_io_hdr_t * sgio_h);
   };
 } // namespace System
 } // namespace tape

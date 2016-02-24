@@ -376,10 +376,100 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);         
       LBPdata = drive->getLBPInfo();
 
-      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,LBPdata.method);
-      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,LBPdata.methodLength);
+      ASSERT_EQ(0xFA,LBPdata.method);
+      ASSERT_EQ(0x3C,LBPdata.methodLength);
+      ASSERT_TRUE(LBPdata.enableLBPforRead);
+      ASSERT_FALSE(LBPdata.enableLBPforWrite);
+    }
+  }
+}
+
+TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
+  /* Prepare the test harness */
+  castor::tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
+  
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
+  
+  /* Test: detect devices, then open the device files */
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
+      i != dl.end(); i++) {
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(3);   
+      drive->setLogicalBlockProtection(
+        castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,
+        castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength, 
+        true, true);      
+      LBPdata = drive->getLBPInfo();
+
+      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,
+        LBPdata.method);
+      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,
+        LBPdata.methodLength);
       ASSERT_TRUE(LBPdata.enableLBPforRead);
       ASSERT_TRUE(LBPdata.enableLBPforWrite);
+    }
+  }
+}
+
+TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
+  /* Prepare the test harness */
+  castor::tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
+  
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(0);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
+  
+  /* Test: detect devices, then open the device files */
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
+      i != dl.end(); i++) {
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
+      castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(5);   
+      drive->setLogicalBlockProtection(
+        castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,
+        castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength, 
+        true, true);   
+      drive->disableLogicalBlockProtection();
+      LBPdata = drive->getLBPInfo();
+      
+      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::DoNotUse,
+        LBPdata.method);
+      ASSERT_EQ(0, LBPdata.methodLength);
+      ASSERT_FALSE(LBPdata.enableLBPforRead);
+      ASSERT_FALSE(LBPdata.enableLBPforWrite);    
     }
   }
 }

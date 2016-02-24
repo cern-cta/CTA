@@ -105,10 +105,10 @@ System::stDeviceFile::stDeviceFile()
   blockID = 0xFFFFFFFF; // Logical Object ID - position on tape 
   
   clearCompressionStats = false;
-  m_LBPInfoMethod = SCSI::logicBlockProtectionMethod::CRC32C;
-  m_LBPInfoLength = SCSI::logicBlockProtectionMethod::CRC32CLength;
-  m_LBPInfo_R = 1;
-  m_LBPInfo_W = 1;
+  m_LBPInfoMethod = 0xFA;
+  m_LBPInfoLength = 0xBC;
+  m_LBPInfo_R = 0xCD;
+  m_LBPInfo_W = 0xAC;
 }
 
 int System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)
@@ -451,6 +451,9 @@ int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t * sgio_h) {
   /* fill the replay with random data */
   srandom(SCSI::Commands::MODE_SENSE_6);
   memset(sgio_h->dxferp, random(), sizeof (devConfig));
+  
+  /* sets fileds to be used*/
+  devConfig.modePage.pageCode = SCSI::modeSensePages::deviceConfiguration;
   return 0;
 }
 
@@ -478,11 +481,15 @@ int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t * sgio_h) {
   srandom(SCSI::Commands::MODE_SENSE_6);
   memset(sgio_h->dxferp, random(), sizeof (controlDataProtection));
   
+  /* fils only used fields */
   controlDataProtection.modePage.LBPMethod = m_LBPInfoMethod;
   controlDataProtection.modePage.LBPInformationLength = m_LBPInfoLength;
   controlDataProtection.modePage.LBP_R = m_LBPInfo_R;
   controlDataProtection.modePage.LBP_W = m_LBPInfo_W;
-  
+  // 28 bytes as IBM and LTO
+  SCSI::Structures::setU16(controlDataProtection.modePage.pageLength, 28);
+  controlDataProtection.modePage.pageCode =
+    SCSI::modeSensePages::controlDataProtection;
   return 0;
 }
 
@@ -491,26 +498,89 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  SCSI::Structures::modeSelect6CDB_t & cdb =
-          *(SCSI::Structures::modeSelect6CDB_t *) sgio_h->cmdp;
-  SCSI::Structures::modeSenseDeviceConfiguration_t & devConfig =
-          *(SCSI::Structures::modeSenseDeviceConfiguration_t *) sgio_h->dxferp;
-  if (sizeof (devConfig) > sgio_h->dxfer_len) {
+  unsigned char * data = (unsigned char *) sgio_h->dxferp;
+  
+  SCSI::Structures::modeParameterHeader6_t & header =
+    *(SCSI::Structures::modeParameterHeader6_t *) sgio_h->dxferp;  
+
+  SCSI::Structures::modeParameterBlockDecriptor_t & blockDescriptor = 
+    *(SCSI::Structures::modeParameterBlockDecriptor_t *) (data+sizeof(header));
+    
+  if(blockDescriptor.blockLength <= 0) {
     errno = EINVAL;
+    return -1;
+  }
+  
+  unsigned char * modeSelectBlock = data+sizeof(header)+sizeof(blockDescriptor);
+
+  switch (modeSelectBlock[0]&0x3F) {  // only 6bits are the page code
+    case SCSI::modeSensePages::deviceConfiguration:
+      return modeSelectDeviceConfiguration(sgio_h);
+    case SCSI::modeSensePages::controlDataProtection:
+      return modeSelectControlDataProtection(sgio_h);
+  }
+  errno = EINVAL;
+  return -1;
+}
+
+int System::stDeviceFile::modeSelectDeviceConfiguration(sg_io_hdr_t * sgio_h) {
+  SCSI::Structures::modeSelect6CDB_t & cdb =
+    *(SCSI::Structures::modeSelect6CDB_t *) sgio_h->cmdp;
+
+  SCSI::Structures::modeSenseDeviceConfiguration_t & devConfig =
+    *(SCSI::Structures::modeSenseDeviceConfiguration_t *) sgio_h->dxferp;
+  
+  if (devConfig.modePage.pageCode != SCSI::modeSensePages::deviceConfiguration) {
+    errno = 5;
+    return -1;
+  }
+  
+  if (sizeof (devConfig) > sgio_h->dxfer_len) {
+    errno = 6;
     return -1;
   }
 
   if (1 != cdb.PF || sizeof (devConfig) != cdb.paramListLength ||
-          0 != devConfig.header.modeDataLength) {
-    errno = EINVAL;
+      0 != devConfig.header.modeDataLength) {
+    errno = 7;
     return -1;
   }
 
   if (1 != devConfig.modePage.selectDataComprAlgorithm &&
-          0 != devConfig.modePage.selectDataComprAlgorithm) {
+      0 != devConfig.modePage.selectDataComprAlgorithm) {
+    errno = 8;
+    return -1;
+  }
+  return 0;
+}
+
+int System::stDeviceFile::modeSelectControlDataProtection(sg_io_hdr_t * sgio_h) {
+  SCSI::Structures::modeSelect6CDB_t & cdb =
+    *(SCSI::Structures::modeSelect6CDB_t *) sgio_h->cmdp;
+
+  SCSI::Structures::modeSenseControlDataProtection_t & controlData =
+    *(SCSI::Structures::modeSenseControlDataProtection_t *) sgio_h->dxferp;
+  
+  if (controlData.modePage.pageCode != SCSI::modeSensePages::controlDataProtection) {
     errno = EINVAL;
     return -1;
   }
+  
+  if (sizeof (controlData) > sgio_h->dxfer_len) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  if (1 != cdb.PF || sizeof (controlData) != cdb.paramListLength ||
+      0 != controlData.header.modeDataLength) {
+    errno = EINVAL;
+    return -1;
+  }
+  
+  m_LBPInfoMethod =  controlData.modePage.LBPMethod;
+  m_LBPInfoLength = controlData.modePage.LBPInformationLength;
+  m_LBPInfo_R = controlData.modePage.LBP_R;
+  m_LBPInfo_W = controlData.modePage.LBP_W;
   return 0;
 }
 
