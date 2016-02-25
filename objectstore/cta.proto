@@ -404,4 +404,39 @@ message SchedulerGlobalLock {
   required uint64 nextmountid = 8000;
 }
 
+// ------------- New interface  ------------------------------------------------
 
+message Requester {
+  required string groupName = 8800;
+  required string userName = 8810;
+}
+
+message DRData {
+  required string drBlob = 8900;
+  required string drGroup = 8910;
+  required string drInstance = 8920;
+  required string drOwner = 8930;
+  required string drPath = 8940;
+}
+
+message ArchiveRequest {
+  required string checksumtype = 9000;
+  required string checksumValue = 9010;
+  required string diskpoolName = 9020;
+  required uint64 diskpoolThroughput = 9030;
+  required DRData drData = 9040;
+  required string eosFileID = 9050;
+  required uint64 fileSize = 9060;
+  required Requester requester = 9070;
+  required string srcURL = 9080;
+  required string storageClass = 9090;
+}
+
+message RetrieveRequest {
+  required uint64 archiveFileID = 9100;
+  required string diskpoolName = 9110;
+  required uint64 diskpoolThroughput = 9120;
+  required DRData drData = 9130;
+  required string dstURL = 9140;
+  required Requester requester = 9150;
+}
