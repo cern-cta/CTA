@@ -398,6 +398,24 @@ namespace drive {
 
     virtual compressionStats getCompression() ;
   };
+  
+  /**
+   * This class will override DriveT10000 for usage with the MHVTL virtual
+   * tape drive. It will fail to operate logic block protection by software
+   * and avoid calling the mode pages not supported by MHVTL.
+   */
+  class DriveMHVTL: public DriveT10000 {
+  public:
+    DriveMHVTL(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveT10000(di, sw) {}
+    virtual void disableLogicalBlockProtection();
+    virtual void enableCRC32CLogicalBlockProtectionReadOnly();
+    virtual void enableCRC32CLogicalBlockProtectionReadWrite();
+    virtual drive::LBPInfo getLBPInfo();
+    virtual lbpToUse getLbpToUse();
+    virtual void setLogicalBlockProtection(const unsigned char method, 
+      unsigned char methodLength, const bool enableLPBforRead, 
+      const bool enableLBBforWrite);
+  };
 
   class DriveLTO : public DriveGeneric {
   public:
