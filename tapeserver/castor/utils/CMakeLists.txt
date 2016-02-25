@@ -46,7 +46,6 @@ set (UTILS_LIB_SRC_FILES
   ../Services.cpp
   ../Factories.cpp
   ../System.cpp)
-set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 add_library (ctautils ${UTILS_LIB_SRC_FILES})
 
