@@ -110,6 +110,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
   }
 
   rewindDrive(drive);
+  drive.disableLogicalBlockProtection();
 
   checkTapeContainsData(drive);
 
@@ -118,7 +119,6 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
   unloadTape(volumeLabelVSN, drive);
 
   dismountTape(volumeLabelVSN);
-  drive.disableLogicalBlockProtection();
 }
 
 //------------------------------------------------------------------------------
