@@ -78,6 +78,7 @@ public:
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
     TapeSessionStats localStats;
+    std::string LBPMode;
     castor::utils::Timer localTime;
     castor::utils::Timer totalTime(localTime);
 
@@ -96,6 +97,7 @@ public:
     try {
       currentErrorToCount = "Error_tapePositionForRead";
       std::unique_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      LBPMode = rf->getLBPMode();
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
 
@@ -154,7 +156,8 @@ public:
                     localStats.totalTime?(1.0*localStats.dataVolume+1.0*localStats.headerVolume)
                      /1000/1000/localStats.totalTime:0)
             .add("payloadTransferSpeedMBps",
-                     localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0);
+                     localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0)
+            .add("LBPMode", LBPMode);
       lc.log(LOG_INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);

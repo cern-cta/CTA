@@ -113,12 +113,6 @@ void castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtect
 void  castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite()  {
   m_lbpToUse = lbpToUse::crc32cReadWrite;
 }
-void castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly()  {
-  throw castor::exception::Exception("FakeDrive::enableReedSolomonLogicalBlockProtectionReadOnly Not implemented");
-}
-void  castor::tape::tapeserver::drive::FakeDrive::enableReedSolomonLogicalBlockProtectionReadWrite()  {
-  throw castor::exception::Exception("FakeDrive::enableCReedSolomonLogicalBlockProtectionReadWrite Not implemented");
-}
 void  castor::tape::tapeserver::drive::FakeDrive::disableLogicalBlockProtection()  {
   m_lbpToUse = lbpToUse::disabled;
 }
@@ -129,9 +123,6 @@ void  castor::tape::tapeserver::drive::FakeDrive::setLogicalBlockProtection(cons
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite)  {
   throw castor::exception::Exception("FakeDrive::setLogicalBlockProtection Not implemented");
-}
-castor::tape::tapeserver::drive::tapeError castor::tape::tapeserver::drive::FakeDrive::getTapeError()  {
-  throw castor::exception::Exception("FakeDrive::getTapeError Not implemented");
 }
 void castor::tape::tapeserver::drive::FakeDrive::setSTBufferWrite(bool bufWrite)  {
   throw castor::exception::Exception("FakeDrive::setSTBufferWrite Not implemented");

@@ -71,15 +71,12 @@ namespace drive {
     unsigned char densityCode = 0) ;
     virtual void enableCRC32CLogicalBlockProtectionReadOnly() ;
     virtual void enableCRC32CLogicalBlockProtectionReadWrite() ;
-    virtual void enableReedSolomonLogicalBlockProtectionReadOnly() ;
-    virtual void enableReedSolomonLogicalBlockProtectionReadWrite() ;
     virtual void disableLogicalBlockProtection() ;
     virtual drive::LBPInfo getLBPInfo();
     virtual void setLogicalBlockProtection(const unsigned char method,
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite); 
     virtual driveStatus getDriveStatus() ;
-    virtual tapeError getTapeError() ;
     virtual void setSTBufferWrite(bool bufWrite) ;
     virtual void fastSpaceToEOM(void) ;
     virtual void rewind(void) ;

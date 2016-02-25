@@ -258,6 +258,16 @@ namespace castor {
           return m_currentFilePart;
         }
         
+        std::string getLBPMode() {
+          if (m_useLbp && m_detectedLbp)
+            return "LBP_On";
+          else if (!m_useLbp && m_detectedLbp)
+            return "LBP_Off_but_present";
+          else if (!m_detectedLbp)
+            return "LBP_Off";
+          throw castor::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
+        }
+        
       private:
                 
         /**
@@ -323,6 +333,12 @@ namespace castor {
          * @return The amount of data actually copied. Zero at end of file.
          */
         size_t read(void *data, const size_t size) ;
+        
+        /**
+         * Returns the LBP access mode.
+         * @return The LBP mode.
+         */
+        std::string getLBPMode();
       
       private:
         void positionByFseq(const cta::RetrieveJob &fileToRecall) ;
@@ -359,6 +375,12 @@ namespace castor {
          * What kind of command we use to position ourself on the tape (fseq or blockid)
          */
         cta::PositioningMethod m_positionCommandCode;
+
+        /**
+         * Description of the LBP mode with which the files is read.
+         */
+        std::string m_LBPMode;
+
       };
 
       /**
@@ -441,6 +463,7 @@ namespace castor {
         void release() throw() {
           if(!m_locked) {
             m_corrupted = true;
+            throw SessionCorrupted();
           }
           m_locked = false;
         }
@@ -480,6 +503,11 @@ namespace castor {
           }
           m_lastWrittenFSeq = writtenFSeq;
         }
+        
+        /**
+         * Gets the LBP mode for logs
+         */
+        std::string getLBPMode();
       private:
         
         /**
@@ -575,6 +603,12 @@ namespace castor {
          * Destructor of the WriteFile object. Releases the WriteSession
          */
         ~WriteFile() throw();
+
+        /**
+         * Returns the LBP access mode.
+         * @return The LBP mode.
+         */
+        std::string getLBPMode();
         
       private:
         
@@ -614,6 +648,11 @@ namespace castor {
          * This value is retried at open time.
          */
         u_int32_t m_blockId;
+        
+        /**
+         * Description of the LBP mode with which the files is read.
+         */
+        std::string m_LBPMode;
       };
     }
   } //end of namespace tape

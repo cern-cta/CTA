@@ -130,6 +130,8 @@ namespace tape {
     };
 
     class VOL1withCrc : public VOL1 {
+    public:
+      VOL1withCrc(): VOL1() { m_crc = 0; }
     protected:
       uint32_t m_crc;          // 32bit crc addition for VOL1
     };

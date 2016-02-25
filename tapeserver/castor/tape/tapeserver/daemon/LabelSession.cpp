@@ -129,6 +129,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   if(m_lbp) {
     // only crc32c lbp mode is supported
     drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  } else {
+    drive.disableLogicalBlockProtection();
   }
   
   mountTape();

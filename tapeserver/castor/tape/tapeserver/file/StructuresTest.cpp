@@ -74,6 +74,55 @@ namespace unitTests {
     vol1Label.backdoorSetLBPMethodString("XY");
     ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
   }
+  
+  class testVOL1withCRC: public castor::tape::tapeFile::VOL1withCrc {
+  public:
+    void backdoorSetLBPMethodString(const std::string & LBPString) {
+      ::strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+    }
+  };
+  
+  TEST(castor_tape_AULFile, VOL1WithCRC) {
+    typedef castor::tape::SCSI::logicBlockProtectionMethod LBPM;
+    testVOL1withCRC vol1LabelWithCRC;
+    /**
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(80U + 4U, sizeof (vol1LabelWithCRC));
+    /* test that verify throws exceptions */
+    EXPECT_ANY_THROW({
+      vol1LabelWithCRC.verify();
+    });
+    vol1LabelWithCRC.fill("test", LBPM::DoNotUse);
+    ASSERT_NO_THROW({
+      vol1LabelWithCRC.verify();
+    });
+    ASSERT_EQ("test  ", vol1LabelWithCRC.getVSN());
+    /* Validate that parser understands correctly values for LBP */
+    uint8_t *buf =(uint8_t *) &vol1LabelWithCRC;
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'0');
+    vol1LabelWithCRC.backdoorSetLBPMethodString("  ");
+    ASSERT_NO_THROW(vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ(buf[77],' ');  ASSERT_EQ(buf[78],' ');
+    vol1LabelWithCRC.backdoorSetLBPMethodString("01");
+    ASSERT_NO_THROW(vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ((int)LBPM::ReedSolomon, (int)vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'1');
+    vol1LabelWithCRC.backdoorSetLBPMethodString("00");
+    ASSERT_NO_THROW(vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ((int)LBPM::DoNotUse, (int)vol1LabelWithCRC.getLBPMethod());
+    vol1LabelWithCRC.backdoorSetLBPMethodString("02");
+    ASSERT_NO_THROW(vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ((int)LBPM::CRC32C, (int)vol1LabelWithCRC.getLBPMethod());
+    ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'2');
+    vol1LabelWithCRC.backdoorSetLBPMethodString("03");
+    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), castor::exception::Exception);
+    vol1LabelWithCRC.backdoorSetLBPMethodString("XY");
+    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), castor::exception::Exception);
+    ASSERT_EQ(0U, *((uint32_t *) &buf[80]));
+  }
 
   TEST(castor_tape_AULFile, HDR1) {
     castor::tape::tapeFile::HDR1 hdr1Label;

@@ -78,10 +78,20 @@ namespace castor {
               m_detectedLbp = true;
               if (m_useLbp) {
                 m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+              } else {
+                m_drive.disableLogicalBlockProtection();
               }
               break;
-            default:
+            case SCSI::logicBlockProtectionMethod::ReedSolomon:
+              throw castor::exception::Exception("In ReadSession::ReadSession(): "
+                  "ReedSolomon LBP method not supported");
+            case SCSI::logicBlockProtectionMethod::DoNotUse:
+              m_drive.disableLogicalBlockProtection();
               m_detectedLbp = false;
+              break;
+            default:
+              throw castor::exception::Exception("In ReadSession::ReadSession(): "
+                  "unknown LBP method");
           }
         }
    
@@ -171,7 +181,8 @@ namespace castor {
       
       ReadFile::ReadFile(ReadSession *rs,
         const cta::RetrieveJob &fileToRecall)
-         : m_currentBlockSize(0), m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod)
+         : m_currentBlockSize(0), m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod),
+         m_LBPMode(rs->getLBPMode())
       {
         if(m_session->isCorrupted()) {
           throw SessionCorrupted();
@@ -363,6 +374,11 @@ namespace castor {
         }
         return bytes_read;
       }
+      
+      std::string ReadFile::getLBPMode() {
+        return m_LBPMode;
+      }
+
 
       WriteSession::WriteSession(tapeserver::drive::DriveInterface & drive, 
               const tapeserver::daemon::VolumeInfo& volInfo, 
@@ -402,8 +418,16 @@ namespace castor {
                 throw ex;
               }
               break;
-            default:
+            case SCSI::logicBlockProtectionMethod::ReedSolomon:
+              throw castor::exception::Exception("In WriteSession::WriteSession(): "
+                  "ReedSolomon LBP method not supported");
+            case SCSI::logicBlockProtectionMethod::DoNotUse:
+              m_drive.disableLogicalBlockProtection();
               m_detectedLbp = false;
+              break;
+            default:
+              throw castor::exception::Exception("In WriteSession::WriteSession(): "
+                  "unknown LBP method");
           }
         }
 
@@ -453,6 +477,16 @@ namespace castor {
         setHostName();
       }
 
+      std::string WriteSession::getLBPMode() {
+          if (m_useLbp && m_detectedLbp)
+            return "LBP_On";
+          else if (!m_useLbp && m_detectedLbp)
+            return "LBP_Off_but_present";
+          else if (!m_detectedLbp)
+            return "LBP_Off";
+          throw castor::exception::Exception("In WriteSession::getLBPMode(): unexpected state");
+      }
+      
       void WriteSession::setHostName()  {
         char hostname_cstr[max_unix_hostname_length];
         castor::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, max_unix_hostname_length), "Failed gethostname() in WriteFile::setHostName");
@@ -524,6 +558,7 @@ namespace castor {
         m_session->m_drive.writeBlock(&uhl1, sizeof(uhl1));
         m_session->m_drive.writeImmediateFileMarks(1);
         m_open=true;
+        m_LBPMode = m_session->getLBPMode();
       }
 
       uint32_t WriteFile::getPosition()  {  
@@ -582,6 +617,11 @@ namespace castor {
         }
         m_session->release();
       }
+
+      std::string WriteFile::getLBPMode() {
+        return m_LBPMode;
+      }
+
 
     } //end of namespace tapeFile
 

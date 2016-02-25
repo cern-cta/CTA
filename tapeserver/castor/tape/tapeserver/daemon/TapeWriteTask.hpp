@@ -173,6 +173,11 @@ private:
    * Stats
    */
   TapeSessionStats m_taskStats;
+
+  /**
+   * LBP mode tracking
+   */
+  std::string m_LBPMode;
   
   /**
    * The NS archive file information

@@ -79,11 +79,8 @@ namespace daemon {
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    
     castor::utils::Timer localTime;
-    
     unsigned long ckSum = Payload::zeroAdler32();
-    
     uint32_t memBlockId  = 0;
     
     // This out-of-try-catch variables allows us to record the stage of the 
@@ -97,6 +94,7 @@ namespace daemon {
       currentErrorToCount = "Error_tapeWriteHeader";
       watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.path, m_archiveJob->archiveFile.fileId, m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
+      m_LBPMode = output->getLBPMode();
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       // We are not error sources here until we actually write.
@@ -323,7 +321,8 @@ namespace daemon {
            .add("NSFILEID",m_archiveFile.fileId)
            .add("fSeq",m_nameServerTapeFile.tapeFileLocation.fSeq)
            .add("lastKnownFilename",m_archiveFile.path)
-           .add("lastModificationTime",m_archiveFile.lastModificationTime);
+           .add("lastModificationTime",m_archiveFile.lastModificationTime)
+           .add("LBPMode", m_LBPMode);
      
      lc.log(level, msg);
 

@@ -224,39 +224,6 @@ namespace drive {
     }
 
     /**
-     * getTapeError: get SENSE buffer from patched version of the driver
-     * or fall back to other information and report tape statuses.
-     * Statuses were in CAStor struct sk_info sk_codmsg[] = { 
-     * 	{"No sense", ETNOSNS},
-     *  {"Recovered error", 0},
-     *  {"Not ready", 0},
-     *  {"Medium error", ETPARIT},
-     *  {"Hardware error", ETHWERR},
-     *  {"Illegal request", ETHWERR},
-     *  {"Unit attention", ETHWERR},
-     *  {"Data protect", 0},
-     *  {"Blank check", ETBLANK},
-     *  {"Vendor unique", 0},
-     *  {"Copy aborted", 0},
-     *  {"Aborted command", 0},
-     *  {"Equal", 0},
-     *  {"Volume overflow", ENOSPC},
-     *  {"Miscompare", 0},
-     *  {"Reserved", 0},
-     *  {"SCSI handshake failure", ETHWERR},
-     *  {"Timeout", ETHWERR},
-     *  {"EOF hit", 0},
-     *  {"EOT hit", ETBLANK},
-     *  {"Length error", ETCOMPA},
-     *  {"BOT hit", ETUNREC},
-     *  {"Wrong tape media", ETCOMPA}
-     * @return error code and string containing the error description
-     */
-    virtual tapeError getTapeError()  {
-      throw castor::exception::Exception("Not implemented");
-    }
-
-    /**
      * Set the buffer write switch in the st driver. This is directly matching a configuration
      * parameter in CASTOR, so this function has to be public and usable by a higher level
      * layer, unless the parameter turns out to be disused.
@@ -371,18 +338,6 @@ namespace drive {
      * Set method CRC32C to be used.
      */
     virtual void enableCRC32CLogicalBlockProtectionReadWrite();
-        
-    /**
-     * Enable Logical Block Protection on the drive for reading only. 
-     * Set method Reed-Solomon to be used.
-     */
-    virtual void enableReedSolomonLogicalBlockProtectionReadOnly();
-    
-    /**
-     * Enable Logical Block Protection on the drive for reading and writing. 
-     * Set method Reed-Solomon to be used.
-     */
-    virtual void enableReedSolomonLogicalBlockProtectionReadWrite();
     /**
      * Disable Logical Block Protection on the drive.
      */
