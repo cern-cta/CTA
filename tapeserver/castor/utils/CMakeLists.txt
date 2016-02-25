@@ -22,6 +22,7 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(/usr/include/shift)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
+set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 set (UTILS_LIB_SRC_FILES
   SmartFd.cpp
   SmartFILEPtr.cpp

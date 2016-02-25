@@ -115,7 +115,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     params.push_back(log::Param("gid", m_request.gid));
     params.push_back(log::Param("TPVID", m_request.vid));
     params.push_back(log::Param("unitName", m_request.drive));
-    params.push_back(log::Param("dgn", m_request.dgn));
+    params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
     params.push_back(log::Param("force", boolToStr(m_force)));
     params.push_back(log::Param("lbp", boolToStr(m_lbp)));
     m_log(LOG_WARNING, "Label session configured to use LBP but lbp parameter "
@@ -326,7 +326,7 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelWithLbpToTape(
   params.push_back(log::Param("gid", m_request.gid));
   params.push_back(log::Param("TPVID", m_request.vid));
   params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("dgn", m_request.dgn));
+  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
   params.push_back(log::Param("force", boolToStr(m_force)));
   params.push_back(log::Param("lbp", boolToStr(m_lbp)));
 
