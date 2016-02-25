@@ -724,9 +724,12 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
       throw castor::exception::Exception("In DriveGeneric::writeBlock: "
           "trying to write a block in CRC-readonly mode");
     case lbpToUse::disabled:
-      castor::exception::Errnum::throwOnMinusOne(
-        m_sysWrapper.write(m_tapeFD, data, count),
-        "Failed ST write in DriveGeneric::writeBlock");
+      {
+          castor::exception::Errnum::throwOnMinusOne(
+            m_sysWrapper.write(m_tapeFD, data, count),
+            "Failed ST write in DriveGeneric::writeBlock");
+          break;
+      }
     default:
       throw castor::exception::Exception("In DriveGeneric::writeBlock: "
           "unknown LBP mode");
@@ -855,6 +858,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
         // Handle block too small
         if ((size_t) res != count)
           throw UnexpectedSize(context);
+        break;
       }
     default:
       throw castor::exception::Exception("In DriveGeneric::readExactBlock: unknown LBP type");
