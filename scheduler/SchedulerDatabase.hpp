@@ -36,6 +36,7 @@
 #include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
 #include "common/forwardDeclarations.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
 
 namespace cta {
 /**
@@ -66,11 +67,18 @@ public:
   };
 
   /**
-   * Queues the specified request.
+   * Queues the specified request. DEPRECATED
    *
    * @param rqst The request.
    */
   virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst) = 0;
+  
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request.
+   */
+  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) = 0;
 
   /**
    * Returns all of the queued archive requests.  The returned requests are

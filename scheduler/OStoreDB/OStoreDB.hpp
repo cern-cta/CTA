@@ -233,6 +233,8 @@ public:
     
   virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> 
     queue(const ArchiveToFileRequest& rqst);
+  
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId);
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);

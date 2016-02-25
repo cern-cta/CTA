@@ -639,6 +639,11 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   return ret;
 }
 
+std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+  OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {  
+  return std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>();
+}
+
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
   const std::string& archiveFile) {
   // First of, find the archive request form all the tape pools.

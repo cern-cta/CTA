@@ -47,7 +47,11 @@ cta::Scheduler::~Scheduler() throw() {
 //------------------------------------------------------------------------------
 // queueArchiveRequest
 //------------------------------------------------------------------------------
-uint64_t cta::Scheduler::queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ArchiveRequest &request) {
+uint64_t cta::Scheduler::queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &requestPusher, const cta::common::dataStructures::ArchiveRequest &request) {  
+  const uint64_t archiveFileId = m_catalogue.getNextArchiveFileId();
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> requestCreation(m_db.queue(request, archiveFileId));
+  requestCreation->complete();
+  
   return 0;
 }
 
