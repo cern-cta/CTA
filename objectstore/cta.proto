@@ -12,6 +12,7 @@ enum ObjectType {
   ArchiveToFileRequest_t = 6;
   RetrieveToFileRequest_t = 7;
   SchedulerGlobalLock_t = 8;
+  ArchiveRequest_t = 9;
   GenericObject_t = 1000;
 }
 
