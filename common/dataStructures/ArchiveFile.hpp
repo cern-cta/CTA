@@ -24,6 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/TapeFileLocation.hpp"
 
 namespace cta {
@@ -67,6 +68,9 @@ public:
 
   void setTapeCopies(const std::map<int,cta::common::dataStructures::TapeFileLocation> &tapeCopies);
   std::map<int,cta::common::dataStructures::TapeFileLocation> getTapeCopies() const;
+
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
   
 
 private:
@@ -99,6 +103,9 @@ private:
 
   std::map<int,cta::common::dataStructures::TapeFileLocation> m_tapeCopies;
   bool m_tapeCopiesSet;
+
+  cta::common::dataStructures::EntryLog m_creationLog;
+  bool m_creationLogSet;
 
 }; // class ArchiveFile
 

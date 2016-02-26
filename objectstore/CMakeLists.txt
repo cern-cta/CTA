@@ -13,6 +13,7 @@ PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/ArchiveToFileRequest.hpp
+  objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
   objectstore/GenericObject.hpp
   objectstore/ObjectOps.cpp
@@ -39,6 +40,7 @@ add_library (ctaobjectstore SHARED
   TapePool.cpp
   Tape.cpp
   ArchiveToFileRequest.cpp
+  ArchiveRequest.cpp
   RetrieveToFileRequest.cpp
   DriveRegister.cpp
   BackendVFS.cpp

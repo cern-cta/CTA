@@ -33,6 +33,7 @@ cta::common::dataStructures::ArchiveRequest::ArchiveRequest() {
   m_requesterSet = false;
   m_srcURLSet = false;
   m_storageClassSet = false;
+  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -47,6 +48,7 @@ cta::common::dataStructures::ArchiveRequest::~ArchiveRequest() throw() {
 bool cta::common::dataStructures::ArchiveRequest::allFieldsSet() const {
   return m_checksumTypeSet
       && m_checksumValueSet
+      && m_creationLogSet
       && m_diskpoolNameSet
       && m_diskpoolThroughputSet
       && m_drDataSet
@@ -235,4 +237,22 @@ std::string cta::common::dataStructures::ArchiveRequest::getStorageClass() const
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }
   return m_storageClass;
+}
+
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  m_creationLog = creationLog;
+  m_creationLogSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::common::dataStructures::ArchiveRequest::getCreationLog() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
+  }
+  return m_creationLog;
 }

@@ -29,6 +29,7 @@ cta::common::dataStructures::RetrieveRequest::RetrieveRequest() {
   m_drDataSet = false;
   m_dstURLSet = false;
   m_requesterSet = false;
+  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -42,6 +43,7 @@ cta::common::dataStructures::RetrieveRequest::~RetrieveRequest() throw() {
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RetrieveRequest::allFieldsSet() const {
   return m_archiveFileIDSet
+      && m_creationLogSet
       && m_diskpoolNameSet
       && m_diskpoolThroughputSet
       && m_drDataSet
@@ -155,4 +157,22 @@ cta::common::dataStructures::Requester cta::common::dataStructures::RetrieveRequ
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
   return m_requester;
+}
+
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::RetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  m_creationLog = creationLog;
+  m_creationLogSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::common::dataStructures::RetrieveRequest::getCreationLog() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
+  }
+  return m_creationLog;
 }

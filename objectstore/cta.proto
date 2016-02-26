@@ -284,8 +284,8 @@ enum ArchiveJobStatus {
   AJS_LinkingToTapePool = 1;
   AJS_PendingMount = 2;
   AJS_PendingNsDeletion = 99;
-  AJS_Selected = 2;
-  AJS_Complete = 3;
+  AJS_Selected = 3;
+  AJS_Complete = 4;
   AJS_Failed = 999;
 }
 
@@ -419,6 +419,12 @@ message DRData {
   required string drPath = 8940;
 }
 
+message EntryLog {
+  required UserIdentity user = 8950;
+  required string host = 8960;
+  required uint64 time = 8970;
+}
+
 message ArchiveRequest {
   required string checksumtype = 9000;
   required string checksumValue = 9010;
@@ -430,6 +436,8 @@ message ArchiveRequest {
   required Requester requester = 9070;
   required string srcURL = 9080;
   required string storageClass = 9090;
+  required EntryLog creationLog = 9091;
+  repeated ArchiveJobEntry jobs = 9092;
 }
 
 message RetrieveRequest {
@@ -439,4 +447,6 @@ message RetrieveRequest {
   required DRData drData = 9130;
   required string dstURL = 9140;
   required Requester requester = 9150;
+  required EntryLog creationLog = 9151;
+  repeated RetrieveJobEntry jobs = 9152;
 }

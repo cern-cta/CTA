@@ -24,6 +24,7 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {  
   m_requesterSet = false;
+  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -36,7 +37,8 @@ cta::common::dataStructures::ListStorageClassRequest::~ListStorageClassRequest()
 // allFieldsSet
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ListStorageClassRequest::allFieldsSet() const {
-  return m_requesterSet;
+  return m_requesterSet
+      && m_creationLogSet;
 }
 
 //------------------------------------------------------------------------------
@@ -55,4 +57,22 @@ cta::common::dataStructures::Requester cta::common::dataStructures::ListStorageC
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ListStorageClassRequest have been set!");
   }
   return m_requester;
+}
+
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::ListStorageClassRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  m_creationLog = creationLog;
+  m_creationLogSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::common::dataStructures::ListStorageClassRequest::getCreationLog() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
+  }
+  return m_creationLog;
 }
