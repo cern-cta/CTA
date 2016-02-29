@@ -39,6 +39,7 @@
 #include "common/archiveNS/TapeFileLocation.hpp"
 #include "ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveNS/ArchiveFile.hpp"
+#include "objectstore/ArchiveRequest.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -368,6 +369,109 @@ OStoreDB::ArchiveToFileRequestCreation::~ArchiveToFileRequestCreation() {
   } catch (...) {}
 }
 
+void OStoreDB::ArchiveRequestCreation::complete() {
+  // We inherited all the objects from the creation.
+  // Lock is still here at that point.
+  // First, record that we are fine for next step.
+  m_request.setAllJobsLinkingToTapePool();
+  m_request.commit();
+  objectstore::RootEntry re(m_objectStore);
+  // We can now plug the request onto its tape pools.
+  // We can discover at that point that a tape pool is actually not
+  // really owned by the root entry, and hence a dangling pointer
+  // We should then unlink the jobs from that already connected
+  // tape pools and abort the job creation.
+  // The list of done tape pools is held here for this purpose
+  // Reconstruct the job list
+  auto jl = m_request.dumpJobs();
+  std::list<std::string> linkedTapePools;
+  try {
+    for (auto j=jl.begin(); j!=jl.end(); j++) {
+      objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
+      ScopedExclusiveLock tpl(tp);
+      tp.fetch();
+      if (tp.getOwner() != re.getAddressIfSet())
+        throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
+            "(dangling pointer): cancelling request creation.");
+      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getDrData().getDrPath(), 
+        m_request.getFileSize(), 0,
+        m_request.getCreationLog().getTime());
+      // Now that we have the tape pool handy, get the retry limits from it and 
+      // assign them to the job
+      m_request.setJobFailureLimits(j->copyNb, tp.getMaxRetriesWithinMount(), 
+        tp.getMaxTotalRetries());
+      tp.commit();
+      linkedTapePools.push_back(j->tapePoolAddress);
+    }
+  } catch (NoSuchTapePool &) {
+    // Unlink the request from already connected tape pools
+    for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
+      objectstore::TapePool tp(*tpa, m_objectStore);
+      ScopedExclusiveLock tpl(tp);
+      tp.fetch();
+      tp.removeJob(m_request.getAddressIfSet());
+      tp.commit();
+      m_request.remove();
+    }
+    throw;
+  }
+  // The request is now fully set. As it's multi-owned, we do not set the owner,
+  // just to disown it from the agent.
+  m_request.setOwner("");
+  m_request.commit();
+  m_lock.release();
+  // And remove reference from the agent
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(m_request.getAddressIfSet());
+    m_agent->commit();
+  }
+  m_closed=true;
+  return;
+}
+
+void OStoreDB::ArchiveRequestCreation::cancel() {
+  // We inherited everything from the creation, and all we have to
+  // do here is to delete the request from storage and dereference it from
+  // the agent's entry
+  if (m_closed) {
+    throw ArchiveRequestAlreadyCompleteOrCanceled(
+      "In OStoreDB::ArchiveToFileRequestCreation::cancel: trying the close "
+      "the request creation twice");
+  }
+  m_request.remove();
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(m_request.getAddressIfSet());
+    m_agent->commit();
+  }
+  m_closed=true;
+  return;
+}
+
+OStoreDB::ArchiveRequestCreation::~ArchiveRequestCreation() {
+  // We have to determine whether complete() or cancel() were called, in which
+  // case there is nothing to do, or not, in which case we have to garbage
+  // collect the archive to file request. This will queue it to the appropriate
+  // tape pool(s) orphanesArchiveToFileCreations. The schedule will then 
+  // determine its fate depending on the status of the NS entry creation
+  // (no entry, just cancel, already created in NS, carry on).
+  if (m_closed)
+    return;
+  try {
+    m_request.garbageCollect(m_agent->getAddressIfSet());
+    {
+      objectstore::ScopedExclusiveLock al(*m_agent);
+      m_agent->fetch();
+      m_agent->removeFromOwnership(m_request.getAddressIfSet());
+      m_agent->commit();
+    }
+    m_closed=true;
+  } catch (...) {}
+}
+
 void OStoreDB::createTapePool(const std::string& name,
   const uint32_t nbPartialTapes, const cta::CreationLog &creationLog) {
   RootEntry re(m_objectStore);
@@ -639,9 +743,9 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   return ret;
 }
 
-std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>
   OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {  
-  return std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>();
+  return std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>();
 }
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
