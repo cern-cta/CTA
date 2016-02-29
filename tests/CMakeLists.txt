@@ -43,9 +43,13 @@ target_link_libraries(cta-unitTests
   ctaremotensunittests
   ctaschedulerunittests
   ctaio
+  ctadaemonunittests
   ${GMOCK_LIB}
   gtest
   pthread)
+
+add_library(unitTestHelper
+  TempFile.cpp)
 
 add_library(systemTestHelper
   Subprocess.cpp)

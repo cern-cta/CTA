@@ -17,6 +17,7 @@
  */
 
 #include "GlobalConfiguration.hpp"
+#include "ConfigurationFile.hpp"
 
 namespace cta { namespace tape { namespace daemon {
   
@@ -27,8 +28,21 @@ GlobalConfiguration GlobalConfiguration::createFromCtaConf(cta::log::Logger& log
 GlobalConfiguration GlobalConfiguration::createFromCtaConf(
   const std::string& generalConfigPath, cta::log::Logger& log) {
   GlobalConfiguration ret;
+  // Parse config file
+  ConfigurationFile cf(generalConfigPath);
+  // Extract configuration from parsed config file
+  // tpConfigPath: this element is optional
+  try {
+    ConfigurationFile::value_t & v = cf.entries.at("Taped").at("tpConfigPath");
+    std::stringstream src;
+    src << generalConfigPath << ":" << v.line;
+     ret.tpConfigPath.set(v.value, src.str());
+  } catch (...) {}
   return ret;
 }
+
+GlobalConfiguration::GlobalConfiguration():
+  tpConfigPath("tpConfigPath", "/etc/cta/TPCONFIG", "Compile time default") {}
 
 cta::log::DummyLogger GlobalConfiguration::gDummyLogger("");
 
