@@ -506,7 +506,7 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
   SCSI::Structures::modeParameterBlockDecriptor_t & blockDescriptor = 
     *(SCSI::Structures::modeParameterBlockDecriptor_t *) (data+sizeof(header));
     
-  if(blockDescriptor.blockLength <= 0) {
+  if(*blockDescriptor.blockLength <= 0) {
     errno = EINVAL;
     return -1;
   }
