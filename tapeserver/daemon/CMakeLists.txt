@@ -14,3 +14,5 @@ add_library(ctadaemonunittests SHARED
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
   unitTestHelper)
+
+install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
