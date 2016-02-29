@@ -45,7 +45,7 @@ namespace cta { namespace taped {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char **const argv,
+static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandLine,
   cta::log::Logger &log);
 
 //------------------------------------------------------------------------------
@@ -66,8 +66,8 @@ std::string gHelpString =
 //------------------------------------------------------------------------------
 // Logs the start of the daemon.
 //------------------------------------------------------------------------------
-static void logStartOfDaemon(cta::log::Logger &log, const int argc,
-  const char *const *const argv);
+void logStartOfDaemon(cta::log::Logger &log,
+  const daemon::CommandLineParams& commandLine);
 
 //------------------------------------------------------------------------------
 // Creates a string that contains the specified command-line arguments
@@ -76,7 +76,7 @@ static void logStartOfDaemon(cta::log::Logger &log, const int argc,
 // @param argc The number of command-line arguments.
 // @param argv The array of command-line arguments.
 //------------------------------------------------------------------------------
-static std::string argvToString(const int argc, const char *const *const argv);
+//static std::string argvToString(const int argc, const char *const *const argv);
 
 ////------------------------------------------------------------------------------
 //// Writes the specified TPCONFIG lines to the specified logging system.
@@ -99,25 +99,23 @@ static std::string argvToString(const int argc, const char *const *const argv);
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char **const argv,
+static int exceptionThrowingMain(
+  const cta::daemon::CommandLineParams & commandLine,
   cta::log::Logger &log) {
   using namespace cta::tape::daemon;
 
-  logStartOfDaemon(log, argc, argv);
+  logStartOfDaemon(log, commandLine);
 
   // Parse /etc/cta/cta.conf and /etc/cta/TPCONFIG for global parameters
   const GlobalConfiguration globalConfig =
-    GlobalConfiguration::createFromCtaConf(log);
+    GlobalConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
 
   // Create the main tapeserverd object
   cta::tape::daemon::TapeDaemon daemon(
-    argc,
-    argv,
-    std::cout,
-    std::cerr,
+    commandLine,
     log,
     globalConfig,
     capUtils);
@@ -129,32 +127,30 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 //------------------------------------------------------------------------------
 // logStartOfDaemon
 //------------------------------------------------------------------------------
-static void logStartOfDaemon(cta::log::Logger &log, const int argc,
-  const char *const *const argv) {
+void logStartOfDaemon(cta::log::Logger &log,
+  const cta::daemon::CommandLineParams & commandLine) {
   using namespace cta;
 
-  const std::string concatenatedArgs = argvToString(argc, argv);
-  std::list<log::Param> params = {
-    log::Param("version", CTA_VERSION),
-    log::Param("argv", concatenatedArgs)};
-  log(log::INFO, "tapeserverd started", params);
+  std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
+  params.splice(params.end(), commandLine.toLogParams());
+  log(log::INFO, "cta-taped started", params);
 }
 
 //------------------------------------------------------------------------------
 // argvToString
 //------------------------------------------------------------------------------
-static std::string argvToString(const int argc, const char *const *const argv) {
-  std::string str;
-
-  for(int i=0; i < argc; i++) {
-    if(i != 0) {
-      str += " ";
-    }
-
-    str += argv[i];
-  }
-  return str;
-}
+//static std::string argvToString(const int argc, const char *const *const argv) {
+//  std::string str;
+//
+//  for(int i=0; i < argc; i++) {
+//    if(i != 0) {
+//      str += " ";
+//    }
+//
+//    str += argv[i];
+//  }
+//  return str;
+//}
 
 ////------------------------------------------------------------------------------
 //// logTpconfigLines
@@ -225,7 +221,7 @@ int main(const int argc, char **const argv) {
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
-    programRc = cta::taped::exceptionThrowingMain(argc, argv, log);
+    programRc = cta::taped::exceptionThrowingMain(*commandLine, log);
   } catch(exception::Exception &ex) {
     std::list<log::Param> params = {
       log::Param("message", ex.getMessage().str())};

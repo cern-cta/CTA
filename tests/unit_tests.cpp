@@ -18,8 +18,15 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <sqlite3.h>
 
 int main(int argc, char** argv) {
+  // The unit tests use SQLite it must be initialized before they are run
+  if(SQLITE_OK != sqlite3_initialize()) {
+    std::cerr << "Failed to initialize SQLite" << std::endl;
+    return 1; // Error
+  }
+
   // The following line must be executed to initialize Google Mock
   // (and Google Test) before running the tests.
   ::testing::InitGoogleMock(&argc, argv);
@@ -32,6 +39,13 @@ int main(int argc, char** argv) {
   close(0);
   close(1);
   close(2);
+
+  // The unit tests used SQLite and so it should shutodwn in order to release
+  // its resources
+  if(SQLITE_OK != sqlite3_shutdown()) {
+    std::cerr << "Failed to shutdown SQLite" << std::endl;
+    return 1; // Error
+  }
 
   return ret;
 }

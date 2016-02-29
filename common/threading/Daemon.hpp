@@ -46,27 +46,13 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log Object representing the API of the CASTOR logging system.
    */
-  Daemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
+  Daemon(log::Logger &log)
     throw();
 
   /**
    * Destructor.
    */
   virtual ~Daemon();
-
-  /**
-   * Parses a command line to set the server options.
-   *
-   * @param argc The size of the command-line vector.
-   * @param argv The command-line vector.
-   */
-  virtual void parseCommandLine(int argc, char *argv[])
-    ;
-
-  /**
-   * Prints out the online help
-   */
-  virtual void help(const std::string &programName) throw();
 
   /**
    * Returns this server's name as used by the CASTOR logging system.
@@ -104,16 +90,6 @@ protected:
    * daemon should be set to those of the stager superuser.
    */
   void daemonizeIfNotRunInForeground(const bool runAsStagerSuperuser);
-
-  /**
-   * Stream representing standard out.
-   */
-  std::ostream &m_stdOut;
-
-  /**
-   * Stream representing standard in.
-   */
-  std::ostream &m_stdErr;
 
   /**
    * Object representing the API of the CASTOR logging system.

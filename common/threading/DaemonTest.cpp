@@ -59,43 +59,10 @@ protected:
 };
 
 TEST_F(cta_threading_DaemonTest, getForegroundBeforeParseCommandLine) {
-  std::ostringstream dummyStdOut;
-  std::ostringstream dummyStdErr;
   cta::log::DummyLogger log(m_programName);
-  cta::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
+  cta::server::Daemon daemon(log);
   
   ASSERT_THROW(daemon.getForeground(), cta::server::Daemon::CommandLineNotParsed);
-}
-
-TEST_F(cta_threading_DaemonTest, parseEmptyCmdLine) {
-  m_argv = new char *[2];
-  m_argv[0] = strdup(m_programName.c_str());
-  m_argv[1] = NULL;
-  m_argc = 1;
-
-  std::ostringstream dummyStdOut;
-  std::ostringstream dummyStdErr;
-  cta::log::DummyLogger log(m_programName);
-  cta::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
-
-  ASSERT_NO_THROW(daemon.parseCommandLine(m_argc, m_argv));
-  ASSERT_FALSE(daemon.getForeground());
-}
-
-TEST_F(cta_threading_DaemonTest, parseFOnCmdLine) {
-  m_argv = new char *[3];
-  m_argv[0] = strdup(m_programName.c_str());
-  m_argv[1] = strdup("-f");
-  m_argv[2] = NULL;
-  m_argc = 2;
-
-  std::ostringstream dummyStdOut;
-  std::ostringstream dummyStdErr;
-  cta::log::DummyLogger log(m_programName);
-  cta::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
-
-  ASSERT_NO_THROW(daemon.parseCommandLine(m_argc, m_argv));
-  ASSERT_EQ(true, daemon.getForeground());
 }
 
 } // namespace unitTests

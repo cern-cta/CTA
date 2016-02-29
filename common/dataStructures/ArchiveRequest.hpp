@@ -24,6 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/Requester.hpp"
 
 namespace cta {
@@ -73,6 +74,9 @@ public:
 
   void setStorageClass(const std::string &storageClass);
   std::string getStorageClass() const;
+
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
   
 
 private:
@@ -111,6 +115,9 @@ private:
 
   std::string m_storageClass;
   bool m_storageClassSet;
+
+  cta::common::dataStructures::EntryLog m_creationLog;
+  bool m_creationLogSet;
 
 }; // class ArchiveRequest
 

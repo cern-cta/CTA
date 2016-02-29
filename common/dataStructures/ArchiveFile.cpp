@@ -31,6 +31,7 @@ cta::common::dataStructures::ArchiveFile::ArchiveFile() {
   m_fileSizeSet = false;
   m_storageClassSet = false;
   m_tapeCopiesSet = false;
+  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -46,6 +47,7 @@ bool cta::common::dataStructures::ArchiveFile::allFieldsSet() const {
   return m_archiveFileIDSet
       && m_checksumTypeSet
       && m_checksumValueSet
+      && m_creationLogSet
       && m_drDataSet
       && m_eosFileIDSet
       && m_fileSizeSet
@@ -195,4 +197,22 @@ std::map<int,cta::common::dataStructures::TapeFileLocation> cta::common::dataStr
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
   }
   return m_tapeCopies;
+}
+
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::ArchiveFile::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  m_creationLog = creationLog;
+  m_creationLogSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::common::dataStructures::ArchiveFile::getCreationLog() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
+  }
+  return m_creationLog;
 }

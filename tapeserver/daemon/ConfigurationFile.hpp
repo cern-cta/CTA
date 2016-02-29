@@ -18,5 +18,17 @@
 
 #pragma once
 
-#define CTA_VERSION "@CTA_VERSION@-@CTA_RELEASE@"
+#include <map>
+#include <string>
 
+namespace cta { namespace tape { namespace daemon {
+struct ConfigurationFile {
+public:
+  ConfigurationFile(const std::string & path);
+  struct value_t {
+    std::string value;
+    uint32_t line;
+  };
+  std::map<std::string, std::map<std::string, value_t> > entries;
+};
+}}} // namespace cta::tape::daemon

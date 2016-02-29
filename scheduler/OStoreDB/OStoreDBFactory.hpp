@@ -165,6 +165,10 @@ public:
     return m_OStoreDB.queue(rqst);
   }
 
+  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {
+    return m_OStoreDB.queue(request, archiveFileId);
+  }
+
   virtual void queue(const RetrieveToFileRequest& rqst) {
     m_OStoreDB.queue(rqst);
   }

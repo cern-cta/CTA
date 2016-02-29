@@ -87,6 +87,13 @@ public:
    * @param rqst The request.
    */
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst);
+  
+  /**
+   * Queues the specified request.
+   *
+   * @param rqst The request.
+   */
+  std::unique_ptr<ArchiveToFileRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId);
 
   /**
    * Returns all of the queued archive requests.  The returned requests are

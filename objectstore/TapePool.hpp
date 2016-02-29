@@ -25,6 +25,7 @@
 #include "common/CreationLog.hpp"
 #include "common/MountControl.hpp"
 #include "ArchiveToFileRequest.hpp"
+#include "ArchiveRequest.hpp"
 #include "CreationLog.hpp"
 #include "Agent.hpp"
 #include "common/archiveNS/Tape.hpp"
@@ -93,6 +94,25 @@ public:
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsDeletion(const ArchiveToFileRequest::JobDump& job,
+    const std::string& archiveToFileAddress,
+    const std::string & path, uint64_t size);
+  
+  void addJob(const ArchiveRequest::JobDump & job,
+    const std::string & archiveToFileAddress, const std::string & path,
+    uint64_t size, uint64_t priority, time_t startTime);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
+  bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
+    const std::string & archiveToFileAddress, 
+    const std::string & path, uint64_t size);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
+  bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,
+    const std::string& archiveToFileAddress, const std::string & path,
+    uint64_t size);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
+  bool addOrphanedJobPendingNsDeletion(const ArchiveRequest::JobDump& job,
     const std::string& archiveToFileAddress,
     const std::string & path, uint64_t size);
   

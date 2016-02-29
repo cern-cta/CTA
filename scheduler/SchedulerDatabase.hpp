@@ -36,6 +36,7 @@
 #include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
 #include "common/forwardDeclarations.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
 
 namespace cta {
 /**
@@ -64,13 +65,34 @@ public:
     virtual void cancel() = 0;
     virtual ~ArchiveToFileRequestCreation() {};
   };
+  
+  /*
+   * Subclass allowing the tracking and automated cleanup of a 
+   * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close
+   * or cancel) surround an NS operation. This class can keep references, locks,
+   * etc... handy to simplify the implementation of the completion and cancelling
+   * (plus the destructor in case the caller fails half way through).
+   */ 
+  class ArchiveRequestCreation {
+  public:
+    virtual void complete() = 0;
+    virtual void cancel() = 0;
+    virtual ~ArchiveRequestCreation() {};
+  };
 
+  /**
+   * Queues the specified request. DEPRECATED
+   *
+   * @param rqst The request.
+   */
+  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst) = 0;
+  
   /**
    * Queues the specified request.
    *
    * @param rqst The request.
    */
-  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst) = 0;
+  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) = 0;
 
   /**
    * Returns all of the queued archive requests.  The returned requests are

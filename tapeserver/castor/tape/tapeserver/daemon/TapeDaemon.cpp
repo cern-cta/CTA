@@ -152,24 +152,17 @@ void castor::tape::tapeserver::daemon::TapeDaemon::destroyZmqContext() throw() {
 //------------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
   try {
-
     exceptionThrowingMain(m_argc, m_argv);
-
   } catch (castor::exception::Exception &ex) {
-    // Write the error to standard error
-    m_stdErr << std::endl << "Aborting: " << ex.getMessage().str() << std::endl
-      << std::endl;
-
     // Log the error
     std::list<log::Param> params = {
       log::Param("Message", ex.getMessage().str()),
       log::Param("Code"   , ex.code())};
     m_log(LOG_ERR, "Aborting", params);
 
-    return 1;
+    return EXIT_FAILURE;
   }
-
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 //------------------------------------------------------------------------------

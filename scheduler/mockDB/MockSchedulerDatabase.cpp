@@ -266,7 +266,13 @@ void cta::MockSchedulerDatabase::ArchiveToFileRequestCreation::cancel() {
   m_parent.deleteArchiveRequest(m_requester, m_archiveFile);
 }
 
-
+//------------------------------------------------------------------------------
+// queue
+//------------------------------------------------------------------------------
+std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+  cta::MockSchedulerDatabase::queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {
+  return std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> ();
+}
 
 //------------------------------------------------------------------------------
 // queue

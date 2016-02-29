@@ -21,6 +21,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
@@ -230,9 +231,28 @@ public:
     bool m_closed;
     friend class cta::OStoreDB;
   };
+  
+  class ArchiveRequestCreation: 
+   public cta::SchedulerDatabase::ArchiveRequestCreation {
+  public:
+    ArchiveRequestCreation(objectstore::Agent * agent, 
+      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
+      m_agent(agent), m_closed(false) {}
+    virtual void complete();
+    virtual void cancel();
+    virtual ~ArchiveRequestCreation();
+  private:
+    objectstore::ArchiveRequest m_request;
+    objectstore::ScopedExclusiveLock m_lock;
+    objectstore::Backend & m_objectStore;
+    objectstore::Agent * m_agent;
+    bool m_closed;
+    friend class cta::OStoreDB;
+  };
     
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> 
-    queue(const ArchiveToFileRequest& rqst);
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest& rqst);
+  
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId);
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);

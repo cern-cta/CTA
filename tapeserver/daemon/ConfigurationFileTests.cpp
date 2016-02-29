@@ -16,47 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <gtest/gtest.h>
 
-#include <sqlite3.h>
-#include <string>
+#include "ConfigurationFile.hpp"
+#include "tests/TempFile.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace unitTests {
 
-/**
- * A C++ wrapper around an SQLite database handle.
- */
-class SQLiteDatabase {
-public:
+TEST(cta_Daemon, ConfigurationFile) {
+  TempFile tf;
+  tf.stringFill("# My test config file\n"
+  "cat1 key1 val1\n"
+  "cat1 #key2 val2\n"
+  "cat1 key3 #val3\n");
+  cta::tape::daemon::ConfigurationFile cf(tf.path());
+  ASSERT_EQ(1, cf.entries.size());
+  ASSERT_NO_THROW(cf.entries.at("cat1").at("key1"));
+  ASSERT_EQ("val1", cf.entries.at("cat1").at("key1").value);
+  ASSERT_EQ(2, cf.entries.at("cat1").at("key1").line);
+}
 
-  /**
-   * Constructor.
-   *
-   * @param filename The filename to be passed to the sqlit3_open() function.
-   */
-  SQLiteDatabase(const std::string &filename);
-
-  /**
-   * Destructor.
-   */
-  ~SQLiteDatabase();
-
-  /**
-   * Returns the underlying database handle.
-   *
-   * @return the underlying database handle.
-   */
-  sqlite3 *getHandle();
-
-private:
-
-  /**
-   * SQLite database handle.
-   */
-  sqlite3 *m_dbHandle;
-
-}; // class SqlLiteDatabase
-
-} // namespace catalogue
-} // namespace cta
+} // namespace unitTests

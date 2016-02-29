@@ -18,5 +18,23 @@
 
 #pragma once
 
-#define CTA_VERSION "@CTA_VERSION@-@CTA_RELEASE@"
+#include <string>
 
+namespace unitTests {
+/**
+ * A class creating a temporary file (deleted by destructor). Various population
+ * operations are provided.
+ */
+class TempFile {
+public:
+  TempFile();
+  TempFile(const std::string& path);
+  std::string path();
+  void randomFill(size_t size);
+  void stringFill(const std::string &string);
+  void stringAppend(const std::string &string);
+  ~TempFile();
+private:
+  std::string m_path;
+};
+}

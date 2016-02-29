@@ -73,7 +73,6 @@ set (COMMON_LIB_SRC_FILES
   threading/Threading.cpp
   utils/utils.cpp
   utils/strerror_r_wrapper.cpp
-  ArchiveRequest.cpp
   CreationLog.cpp
   Configuration.cpp
   SecurityIdentity.cpp

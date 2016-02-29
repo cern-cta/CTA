@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/SQLiteDatabase.hpp"
+#include "catalogue/SqliteDatabase.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SQLiteDatabase::SQLiteDatabase(const std::string &filename) {
+cta::catalogue::SqliteDatabase::SqliteDatabase(const std::string &filename) {
   m_dbHandle = NULL;
   if(sqlite3_open(filename.c_str(), &m_dbHandle)) {
     sqlite3_close(m_dbHandle);
     exception::Exception ex;
-    ex.getMessage() << "Failed to construct SQLiteDatabase: sqlite3_open failed"
+    ex.getMessage() << "Failed to construct SqliteDatabase: sqlite3_open failed"
       ": " << sqlite3_errmsg(m_dbHandle);
     throw(ex);
   }
@@ -36,13 +36,13 @@ cta::catalogue::SQLiteDatabase::SQLiteDatabase(const std::string &filename) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::SQLiteDatabase::~SQLiteDatabase() {
+cta::catalogue::SqliteDatabase::~SqliteDatabase() {
   sqlite3_close(m_dbHandle);
 }
 
 //------------------------------------------------------------------------------
 // getHandle
 //------------------------------------------------------------------------------
-sqlite3 *cta::catalogue::SQLiteDatabase::getHandle() {
+sqlite3 *cta::catalogue::SqliteDatabase::getHandle() {
   return m_dbHandle;
 }

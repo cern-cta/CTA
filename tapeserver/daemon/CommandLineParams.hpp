@@ -19,6 +19,8 @@
 #pragma once
 
 #include <string>
+#include <list>
+#include "common/log/Param.hpp"
 
 namespace cta { namespace daemon {
 /// A class parsing the command line and turning it into a struct.
@@ -33,5 +35,6 @@ struct CommandLineParams{
   bool logToStdout;                 ///< Log to stdout instead of syslog. Foreground is required.
   std::string configFileLocation;   ///< Location of the configuration file. Defaults to /etc/cta/cta.conf
   bool helpRequested;               ///< Help requested: will print out help and exit.
+  std::list<log::Param> toLogParams() const; ///< Convert the command line into set of parameters for logging.
 };
 }}

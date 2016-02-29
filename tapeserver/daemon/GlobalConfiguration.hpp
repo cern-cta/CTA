@@ -19,8 +19,11 @@
 #pragma once
 #include <string>
 #include <map>
+#include <type_traits>
+#include <limits>
 #include "DriveConfiguration.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace tape {
@@ -34,9 +37,49 @@ struct GlobalConfiguration {
           cta::log::Logger &log = gDummyLogger);
   static GlobalConfiguration createFromCtaConf(
           const std::string & generalConfigPath,
-          const std::string & tapeConfigFile,
           cta::log::Logger & log = gDummyLogger);
+  // Default constructor.
+  GlobalConfiguration();
   std::map<std::string, DriveConfiguration> driveConfigs;
+
+  
+  /**
+   * A templated class allowing the tracking of parameter with their source.
+   * If the parameter is not set (implicitly defined as the source being
+   * an empty string), access to the value will be denied (exception)
+   */
+  template<class C>
+  class SourcedParameter {
+  public:
+    CTA_GENERATE_EXCEPTION_CLASS(ParameterNotDefined);
+    SourcedParameter(const std::string & name): m_name(name) {
+      if (std::is_arithmetic<C>::value) {
+        m_value=std::numeric_limits<C>::max();
+      }
+    }
+    SourcedParameter(const std::string & name, C value, const std::string & source):
+      m_name(name), m_value(value), m_source(source) {}
+    C operator() () {
+      if (m_source.empty()) {
+        throw ParameterNotDefined(std::string("In SourcedParameter::operator(): "
+                "value not defined for parameter \'" + m_name + "\' :"));
+      }
+      return m_value;
+    }
+    void set(const std::string & value, const std::string & source) {
+      m_value = value;
+      m_source = source;
+    }
+    const std::string & name() { return m_name; }
+    const std::string & source() { return m_source; }
+  private:
+    std::string m_name;
+    C m_value;
+    std::string m_source;
+  };
+  
+  // The actual parameters:
+  SourcedParameter<std::string> tpConfigPath;
 private:
   /** A private dummy logger which will simplify the implementaion of the 
    * functions (just unconditionally log things). */

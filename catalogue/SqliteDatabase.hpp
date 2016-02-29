@@ -18,5 +18,45 @@
 
 #pragma once
 
-#define CTA_VERSION "@CTA_VERSION@-@CTA_RELEASE@"
+#include <sqlite3.h>
+#include <string>
 
+namespace cta {
+namespace catalogue {
+
+/**
+ * A C++ wrapper around an SQLite database handle.
+ */
+class SqliteDatabase {
+public:
+
+  /**
+   * Constructor.
+   *
+   * @param filename The filename to be passed to the sqlit3_open() function.
+   */
+  SqliteDatabase(const std::string &filename);
+
+  /**
+   * Destructor.
+   */
+  ~SqliteDatabase();
+
+  /**
+   * Returns the underlying database handle.
+   *
+   * @return the underlying database handle.
+   */
+  sqlite3 *getHandle();
+
+private:
+
+  /**
+   * The database handle.
+   */
+  sqlite3 *m_dbHandle;
+
+}; // class SqlLiteDatabase
+
+} // namespace catalogue
+} // namespace cta
