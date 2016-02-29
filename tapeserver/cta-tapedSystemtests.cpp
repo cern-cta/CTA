@@ -17,28 +17,44 @@
  */
 
 #include "tests/Subprocess.hpp"
+#include "tests/TempFile.hpp"
 
 #include <gtest/gtest.h>
 
 namespace systemTests {  
 TEST(cta_taped, InvocationTests) {
-  // Do we get help with -h or --help?
-  Subprocess spHelpShort("cta-taped", std::list<std::string>({"cta-taped", "-h"}));
-  spHelpShort.wait();
-  ASSERT_NE(std::string::npos, spHelpShort.stdout().find("Usage"));
-  ASSERT_TRUE(spHelpShort.stderr().empty());
-  ASSERT_EQ(EXIT_SUCCESS, spHelpShort.exitValue());
-  Subprocess spHelpLong("cta-taped", std::list<std::string>({"cta-taped", "--help"}));
-  spHelpLong.wait();
-  ASSERT_NE(std::string::npos, spHelpLong.stdout().find("Usage: cta-taped [options]"));
-  ASSERT_TRUE(spHelpLong.stderr().empty());
-  ASSERT_EQ(EXIT_SUCCESS, spHelpLong.exitValue());
+  {  
+    // Do we get help with -h or --help?
+    Subprocess spHelpShort("cta-taped", std::list<std::string>({"cta-taped", "-h"}));
+    spHelpShort.wait();
+    ASSERT_NE(std::string::npos, spHelpShort.stdout().find("Usage"));
+    ASSERT_TRUE(spHelpShort.stderr().empty());
+    ASSERT_EQ(EXIT_SUCCESS, spHelpShort.exitValue());
+    Subprocess spHelpLong("cta-taped", std::list<std::string>({"cta-taped", "--help"}));
+    spHelpLong.wait();
+    ASSERT_NE(std::string::npos, spHelpLong.stdout().find("Usage: cta-taped [options]"));
+    ASSERT_TRUE(spHelpLong.stderr().empty());
+    ASSERT_EQ(EXIT_SUCCESS, spHelpLong.exitValue());
+  }
+  
+  {
+    // Do we get proper complaint when the configuration file is not there?
+    Subprocess spNoConfigFile("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", "/no/such/file"}));
+    spNoConfigFile.wait();
+    ASSERT_NE(std::string::npos, spNoConfigFile.stdout().find("Failed to open configuration file"));
+    ASSERT_TRUE(spNoConfigFile.stderr().empty());
+    ASSERT_EQ(EXIT_FAILURE, spNoConfigFile.exitValue());
+  }
   
   // Does the tape server complain about absence of drive configuration?
-  Subprocess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s"}));
-  spNoDrive.wait();
-  ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting\" Message=\"No drive found in configuration\""));
-  ASSERT_TRUE(spNoDrive.stderr().empty());
-  ASSERT_EQ(EXIT_FAILURE, spNoDrive.exitValue());
+  {
+    // We provide le daemon with an existing (but empty) configuration file
+    unitTests::TempFile tf;
+    Subprocess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", tf.path()}));
+    spNoDrive.wait();
+    ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting\" Message=\"No drive found in configuration\""));
+    ASSERT_TRUE(spNoDrive.stderr().empty());
+    ASSERT_EQ(EXIT_FAILURE, spNoDrive.exitValue());
+  }
 }
 }

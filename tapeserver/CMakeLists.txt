@@ -18,6 +18,7 @@ add_library(cta-tapedSystemTests SHARED
 
 target_link_libraries(cta-tapedSystemTests
   systemTestHelper
+  unitTestHelper
   ctacommon)
 
 install(TARGETS cta-tapedSystemTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
