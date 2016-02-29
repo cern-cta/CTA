@@ -39,9 +39,15 @@ namespace castor {
       
       const unsigned short max_unix_hostname_length = 256; //255 + 1 terminating character
       
-      LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive, const std::string &vid)  {
+      LabelSession::LabelSession(tapeserver::drive::DriveInterface & drive,
+        const std::string &vid, const bool lbp)  {
         VOL1 vol1;
-        vol1.fill(vid, SCSI::logicBlockProtectionMethod::DoNotUse);
+        if (lbp) {
+          // we only support crc32c LBP method
+          vol1.fill(vid, SCSI::logicBlockProtectionMethod::CRC32C);
+        } else {
+          vol1.fill(vid, SCSI::logicBlockProtectionMethod::DoNotUse);
+        }
         drive.writeBlock(&vol1, sizeof(vol1));
         HDR1PRELABEL prelabel;
         prelabel.fill(vid);
