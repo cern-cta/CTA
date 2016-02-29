@@ -351,12 +351,12 @@ cta::common::dataStructures::EntryLog cta::objectstore::ArchiveRequest::getCreat
   return creationLog;  
 }
 
-auto cta::objectstore::ArchiveRequest::dumpJobs() -> std::list<ArchiveToFileRequest::JobDump> {
+auto cta::objectstore::ArchiveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
-  std::list<ArchiveToFileRequest::JobDump> ret;
+  std::list<JobDump> ret;
   auto & jl = m_payload.jobs();
   for (auto j=jl.begin(); j!=jl.end(); j++) {
-    ret.push_back(ArchiveToFileRequest::JobDump());
+    ret.push_back(JobDump());
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
     ret.back().tapePoolAddress = j->tapepooladdress();

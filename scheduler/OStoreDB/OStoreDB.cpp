@@ -394,7 +394,7 @@ void OStoreDB::ArchiveRequestCreation::complete() {
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
       tp.addJob(*j, m_request.getAddressIfSet(), m_request.getDrData().getDrPath(), 
-        m_request.getFileSize(), 0,
+        m_request.getFileSize(), 0, //TODO: fix priorities and mount criteria to come from usergroups
         m_request.getCreationLog().getTime());
       // Now that we have the tape pool handy, get the retry limits from it and 
       // assign them to the job

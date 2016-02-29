@@ -250,8 +250,7 @@ public:
     friend class cta::OStoreDB;
   };
     
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> 
-    queue(const ArchiveToFileRequest& rqst);
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest& rqst);
   
   virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId);
 

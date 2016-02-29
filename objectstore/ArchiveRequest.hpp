@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "ArchiveToFileRequest.hpp"
 #include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/Requester.hpp"
@@ -99,7 +98,14 @@ public:
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog();
   
-  std::list<ArchiveToFileRequest::JobDump> dumpJobs();
+  class JobDump {
+  public:
+    uint16_t copyNb;
+    std::string tapePool;
+    std::string tapePoolAddress;
+  };
+  
+  std::list<JobDump> dumpJobs();
   void garbageCollect(const std::string &presumedOwner);
   std::string  dump();
 };
