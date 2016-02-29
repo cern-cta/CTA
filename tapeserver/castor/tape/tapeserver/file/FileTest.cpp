@@ -97,7 +97,7 @@ namespace unitTests {
   TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ASSERT_NO_THROW(ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true));
+    ASSERT_NO_THROW(ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false));
     ASSERT_EQ(ws->m_compressionEnabled, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
