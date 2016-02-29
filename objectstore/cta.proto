@@ -13,6 +13,7 @@ enum ObjectType {
   RetrieveToFileRequest_t = 7;
   SchedulerGlobalLock_t = 8;
   ArchiveRequest_t = 9;
+  RetrieveRequest_t = 10;
   GenericObject_t = 1000;
 }
 
@@ -421,7 +422,8 @@ message DRData {
 }
 
 message EntryLog {
-  required UserIdentity user = 8950;
+  required uint64 uid = 8950;
+  required uint64 gid = 8955;
   required string host = 8960;
   required uint64 time = 8970;
 }

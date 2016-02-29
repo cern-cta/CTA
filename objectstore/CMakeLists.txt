@@ -18,6 +18,7 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/GenericObject.hpp
   objectstore/ObjectOps.cpp
   objectstore/ObjectOps.hpp
+  objectstore/RetrieveRequest.hpp
   objectstore/RetrieveToFileRequest.cpp
   objectstore/RetrieveToFileRequest.hpp
   objectstore/RootEntry.hpp
@@ -42,6 +43,7 @@ add_library (ctaobjectstore SHARED
   ArchiveToFileRequest.cpp
   ArchiveRequest.cpp
   RetrieveToFileRequest.cpp
+  RetrieveRequest.cpp
   DriveRegister.cpp
   BackendVFS.cpp
   BackendRados.cpp

@@ -1,4 +1,3 @@
-
 /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
@@ -19,13 +18,13 @@
 
 #pragma once
 
-#include "ArchiveToFileRequest.hpp"
-#include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/Requester.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
+#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/Requester.hpp"
+#include "common/archiveNS/TapeFileLocation.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -34,25 +33,37 @@ class Agent;
 class GenericObject;
 class CreationLog;
 
-class ArchiveRequest: public ObjectOps<serializers::ArchiveRequest> {
+class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest> {
 public:
-  ArchiveRequest(const std::string & address, Backend & os);
-  ArchiveRequest(Backend & os);
-  ArchiveRequest(GenericObject & go);
+  RetrieveRequest(const std::string & address, Backend & os);
+  RetrieveRequest(GenericObject & go);
   void initialize();
   // Job management ============================================================
-  void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & tapepooladdress);
+  void addJob(const cta::TapeFileLocation & tapeFileLocation,
+    const std::string & tapeaddress);
   void setJobFailureLimits(uint16_t copyNumber,
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
-  bool addJobFailure(uint16_t copyNumber, uint64_t sessionId); //< returns true the job failed
-  serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
-  // Handling of the consequences of a job status change for the entire request.
-  // This function returns true if the request got finished.
-  bool finishIfNecessary();
+  class JobDump {
+  public:
+    uint16_t copyNb;
+    std::string tape;
+    std::string tapeAddress;
+    uint64_t fseq;
+    uint64_t blockid;
+  };
+  JobDump getJob(uint16_t copyNb);
+  struct FailuresCount {
+    uint16_t failuresWithinMount;
+    uint16_t totalFailures;
+  };
+  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
+  serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
+  // Handling of the consequences of a job status. This is simpler that archival
+  // as one finish is enough.
+  void finish();
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setAllJobsLinkingToTapePool();
   // Mark all the jobs as being deleted, in case of a cancellation
@@ -60,17 +71,12 @@ public:
   // Mark all the jobs as pending deletion from NS.
   void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-  // Set a job ownership
-  void setJobOwner(uint16_t copyNumber, const std::string & owner);
   // Request management ========================================================
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setChecksumType(const std::string &checksumType);
-  std::string getChecksumType();
-
-  void setChecksumValue(const std::string &checksumValue);
-  std::string getChecksumValue();
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID();
 
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName();
@@ -81,27 +87,17 @@ public:
   void setDrData(const cta::common::dataStructures::DRData &drData);
   cta::common::dataStructures::DRData getDrData();
 
-  void setEosFileID(const std::string &eosFileID);
-  std::string getEosFileID();
-
-  void setFileSize(const uint64_t fileSize);
-  uint64_t getFileSize();
+  void setDstURL(const std::string &dstURL);
+  std::string getDstURL();
 
   void setRequester(const cta::common::dataStructures::Requester &requester);
   cta::common::dataStructures::Requester getRequester();
 
-  void setSrcURL(const std::string &srcURL);
-  std::string getSrcURL();
-
-  void setStorageClass(const std::string &storageClass);
-  std::string getStorageClass();
-
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog();
-  
-  std::list<ArchiveToFileRequest::JobDump> dumpJobs();
-  void garbageCollect(const std::string &presumedOwner);
-  std::string  dump();
+  // ===========================================================================
+  std::list<JobDump> dumpJobs();
+  std::string dump();
 };
 
 }}

@@ -19,6 +19,7 @@
 #include "ArchiveRequest.hpp"
 #include "GenericObject.hpp"
 #include "TapePool.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 #include <json-c/json.h>
 
 cta::objectstore::ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
@@ -322,6 +323,34 @@ std::string cta::objectstore::ArchiveRequest::getStorageClass() {
   return m_payload.storageclass();
 }
 
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::objectstore::ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  checkPayloadWritable();
+  auto payloadCreationLog = m_payload.mutable_creationlog();
+  payloadCreationLog->set_time(creationLog.getTime());
+  payloadCreationLog->set_host(creationLog.getHost());
+  payloadCreationLog->set_uid(creationLog.getUser().getUid());
+  payloadCreationLog->set_gid(creationLog.getUser().getGid());
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::objectstore::ArchiveRequest::getCreationLog() {
+  checkPayloadReadable();
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::UserIdentity user;
+  auto payloadCreationLog = m_payload.creationlog();
+  user.setUid(payloadCreationLog.uid());
+  user.setGid(payloadCreationLog.gid());
+  creationLog.setUser(user);
+  creationLog.setHost(payloadCreationLog.host());
+  creationLog.setTime(payloadCreationLog.time());
+  return creationLog;  
+}
+
 auto cta::objectstore::ArchiveRequest::dumpJobs() -> std::list<ArchiveToFileRequest::JobDump> {
   checkPayloadReadable();
   std::list<ArchiveToFileRequest::JobDump> ret;
@@ -474,11 +503,8 @@ std::string cta::objectstore::ArchiveRequest::dump() {
   json_object * jaf = json_object_new_object();
   json_object_object_add(jaf, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
   json_object_object_add(jaf, "time", json_object_new_int64(m_payload.creationlog().time()));
-  // Object for user in the creation log
-  json_object * jaff = json_object_new_object();
-  json_object_object_add(jaff, "uid", json_object_new_int64(m_payload.creationlog().user().uid()));
-  json_object_object_add(jaff, "gid", json_object_new_int64(m_payload.creationlog().user().gid()));
-  json_object_object_add(jaf, "user", jaff);
+  json_object_object_add(jaf, "uid", json_object_new_int64(m_payload.creationlog().uid()));
+  json_object_object_add(jaf, "gid", json_object_new_int64(m_payload.creationlog().gid()));
   json_object_object_add(jo, "creationlog", jaf);
   // Array for jobs
   json_object * jja = json_object_new_array();
