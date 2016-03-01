@@ -40,6 +40,7 @@
 #include "ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "objectstore/ArchiveRequest.hpp"
+#include "common/dataStructures/UserGroup.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -743,9 +744,63 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
   return ret;
 }
 
-std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>
-  OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {  
-  return std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>();
+std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, 
+        const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap) {
+  assertAgentSet();
+  // Construct the return value immediately
+  std::unique_ptr<cta::OStoreDB::ArchiveRequestCreation> internalRet(new cta::OStoreDB::ArchiveRequestCreation(m_agent, m_objectStore));
+  cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
+  ar.setAddress(m_agent->nextId("ArchiveRequest"));
+  ar.initialize();
+  ar.setChecksumType(request.getChecksumType());
+  ar.setChecksumValue(request.getChecksumValue());
+  ar.setCreationLog(request.getCreationLog());
+  ar.setDiskpoolName(request.getDiskpoolName());
+  ar.setDiskpoolThroughput(request.getDiskpoolThroughput());
+  ar.setDrData(request.getDrData());
+  ar.setEosFileID(request.getEosFileID());
+  ar.setFileSize(request.getFileSize());
+  ar.setRequester(request.getRequester());
+  ar.setSrcURL(request.getSrcURL());
+  ar.setStorageClass(request.getStorageClass());
+  // We will need to identity tapepools is order to construct the request
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto & cl = copyNbToPoolMap;
+  std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
+  for (auto copy=cl.begin(); copy != cl.end(); copy++) {
+    std::string tpaddr = re.getTapePoolAddress(copy->second);
+    ar.addJob(copy->first, copy->second, tpaddr);
+    jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
+    jl.back().copyNb = copy->first;
+    jl.back().tapePool = copy->second;
+    jl.back().tapePoolAddress = tpaddr;
+  }
+  if (!jl.size()) {
+    throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
+  }
+  // We create the object here
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->addToOwnership(ar.getAddressIfSet());
+    m_agent->commit();
+  }
+  ar.setOwner(m_agent->getAddressIfSet());
+  ar.insert();
+  internalRet->m_lock.lock(ar);  
+  // We successfully prepared the object. It will remain attached to the agent 
+  // entry for the time being and get plugged to the tape pools on a second
+  // pass. 
+  // TODO: this can be improved by passing an opaque set of data to the called
+  // (including the lock) in order to optimise the acesses to the object store.
+  // In the mean time, the step 2 of this insertion will be done by finding the
+  // archiveRequest from the agent's owned object. Crude, but should not be too
+  // bad as the agent is not supposed to own many objects in this place.
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> ret;
+  ret.reset(internalRet.release());
+  return ret;
 }
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 

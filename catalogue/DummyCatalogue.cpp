@@ -408,3 +408,10 @@ void cta::catalogue::DummyCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::ArchiveRequest &archiveRequest,
   const cta::common::dataStructures::TapeFileLocation tapeFileLocation) {
 }
+
+//------------------------------------------------------------------------------
+// getCopyNbToTapePoolMap
+//------------------------------------------------------------------------------  
+std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::getCopyNbToTapePoolMap(const std::string &storageClass) {
+  return std::map<uint64_t,std::string>();
+}

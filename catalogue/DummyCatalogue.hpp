@@ -141,6 +141,8 @@ public:
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
     const cta::common::dataStructures::TapeFileLocation tapeFileLocation);
+  
+  std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass);
 
 }; // class DummyCatalogue
 

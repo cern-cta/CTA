@@ -92,7 +92,7 @@ public:
    *
    * @param rqst The request.
    */
-  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) = 0;
+  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap) = 0;
 
   /**
    * Returns all of the queued archive requests.  The returned requests are
