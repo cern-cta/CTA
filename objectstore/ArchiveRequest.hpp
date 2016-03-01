@@ -21,6 +21,7 @@
 
 #include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/Requester.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
@@ -65,6 +66,9 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID();
+  
   void setChecksumType(const std::string &checksumType);
   std::string getChecksumType();
 
@@ -97,6 +101,9 @@ public:
 
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog();
+  
+  void setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy);
+  cta::common::dataStructures::MountPolicy getMountPolicy();
   
   class JobDump {
   public:

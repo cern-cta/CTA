@@ -18,6 +18,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
   dataStructures/MountType.cpp
+  dataStructures/MountPolicy.cpp
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
   dataStructures/RepackType.cpp

@@ -165,8 +165,9 @@ public:
     return m_OStoreDB.queue(rqst);
   }
 
-  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap) {
-    return m_OStoreDB.queue(request, archiveFileId, copyNbToPoolMap);
+  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId, 
+          const std::map<uint64_t, std::string> &copyNbToPoolMap, const cta::common::dataStructures::MountPolicy &mountPolicy) {
+    return m_OStoreDB.queue(request, archiveFileId, copyNbToPoolMap, mountPolicy);
   }
 
   virtual void queue(const RetrieveToFileRequest& rqst) {

@@ -745,13 +745,14 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
 }
 
 std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, 
-        const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap) {
+        const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap, const cta::common::dataStructures::MountPolicy &mountPolicy) {
   assertAgentSet();
   // Construct the return value immediately
   std::unique_ptr<cta::OStoreDB::ArchiveRequestCreation> internalRet(new cta::OStoreDB::ArchiveRequestCreation(m_agent, m_objectStore));
   cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
   ar.setAddress(m_agent->nextId("ArchiveRequest"));
   ar.initialize();
+  ar.setArchiveFileID(archiveFileId);
   ar.setChecksumType(request.getChecksumType());
   ar.setChecksumValue(request.getChecksumValue());
   ar.setCreationLog(request.getCreationLog());
@@ -760,6 +761,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   ar.setDrData(request.getDrData());
   ar.setEosFileID(request.getEosFileID());
   ar.setFileSize(request.getFileSize());
+  ar.setMountPolicy(mountPolicy);
   ar.setRequester(request.getRequester());
   ar.setSrcURL(request.getSrcURL());
   ar.setStorageClass(request.getStorageClass());

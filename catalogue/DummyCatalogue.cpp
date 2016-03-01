@@ -415,3 +415,17 @@ void cta::catalogue::DummyCatalogue::fileWrittenToTape(
 std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::getCopyNbToTapePoolMap(const std::string &storageClass) {
   return std::map<uint64_t,std::string>();
 }
+
+//------------------------------------------------------------------------------
+// getArchiveMountPolicy
+//------------------------------------------------------------------------------
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+  return cta::common::dataStructures::MountPolicy();
+}
+
+//------------------------------------------------------------------------------
+// getRetrieveMountPolicy
+//------------------------------------------------------------------------------
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+  return cta::common::dataStructures::MountPolicy();
+}

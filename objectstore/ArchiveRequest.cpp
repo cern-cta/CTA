@@ -146,6 +146,22 @@ void cta::objectstore::ArchiveRequest::setAllJobsPendingNSdeletion() {
 }
 
 //------------------------------------------------------------------------------
+// setArchiveFileID
+//------------------------------------------------------------------------------
+void cta::objectstore::ArchiveRequest::setArchiveFileID(const uint64_t archiveFileID) {
+  checkPayloadWritable();
+  m_payload.set_archivefileid(archiveFileID);
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileID
+//------------------------------------------------------------------------------
+uint64_t cta::objectstore::ArchiveRequest::getArchiveFileID() {
+  checkPayloadReadable();
+  return m_payload.archivefileid();
+}
+
+//------------------------------------------------------------------------------
 // setChecksumType
 //------------------------------------------------------------------------------
 void cta::objectstore::ArchiveRequest::setChecksumType(const std::string &checksumType) {
@@ -207,6 +223,34 @@ void cta::objectstore::ArchiveRequest::setDiskpoolThroughput(const uint64_t disk
 uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
   checkPayloadReadable();
   return m_payload.diskpoolthroughput();
+}
+
+//------------------------------------------------------------------------------
+// setDiskpoolThroughput
+//------------------------------------------------------------------------------
+void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
+  checkPayloadWritable();
+  auto payloadMountPolicy = m_payload.mutable_mountpolicy();
+  payloadMountPolicy->set_maxdrives(mountPolicy.getMaxDrives());
+  payloadMountPolicy->set_minbytesqueued(mountPolicy.getMinBytesQueued());
+  payloadMountPolicy->set_minfilesqueued(mountPolicy.getMinFilesQueued());
+  payloadMountPolicy->set_minrequestage(mountPolicy.getMinRequestAge());
+  payloadMountPolicy->set_priority(mountPolicy.getPriority());
+}
+
+//------------------------------------------------------------------------------
+// setDiskpoolThroughput
+//------------------------------------------------------------------------------
+cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMountPolicy() {
+  checkPayloadReadable();
+  cta::common::dataStructures::MountPolicy mountPolicy;
+  auto payloadMountPolicy = m_payload.mountpolicy();
+  mountPolicy.setMaxDrives(payloadMountPolicy.maxdrives());
+  mountPolicy.setMinBytesQueued(payloadMountPolicy.minbytesqueued());
+  mountPolicy.setMinFilesQueued(payloadMountPolicy.minfilesqueued());
+  mountPolicy.setMinRequestAge(payloadMountPolicy.minrequestage());
+  mountPolicy.setPriority(payloadMountPolicy.priority());
+  return mountPolicy;
 }
 
 //------------------------------------------------------------------------------

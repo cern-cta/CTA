@@ -40,6 +40,7 @@
 #include "common/dataStructures/ListStorageClassRequest.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
@@ -184,6 +185,8 @@ public:
  const cta::common::dataStructures::TapeFileLocation tapeFileLocation) = 0;
   
   virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) = 0;
+  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester) = 0;
+  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester) = 0;
 
 }; // class Catalogue
 

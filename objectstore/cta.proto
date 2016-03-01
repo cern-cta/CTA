@@ -428,7 +428,17 @@ message EntryLog {
   required uint64 time = 8970;
 }
 
+message MountPolicy {
+  required uint64 minBytesQueued = 8981;
+  required uint64 minFilesQueued = 8983;
+  required uint64 minRequestAge = 8985;
+  required uint64 priority = 8987;
+  required uint64 maxDrives = 8989;
+}
+
 message ArchiveRequest {
+  required uint64 archiveFileID = 8990;
+  required MountPolicy mountPolicy = 8995;
   required string checksumtype = 9000;
   required string checksumValue = 9010;
   required string diskpoolName = 9020;
@@ -445,6 +455,7 @@ message ArchiveRequest {
 
 message RetrieveRequest {
   required uint64 archiveFileID = 9100;
+  required MountPolicy mountPolicy = 9105;
   required string diskpoolName = 9110;
   required uint64 diskpoolThroughput = 9120;
   required DRData drData = 9130;
