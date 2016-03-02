@@ -17,8 +17,11 @@ cmake_minimum_required (VERSION 2.6)
 
 set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
+  DbLogin.cpp
   DummyCatalogue.cpp
-  SqliteDatabase.cpp)
+  SqliteCatalogue.cpp
+  SqliteConn.cpp
+  SqliteStmt.cpp)
 
 add_library (ctacatalogue
   ${CATALOGUE_LIB_SRC_FILES})

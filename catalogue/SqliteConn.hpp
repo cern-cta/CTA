@@ -25,9 +25,9 @@ namespace cta {
 namespace catalogue {
 
 /**
- * A C++ wrapper around an SQLite database handle.
+ * A C++ wrapper around a connectioin an SQLite database.
  */
-class SqliteDatabase {
+class SqliteConn {
 public:
 
   /**
@@ -35,28 +35,40 @@ public:
    *
    * @param filename The filename to be passed to the sqlit3_open() function.
    */
-  SqliteDatabase(const std::string &filename);
+  SqliteConn(const std::string &filename);
 
   /**
    * Destructor.
    */
-  ~SqliteDatabase();
+  ~SqliteConn() throw();
 
   /**
-   * Returns the underlying database handle.
+   * Returns the underlying database connection.
    *
-   * @return the underlying database handle.
+   * @return the underlying database connection.
    */
-  sqlite3 *getHandle();
+  sqlite3 *get();
+
+  /**
+   * Enables foreign key constraints.
+   */
+  void enableForeignKeys();
+
+  /**
+   * Executes the specified non-query SQL statement.
+   *
+   * @param sql The SQL statement.
+   */
+  void execNonQuery(const std::string &sql);
 
 private:
 
   /**
-   * The database handle.
+   * The database connection.
    */
-  sqlite3 *m_dbHandle;
+  sqlite3 *m_conn;
 
-}; // class SqlLiteDatabase
+}; // class SqlLiteConn
 
 } // namespace catalogue
 } // namespace cta

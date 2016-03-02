@@ -16,33 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/SqliteDatabase.hpp"
+#include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteDatabase::SqliteDatabase(const std::string &filename) {
-  m_dbHandle = NULL;
-  if(sqlite3_open(filename.c_str(), &m_dbHandle)) {
-    sqlite3_close(m_dbHandle);
-    exception::Exception ex;
-    ex.getMessage() << "Failed to construct SqliteDatabase: sqlite3_open failed"
-      ": " << sqlite3_errmsg(m_dbHandle);
-    throw(ex);
-  }
+cta::catalogue::SqliteStmt::SqliteStmt(sqlite3 *const conn) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::catalogue::SqliteStmt::SqliteStmt(SqliteConn &conn) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteDatabase::~SqliteDatabase() {
-  sqlite3_close(m_dbHandle);
+cta::catalogue::SqliteStmt::~SqliteStmt() throw() {
+  sqlite3_finalize(m_stmt);
 }
 
 //------------------------------------------------------------------------------
-// getHandle
+// get
 //------------------------------------------------------------------------------
-sqlite3 *cta::catalogue::SqliteDatabase::getHandle() {
-  return m_dbHandle;
+sqlite3_stmt *cta::catalogue::SqliteStmt::get() {
+  if(NULL == m_stmt) {
+    throw exception::Exception("Failed to get SQLite prepared statement"
+      ": NULL pointer");
+  }
+  return m_stmt;
 }
