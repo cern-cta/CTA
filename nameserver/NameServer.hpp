@@ -48,7 +48,7 @@ public:
    * @param mode The mode bits of the directory entry.
    */
   virtual void createDir(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const mode_t mode) = 0;
 
@@ -59,7 +59,7 @@ public:
    * @param path The absolute path of the directory.
    */
   virtual void deleteDir(
-   const SecurityIdentity &requester,
+   const SecurityIdentity &cliIdentity,
    const std::string &path) = 0;
   
   /**
@@ -71,7 +71,7 @@ public:
    * @param copyNb The copy number of the file.
    */
   virtual std::string getVidOfFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const uint16_t copyNb) const = 0;
 
@@ -83,7 +83,7 @@ public:
    * @return An iterator over the contents of the directory.
    */
   virtual common::archiveNS::ArchiveDirIterator getDirContents(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const = 0;
 
   /**
@@ -97,7 +97,7 @@ public:
    * directory does not exist.
    */
   virtual std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const = 0;
 
   /**
@@ -110,7 +110,7 @@ public:
    * class should have on tape.
    */
   virtual void createStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint16_t nbCopies) = 0;
 
@@ -125,7 +125,7 @@ public:
    * @param id The numeric indentifier of the storage class.
    */
   virtual void createStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint16_t nbCopies,
     const uint32_t id) = 0;
@@ -138,7 +138,7 @@ public:
    * @param name The name of the storage class.
    */
   virtual void deleteStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name) = 0;
 
   /**
@@ -152,7 +152,7 @@ public:
    * class should have on tape.
    */
   virtual void updateStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint16_t nbCopies) = 0;
 
@@ -164,7 +164,7 @@ public:
    * @param storageClassName The name of the storage class.
    */
   virtual void setDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const std::string &storageClassName) = 0;
 
@@ -175,7 +175,7 @@ public:
    * @param path The absolute path of the directory.
    */
   virtual void clearDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) = 0;
 
   /**
@@ -186,7 +186,7 @@ public:
    * @return The name of the storage class of the specified directory.
    */
   virtual std::string getDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const = 0;
  
   /**
@@ -200,7 +200,7 @@ public:
    * @param path The absolute path of the file or directory.
    */
   virtual void assertStorageClassIsNotInUse(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &storageClass,
     const std::string &path) const = 0;
 
@@ -212,7 +212,7 @@ public:
    * @param mode The mode bits of the file entry.
    */
   virtual void createFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const mode_t mode,
     const Checksum & checksum,
@@ -226,7 +226,7 @@ public:
    * @param owner The owner.
    */
   virtual void setOwner(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const UserIdentity &owner) = 0;
 
@@ -238,7 +238,7 @@ public:
    * @return The owner of the specified file or directory entry.
    */
   virtual UserIdentity getOwner(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const = 0;
 
   /**
@@ -248,7 +248,7 @@ public:
    * @param path The absolute path of the file.
    */
   virtual void deleteFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) = 0;
 
   /**
@@ -259,7 +259,7 @@ public:
    * @param nameServerTapeFile The tape file entry.
    */
   virtual void addTapeFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const NameServerTapeFile &tapeFile) = 0;
   
@@ -271,7 +271,7 @@ public:
    * @param copyNb The tape copy to delete.
    */
   virtual void deleteTapeFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const uint16_t copyNb) = 0;
 
@@ -284,7 +284,7 @@ public:
    * @return The tape file entries.
    */
   virtual std::list<NameServerTapeFile> getTapeFiles(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const = 0;
 
 }; // class NameServer

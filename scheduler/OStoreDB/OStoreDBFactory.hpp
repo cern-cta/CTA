@@ -77,36 +77,36 @@ public:
     m_OStoreDB.setTapePoolMountCriteria(tapePool, mountCriteriaByDirection);
   }
 
-  virtual void deleteArchiveRoute(const SecurityIdentity& requester, const std::string& storageClassName, const uint16_t copyNb) {
-    m_OStoreDB.deleteArchiveRoute(requester, storageClassName, copyNb);
+  virtual void deleteArchiveRoute(const SecurityIdentity& cliIdentity, const std::string& storageClassName, const uint16_t copyNb) {
+    m_OStoreDB.deleteArchiveRoute(cliIdentity, storageClassName, copyNb);
   }
 
-  virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile) {
-    m_OStoreDB.deleteArchiveRequest(requester, archiveFile);
+  virtual void deleteArchiveRequest(const SecurityIdentity& cliIdentity, const std::string& archiveFile) {
+    m_OStoreDB.deleteArchiveRequest(cliIdentity, archiveFile);
   }
 
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &requester, const std::string &archiveFile) {
-    return m_OStoreDB.markArchiveRequestForDeletion(requester, archiveFile);
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, const std::string &archiveFile) {
+    return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, archiveFile);
   }
 
-  virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name) {
-    m_OStoreDB.deleteLogicalLibrary(requester, name);
+  virtual void deleteLogicalLibrary(const SecurityIdentity& cliIdentity, const std::string& name) {
+    m_OStoreDB.deleteLogicalLibrary(cliIdentity, name);
   }
 
-  virtual void deleteRetrieveRequest(const SecurityIdentity& requester, const std::string& remoteFile) {
-    m_OStoreDB.deleteRetrieveRequest(requester, remoteFile);
+  virtual void deleteRetrieveRequest(const SecurityIdentity& cliIdentity, const std::string& remoteFile) {
+    m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 
-  virtual void deleteStorageClass(const SecurityIdentity& requester, const std::string& name) {
-    m_OStoreDB.deleteStorageClass(requester, name);
+  virtual void deleteStorageClass(const SecurityIdentity& cliIdentity, const std::string& name) {
+    m_OStoreDB.deleteStorageClass(cliIdentity, name);
   }
 
-  virtual void deleteTape(const SecurityIdentity& requester, const std::string& vid) {
-    m_OStoreDB.deleteTape(requester, vid);
+  virtual void deleteTape(const SecurityIdentity& cliIdentity, const std::string& vid) {
+    m_OStoreDB.deleteTape(cliIdentity, vid);
   }
 
-  virtual void deleteTapePool(const SecurityIdentity& requester, const std::string& name) {
-    m_OStoreDB.deleteTapePool(requester, name);
+  virtual void deleteTapePool(const SecurityIdentity& cliIdentity, const std::string& name) {
+    m_OStoreDB.deleteTapePool(cliIdentity, name);
   }
 
   virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {

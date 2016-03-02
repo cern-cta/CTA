@@ -83,7 +83,7 @@ cta::Scheduler_old::~Scheduler() throw() {
 // getArchiveRequests
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
-  cta::Scheduler_old::getArchiveRequests(const SecurityIdentity &requester) const {
+  cta::Scheduler_old::getArchiveRequests(const SecurityIdentity &cliIdentity) const {
   return m_db.getArchiveRequests();
 }
 
@@ -91,7 +91,7 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
 // getArchiveRequests
 //------------------------------------------------------------------------------
 std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler_old::getArchiveRequests(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &tapePoolName) const {
   return m_db.getArchiveRequests(tapePoolName);
 }
@@ -100,7 +100,7 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::Scheduler_old::getArchiveRequests(
 // deleteArchiveRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteArchiveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &archiveFile) {
   std::unique_ptr<cta::Scheduler_oldDatabase::ArchiveToFileRequestCancelation>
     reqCancelation(
@@ -113,7 +113,7 @@ void cta::Scheduler_old::deleteArchiveRequest(
 // getRetrieveRequests
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
-  Scheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
+  Scheduler::getRetrieveRequests(const SecurityIdentity &cliIdentity) const {
   return m_db.getRetrieveRequests();
 }
 
@@ -121,7 +121,7 @@ std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
 // getRetrieveRequests
 //------------------------------------------------------------------------------
 std::list<cta::RetrieveRequestDump> cta::Scheduler_old::getRetrieveRequests(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid) const {
   return m_db.getRetrieveRequests(vid);
 }
@@ -130,7 +130,7 @@ std::list<cta::RetrieveRequestDump> cta::Scheduler_old::getRetrieveRequests(
 // deleteRetrieveRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteRetrieveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &remoteFile) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteRetrieveRequest(requester, remoteFile);
@@ -140,7 +140,7 @@ void cta::Scheduler_old::deleteRetrieveRequest(
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
@@ -151,7 +151,7 @@ void cta::Scheduler_old::createAdminUser(
 // createAdminUserWithoutAuthorizingRequester
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createAdminUserWithoutAuthorizingRequester(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &comment) {
   m_db.createAdminUser(requester, user, comment);
@@ -161,7 +161,7 @@ void cta::Scheduler_old::createAdminUserWithoutAuthorizingRequester(
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteAdminUser(requester, user);
@@ -180,7 +180,7 @@ std::list<cta::common::admin::AdminUser> cta::Scheduler_old::getAdminUsers(const
 // createAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createAdminHost(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
@@ -193,7 +193,7 @@ void cta::Scheduler_old::createAdminHost(
 // createAdminHostWithoutAuthorizingRequester
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createAdminHostWithoutAuthorizingRequester(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName,
   const std::string &comment) {
   CreationLog log (requester.getUser(), requester.getHost(), time(NULL), comment);
@@ -204,7 +204,7 @@ void cta::Scheduler_old::createAdminHostWithoutAuthorizingRequester(
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteAdminHost(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteAdminHost(requester, hostName);
@@ -222,7 +222,7 @@ std::list<cta::common::admin::AdminHost> cta::Scheduler_old::getAdminHosts(const
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
@@ -243,7 +243,7 @@ void cta::Scheduler_old::createStorageClass(
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint16_t nbCopies,
   const uint32_t id,
@@ -271,7 +271,7 @@ void cta::Scheduler_old::createStorageClass(
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_ns.assertStorageClassIsNotInUse(requester, name, "/");
@@ -283,7 +283,7 @@ void cta::Scheduler_old::deleteStorageClass(
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::Scheduler_old::getStorageClasses(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return m_db.getStorageClasses();
 }
 
@@ -291,7 +291,7 @@ std::list<cta::StorageClass> cta::Scheduler_old::getStorageClasses(
 // createTapePool
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createTapePool(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
@@ -304,7 +304,7 @@ void cta::Scheduler_old::createTapePool(
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteTapePool(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteTapePool(requester, name);
@@ -314,7 +314,7 @@ void cta::Scheduler_old::deleteTapePool(
 // getTapePools
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::Scheduler_old::getTapePools(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return m_db.getTapePools();
 }
 
@@ -330,7 +330,7 @@ void cta::Scheduler_old::setTapePoolMountCriteria(
 // createArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createArchiveRoute(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
@@ -345,7 +345,7 @@ void cta::Scheduler_old::createArchiveRoute(
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteArchiveRoute(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint16_t copyNb) {
   m_db.assertIsAdminOnAdminHost(requester);
@@ -356,7 +356,7 @@ void cta::Scheduler_old::deleteArchiveRoute(
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<cta::common::archiveRoute::ArchiveRoute> cta::Scheduler_old::getArchiveRoutes(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return m_db.getArchiveRoutes();
 }
 
@@ -364,7 +364,7 @@ std::list<cta::common::archiveRoute::ArchiveRoute> cta::Scheduler_old::getArchiv
 // createLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createLogicalLibrary(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const std::string &comment) {
   m_db.assertIsAdminOnAdminHost(requester);
@@ -376,7 +376,7 @@ void cta::Scheduler_old::createLogicalLibrary(
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteLogicalLibrary(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteLogicalLibrary(requester, name);
@@ -386,7 +386,7 @@ void cta::Scheduler_old::deleteLogicalLibrary(
 // getLogicalLibraries
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::Scheduler_old::getLogicalLibraries(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return m_db.getLogicalLibraries();
 }
 
@@ -394,7 +394,7 @@ std::list<cta::LogicalLibrary> cta::Scheduler_old::getLogicalLibraries(
 // createTape
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createTape(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -410,7 +410,7 @@ void cta::Scheduler_old::createTape(
 // deleteTape
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteTape(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid) {
   m_db.assertIsAdminOnAdminHost(requester);
   m_db.deleteTape(requester, vid);
@@ -419,7 +419,7 @@ void cta::Scheduler_old::deleteTape(
 //------------------------------------------------------------------------------
 // getTape
 //------------------------------------------------------------------------------
-cta::Tape cta::Scheduler_old::getTape(const SecurityIdentity &requester,
+cta::Tape cta::Scheduler_old::getTape(const SecurityIdentity &cliIdentity,
   const std::string &vid) const {
   return m_db.getTape(vid);
 }
@@ -428,7 +428,7 @@ cta::Tape cta::Scheduler_old::getTape(const SecurityIdentity &requester,
 // getTapes
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::Scheduler_old::getTapes(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return m_db.getTapes();
 }
 
@@ -436,7 +436,7 @@ std::list<cta::Tape> cta::Scheduler_old::getTapes(
 // createDir
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::createDir(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const mode_t mode) {
   m_ns.createDir(requester, path, mode);
@@ -446,7 +446,7 @@ void cta::Scheduler_old::createDir(
 // setOwner
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::setOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const UserIdentity &owner) {
   m_ns.setOwner(requester, path, owner);
@@ -456,7 +456,7 @@ void cta::Scheduler_old::setOwner(
 // getOwner
 //------------------------------------------------------------------------------
 cta::UserIdentity cta::Scheduler_old::getOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return m_ns.getOwner(requester, path);
 }
@@ -465,7 +465,7 @@ cta::UserIdentity cta::Scheduler_old::getOwner(
 // deleteDir
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::deleteDir(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) {
   m_ns.deleteDir(requester, path);
 }
@@ -474,7 +474,7 @@ void cta::Scheduler_old::deleteDir(
 // getVidOfFile
 //------------------------------------------------------------------------------
 std::string cta::Scheduler_old::getVidOfFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const uint16_t copyNb) const {
   return m_ns.getVidOfFile(requester, path, copyNb);
@@ -484,7 +484,7 @@ std::string cta::Scheduler_old::getVidOfFile(
 // getDirContents
 //------------------------------------------------------------------------------
 cta::common::archiveNS::ArchiveDirIterator cta::Scheduler_old::getDirContents(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return m_ns.getDirContents(requester, path);
 }
@@ -493,7 +493,7 @@ cta::common::archiveNS::ArchiveDirIterator cta::Scheduler_old::getDirContents(
 // statArchiveFile
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::Scheduler_old::statArchiveFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return m_ns.statFile(requester, path);
 }
@@ -502,7 +502,7 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::Scheduler_old::s
 // setDirStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::setDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const std::string &storageClassName) {
   m_ns.setDirStorageClass(requester, path, storageClassName);
@@ -512,7 +512,7 @@ void cta::Scheduler_old::setDirStorageClass(
 // clearDirStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::clearDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) {
   m_ns.clearDirStorageClass(requester, path);
 }
@@ -521,7 +521,7 @@ void cta::Scheduler_old::clearDirStorageClass(
 // getDirStorageClass
 //------------------------------------------------------------------------------
 std::string cta::Scheduler_old::getDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return m_ns.getDirStorageClass(requester, path);
 }
@@ -530,7 +530,7 @@ std::string cta::Scheduler_old::getDirStorageClass(
 // queueArchiveRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::queueArchiveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
 
@@ -608,7 +608,7 @@ void cta::Scheduler_old::assertStorageClassHasAtLeastOneCopy(
 //------------------------------------------------------------------------------
 std::list<cta::ArchiveToFileRequest> cta::Scheduler_old::
   createArchiveToFileRequests(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::list<RemotePathAndStatus> &remoteFiles,
   const std::string &archiveDir,
   const uint64_t priority) {
@@ -631,7 +631,7 @@ std::list<cta::ArchiveToFileRequest> cta::Scheduler_old::
 // queueArchiveToFileRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::queueArchiveToFileRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const RemotePathAndStatus &remoteFile,
   const std::string &archiveFile) {
 
@@ -646,7 +646,7 @@ void cta::Scheduler_old::queueArchiveToFileRequest(
 // createArchiveToFileRequest
 //------------------------------------------------------------------------------
 cta::ArchiveToFileRequest cta::Scheduler_old::createArchiveToFileRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const RemotePathAndStatus &remoteFile,
   const std::string &archiveFilePath,
   const uint64_t priority) const {
@@ -687,7 +687,7 @@ std::map<uint16_t, std::string> cta::Scheduler_old::createCopyNbToPoolMap(
 // queueRetrieveRequest
 //------------------------------------------------------------------------------
 void cta::Scheduler_old::queueRetrieveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
 
@@ -899,6 +899,6 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler_old::getNextMount(
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<cta::common::DriveState> cta::Scheduler_old::getDriveStates(const SecurityIdentity &requester) const {
+std::list<cta::common::DriveState> cta::Scheduler_old::getDriveStates(const SecurityIdentity &cliIdentity) const {
   return m_db.getDriveStates();
 }

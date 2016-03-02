@@ -122,7 +122,7 @@ public:
    * archive namespace.
    */
   void deleteArchiveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &archiveFile);
 
   /*
@@ -136,7 +136,7 @@ public:
    */ 
   class ArchiveToFileRequestCancelation: public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
-    ArchiveToFileRequestCancelation(const SecurityIdentity &requester,
+    ArchiveToFileRequestCancelation(const SecurityIdentity &cliIdentity,
       const std::string &archiveFile, MockSchedulerDatabase & parent): m_requester(requester), 
       m_archiveFile(archiveFile), m_parent(parent) {}
     virtual void complete();
@@ -157,7 +157,7 @@ public:
    * archive namespace.
    */
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &archiveFile);
 
   /**
@@ -202,7 +202,7 @@ public:
    * @param remoteFile The URL of the destination file.
    */
   void deleteRetrieveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &remoteFile);
 
   /**
@@ -213,7 +213,7 @@ public:
    * @param comment The comment describing the sministrator.
    */
   void createAdminUser(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const UserIdentity &user,
     const std::string &comment);
 
@@ -224,7 +224,7 @@ public:
    * @param user The identity of the administrator.
    */
   void deleteAdminUser(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const UserIdentity &user);
 
   /**
@@ -260,7 +260,7 @@ public:
    * @param hostName The network name of the administration host.
    */
   void deleteAdminHost(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &hostName);
 
   /**
@@ -291,7 +291,7 @@ public:
    * @param name The name of the storage class.
    */
   void deleteStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
   /**
@@ -330,7 +330,7 @@ public:
    * @param name The name of the tape pool.
    */
   void deleteTapePool(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
 
@@ -369,7 +369,7 @@ public:
    * @param copyNb The tape copy number.
    */
   void deleteArchiveRoute(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &storageClassName,
     const uint16_t copyNb);
 
@@ -412,7 +412,7 @@ public:
    * @param name The name of the logical library.
    */
   void deleteLogicalLibrary(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
   /**
@@ -446,7 +446,7 @@ public:
    * @param vid The volume identifier of the tape.
    */
   void deleteTape(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid);
 
   /**

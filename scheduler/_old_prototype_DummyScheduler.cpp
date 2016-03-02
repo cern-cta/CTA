@@ -59,7 +59,7 @@ cta::DummyScheduler::~DummyScheduler() throw() {
 // getArchiveRequests
 //------------------------------------------------------------------------------
 std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
-  cta::DummyScheduler::getArchiveRequests(const SecurityIdentity &requester) const {
+  cta::DummyScheduler::getArchiveRequests(const SecurityIdentity &cliIdentity) const {
   return std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >();
 }
 
@@ -67,7 +67,7 @@ std::map<cta::TapePool, std::list<cta::ArchiveToTapeCopyRequest> >
 // getArchiveRequests
 //------------------------------------------------------------------------------
 std::list<cta::ArchiveToTapeCopyRequest> cta::DummyScheduler::getArchiveRequests(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &tapePoolName) const {
   return std::list<cta::ArchiveToTapeCopyRequest>();
 }
@@ -76,7 +76,7 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::DummyScheduler::getArchiveRequests
 // deleteArchiveRequest
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteArchiveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &archiveFile) {
 }
 
@@ -84,7 +84,7 @@ void cta::DummyScheduler::deleteArchiveRequest(
 // getRetrieveRequests
 //------------------------------------------------------------------------------
 std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
-  DummyScheduler::getRetrieveRequests(const SecurityIdentity &requester) const {
+  DummyScheduler::getRetrieveRequests(const SecurityIdentity &cliIdentity) const {
   return std::map<cta::Tape, std::list<cta::RetrieveRequestDump> >();
 }
 
@@ -92,7 +92,7 @@ std::map<cta::Tape, std::list<cta::RetrieveRequestDump> > cta::
 // getRetrieveRequests
 //------------------------------------------------------------------------------
 std::list<cta::RetrieveRequestDump> cta::DummyScheduler::getRetrieveRequests(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid) const {
   return std::list<cta::RetrieveRequestDump>();
 }
@@ -101,7 +101,7 @@ std::list<cta::RetrieveRequestDump> cta::DummyScheduler::getRetrieveRequests(
 // deleteRetrieveRequest
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteRetrieveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &remoteFile) {
 }
 
@@ -109,7 +109,7 @@ void cta::DummyScheduler::deleteRetrieveRequest(
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &comment) {
 }
@@ -118,7 +118,7 @@ void cta::DummyScheduler::createAdminUser(
 // createAdminUserWithoutAuthorizingRequester
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createAdminUserWithoutAuthorizingRequester(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &comment) {
 }
@@ -127,7 +127,7 @@ void cta::DummyScheduler::createAdminUserWithoutAuthorizingRequester(
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user) {
 }
 
@@ -143,7 +143,7 @@ std::list<cta::common::admin::AdminUser> cta::DummyScheduler::getAdminUsers(cons
 // createAdminHost
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createAdminHost(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName,
   const std::string &comment) {
 }
@@ -152,7 +152,7 @@ void cta::DummyScheduler::createAdminHost(
 // createAdminHostWithoutAuthorizingRequester
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createAdminHostWithoutAuthorizingRequester(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName,
   const std::string &comment) {
 }
@@ -161,7 +161,7 @@ void cta::DummyScheduler::createAdminHostWithoutAuthorizingRequester(
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteAdminHost(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName) {
 }
 
@@ -177,7 +177,7 @@ std::list<cta::common::admin::AdminHost> cta::DummyScheduler::getAdminHosts(cons
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint16_t nbCopies,
   const std::string &comment) {
@@ -187,7 +187,7 @@ void cta::DummyScheduler::createStorageClass(
 // createStorageClass
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint16_t nbCopies,
   const uint32_t id,
@@ -198,7 +198,7 @@ void cta::DummyScheduler::createStorageClass(
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
 }
 
@@ -206,7 +206,7 @@ void cta::DummyScheduler::deleteStorageClass(
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<cta::StorageClass> cta::DummyScheduler::getStorageClasses(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return std::list<cta::StorageClass>();
 }
 
@@ -214,7 +214,7 @@ std::list<cta::StorageClass> cta::DummyScheduler::getStorageClasses(
 // createTapePool
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createTapePool(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint32_t nbPartialTapes,
   const std::string &comment) {
@@ -224,7 +224,7 @@ void cta::DummyScheduler::createTapePool(
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteTapePool(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
 }
 
@@ -232,7 +232,7 @@ void cta::DummyScheduler::deleteTapePool(
 // getTapePools
 //------------------------------------------------------------------------------
 std::list<cta::TapePool> cta::DummyScheduler::getTapePools(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return std::list<cta::TapePool>();
 }
 
@@ -240,7 +240,7 @@ std::list<cta::TapePool> cta::DummyScheduler::getTapePools(
 // createArchiveRoute
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createArchiveRoute(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint16_t copyNb,
   const std::string &tapePoolName,
@@ -251,7 +251,7 @@ void cta::DummyScheduler::createArchiveRoute(
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteArchiveRoute(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint16_t copyNb) {
 }
@@ -260,7 +260,7 @@ void cta::DummyScheduler::deleteArchiveRoute(
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<cta::common::archiveRoute::ArchiveRoute> cta::DummyScheduler::getArchiveRoutes(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return std::list<cta::common::archiveRoute::ArchiveRoute>();
 }
 
@@ -268,7 +268,7 @@ std::list<cta::common::archiveRoute::ArchiveRoute> cta::DummyScheduler::getArchi
 // createLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createLogicalLibrary(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name,
   const std::string &comment) {
 }
@@ -277,7 +277,7 @@ void cta::DummyScheduler::createLogicalLibrary(
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteLogicalLibrary(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
 }
 
@@ -285,7 +285,7 @@ void cta::DummyScheduler::deleteLogicalLibrary(
 // getLogicalLibraries
 //------------------------------------------------------------------------------
 std::list<cta::LogicalLibrary> cta::DummyScheduler::getLogicalLibraries(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return std::list<cta::LogicalLibrary>();
 }
 
@@ -293,7 +293,7 @@ std::list<cta::LogicalLibrary> cta::DummyScheduler::getLogicalLibraries(
 // createTape
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createTape(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -305,14 +305,14 @@ void cta::DummyScheduler::createTape(
 // deleteTape
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteTape(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid) {
 }
 
 //------------------------------------------------------------------------------
 // getTape
 //------------------------------------------------------------------------------
-cta::Tape cta::DummyScheduler::getTape(const SecurityIdentity &requester,
+cta::Tape cta::DummyScheduler::getTape(const SecurityIdentity &cliIdentity,
   const std::string &vid) const {
   return Tape();
 }
@@ -321,7 +321,7 @@ cta::Tape cta::DummyScheduler::getTape(const SecurityIdentity &requester,
 // getTapes
 //------------------------------------------------------------------------------
 std::list<cta::Tape> cta::DummyScheduler::getTapes(
-  const SecurityIdentity &requester) const {
+  const SecurityIdentity &cliIdentity) const {
   return std::list<cta::Tape>();
 }
 
@@ -329,7 +329,7 @@ std::list<cta::Tape> cta::DummyScheduler::getTapes(
 // createDir
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::createDir(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const mode_t mode) {
 }
@@ -338,7 +338,7 @@ void cta::DummyScheduler::createDir(
 // setOwner
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::setOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const UserIdentity &owner) {
 }
@@ -347,7 +347,7 @@ void cta::DummyScheduler::setOwner(
 // getOwner
 //------------------------------------------------------------------------------
 cta::UserIdentity cta::DummyScheduler::getOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return cta::UserIdentity();
 }
@@ -356,7 +356,7 @@ cta::UserIdentity cta::DummyScheduler::getOwner(
 // deleteDir
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::deleteDir(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) {
 }
 
@@ -364,7 +364,7 @@ void cta::DummyScheduler::deleteDir(
 // getVidOfFile
 //------------------------------------------------------------------------------
 std::string cta::DummyScheduler::getVidOfFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const uint16_t copyNb) const {
   return std::string();
@@ -374,7 +374,7 @@ std::string cta::DummyScheduler::getVidOfFile(
 // getDirContents
 //------------------------------------------------------------------------------
 cta::common::archiveNS::ArchiveDirIterator cta::DummyScheduler::getDirContents(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return cta::common::archiveNS::ArchiveDirIterator();
 }
@@ -383,7 +383,7 @@ cta::common::archiveNS::ArchiveDirIterator cta::DummyScheduler::getDirContents(
 // statArchiveFile
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::DummyScheduler::statArchiveFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus>();
 }
@@ -392,7 +392,7 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::DummyScheduler::
 // setDirStorageClass
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::setDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const std::string &storageClassName) {
 }
@@ -401,7 +401,7 @@ void cta::DummyScheduler::setDirStorageClass(
 // clearDirStorageClass
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::clearDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) {
 }
   
@@ -409,7 +409,7 @@ void cta::DummyScheduler::clearDirStorageClass(
 // getDirStorageClass
 //------------------------------------------------------------------------------
 std::string cta::DummyScheduler::getDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
   return std::string();
 }
@@ -418,7 +418,7 @@ std::string cta::DummyScheduler::getDirStorageClass(
 // queueArchiveRequest
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::queueArchiveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::list<std::string> &remoteFiles,
   const std::string &archiveFileOrDir) {
 }
@@ -427,7 +427,7 @@ void cta::DummyScheduler::queueArchiveRequest(
 // queueRetrieveRequest
 //------------------------------------------------------------------------------
 void cta::DummyScheduler::queueRetrieveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::list<std::string> &archiveFiles,
   const std::string &remoteFileOrDir) {
 }

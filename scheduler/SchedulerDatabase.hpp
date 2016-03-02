@@ -123,7 +123,7 @@ public:
    * archive namespace.
    */
   virtual void deleteArchiveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &archiveFile) = 0;
   
   /*
@@ -150,7 +150,7 @@ public:
    * archive namespace.
    */
   virtual std::unique_ptr<ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &archiveFile) = 0;
 
   /*============ Archive management: tape server side =======================*/
@@ -226,7 +226,7 @@ public:
    * @param remoteFile The URL of the destination file.
    */
   virtual void deleteRetrieveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
   
   /*============ Retrieve management: tape server side ======================*/
@@ -369,7 +369,7 @@ public:
    * @param name The name of the storage class.
    */
   virtual void deleteStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name) = 0;
 
   /**
@@ -417,7 +417,7 @@ public:
    * @param name The name of the tape pool.
    */
   virtual void deleteTapePool(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name) = 0;
 
   /**
@@ -453,7 +453,7 @@ public:
    * @param copyNb The tape copy number.
    */
   virtual void deleteArchiveRoute(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &storageClassName,
     const uint16_t copyNb) = 0;
 
@@ -499,7 +499,7 @@ public:
    * @param name The name of the logical library.
    */
   virtual void deleteLogicalLibrary(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name) = 0;
 
   /**
@@ -535,7 +535,7 @@ public:
    * @param vid The volume identifier of the tape.
    */
   virtual void deleteTape(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid) = 0;
 
   /**

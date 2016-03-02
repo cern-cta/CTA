@@ -532,7 +532,7 @@ std::list<cta::ArchiveToTapeCopyRequest> cta::MockSchedulerDatabase::
 // deleteArchiveRequest
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteArchiveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &archiveFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -559,7 +559,7 @@ void cta::MockSchedulerDatabase::deleteArchiveRequest(
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> 
   cta::MockSchedulerDatabase::markArchiveRequestForDeletion(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &archiveFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -600,7 +600,7 @@ void cta::MockSchedulerDatabase::queue(const RetrieveToDirRequest &rqst) {
 void cta::MockSchedulerDatabase::queue(const RetrieveToFileRequest &rqst) {
 /*
   char *zErrMsg = 0;
-  const SecurityIdentity &requester = rqst.getRequester();
+  const SecurityIdentity &cliIdentity = rqst.getRequester();
   std::ostringstream query;
   query << "INSERT INTO RETRIEVEFROMTAPECOPYREQUEST(ARCHIVEFILE, REMOTEFILE, COPYNB, VID, FSEQ, BLOCKID, PRIORITY, UID,"
     " GID, HOST, CREATIONTIME) VALUES(" << (int)cta::RetrieveFromTapeCopyRequestState::PENDING <<
@@ -725,7 +725,7 @@ std::list<cta::RetrieveFromTapeCopyRequest> cta::MockSchedulerDatabase::getRetri
 // deleteRetrieveRequest
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteRetrieveRequest(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &remoteFile) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -751,7 +751,7 @@ void cta::MockSchedulerDatabase::deleteRetrieveRequest(
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::createAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &comment) {
   const uint32_t adminUid = user.uid;
@@ -782,7 +782,7 @@ void cta::MockSchedulerDatabase::createAdminUser(
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteAdminUser(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -937,7 +937,7 @@ void cta::MockSchedulerDatabase::createAdminHost(
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteAdminHost(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &hostName) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -1015,7 +1015,7 @@ void cta::MockSchedulerDatabase::createStorageClass(
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -1148,7 +1148,7 @@ void cta::MockSchedulerDatabase::createTapePool(
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteTapePool(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -1267,7 +1267,7 @@ void cta::MockSchedulerDatabase::assertTapePoolIsNotAlreadyADestination(
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteArchiveRoute(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint16_t copyNb) {
   char *zErrMsg = 0;
@@ -1410,7 +1410,7 @@ void cta::MockSchedulerDatabase::createLogicalLibrary(
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteLogicalLibrary(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &name) {
   char *zErrMsg = 0;
   std::ostringstream query;
@@ -1495,7 +1495,7 @@ void cta::MockSchedulerDatabase::createTape(
 // deleteTape
 //------------------------------------------------------------------------------
 void cta::MockSchedulerDatabase::deleteTape(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &vid) {
   char *zErrMsg = 0;
   std::ostringstream query;

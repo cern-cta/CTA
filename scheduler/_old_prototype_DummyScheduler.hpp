@@ -55,7 +55,7 @@ public:
    * @return The queued requests.
    */
   std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Returns the list of queued archive requests for the specified tape pool.
@@ -66,7 +66,7 @@ public:
    * @return The queued requests.
    */
   std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &tapePoolName) const;
 
   /**
@@ -77,7 +77,7 @@ public:
    * archive namespace.
    */
   void deleteArchiveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &remoteFile);
 
   /**
@@ -89,7 +89,7 @@ public:
    * grouped by tape and then sorted by creation time, oldest first.
    */
   std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Returns the queued retrieve requests for the specified tape.  The
@@ -101,7 +101,7 @@ public:
    * returned requests are sorted by creation time, oldest first.
    */
   std::list<RetrieveRequestDump> getRetrieveRequests(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid) const;
   
   /**
@@ -111,7 +111,7 @@ public:
    * @param remoteFile The URL of the remote file.
    */
   void deleteRetrieveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &remoteFile);
 
   /**
@@ -122,7 +122,7 @@ public:
    * @param comment The comment describing the sministrator.
    */
   void createAdminUser(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const UserIdentity &user,
     const std::string &comment);
 
@@ -140,7 +140,7 @@ public:
    * @param comment The comment describing the sministrator.
    */
   void createAdminUserWithoutAuthorizingRequester(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const UserIdentity &user,
     const std::string &comment);
 
@@ -152,7 +152,7 @@ public:
    * @param user The identity of the administrator.
    */
   void deleteAdminUser(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const UserIdentity &user);
 
   /**
@@ -161,7 +161,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administrators in lexicographical order.
    */
-  std::list<common::admin::AdminUser> getAdminUsers(const SecurityIdentity &requester) const;
+  std::list<common::admin::AdminUser> getAdminUsers(const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates the specified administration host.
@@ -171,7 +171,7 @@ public:
    * @param comment The comment describing the administration host.
    */
   void createAdminHost(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &hostName,
     const std::string &comment);
 
@@ -188,7 +188,7 @@ public:
    * @param comment The comment describing the administration host.
    */
   void createAdminHostWithoutAuthorizingRequester(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &hostName,
     const std::string &comment);
 
@@ -200,7 +200,7 @@ public:
    * @param hostName The network name of the administration host.
    */
   void deleteAdminHost(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &hostName);
 
   /**
@@ -209,7 +209,7 @@ public:
    * @param requester The identity of the user requesting the list.
    * @return The current list of administration hosts in lexicographical order.
    */
-  std::list<common::admin::AdminHost> getAdminHosts(const SecurityIdentity &requester) const;
+  std::list<common::admin::AdminHost> getAdminHosts(const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates the specified storage class.
@@ -222,7 +222,7 @@ public:
    * @param comment The comment describing the storage class.
    */
   void createStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint16_t nbCopies,
     const std::string &comment);
@@ -239,7 +239,7 @@ public:
    * @param comment The comment describing the storage class.
    */
   void createStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint16_t nbCopies,
     const uint32_t id,
@@ -253,7 +253,7 @@ public:
    * @param name The name of the storage class.
    */
   void deleteStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
   /**
@@ -263,7 +263,7 @@ public:
    * @return The current list of storage classes in lexicographical order.
    */
   std::list<StorageClass> getStorageClasses(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates a tape pool with the specifed name.
@@ -276,7 +276,7 @@ public:
    * @param comment The comment describing the tape pool.
    */
   void createTapePool(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint32_t nbPartialTapes,
     const std::string &comment);
@@ -289,7 +289,7 @@ public:
    * @param name The name of the tape pool.
    */
   void deleteTapePool(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
   /**
@@ -299,7 +299,7 @@ public:
    * @return The current list of tape pools in lexicographical order.
    */
   std::list<TapePool> getTapePools(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates the specified archive route.
@@ -313,7 +313,7 @@ public:
    * @param comment The comment describing the archive route.
    */
   void createArchiveRoute(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &storageClassName,
     const uint16_t copyNb,
     const std::string &tapePoolName,
@@ -329,7 +329,7 @@ public:
    * @param copyNb The tape copy number.
    */
   void deleteArchiveRoute(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &storageClassName,
     const uint16_t copyNb);
 
@@ -339,7 +339,7 @@ public:
    * @param requester The identity of the user requesting the list.
    */
   std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates a logical library with the specified name.
@@ -350,7 +350,7 @@ public:
    * @param comment The comment describing the logical library.
    */
   void createLogicalLibrary(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name,
     const std::string &comment);
 
@@ -362,7 +362,7 @@ public:
    * @param name The name of the logical library.
    */
   void deleteLogicalLibrary(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &name);
 
   /**
@@ -372,7 +372,7 @@ public:
    * @return The current list of libraries in lexicographical order.
    */
   std::list<LogicalLibrary> getLogicalLibraries(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates a tape.
@@ -386,7 +386,7 @@ public:
    * @param creationLog The who, where, when an why of this modification.
    */
   void createTape(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
@@ -400,7 +400,7 @@ public:
    * @param vid The volume identifier of the tape.
    */
   void deleteTape(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid);
 
   /**
@@ -411,7 +411,7 @@ public:
    * @return The tape with the specified volume identifier.
    */
   Tape getTape(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &vid) const;
 
   /**
@@ -423,7 +423,7 @@ public:
    * volume identifiers.
    */
   std::list<Tape> getTapes(
-    const SecurityIdentity &requester) const;
+    const SecurityIdentity &cliIdentity) const;
 
   /**
    * Creates the specified directory.
@@ -433,7 +433,7 @@ public:
    * @param mode The mode bits of the directory entry.
    */
   void createDir(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const mode_t mode);
   
@@ -445,7 +445,7 @@ public:
    * @param owner The owner.
    */
   void setOwner(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const UserIdentity &owner);
     
@@ -457,7 +457,7 @@ public:
    * @return The owner of the specified file or directory entry.
    */
   virtual UserIdentity getOwner(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
 
   /**
@@ -467,7 +467,7 @@ public:
    * @param path The absolute path of the directory.
    */
   void deleteDir(
-   const SecurityIdentity &requester,
+   const SecurityIdentity &cliIdentity,
    const std::string &path);
 
   /**
@@ -479,7 +479,7 @@ public:
    * @param copyNb The copy number of the file.
    */
   std::string getVidOfFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const uint16_t copyNb) const;
 
@@ -491,7 +491,7 @@ public:
    * @return An iterator over the contents of the directory.
    */
   common::archiveNS::ArchiveDirIterator getDirContents(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
 
   /**
@@ -505,7 +505,7 @@ public:
    * directory does not exist.
    */
   std::unique_ptr<common::archiveNS::ArchiveFileStatus> statArchiveFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
 
   /**
@@ -516,7 +516,7 @@ public:
    * @param storageClassName The name of the storage class.
    */
   void setDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const std::string &storageClassName);
 
@@ -527,7 +527,7 @@ public:
    * @param path The absolute path of the directory.
    */ 
   void clearDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path);
 
   /**
@@ -538,7 +538,7 @@ public:
    * @return The name of the storage class of the specified directory.
    */
   std::string getDirStorageClass(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
 
   /**
@@ -559,7 +559,7 @@ public:
    * directory within the archive namespace.
    */
   void queueArchiveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::list<std::string> &remoteFiles,
     const std::string &archiveFileOrDir);
 
@@ -578,7 +578,7 @@ public:
    * @param remoteFileOrDir The URL of the destination remote file or directory.
    */
   void queueRetrieveRequest(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::list<std::string> &archiveFiles,
     const std::string &remoteFileOrDir);
   

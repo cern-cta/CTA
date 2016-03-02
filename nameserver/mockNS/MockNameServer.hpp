@@ -61,39 +61,39 @@ public:
    */
   ~MockNameServer() throw();  
 
-  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies); 
+  void createStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies); 
 
-  void createStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies, const uint32_t id);
+  void createStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies, const uint32_t id);
 
-  void deleteStorageClass(const SecurityIdentity &requester, const std::string &name);
+  void deleteStorageClass(const SecurityIdentity &cliIdentity, const std::string &name);
 
-  void updateStorageClass(const SecurityIdentity &requester, const std::string &name, const uint16_t nbCopies);
+  void updateStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies);
   
-  void setDirStorageClass(const SecurityIdentity &requester, const std::string &path, const std::string &storageClassName);
+  void setDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path, const std::string &storageClassName);
   
-  void clearDirStorageClass(const SecurityIdentity &requester, const std::string &path);
+  void clearDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path);
   
-  std::string getDirStorageClass(const SecurityIdentity &requester, const std::string &path) const;
+  std::string getDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path) const;
   
-  void createFile(const SecurityIdentity &requester, const std::string &path, const mode_t mode, const Checksum & checkcum, const uint64_t size);
+  void createFile(const SecurityIdentity &cliIdentity, const std::string &path, const mode_t mode, const Checksum & checkcum, const uint64_t size);
 
-  void setOwner(const SecurityIdentity &requester, const std::string &path, const UserIdentity &owner);
+  void setOwner(const SecurityIdentity &cliIdentity, const std::string &path, const UserIdentity &owner);
 
-  UserIdentity getOwner(const SecurityIdentity &requester, const std::string &path) const;
+  UserIdentity getOwner(const SecurityIdentity &cliIdentity, const std::string &path) const;
   
-  void createDir(const SecurityIdentity &requester, const std::string &path, const mode_t mode);
+  void createDir(const SecurityIdentity &cliIdentity, const std::string &path, const mode_t mode);
   
-  void deleteFile(const SecurityIdentity &requester, const std::string &path);
+  void deleteFile(const SecurityIdentity &cliIdentity, const std::string &path);
   
-  void deleteDir(const SecurityIdentity &requester, const std::string &path);
+  void deleteDir(const SecurityIdentity &cliIdentity, const std::string &path);
   
-  std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(const SecurityIdentity &requester, const std::string &path) const;
+  std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(const SecurityIdentity &cliIdentity, const std::string &path) const;
   
-  common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &requester, const std::string &path) const;
+  common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &cliIdentity, const std::string &path) const;
   
-  std::string getVidOfFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) const;
+  std::string getVidOfFile(const SecurityIdentity &cliIdentity, const std::string &path, const uint16_t copyNb) const;
   
-  void assertStorageClassIsNotInUse(const SecurityIdentity &requester, const std::string &storageClass, const std::string &path) const;
+  void assertStorageClassIsNotInUse(const SecurityIdentity &cliIdentity, const std::string &storageClass, const std::string &path) const;
 
   /**
    * Add the specified tape file entry to the archive namespace.
@@ -103,7 +103,7 @@ public:
    * @param nameServerTapeFile The tape file entry.
    */
   void addTapeFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const NameServerTapeFile &tapeFile);
 
@@ -116,7 +116,7 @@ public:
    * @return The tape file entries.
    */
   std::list<NameServerTapeFile> getTapeFiles(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
   
   /**
@@ -127,7 +127,7 @@ public:
    * @param copyNb The tape copy to delete.
    */
   virtual void deleteTapeFile(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const uint16_t copyNb);
 
@@ -161,7 +161,7 @@ private:
   
   void assertFsPathDoesNotExist(const std::string &path) const;
   
-  std::list<cta::common::archiveNS::ArchiveDirEntry> getDirEntries(const SecurityIdentity &requester, const std::string &path) const;
+  std::list<cta::common::archiveNS::ArchiveDirEntry> getDirEntries(const SecurityIdentity &cliIdentity, const std::string &path) const;
 
   /**
    * Throws an exception if the specified user is not the owner of the
@@ -171,7 +171,7 @@ private:
    * @param user The user.
    * @param path The absolute path of the namespace entry.
    */
-  void assertIsOwner(const SecurityIdentity &requester, const UserIdentity &user, const std::string &path) const;
+  void assertIsOwner(const SecurityIdentity &cliIdentity, const UserIdentity &user, const std::string &path) const;
 
   /**
    * Returns the directory entry corresponding to the specified path.
@@ -180,7 +180,7 @@ private:
    * @param The absolute path of the namespace entry.
    */
   common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path) const;
 
   /**
@@ -192,7 +192,7 @@ private:
    * @param statResult The result of running stat().
    */
   common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
-    const SecurityIdentity &requester,
+    const SecurityIdentity &cliIdentity,
     const std::string &path,
     const struct stat statResult) const;
   

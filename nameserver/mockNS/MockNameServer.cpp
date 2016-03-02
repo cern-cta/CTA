@@ -132,7 +132,7 @@ void cta::MockNameServer::assertFsPathDoesNotExist(const std::string &path)
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
+void cta::MockNameServer::createStorageClass(const SecurityIdentity &cliIdentity,
   const std::string &name, const uint16_t nbCopies) {
   //no need to do anything here
 }
@@ -140,7 +140,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
+void cta::MockNameServer::createStorageClass(const SecurityIdentity &cliIdentity,
   const std::string &name, const uint16_t nbCopies, const uint32_t id) {
   //no need to do anything here
 } 
@@ -148,7 +148,7 @@ void cta::MockNameServer::createStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
+void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &cliIdentity,
   const std::string &name) {
   //no need to do anything here
 }
@@ -156,7 +156,7 @@ void cta::MockNameServer::deleteStorageClass(const SecurityIdentity &requester,
 //------------------------------------------------------------------------------
 // updateStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::updateStorageClass(const SecurityIdentity &requester,
+void cta::MockNameServer::updateStorageClass(const SecurityIdentity &cliIdentity,
   const std::string &name, const uint16_t nbCopies) {
 
   std::lock_guard<std::mutex> lock(m_mutex);
@@ -167,12 +167,12 @@ void cta::MockNameServer::updateStorageClass(const SecurityIdentity &requester,
 // assertStorageClassIsNotInUse
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertStorageClassIsNotInUse(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &storageClass,
   const std::string &path) const {
 
 
-  if(getDirStorageClass(requester, path) == storageClass) {
+  if(getDirStorageClass(cliIdentity, path) == storageClass) {
     std::ostringstream msg;
     msg << "assertStorageClassIsNotInUse() - " << path << " has the " <<
       storageClass << " storage class.";
@@ -198,7 +198,7 @@ void cta::MockNameServer::assertStorageClassIsNotInUse(
       const std::string entryPath = pathEndsWithASlash ?
         path + entryName : path + "/" + entryName;
       try {
-        assertStorageClassIsNotInUse(requester, storageClass, entryPath);
+        assertStorageClassIsNotInUse(cliIdentity, storageClass, entryPath);
       } catch (...) {
         closedir(dp);
         throw;
@@ -249,7 +249,7 @@ cta::NameServerTapeFile cta::MockNameServer::fromStringToNameServerTapeFile(cons
 //------------------------------------------------------------------------------
 // addTapeFile
 //------------------------------------------------------------------------------
-void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const std::string &path, const NameServerTapeFile &tapeFile) {
+void cta::MockNameServer::addTapeFile(const SecurityIdentity &cliIdentity, const std::string &path, const NameServerTapeFile &tapeFile) {
   std::lock_guard<std::mutex> lock(m_mutex);
   utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
@@ -268,7 +268,7 @@ void cta::MockNameServer::addTapeFile(const SecurityIdentity &requester, const s
 //------------------------------------------------------------------------------
 // getTapeFiles
 //------------------------------------------------------------------------------
-std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &requester, const std::string &path) const {
+std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const SecurityIdentity &cliIdentity, const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
   const std::string fsPath = m_fsDir + path;
@@ -288,7 +288,7 @@ std::list<cta::NameServerTapeFile> cta::MockNameServer::getTapeFiles(const Secur
 //------------------------------------------------------------------------------
 // deleteTapeFile
 //------------------------------------------------------------------------------
-void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &requester, const std::string &path, const uint16_t copyNb) {
+void cta::MockNameServer::deleteTapeFile(const SecurityIdentity &cliIdentity, const std::string &path, const uint16_t copyNb) {
 
   std::lock_guard<std::mutex> lock(m_mutex);
   utils::assertAbsolutePathSyntax(path);
@@ -363,7 +363,7 @@ cta::MockNameServer::~MockNameServer() throw() {
 //------------------------------------------------------------------------------
 // setDirStorageClass
 //------------------------------------------------------------------------------
-void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
+void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &cliIdentity,
   const std::string &path, const std::string &storageClassName) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -377,17 +377,17 @@ void cta::MockNameServer::setDirStorageClass(const SecurityIdentity &requester,
 // clearDirStorageClass
 //------------------------------------------------------------------------------
 void cta::MockNameServer::clearDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) {
 
-  setDirStorageClass(requester, path, "");
+  setDirStorageClass(cliIdentity, path, "");
 }  
 
 //------------------------------------------------------------------------------
 // getDirStorageClass
 //------------------------------------------------------------------------------
 std::string cta::MockNameServer::getDirStorageClass(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
@@ -401,7 +401,7 @@ std::string cta::MockNameServer::getDirStorageClass(
 // createFile
 //------------------------------------------------------------------------------
 void cta::MockNameServer::createFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const mode_t mode,
   const Checksum &checksum,
@@ -412,7 +412,7 @@ void cta::MockNameServer::createFile(
     utils::assertAbsolutePathSyntax(path);  
     const std::string dir = utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + dir);
-    assertIsOwner(requester, requester.getUser(), dir);
+    assertIsOwner(cliIdentity, cliIdentity.getUser(), dir);
 
     const std::string fsPath = m_fsDir + path;
     assertFsPathDoesNotExist(fsPath);
@@ -447,19 +447,19 @@ void cta::MockNameServer::createFile(
     utils::setXattr(fsPath, "user.CTAMode", modeString.str());
     utils::setXattr(fsPath, "user.CTAChecksum", checksum.str());
   }
-  setOwner(requester, path, requester.getUser());
+  setOwner(cliIdentity, path, cliIdentity.getUser());
 }
 
 //------------------------------------------------------------------------------
 // assertIsOwner
 //------------------------------------------------------------------------------
 void cta::MockNameServer::assertIsOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const UserIdentity &user,
   const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
-  const UserIdentity owner = getOwner(requester, path);
+  const UserIdentity owner = getOwner(cliIdentity, path);
 
   if(user != owner) {
     std::ostringstream msg;
@@ -473,7 +473,7 @@ void cta::MockNameServer::assertIsOwner(
 // setOwner
 //------------------------------------------------------------------------------
 void cta::MockNameServer::setOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const UserIdentity &owner) {
   std::lock_guard<std::mutex> lock(m_mutex);
@@ -491,7 +491,7 @@ void cta::MockNameServer::setOwner(
 // getOwner
 //------------------------------------------------------------------------------
 cta::UserIdentity cta::MockNameServer::getOwner(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
@@ -514,7 +514,7 @@ cta::UserIdentity cta::MockNameServer::getOwner(
 //------------------------------------------------------------------------------
 // createDir
 //------------------------------------------------------------------------------
-void cta::MockNameServer::createDir(const SecurityIdentity &requester,
+void cta::MockNameServer::createDir(const SecurityIdentity &cliIdentity,
   const std::string &path, const mode_t mode) {
   std::string inheritedStorageClass = "";
   {
@@ -523,9 +523,9 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
     utils::assertAbsolutePathSyntax(path);  
     const std::string enclosingPath = utils::getEnclosingPath(path);
     assertFsDirExists(m_fsDir + enclosingPath);
-    assertIsOwner(requester, requester.getUser(), enclosingPath);
+    assertIsOwner(cliIdentity, cliIdentity.getUser(), enclosingPath);
 
-    inheritedStorageClass = getDirStorageClass(requester, enclosingPath);
+    inheritedStorageClass = getDirStorageClass(cliIdentity, enclosingPath);
     const std::string fsPath = m_fsDir + path;
     if(mkdir(fsPath.c_str(), 0777)) {
       const int savedErrno = errno;
@@ -541,14 +541,14 @@ void cta::MockNameServer::createDir(const SecurityIdentity &requester,
     modeString << std::oct << mode;
     utils::setXattr(fsPath, "user.CTAMode", modeString.str());
   }
-  setDirStorageClass(requester, path, inheritedStorageClass);
-  setOwner(requester, path, requester.getUser());
+  setDirStorageClass(cliIdentity, path, inheritedStorageClass);
+  setOwner(cliIdentity, path, cliIdentity.getUser());
 }  
 
 //------------------------------------------------------------------------------
 // deleteFile
 //------------------------------------------------------------------------------
-void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const std::string &path) { 
+void cta::MockNameServer::deleteFile(const SecurityIdentity &cliIdentity, const std::string &path) { 
   std::lock_guard<std::mutex> lock(m_mutex); 
 
   utils::assertAbsolutePathSyntax(path);
@@ -566,7 +566,7 @@ void cta::MockNameServer::deleteFile(const SecurityIdentity &requester, const st
 //------------------------------------------------------------------------------
 // deleteDir
 //------------------------------------------------------------------------------
-void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
+void cta::MockNameServer::deleteDir(const SecurityIdentity &cliIdentity,
   const std::string &path) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -591,7 +591,7 @@ void cta::MockNameServer::deleteDir(const SecurityIdentity &requester,
 // statFile
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::statFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
@@ -612,7 +612,7 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::
     throw(exception::Exception(msg.str()));
   }
 
-  common::archiveNS::ArchiveDirEntry entry = getArchiveDirEntry(requester, path, statResult);
+  common::archiveNS::ArchiveDirEntry entry = getArchiveDirEntry(cliIdentity, path, statResult);
   return std::unique_ptr<common::archiveNS::ArchiveFileStatus>(
     new common::archiveNS::ArchiveFileStatus(entry.status));
 }
@@ -621,7 +621,7 @@ std::unique_ptr<cta::common::archiveNS::ArchiveFileStatus> cta::MockNameServer::
 // getDirEntries
 //------------------------------------------------------------------------------
 std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEntries(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const { 
  
   const std::string fsPath = m_fsDir + path;
@@ -651,14 +651,14 @@ std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEn
       if(entryName != "." && entryName != "..") {
         const std::string entryPath = pathEndsWithASlash ?
           path + entryName : path + "/" + entryName;
-        entries.push_back(getArchiveDirEntry(requester, entryPath));
+        entries.push_back(getArchiveDirEntry(cliIdentity, entryPath));
       }
     }
     closedir(dp);  
     return entries;
   } else if(S_ISREG(statResult.st_mode)) {
     std::list<common::archiveNS::ArchiveDirEntry> entries;
-    entries.push_back(getArchiveDirEntry(requester, path));  
+    entries.push_back(getArchiveDirEntry(cliIdentity, path));  
     return entries;
   } else {
     std::ostringstream msg;
@@ -672,7 +672,7 @@ std::list<cta::common::archiveNS::ArchiveDirEntry> cta::MockNameServer::getDirEn
 // getArchiveDirEntry
 //------------------------------------------------------------------------------
 cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
@@ -687,14 +687,14 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
     throw(exception::Exception(msg.str()));
   }
 
-  return getArchiveDirEntry(requester, path, statResult);
+  return getArchiveDirEntry(cliIdentity, path, statResult);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveDirEntry
 //------------------------------------------------------------------------------
 cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const struct stat statResult) const {
 
@@ -707,11 +707,11 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
   
   if(S_ISDIR(statResult.st_mode)) {
     entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY;
-    storageClassName = getDirStorageClass(requester, path);
+    storageClassName = getDirStorageClass(cliIdentity, path);
   } else if(S_ISREG(statResult.st_mode)) {
     entryType = common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE;
-    storageClassName = getDirStorageClass(requester, enclosingPath);
-    tapeCopies = getTapeFiles(requester, path);
+    storageClassName = getDirStorageClass(cliIdentity, enclosingPath);
+    tapeCopies = getTapeFiles(cliIdentity, path);
   } else {
     std::ostringstream msg;
     msg << "statFile() - " << path <<
@@ -719,7 +719,7 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
     throw(exception::Exception(msg.str()));
   } 
 
-  const UserIdentity owner = getOwner(requester, path);
+  const UserIdentity owner = getOwner(cliIdentity, path);
   const std::string fsPath = m_fsDir + path;
   // Size is 0 for directories (and set for files)
   uint64_t size = 0;
@@ -743,17 +743,17 @@ cta::common::archiveNS::ArchiveDirEntry cta::MockNameServer::getArchiveDirEntry(
 // getDirContents
 //------------------------------------------------------------------------------
 cta::common::archiveNS::ArchiveDirIterator cta::MockNameServer::getDirContents(
-  const SecurityIdentity &requester, const std::string &path) const {
+  const SecurityIdentity &cliIdentity, const std::string &path) const {
 
   utils::assertAbsolutePathSyntax(path);
-  return getDirEntries(requester, path);
+  return getDirEntries(cliIdentity, path);
 }
 
 //------------------------------------------------------------------------------
 // getVidOfFile
 //------------------------------------------------------------------------------
 std::string cta::MockNameServer::getVidOfFile(
-  const SecurityIdentity &requester,
+  const SecurityIdentity &cliIdentity,
   const std::string &path,
   const uint16_t copyNb) const {
 
