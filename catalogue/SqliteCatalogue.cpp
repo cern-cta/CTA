@@ -298,7 +298,7 @@ void cta::catalogue::SqliteCatalogue::modifyTapeComment(const cta::common::dataS
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUser
@@ -311,9 +311,9 @@ void cta::catalogue::SqliteCatalogue::deleteUser(const cta::common::dataStructur
 std::list<cta::common::dataStructures::User> cta::catalogue::SqliteCatalogue::getUsers(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::User>();}
 
 //------------------------------------------------------------------------------
-// modifyUserUserGroup
+// modifyUserMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup) {}
+void cta::catalogue::SqliteCatalogue::modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyUserComment
@@ -321,76 +321,76 @@ void cta::catalogue::SqliteCatalogue::modifyUserUserGroup(const cta::common::dat
 void cta::catalogue::SqliteCatalogue::modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
-// createUserGroup
+// createMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
+void cta::catalogue::SqliteCatalogue::createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
-// deleteUserGroup
+// deleteMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::SqliteCatalogue::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
-// getUserGroups
+// getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::UserGroup> cta::catalogue::SqliteCatalogue::getUserGroups(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::UserGroup>();}
+std::list<cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::getMountGroups(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::MountGroup>();}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchivePriority
+// modifyMountGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinFilesQueued
+// modifyMountGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinBytesQueued
+// modifyMountGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinRequestAge
+// modifyMountGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrievePriority
+// modifyMountGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinFilesQueued
+// modifyMountGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinBytesQueued
+// modifyMountGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinRequestAge
+// modifyMountGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupMaxDrivesAllowed
+// modifyMountGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupComment
+// modifyMountGroupComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
+void cta::catalogue::SqliteCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {}
 
 //------------------------------------------------------------------------------
@@ -409,9 +409,9 @@ std::list<cta::common::dataStructures::Dedication> cta::catalogue::SqliteCatalog
 void cta::catalogue::SqliteCatalogue::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {}
 
 //------------------------------------------------------------------------------
-// modifyDedicationUserGroup
+// modifyDedicationMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &userGroup) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
