@@ -31,7 +31,7 @@ cta::common::dataStructures::Dedication::Dedication() {
   m_lastModificationLogSet = false;
   m_tagSet = false;
   m_untilTimestampSet = false;
-  m_userGroupSet = false;
+  m_mountGroupSet = false;
   m_vidSet = false;
 }
 
@@ -53,7 +53,7 @@ bool cta::common::dataStructures::Dedication::allFieldsSet() const {
       && m_lastModificationLogSet
       && m_tagSet
       && m_untilTimestampSet
-      && m_userGroupSet
+      && m_mountGroupSet
       && m_vidSet;
 }
 
@@ -202,21 +202,21 @@ uint64_t cta::common::dataStructures::Dedication::getUntilTimestamp() const {
 }
 
 //------------------------------------------------------------------------------
-// setUserGroup
+// setMountGroup
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::Dedication::setUserGroup(const std::string &userGroup) {
-  m_userGroup = userGroup;
-  m_userGroupSet = true;
+void cta::common::dataStructures::Dedication::setMountGroup(const std::string &mountGroup) {
+  m_mountGroup = mountGroup;
+  m_mountGroupSet = true;
 }
 
 //------------------------------------------------------------------------------
-// getUserGroup
+// getMountGroup
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::Dedication::getUserGroup() const {
+std::string cta::common::dataStructures::Dedication::getMountGroup() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
-  return m_userGroup;
+  return m_mountGroup;
 }
 
 //------------------------------------------------------------------------------

@@ -29,19 +29,19 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class UserGroup {
+class MountGroup {
 
 public:
 
   /**
    * Constructor
    */
-  UserGroup();
+  MountGroup();
 
   /**
    * Destructor
    */
-  ~UserGroup() throw();
+  ~MountGroup() throw();
 
   void setArchive_minBytesQueued(const uint64_t archive_minBytesQueued);
   uint64_t getArchive_minBytesQueued() const;
@@ -129,7 +129,7 @@ private:
   uint64_t m_retrieve_priority;
   bool m_retrieve_prioritySet;
 
-}; // class UserGroup
+}; // class MountGroup
 
 } // namespace dataStructures
 } // namespace common

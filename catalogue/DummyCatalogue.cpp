@@ -226,7 +226,7 @@ void cta::catalogue::DummyCatalogue::modifyTapeComment(const cta::common::dataSt
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup, const std::string &comment) {}
+void cta::catalogue::DummyCatalogue::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUser
@@ -239,9 +239,9 @@ void cta::catalogue::DummyCatalogue::deleteUser(const cta::common::dataStructure
 std::list<cta::common::dataStructures::User> cta::catalogue::DummyCatalogue::getUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::User>();}
 
 //------------------------------------------------------------------------------
-// modifyUserUserGroup
+// modifyUserMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup) {}
+void cta::catalogue::DummyCatalogue::modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyUserComment
@@ -249,76 +249,76 @@ void cta::catalogue::DummyCatalogue::modifyUserUserGroup(const cta::common::data
 void cta::catalogue::DummyCatalogue::modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
-// createUserGroup
+// createMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::createUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
+void cta::catalogue::DummyCatalogue::createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
-// deleteUserGroup
+// deleteMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::DummyCatalogue::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
-// getUserGroups
+// getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::UserGroup> cta::catalogue::DummyCatalogue::getUserGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::UserGroup>();}
+std::list<cta::common::dataStructures::MountGroup> cta::catalogue::DummyCatalogue::getMountGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::MountGroup>();}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchivePriority
+// modifyMountGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinFilesQueued
+// modifyMountGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinBytesQueued
+// modifyMountGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinRequestAge
+// modifyMountGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrievePriority
+// modifyMountGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinFilesQueued
+// modifyMountGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinBytesQueued
+// modifyMountGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinRequestAge
+// modifyMountGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupMaxDrivesAllowed
+// modifyMountGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
 
 //------------------------------------------------------------------------------
-// modifyUserGroupComment
+// modifyMountGroupComment
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyUserGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::DummyCatalogue::modifyMountGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
+void cta::catalogue::DummyCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {}
 
 //------------------------------------------------------------------------------
@@ -337,9 +337,9 @@ std::list<cta::common::dataStructures::Dedication> cta::catalogue::DummyCatalogu
 void cta::catalogue::DummyCatalogue::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {}
 
 //------------------------------------------------------------------------------
-// modifyDedicationUserGroup
+// modifyDedicationMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::modifyDedicationUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &userGroup) {}
+void cta::catalogue::DummyCatalogue::modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag

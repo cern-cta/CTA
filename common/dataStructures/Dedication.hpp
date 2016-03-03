@@ -68,8 +68,8 @@ public:
   void setUntilTimestamp(const uint64_t untilTimestamp);
   uint64_t getUntilTimestamp() const;
 
-  void setUserGroup(const std::string &userGroup);
-  std::string getUserGroup() const;
+  void setMountGroup(const std::string &mountGroup);
+  std::string getMountGroup() const;
 
   void setVid(const std::string &vid);
   std::string getVid() const;
@@ -106,8 +106,8 @@ private:
   uint64_t m_untilTimestamp;
   bool m_untilTimestampSet;
 
-  std::string m_userGroup;
-  bool m_userGroupSet;
+  std::string m_mountGroup;
+  bool m_mountGroupSet;
 
   std::string m_vid;
   bool m_vidSet;

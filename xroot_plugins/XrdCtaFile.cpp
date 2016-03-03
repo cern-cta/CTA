@@ -91,7 +91,7 @@ void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("ta"  == command || "tape"                 == command) {xCom_tape(tokens, cliIdentity);}
   else if("sc"  == command || "storageclass"         == command) {xCom_storageclass(tokens, cliIdentity);}
   else if("us"  == command || "user"                 == command) {xCom_user(tokens, cliIdentity);}
-  else if("ug"  == command || "usergroup"            == command) {xCom_usergroup(tokens, cliIdentity);}
+  else if("mg"  == command || "mountgroup"           == command) {xCom_mountgroup(tokens, cliIdentity);}
   else if("de"  == command || "dedication"           == command) {xCom_dedication(tokens, cliIdentity);}
   else if("re"  == command || "repack"               == command) {xCom_repack(tokens, cliIdentity);}
   else if("sh"  == command || "shrink"               == command) {xCom_shrink(tokens, cliIdentity);}
@@ -970,8 +970,8 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " us/user add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <user_name> --group/-g <group_name> --usergroup/-u <user_group_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <user_name> --group/-g <group_name> [--usergroup/-u <user_group_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <user_name> --group/-g <group_name> --mountgroup/-u <mount_group_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <user_name> --group/-g <group_name> [--mountgroup/-u <mount_group_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -982,26 +982,26 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
       return;
     }  
     if("add" == tokens[2]) { //add
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty()||usergroup.empty()) {
+      if(comment.empty()||mountgroup.empty()) {
         m_data = help.str();
         return;
       }
-      m_scheduler->createUser(cliIdentity, user, group, usergroup, comment);
+      m_scheduler->createUser(cliIdentity, user, group, mountgroup, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty()&&usergroup.empty()) {
+      if(comment.empty()&&mountgroup.empty()) {
         m_data = help.str();
         return;
       }
       if(!comment.empty()) {
         m_scheduler->modifyUserComment(cliIdentity, user, group, comment);
       }
-      if(!usergroup.empty()) {
-        m_scheduler->modifyUserUserGroup(cliIdentity, user, group, usergroup);
+      if(!mountgroup.empty()) {
+        m_scheduler->modifyUserMountGroup(cliIdentity, user, group, mountgroup);
       }
     }
     else { //rm
@@ -1018,7 +1018,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         std::vector<std::string> currentRow;
         currentRow.push_back(it->getName());
         currentRow.push_back(it->getGroup());
-        currentRow.push_back(it->getUserGroupName());
+        currentRow.push_back(it->getMountGroupName());
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
         currentRow.push_back(it->getComment());
         responseTable.push_back(currentRow);
@@ -1032,18 +1032,18 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
 }
 
 //------------------------------------------------------------------------------
-// xCom_usergroup
+// xCom_mountgroup
 //------------------------------------------------------------------------------
-void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+void XrdProFile::xCom_mountgroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " ug/usergroup add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <usergroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl
+  help << tokens[0] << " mg/mountgroup add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <mountgroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl
        << "\t    --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> " << std::endl
        << "\t    --minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <usergroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl
+       << "\tch  --name/-n <mountgroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl
        << "\t   [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl
        << "\t   [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <usergroup_name>" << std::endl
+       << "\trm  --name/-n <mountgroup_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string group = getOptionValue(tokens, "-n", "--name", false);
@@ -1077,7 +1077,7 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
         uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
         uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
         uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
-        m_scheduler->createUserGroup(cliIdentity, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
+        m_scheduler->createMountGroup(cliIdentity, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
         if(archivepriority_s.empty()&&minarchivefilesqueued_s.empty()&&minarchivebytesqueued_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
@@ -1087,51 +1087,51 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
         }
         if(!archivepriority_s.empty()) {
           uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
-          m_scheduler->modifyUserGroupArchivePriority(cliIdentity, group, archivepriority);
+          m_scheduler->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
         }
         if(!minarchivefilesqueued_s.empty()) {
           uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
-          m_scheduler->modifyUserGroupArchiveMinFilesQueued(cliIdentity, group, minarchivefilesqueued);
+          m_scheduler->modifyMountGroupArchiveMinFilesQueued(cliIdentity, group, minarchivefilesqueued);
         }
         if(!minarchivebytesqueued_s.empty()) {
           uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
-          m_scheduler->modifyUserGroupArchiveMinBytesQueued(cliIdentity, group, minarchivebytesqueued);
+          m_scheduler->modifyMountGroupArchiveMinBytesQueued(cliIdentity, group, minarchivebytesqueued);
         }
         if(!minarchiverequestage_s.empty()) {
           uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
-          m_scheduler->modifyUserGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
+          m_scheduler->modifyMountGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
         }
         if(!retrievepriority_s.empty()) {
           uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
-          m_scheduler->modifyUserGroupRetrievePriority(cliIdentity, group, retrievepriority);
+          m_scheduler->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
         }
         if(!minretrievefilesqueued_s.empty()) {
           uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
-          m_scheduler->modifyUserGroupRetrieveMinFilesQueued(cliIdentity, group, minretrievefilesqueued);
+          m_scheduler->modifyMountGroupRetrieveMinFilesQueued(cliIdentity, group, minretrievefilesqueued);
         }
         if(!minretrievebytesqueued_s.empty()) {
           uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
-          m_scheduler->modifyUserGroupRetrieveMinBytesQueued(cliIdentity, group, minretrievebytesqueued);
+          m_scheduler->modifyMountGroupRetrieveMinBytesQueued(cliIdentity, group, minretrievebytesqueued);
         }
         if(!minretrieverequestage_s.empty()) {
           uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
-          m_scheduler->modifyUserGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
+          m_scheduler->modifyMountGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
         }
         if(!maxdrivesallowed_s.empty()) {
           uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
-          m_scheduler->modifyUserGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
+          m_scheduler->modifyMountGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
         }
         if(!comment.empty()) {
-          m_scheduler->modifyUserGroupComment(cliIdentity, group, comment);
+          m_scheduler->modifyMountGroupComment(cliIdentity, group, comment);
         }
       }
     }
     else { //rm
-      m_scheduler->deleteUserGroup(cliIdentity, group);
+      m_scheduler->deleteMountGroup(cliIdentity, group);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::UserGroup> list= m_scheduler->getUserGroups(cliIdentity);
+    std::list<cta::common::dataStructures::MountGroup> list= m_scheduler->getMountGroups(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
@@ -1166,8 +1166,8 @@ void XrdProFile::xCom_usergroup(const std::vector<std::string> &tokens, const ct
 void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " de/dedication add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--usergroup/-u <user_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--mountgroup/-u <mount_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--mountgroup/-u <mount_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -1179,14 +1179,14 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     if("add" == tokens[2] || "ch" == tokens[2]) {
       bool readonly = hasOption(tokens, "-r", "--readonly");
       bool writeonly = hasOption(tokens, "-w", "--writeonly");
-      std::string usergroup = getOptionValue(tokens, "-u", "--usergroup", false);
+      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
       std::string vid = getOptionValue(tokens, "-v", "--vid", false);
       std::string tag = getOptionValue(tokens, "-t", "--tag", false);
       std::string from_s = getOptionValue(tokens, "-f", "--from", false);
       std::string until_s = getOptionValue(tokens, "-u", "--until", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
-        if(comment.empty()||from_s.empty()||until_s.empty()||(usergroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if(comment.empty()||from_s.empty()||until_s.empty()||(mountgroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
           return;
         }
@@ -1208,10 +1208,10 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_scheduler->createDedication(cliIdentity, drive, type, usergroup, tag, vid, from, until, comment);
+        m_scheduler->createDedication(cliIdentity, drive, type, mountgroup, tag, vid, from, until, comment);
       }
       else if("ch" == tokens[2]) { //ch
-        if((comment.empty()&&from_s.empty()&&until_s.empty()&&usergroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if((comment.empty()&&from_s.empty()&&until_s.empty()&&mountgroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
           return;
         }
@@ -1236,8 +1236,8 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           time_t until = mktime(&time);  // timestamp in current timezone
           m_scheduler->modifyDedicationUntil(cliIdentity, drive, until);
         }
-        if(!usergroup.empty()) {
-          m_scheduler->modifyDedicationUserGroup(cliIdentity, drive, usergroup);
+        if(!mountgroup.empty()) {
+          m_scheduler->modifyDedicationMountGroup(cliIdentity, drive, mountgroup);
         }
         if(!vid.empty()) {
           m_scheduler->modifyDedicationVid(cliIdentity, drive, vid);
@@ -1280,7 +1280,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
         currentRow.push_back(it->getDriveName());
         currentRow.push_back(type_s);
         currentRow.push_back(it->getVid());
-        currentRow.push_back(it->getUserGroup());
+        currentRow.push_back(it->getMountGroup());
         currentRow.push_back(it->getTag());
         currentRow.push_back(timeToString(it->getFromTimestamp()));
         currentRow.push_back(timeToString(it->getUntilTimestamp()));
@@ -2177,7 +2177,7 @@ std::string XrdProFile::getGenericHelp(const std::string &programName) const {
   help << programName << " tapepool/tp       add/ch/rm/ls"               << std::endl;
   help << programName << " test/te           read/write"                 << std::endl;
   help << programName << " user/us           add/ch/rm/ls"               << std::endl;
-  help << programName << " usergroup/ug      add/ch/rm/ls"               << std::endl;
+  help << programName << " mountgroup/mg     add/ch/rm/ls"               << std::endl;
   help << programName << " verify/ve         add/rm/ls/err"              << std::endl;
   help << "" << std::endl;
   help << "CTA EOS commands:" << std::endl;

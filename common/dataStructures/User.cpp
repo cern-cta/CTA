@@ -28,7 +28,7 @@ cta::common::dataStructures::User::User() {
   m_groupSet = false;
   m_lastModificationLogSet = false;
   m_nameSet = false;
-  m_userGroupNameSet = false;
+  m_mountGroupNameSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ bool cta::common::dataStructures::User::allFieldsSet() const {
       && m_groupSet
       && m_lastModificationLogSet
       && m_nameSet
-      && m_userGroupNameSet;
+      && m_mountGroupNameSet;
 }
 
 //------------------------------------------------------------------------------
@@ -140,19 +140,19 @@ std::string cta::common::dataStructures::User::getName() const {
 }
 
 //------------------------------------------------------------------------------
-// setUserGroupName
+// setMountGroupName
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::User::setUserGroupName(const std::string &userGroupName) {
-  m_userGroupName = userGroupName;
-  m_userGroupNameSet = true;
+void cta::common::dataStructures::User::setMountGroupName(const std::string &mountGroupName) {
+  m_mountGroupName = mountGroupName;
+  m_mountGroupNameSet = true;
 }
 
 //------------------------------------------------------------------------------
-// getUserGroupName
+// getMountGroupName
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::User::getUserGroupName() const {
+std::string cta::common::dataStructures::User::getMountGroupName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the User have been set!");
   }
-  return m_userGroupName;
+  return m_mountGroupName;
 }

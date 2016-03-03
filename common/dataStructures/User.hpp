@@ -58,8 +58,8 @@ public:
   void setName(const std::string &name);
   std::string getName() const;
 
-  void setUserGroupName(const std::string &userGroupName);
-  std::string getUserGroupName() const;
+  void setMountGroupName(const std::string &mountGroupName);
+  std::string getMountGroupName() const;
   
 
 private:
@@ -84,8 +84,8 @@ private:
   std::string m_name;
   bool m_nameSet;
 
-  std::string m_userGroupName;
-  bool m_userGroupNameSet;
+  std::string m_mountGroupName;
+  bool m_mountGroupNameSet;
 
 }; // class User
 

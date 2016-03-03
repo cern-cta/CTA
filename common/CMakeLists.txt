@@ -17,6 +17,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
+  dataStructures/MountGroup.cpp
   dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp
   dataStructures/ReadTestResult.cpp
@@ -33,7 +34,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/User.cpp
-  dataStructures/UserGroup.cpp
   dataStructures/UserIdentity.cpp
   dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp

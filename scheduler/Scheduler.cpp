@@ -380,9 +380,9 @@ void cta::Scheduler::modifyTapeComment(const cta::common::dataStructures::Securi
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::Scheduler::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup,
+void cta::Scheduler::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup,
         const std::string &comment) {
-  m_catalogue.createUser(cliIdentity, name, group, userGroup, comment);
+  m_catalogue.createUser(cliIdentity, name, group, mountGroup, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -400,10 +400,10 @@ std::list<cta::common::dataStructures::User> cta::Scheduler::getUsers(const cta:
 }
 
 //------------------------------------------------------------------------------
-// modifyUserUserGroup
+// modifyUserMountGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &userGroup) {
-  m_catalogue.modifyUserUserGroup(cliIdentity, name, group, userGroup);
+void cta::Scheduler::modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {
+  m_catalogue.modifyUserMountGroup(cliIdentity, name, group, mountGroup);
 }
 
 //------------------------------------------------------------------------------
@@ -414,104 +414,104 @@ void cta::Scheduler::modifyUserComment(const cta::common::dataStructures::Securi
 }
 
 //------------------------------------------------------------------------------
-// createUserGroup
+// createMountGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::createUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued,
+void cta::Scheduler::createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued,
         const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
         const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {
-  m_catalogue.createUserGroup(cliIdentity, name, archivePriority, minArchiveFilesQueued, minArchiveBytesQueued, minArchiveRequestAge, retrievePriority, minRetrieveFilesQueued, minRetrieveBytesQueued, minRetrieveRequestAge, maxDrivesAllowed, comment);
+  m_catalogue.createMountGroup(cliIdentity, name, archivePriority, minArchiveFilesQueued, minArchiveBytesQueued, minArchiveRequestAge, retrievePriority, minRetrieveFilesQueued, minRetrieveBytesQueued, minRetrieveRequestAge, maxDrivesAllowed, comment);
 }
 
 //------------------------------------------------------------------------------
-// deleteUserGroup
+// deleteMountGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
-  m_catalogue.deleteUserGroup(cliIdentity, name);
+void cta::Scheduler::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
+  m_catalogue.deleteMountGroup(cliIdentity, name);
 }
 
 //------------------------------------------------------------------------------
-// getUserGroups
+// getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::UserGroup> cta::Scheduler::getUserGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getUserGroups(cliIdentity); 
+std::list<cta::common::dataStructures::MountGroup> cta::Scheduler::getMountGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
+  return m_catalogue.getMountGroups(cliIdentity); 
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchivePriority
+// modifyMountGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {
-  m_catalogue.modifyUserGroupArchivePriority(cliIdentity, name, archivePriority);
+void cta::Scheduler::modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {
+  m_catalogue.modifyMountGroupArchivePriority(cliIdentity, name, archivePriority);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinFilesQueued
+// modifyMountGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {
-  m_catalogue.modifyUserGroupArchiveMinFilesQueued(cliIdentity, name, minArchiveFilesQueued);
+void cta::Scheduler::modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {
+  m_catalogue.modifyMountGroupArchiveMinFilesQueued(cliIdentity, name, minArchiveFilesQueued);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinBytesQueued
+// modifyMountGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {
-  m_catalogue.modifyUserGroupArchiveMinBytesQueued(cliIdentity, name, minArchiveBytesQueued);
+void cta::Scheduler::modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {
+  m_catalogue.modifyMountGroupArchiveMinBytesQueued(cliIdentity, name, minArchiveBytesQueued);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupArchiveMinRequestAge
+// modifyMountGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {
-  m_catalogue.modifyUserGroupArchiveMinRequestAge(cliIdentity, name, minArchiveRequestAge);
+void cta::Scheduler::modifyMountGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {
+  m_catalogue.modifyMountGroupArchiveMinRequestAge(cliIdentity, name, minArchiveRequestAge);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrievePriority
+// modifyMountGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {
-  m_catalogue.modifyUserGroupRetrievePriority(cliIdentity, name, retrievePriority);
+void cta::Scheduler::modifyMountGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {
+  m_catalogue.modifyMountGroupRetrievePriority(cliIdentity, name, retrievePriority);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinFilesQueued
+// modifyMountGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {
-  m_catalogue.modifyUserGroupRetrieveMinFilesQueued(cliIdentity, name, minRetrieveFilesQueued);
+void cta::Scheduler::modifyMountGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {
+  m_catalogue.modifyMountGroupRetrieveMinFilesQueued(cliIdentity, name, minRetrieveFilesQueued);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinBytesQueued
+// modifyMountGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {
-  m_catalogue.modifyUserGroupRetrieveMinBytesQueued(cliIdentity, name, minRetrieveBytesQueued);
+void cta::Scheduler::modifyMountGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {
+  m_catalogue.modifyMountGroupRetrieveMinBytesQueued(cliIdentity, name, minRetrieveBytesQueued);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupRetrieveMinRequestAge
+// modifyMountGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {
-  m_catalogue.modifyUserGroupRetrieveMinRequestAge(cliIdentity, name, minRetrieveRequestAge);
+void cta::Scheduler::modifyMountGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {
+  m_catalogue.modifyMountGroupRetrieveMinRequestAge(cliIdentity, name, minRetrieveRequestAge);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupMaxDrivesAllowed
+// modifyMountGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {
-  m_catalogue.modifyUserGroupMaxDrivesAllowed(cliIdentity, name, maxDrivesAllowed);
+void cta::Scheduler::modifyMountGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {
+  m_catalogue.modifyMountGroupMaxDrivesAllowed(cliIdentity, name, maxDrivesAllowed);
 }
 
 //------------------------------------------------------------------------------
-// modifyUserGroupComment
+// modifyMountGroupComment
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyUserGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
-  m_catalogue.modifyUserGroupComment(cliIdentity, name, comment);
+void cta::Scheduler::modifyMountGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+  m_catalogue.modifyMountGroupComment(cliIdentity, name, comment);
 }
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &userGroup,
+void cta::Scheduler::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
         const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
-  m_catalogue.createDedication(cliIdentity, drivename, dedicationType, userGroup, tag, vid, fromTimestamp, untilTimestamp, comment);
+  m_catalogue.createDedication(cliIdentity, drivename, dedicationType, mountGroup, tag, vid, fromTimestamp, untilTimestamp, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -536,10 +536,10 @@ void cta::Scheduler::modifyDedicationType(const cta::common::dataStructures::Sec
 }
 
 //------------------------------------------------------------------------------
-// modifyDedicationUserGroup
+// modifyDedicationMountGroup
 //------------------------------------------------------------------------------
-void cta::Scheduler::modifyDedicationUserGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &userGroup) {
-  m_catalogue.modifyDedicationUserGroup(cliIdentity, drivename, userGroup);
+void cta::Scheduler::modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) {
+  m_catalogue.modifyDedicationMountGroup(cliIdentity, drivename, mountGroup);
 }
 
 //------------------------------------------------------------------------------

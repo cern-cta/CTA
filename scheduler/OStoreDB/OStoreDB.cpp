@@ -40,7 +40,7 @@
 #include "ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "objectstore/ArchiveRequest.hpp"
-#include "common/dataStructures/UserGroup.hpp"
+#include "common/dataStructures/MountGroup.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
