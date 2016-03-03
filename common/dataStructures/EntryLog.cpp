@@ -35,6 +35,22 @@ cta::common::dataStructures::EntryLog::~EntryLog() throw() {
 }
 
 //------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::common::dataStructures::EntryLog::operator==(const EntryLog &rhs)
+  const {
+  if(!allFieldsSet()) {
+    throw exception::Exception(
+      "Not all of fields of EntryLog on LHS of == are set");
+  }
+  if(!rhs.allFieldsSet()) {
+    throw exception::Exception(
+      "Not all of fields of EntryLog on RHS of == are set"); 
+  }
+  return m_host == rhs.m_host && m_time == rhs.m_time && m_user == rhs.m_user;
+}
+
+//------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::EntryLog::allFieldsSet() const {
@@ -95,4 +111,20 @@ cta::common::dataStructures::UserIdentity cta::common::dataStructures::EntryLog:
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
   }
   return m_user;
+}
+
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &cta::common::dataStructures::operator<<(std::ostream &os,
+  const cta::common::dataStructures::EntryLog &entryLog) {
+  if(!entryLog.allFieldsSet()) {
+    throw exception::Exception(
+      "operator<<( for EntryLog failed: Not all fields are set");
+  }
+  os << "{"
+    "host=" << entryLog.getHost() << " " <<
+    "time=" << entryLog.getTime() << " " <<
+    "user=" << entryLog.getUser() << "}";
+  return os;
 }

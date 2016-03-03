@@ -42,6 +42,13 @@ public:
    */
   ~UserIdentity() throw();
 
+  /**
+   * Equality operator.
+   *
+   * @param rhs The right hand side of the operator.
+   */
+  bool operator==(const UserIdentity &rhs) const;
+
   void setGid(const uint64_t gid);
   uint64_t getGid() const;
 
@@ -62,7 +69,18 @@ private:
   uint64_t m_uid;
   bool m_uidSet;
 
+  friend std::ostream &operator<<(std::ostream &, const UserIdentity &);
+
 }; // class UserIdentity
+
+/**
+ * Output stream operator for UserIdentity.
+ *
+ * @param os The output stream.
+ * @param entryLog The entry log.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &os, const UserIdentity &userIdentity);
 
 } // namespace dataStructures
 } // namespace common

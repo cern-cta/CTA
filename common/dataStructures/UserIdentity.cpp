@@ -34,6 +34,22 @@ cta::common::dataStructures::UserIdentity::~UserIdentity() throw() {
 }
 
 //------------------------------------------------------------------------------
+// operator==
+//------------------------------------------------------------------------------
+bool cta::common::dataStructures::UserIdentity::operator==(
+  const UserIdentity &rhs) const {
+  if(!allFieldsSet()) {
+    throw exception::Exception(
+      "Not all of fields of UserIdentity on LHS of == are set");
+  }
+  if(!rhs.allFieldsSet()) {
+    throw exception::Exception(
+      "Not all of fields of UserIdentity on RHS of == are set");
+  }
+  return m_gid == rhs.m_gid && m_uidSet == rhs.m_uidSet;
+}
+
+//------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::UserIdentity::allFieldsSet() const {
@@ -75,4 +91,17 @@ uint64_t cta::common::dataStructures::UserIdentity::getUid() const {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
   }
   return m_uid;
+}
+
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &cta::common::dataStructures::operator<<(std::ostream &os,
+  const UserIdentity &userIdentity) {
+  if(!userIdentity.allFieldsSet()) {
+    throw exception::Exception(
+      "operator<< for UserIdentity failed: Not all fields are set");
+  }
+  os << "{gid=" << userIdentity.m_gid << " uid=" << userIdentity.m_uid << "}";
+  return os;
 }

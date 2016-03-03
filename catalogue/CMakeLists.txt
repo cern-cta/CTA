@@ -26,6 +26,9 @@ set (CATALOGUE_LIB_SRC_FILES
 add_library (ctacatalogue
   ${CATALOGUE_LIB_SRC_FILES})
 
+set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  SqliteCatalogueTest.cpp)
+
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
 

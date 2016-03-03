@@ -18,12 +18,13 @@
 
 #pragma once
 
+#include "common/dataStructures/UserIdentity.hpp"
+
 #include <list>
 #include <map>
+#include <ostream>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -43,6 +44,13 @@ public:
    */
   ~EntryLog() throw();
 
+  /**
+   * Equality operator.
+   *
+   * @param rhs The right hand side of the operator.
+   */
+  bool operator==(const EntryLog &rhs) const;
+
   void setHost(const std::string &host);
   std::string getHost() const;
 
@@ -51,7 +59,6 @@ public:
 
   void setUser(const cta::common::dataStructures::UserIdentity &user);
   cta::common::dataStructures::UserIdentity getUser() const;
-  
 
 private:
   
@@ -69,7 +76,18 @@ private:
   cta::common::dataStructures::UserIdentity m_user;
   bool m_userSet;
 
+  friend std::ostream &operator<<(std::ostream &, const EntryLog &);
+
 }; // class EntryLog
+
+/**
+ * Output stream operator for EntryLog.
+ *
+ * @param os The output stream.
+ * @param entryLog The entry log.
+ * @return The output stream.
+ */
+std::ostream &operator<<(std::ostream &os, const EntryLog &entryLog);
 
 } // namespace dataStructures
 } // namespace common
