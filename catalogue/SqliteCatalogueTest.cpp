@@ -37,14 +37,14 @@ protected:
 TEST_F(cta_catalogue_SqliteCatalogueTest, constructor) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::SqliteCatalogue> catalogue;
+  std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::SqliteCatalogue> catalogue;
+  std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 
   common::dataStructures::UserIdentity admin1User;
@@ -76,7 +76,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::SqliteCatalogue> catalogue;
+  std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 
   common::dataStructures::UserIdentity admin1User;
@@ -116,6 +116,15 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
     ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_admin1));
     ASSERT_EQ(2, admins.size());
   }
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_notAdmin) {
+  using namespace cta;
+
+  std::unique_ptr<catalogue::Catalogue> catalogue;
+  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+
+  ASSERT_FALSE(catalogue->isAdmin(m_cliIdentity));
 }
 
 } // namespace unitTests

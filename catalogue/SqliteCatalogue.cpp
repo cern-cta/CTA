@@ -17,9 +17,11 @@
  */
 
 #include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <sqlite3.h>
+#include <time.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -59,12 +61,11 @@ cta::catalogue::SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 // createBootstrapAdminAndHostNoAuth
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) {}
-
-//------------------------------------------------------------------------------
-// createAdminUser
-//------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {
+void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::UserIdentity &user,
+  const std::string &hostName,
+  const std::string &comment) {
   const char *sql =
     "INSERT INTO ADMIN_USER("
       "UID,"
@@ -81,7 +82,55 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const cta::common::dataStr
       "UPDATER_HOST,"
       "UPDATE_TIME)"
     "VALUES("
-       ":UID,"
+      ":UID,"
+      ":GID,"
+      ":COMMENT,"
+
+      ":CREATOR_UID,"
+      ":CREATOR_GID,,"
+      ":CREATOR_HOST,"
+      ":CREATION_TIME,"
+
+      ":CREATOR_UID,"
+      ":CREATOR_GID,"
+      ":CREATOR_HOST,"
+      ":CREATION_TIME";
+  SqliteStmt stmt(m_conn, sql);
+  const uint64_t now = time(NULL);
+
+  stmt.bind(":UID", user.getUid());
+  stmt.bind(":GID", user.getGid());
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATOR_UID", cliIdentity.getUid());
+  stmt.bind(":CREATOR_GID", cliIdentity.getGid());
+  stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+  stmt.bind(":CREATION_TIME", now);
+
+  stmt.step();
+}
+
+//------------------------------------------------------------------------------
+// createAdminUser
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
+  const char *sql =
+    "INSERT INTO ADMIN_USER("
+      "UID,"
+      "GID,"
+      "COMMENT,"
+
+      "CREATOR_UID,"
+      "CREATOR_GID,,"
+      "CREATOR_HOST,"
+      "CREATION_TIME,"
+
+      "UPDATER_UID,"
+      "UPDATER_GID,"
+      "UPDATER_HOST,"
+      "UPDATE_TIME)"
+    "VALUES("
+      ":UID,"
       ":GID,"
       ":COMMENT,"
 
@@ -94,354 +143,356 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const cta::common::dataStr
       ":UPDATER_GID,"
       ":UPDATER_HOST,"
       ":UPDATE_TIME";
-  sqlite3_stmt *stmt = NULL;
-  const int prepareRc = sqlite3_prepare_v2(m_conn.get(), sql, 0, &stmt, NULL);
-  if(SQLITE_OK != prepareRc) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to create admin user"
-      ": Failed to prepare SQL statment";
-    sqlite3_finalize(stmt);
-    throw ex;
-  }
+  SqliteStmt stmt(m_conn, sql);
+  const uint64_t now = time(NULL);
 
-  sqlite3_finalize(stmt);
+  stmt.bind(":UID", user.getUid());
+  stmt.bind(":GID", user.getGid());
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATOR_UID", cliIdentity.getUid());
+  stmt.bind(":CREATOR_GID", cliIdentity.getGid());
+  stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+  stmt.bind(":CREATION_TIME", now);
+
+  stmt.step();
 }
 
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user) {}
+void cta::catalogue::SqliteCatalogue::deleteAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user) {}
 
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogue::getAdminUsers(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminUser>();}
+std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogue::getAdminUsers(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminUser>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyAdminUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName) {}
+void cta::catalogue::SqliteCatalogue::deleteAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName) {}
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogue::getAdminHosts(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminHost>();}
+std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogue::getAdminHosts(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminHost>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyAdminHostComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createStorageClass(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::SqliteCatalogue::deleteStorageClass(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass> cta::catalogue::SqliteCatalogue::getStorageClasses(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::StorageClass>();}
+std::list<cta::common::dataStructures::StorageClass> cta::catalogue::SqliteCatalogue::getStorageClasses(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::StorageClass>();}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) {}
+void cta::catalogue::SqliteCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) {}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyStorageClassComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::SqliteCatalogue::deleteTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::TapePool> cta::catalogue::SqliteCatalogue::getTapePools(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::TapePool>();}
+std::list<cta::common::dataStructures::TapePool> cta::catalogue::SqliteCatalogue::getTapePools(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::TapePool>();}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) {}
+void cta::catalogue::SqliteCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) {}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb) {}
+void cta::catalogue::SqliteCatalogue::deleteArchiveRoute(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb) {}
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::SqliteCatalogue::getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::ArchiveRoute>();}
+std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::SqliteCatalogue::getArchiveRoutes(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::ArchiveRoute>();}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {}
+void cta::catalogue::SqliteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::SqliteCatalogue::deleteLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::LogicalLibrary> cta::catalogue::SqliteCatalogue::getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::LogicalLibrary>();}
+std::list<cta::common::dataStructures::LogicalLibrary> cta::catalogue::SqliteCatalogue::getLogicalLibraries(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::LogicalLibrary>();}
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
+void cta::catalogue::SqliteCatalogue::createTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
                           const bool disabledValue, const bool fullValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {}
+void cta::catalogue::SqliteCatalogue::deleteTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape> cta::catalogue::SqliteCatalogue::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+std::list<cta::common::dataStructures::Tape> cta::catalogue::SqliteCatalogue::getTapes(const common::dataStructures::SecurityIdentity &cliIdentity,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) { return std::list<cta::common::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::reclaimTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {}
+void cta::catalogue::SqliteCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapeLogicalLibraryName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) {}
+void cta::catalogue::SqliteCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeTapePoolName
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapeTapePoolName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) {}
+void cta::catalogue::SqliteCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeCapacityInBytes
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapeCapacityInBytes(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {}
+void cta::catalogue::SqliteCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {}
 
 //------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {}
+void cta::catalogue::SqliteCatalogue::setTapeBusy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {}
 
 //------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {}
+void cta::catalogue::SqliteCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {}
 
 //------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {}
+void cta::catalogue::SqliteCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group) {}
+void cta::catalogue::SqliteCatalogue::deleteUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group) {}
 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::User> cta::catalogue::SqliteCatalogue::getUsers(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::User>();}
+std::list<cta::common::dataStructures::User> cta::catalogue::SqliteCatalogue::getUsers(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::User>();}
 
 //------------------------------------------------------------------------------
 // modifyUserMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {}
+void cta::catalogue::SqliteCatalogue::modifyUserMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyUserComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
+void cta::catalogue::SqliteCatalogue::createMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::SqliteCatalogue::deleteMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::getMountGroups(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::MountGroup>();}
+std::list<cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::getMountGroups(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::MountGroup>();}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchivePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrievePriority
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
+void cta::catalogue::SqliteCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename) {}
+void cta::catalogue::SqliteCatalogue::deleteDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename) {}
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Dedication> cta::catalogue::SqliteCatalogue::getDedications(const cta::common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::Dedication>();}
+std::list<cta::common::dataStructures::Dedication> cta::catalogue::SqliteCatalogue::getDedications(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::Dedication>();}
 
 //------------------------------------------------------------------------------
 // modifyDedicationType
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationTag(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationVid(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationFrom
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationFrom(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationUntil
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) {}
 
 //------------------------------------------------------------------------------
 // modifyDedicationComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::SqliteCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::SqliteCatalogue::getArchiveFiles(const common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
@@ -449,7 +500,7 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::SqliteCatalo
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::catalogue::SqliteCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+cta::common::dataStructures::ArchiveFileSummary cta::catalogue::SqliteCatalogue::getArchiveFileSummary(const common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
@@ -464,7 +515,7 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::getArc
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {}
+void cta::catalogue::SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {}
 
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
@@ -509,6 +560,6 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 // isAdmin
 //------------------------------------------------------------------------------
 bool cta::catalogue::SqliteCatalogue::isAdmin(
-  const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+  const common::dataStructures::SecurityIdentity &cliIdentity) {
   return false;
 }

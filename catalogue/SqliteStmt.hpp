@@ -34,17 +34,11 @@ public:
 
   /**
    * Constructor.
-   *
+   *  
    * @param conn The SQLite database connection.
+   * @param sql The SQL statement.
    */
-  SqliteStmt(sqlite3 *const conn);
-
-  /**
-   * Constructor.
-   *
-   * @param conn The SQLite database connection.
-   */
-  SqliteStmt(SqliteConn &conn);
+  SqliteStmt(SqliteConn &conn, const std::string &sql);
 
   /**
    * Destructor.
@@ -56,14 +50,59 @@ public:
    *
    * @return the underlying prepared statemen.
    */
-  sqlite3_stmt *get();
+  sqlite3_stmt *get() const;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bind(const std::string &paramName, const uint64_t paramValue);
+
+  /** 
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */ 
+  void bind(const std::string &paramName, const std::string &paramValue);
+
+  /**
+   * Convenience wrapper around sqlite3_step().
+   *
+   * This method throws a exception if sqlite3_step() returns an error.
+   *
+   * @return See sqlite3_step() documenetation.
+   */
+  int step();
 
 private:
 
   /**
-   * The database statement.
+   * The SQL statement.
+   */
+  const std::string m_sql;
+
+  /**
+   * The prepared statement.
    */
   sqlite3_stmt *m_stmt;
+
+  /**
+   * Returns the index of the SQL parameter with the specified name.
+   *
+   * This method throws an exception if the parameter is not found.
+   */
+  int getParamIndex(const std::string &paramName);
+
+  /**
+   * Returns the string representation of the specified SQLite return code.
+   *
+   * @param rc The SQLite return code.
+   * @return The string representation of the SQLite return code.
+   */
+  std::string sqliteRcToString(const int rc) const;
 
 }; // class SqlLiteStmt
 
