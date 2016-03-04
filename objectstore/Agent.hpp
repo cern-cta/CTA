@@ -37,7 +37,7 @@ class GenericObject;
  * It handles (in the base class):
  */
 
-class Agent: public ObjectOps<serializers::Agent> {
+class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(Backend & os);

@@ -31,7 +31,7 @@ class Agent;
 class GenericObject;
 class CreationLog;
 
-class RetrieveToFileRequest: public ObjectOps<serializers::RetrieveToFileRequest> {
+class RetrieveToFileRequest: public ObjectOps<serializers::RetrieveToFileRequest, serializers::RetrieveToFileRequest_t> {
 public:
   RetrieveToFileRequest(const std::string & address, Backend & os);
   RetrieveToFileRequest(GenericObject & go);

@@ -30,7 +30,7 @@ class Agent;
 class GenericObject;
 class CreationLog;
 
-class DriveRegister: public ObjectOps<serializers::DriveRegister> {
+class DriveRegister: public ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t> {
   CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
 public:
   DriveRegister(const std::string & address, Backend & os);

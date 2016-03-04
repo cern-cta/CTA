@@ -23,10 +23,10 @@
 
 namespace cta {  namespace objectstore {
 
-class GenericObject: public ObjectOps<serializers::GenericObject> {
+class GenericObject: public ObjectOps<serializers::GenericObject, serializers::GenericObject_t> {
 public:
   GenericObject(const std::string & name, Backend & os):
-    ObjectOps<serializers::GenericObject>(os, name) {};
+    ObjectOps<serializers::GenericObject, serializers::GenericObject_t>(os, name) {};
     
   class ForbiddenOperation: public cta::exception::Exception {
   public:

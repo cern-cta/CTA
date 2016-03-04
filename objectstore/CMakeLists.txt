@@ -16,7 +16,6 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
   objectstore/GenericObject.hpp
-  objectstore/ObjectOps.cpp
   objectstore/ObjectOps.hpp
   objectstore/RetrieveRequest.hpp
   objectstore/RetrieveToFileRequest.cpp
@@ -49,7 +48,6 @@ add_library (ctaobjectstore SHARED
   BackendRados.cpp
   BackendPopulator.cpp
   BackendFactory.cpp
-  ObjectOps.cpp
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
   GarbageCollector.cpp

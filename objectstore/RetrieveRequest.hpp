@@ -33,7 +33,7 @@ class Agent;
 class GenericObject;
 class CreationLog;
 
-class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest> {
+class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t> {
 public:
   RetrieveRequest(const std::string & address, Backend & os);
   RetrieveRequest(GenericObject & go);

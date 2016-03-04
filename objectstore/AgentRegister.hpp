@@ -27,7 +27,7 @@ class Backend;
 class Agent;
 class GenericObject;
 
-class AgentRegister: public ObjectOps<serializers::AgentRegister> {
+class AgentRegister: public ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t> {
 public:
   AgentRegister(Backend & os);
   AgentRegister(GenericObject & go);

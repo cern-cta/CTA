@@ -30,7 +30,7 @@ class Backend;
 class Agent;
 class GenericObject;
 
-class Tape: public ObjectOps<serializers::Tape> {
+class Tape: public ObjectOps<serializers::Tape, serializers::Tape_t> {
 public:
   Tape(const std::string & address, Backend & os);
   Tape(GenericObject & go);

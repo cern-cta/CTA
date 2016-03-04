@@ -223,7 +223,7 @@ protected:
   }
 };
 
-template <class C>
+template <class PayloadType, serializers::ObjectType PayloadTypeId>
 class ObjectOps: public ObjectOpsBase {
 protected:
   ObjectOps(Backend & os, const std::string & name): ObjectOpsBase(os) {
@@ -272,10 +272,10 @@ protected:
 
   void getHeaderFromObjectStore () {
     m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
-    if (m_header.type() != typeId) {
+    if (m_header.type() != payloadTypeId) {
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "
-          << "found=" << m_header.type() << " expected=" << typeId;
+          << "found=" << m_header.type() << " expected=" << payloadTypeId;
       throw ObjectOpsBase::WrongType(err.str());
     }
     m_headerInterpreted = true;
@@ -288,7 +288,7 @@ public:
   void initialize() {
     if (m_headerInterpreted || m_existingObject)
       throw NotNewObject("In ObjectOps::initialize: trying to initialize an exitsting object");
-    m_header.set_type(typeId);
+    m_header.set_type(payloadTypeId);
     m_header.set_version(0);
     m_header.set_owner("");
     m_header.set_backupowner("");
@@ -315,8 +315,8 @@ public:
   }
   
 private:
-  template <class C2>
-  void writeChild (const std::string & name, C2 & val) {
+  template <class ChildType>
+  void writeChild (const std::string & name, ChildType & val) {
     m_objectStore.create(name, val.SerializeAsString());
   }
   
@@ -334,8 +334,8 @@ private:
   }
   
 protected:
-  static const serializers::ObjectType typeId;
-  C m_payload;
+  static const serializers::ObjectType payloadTypeId = PayloadTypeId;
+  PayloadType m_payload;
 };
 
 }}

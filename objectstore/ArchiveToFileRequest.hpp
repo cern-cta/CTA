@@ -31,7 +31,7 @@ class Agent;
 class GenericObject;
 class CreationLog;
 
-class ArchiveToFileRequest: public ObjectOps<serializers::ArchiveToFileRequest> {
+class ArchiveToFileRequest: public ObjectOps<serializers::ArchiveToFileRequest, serializers::ArchiveToFileRequest_t> {
 public:
   ArchiveToFileRequest(const std::string & address, Backend & os);
   ArchiveToFileRequest(Backend & os);

@@ -24,10 +24,10 @@
 
 cta::objectstore::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::string& address, Backend& os): 
-  ObjectOps<serializers::RetrieveToFileRequest>(os, address) { }
+  ObjectOps<serializers::RetrieveToFileRequest, serializers::RetrieveToFileRequest_t>(os, address) { }
 
 cta::objectstore::RetrieveToFileRequest::RetrieveToFileRequest(GenericObject& go):
-  ObjectOps<serializers::RetrieveToFileRequest>(go.objectStore()) {
+  ObjectOps<serializers::RetrieveToFileRequest, serializers::RetrieveToFileRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -36,7 +36,7 @@ cta::objectstore::RetrieveToFileRequest::RetrieveToFileRequest(GenericObject& go
 
 void cta::objectstore::RetrieveToFileRequest::initialize() {
   // Setup underlying object
-  ObjectOps<serializers::RetrieveToFileRequest>::initialize();
+  ObjectOps<serializers::RetrieveToFileRequest, serializers::RetrieveToFileRequest_t>::initialize();
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }

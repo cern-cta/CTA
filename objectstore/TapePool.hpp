@@ -34,7 +34,7 @@ namespace cta { namespace objectstore {
   
 class GenericObject;
 
-class TapePool: public ObjectOps<serializers::TapePool> {
+class TapePool: public ObjectOps<serializers::TapePool, serializers::TapePool_t> {
 public:
   // Constructor
   TapePool(const std::string & address, Backend & os);

@@ -32,7 +32,7 @@ namespace cta { namespace objectstore {
 class Agent;
 class GenericObject;
   
-class RootEntry: public ObjectOps<serializers::RootEntry> {
+class RootEntry: public ObjectOps<serializers::RootEntry, serializers::RootEntry_t> {
 public:
   // Constructor
   RootEntry(Backend & os);

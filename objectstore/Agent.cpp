@@ -32,10 +32,10 @@
 #include <json-c/json.h>
 
 cta::objectstore::Agent::Agent(Backend & os): 
-  ObjectOps<serializers::Agent>(os), m_nextId(0) {}
+  ObjectOps<serializers::Agent, serializers::Agent_t>(os), m_nextId(0) {}
 
 cta::objectstore::Agent::Agent(GenericObject& go):
-  ObjectOps<serializers::Agent>(go.objectStore()) {
+  ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -43,10 +43,10 @@ cta::objectstore::Agent::Agent(GenericObject& go):
 }
 
 cta::objectstore::Agent::Agent(const std::string & name, Backend & os): 
-  ObjectOps<serializers::Agent>(os, name), m_nextId(0) {}
+  ObjectOps<serializers::Agent, serializers::Agent_t>(os, name), m_nextId(0) {}
 
 void cta::objectstore::Agent::initialize() {
-  ObjectOps<serializers::Agent>::initialize();
+  ObjectOps<serializers::Agent, serializers::Agent_t>::initialize();
   m_payload.set_heartbeat(0);
   m_payload.set_timeout_us(60*1000*1000);
   m_payload.set_description("");

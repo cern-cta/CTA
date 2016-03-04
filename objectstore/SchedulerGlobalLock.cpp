@@ -25,10 +25,10 @@ namespace cta { namespace objectstore {
 
   
 SchedulerGlobalLock::SchedulerGlobalLock(const std::string& address, Backend& os):
-  ObjectOps<serializers::SchedulerGlobalLock>(os, address) { }
+  ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t>(os, address) { }
 
 SchedulerGlobalLock::SchedulerGlobalLock(GenericObject& go):
-  ObjectOps<serializers::SchedulerGlobalLock>(go.objectStore()) {
+  ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -37,7 +37,7 @@ SchedulerGlobalLock::SchedulerGlobalLock(GenericObject& go):
 
 void SchedulerGlobalLock::initialize() {
   // Setup underlying object
-  ObjectOps<serializers::SchedulerGlobalLock>::initialize();
+  ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t>::initialize();
   // Setup the object
   m_payload.set_nextmountid(1);
   m_payloadInterpreted = 1;

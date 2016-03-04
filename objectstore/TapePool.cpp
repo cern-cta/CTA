@@ -25,10 +25,10 @@
 #include <json-c/json.h>
 
 cta::objectstore::TapePool::TapePool(const std::string& address, Backend& os):
-  ObjectOps<serializers::TapePool>(os, address) { }
+  ObjectOps<serializers::TapePool, serializers::TapePool_t>(os, address) { }
 
 cta::objectstore::TapePool::TapePool(GenericObject& go):
-  ObjectOps<serializers::TapePool>(go.objectStore()) {
+  ObjectOps<serializers::TapePool, serializers::TapePool_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -110,7 +110,7 @@ std::string cta::objectstore::TapePool::dump() {
 
 void cta::objectstore::TapePool::initialize(const std::string& name) {
   // Setup underlying object
-  ObjectOps<serializers::TapePool>::initialize();
+  ObjectOps<serializers::TapePool, serializers::TapePool_t>::initialize();
   // Setup the object so it's valid
   m_payload.set_name(name);
   // set the archive jobs counter to zero
@@ -162,7 +162,7 @@ std::string cta::objectstore::TapePool::addOrGetTapeAndCommit(const std::string&
   agent.addToOwnership(tapeAddress);
   agent.commit();
   // The create the tape object
-  Tape t(tapeAddress, ObjectOps<serializers::TapePool>::m_objectStore);
+  Tape t(tapeAddress, ObjectOps<serializers::TapePool, serializers::TapePool_t>::m_objectStore);
   t.initialize(vid, logicalLibraryName, creationLog);
   t.setOwner(agent.getAddressIfSet());
   t.setBackupOwner(getAddressIfSet());

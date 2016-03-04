@@ -22,10 +22,10 @@
 #include <json-c/json_object.h>
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):
-ObjectOps<serializers::AgentRegister>(os) {}
+ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os) {}
 
 cta::objectstore::AgentRegister::AgentRegister(GenericObject& go): 
-  ObjectOps<serializers::AgentRegister>(go.objectStore()) {
+  ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -33,10 +33,10 @@ cta::objectstore::AgentRegister::AgentRegister(GenericObject& go):
 }
 
 cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Backend & os):
-ObjectOps<serializers::AgentRegister>(os, name) {}
+ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os, name) {}
 
 void cta::objectstore::AgentRegister::initialize() {
-  ObjectOps<serializers::AgentRegister>::initialize();
+  ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>::initialize();
   // There is nothing to do for the payload.
   m_payloadInterpreted = true;
 }

@@ -24,10 +24,10 @@
 
 cta::objectstore::RetrieveRequest::RetrieveRequest(
   const std::string& address, Backend& os): 
-  ObjectOps<serializers::RetrieveRequest>(os, address) { }
+  ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(os, address) { }
 
 cta::objectstore::RetrieveRequest::RetrieveRequest(GenericObject& go):
-  ObjectOps<serializers::RetrieveRequest>(go.objectStore()) {
+  ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -36,7 +36,7 @@ cta::objectstore::RetrieveRequest::RetrieveRequest(GenericObject& go):
 
 void cta::objectstore::RetrieveRequest::initialize() {
   // Setup underlying object
-  ObjectOps<serializers::RetrieveRequest>::initialize();
+  ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }

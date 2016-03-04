@@ -22,10 +22,10 @@
 #include <json-c/json.h>
 
 cta::objectstore::Tape::Tape(const std::string& address, Backend& os):
-  ObjectOps<serializers::Tape>(os, address) { }
+  ObjectOps<serializers::Tape, serializers::Tape_t>(os, address) { }
 
 cta::objectstore::Tape::Tape(GenericObject& go):
-  ObjectOps<serializers::Tape>(go.objectStore()){
+  ObjectOps<serializers::Tape, serializers::Tape_t>(go.objectStore()){
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -34,7 +34,7 @@ cta::objectstore::Tape::Tape(GenericObject& go):
 
 void cta::objectstore::Tape::initialize(const std::string &name, 
     const std::string &logicallibrary, const cta::CreationLog & creationLog) {
-  ObjectOps<serializers::Tape>::initialize();
+  ObjectOps<serializers::Tape, serializers::Tape_t>::initialize();
   // Set the reguired fields
   objectstore::CreationLog oscl(creationLog);
   oscl.serialize(*m_payload.mutable_log());

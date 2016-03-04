@@ -23,13 +23,13 @@
 #include <json-c/json.h>
 
 cta::objectstore::ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
-  ObjectOps<serializers::ArchiveRequest>(os, address){ }
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os, address){ }
 
 cta::objectstore::ArchiveRequest::ArchiveRequest(Backend& os): 
-  ObjectOps<serializers::ArchiveRequest>(os) { }
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os) { }
 
 cta::objectstore::ArchiveRequest::ArchiveRequest(GenericObject& go):
-  ObjectOps<serializers::ArchiveRequest>(go.objectStore()) {
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -38,7 +38,7 @@ cta::objectstore::ArchiveRequest::ArchiveRequest(GenericObject& go):
 
 void cta::objectstore::ArchiveRequest::initialize() {
   // Setup underlying object
-  ObjectOps<serializers::ArchiveRequest>::initialize();
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>::initialize();
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }

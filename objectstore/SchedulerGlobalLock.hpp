@@ -27,7 +27,7 @@ class Backend;
 class Agent;
 class GenericObject;
 
-class SchedulerGlobalLock: public ObjectOps<serializers::SchedulerGlobalLock> {
+class SchedulerGlobalLock: public ObjectOps<serializers::SchedulerGlobalLock, serializers::SchedulerGlobalLock_t> {
 public:
   SchedulerGlobalLock(const std::string & address, Backend & os);
   SchedulerGlobalLock(GenericObject & go);

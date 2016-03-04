@@ -30,10 +30,10 @@
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 cta::objectstore::RootEntry::RootEntry(Backend & os):
-  ObjectOps<serializers::RootEntry>(os, "root") {}
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, "root") {}
 
 cta::objectstore::RootEntry::RootEntry(GenericObject& go): 
-  ObjectOps<serializers::RootEntry>(go.objectStore()) {
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -43,7 +43,7 @@ cta::objectstore::RootEntry::RootEntry(GenericObject& go):
 // Initialiser. This uses the base object's initialiser and sets the defaults 
 // of payload.
 void cta::objectstore::RootEntry::initialize() {
-  ObjectOps<serializers::RootEntry>::initialize();
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::initialize();
   // There is nothing to do for the payload.
   m_payloadInterpreted = true;
 }
@@ -479,7 +479,7 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::st
   agent.addToOwnership(tapePoolAddress);
   agent.commit();
   // Then create the tape pool object
-  TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
+  TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   tp.initialize(tapePool);
   tp.setOwner(agent.getAddressIfSet());
   tp.setMaxRetriesWithinMount(maxRetriesPerMount);
@@ -521,7 +521,7 @@ void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tap
       }
     }
     // Open the tape pool object
-    TapePool tp (tpp.address(), ObjectOps<serializers::RootEntry>::m_objectStore);
+    TapePool tp (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
     ScopedExclusiveLock tpl(tp);
     tp.fetch();
     // Verify this is the tapepool we're looking for.
@@ -621,7 +621,7 @@ void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
       !m_payload.driveregisterpointer().address().size())
     return;
   std::string drAddr = m_payload.driveregisterpointer().address();
-  DriveRegister dr(drAddr, ObjectOps<serializers::RootEntry>::m_objectStore);
+  DriveRegister dr(drAddr, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   ScopedExclusiveLock drl(dr);
   dr.fetch();
   // Check the drive register is empty
@@ -713,7 +713,7 @@ void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
   // well
   if (m_payload.agentregisterintent().size()) {
     AgentRegister iar(m_payload.agentregisterintent(),
-      ObjectOps<serializers::RootEntry>::m_objectStore);
+      ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
     ScopedExclusiveLock iarl(iar);
     // An agent register only referenced in the intent should not be used
     // and hence empty. We'll see that.
@@ -729,7 +729,7 @@ void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
   if (m_payload.has_agentregisterpointer() &&
       m_payload.agentregisterpointer().address().size()) {
     AgentRegister ar(m_payload.agentregisterpointer().address(),
-      ObjectOps<serializers::RootEntry>::m_objectStore);
+      ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
     ScopedExclusiveLock arl(ar);
     ar.fetch();
     if (!ar.isEmpty()) {
@@ -759,10 +759,10 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
     // If it did not, we clean up the object if present, clean up the intent
     // and replace it with the new one.
     // We do not recycle the object, as the state is doubtful.
-    if (ObjectOps<serializers::RootEntry>::m_objectStore.exists(
+    if (ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore.exists(
       m_payload.agentregisterintent())) {
       AgentRegister iar(m_payload.agentregisterintent(),
-        ObjectOps<serializers::RootEntry>::m_objectStore);
+        ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
       iar.fetch();
       if (!iar.isEmpty()) {
         throw AgentRegisterNotEmpty("In RootEntry::addIntendedAgentRegistry, "
@@ -833,7 +833,7 @@ void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
       !m_payload.schedulerlockpointer().address().size())
     return;
   std::string sglAddress = m_payload.schedulerlockpointer().address();
-  SchedulerGlobalLock sgl(sglAddress, ObjectOps<serializers::RootEntry>::m_objectStore);
+  SchedulerGlobalLock sgl(sglAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   ScopedExclusiveLock sgll(sgl);
   sgl.fetch();
   // Check the drive register is empty

@@ -26,10 +26,10 @@
 #include <iostream>
 
 cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):
-  ObjectOps<serializers::DriveRegister>(os, address) { }
+  ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(os, address) { }
 
 cta::objectstore::DriveRegister::DriveRegister(GenericObject& go):
-  ObjectOps<serializers::DriveRegister>(go.objectStore()) {
+  ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -88,7 +88,7 @@ std::string cta::objectstore::DriveRegister::dump() {
 
 void cta::objectstore::DriveRegister::initialize() {
   // Setup underlying object
-  ObjectOps<serializers::DriveRegister>::initialize();
+  ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>::initialize();
   m_payloadInterpreted = true;
 }
 
