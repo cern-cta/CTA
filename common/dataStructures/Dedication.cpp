@@ -29,9 +29,9 @@ cta::common::dataStructures::Dedication::Dedication() {
   m_driveNameSet = false;
   m_fromTimestampSet = false;
   m_lastModificationLogSet = false;
+  m_mountGroupSet = false;
   m_tagSet = false;
   m_untilTimestampSet = false;
-  m_mountGroupSet = false;
   m_vidSet = false;
 }
 
@@ -51,9 +51,9 @@ bool cta::common::dataStructures::Dedication::allFieldsSet() const {
       && m_driveNameSet
       && m_fromTimestampSet
       && m_lastModificationLogSet
+      && m_mountGroupSet
       && m_tagSet
       && m_untilTimestampSet
-      && m_mountGroupSet
       && m_vidSet;
 }
 
@@ -166,6 +166,24 @@ cta::common::dataStructures::EntryLog cta::common::dataStructures::Dedication::g
 }
 
 //------------------------------------------------------------------------------
+// setMountGroup
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::Dedication::setMountGroup(const std::string &mountGroup) {
+  m_mountGroup = mountGroup;
+  m_mountGroupSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getMountGroup
+//------------------------------------------------------------------------------
+std::string cta::common::dataStructures::Dedication::getMountGroup() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
+  }
+  return m_mountGroup;
+}
+
+//------------------------------------------------------------------------------
 // setTag
 //------------------------------------------------------------------------------
 void cta::common::dataStructures::Dedication::setTag(const std::string &tag) {
@@ -199,24 +217,6 @@ uint64_t cta::common::dataStructures::Dedication::getUntilTimestamp() const {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
   }
   return m_untilTimestamp;
-}
-
-//------------------------------------------------------------------------------
-// setMountGroup
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::Dedication::setMountGroup(const std::string &mountGroup) {
-  m_mountGroup = mountGroup;
-  m_mountGroupSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMountGroup
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::Dedication::getMountGroup() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the Dedication have been set!");
-  }
-  return m_mountGroup;
 }
 
 //------------------------------------------------------------------------------

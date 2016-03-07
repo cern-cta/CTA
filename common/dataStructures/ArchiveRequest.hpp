@@ -51,6 +51,9 @@ public:
   void setChecksumValue(const std::string &checksumValue);
   std::string getChecksumValue() const;
 
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
+
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName() const;
 
@@ -74,9 +77,6 @@ public:
 
   void setStorageClass(const std::string &storageClass);
   std::string getStorageClass() const;
-
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
   
 
 private:
@@ -91,6 +91,9 @@ private:
 
   std::string m_checksumValue;
   bool m_checksumValueSet;
+
+  cta::common::dataStructures::EntryLog m_creationLog;
+  bool m_creationLogSet;
 
   std::string m_diskpoolName;
   bool m_diskpoolNameSet;
@@ -115,9 +118,6 @@ private:
 
   std::string m_storageClass;
   bool m_storageClassSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
 
 }; // class ArchiveRequest
 

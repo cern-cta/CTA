@@ -27,7 +27,6 @@ cta::common::dataStructures::CancelRetrieveRequest::CancelRetrieveRequest() {
   m_drDataSet = false;
   m_dstURLSet = false;
   m_requesterSet = false;
-  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -41,7 +40,6 @@ cta::common::dataStructures::CancelRetrieveRequest::~CancelRetrieveRequest() thr
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::CancelRetrieveRequest::allFieldsSet() const {
   return m_archiveFileIDSet
-      && m_creationLogSet
       && m_drDataSet
       && m_dstURLSet
       && m_requesterSet;
@@ -117,22 +115,4 @@ cta::common::dataStructures::Requester cta::common::dataStructures::CancelRetrie
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the CancelRetrieveRequest have been set!");
   }
   return m_requester;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::CancelRetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::CancelRetrieveRequest::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
-  }
-  return m_creationLog;
 }

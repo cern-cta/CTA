@@ -50,11 +50,11 @@ public:
   void setErrors(const std::map<uint64_t,std::string> &errors);
   std::map<uint64_t,std::string> getErrors() const;
 
-  void setFilesFailed(const uint64_t filesFailed);
-  uint64_t getFilesFailed() const;
-
   void setFilesArchived(const uint64_t filesArchived);
   uint64_t getFilesArchived() const;
+
+  void setFilesFailed(const uint64_t filesFailed);
+  uint64_t getFilesFailed() const;
 
   void setFilesToArchive(const uint64_t filesToArchive);
   uint64_t getFilesToArchive() const;
@@ -94,11 +94,11 @@ private:
   std::map<uint64_t,std::string> m_errors;
   bool m_errorsSet;
 
-  uint64_t m_filesFailed;
-  bool m_filesFailedSet;
-
   uint64_t m_filesArchived;
   bool m_filesArchivedSet;
+
+  uint64_t m_filesFailed;
+  bool m_filesFailedSet;
 
   uint64_t m_filesToArchive;
   bool m_filesToArchiveSet;

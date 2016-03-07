@@ -48,6 +48,9 @@ public:
   void setArchiveFileID(const uint64_t archiveFileID);
   uint64_t getArchiveFileID() const;
 
+  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getCreationLog() const;
+
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName() const;
 
@@ -62,9 +65,6 @@ public:
 
   void setRequester(const cta::common::dataStructures::Requester &requester);
   cta::common::dataStructures::Requester getRequester() const;
-
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
   
 
 private:
@@ -76,6 +76,9 @@ private:
 
   uint64_t m_archiveFileID;
   bool m_archiveFileIDSet;
+
+  cta::common::dataStructures::EntryLog m_creationLog;
+  bool m_creationLogSet;
 
   std::string m_diskpoolName;
   bool m_diskpoolNameSet;
@@ -91,9 +94,6 @@ private:
 
   cta::common::dataStructures::Requester m_requester;
   bool m_requesterSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
 
 }; // class RetrieveRequest
 

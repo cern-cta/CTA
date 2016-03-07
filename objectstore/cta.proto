@@ -422,8 +422,8 @@ message DRData {
 }
 
 message EntryLog {
-  required uint64 uid = 8950;
-  required uint64 gid = 8955;
+  required string name = 8950;
+  required string group = 8955;
   required string host = 8960;
   required uint64 time = 8970;
 }

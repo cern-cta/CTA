@@ -59,8 +59,11 @@ public:
   void setFilesTransferedInSession(const uint64_t filesTransferedInSession);
   uint64_t getFilesTransferedInSession() const;
 
-  void setLatestBandwidth(const double &latestBandwidth);
-  double getLatestBandwidth() const;
+  void setHost(const std::string &host);
+  std::string getHost() const;
+
+  void setLatestBandwidth(const uint64_t latestBandwidth);
+  uint64_t getLatestBandwidth() const;
 
   void setLogicalLibrary(const std::string &logicalLibrary);
   std::string getLogicalLibrary() const;
@@ -70,9 +73,6 @@ public:
 
   void setName(const std::string &name);
   std::string getName() const;
-
-  void setHost(const std::string &host);
-  std::string getHost() const;
 
   void setSessionId(const uint64_t sessionId);
   uint64_t getSessionId() const;
@@ -106,7 +106,10 @@ private:
   uint64_t m_filesTransferedInSession;
   bool m_filesTransferedInSessionSet;
 
-  double m_latestBandwidth;
+  std::string m_host;
+  bool m_hostSet;
+
+  uint64_t m_latestBandwidth;
   bool m_latestBandwidthSet;
 
   std::string m_logicalLibrary;
@@ -117,9 +120,6 @@ private:
 
   std::string m_name;
   bool m_nameSet;
-
-  std::string m_host;
-  bool m_hostSet;
 
   uint64_t m_sessionId;
   bool m_sessionIdSet;

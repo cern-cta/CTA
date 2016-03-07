@@ -88,7 +88,7 @@ void cta::common::dataStructures::VerifyInfo::setErrors(const std::map<uint64_t,
 //------------------------------------------------------------------------------
 std::map<uint64_t,std::string> cta::common::dataStructures::VerifyInfo::getErrors() const {
   if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
   }
   return m_errors;
 }

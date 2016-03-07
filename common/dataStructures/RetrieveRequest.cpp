@@ -24,12 +24,12 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RetrieveRequest::RetrieveRequest() {  
   m_archiveFileIDSet = false;
+  m_creationLogSet = false;
   m_diskpoolNameSet = false;
   m_diskpoolThroughputSet = false;
   m_drDataSet = false;
   m_dstURLSet = false;
   m_requesterSet = false;
-  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -67,6 +67,24 @@ uint64_t cta::common::dataStructures::RetrieveRequest::getArchiveFileID() const 
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
   return m_archiveFileID;
+}
+
+//------------------------------------------------------------------------------
+// setCreationLog
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::RetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+  m_creationLog = creationLog;
+  m_creationLogSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getCreationLog
+//------------------------------------------------------------------------------
+cta::common::dataStructures::EntryLog cta::common::dataStructures::RetrieveRequest::getCreationLog() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
+  }
+  return m_creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -157,22 +175,4 @@ cta::common::dataStructures::Requester cta::common::dataStructures::RetrieveRequ
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }
   return m_requester;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::RetrieveRequest::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
-  }
-  return m_creationLog;
 }

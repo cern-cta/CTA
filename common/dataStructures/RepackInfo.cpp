@@ -25,8 +25,8 @@
 cta::common::dataStructures::RepackInfo::RepackInfo() {  
   m_creationLogSet = false;
   m_errorsSet = false;
-  m_filesFailedSet = false;
   m_filesArchivedSet = false;
+  m_filesFailedSet = false;
   m_filesToArchiveSet = false;
   m_filesToRetrieveSet = false;
   m_repackStatusSet = false;
@@ -49,8 +49,8 @@ cta::common::dataStructures::RepackInfo::~RepackInfo() throw() {
 bool cta::common::dataStructures::RepackInfo::allFieldsSet() const {
   return m_creationLogSet
       && m_errorsSet
-      && m_filesFailedSet
       && m_filesArchivedSet
+      && m_filesFailedSet
       && m_filesToArchiveSet
       && m_filesToRetrieveSet
       && m_repackStatusSet
@@ -98,6 +98,24 @@ std::map<uint64_t,std::string> cta::common::dataStructures::RepackInfo::getError
 }
 
 //------------------------------------------------------------------------------
+// setFilesArchived
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::RepackInfo::setFilesArchived(const uint64_t filesArchived) {
+  m_filesArchived = filesArchived;
+  m_filesArchivedSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getFilesArchived
+//------------------------------------------------------------------------------
+uint64_t cta::common::dataStructures::RepackInfo::getFilesArchived() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
+  }
+  return m_filesArchived;
+}
+
+//------------------------------------------------------------------------------
 // setFilesFailed
 //------------------------------------------------------------------------------
 void cta::common::dataStructures::RepackInfo::setFilesFailed(const uint64_t filesFailed) {
@@ -116,25 +134,7 @@ uint64_t cta::common::dataStructures::RepackInfo::getFilesFailed() const {
 }
 
 //------------------------------------------------------------------------------
-// setFilesMigrated
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RepackInfo::setFilesArchived(const uint64_t filesArchived) {
-  m_filesArchived = filesArchived;
-  m_filesArchivedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFilesMigrated
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::RepackInfo::getFilesArchived() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RepackInfo have been set!");
-  }
-  return m_filesArchived;
-}
-
-//------------------------------------------------------------------------------
-// setFilesToMigr
+// setFilesToArchive
 //------------------------------------------------------------------------------
 void cta::common::dataStructures::RepackInfo::setFilesToArchive(const uint64_t filesToArchive) {
   m_filesToArchive = filesToArchive;
@@ -142,7 +142,7 @@ void cta::common::dataStructures::RepackInfo::setFilesToArchive(const uint64_t f
 }
 
 //------------------------------------------------------------------------------
-// getFilesToMigr
+// getFilesToArchive
 //------------------------------------------------------------------------------
 uint64_t cta::common::dataStructures::RepackInfo::getFilesToArchive() const {
   if(!allFieldsSet()) {
@@ -152,7 +152,7 @@ uint64_t cta::common::dataStructures::RepackInfo::getFilesToArchive() const {
 }
 
 //------------------------------------------------------------------------------
-// setFilesToRecall
+// setFilesToRetrieve
 //------------------------------------------------------------------------------
 void cta::common::dataStructures::RepackInfo::setFilesToRetrieve(const uint64_t filesToRetrieve) {
   m_filesToRetrieve = filesToRetrieve;
@@ -160,7 +160,7 @@ void cta::common::dataStructures::RepackInfo::setFilesToRetrieve(const uint64_t 
 }
 
 //------------------------------------------------------------------------------
-// getFilesToRecall
+// getFilesToRetrieve
 //------------------------------------------------------------------------------
 uint64_t cta::common::dataStructures::RepackInfo::getFilesToRetrieve() const {
   if(!allFieldsSet()) {

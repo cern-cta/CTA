@@ -62,14 +62,14 @@ public:
   void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
   cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
+  void setMountGroup(const std::string &mountGroup);
+  std::string getMountGroup() const;
+
   void setTag(const std::string &tag);
   std::string getTag() const;
 
   void setUntilTimestamp(const uint64_t untilTimestamp);
   uint64_t getUntilTimestamp() const;
-
-  void setMountGroup(const std::string &mountGroup);
-  std::string getMountGroup() const;
 
   void setVid(const std::string &vid);
   std::string getVid() const;
@@ -100,14 +100,14 @@ private:
   cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
+  std::string m_mountGroup;
+  bool m_mountGroupSet;
+
   std::string m_tag;
   bool m_tagSet;
 
   uint64_t m_untilTimestamp;
   bool m_untilTimestampSet;
-
-  std::string m_mountGroup;
-  bool m_mountGroupSet;
 
   std::string m_vid;
   bool m_vidSet;

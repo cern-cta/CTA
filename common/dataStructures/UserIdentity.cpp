@@ -23,8 +23,8 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::UserIdentity::UserIdentity() {  
-  m_gidSet = false;
-  m_uidSet = false;
+  m_groupSet = false;
+  m_nameSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -34,74 +34,45 @@ cta::common::dataStructures::UserIdentity::~UserIdentity() throw() {
 }
 
 //------------------------------------------------------------------------------
-// operator==
-//------------------------------------------------------------------------------
-bool cta::common::dataStructures::UserIdentity::operator==(
-  const UserIdentity &rhs) const {
-  if(!allFieldsSet()) {
-    throw exception::Exception(
-      "Not all of fields of UserIdentity on LHS of == are set");
-  }
-  if(!rhs.allFieldsSet()) {
-    throw exception::Exception(
-      "Not all of fields of UserIdentity on RHS of == are set");
-  }
-  return m_gid == rhs.m_gid && m_uidSet == rhs.m_uidSet;
-}
-
-//------------------------------------------------------------------------------
 // allFieldsSet
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::UserIdentity::allFieldsSet() const {
-  return m_gidSet
-      && m_uidSet;
+  return m_groupSet
+      && m_nameSet;
 }
 
 //------------------------------------------------------------------------------
-// setGid
+// setGroup
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setGid(const uint64_t gid) {
-  m_gid = gid;
-  m_gidSet = true;
+void cta::common::dataStructures::UserIdentity::setGroup(const std::string &group) {
+  m_group = group;
+  m_groupSet = true;
 }
 
 //------------------------------------------------------------------------------
-// getGid
+// getGroup
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::UserIdentity::getGid() const {
+std::string cta::common::dataStructures::UserIdentity::getGroup() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
   }
-  return m_gid;
+  return m_group;
 }
 
 //------------------------------------------------------------------------------
-// setUid
+// setName
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setUid(const uint64_t uid) {
-  m_uid = uid;
-  m_uidSet = true;
+void cta::common::dataStructures::UserIdentity::setName(const std::string &name) {
+  m_name = name;
+  m_nameSet = true;
 }
 
 //------------------------------------------------------------------------------
-// getUid
+// getName
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::UserIdentity::getUid() const {
+std::string cta::common::dataStructures::UserIdentity::getName() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
   }
-  return m_uid;
-}
-
-//------------------------------------------------------------------------------
-// operator<<
-//------------------------------------------------------------------------------
-std::ostream &cta::common::dataStructures::operator<<(std::ostream &os,
-  const UserIdentity &userIdentity) {
-  if(!userIdentity.allFieldsSet()) {
-    throw exception::Exception(
-      "operator<< for UserIdentity failed: Not all fields are set");
-  }
-  os << "{gid=" << userIdentity.m_gid << " uid=" << userIdentity.m_uid << "}";
-  return os;
+  return m_name;
 }

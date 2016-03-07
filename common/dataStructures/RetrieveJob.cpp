@@ -62,7 +62,7 @@ cta::common::dataStructures::RetrieveRequest cta::common::dataStructures::Retrie
 //------------------------------------------------------------------------------
 // setTapeCopies
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveJob::setTapeCopies(const std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> &tapeCopies) {
+void cta::common::dataStructures::RetrieveJob::setTapeCopies(const std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> &tapeCopies) {
   m_tapeCopies = tapeCopies;
   m_tapeCopiesSet = true;
 }
@@ -70,7 +70,7 @@ void cta::common::dataStructures::RetrieveJob::setTapeCopies(const std::map<std:
 //------------------------------------------------------------------------------
 // getTapeCopies
 //------------------------------------------------------------------------------
-std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> cta::common::dataStructures::RetrieveJob::getTapeCopies() const {
+std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> cta::common::dataStructures::RetrieveJob::getTapeCopies() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveJob have been set!");
   }

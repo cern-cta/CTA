@@ -391,12 +391,12 @@ std::string XrdProFile::formatResponse(const std::vector<std::vector<std::string
 // addLogInfoToResponseRow
 //------------------------------------------------------------------------------
 void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getUid()));
-  responseRow.push_back(std::to_string((unsigned long long)creationLog.getUser().getGid()));
+  responseRow.push_back(creationLog.getUser().getName());
+  responseRow.push_back(creationLog.getUser().getGroup());
   responseRow.push_back(creationLog.getHost());
   responseRow.push_back(timeToString(creationLog.getTime()));
-  responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getUid()));
-  responseRow.push_back(std::to_string((unsigned long long)lastModificationLog.getUser().getGid()));
+  responseRow.push_back(lastModificationLog.getUser().getName());
+  responseRow.push_back(lastModificationLog.getUser().getGroup());
   responseRow.push_back(lastModificationLog.getHost());
   responseRow.push_back(timeToString(lastModificationLog.getTime()));
 }
@@ -406,24 +406,18 @@ void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, 
 //------------------------------------------------------------------------------
 void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " bs/bootstrap --uid/-u <uid> --gid/-g <gid> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  std::string uid_s = getOptionValue(tokens, "-u", "--uid", false);
-  std::string gid_s = getOptionValue(tokens, "-g", "--gid", false);
+  help << tokens[0] << " bs/bootstrap --user/-u <user> --group/-g <group> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
+  std::string user = getOptionValue(tokens, "-u", "--user", false);
+  std::string group = getOptionValue(tokens, "-g", "--group", false);
   std::string hostname = getOptionValue(tokens, "-h", "--hostname", false);
   std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-  if(uid_s.empty()||gid_s.empty()||hostname.empty()||comment.empty()) {
+  if(user.empty()||group.empty()||hostname.empty()||comment.empty()) {
     m_data = help.str();
     return;
   }
   cta::common::dataStructures::UserIdentity adminUser;
-  std::stringstream uid_ss(uid_s);
-  int uid = 0;
-  uid_ss >> uid;
-  adminUser.setUid(uid);
-  std::stringstream gid_ss(gid_s);
-  int gid = 0;
-  gid_ss >> gid;
-  adminUser.setGid(gid);
+  adminUser.setName(user);
+  adminUser.setGroup(group);
   m_scheduler->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
 }
 
@@ -433,26 +427,20 @@ void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const ct
 void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl
-       << "\tadd --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --uid/-u <uid> --gid/-g <gid> --comment/-m <\"comment\">" << std::endl
-       << "\trm  --uid/-u <uid> --gid/-g <gid>" << std::endl
+       << "\tadd --user/-u <user> --group/-g <group> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --user/-u <user> --group/-g <group> --comment/-m <\"comment\">" << std::endl
+       << "\trm  --user/-u <user> --group/-g <group>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string uid_s = getOptionValue(tokens, "-u", "--uid", false);
-    std::string gid_s = getOptionValue(tokens, "-g", "--gid", false);
-    if(uid_s.empty()||gid_s.empty()) {
+    std::string user = getOptionValue(tokens, "-u", "--user", false);
+    std::string group = getOptionValue(tokens, "-g", "--group", false);
+    if(user.empty()||group.empty()) {
       m_data = help.str();
       return;
     }
     cta::common::dataStructures::UserIdentity adminUser;
-    std::stringstream uid_ss(uid_s);
-    int uid = 0;
-    uid_ss >> uid;
-    adminUser.setUid(uid);
-    std::stringstream gid_ss(gid_s);
-    int gid = 0;
-    gid_ss >> gid;
-    adminUser.setGid(gid);
+    adminUser.setName(user);
+    adminUser.setGroup(group);
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
@@ -474,12 +462,12 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
     std::list<cta::common::dataStructures::AdminUser> list= m_scheduler->getAdminUsers(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"uid","gid","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"user","group","c.user","c.group","c.host","c.time","m.user","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(std::to_string((unsigned long long)it->getUser().getUid()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getUser().getGid()));
+        currentRow.push_back(it->getUser().getName());
+        currentRow.push_back(it->getUser().getGroup());
         addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
         currentRow.push_back(it->getComment());
         responseTable.push_back(currentRow);
@@ -1385,8 +1373,8 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
         currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
         currentRow.push_back(std::to_string((unsigned long long)it->getFilesArchived()));
         currentRow.push_back(it->getRepackStatus());
-        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
+        currentRow.push_back(it->getCreationLog().getUser().getName());
+        currentRow.push_back(it->getCreationLog().getUser().getGroup());
         currentRow.push_back(it->getCreationLog().getHost());        
         currentRow.push_back(timeToString(it->getCreationLog().getTime()));
         responseTable.push_back(currentRow);
@@ -1487,8 +1475,8 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
         currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
         currentRow.push_back(std::to_string((unsigned long long)it->getFilesVerified()));
         currentRow.push_back(it->getVerifyStatus());
-        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getUid()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getCreationLog().getUser().getGid()));
+        currentRow.push_back(it->getCreationLog().getUser().getName());
+        currentRow.push_back(it->getCreationLog().getUser().getGroup());
         currentRow.push_back(it->getCreationLog().getHost());       
         currentRow.push_back(timeToString(it->getCreationLog().getTime()));
         responseTable.push_back(currentRow);
@@ -1534,7 +1522,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
         for(auto it = list.cbegin(); it != list.cend(); it++) {
           for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
             std::vector<std::string> currentRow;
-            currentRow.push_back(it->getArchiveFileID());
+            currentRow.push_back(std::to_string((unsigned long long)it->getArchiveFileID()));
             currentRow.push_back(std::to_string((unsigned long long)jt->first));
             currentRow.push_back(jt->second.getVid());
             currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));
@@ -1712,7 +1700,7 @@ void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
     for(auto it = list.cbegin(); it != list.cend(); it++) {
       for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getArchiveFileID());
+        currentRow.push_back(std::to_string((unsigned long long)it->getArchiveFileID()));
         currentRow.push_back(std::to_string((unsigned long long)jt->first));
         currentRow.push_back(jt->second.getVid());
         currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));

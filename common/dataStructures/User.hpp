@@ -55,11 +55,11 @@ public:
   void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
   cta::common::dataStructures::EntryLog getLastModificationLog() const;
 
-  void setName(const std::string &name);
-  std::string getName() const;
-
   void setMountGroupName(const std::string &mountGroupName);
   std::string getMountGroupName() const;
+
+  void setName(const std::string &name);
+  std::string getName() const;
   
 
 private:
@@ -81,11 +81,11 @@ private:
   cta::common::dataStructures::EntryLog m_lastModificationLog;
   bool m_lastModificationLogSet;
 
-  std::string m_name;
-  bool m_nameSet;
-
   std::string m_mountGroupName;
   bool m_mountGroupNameSet;
+
+  std::string m_name;
+  bool m_nameSet;
 
 }; // class User
 

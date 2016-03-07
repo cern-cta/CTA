@@ -24,7 +24,6 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/Requester.hpp"
 
 namespace cta {
@@ -56,9 +55,6 @@ public:
 
   void setRequester(const cta::common::dataStructures::Requester &requester);
   cta::common::dataStructures::Requester getRequester() const;
-
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
   
 
 private:
@@ -79,9 +75,6 @@ private:
 
   cta::common::dataStructures::Requester m_requester;
   bool m_requesterSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
 
 }; // class CancelRetrieveRequest
 

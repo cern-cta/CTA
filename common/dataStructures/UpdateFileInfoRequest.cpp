@@ -27,7 +27,6 @@ cta::common::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest() {
   m_drDataSet = false;
   m_requesterSet = false;
   m_storageClassSet = false;
-  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -41,7 +40,6 @@ cta::common::dataStructures::UpdateFileInfoRequest::~UpdateFileInfoRequest() thr
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::UpdateFileInfoRequest::allFieldsSet() const {
   return m_archiveFileIDSet
-      && m_creationLogSet
       && m_drDataSet
       && m_requesterSet
       && m_storageClassSet;
@@ -117,22 +115,4 @@ std::string cta::common::dataStructures::UpdateFileInfoRequest::getStorageClass(
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }
   return m_storageClass;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::UpdateFileInfoRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::UpdateFileInfoRequest::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
-  }
-  return m_creationLog;
 }

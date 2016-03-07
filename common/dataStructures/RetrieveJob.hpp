@@ -47,8 +47,8 @@ public:
   void setRequest(const cta::common::dataStructures::RetrieveRequest &request);
   cta::common::dataStructures::RetrieveRequest getRequest() const;
 
-  void setTapeCopies(const std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> &tapeCopies);
-  std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> getTapeCopies() const;
+  void setTapeCopies(const std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> &tapeCopies);
+  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> getTapeCopies() const;
   
 
 private:
@@ -61,7 +61,7 @@ private:
   cta::common::dataStructures::RetrieveRequest m_request;
   bool m_requestSet;
 
-  std::map<std::string,std::pair<int,cta::common::dataStructures::TapeFileLocation>> m_tapeCopies;
+  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> m_tapeCopies;
   bool m_tapeCopiesSet;
 
 }; // class RetrieveJob

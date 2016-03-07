@@ -24,7 +24,6 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/TapeFileLocation.hpp"
 
 namespace cta {
@@ -45,8 +44,8 @@ public:
    */
   ~ArchiveFile() throw();
 
-  void setArchiveFileID(const std::string &archiveFileID);
-  std::string getArchiveFileID() const;
+  void setArchiveFileID(const uint64_t archiveFileID);
+  uint64_t getArchiveFileID() const;
 
   void setChecksumType(const std::string &checksumType);
   std::string getChecksumType() const;
@@ -66,11 +65,8 @@ public:
   void setStorageClass(const std::string &storageClass);
   std::string getStorageClass() const;
 
-  void setTapeCopies(const std::map<int,cta::common::dataStructures::TapeFileLocation> &tapeCopies);
-  std::map<int,cta::common::dataStructures::TapeFileLocation> getTapeCopies() const;
-
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  void setTapeCopies(const std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> &tapeCopies);
+  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> getTapeCopies() const;
   
 
 private:
@@ -80,7 +76,7 @@ private:
    */
   bool allFieldsSet() const;
 
-  std::string m_archiveFileID;
+  uint64_t m_archiveFileID;
   bool m_archiveFileIDSet;
 
   std::string m_checksumType;
@@ -101,11 +97,8 @@ private:
   std::string m_storageClass;
   bool m_storageClassSet;
 
-  std::map<int,cta::common::dataStructures::TapeFileLocation> m_tapeCopies;
+  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> m_tapeCopies;
   bool m_tapeCopiesSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
 
 }; // class ArchiveFile
 

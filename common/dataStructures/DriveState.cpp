@@ -28,11 +28,11 @@ cta::common::dataStructures::DriveState::DriveState() {
   m_currentTapePoolSet = false;
   m_currentVidSet = false;
   m_filesTransferedInSessionSet = false;
+  m_hostSet = false;
   m_latestBandwidthSet = false;
   m_logicalLibrarySet = false;
   m_mountTypeSet = false;
   m_nameSet = false;
-  m_hostSet = false;
   m_sessionIdSet = false;
   m_sessionStartTimeSet = false;
   m_statusSet = false;
@@ -53,11 +53,11 @@ bool cta::common::dataStructures::DriveState::allFieldsSet() const {
       && m_currentTapePoolSet
       && m_currentVidSet
       && m_filesTransferedInSessionSet
+      && m_hostSet
       && m_latestBandwidthSet
       && m_logicalLibrarySet
       && m_mountTypeSet
       && m_nameSet
-      && m_hostSet
       && m_sessionIdSet
       && m_sessionStartTimeSet
       && m_statusSet;
@@ -154,9 +154,27 @@ uint64_t cta::common::dataStructures::DriveState::getFilesTransferedInSession() 
 }
 
 //------------------------------------------------------------------------------
+// setHost
+//------------------------------------------------------------------------------
+void cta::common::dataStructures::DriveState::setHost(const std::string &host) {
+  m_host = host;
+  m_hostSet = true;
+}
+
+//------------------------------------------------------------------------------
+// getHost
+//------------------------------------------------------------------------------
+std::string cta::common::dataStructures::DriveState::getHost() const {
+  if(!allFieldsSet()) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
+  }
+  return m_host;
+}
+
+//------------------------------------------------------------------------------
 // setLatestBandwidth
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setLatestBandwidth(const double &latestBandwidth) {
+void cta::common::dataStructures::DriveState::setLatestBandwidth(const uint64_t latestBandwidth) {
   m_latestBandwidth = latestBandwidth;
   m_latestBandwidthSet = true;
 }
@@ -164,7 +182,7 @@ void cta::common::dataStructures::DriveState::setLatestBandwidth(const double &l
 //------------------------------------------------------------------------------
 // getLatestBandwidth
 //------------------------------------------------------------------------------
-double cta::common::dataStructures::DriveState::getLatestBandwidth() const {
+uint64_t cta::common::dataStructures::DriveState::getLatestBandwidth() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
   }
@@ -223,24 +241,6 @@ std::string cta::common::dataStructures::DriveState::getName() const {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
   }
   return m_name;
-}
-
-//------------------------------------------------------------------------------
-// setHost
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setHost(const std::string &host) {
-  m_host = host;
-  m_hostSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getHost
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getHost() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_host;
 }
 
 //------------------------------------------------------------------------------

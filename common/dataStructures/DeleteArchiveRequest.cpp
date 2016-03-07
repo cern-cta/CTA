@@ -25,7 +25,6 @@
 cta::common::dataStructures::DeleteArchiveRequest::DeleteArchiveRequest() {  
   m_archiveFileIDSet = false;
   m_requesterSet = false;
-  m_creationLogSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -39,7 +38,6 @@ cta::common::dataStructures::DeleteArchiveRequest::~DeleteArchiveRequest() throw
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DeleteArchiveRequest::allFieldsSet() const {
   return m_archiveFileIDSet
-      && m_creationLogSet
       && m_requesterSet;
 }
 
@@ -77,22 +75,4 @@ cta::common::dataStructures::Requester cta::common::dataStructures::DeleteArchiv
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DeleteArchiveRequest have been set!");
   }
   return m_requester;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DeleteArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::DeleteArchiveRequest::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminHost have been set!");
-  }
-  return m_creationLog;
 }

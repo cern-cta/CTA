@@ -42,18 +42,11 @@ public:
    */
   ~UserIdentity() throw();
 
-  /**
-   * Equality operator.
-   *
-   * @param rhs The right hand side of the operator.
-   */
-  bool operator==(const UserIdentity &rhs) const;
+  void setGroup(const std::string &group);
+  std::string getGroup() const;
 
-  void setGid(const uint64_t gid);
-  uint64_t getGid() const;
-
-  void setUid(const uint64_t uid);
-  uint64_t getUid() const;
+  void setName(const std::string &name);
+  std::string getName() const;
   
 
 private:
@@ -63,24 +56,13 @@ private:
    */
   bool allFieldsSet() const;
 
-  uint64_t m_gid;
-  bool m_gidSet;
+  std::string m_group;
+  bool m_groupSet;
 
-  uint64_t m_uid;
-  bool m_uidSet;
-
-  friend std::ostream &operator<<(std::ostream &, const UserIdentity &);
+  std::string m_name;
+  bool m_nameSet;
 
 }; // class UserIdentity
-
-/**
- * Output stream operator for UserIdentity.
- *
- * @param os The output stream.
- * @param entryLog The entry log.
- * @return The output stream.
- */
-std::ostream &operator<<(std::ostream &os, const UserIdentity &userIdentity);
 
 } // namespace dataStructures
 } // namespace common

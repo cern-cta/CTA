@@ -195,8 +195,8 @@ void cta::objectstore::RetrieveRequest::setCreationLog(const cta::common::dataSt
   auto payloadCreationLog = m_payload.mutable_creationlog();
   payloadCreationLog->set_time(creationLog.getTime());
   payloadCreationLog->set_host(creationLog.getHost());
-  payloadCreationLog->set_uid(creationLog.getUser().getUid());
-  payloadCreationLog->set_gid(creationLog.getUser().getGid());
+  payloadCreationLog->set_name(creationLog.getUser().getName());
+  payloadCreationLog->set_group(creationLog.getUser().getGroup());
 }
 
 //------------------------------------------------------------------------------
@@ -207,8 +207,8 @@ cta::common::dataStructures::EntryLog cta::objectstore::RetrieveRequest::getCrea
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::UserIdentity user;
   auto payloadCreationLog = m_payload.creationlog();
-  user.setUid(payloadCreationLog.uid());
-  user.setGid(payloadCreationLog.gid());
+  user.setName(payloadCreationLog.name());
+  user.setGroup(payloadCreationLog.group());
   creationLog.setUser(user);
   creationLog.setHost(payloadCreationLog.host());
   creationLog.setTime(payloadCreationLog.time());
@@ -259,8 +259,8 @@ std::string cta::objectstore::RetrieveRequest::dump() {
   json_object * jaf = json_object_new_object();
   json_object_object_add(jaf, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
   json_object_object_add(jaf, "time", json_object_new_int64(m_payload.creationlog().time()));
-  json_object_object_add(jaf, "uid", json_object_new_int64(m_payload.creationlog().uid()));
-  json_object_object_add(jaf, "gid", json_object_new_int64(m_payload.creationlog().gid()));
+  json_object_object_add(jaf, "name", json_object_new_string(m_payload.creationlog().name().c_str()));
+  json_object_object_add(jaf, "group", json_object_new_string(m_payload.creationlog().group().c_str()));
   json_object_object_add(jo, "creationlog", jaf);
   // Array for jobs
   json_object * jja = json_object_new_array();
