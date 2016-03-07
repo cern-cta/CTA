@@ -22,11 +22,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteStmt::SqliteStmt(SqliteConn &conn,
+cta::catalogue::SqliteStmt::SqliteStmt(const SqliteConn &conn,
   const std::string &sql): m_sql(sql) {
   m_stmt = NULL;
-  const int prepareRc = sqlite3_prepare_v2(conn.get(), sql.c_str(), 0, &m_stmt,
-    NULL);
+  const int nByte = -1; // Read SQL up to first null terminator
+  const int prepareRc = sqlite3_prepare_v2(conn.get(), sql.c_str(), nByte,
+    &m_stmt, NULL);
   if(SQLITE_OK != prepareRc) {
     sqlite3_finalize(m_stmt);
     exception::Exception ex;
@@ -76,7 +77,7 @@ void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
 void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
   const std::string &paramValue) {
   const int paramIdx = getParamIndex(paramName);
-  const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramName.c_str(), -1,
+  const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1,
     SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {
     exception::Exception ex;
@@ -98,78 +99,58 @@ int cta::catalogue::SqliteStmt::step() {
 
   // Throw an appropriate exception
   exception::Exception ex;
-  ex.getMessage() << __FUNCTION__ << " failed: " << sqliteRcToString(stepRc) <<
+  ex.getMessage() << __FUNCTION__ << " failed: " << sqlite3_errstr(stepRc) <<
     ": For SQL statement " << m_sql;
   throw ex;
 }
 
 //------------------------------------------------------------------------------
-// sqliteRcToString
+// getColumnNameToIdx
 //------------------------------------------------------------------------------
-std::string cta::catalogue::SqliteStmt::sqliteRcToString(const int rc) const {
-  switch(rc) {
-  case SQLITE_ABORT:
-    return "Abort requested";
-  case SQLITE_AUTH:
-    return "Authorization denied";
-  case SQLITE_BUSY:
-    return "Failed to take locks";
-  case SQLITE_CANTOPEN:
-    return "Cannot open database file";
-  case SQLITE_CONSTRAINT:
-    return "Constraint violation";
-  case SQLITE_CORRUPT:
-    return "Database file corrupted";
-  case SQLITE_DONE:
-    return "Statement finished executing successfully";
-  case SQLITE_EMPTY:
-    return "Database file empty";
-  case SQLITE_FORMAT:
-    return "Database format error";
-  case SQLITE_FULL:
-    return "Database full";
-  case SQLITE_INTERNAL:
-    return "Internal SQLite library error";
-  case SQLITE_INTERRUPT:
-    return "Interrupted";
-  case SQLITE_IOERR:
-    return "I/O error";
-  case SQLITE_LOCKED:
-    return "A table is locked";
-  case SQLITE_MISMATCH:
-    return "Datatype mismatch";
-  case SQLITE_MISUSE:
-    return "Misuse";
-  case SQLITE_NOLFS:
-    return "OS cannot provide functionality";
-  case SQLITE_NOMEM:
-    return "Memory allocation error";
-  case SQLITE_NOTADB:
-    return "Not a database file";
-  case SQLITE_OK:
-    return "Operation successful";
-  case SQLITE_PERM:
-    return "Permnission denied";
-  case SQLITE_RANGE:
-    return "Invalid bind parameter index";
-  case SQLITE_READONLY:
-    return "Failed to write to read-only database";
-  case SQLITE_ROW:
-    return "A new row of data is ready for reading";
-  case SQLITE_SCHEMA:
-    return "Database schema changed";
-  case SQLITE_TOOBIG:
-    return "TEXT or BLOCK too big";
-  case SQLITE_ERROR:
-    return "Generic error";
-  default:
-    {
-      std::ostringstream oss;
-      oss << "Unknown SQLite return code " << rc;
-      return oss.str();
+cta::catalogue::ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx()
+  const {
+  ColumnNameToIdx nameToIdx;
+
+  try {
+    const int nbCols = sqlite3_column_count(m_stmt);
+    for(int i = 0; i < nbCols; i++) {
+      const char *name = sqlite3_column_name(m_stmt, i);
+      if(NULL == name) {
+        exception::Exception ex;
+        ex.getMessage() << "Failed to get column name for column index " << i;
+        throw ex;
+      }
+      nameToIdx.add(name, i);
     }
+  } catch(exception::Exception &ne) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed: For SQL statement " << m_sql
+      << ": " << ne.getMessage();
+    throw ex;
+  }
+
+  return nameToIdx;
+}
+
+//------------------------------------------------------------------------------
+// columnText
+//------------------------------------------------------------------------------
+std::string cta::catalogue::SqliteStmt::columnText(const int colIdx) {
+  const char *const colValue = (const char *)sqlite3_column_text(m_stmt,
+    colIdx);
+  if(NULL == colValue) {
+    return "";
+  } else  {
+    return colValue;
   }
 }
+
+//------------------------------------------------------------------------------
+// columnUint64
+//------------------------------------------------------------------------------
+uint64_t cta::catalogue::SqliteStmt::columnUint64(const int colIdx) {
+  return (uint64_t)sqlite3_column_int64(m_stmt, colIdx);
+} 
 
 //------------------------------------------------------------------------------
 // getParamIndex

@@ -49,6 +49,20 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "UPDATER_USER  TEXT,"
       "UPDATER_GROUP TEXT,"
       "UPDATER_HOST  TEXT,"
+      "UPDATE_TIME   INTEGER);"
+
+    "CREATE TABLE ADMIN_HOST("
+      "HOST_NAME     TEXT,"
+      "COMMENT       TEXT,"
+
+      "CREATOR_USER  TEXT,"
+      "CREATOR_GROUP TEXT,"
+      "CREATOR_HOST  TEXT,"
+      "CREATION_TIME INTEGER,"
+
+      "UPDATER_USER  TEXT,"
+      "UPDATER_GROUP TEXT,"
+      "UPDATER_HOST  TEXT,"
       "UPDATE_TIME   INTEGER);");
 }
 
@@ -66,55 +80,100 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   const common::dataStructures::UserIdentity &user,
   const std::string &hostName,
   const std::string &comment) {
-  const char *sql =
-    "INSERT INTO ADMIN_USER("
-      "USER_NAME,"
-      "GROUP_NAME,"
-      "COMMENT,"
-
-      "CREATOR_USER,"
-      "CREATOR_GROUP,"
-      "CREATOR_HOST,"
-      "CREATION_TIME,"
-
-      "UPDATER_USER,"
-      "UPDATER_GROUP,"
-      "UPDATER_HOST,"
-      "UPDATE_TIME)"
-    "VALUES("
-      ":USER_NAME,"
-      ":GROUP_NAME,"
-      ":COMMENT,"
-
-      ":CREATOR_USER,"
-      ":CREATOR_GROUP,"
-      ":CREATOR_HOST,"
-      ":CREATION_TIME,"
-
-      ":CREATOR_USER,"
-      ":CREATOR_GROUP,"
-      ":CREATOR_HOST,"
-      ":CREATION_TIME";
-  SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":USER_NAME", user.name);
-  stmt.bind(":GROUP_NAME", user.group);
-  stmt.bind(":COMMENT", comment);
+  {
+    const char *const sql =
+      "INSERT INTO ADMIN_USER("
+        "USER_NAME,"
+        "GROUP_NAME,"
+        "COMMENT,"
 
-  stmt.bind(":CREATOR_USER", cliIdentity.user.name);
-  stmt.bind(":CREATOR_GROUP", cliIdentity.user.group);
-  stmt.bind(":CREATOR_HOST", cliIdentity.host);
-  stmt.bind(":CREATION_TIME", now);
+        "CREATOR_USER,"
+        "CREATOR_GROUP,"
+        "CREATOR_HOST,"
+        "CREATION_TIME,"
 
-  stmt.step();
+        "UPDATER_USER,"
+        "UPDATER_GROUP,"
+        "UPDATER_HOST,"
+        "UPDATE_TIME)"
+      "VALUES("
+        ":USER_NAME,"
+        ":GROUP_NAME,"
+        ":COMMENT,"
+
+        ":CREATOR_USER,"
+        ":CREATOR_GROUP,"
+        ":CREATOR_HOST,"
+        ":CREATION_TIME,"
+
+        ":CREATOR_USER,"
+        ":CREATOR_GROUP,"
+        ":CREATOR_HOST,"
+        ":CREATION_TIME);";
+    SqliteStmt stmt(m_conn, sql);
+
+    stmt.bind(":USER_NAME", user.getName());
+    stmt.bind(":GROUP_NAME", user.getGroup());
+    stmt.bind(":COMMENT", comment);
+
+    stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
+    stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
+    stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+    stmt.bind(":CREATION_TIME", now);
+
+    stmt.step();
+  }
+
+  {
+    const char *const sql =
+      "INSERT INTO ADMIN_HOST("
+        "HOST_NAME,"
+        "COMMENT,"
+
+        "CREATOR_USER,"
+        "CREATOR_GROUP,"
+        "CREATOR_HOST,"
+        "CREATION_TIME,"
+
+        "UPDATER_USER,"
+        "UPDATER_GROUP,"
+        "UPDATER_HOST,"
+        "UPDATE_TIME)"
+      "VALUES("
+        ":HOST_NAME,"
+        ":COMMENT,"
+
+        ":CREATOR_USER,"
+        ":CREATOR_GROUP,"
+        ":CREATOR_HOST,"
+        ":CREATION_TIME,"
+
+        ":CREATOR_USER,"
+        ":CREATOR_GROUP,"
+        ":CREATOR_HOST,"
+        ":CREATION_TIME);";
+    SqliteStmt stmt(m_conn, sql);
+
+    stmt.bind(":HOST_NAME", hostName);
+    stmt.bind(":COMMENT", comment);
+
+    stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
+    stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
+    stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+    stmt.bind(":CREATION_TIME", now);
+
+    stmt.step();
+  }
 }
 
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
-  const char *sql =
+  const uint64_t now = time(NULL);
+  const char *const sql =
     "INSERT INTO ADMIN_USER("
       "USER_NAME,"
       "GROUP_NAME,"
@@ -139,12 +198,11 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructur
       ":CREATOR_HOST,"
       ":CREATION_TIME,"
 
-      ":UPDATER_USER,"
-      ":UPDATER_GROUP,"
-      ":UPDATER_HOST,"
-      ":UPDATE_TIME";
+      ":CREATOR_USER,"
+      ":CREATER_GROUP,"
+      ":CREATER_HOST,"
+      ":CREATION_TIME);";
   SqliteStmt stmt(m_conn, sql);
-  const uint64_t now = time(NULL);
 
   stmt.bind(":USER_NAME", user.name);
   stmt.bind(":GROUP_NAME", user.group);
@@ -166,7 +224,63 @@ void cta::catalogue::SqliteCatalogue::deleteAdminUser(const common::dataStructur
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogue::getAdminUsers(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminUser>();}
+std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogue::getAdminUsers(const common::dataStructures::SecurityIdentity &requester) const {
+  std::list<cta::common::dataStructures::AdminUser> admins;
+  const char *const sql =
+    "SELECT "
+      "USER_NAME     AS USER_NAME,"
+      "GROUP_NAME    AS GROUP_NAME,"
+      "COMMENT       AS COMMENT,"
+
+      "CREATOR_USER  AS CREATOR_USER,"
+      "CREATOR_GROUP AS CREATOR_GROUP,"
+      "CREATOR_HOST  AS CREATOR_HOST,"
+      "CREATION_TIME AS CREATION_TIME,"
+
+      "UPDATER_USER  AS UPDATER_USER,"
+      "UPDATER_GROUP AS UPDATER_GROUP,"
+      "UPDATER_HOST  AS UPDATER_HOST,"
+      "UPDATE_TIME   AS UPDATE_TIME "
+    "FROM ADMIN_USER";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::AdminUser admin;
+
+    common::dataStructures::UserIdentity adminUI;
+    adminUI.setName(stmt.columnText(nameToIdx["USER_NAME"]));
+    adminUI.setGroup(stmt.columnText(nameToIdx["GROUP_NAME"]));
+    admin.setUser(adminUI);
+
+    admin.setComment(stmt.columnText(nameToIdx["COMMENT"]));
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.setName(stmt.columnText(nameToIdx["CREATOR_USER"]));
+    creatorUI.setGroup(stmt.columnText(nameToIdx["CREATOR_GROUP"]));
+
+    common::dataStructures::EntryLog creationLOg;
+    creationLOg.setUser(creatorUI);
+    creationLOg.setHost(stmt.columnText(nameToIdx["CREATOR_HOST"]));
+    creationLOg.setTime(stmt.columnUint64(nameToIdx["CREATION_TIME"]));
+    admin.setCreationLog(creationLOg);
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.setName(stmt.columnText(nameToIdx["UPDATER_USER"]));
+    updaterUI.setGroup(stmt.columnText(nameToIdx["UPDATER_GROUP"]));
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.setUser(updaterUI);
+    updateLog.setHost(stmt.columnText(nameToIdx["UPDATER_HOST"]));
+    updateLog.setTime(stmt.columnUint64(nameToIdx["UPDATE_TIME"]));
+    admin.setLastModificationLog(updateLog);
+    admins.push_back(admin);
+  }
+
+  return admins;
+}
 
 //------------------------------------------------------------------------------
 // modifyAdminUserComment

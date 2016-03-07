@@ -43,7 +43,7 @@ cta::catalogue::SqliteConn::~SqliteConn() throw() {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-sqlite3 *cta::catalogue::SqliteConn::get() {
+sqlite3 *cta::catalogue::SqliteConn::get() const {
   if(NULL == m_conn) {
     throw exception::Exception("Failed to get SQLite database connection"
       ": NULL pointer");

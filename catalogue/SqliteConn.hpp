@@ -47,7 +47,7 @@ public:
    *
    * @return the underlying database connection.
    */
-  sqlite3 *get();
+  sqlite3 *get() const;
 
   /**
    * Enables foreign key constraints.

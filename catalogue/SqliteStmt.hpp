@@ -19,7 +19,10 @@
 #pragma once
 
 #include "catalogue/SqliteConn.hpp"
+#include "catalogue/ColumnNameToIdx.hpp"
 
+#include <map>
+#include <stdint.h>
 #include <sqlite3.h>
 #include <string>
 
@@ -38,7 +41,7 @@ public:
    * @param conn The SQLite database connection.
    * @param sql The SQL statement.
    */
-  SqliteStmt(SqliteConn &conn, const std::string &sql);
+  SqliteStmt(const SqliteConn &conn, const std::string &sql);
 
   /**
    * Destructor.
@@ -77,6 +80,29 @@ public:
    */
   int step();
 
+  /**
+   * Returns a map from column name to column index.
+   *
+   * @return a map from column name to column index.
+   */
+  ColumnNameToIdx getColumnNameToIdx() const;
+
+  /**
+   * Convenience wrapper around sqlite3_column_text().
+   *
+   * @param The index of the column.
+   * @return The value of the specified column.
+   */
+  std::string columnText(const int colIdx);
+
+  /**
+   * Convenience wrapper around sqlite3_column_int64().
+   *
+   * @param The index of the column.
+   * @return The value of the specified column.
+   */
+  uint64_t columnUint64(const int colIdx);
+
 private:
 
   /**
@@ -95,14 +121,6 @@ private:
    * This method throws an exception if the parameter is not found.
    */
   int getParamIndex(const std::string &paramName);
-
-  /**
-   * Returns the string representation of the specified SQLite return code.
-   *
-   * @param rc The SQLite return code.
-   * @return The string representation of the SQLite return code.
-   */
-  std::string sqliteRcToString(const int rc) const;
 
 }; // class SqlLiteStmt
 

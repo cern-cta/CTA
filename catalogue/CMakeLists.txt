@@ -17,6 +17,7 @@ cmake_minimum_required (VERSION 2.6)
 
 set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
+  ColumnNameToIdx.cpp
   DbLogin.cpp
   DummyCatalogue.cpp
   SqliteCatalogue.cpp
@@ -27,7 +28,8 @@ add_library (ctacatalogue
   ${CATALOGUE_LIB_SRC_FILES})
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  SqliteCatalogueTest.cpp)
+  SqliteCatalogueTest.cpp
+  SqliteStmtTest.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

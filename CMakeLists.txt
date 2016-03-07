@@ -31,9 +31,6 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 # to be tested once we have a stable compilation on CC7:
 #-Wno-unused-parameter -Wlogical-op -Wfloat-equal -Wdeclaration-after- statement -Wundef -Wno-endif-labels -Wshadow -Wunsafe-loop- optimizations -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite- strings -Wconversion -Wmissing-field-initializers -Wredundant-decls -Wnested-externs -Wunreachable-code -Winline -Wvariadic-macros -Wtraditional -Wmissing-prototypes -Wmissing-declarations -Wold-style- definition -Wc++-compat -Wstrict-prototypes -Wpadded -Wcast-qual -Wnon-virtual-dtor -Wlogical-op -Wmissing-declarations -Wsign-conversion -Wredundant-decls -Wold-style-cast -Wshadow
 
-
-
-
 # Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
 # in order to prevent the -O2 flag from being used.
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
