@@ -162,7 +162,7 @@ std::string cta::common::dataStructures::RetrieveRequest::getDstURL() const {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
+void cta::common::dataStructures::RetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -170,7 +170,7 @@ void cta::common::dataStructures::RetrieveRequest::setRequester(const cta::commo
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester cta::common::dataStructures::RetrieveRequest::getRequester() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::RetrieveRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
   }

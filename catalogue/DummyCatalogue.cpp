@@ -419,14 +419,14 @@ std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::getCopyNbToTapePo
 //------------------------------------------------------------------------------
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
   return cta::common::dataStructures::MountPolicy();
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
   return cta::common::dataStructures::MountPolicy();
 }
 

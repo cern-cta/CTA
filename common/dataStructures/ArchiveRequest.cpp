@@ -206,7 +206,7 @@ uint64_t cta::common::dataStructures::ArchiveRequest::getFileSize() const {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
+void cta::common::dataStructures::ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -214,7 +214,7 @@ void cta::common::dataStructures::ArchiveRequest::setRequester(const cta::common
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester cta::common::dataStructures::ArchiveRequest::getRequester() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::ArchiveRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRequest have been set!");
   }

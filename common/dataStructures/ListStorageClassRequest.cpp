@@ -42,7 +42,7 @@ bool cta::common::dataStructures::ListStorageClassRequest::allFieldsSet() const 
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ListStorageClassRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
+void cta::common::dataStructures::ListStorageClassRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -50,7 +50,7 @@ void cta::common::dataStructures::ListStorageClassRequest::setRequester(const ct
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester cta::common::dataStructures::ListStorageClassRequest::getRequester() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::ListStorageClassRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ListStorageClassRequest have been set!");
   }

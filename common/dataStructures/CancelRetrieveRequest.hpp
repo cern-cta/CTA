@@ -24,7 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -53,8 +53,8 @@ public:
   void setDstURL(const std::string &dstURL);
   std::string getDstURL() const;
 
-  void setRequester(const cta::common::dataStructures::Requester &requester);
-  cta::common::dataStructures::Requester getRequester() const;
+  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
+  cta::common::dataStructures::UserIdentity getRequester() const;
   
 
 private:
@@ -73,7 +73,7 @@ private:
   std::string m_dstURL;
   bool m_dstURLSet;
 
-  cta::common::dataStructures::Requester m_requester;
+  cta::common::dataStructures::UserIdentity m_requester;
   bool m_requesterSet;
 
 }; // class CancelRetrieveRequest

@@ -25,7 +25,7 @@
 
 #include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -69,8 +69,8 @@ public:
   void setFileSize(const uint64_t fileSize);
   uint64_t getFileSize() const;
 
-  void setRequester(const cta::common::dataStructures::Requester &requester);
-  cta::common::dataStructures::Requester getRequester() const;
+  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
+  cta::common::dataStructures::UserIdentity getRequester() const;
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL() const;
@@ -110,7 +110,7 @@ private:
   uint64_t m_fileSize;
   bool m_fileSizeSet;
 
-  cta::common::dataStructures::Requester m_requester;
+  cta::common::dataStructures::UserIdentity m_requester;
   bool m_requesterSet;
 
   std::string m_srcURL;

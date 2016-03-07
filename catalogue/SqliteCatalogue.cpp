@@ -37,17 +37,17 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(
     "CREATE TABLE ADMIN_USER("
-      "UID           INTEGER,"
-      "GID           INTEGER,"
+      "USER          TEXT,"
+      "GROUP         TEXT,"
       "COMMENT       TEXT,"
 
-      "CREATOR_UID   INTEGER,"
-      "CREATOR_GID   INTEGER,"
+      "CREATOR_USER  INTEGER,"
+      "CREATOR_GROUP INTEGER,"
       "CREATOR_HOST  TEXT,"
       "CREATION_TIME INTEGER,"
 
-      "UPDATER_UID   INTEGER,"
-      "UPDATER_GID   INTEGER,"
+      "UPDATER_USER  INTEGER,"
+      "UPDATER_GROUP INTEGER,"
       "UPDATER_HOST  TEXT,"
       "UPDATE_TIME   INTEGER);");
 }
@@ -68,17 +68,17 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   const std::string &comment) {
   const char *sql =
     "INSERT INTO ADMIN_USER("
-      "UID,"
-      "GID,"
+      "USER,"
+      "GROUP,"
       "COMMENT,"
 
-      "CREATOR_UID,"
-      "CREATOR_GID,,"
+      "CREATOR_USER,"
+      "CREATOR_GROUP,"
       "CREATOR_HOST,"
       "CREATION_TIME,"
 
-      "UPDATER_UID,"
-      "UPDATER_GID,"
+      "UPDATER_USER,"
+      "UPDATER_GROUP,"
       "UPDATER_HOST,"
       "UPDATE_TIME)"
     "VALUES("
@@ -86,24 +86,24 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
       ":GID,"
       ":COMMENT,"
 
-      ":CREATOR_UID,"
-      ":CREATOR_GID,,"
+      ":CREATOR_USER,"
+      ":CREATOR_GROUP,"
       ":CREATOR_HOST,"
       ":CREATION_TIME,"
 
-      ":CREATOR_UID,"
-      ":CREATOR_GID,"
+      ":CREATOR_USER,"
+      ":CREATOR_GROUP,"
       ":CREATOR_HOST,"
       ":CREATION_TIME";
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":UID", user.getUid());
-  stmt.bind(":GID", user.getGid());
+  stmt.bind(":USER", user.getName());
+  stmt.bind(":GROUP", user.getGroup());
   stmt.bind(":COMMENT", comment);
 
-  stmt.bind(":CREATOR_UID", cliIdentity.getUid());
-  stmt.bind(":CREATOR_GID", cliIdentity.getGid());
+  stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
+  stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
   stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
   stmt.bind(":CREATION_TIME", now);
 
@@ -116,42 +116,42 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
 void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
   const char *sql =
     "INSERT INTO ADMIN_USER("
-      "UID,"
-      "GID,"
+      "USER,"
+      "GROUP,"
       "COMMENT,"
 
-      "CREATOR_UID,"
-      "CREATOR_GID,,"
+      "CREATOR_USER,"
+      "CREATOR_GROUP,"
       "CREATOR_HOST,"
       "CREATION_TIME,"
 
-      "UPDATER_UID,"
-      "UPDATER_GID,"
+      "UPDATER_USER,"
+      "UPDATER_GROUP,"
       "UPDATER_HOST,"
       "UPDATE_TIME)"
     "VALUES("
-      ":UID,"
-      ":GID,"
+      ":USER,"
+      ":GROUP,"
       ":COMMENT,"
 
-      ":CREATOR_UID,"
-      ":CREATOR_GID,,"
+      ":CREATOR_USER,"
+      ":CREATOR_GROUP,"
       ":CREATOR_HOST,"
       ":CREATION_TIME,"
 
-      ":UPDATER_UID,"
-      ":UPDATER_GID,"
+      ":UPDATER_USER,"
+      ":UPDATER_GROUP,"
       ":UPDATER_HOST,"
       ":UPDATE_TIME";
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":UID", user.getUid());
-  stmt.bind(":GID", user.getGid());
+  stmt.bind(":USER", user.getName());
+  stmt.bind(":GROUP", user.getGroup());
   stmt.bind(":COMMENT", comment);
 
-  stmt.bind(":CREATOR_UID", cliIdentity.getUid());
-  stmt.bind(":CREATOR_GID", cliIdentity.getGid());
+  stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
+  stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
   stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
   stmt.bind(":CREATION_TIME", now);
 
@@ -544,7 +544,7 @@ std::map<uint64_t,std::string> cta::catalogue::SqliteCatalogue::
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+  getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
   return common::dataStructures::MountPolicy();
 }
 
@@ -552,7 +552,7 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester) {
+  getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
   return common::dataStructures::MountPolicy();
 }
 

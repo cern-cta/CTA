@@ -408,9 +408,9 @@ message SchedulerGlobalLock {
 
 // ------------- New interface  ------------------------------------------------
 
-message Requester {
-  required string groupName = 8800;
-  required string userName = 8810;
+message User {
+  required string name = 8800;
+  required string group = 8810;
 }
 
 message DRData {
@@ -446,7 +446,7 @@ message ArchiveRequest {
   required DRData drData = 9040;
   required string eosFileID = 9050;
   required uint64 fileSize = 9060;
-  required Requester requester = 9070;
+  required User requester = 9070;
   required string srcURL = 9080;
   required string storageClass = 9090;
   required EntryLog creationLog = 9091;
@@ -460,7 +460,7 @@ message RetrieveRequest {
   required uint64 diskpoolThroughput = 9120;
   required DRData drData = 9130;
   required string dstURL = 9140;
-  required Requester requester = 9150;
+  required User requester = 9150;
   required EntryLog creationLog = 9151;
   repeated RetrieveJobEntry jobs = 9152;
 }

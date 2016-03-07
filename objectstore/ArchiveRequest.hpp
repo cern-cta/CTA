@@ -22,7 +22,7 @@
 #include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
@@ -90,8 +90,8 @@ public:
   void setFileSize(const uint64_t fileSize);
   uint64_t getFileSize();
 
-  void setRequester(const cta::common::dataStructures::Requester &requester);
-  cta::common::dataStructures::Requester getRequester();
+  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
+  cta::common::dataStructures::UserIdentity getRequester();
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL();

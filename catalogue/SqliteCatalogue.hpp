@@ -150,8 +150,8 @@ public:
  const cta::common::dataStructures::TapeFileLocation tapeFileLocation);
   
   virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass);
-  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester);
-  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester);
+  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester);
+  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester);
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
 
 private:

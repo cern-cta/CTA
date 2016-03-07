@@ -44,7 +44,6 @@
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
-#include "common/dataStructures/Requester.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -185,8 +184,8 @@ public:
  const cta::common::dataStructures::TapeFileLocation tapeFileLocation) = 0;
   
   virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) = 0;
-  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::Requester &requester) = 0;
-  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::Requester &requester) = 0;
+  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) = 0;
+  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) = 0;
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) = 0;
 
 }; // class Catalogue

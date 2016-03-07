@@ -84,7 +84,7 @@ cta::common::dataStructures::DRData cta::common::dataStructures::UpdateFileInfoR
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UpdateFileInfoRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
+void cta::common::dataStructures::UpdateFileInfoRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   m_requester = requester;
   m_requesterSet = true;
 }
@@ -92,7 +92,7 @@ void cta::common::dataStructures::UpdateFileInfoRequest::setRequester(const cta:
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester cta::common::dataStructures::UpdateFileInfoRequest::getRequester() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::UpdateFileInfoRequest::getRequester() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UpdateFileInfoRequest have been set!");
   }

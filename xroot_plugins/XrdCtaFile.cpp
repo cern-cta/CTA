@@ -70,8 +70,10 @@ cta::common::dataStructures::SecurityIdentity XrdProFile::checkClient(const XrdS
     }
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
-  cliIdentity.setUid(pwd.pw_uid);
-  cliIdentity.setGid(pwd.pw_gid);
+  cta::common::dataStructures::UserIdentity user;
+  user.setName(client->name);
+  user.setGroup(client->grps);
+  cliIdentity.setUser(user);
   cliIdentity.setHost(client->host);
   return cliIdentity;
 }
@@ -1755,8 +1757,8 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
           currentRow.push_back(jt->getRequest().getChecksumType());
           currentRow.push_back(jt->getRequest().getChecksumValue());         
           currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getFileSize()));
-          currentRow.push_back(jt->getRequest().getRequester().getUserName());
-          currentRow.push_back(jt->getRequest().getRequester().getGroupName());
+          currentRow.push_back(jt->getRequest().getRequester().getName());
+          currentRow.push_back(jt->getRequest().getRequester().getGroup());
           currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
           currentRow.push_back(jt->getRequest().getDrData().getDrPath());
           currentRow.push_back(jt->getRequest().getDiskpoolName());
@@ -1819,8 +1821,8 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getFSeq()));
           currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getBlockId()));
           currentRow.push_back(std::to_string((unsigned long long)file.getFileSize()));
-          currentRow.push_back(jt->getRequest().getRequester().getUserName());
-          currentRow.push_back(jt->getRequest().getRequester().getGroupName());
+          currentRow.push_back(jt->getRequest().getRequester().getName());
+          currentRow.push_back(jt->getRequest().getRequester().getGroup());
           currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
           currentRow.push_back(jt->getRequest().getDrData().getDrPath());
           currentRow.push_back(jt->getRequest().getDiskpoolName());
@@ -1919,9 +1921,9 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   }
   uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
   uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::DRData drData;
   drData.setDrBlob(dr_blob);
   drData.setDrGroup(dr_ownergroup);
@@ -1975,9 +1977,9 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
   uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::DRData drData;
   drData.setDrBlob(dr_blob);
   drData.setDrGroup(dr_ownergroup);
@@ -2014,9 +2016,9 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
     return;
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.setArchiveFileID(id);
   request.setRequester(originator);
@@ -2050,9 +2052,9 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
     return;
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::DRData drData;
   drData.setDrBlob(dr_blob);
   drData.setDrGroup(dr_ownergroup);
@@ -2094,9 +2096,9 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
     return;
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::DRData drData;
   drData.setDrBlob(dr_blob);
   drData.setDrGroup(dr_ownergroup);
@@ -2129,9 +2131,9 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
     m_data = help.str();
     return;
   }
-  cta::common::dataStructures::Requester originator;
-  originator.setUserName(user);
-  originator.setGroupName(group);
+  cta::common::dataStructures::UserIdentity originator;
+  originator.setName(user);
+  originator.setGroup(group);
   cta::common::dataStructures::ListStorageClassRequest request;
   request.setRequester(originator);
   m_scheduler->listStorageClassRequest(cliIdentity, request);

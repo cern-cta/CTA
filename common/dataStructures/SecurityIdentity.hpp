@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -42,14 +43,11 @@ public:
    */
   ~SecurityIdentity() throw();
 
-  void setGid(const gid_t &gid);
-  gid_t getGid() const;
-
   void setHost(const std::string &host);
   std::string getHost() const;
 
-  void setUid(const uid_t &uid);
-  uid_t getUid() const;
+  void setUser(const cta::common::dataStructures::UserIdentity &user);
+  cta::common::dataStructures::UserIdentity getUser() const;
   
 
 private:
@@ -59,14 +57,11 @@ private:
    */
   bool allFieldsSet() const;
 
-  gid_t m_gid;
-  bool m_gidSet;
-
   std::string m_host;
   bool m_hostSet;
 
-  uid_t m_uid;
-  bool m_uidSet;
+  cta::common::dataStructures::UserIdentity m_user;
+  bool m_userSet;
 
 }; // class SecurityIdentity
 

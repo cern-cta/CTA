@@ -23,9 +23,8 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {  
-  m_gidSet = false;
   m_hostSet = false;
-  m_uidSet = false;
+  m_userSet = false;
 }
 
 //------------------------------------------------------------------------------
@@ -38,27 +37,8 @@ cta::common::dataStructures::SecurityIdentity::~SecurityIdentity() throw() {
 // allFieldsSet
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::SecurityIdentity::allFieldsSet() const {
-  return m_gidSet
-      && m_hostSet
-      && m_uidSet;
-}
-
-//------------------------------------------------------------------------------
-// setGid
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::SecurityIdentity::setGid(const gid_t &gid) {
-  m_gid = gid;
-  m_gidSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getGid
-//------------------------------------------------------------------------------
-gid_t cta::common::dataStructures::SecurityIdentity::getGid() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
-  }
-  return m_gid;
+  return m_hostSet
+      && m_userSet;
 }
 
 //------------------------------------------------------------------------------
@@ -80,19 +60,19 @@ std::string cta::common::dataStructures::SecurityIdentity::getHost() const {
 }
 
 //------------------------------------------------------------------------------
-// setUid
+// setUser
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::SecurityIdentity::setUid(const uid_t &uid) {
-  m_uid = uid;
-  m_uidSet = true;
+void cta::common::dataStructures::SecurityIdentity::setUser(const cta::common::dataStructures::UserIdentity &user) {
+  m_user = user;
+  m_userSet = true;
 }
 
 //------------------------------------------------------------------------------
-// getUid
+// getUser
 //------------------------------------------------------------------------------
-uid_t cta::common::dataStructures::SecurityIdentity::getUid() const {
+cta::common::dataStructures::UserIdentity cta::common::dataStructures::SecurityIdentity::getUser() const {
   if(!allFieldsSet()) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
   }
-  return m_uid;
+  return m_user;
 }

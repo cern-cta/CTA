@@ -316,22 +316,22 @@ uint64_t cta::objectstore::ArchiveRequest::getFileSize() {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setRequester(const cta::common::dataStructures::Requester &requester) {
+void cta::objectstore::ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
-  payloadRequester->set_username(requester.getUserName());
-  payloadRequester->set_groupname(requester.getGroupName());
+  payloadRequester->set_name(requester.getName());
+  payloadRequester->set_group(requester.getGroup());
 }
 
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester cta::objectstore::ArchiveRequest::getRequester() {
+cta::common::dataStructures::UserIdentity cta::objectstore::ArchiveRequest::getRequester() {
   checkPayloadReadable();
-  cta::common::dataStructures::Requester requester;
+  cta::common::dataStructures::UserIdentity requester;
   auto payloadRequester = m_payload.requester();
-  requester.setUserName(payloadRequester.username());
-  requester.setGroupName(payloadRequester.groupname());
+  requester.setName(payloadRequester.name());
+  requester.setGroup(payloadRequester.group());
   return requester;
 }
 
@@ -579,8 +579,8 @@ std::string cta::objectstore::ArchiveRequest::dump() {
   json_object_object_add(jo, "drdata", jlog);
   // Object for requester
   json_object * jrf = json_object_new_object();
-  json_object_object_add(jrf, "username", json_object_new_string(m_payload.requester().username().c_str()));
-  json_object_object_add(jrf, "groupname", json_object_new_string(m_payload.requester().groupname().c_str()));
+  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
+  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
   json_object_object_add(jo, "requester", jrf);
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
   json_object_put(jo);

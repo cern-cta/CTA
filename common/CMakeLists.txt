@@ -23,7 +23,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
   dataStructures/RepackType.cpp
-  dataStructures/Requester.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp
