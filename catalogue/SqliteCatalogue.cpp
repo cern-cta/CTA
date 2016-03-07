@@ -41,13 +41,13 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "GROUP         TEXT,"
       "COMMENT       TEXT,"
 
-      "CREATOR_USER  INTEGER,"
-      "CREATOR_GROUP INTEGER,"
+      "CREATOR_USER  TEXT,"
+      "CREATOR_GROUP TEXT,"
       "CREATOR_HOST  TEXT,"
       "CREATION_TIME INTEGER,"
 
-      "UPDATER_USER  INTEGER,"
-      "UPDATER_GROUP INTEGER,"
+      "UPDATER_USER  TEXT,"
+      "UPDATER_GROUP TEXT,"
       "UPDATER_HOST  TEXT,"
       "UPDATE_TIME   INTEGER);");
 }
