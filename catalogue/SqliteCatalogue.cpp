@@ -37,8 +37,8 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(
     "CREATE TABLE ADMIN_USER("
-      "USER          TEXT,"
-      "GROUP         TEXT,"
+      "USER_NAME     TEXT,"
+      "GROUP_NAME    TEXT,"
       "COMMENT       TEXT,"
 
       "CREATOR_USER  TEXT,"
@@ -68,8 +68,8 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   const std::string &comment) {
   const char *sql =
     "INSERT INTO ADMIN_USER("
-      "USER,"
-      "GROUP,"
+      "USER_NAME,"
+      "GROUP_NAME,"
       "COMMENT,"
 
       "CREATOR_USER,"
@@ -82,8 +82,8 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
       "UPDATER_HOST,"
       "UPDATE_TIME)"
     "VALUES("
-      ":UID,"
-      ":GID,"
+      ":USER_NAME,"
+      ":GROUP_NAME,"
       ":COMMENT,"
 
       ":CREATOR_USER,"
@@ -98,8 +98,8 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":USER", user.getName());
-  stmt.bind(":GROUP", user.getGroup());
+  stmt.bind(":USER_NAME", user.getName());
+  stmt.bind(":GROUP_NAME", user.getGroup());
   stmt.bind(":COMMENT", comment);
 
   stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
@@ -116,8 +116,8 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
 void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
   const char *sql =
     "INSERT INTO ADMIN_USER("
-      "USER,"
-      "GROUP,"
+      "USER_NAME,"
+      "GROUP_NAME,"
       "COMMENT,"
 
       "CREATOR_USER,"
@@ -130,8 +130,8 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructur
       "UPDATER_HOST,"
       "UPDATE_TIME)"
     "VALUES("
-      ":USER,"
-      ":GROUP,"
+      ":USER_NAME,"
+      ":GROUP_NAME,"
       ":COMMENT,"
 
       ":CREATOR_USER,"
@@ -146,8 +146,8 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructur
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":USER", user.getName());
-  stmt.bind(":GROUP", user.getGroup());
+  stmt.bind(":USER_NAME", user.getName());
+  stmt.bind(":GROUP_NAME", user.getGroup());
   stmt.bind(":COMMENT", comment);
 
   stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
