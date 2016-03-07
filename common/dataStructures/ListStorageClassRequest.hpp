@@ -29,36 +29,20 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ListStorageClassRequest {
+struct ListStorageClassRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ListStorageClassRequest();
-
-  /**
-   * Destructor
-   */
   ~ListStorageClassRequest() throw();
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
-  
+  bool operator==(const ListStorageClassRequest &rhs) const;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
+  bool operator!=(const ListStorageClassRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
+  cta::common::dataStructures::UserIdentity requester;
 
-}; // class ListStorageClassRequest
+}; // struct ListStorageClassRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ListStorageClassRequest &obj);

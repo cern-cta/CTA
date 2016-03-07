@@ -28,42 +28,21 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ArchiveFileSummary {
+struct ArchiveFileSummary {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ArchiveFileSummary();
-
-  /**
-   * Destructor
-   */
   ~ArchiveFileSummary() throw();
 
-  void setTotalBytes(const uint64_t totalBytes);
-  uint64_t getTotalBytes() const;
+  bool operator==(const ArchiveFileSummary &rhs) const;
 
-  void setTotalFiles(const uint64_t totalFiles);
-  uint64_t getTotalFiles() const;
-  
+  bool operator!=(const ArchiveFileSummary &rhs) const;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
+  uint64_t totalBytes;
+  uint64_t totalFiles;
 
-  uint64_t m_totalBytes;
-  bool m_totalBytesSet;
-
-  uint64_t m_totalFiles;
-  bool m_totalFilesSet;
-
-}; // class ArchiveFileSummary
+}; // struct ArchiveFileSummary
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFileSummary &obj);

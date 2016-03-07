@@ -30,54 +30,23 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class CancelRetrieveRequest {
+struct CancelRetrieveRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  CancelRetrieveRequest();
-
-  /**
-   * Destructor
-   */
   ~CancelRetrieveRequest() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const CancelRetrieveRequest &rhs) const;
 
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData() const;
+  bool operator!=(const CancelRetrieveRequest &rhs) const;
 
-  void setDstURL(const std::string &dstURL);
-  std::string getDstURL() const;
+  uint64_t archiveFileID;
+  cta::common::dataStructures::DRData drData;
+  std::string dstURL;
+  cta::common::dataStructures::UserIdentity requester;
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  cta::common::dataStructures::DRData m_drData;
-  bool m_drDataSet;
-
-  std::string m_dstURL;
-  bool m_dstURLSet;
-
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
-
-}; // class CancelRetrieveRequest
+}; // struct CancelRetrieveRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::CancelRetrieveRequest &obj);

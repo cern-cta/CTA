@@ -29,48 +29,22 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class EntryLog {
+struct EntryLog {
 
-public:
-
-  /**
-   * Constructor
-   */
-  EntryLog();
-
-  /**
-   * Destructor
-   */
   ~EntryLog() throw();
 
-  void setHost(const std::string &host);
-  std::string getHost() const;
+  bool operator==(const EntryLog &rhs) const;
 
-  void setTime(const time_t &time);
-  time_t getTime() const;
+  bool operator!=(const EntryLog &rhs) const;
 
-  void setUser(const cta::common::dataStructures::UserIdentity &user);
-  cta::common::dataStructures::UserIdentity getUser() const;
-  
+  std::string host;
+  time_t time;
+  cta::common::dataStructures::UserIdentity user;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_host;
-  bool m_hostSet;
-
-  time_t m_time;
-  bool m_timeSet;
-
-  cta::common::dataStructures::UserIdentity m_user;
-  bool m_userSet;
-
-}; // class EntryLog
+}; // struct EntryLog
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::EntryLog &obj);

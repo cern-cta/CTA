@@ -28,78 +28,27 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class WriteTestResult {
+struct WriteTestResult {
 
-public:
-
-  /**
-   * Constructor
-   */
-  WriteTestResult();
-
-  /**
-   * Destructor
-   */
   ~WriteTestResult() throw();
 
-  void setChecksums(const std::map<uint64_t,std::pair<std::string,std::string>> &checksums);
-  std::map<uint64_t,std::pair<std::string,std::string>> getChecksums() const;
+  bool operator==(const WriteTestResult &rhs) const;
 
-  void setDriveName(const std::string &driveName);
-  std::string getDriveName() const;
+  bool operator!=(const WriteTestResult &rhs) const;
 
-  void setErrors(const std::map<uint64_t,std::string> &errors);
-  std::map<uint64_t,std::string> getErrors() const;
+  std::map<uint64_t,std::pair<std::string,std::string>> checksums;
+  std::string driveName;
+  std::map<uint64_t,std::string> errors;
+  uint64_t noOfFilesWritten;
+  uint64_t totalBytesWritten;
+  uint64_t totalFilesWritten;
+  uint64_t totalTimeInSeconds;
+  std::string vid;
 
-  void setNoOfFilesWritten(const uint64_t noOfFilesWritten);
-  uint64_t getNoOfFilesWritten() const;
-
-  void setTotalBytesWritten(const uint64_t totalBytesWritten);
-  uint64_t getTotalBytesWritten() const;
-
-  void setTotalFilesWritten(const uint64_t totalFilesWritten);
-  uint64_t getTotalFilesWritten() const;
-
-  void setTotalTimeInSeconds(const uint64_t totalTimeInSeconds);
-  uint64_t getTotalTimeInSeconds() const;
-
-  void setVid(const std::string &vid);
-  std::string getVid() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::map<uint64_t,std::pair<std::string,std::string>> m_checksums;
-  bool m_checksumsSet;
-
-  std::string m_driveName;
-  bool m_driveNameSet;
-
-  std::map<uint64_t,std::string> m_errors;
-  bool m_errorsSet;
-
-  uint64_t m_noOfFilesWritten;
-  bool m_noOfFilesWrittenSet;
-
-  uint64_t m_totalBytesWritten;
-  bool m_totalBytesWrittenSet;
-
-  uint64_t m_totalFilesWritten;
-  bool m_totalFilesWrittenSet;
-
-  uint64_t m_totalTimeInSeconds;
-  bool m_totalTimeInSecondsSet;
-
-  std::string m_vid;
-  bool m_vidSet;
-
-}; // class WriteTestResult
+}; // struct WriteTestResult
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::WriteTestResult &obj);

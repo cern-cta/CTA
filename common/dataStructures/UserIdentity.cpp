@@ -17,15 +17,8 @@
  */
 
 #include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity::UserIdentity() {  
-  m_groupSet = false;
-  m_nameSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -34,45 +27,26 @@ cta::common::dataStructures::UserIdentity::~UserIdentity() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UserIdentity::allFieldsSet() const {
-  return m_groupSet
-      && m_nameSet;
+bool cta::common::dataStructures::UserIdentity::operator==(const UserIdentity &rhs) const {
+  return group==rhs.group
+      && name==rhs.name;
 }
 
 //------------------------------------------------------------------------------
-// setGroup
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setGroup(const std::string &group) {
-  m_group = group;
-  m_groupSet = true;
+bool cta::common::dataStructures::UserIdentity::operator!=(const UserIdentity &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getGroup
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::UserIdentity::getGroup() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
-  }
-  return m_group;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UserIdentity &obj) {
+  os << "(group=" << obj.group
+     << " name=" << obj.name << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::UserIdentity::setName(const std::string &name) {
-  m_name = name;
-  m_nameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::UserIdentity::getName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the UserIdentity have been set!");
-  }
-  return m_name;
-}

@@ -17,15 +17,8 @@
  */
 
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DeleteArchiveRequest::DeleteArchiveRequest() {  
-  m_archiveFileIDSet = false;
-  m_requesterSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -34,45 +27,26 @@ cta::common::dataStructures::DeleteArchiveRequest::~DeleteArchiveRequest() throw
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DeleteArchiveRequest::allFieldsSet() const {
-  return m_archiveFileIDSet
-      && m_requesterSet;
+bool cta::common::dataStructures::DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
+  return archiveFileID==rhs.archiveFileID
+      && requester==rhs.requester;
 }
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::DeleteArchiveRequest::setArchiveFileID(const uint64_t archiveFileID) {
-  m_archiveFileID = archiveFileID;
-  m_archiveFileIDSet = true;
+bool cta::common::dataStructures::DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::DeleteArchiveRequest::getArchiveFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DeleteArchiveRequest have been set!");
-  }
-  return m_archiveFileID;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DeleteArchiveRequest &obj) {
+  os << "(archiveFileID=" << obj.archiveFileID
+     << " requester=" << obj.requester << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setRequester
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DeleteArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
-  m_requester = requester;
-  m_requesterSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRequester
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::DeleteArchiveRequest::getRequester() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DeleteArchiveRequest have been set!");
-  }
-  return m_requester;
-}

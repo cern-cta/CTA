@@ -29,42 +29,21 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class SecurityIdentity {
+struct SecurityIdentity {
 
-public:
-
-  /**
-   * Constructor
-   */
-  SecurityIdentity();
-
-  /**
-   * Destructor
-   */
   ~SecurityIdentity() throw();
 
-  void setHost(const std::string &host);
-  std::string getHost() const;
+  bool operator==(const SecurityIdentity &rhs) const;
 
-  void setUser(const cta::common::dataStructures::UserIdentity &user);
-  cta::common::dataStructures::UserIdentity getUser() const;
-  
+  bool operator!=(const SecurityIdentity &rhs) const;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
+  std::string host;
+  cta::common::dataStructures::UserIdentity user;
 
-  std::string m_host;
-  bool m_hostSet;
-
-  cta::common::dataStructures::UserIdentity m_user;
-  bool m_userSet;
-
-}; // class SecurityIdentity
+}; // struct SecurityIdentity
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::SecurityIdentity &obj);

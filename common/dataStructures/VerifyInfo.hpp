@@ -29,90 +29,29 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class VerifyInfo {
+struct VerifyInfo {
 
-public:
-
-  /**
-   * Constructor
-   */
-  VerifyInfo();
-
-  /**
-   * Destructor
-   */
   ~VerifyInfo() throw();
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  bool operator==(const VerifyInfo &rhs) const;
 
-  void setErrors(const std::map<uint64_t,std::string> &errors);
-  std::map<uint64_t,std::string> getErrors() const;
+  bool operator!=(const VerifyInfo &rhs) const;
 
-  void setFilesFailed(const uint64_t filesFailed);
-  uint64_t getFilesFailed() const;
+  cta::common::dataStructures::EntryLog creationLog;
+  std::map<uint64_t,std::string> errors;
+  uint64_t filesFailed;
+  uint64_t filesToVerify;
+  uint64_t filesVerified;
+  std::string tag;
+  uint64_t totalFiles;
+  uint64_t totalSize;
+  std::string verifyStatus;
+  std::string vid;
 
-  void setFilesToVerify(const uint64_t filesToVerify);
-  uint64_t getFilesToVerify() const;
-
-  void setFilesVerified(const uint64_t filesVerified);
-  uint64_t getFilesVerified() const;
-
-  void setTag(const std::string &tag);
-  std::string getTag() const;
-
-  void setTotalFiles(const uint64_t totalFiles);
-  uint64_t getTotalFiles() const;
-
-  void setTotalSize(const uint64_t totalSize);
-  uint64_t getTotalSize() const;
-
-  void setVerifyStatus(const std::string &verifyStatus);
-  std::string getVerifyStatus() const;
-
-  void setVid(const std::string &vid);
-  std::string getVid() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  std::map<uint64_t,std::string> m_errors;
-  bool m_errorsSet;
-
-  uint64_t m_filesFailed;
-  bool m_filesFailedSet;
-
-  uint64_t m_filesToVerify;
-  bool m_filesToVerifySet;
-
-  uint64_t m_filesVerified;
-  bool m_filesVerifiedSet;
-
-  std::string m_tag;
-  bool m_tagSet;
-
-  uint64_t m_totalFiles;
-  bool m_totalFilesSet;
-
-  uint64_t m_totalSize;
-  bool m_totalSizeSet;
-
-  std::string m_verifyStatus;
-  bool m_verifyStatusSet;
-
-  std::string m_vid;
-  bool m_vidSet;
-
-}; // class VerifyInfo
+}; // struct VerifyInfo
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::VerifyInfo &obj);

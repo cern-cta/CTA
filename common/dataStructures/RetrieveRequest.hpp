@@ -31,72 +31,26 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class RetrieveRequest {
+struct RetrieveRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  RetrieveRequest();
-
-  /**
-   * Destructor
-   */
   ~RetrieveRequest() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const RetrieveRequest &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  bool operator!=(const RetrieveRequest &rhs) const;
 
-  void setDiskpoolName(const std::string &diskpoolName);
-  std::string getDiskpoolName() const;
+  uint64_t archiveFileID;
+  cta::common::dataStructures::EntryLog creationLog;
+  std::string diskpoolName;
+  uint64_t diskpoolThroughput;
+  cta::common::dataStructures::DRData drData;
+  std::string dstURL;
+  cta::common::dataStructures::UserIdentity requester;
 
-  void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
-  uint64_t getDiskpoolThroughput() const;
-
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData() const;
-
-  void setDstURL(const std::string &dstURL);
-  std::string getDstURL() const;
-
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  std::string m_diskpoolName;
-  bool m_diskpoolNameSet;
-
-  uint64_t m_diskpoolThroughput;
-  bool m_diskpoolThroughputSet;
-
-  cta::common::dataStructures::DRData m_drData;
-  bool m_drDataSet;
-
-  std::string m_dstURL;
-  bool m_dstURLSet;
-
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
-
-}; // class RetrieveRequest
+}; // struct RetrieveRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveRequest &obj);

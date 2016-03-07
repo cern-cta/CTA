@@ -98,13 +98,13 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":USER_NAME", user.getName());
-  stmt.bind(":GROUP_NAME", user.getGroup());
+  stmt.bind(":USER_NAME", user.name);
+  stmt.bind(":GROUP_NAME", user.group);
   stmt.bind(":COMMENT", comment);
 
-  stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
-  stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
-  stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+  stmt.bind(":CREATOR_USER", cliIdentity.user.name);
+  stmt.bind(":CREATOR_GROUP", cliIdentity.user.group);
+  stmt.bind(":CREATOR_HOST", cliIdentity.host);
   stmt.bind(":CREATION_TIME", now);
 
   stmt.step();
@@ -146,13 +146,13 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructur
   SqliteStmt stmt(m_conn, sql);
   const uint64_t now = time(NULL);
 
-  stmt.bind(":USER_NAME", user.getName());
-  stmt.bind(":GROUP_NAME", user.getGroup());
+  stmt.bind(":USER_NAME", user.name);
+  stmt.bind(":GROUP_NAME", user.group);
   stmt.bind(":COMMENT", comment);
 
-  stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
-  stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
-  stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+  stmt.bind(":CREATOR_USER", cliIdentity.user.name);
+  stmt.bind(":CREATOR_GROUP", cliIdentity.user.group);
+  stmt.bind(":CREATOR_HOST", cliIdentity.host);
   stmt.bind(":CREATION_TIME", now);
 
   stmt.step();

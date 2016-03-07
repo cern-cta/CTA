@@ -71,10 +71,10 @@ cta::common::dataStructures::SecurityIdentity XrdProFile::checkClient(const XrdS
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   cta::common::dataStructures::UserIdentity user;
-  user.setName(client->name);
-  user.setGroup(client->grps);
-  cliIdentity.setUser(user);
-  cliIdentity.setHost(client->host);
+  user.name=client->name;
+  user.group=client->grps;
+  cliIdentity.user=user;
+  cliIdentity.host=client->host;
   return cliIdentity;
 }
 
@@ -393,14 +393,14 @@ std::string XrdProFile::formatResponse(const std::vector<std::vector<std::string
 // addLogInfoToResponseRow
 //------------------------------------------------------------------------------
 void XrdProFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  responseRow.push_back(creationLog.getUser().getName());
-  responseRow.push_back(creationLog.getUser().getGroup());
-  responseRow.push_back(creationLog.getHost());
-  responseRow.push_back(timeToString(creationLog.getTime()));
-  responseRow.push_back(lastModificationLog.getUser().getName());
-  responseRow.push_back(lastModificationLog.getUser().getGroup());
-  responseRow.push_back(lastModificationLog.getHost());
-  responseRow.push_back(timeToString(lastModificationLog.getTime()));
+  responseRow.push_back(creationLog.user.name);
+  responseRow.push_back(creationLog.user.group);
+  responseRow.push_back(creationLog.host);
+  responseRow.push_back(timeToString(creationLog.time));
+  responseRow.push_back(lastModificationLog.user.name);
+  responseRow.push_back(lastModificationLog.user.group);
+  responseRow.push_back(lastModificationLog.host);
+  responseRow.push_back(timeToString(lastModificationLog.time));
 }
 
 //------------------------------------------------------------------------------
@@ -418,8 +418,8 @@ void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const ct
     return;
   }
   cta::common::dataStructures::UserIdentity adminUser;
-  adminUser.setName(user);
-  adminUser.setGroup(group);
+  adminUser.name=user;
+  adminUser.group=group;
   m_scheduler->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
 }
 
@@ -441,8 +441,8 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       return;
     }
     cta::common::dataStructures::UserIdentity adminUser;
-    adminUser.setName(user);
-    adminUser.setGroup(group);
+    adminUser.name=user;
+    adminUser.group=group;
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
@@ -468,10 +468,10 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getUser().getName());
-        currentRow.push_back(it->getUser().getGroup());
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->user.name);
+        currentRow.push_back(it->user.group);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -523,9 +523,9 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -593,10 +593,10 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        currentRow.push_back(std::to_string((unsigned long long)it->getNbPartialTapes()));
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->nbPartialTapes));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -662,11 +662,11 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getStorageClassName());
-        currentRow.push_back(std::to_string((unsigned long long)it->getCopyNb()));
-        currentRow.push_back(it->getTapePoolName());
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->storageClassName);
+        currentRow.push_back(std::to_string((unsigned long long)it->copyNb));
+        currentRow.push_back(it->tapePoolName);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -718,9 +718,9 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -862,17 +862,17 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getVid());
-        currentRow.push_back(it->getLogicalLibraryName());
-        currentRow.push_back(it->getTapePoolName());
-        currentRow.push_back(std::to_string((unsigned long long)it->getCapacityInBytes()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getDataOnTapeInBytes()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getLastFSeq()));
-        if(it->getBusy()) currentRow.push_back("true"); else currentRow.push_back("false");
-        if(it->getFull()) currentRow.push_back("true"); else currentRow.push_back("false");
-        if(it->getDisabled()) currentRow.push_back("true"); else currentRow.push_back("false");
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->vid);
+        currentRow.push_back(it->logicalLibraryName);
+        currentRow.push_back(it->tapePoolName);
+        currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
+        currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
+        currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));
+        if(it->busy) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -940,10 +940,10 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        currentRow.push_back(std::to_string((unsigned long long)it->getNbCopies()));
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->nbCopies));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1006,11 +1006,11 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        currentRow.push_back(it->getGroup());
-        currentRow.push_back(it->getMountGroupName());
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        currentRow.push_back(it->group);
+        currentRow.push_back(it->mountGroupName);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1128,18 +1128,18 @@ void XrdProFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getName());
-        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_priority()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minFilesQueued()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minBytesQueued()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getArchive_minRequestAge()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_priority()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minFilesQueued()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minBytesQueued()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getRetrieve_minRequestAge()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getMaxDrivesAllowed()));
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->archive_priority));
+        currentRow.push_back(std::to_string((unsigned long long)it->archive_minFilesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->archive_minBytesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->archive_minRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_priority));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minFilesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minBytesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->maxDrivesAllowed));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1256,7 +1256,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         std::string type_s;
-        switch(it->getDedicationType()) {
+        switch(it->dedicationType) {
           case cta::common::dataStructures::DedicationType::readonly:
             type_s = "readonly";
             break;
@@ -1267,15 +1267,15 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
             type_s = "readwrite";
             break;
         }     
-        currentRow.push_back(it->getDriveName());
+        currentRow.push_back(it->driveName);
         currentRow.push_back(type_s);
-        currentRow.push_back(it->getVid());
-        currentRow.push_back(it->getMountGroup());
-        currentRow.push_back(it->getTag());
-        currentRow.push_back(timeToString(it->getFromTimestamp()));
-        currentRow.push_back(timeToString(it->getUntilTimestamp()));
-        addLogInfoToResponseRow(currentRow, it->getCreationLog(), it->getLastModificationLog());
-        currentRow.push_back(it->getComment());
+        currentRow.push_back(it->vid);
+        currentRow.push_back(it->mountGroup);
+        currentRow.push_back(it->tag);
+        currentRow.push_back(timeToString(it->fromTimestamp));
+        currentRow.push_back(timeToString(it->untilTimestamp));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1321,11 +1321,11 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
     }
     else if("err" == tokens[2]) { //err
       cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(cliIdentity, vid);
-      if(info.getErrors().size()>0) {
+      if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
         if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
-        for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
+        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
           currentRow.push_back(it->second);
@@ -1353,7 +1353,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
-        switch(it->getRepackType()) {
+        switch(it->repackType) {
           case cta::common::dataStructures::RepackType::expandandrepack:
             type_s = "expandandrepack";
             break;
@@ -1365,20 +1365,20 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
             break;
         }
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getVid());
-        currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getTotalSize()));
+        currentRow.push_back(it->vid);
+        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
+        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
         currentRow.push_back(type_s);
-        currentRow.push_back(it->getTag());
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToRetrieve()));//change names
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToArchive()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesArchived()));
-        currentRow.push_back(it->getRepackStatus());
-        currentRow.push_back(it->getCreationLog().getUser().getName());
-        currentRow.push_back(it->getCreationLog().getUser().getGroup());
-        currentRow.push_back(it->getCreationLog().getHost());        
-        currentRow.push_back(timeToString(it->getCreationLog().getTime()));
+        currentRow.push_back(it->tag);
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToRetrieve));//change names
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToArchive));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesArchived));
+        currentRow.push_back(it->repackStatus);
+        currentRow.push_back(it->creationLog.user.name);
+        currentRow.push_back(it->creationLog.user.group);
+        currentRow.push_back(it->creationLog.host);        
+        currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1437,11 +1437,11 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
     }
     else if("err" == tokens[2]) { //err
       cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(cliIdentity, vid);
-      if(info.getErrors().size()>0) {
+      if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
         if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
-        for(auto it = info.getErrors().cbegin(); it != info.getErrors().cend(); it++) {
+        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
           currentRow.push_back(it->second);
@@ -1469,18 +1469,18 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->getVid());
-        currentRow.push_back(std::to_string((unsigned long long)it->getTotalFiles()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getTotalSize()));
-        currentRow.push_back(it->getTag());
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesToVerify()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesFailed()));
-        currentRow.push_back(std::to_string((unsigned long long)it->getFilesVerified()));
-        currentRow.push_back(it->getVerifyStatus());
-        currentRow.push_back(it->getCreationLog().getUser().getName());
-        currentRow.push_back(it->getCreationLog().getUser().getGroup());
-        currentRow.push_back(it->getCreationLog().getHost());       
-        currentRow.push_back(timeToString(it->getCreationLog().getTime()));
+        currentRow.push_back(it->vid);
+        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
+        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
+        currentRow.push_back(it->tag);
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToVerify));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesVerified));
+        currentRow.push_back(it->verifyStatus);
+        currentRow.push_back(it->creationLog.user.name);
+        currentRow.push_back(it->creationLog.user.group);
+        currentRow.push_back(it->creationLog.host);       
+        currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
       m_data = formatResponse(responseTable);
@@ -1522,22 +1522,22 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
         if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = list.cbegin(); it != list.cend(); it++) {
-          for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
+          for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
             std::vector<std::string> currentRow;
-            currentRow.push_back(std::to_string((unsigned long long)it->getArchiveFileID()));
+            currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
             currentRow.push_back(std::to_string((unsigned long long)jt->first));
-            currentRow.push_back(jt->second.getVid());
-            currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));
-            currentRow.push_back(std::to_string((unsigned long long)jt->second.getBlockId()));
-            currentRow.push_back(it->getEosFileID());
-            currentRow.push_back(std::to_string((unsigned long long)it->getFileSize()));
-            currentRow.push_back(it->getChecksumType());
-            currentRow.push_back(it->getChecksumValue());
-            currentRow.push_back(it->getStorageClass());
-            currentRow.push_back(it->getDrData().getDrOwner());
-            currentRow.push_back(it->getDrData().getDrGroup());
-            currentRow.push_back(it->getDrData().getDrInstance());
-            currentRow.push_back(it->getDrData().getDrPath());          
+            currentRow.push_back(jt->second.vid);
+            currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
+            currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
+            currentRow.push_back(it->eosFileID);
+            currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
+            currentRow.push_back(it->checksumType);
+            currentRow.push_back(it->checksumValue);
+            currentRow.push_back(it->storageClass);
+            currentRow.push_back(it->drData.drOwner);
+            currentRow.push_back(it->drData.drGroup);
+            currentRow.push_back(it->drData.drInstance);
+            currentRow.push_back(it->drData.drPath);          
             responseTable.push_back(currentRow);
           }
         }
@@ -1548,7 +1548,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       cta::common::dataStructures::ArchiveFileSummary summary=m_scheduler->getArchiveFileSummary(cliIdentity, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
-      std::vector<std::string> row = {std::to_string((unsigned long long)summary.getTotalFiles()),std::to_string((unsigned long long)summary.getTotalBytes())};
+      std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);
       responseTable.push_back(row);
     }
@@ -1589,13 +1589,13 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
     responseTable.push_back(header);
-    for(auto it = res.getChecksums().cbegin(); it != res.getChecksums().cend(); it++) {
+    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
       currentRow.push_back(std::to_string((unsigned long long)it->first));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
-      if(res.getErrors().find(it->first) != res.getErrors().cend()) {
-        currentRow.push_back(res.getErrors().at(it->first));
+      if(res.errors.find(it->first) != res.errors.cend()) {
+        currentRow.push_back(res.errors.at(it->first));
       }
       else {
         currentRow.push_back("-");
@@ -1604,8 +1604,8 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
     }
     m_data = formatResponse(responseTable);
     std::stringstream ss;
-    ss << std::endl << "Drive: " << res.getDriveName() << " Vid: " << res.getVid() << " #Files: " << res.getTotalFilesRead() << " #Bytes: " << res.getTotalBytesRead() 
-       << " Time: " << res.getTotalTimeInSeconds() << " s Speed(avg): " << (long double)res.getTotalBytesRead()/(long double)res.getTotalTimeInSeconds() << " B/s" <<std::endl;
+    ss << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesRead << " #Bytes: " << res.totalBytesRead 
+       << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesRead/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
     m_data += ss.str();   
   }
   else if("write" == tokens[2] || "write_auto" == tokens[2]) {
@@ -1640,13 +1640,13 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
     responseTable.push_back(header);
-    for(auto it = res.getChecksums().cbegin(); it != res.getChecksums().cend(); it++) {
+    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
       currentRow.push_back(std::to_string((unsigned long long)it->first));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
-      if(res.getErrors().find(it->first) != res.getErrors().cend()) {
-        currentRow.push_back(res.getErrors().at(it->first));
+      if(res.errors.find(it->first) != res.errors.cend()) {
+        currentRow.push_back(res.errors.at(it->first));
       }
       else {
         currentRow.push_back("-");
@@ -1655,8 +1655,8 @@ void XrdProFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
     }
     m_data = formatResponse(responseTable);
     std::stringstream ss;
-    ss << std::endl << "Drive: " << res.getDriveName() << " Vid: " << res.getVid() << " #Files: " << res.getTotalFilesWritten() << " #Bytes: " << res.getTotalBytesWritten() 
-       << " Time: " << res.getTotalTimeInSeconds() << " s Speed(avg): " << (long double)res.getTotalBytesWritten()/(long double)res.getTotalTimeInSeconds() << " B/s" <<std::endl;
+    ss << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesWritten << " #Bytes: " << res.totalBytesWritten 
+       << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesWritten/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
     m_data += ss.str();    
   }
   else {
@@ -1700,22 +1700,22 @@ void XrdProFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
     std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
     responseTable.push_back(header);    
     for(auto it = list.cbegin(); it != list.cend(); it++) {
-      for(auto jt = it->getTapeCopies().cbegin(); jt != it->getTapeCopies().cend(); jt++) {
+      for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(std::to_string((unsigned long long)it->getArchiveFileID()));
+        currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
         currentRow.push_back(std::to_string((unsigned long long)jt->first));
-        currentRow.push_back(jt->second.getVid());
-        currentRow.push_back(std::to_string((unsigned long long)jt->second.getFSeq()));
-        currentRow.push_back(std::to_string((unsigned long long)jt->second.getBlockId()));
-        currentRow.push_back(it->getEosFileID());
-        currentRow.push_back(std::to_string((unsigned long long)it->getFileSize()));
-        currentRow.push_back(it->getChecksumType());
-        currentRow.push_back(it->getChecksumValue());
-        currentRow.push_back(it->getStorageClass());
-        currentRow.push_back(it->getDrData().getDrOwner());
-        currentRow.push_back(it->getDrData().getDrGroup());
-        currentRow.push_back(it->getDrData().getDrInstance());
-        currentRow.push_back(it->getDrData().getDrPath());          
+        currentRow.push_back(jt->second.vid);
+        currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
+        currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
+        currentRow.push_back(it->eosFileID);
+        currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
+        currentRow.push_back(it->checksumType);
+        currentRow.push_back(it->checksumValue);
+        currentRow.push_back(it->storageClass);
+        currentRow.push_back(it->drData.drOwner);
+        currentRow.push_back(it->drData.drGroup);
+        currentRow.push_back(it->drData.drInstance);
+        currentRow.push_back(it->drData.drPath);          
         responseTable.push_back(currentRow);
       }
     }
@@ -1750,19 +1750,19 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
-          currentRow.push_back(std::to_string((unsigned long long)jt->getArchiveFileID()));
-          currentRow.push_back(jt->getRequest().getStorageClass());
-          currentRow.push_back(std::to_string((unsigned long long)jt->getCopyNumber()));
-          currentRow.push_back(jt->getRequest().getEosFileID());
-          currentRow.push_back(jt->getRequest().getChecksumType());
-          currentRow.push_back(jt->getRequest().getChecksumValue());         
-          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getFileSize()));
-          currentRow.push_back(jt->getRequest().getRequester().getName());
-          currentRow.push_back(jt->getRequest().getRequester().getGroup());
-          currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
-          currentRow.push_back(jt->getRequest().getDrData().getDrPath());
-          currentRow.push_back(jt->getRequest().getDiskpoolName());
-          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getDiskpoolThroughput()));
+          currentRow.push_back(std::to_string((unsigned long long)jt->archiveFileID));
+          currentRow.push_back(jt->request.storageClass);
+          currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
+          currentRow.push_back(jt->request.eosFileID);
+          currentRow.push_back(jt->request.checksumType);
+          currentRow.push_back(jt->request.checksumValue);         
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
+          currentRow.push_back(jt->request.requester.name);
+          currentRow.push_back(jt->request.requester.group);
+          currentRow.push_back(jt->request.drData.drInstance);
+          currentRow.push_back(jt->request.drData.drPath);
+          currentRow.push_back(jt->request.diskpoolName);
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
           responseTable.push_back(currentRow);
         }
       }
@@ -1778,7 +1778,7 @@ void XrdProFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
         currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
         uint64_t size=0;
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          size += jt->getRequest().getFileSize();
+          size += jt->request.fileSize;
         }
         currentRow.push_back(std::to_string((unsigned long long)size));
         responseTable.push_back(currentRow);
@@ -1815,18 +1815,18 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
-          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getArchiveFileID()));
-          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->getRequest().getArchiveFileID());
-          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].first));
-          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getFSeq()));
-          currentRow.push_back(std::to_string((unsigned long long)jt->getTapeCopies()[it->first].second.getBlockId()));
-          currentRow.push_back(std::to_string((unsigned long long)file.getFileSize()));
-          currentRow.push_back(jt->getRequest().getRequester().getName());
-          currentRow.push_back(jt->getRequest().getRequester().getGroup());
-          currentRow.push_back(jt->getRequest().getDrData().getDrInstance());
-          currentRow.push_back(jt->getRequest().getDrData().getDrPath());
-          currentRow.push_back(jt->getRequest().getDiskpoolName());
-          currentRow.push_back(std::to_string((unsigned long long)jt->getRequest().getDiskpoolThroughput()));
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
+          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->request.archiveFileID);
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
+          currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
+          currentRow.push_back(jt->request.requester.name);
+          currentRow.push_back(jt->request.requester.group);
+          currentRow.push_back(jt->request.drData.drInstance);
+          currentRow.push_back(jt->request.drData.drPath);
+          currentRow.push_back(jt->request.diskpoolName);
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
           responseTable.push_back(currentRow);
         }
       }
@@ -1842,8 +1842,8 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
         currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
         uint64_t size=0;
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->getRequest().getArchiveFileID());
-          size += file.getFileSize();
+          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->request.archiveFileID);
+          size += file.fileSize;
         }
         currentRow.push_back(std::to_string((unsigned long long)size));
         responseTable.push_back(currentRow);
@@ -1866,19 +1866,19 @@ void XrdProFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
     if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
     for(auto it = result.cbegin(); it != result.cend(); it++) {
       std::vector<std::string> currentRow;
-      currentRow.push_back(it->getLogicalLibrary());
-      currentRow.push_back(it->getHost());
-      currentRow.push_back(it->getName());
-      currentRow.push_back(cta::common::dataStructures::toString(it->getStatus()));
-      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->getCurrentStateStartTime())));
-      currentRow.push_back(cta::common::dataStructures::toString(it->getMountType()));
-      currentRow.push_back(it->getCurrentVid());
-      currentRow.push_back(it->getCurrentTapePool());
-      currentRow.push_back(std::to_string((unsigned long long)it->getSessionId()));
-      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->getSessionStartTime())));
-      currentRow.push_back(std::to_string((unsigned long long)it->getFilesTransferedInSession()));
-      currentRow.push_back(std::to_string((unsigned long long)it->getBytesTransferedInSession()));
-      currentRow.push_back(std::to_string((long double)it->getLatestBandwidth()));
+      currentRow.push_back(it->logicalLibrary);
+      currentRow.push_back(it->host);
+      currentRow.push_back(it->name);
+      currentRow.push_back(cta::common::dataStructures::toString(it->status));
+      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->currentStateStartTime)));
+      currentRow.push_back(cta::common::dataStructures::toString(it->mountType));
+      currentRow.push_back(it->currentVid);
+      currentRow.push_back(it->currentTapePool);
+      currentRow.push_back(std::to_string((unsigned long long)it->sessionId));
+      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->sessionStartTime)));
+      currentRow.push_back(std::to_string((unsigned long long)it->filesTransferedInSession));
+      currentRow.push_back(std::to_string((unsigned long long)it->bytesTransferedInSession));
+      currentRow.push_back(std::to_string((long double)it->latestBandwidth));
       responseTable.push_back(currentRow);
     }
     m_data = formatResponse(responseTable);
@@ -1922,25 +1922,25 @@ void XrdProFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
   uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.setDrBlob(dr_blob);
-  drData.setDrGroup(dr_ownergroup);
-  drData.setDrInstance(dr_instance);
-  drData.setDrOwner(dr_owner);
-  drData.setDrPath(dr_path);
+  drData.drBlob=dr_blob;
+  drData.drGroup=dr_ownergroup;
+  drData.drInstance=dr_instance;
+  drData.drOwner=dr_owner;
+  drData.drPath=dr_path;
   cta::common::dataStructures::ArchiveRequest request;
-  request.setChecksumType(checksumtype);
-  request.setChecksumValue(checksumvalue);
-  request.setDiskpoolName(diskpool);
-  request.setDiskpoolThroughput(throughput);
-  request.setDrData(drData);
-  request.setEosFileID(eosid);
-  request.setFileSize(size);
-  request.setRequester(originator);
-  request.setSrcURL(srcurl);
-  request.setStorageClass(storageclass);  
+  request.checksumType=checksumtype;
+  request.checksumValue=checksumvalue;
+  request.diskpoolName=diskpool;
+  request.diskpoolThroughput=throughput;
+  request.drData=drData;
+  request.eosFileID=eosid;
+  request.fileSize=size;
+  request.requester=originator;
+  request.srcURL=srcurl;
+  request.storageClass=storageclass;  
   uint64_t archiveFileId = m_scheduler->queueArchiveRequest(cliIdentity, request);
   std::stringstream res_ss;
   res_ss << archiveFileId << std::endl;
@@ -1978,21 +1978,21 @@ void XrdProFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
   uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.setDrBlob(dr_blob);
-  drData.setDrGroup(dr_ownergroup);
-  drData.setDrInstance(dr_instance);
-  drData.setDrOwner(dr_owner);
-  drData.setDrPath(dr_path);
+  drData.drBlob=dr_blob;
+  drData.drGroup=dr_ownergroup;
+  drData.drInstance=dr_instance;
+  drData.drOwner=dr_owner;
+  drData.drPath=dr_path;
   cta::common::dataStructures::RetrieveRequest request;
-  request.setDiskpoolName(diskpool);
-  request.setDiskpoolThroughput(throughput);
-  request.setDrData(drData);
-  request.setArchiveFileID(id);
-  request.setRequester(originator);
-  request.setDstURL(dsturl);
+  request.diskpoolName=diskpool;
+  request.diskpoolThroughput=throughput;
+  request.drData=drData;
+  request.archiveFileID=id;
+  request.requester=originator;
+  request.dstURL=dsturl;
   m_scheduler->queueRetrieveRequest(cliIdentity, request);
 }
 
@@ -2017,11 +2017,11 @@ void XrdProFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::DeleteArchiveRequest request;
-  request.setArchiveFileID(id);
-  request.setRequester(originator);
+  request.archiveFileID=id;
+  request.requester=originator;
   m_scheduler->deleteArchiveRequest(cliIdentity, request);
 }
 
@@ -2053,19 +2053,19 @@ void XrdProFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.setDrBlob(dr_blob);
-  drData.setDrGroup(dr_ownergroup);
-  drData.setDrInstance(dr_instance);
-  drData.setDrOwner(dr_owner);
-  drData.setDrPath(dr_path);
+  drData.drBlob=dr_blob;
+  drData.drGroup=dr_ownergroup;
+  drData.drInstance=dr_instance;
+  drData.drOwner=dr_owner;
+  drData.drPath=dr_path;
   cta::common::dataStructures::CancelRetrieveRequest request;
-  request.setDrData(drData);
-  request.setArchiveFileID(id);
-  request.setRequester(originator);
-  request.setDstURL(dsturl);
+  request.drData=drData;
+  request.archiveFileID=id;
+  request.requester=originator;
+  request.dstURL=dsturl;
   m_scheduler->cancelRetrieveRequest(cliIdentity, request);
 }
 
@@ -2097,19 +2097,19 @@ void XrdProFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   }
   uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.setDrBlob(dr_blob);
-  drData.setDrGroup(dr_ownergroup);
-  drData.setDrInstance(dr_instance);
-  drData.setDrOwner(dr_owner);
-  drData.setDrPath(dr_path);
+  drData.drBlob=dr_blob;
+  drData.drGroup=dr_ownergroup;
+  drData.drInstance=dr_instance;
+  drData.drOwner=dr_owner;
+  drData.drPath=dr_path;
   cta::common::dataStructures::UpdateFileInfoRequest request;
-  request.setDrData(drData);
-  request.setArchiveFileID(id);
-  request.setRequester(originator);
-  request.setStorageClass(storageclass);
+  request.drData=drData;
+  request.archiveFileID=id;
+  request.requester=originator;
+  request.storageClass=storageclass;
   m_scheduler->updateFileInfoRequest(cliIdentity, request);
 }
 
@@ -2132,10 +2132,10 @@ void XrdProFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
     return;
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.setName(user);
-  originator.setGroup(group);
+  originator.name=user;
+  originator.group=group;
   cta::common::dataStructures::ListStorageClassRequest request;
-  request.setRequester(originator);
+  request.requester=originator;
   m_scheduler->listStorageClassRequest(cliIdentity, request);
 }
   

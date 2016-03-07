@@ -28,60 +28,24 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class MountPolicy {
+struct MountPolicy {
 
-public:
-
-  /**
-   * Constructor
-   */
-  MountPolicy();
-
-  /**
-   * Destructor
-   */
   ~MountPolicy() throw();
 
-  void setMaxDrives(const uint64_t maxDrives);
-  uint64_t getMaxDrives() const;
+  bool operator==(const MountPolicy &rhs) const;
 
-  void setMinBytesQueued(const uint64_t minBytesQueued);
-  uint64_t getMinBytesQueued() const;
+  bool operator!=(const MountPolicy &rhs) const;
 
-  void setMinFilesQueued(const uint64_t minFilesQueued);
-  uint64_t getMinFilesQueued() const;
+  uint64_t maxDrives;
+  uint64_t minBytesQueued;
+  uint64_t minFilesQueued;
+  uint64_t minRequestAge;
+  uint64_t priority;
 
-  void setMinRequestAge(const uint64_t minRequestAge);
-  uint64_t getMinRequestAge() const;
-
-  void setPriority(const uint64_t priority);
-  uint64_t getPriority() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_maxDrives;
-  bool m_maxDrivesSet;
-
-  uint64_t m_minBytesQueued;
-  bool m_minBytesQueuedSet;
-
-  uint64_t m_minFilesQueued;
-  bool m_minFilesQueuedSet;
-
-  uint64_t m_minRequestAge;
-  bool m_minRequestAgeSet;
-
-  uint64_t m_priority;
-  bool m_prioritySet;
-
-}; // class MountPolicy
+}; // struct MountPolicy
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj);

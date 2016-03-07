@@ -17,18 +17,8 @@
  */
 
 #include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy::MountPolicy() {  
-  m_maxDrivesSet = false;
-  m_minBytesQueuedSet = false;
-  m_minFilesQueuedSet = false;
-  m_minRequestAgeSet = false;
-  m_prioritySet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -37,102 +27,32 @@ cta::common::dataStructures::MountPolicy::~MountPolicy() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::MountPolicy::allFieldsSet() const {
-  return m_maxDrivesSet
-      && m_minBytesQueuedSet
-      && m_minFilesQueuedSet
-      && m_minRequestAgeSet
-      && m_prioritySet;
+bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs) const {
+  return maxDrives==rhs.maxDrives
+      && minBytesQueued==rhs.minBytesQueued
+      && minFilesQueued==rhs.minFilesQueued
+      && minRequestAge==rhs.minRequestAge
+      && priority==rhs.priority;
 }
 
 //------------------------------------------------------------------------------
-// setMaxDrives
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::MountPolicy::setMaxDrives(const uint64_t maxDrives) {
-  m_maxDrives = maxDrives;
-  m_maxDrivesSet = true;
+bool cta::common::dataStructures::MountPolicy::operator!=(const MountPolicy &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getMaxDrives
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountPolicy::getMaxDrives() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountPolicy have been set!");
-  }
-  return m_maxDrives;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj) {
+  os << "(maxDrives=" << obj.maxDrives
+     << " minBytesQueued=" << obj.minBytesQueued
+     << " minFilesQueued=" << obj.minFilesQueued
+     << " minRequestAge=" << obj.minRequestAge
+     << " priority=" << obj.priority << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setMinBytesQueued
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountPolicy::setMinBytesQueued(const uint64_t minBytesQueued) {
-  m_minBytesQueued = minBytesQueued;
-  m_minBytesQueuedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMinBytesQueued
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountPolicy::getMinBytesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountPolicy have been set!");
-  }
-  return m_minBytesQueued;
-}
-
-//------------------------------------------------------------------------------
-// setMinFilesQueued
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountPolicy::setMinFilesQueued(const uint64_t minFilesQueued) {
-  m_minFilesQueued = minFilesQueued;
-  m_minFilesQueuedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMinFilesQueued
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountPolicy::getMinFilesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountPolicy have been set!");
-  }
-  return m_minFilesQueued;
-}
-
-//------------------------------------------------------------------------------
-// setMinRequestAge
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountPolicy::setMinRequestAge(const uint64_t minRequestAge) {
-  m_minRequestAge = minRequestAge;
-  m_minRequestAgeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMinRequestAge
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountPolicy::getMinRequestAge() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountPolicy have been set!");
-  }
-  return m_minRequestAge;
-}
-
-//------------------------------------------------------------------------------
-// setPriority
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountPolicy::setPriority(const uint64_t priority) {
-  m_priority = priority;
-  m_prioritySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getPriority
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountPolicy::getPriority() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountPolicy have been set!");
-  }
-  return m_priority;
-}

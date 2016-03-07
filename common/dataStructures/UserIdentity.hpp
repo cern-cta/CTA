@@ -28,42 +28,21 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class UserIdentity {
+struct UserIdentity {
 
-public:
-
-  /**
-   * Constructor
-   */
-  UserIdentity();
-
-  /**
-   * Destructor
-   */
   ~UserIdentity() throw();
 
-  void setGroup(const std::string &group);
-  std::string getGroup() const;
+  bool operator==(const UserIdentity &rhs) const;
 
-  void setName(const std::string &name);
-  std::string getName() const;
-  
+  bool operator!=(const UserIdentity &rhs) const;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
+  std::string group;
+  std::string name;
 
-  std::string m_group;
-  bool m_groupSet;
-
-  std::string m_name;
-  bool m_nameSet;
-
-}; // class UserIdentity
+}; // struct UserIdentity
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UserIdentity &obj);

@@ -29,60 +29,24 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class TapePool {
+struct TapePool {
 
-public:
-
-  /**
-   * Constructor
-   */
-  TapePool();
-
-  /**
-   * Destructor
-   */
   ~TapePool() throw();
 
-  void setComment(const std::string &comment);
-  std::string getComment() const;
+  bool operator==(const TapePool &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  bool operator!=(const TapePool &rhs) const;
 
-  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
-  cta::common::dataStructures::EntryLog getLastModificationLog() const;
+  std::string comment;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string name;
+  uint64_t nbPartialTapes;
 
-  void setName(const std::string &name);
-  std::string getName() const;
-
-  void setNbPartialTapes(const uint64_t nbPartialTapes);
-  uint64_t getNbPartialTapes() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_comment;
-  bool m_commentSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  cta::common::dataStructures::EntryLog m_lastModificationLog;
-  bool m_lastModificationLogSet;
-
-  std::string m_name;
-  bool m_nameSet;
-
-  uint64_t m_nbPartialTapes;
-  bool m_nbPartialTapesSet;
-
-}; // class TapePool
+}; // struct TapePool
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj);

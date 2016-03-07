@@ -17,16 +17,8 @@
  */
 
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog::EntryLog() {  
-  m_hostSet = false;
-  m_timeSet = false;
-  m_userSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -35,64 +27,28 @@ cta::common::dataStructures::EntryLog::~EntryLog() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::EntryLog::allFieldsSet() const {
-  return m_hostSet
-      && m_timeSet
-      && m_userSet;
+bool cta::common::dataStructures::EntryLog::operator==(const EntryLog &rhs) const {
+  return host==rhs.host
+      && time==rhs.time
+      && user==rhs.user;
 }
 
 //------------------------------------------------------------------------------
-// setHost
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::EntryLog::setHost(const std::string &host) {
-  m_host = host;
-  m_hostSet = true;
+bool cta::common::dataStructures::EntryLog::operator!=(const EntryLog &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getHost
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::EntryLog::getHost() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
-  }
-  return m_host;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::EntryLog &obj) {
+  os << "(host=" << obj.host
+     << " time=" << obj.time
+     << " user=" << obj.user << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setTime
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::EntryLog::setTime(const time_t &time) {
-  m_time = time;
-  m_timeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTime
-//------------------------------------------------------------------------------
-time_t cta::common::dataStructures::EntryLog::getTime() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
-  }
-  return m_time;
-}
-
-//------------------------------------------------------------------------------
-// setUser
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::EntryLog::setUser(const cta::common::dataStructures::UserIdentity &user) {
-  m_user = user;
-  m_userSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getUser
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::EntryLog::getUser() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the EntryLog have been set!");
-  }
-  return m_user;
-}

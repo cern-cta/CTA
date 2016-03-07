@@ -30,108 +30,32 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class DriveState {
+struct DriveState {
 
-public:
-
-  /**
-   * Constructor
-   */
-  DriveState();
-
-  /**
-   * Destructor
-   */
   ~DriveState() throw();
 
-  void setBytesTransferedInSession(const uint64_t bytesTransferedInSession);
-  uint64_t getBytesTransferedInSession() const;
+  bool operator==(const DriveState &rhs) const;
 
-  void setCurrentStateStartTime(const time_t &currentStateStartTime);
-  time_t getCurrentStateStartTime() const;
+  bool operator!=(const DriveState &rhs) const;
 
-  void setCurrentTapePool(const std::string &currentTapePool);
-  std::string getCurrentTapePool() const;
+  uint64_t bytesTransferedInSession;
+  time_t currentStateStartTime;
+  std::string currentTapePool;
+  std::string currentVid;
+  uint64_t filesTransferedInSession;
+  std::string host;
+  uint64_t latestBandwidth;
+  std::string logicalLibrary;
+  cta::common::dataStructures::MountType mountType;
+  std::string name;
+  uint64_t sessionId;
+  time_t sessionStartTime;
+  cta::common::dataStructures::DriveStatus status;
 
-  void setCurrentVid(const std::string &currentVid);
-  std::string getCurrentVid() const;
-
-  void setFilesTransferedInSession(const uint64_t filesTransferedInSession);
-  uint64_t getFilesTransferedInSession() const;
-
-  void setHost(const std::string &host);
-  std::string getHost() const;
-
-  void setLatestBandwidth(const uint64_t latestBandwidth);
-  uint64_t getLatestBandwidth() const;
-
-  void setLogicalLibrary(const std::string &logicalLibrary);
-  std::string getLogicalLibrary() const;
-
-  void setMountType(const cta::common::dataStructures::MountType &mountType);
-  cta::common::dataStructures::MountType getMountType() const;
-
-  void setName(const std::string &name);
-  std::string getName() const;
-
-  void setSessionId(const uint64_t sessionId);
-  uint64_t getSessionId() const;
-
-  void setSessionStartTime(const time_t &sessionStartTime);
-  time_t getSessionStartTime() const;
-
-  void setStatus(const cta::common::dataStructures::DriveStatus &status);
-  cta::common::dataStructures::DriveStatus getStatus() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_bytesTransferedInSession;
-  bool m_bytesTransferedInSessionSet;
-
-  time_t m_currentStateStartTime;
-  bool m_currentStateStartTimeSet;
-
-  std::string m_currentTapePool;
-  bool m_currentTapePoolSet;
-
-  std::string m_currentVid;
-  bool m_currentVidSet;
-
-  uint64_t m_filesTransferedInSession;
-  bool m_filesTransferedInSessionSet;
-
-  std::string m_host;
-  bool m_hostSet;
-
-  uint64_t m_latestBandwidth;
-  bool m_latestBandwidthSet;
-
-  std::string m_logicalLibrary;
-  bool m_logicalLibrarySet;
-
-  cta::common::dataStructures::MountType m_mountType;
-  bool m_mountTypeSet;
-
-  std::string m_name;
-  bool m_nameSet;
-
-  uint64_t m_sessionId;
-  bool m_sessionIdSet;
-
-  time_t m_sessionStartTime;
-  bool m_sessionStartTimeSet;
-
-  cta::common::dataStructures::DriveStatus m_status;
-  bool m_statusSet;
-
-}; // class DriveState
+}; // struct DriveState
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DriveState &obj);

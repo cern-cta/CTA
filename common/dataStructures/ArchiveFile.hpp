@@ -30,78 +30,27 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ArchiveFile {
+struct ArchiveFile {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ArchiveFile();
-
-  /**
-   * Destructor
-   */
   ~ArchiveFile() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const ArchiveFile &rhs) const;
 
-  void setChecksumType(const std::string &checksumType);
-  std::string getChecksumType() const;
+  bool operator!=(const ArchiveFile &rhs) const;
 
-  void setChecksumValue(const std::string &checksumValue);
-  std::string getChecksumValue() const;
+  uint64_t archiveFileID;
+  std::string checksumType;
+  std::string checksumValue;
+  cta::common::dataStructures::DRData drData;
+  std::string eosFileID;
+  uint64_t fileSize;
+  std::string storageClass;
+  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> tapeCopies;
 
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData() const;
-
-  void setEosFileID(const std::string &eosFileID);
-  std::string getEosFileID() const;
-
-  void setFileSize(const uint64_t fileSize);
-  uint64_t getFileSize() const;
-
-  void setStorageClass(const std::string &storageClass);
-  std::string getStorageClass() const;
-
-  void setTapeCopies(const std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> &tapeCopies);
-  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> getTapeCopies() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  std::string m_checksumType;
-  bool m_checksumTypeSet;
-
-  std::string m_checksumValue;
-  bool m_checksumValueSet;
-
-  cta::common::dataStructures::DRData m_drData;
-  bool m_drDataSet;
-
-  std::string m_eosFileID;
-  bool m_eosFileIDSet;
-
-  uint64_t m_fileSize;
-  bool m_fileSizeSet;
-
-  std::string m_storageClass;
-  bool m_storageClassSet;
-
-  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> m_tapeCopies;
-  bool m_tapeCopiesSet;
-
-}; // class ArchiveFile
+}; // struct ArchiveFile
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj);

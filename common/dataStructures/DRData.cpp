@@ -17,18 +17,8 @@
  */
 
 #include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DRData::DRData() {  
-  m_drBlobSet = false;
-  m_drGroupSet = false;
-  m_drInstanceSet = false;
-  m_drOwnerSet = false;
-  m_drPathSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -37,102 +27,32 @@ cta::common::dataStructures::DRData::~DRData() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DRData::allFieldsSet() const {
-  return m_drBlobSet
-      && m_drGroupSet
-      && m_drInstanceSet
-      && m_drOwnerSet
-      && m_drPathSet;
+bool cta::common::dataStructures::DRData::operator==(const DRData &rhs) const {
+  return drBlob==rhs.drBlob
+      && drGroup==rhs.drGroup
+      && drInstance==rhs.drInstance
+      && drOwner==rhs.drOwner
+      && drPath==rhs.drPath;
 }
 
 //------------------------------------------------------------------------------
-// setDrBlob
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::DRData::setDrBlob(const std::string &drBlob) {
-  m_drBlob = drBlob;
-  m_drBlobSet = true;
+bool cta::common::dataStructures::DRData::operator!=(const DRData &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getDrBlob
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DRData::getDrBlob() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
-  }
-  return m_drBlob;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DRData &obj) {
+  os << "(drBlob=" << obj.drBlob
+     << " drGroup=" << obj.drGroup
+     << " drInstance=" << obj.drInstance
+     << " drOwner=" << obj.drOwner
+     << " drPath=" << obj.drPath << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setDrGroup
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DRData::setDrGroup(const std::string &drGroup) {
-  m_drGroup = drGroup;
-  m_drGroupSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrGroup
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DRData::getDrGroup() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
-  }
-  return m_drGroup;
-}
-
-//------------------------------------------------------------------------------
-// setDrInstance
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DRData::setDrInstance(const std::string &drInstance) {
-  m_drInstance = drInstance;
-  m_drInstanceSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrInstance
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DRData::getDrInstance() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
-  }
-  return m_drInstance;
-}
-
-//------------------------------------------------------------------------------
-// setDrOwner
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DRData::setDrOwner(const std::string &drOwner) {
-  m_drOwner = drOwner;
-  m_drOwnerSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrOwner
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DRData::getDrOwner() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
-  }
-  return m_drOwner;
-}
-
-//------------------------------------------------------------------------------
-// setDrPath
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DRData::setDrPath(const std::string &drPath) {
-  m_drPath = drPath;
-  m_drPathSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrPath
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DRData::getDrPath() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DRData have been set!");
-  }
-  return m_drPath;
-}

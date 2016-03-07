@@ -17,26 +17,8 @@
  */
 
 #include "common/dataStructures/DriveState.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DriveState::DriveState() {  
-  m_bytesTransferedInSessionSet = false;
-  m_currentStateStartTimeSet = false;
-  m_currentTapePoolSet = false;
-  m_currentVidSet = false;
-  m_filesTransferedInSessionSet = false;
-  m_hostSet = false;
-  m_latestBandwidthSet = false;
-  m_logicalLibrarySet = false;
-  m_mountTypeSet = false;
-  m_nameSet = false;
-  m_sessionIdSet = false;
-  m_sessionStartTimeSet = false;
-  m_statusSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -45,254 +27,48 @@ cta::common::dataStructures::DriveState::~DriveState() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DriveState::allFieldsSet() const {
-  return m_bytesTransferedInSessionSet
-      && m_currentStateStartTimeSet
-      && m_currentTapePoolSet
-      && m_currentVidSet
-      && m_filesTransferedInSessionSet
-      && m_hostSet
-      && m_latestBandwidthSet
-      && m_logicalLibrarySet
-      && m_mountTypeSet
-      && m_nameSet
-      && m_sessionIdSet
-      && m_sessionStartTimeSet
-      && m_statusSet;
+bool cta::common::dataStructures::DriveState::operator==(const DriveState &rhs) const {
+  return bytesTransferedInSession==rhs.bytesTransferedInSession
+      && currentStateStartTime==rhs.currentStateStartTime
+      && currentTapePool==rhs.currentTapePool
+      && currentVid==rhs.currentVid
+      && filesTransferedInSession==rhs.filesTransferedInSession
+      && host==rhs.host
+      && latestBandwidth==rhs.latestBandwidth
+      && logicalLibrary==rhs.logicalLibrary
+      && mountType==rhs.mountType
+      && name==rhs.name
+      && sessionId==rhs.sessionId
+      && sessionStartTime==rhs.sessionStartTime
+      && status==rhs.status;
 }
 
 //------------------------------------------------------------------------------
-// setBytesTransferedInSession
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setBytesTransferedInSession(const uint64_t bytesTransferedInSession) {
-  m_bytesTransferedInSession = bytesTransferedInSession;
-  m_bytesTransferedInSessionSet = true;
+bool cta::common::dataStructures::DriveState::operator!=(const DriveState &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getBytesTransferedInSession
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::DriveState::getBytesTransferedInSession() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_bytesTransferedInSession;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DriveState &obj) {
+  os << "(bytesTransferedInSession=" << obj.bytesTransferedInSession
+     << " currentStateStartTime=" << obj.currentStateStartTime
+     << " currentTapePool=" << obj.currentTapePool
+     << " currentVid=" << obj.currentVid
+     << " filesTransferedInSession=" << obj.filesTransferedInSession
+     << " host=" << obj.host
+     << " latestBandwidth=" << obj.latestBandwidth
+     << " logicalLibrary=" << obj.logicalLibrary
+     << " mountType=" << obj.mountType
+     << " name=" << obj.name
+     << " sessionId=" << obj.sessionId
+     << " sessionStartTime=" << obj.sessionStartTime
+     << " status=" << obj.status << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCurrentStateStartTime
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setCurrentStateStartTime(const time_t &currentStateStartTime) {
-  m_currentStateStartTime = currentStateStartTime;
-  m_currentStateStartTimeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCurrentStateStartTime
-//------------------------------------------------------------------------------
-time_t cta::common::dataStructures::DriveState::getCurrentStateStartTime() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_currentStateStartTime;
-}
-
-//------------------------------------------------------------------------------
-// setCurrentTapePool
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setCurrentTapePool(const std::string &currentTapePool) {
-  m_currentTapePool = currentTapePool;
-  m_currentTapePoolSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCurrentTapePool
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getCurrentTapePool() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_currentTapePool;
-}
-
-//------------------------------------------------------------------------------
-// setCurrentVid
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setCurrentVid(const std::string &currentVid) {
-  m_currentVid = currentVid;
-  m_currentVidSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCurrentVid
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getCurrentVid() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_currentVid;
-}
-
-//------------------------------------------------------------------------------
-// setFilesTransferedInSession
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setFilesTransferedInSession(const uint64_t filesTransferedInSession) {
-  m_filesTransferedInSession = filesTransferedInSession;
-  m_filesTransferedInSessionSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFilesTransferedInSession
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::DriveState::getFilesTransferedInSession() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_filesTransferedInSession;
-}
-
-//------------------------------------------------------------------------------
-// setHost
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setHost(const std::string &host) {
-  m_host = host;
-  m_hostSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getHost
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getHost() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_host;
-}
-
-//------------------------------------------------------------------------------
-// setLatestBandwidth
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setLatestBandwidth(const uint64_t latestBandwidth) {
-  m_latestBandwidth = latestBandwidth;
-  m_latestBandwidthSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLatestBandwidth
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::DriveState::getLatestBandwidth() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_latestBandwidth;
-}
-
-//------------------------------------------------------------------------------
-// setLogicalLibrary
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setLogicalLibrary(const std::string &logicalLibrary) {
-  m_logicalLibrary = logicalLibrary;
-  m_logicalLibrarySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLogicalLibrary
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getLogicalLibrary() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_logicalLibrary;
-}
-
-//------------------------------------------------------------------------------
-// setMountType
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setMountType(const cta::common::dataStructures::MountType &mountType) {
-  m_mountType = mountType;
-  m_mountTypeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMountType
-//------------------------------------------------------------------------------
-cta::common::dataStructures::MountType cta::common::dataStructures::DriveState::getMountType() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_mountType;
-}
-
-//------------------------------------------------------------------------------
-// setName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setName(const std::string &name) {
-  m_name = name;
-  m_nameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::DriveState::getName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// setSessionId
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setSessionId(const uint64_t sessionId) {
-  m_sessionId = sessionId;
-  m_sessionIdSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getSessionId
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::DriveState::getSessionId() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_sessionId;
-}
-
-//------------------------------------------------------------------------------
-// setSessionStartTime
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setSessionStartTime(const time_t &sessionStartTime) {
-  m_sessionStartTime = sessionStartTime;
-  m_sessionStartTimeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getSessionStartTime
-//------------------------------------------------------------------------------
-time_t cta::common::dataStructures::DriveState::getSessionStartTime() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_sessionStartTime;
-}
-
-//------------------------------------------------------------------------------
-// setStatus
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::DriveState::setStatus(const cta::common::dataStructures::DriveStatus &status) {
-  m_status = status;
-  m_statusSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getStatus
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DriveStatus cta::common::dataStructures::DriveState::getStatus() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the DriveState have been set!");
-  }
-  return m_status;
-}

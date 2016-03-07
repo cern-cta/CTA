@@ -17,15 +17,8 @@
  */
 
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {  
-  m_hostSet = false;
-  m_userSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -34,45 +27,26 @@ cta::common::dataStructures::SecurityIdentity::~SecurityIdentity() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::SecurityIdentity::allFieldsSet() const {
-  return m_hostSet
-      && m_userSet;
+bool cta::common::dataStructures::SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
+  return host==rhs.host
+      && user==rhs.user;
 }
 
 //------------------------------------------------------------------------------
-// setHost
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::SecurityIdentity::setHost(const std::string &host) {
-  m_host = host;
-  m_hostSet = true;
+bool cta::common::dataStructures::SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getHost
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::SecurityIdentity::getHost() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
-  }
-  return m_host;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::SecurityIdentity &obj) {
+  os << "(host=" << obj.host
+     << " user=" << obj.user << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setUser
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::SecurityIdentity::setUser(const cta::common::dataStructures::UserIdentity &user) {
-  m_user = user;
-  m_userSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getUser
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::SecurityIdentity::getUser() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the SecurityIdentity have been set!");
-  }
-  return m_user;
-}

@@ -17,15 +17,8 @@
  */
 
 #include "common/dataStructures/ArchiveFileSummary.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary::ArchiveFileSummary() {  
-  m_totalBytesSet = false;
-  m_totalFilesSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -34,45 +27,26 @@ cta::common::dataStructures::ArchiveFileSummary::~ArchiveFileSummary() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFileSummary::allFieldsSet() const {
-  return m_totalBytesSet
-      && m_totalFilesSet;
+bool cta::common::dataStructures::ArchiveFileSummary::operator==(const ArchiveFileSummary &rhs) const {
+  return totalBytes==rhs.totalBytes
+      && totalFiles==rhs.totalFiles;
 }
 
 //------------------------------------------------------------------------------
-// setTotalBytes
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFileSummary::setTotalBytes(const uint64_t totalBytes) {
-  m_totalBytes = totalBytes;
-  m_totalBytesSet = true;
+bool cta::common::dataStructures::ArchiveFileSummary::operator!=(const ArchiveFileSummary &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getTotalBytes
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveFileSummary::getTotalBytes() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFileSummary have been set!");
-  }
-  return m_totalBytes;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFileSummary &obj) {
+  os << "(totalBytes=" << obj.totalBytes
+     << " totalFiles=" << obj.totalFiles << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setTotalFiles
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFileSummary::setTotalFiles(const uint64_t totalFiles) {
-  m_totalFiles = totalFiles;
-  m_totalFilesSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTotalFiles
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveFileSummary::getTotalFiles() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFileSummary have been set!");
-  }
-  return m_totalFiles;
-}

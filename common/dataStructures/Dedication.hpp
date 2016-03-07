@@ -30,90 +30,29 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class Dedication {
+struct Dedication {
 
-public:
-
-  /**
-   * Constructor
-   */
-  Dedication();
-
-  /**
-   * Destructor
-   */
   ~Dedication() throw();
 
-  void setComment(const std::string &comment);
-  std::string getComment() const;
+  bool operator==(const Dedication &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  bool operator!=(const Dedication &rhs) const;
 
-  void setDedicationType(const cta::common::dataStructures::DedicationType &dedicationType);
-  cta::common::dataStructures::DedicationType getDedicationType() const;
+  std::string comment;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::DedicationType dedicationType;
+  std::string driveName;
+  uint64_t fromTimestamp;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string mountGroup;
+  std::string tag;
+  uint64_t untilTimestamp;
+  std::string vid;
 
-  void setDriveName(const std::string &driveName);
-  std::string getDriveName() const;
-
-  void setFromTimestamp(const uint64_t fromTimestamp);
-  uint64_t getFromTimestamp() const;
-
-  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
-  cta::common::dataStructures::EntryLog getLastModificationLog() const;
-
-  void setMountGroup(const std::string &mountGroup);
-  std::string getMountGroup() const;
-
-  void setTag(const std::string &tag);
-  std::string getTag() const;
-
-  void setUntilTimestamp(const uint64_t untilTimestamp);
-  uint64_t getUntilTimestamp() const;
-
-  void setVid(const std::string &vid);
-  std::string getVid() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_comment;
-  bool m_commentSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  cta::common::dataStructures::DedicationType m_dedicationType;
-  bool m_dedicationTypeSet;
-
-  std::string m_driveName;
-  bool m_driveNameSet;
-
-  uint64_t m_fromTimestamp;
-  bool m_fromTimestampSet;
-
-  cta::common::dataStructures::EntryLog m_lastModificationLog;
-  bool m_lastModificationLogSet;
-
-  std::string m_mountGroup;
-  bool m_mountGroupSet;
-
-  std::string m_tag;
-  bool m_tagSet;
-
-  uint64_t m_untilTimestamp;
-  bool m_untilTimestampSet;
-
-  std::string m_vid;
-  bool m_vidSet;
-
-}; // class Dedication
+}; // struct Dedication
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dedication &obj);

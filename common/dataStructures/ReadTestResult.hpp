@@ -28,78 +28,27 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ReadTestResult {
+struct ReadTestResult {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ReadTestResult();
-
-  /**
-   * Destructor
-   */
   ~ReadTestResult() throw();
 
-  void setChecksums(const std::map<uint64_t,std::pair<std::string,std::string>> &checksums);
-  std::map<uint64_t,std::pair<std::string,std::string>> getChecksums() const;
+  bool operator==(const ReadTestResult &rhs) const;
 
-  void setDriveName(const std::string &driveName);
-  std::string getDriveName() const;
+  bool operator!=(const ReadTestResult &rhs) const;
 
-  void setErrors(const std::map<uint64_t,std::string> &errors);
-  std::map<uint64_t,std::string> getErrors() const;
+  std::map<uint64_t,std::pair<std::string,std::string>> checksums;
+  std::string driveName;
+  std::map<uint64_t,std::string> errors;
+  uint64_t noOfFilesRead;
+  uint64_t totalBytesRead;
+  uint64_t totalFilesRead;
+  uint64_t totalTimeInSeconds;
+  std::string vid;
 
-  void setNoOfFilesRead(const uint64_t noOfFilesRead);
-  uint64_t getNoOfFilesRead() const;
-
-  void setTotalBytesRead(const uint64_t totalBytesRead);
-  uint64_t getTotalBytesRead() const;
-
-  void setTotalFilesRead(const uint64_t totalFilesRead);
-  uint64_t getTotalFilesRead() const;
-
-  void setTotalTimeInSeconds(const uint64_t totalTimeInSeconds);
-  uint64_t getTotalTimeInSeconds() const;
-
-  void setVid(const std::string &vid);
-  std::string getVid() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::map<uint64_t,std::pair<std::string,std::string>> m_checksums;
-  bool m_checksumsSet;
-
-  std::string m_driveName;
-  bool m_driveNameSet;
-
-  std::map<uint64_t,std::string> m_errors;
-  bool m_errorsSet;
-
-  uint64_t m_noOfFilesRead;
-  bool m_noOfFilesReadSet;
-
-  uint64_t m_totalBytesRead;
-  bool m_totalBytesReadSet;
-
-  uint64_t m_totalFilesRead;
-  bool m_totalFilesReadSet;
-
-  uint64_t m_totalTimeInSeconds;
-  bool m_totalTimeInSecondsSet;
-
-  std::string m_vid;
-  bool m_vidSet;
-
-}; // class ReadTestResult
+}; // struct ReadTestResult
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ReadTestResult &obj);

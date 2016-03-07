@@ -17,20 +17,8 @@
  */
 
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveRequest::RetrieveRequest() {  
-  m_archiveFileIDSet = false;
-  m_creationLogSet = false;
-  m_diskpoolNameSet = false;
-  m_diskpoolThroughputSet = false;
-  m_drDataSet = false;
-  m_dstURLSet = false;
-  m_requesterSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -39,140 +27,36 @@ cta::common::dataStructures::RetrieveRequest::~RetrieveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RetrieveRequest::allFieldsSet() const {
-  return m_archiveFileIDSet
-      && m_creationLogSet
-      && m_diskpoolNameSet
-      && m_diskpoolThroughputSet
-      && m_drDataSet
-      && m_dstURLSet
-      && m_requesterSet;
+bool cta::common::dataStructures::RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
+  return archiveFileID==rhs.archiveFileID
+      && creationLog==rhs.creationLog
+      && diskpoolName==rhs.diskpoolName
+      && diskpoolThroughput==rhs.diskpoolThroughput
+      && drData==rhs.drData
+      && dstURL==rhs.dstURL
+      && requester==rhs.requester;
 }
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setArchiveFileID(const uint64_t archiveFileID) {
-  m_archiveFileID = archiveFileID;
-  m_archiveFileIDSet = true;
+bool cta::common::dataStructures::RetrieveRequest::operator!=(const RetrieveRequest &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::RetrieveRequest::getArchiveFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_archiveFileID;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveRequest &obj) {
+  os << "(archiveFileID=" << obj.archiveFileID
+     << " creationLog=" << obj.creationLog
+     << " diskpoolName=" << obj.diskpoolName
+     << " diskpoolThroughput=" << obj.diskpoolThroughput
+     << " drData=" << obj.drData
+     << " dstURL=" << obj.dstURL
+     << " requester=" << obj.requester << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::RetrieveRequest::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setDiskpoolName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
-  m_diskpoolName = diskpoolName;
-  m_diskpoolNameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::RetrieveRequest::getDiskpoolName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_diskpoolName;
-}
-
-//------------------------------------------------------------------------------
-// setDiskpoolThroughput
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
-  m_diskpoolThroughput = diskpoolThroughput;
-  m_diskpoolThroughputSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolThroughput
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::RetrieveRequest::getDiskpoolThroughput() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_diskpoolThroughput;
-}
-
-//------------------------------------------------------------------------------
-// setDrData
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
-  m_drData = drData;
-  m_drDataSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrData
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DRData cta::common::dataStructures::RetrieveRequest::getDrData() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_drData;
-}
-
-//------------------------------------------------------------------------------
-// setDstURL
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setDstURL(const std::string &dstURL) {
-  m_dstURL = dstURL;
-  m_dstURLSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDstURL
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::RetrieveRequest::getDstURL() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_dstURL;
-}
-
-//------------------------------------------------------------------------------
-// setRequester
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::RetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
-  m_requester = requester;
-  m_requesterSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRequester
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::RetrieveRequest::getRequester() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the RetrieveRequest have been set!");
-  }
-  return m_requester;
-}

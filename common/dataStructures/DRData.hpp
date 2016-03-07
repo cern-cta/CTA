@@ -28,60 +28,24 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class DRData {
+struct DRData {
 
-public:
-
-  /**
-   * Constructor
-   */
-  DRData();
-
-  /**
-   * Destructor
-   */
   ~DRData() throw();
 
-  void setDrBlob(const std::string &drBlob);
-  std::string getDrBlob() const;
+  bool operator==(const DRData &rhs) const;
 
-  void setDrGroup(const std::string &drGroup);
-  std::string getDrGroup() const;
+  bool operator!=(const DRData &rhs) const;
 
-  void setDrInstance(const std::string &drInstance);
-  std::string getDrInstance() const;
+  std::string drBlob;
+  std::string drGroup;
+  std::string drInstance;
+  std::string drOwner;
+  std::string drPath;
 
-  void setDrOwner(const std::string &drOwner);
-  std::string getDrOwner() const;
-
-  void setDrPath(const std::string &drPath);
-  std::string getDrPath() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_drBlob;
-  bool m_drBlobSet;
-
-  std::string m_drGroup;
-  bool m_drGroupSet;
-
-  std::string m_drInstance;
-  bool m_drInstanceSet;
-
-  std::string m_drOwner;
-  bool m_drOwnerSet;
-
-  std::string m_drPath;
-  bool m_drPathSet;
-
-}; // class DRData
+}; // struct DRData
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DRData &obj);

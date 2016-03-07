@@ -29,66 +29,25 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ArchiveRoute {
+struct ArchiveRoute {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ArchiveRoute();
-
-  /**
-   * Destructor
-   */
   ~ArchiveRoute() throw();
 
-  void setComment(const std::string &comment);
-  std::string getComment() const;
+  bool operator==(const ArchiveRoute &rhs) const;
 
-  void setCopyNb(const uint64_t copyNb);
-  uint64_t getCopyNb() const;
+  bool operator!=(const ArchiveRoute &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  std::string comment;
+  uint64_t copyNb;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string storageClassName;
+  std::string tapePoolName;
 
-  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
-  cta::common::dataStructures::EntryLog getLastModificationLog() const;
-
-  void setStorageClassName(const std::string &storageClassName);
-  std::string getStorageClassName() const;
-
-  void setTapePoolName(const std::string &tapePoolName);
-  std::string getTapePoolName() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_comment;
-  bool m_commentSet;
-
-  uint64_t m_copyNb;
-  bool m_copyNbSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  cta::common::dataStructures::EntryLog m_lastModificationLog;
-  bool m_lastModificationLogSet;
-
-  std::string m_storageClassName;
-  bool m_storageClassNameSet;
-
-  std::string m_tapePoolName;
-  bool m_tapePoolNameSet;
-
-}; // class ArchiveRoute
+}; // struct ArchiveRoute
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRoute &obj);

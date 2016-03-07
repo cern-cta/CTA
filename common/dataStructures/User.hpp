@@ -29,66 +29,25 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class User {
+struct User {
 
-public:
-
-  /**
-   * Constructor
-   */
-  User();
-
-  /**
-   * Destructor
-   */
   ~User() throw();
 
-  void setComment(const std::string &comment);
-  std::string getComment() const;
+  bool operator==(const User &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  bool operator!=(const User &rhs) const;
 
-  void setGroup(const std::string &group);
-  std::string getGroup() const;
+  std::string comment;
+  cta::common::dataStructures::EntryLog creationLog;
+  std::string group;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string mountGroupName;
+  std::string name;
 
-  void setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog);
-  cta::common::dataStructures::EntryLog getLastModificationLog() const;
-
-  void setMountGroupName(const std::string &mountGroupName);
-  std::string getMountGroupName() const;
-
-  void setName(const std::string &name);
-  std::string getName() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_comment;
-  bool m_commentSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  std::string m_group;
-  bool m_groupSet;
-
-  cta::common::dataStructures::EntryLog m_lastModificationLog;
-  bool m_lastModificationLogSet;
-
-  std::string m_mountGroupName;
-  bool m_mountGroupNameSet;
-
-  std::string m_name;
-  bool m_nameSet;
-
-}; // class User
+}; // struct User
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::User &obj);

@@ -17,23 +17,8 @@
  */
 
 #include "common/dataStructures/VerifyInfo.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::VerifyInfo::VerifyInfo() {  
-  m_creationLogSet = false;
-  m_errorsSet = false;
-  m_filesFailedSet = false;
-  m_filesToVerifySet = false;
-  m_filesVerifiedSet = false;
-  m_tagSet = false;
-  m_totalFilesSet = false;
-  m_totalSizeSet = false;
-  m_verifyStatusSet = false;
-  m_vidSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -42,197 +27,42 @@ cta::common::dataStructures::VerifyInfo::~VerifyInfo() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::VerifyInfo::allFieldsSet() const {
-  return m_creationLogSet
-      && m_errorsSet
-      && m_filesFailedSet
-      && m_filesToVerifySet
-      && m_filesVerifiedSet
-      && m_tagSet
-      && m_totalFilesSet
-      && m_totalSizeSet
-      && m_verifyStatusSet
-      && m_vidSet;
+bool cta::common::dataStructures::VerifyInfo::operator==(const VerifyInfo &rhs) const {
+  return creationLog==rhs.creationLog
+      && errors==rhs.errors
+      && filesFailed==rhs.filesFailed
+      && filesToVerify==rhs.filesToVerify
+      && filesVerified==rhs.filesVerified
+      && tag==rhs.tag
+      && totalFiles==rhs.totalFiles
+      && totalSize==rhs.totalSize
+      && verifyStatus==rhs.verifyStatus
+      && vid==rhs.vid;
 }
 
 //------------------------------------------------------------------------------
-// setCreationLog
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
+bool cta::common::dataStructures::VerifyInfo::operator!=(const VerifyInfo &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getCreationLog
+// operator<<
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::VerifyInfo::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_creationLog;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::VerifyInfo &obj) {
+  os << "(creationLog=" << obj.creationLog
+     << " errors=" << obj.errors
+     << " filesFailed=" << obj.filesFailed
+     << " filesToVerify=" << obj.filesToVerify
+     << " filesVerified=" << obj.filesVerified
+     << " tag=" << obj.tag
+     << " totalFiles=" << obj.totalFiles
+     << " totalSize=" << obj.totalSize
+     << " verifyStatus=" << obj.verifyStatus
+     << " vid=" << obj.vid << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setErrors
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setErrors(const std::map<uint64_t,std::string> &errors) {
-  m_errors = errors;
-  m_errorsSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getErrors
-//------------------------------------------------------------------------------
-std::map<uint64_t,std::string> cta::common::dataStructures::VerifyInfo::getErrors() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_errors;
-}
-
-//------------------------------------------------------------------------------
-// setFilesFailed
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setFilesFailed(const uint64_t filesFailed) {
-  m_filesFailed = filesFailed;
-  m_filesFailedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFilesFailed
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::VerifyInfo::getFilesFailed() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_filesFailed;
-}
-
-//------------------------------------------------------------------------------
-// setFilesToVerify
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setFilesToVerify(const uint64_t filesToVerify) {
-  m_filesToVerify = filesToVerify;
-  m_filesToVerifySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFilesToVerify
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::VerifyInfo::getFilesToVerify() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_filesToVerify;
-}
-
-//------------------------------------------------------------------------------
-// setFilesVerified
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setFilesVerified(const uint64_t filesVerified) {
-  m_filesVerified = filesVerified;
-  m_filesVerifiedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFilesVerified
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::VerifyInfo::getFilesVerified() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_filesVerified;
-}
-
-//------------------------------------------------------------------------------
-// setTag
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setTag(const std::string &tag) {
-  m_tag = tag;
-  m_tagSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTag
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::VerifyInfo::getTag() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_tag;
-}
-
-//------------------------------------------------------------------------------
-// setTotalFiles
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setTotalFiles(const uint64_t totalFiles) {
-  m_totalFiles = totalFiles;
-  m_totalFilesSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTotalFiles
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::VerifyInfo::getTotalFiles() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_totalFiles;
-}
-
-//------------------------------------------------------------------------------
-// setTotalSize
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setTotalSize(const uint64_t totalSize) {
-  m_totalSize = totalSize;
-  m_totalSizeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTotalSize
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::VerifyInfo::getTotalSize() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_totalSize;
-}
-
-//------------------------------------------------------------------------------
-// setVerifyStatus
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setVerifyStatus(const std::string &verifyStatus) {
-  m_verifyStatus = verifyStatus;
-  m_verifyStatusSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getVerifyStatus
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::VerifyInfo::getVerifyStatus() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_verifyStatus;
-}
-
-//------------------------------------------------------------------------------
-// setVid
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::VerifyInfo::setVid(const std::string &vid) {
-  m_vid = vid;
-  m_vidSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getVid
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::VerifyInfo::getVid() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the VerifyInfo have been set!");
-  }
-  return m_vid;
-}

@@ -29,42 +29,21 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class DeleteArchiveRequest {
+struct DeleteArchiveRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  DeleteArchiveRequest();
-
-  /**
-   * Destructor
-   */
   ~DeleteArchiveRequest() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const DeleteArchiveRequest &rhs) const;
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
-  
+  bool operator!=(const DeleteArchiveRequest &rhs) const;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
+  uint64_t archiveFileID;
+  cta::common::dataStructures::UserIdentity requester;
 
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
-
-}; // class DeleteArchiveRequest
+}; // struct DeleteArchiveRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DeleteArchiveRequest &obj);

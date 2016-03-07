@@ -17,19 +17,8 @@
  */
 
 #include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveRoute::ArchiveRoute() {  
-  m_commentSet = false;
-  m_copyNbSet = false;
-  m_creationLogSet = false;
-  m_lastModificationLogSet = false;
-  m_storageClassNameSet = false;
-  m_tapePoolNameSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -38,121 +27,34 @@ cta::common::dataStructures::ArchiveRoute::~ArchiveRoute() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveRoute::allFieldsSet() const {
-  return m_commentSet
-      && m_copyNbSet
-      && m_creationLogSet
-      && m_lastModificationLogSet
-      && m_storageClassNameSet
-      && m_tapePoolNameSet;
+bool cta::common::dataStructures::ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
+  return comment==rhs.comment
+      && copyNb==rhs.copyNb
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && storageClassName==rhs.storageClassName
+      && tapePoolName==rhs.tapePoolName;
 }
 
 //------------------------------------------------------------------------------
-// setComment
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setComment(const std::string &comment) {
-  m_comment = comment;
-  m_commentSet = true;
+bool cta::common::dataStructures::ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getComment
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveRoute::getComment() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_comment;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRoute &obj) {
+  os << "(comment=" << obj.comment
+     << " copyNb=" << obj.copyNb
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " storageClassName=" << obj.storageClassName
+     << " tapePoolName=" << obj.tapePoolName << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCopyNb
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setCopyNb(const uint64_t copyNb) {
-  m_copyNb = copyNb;
-  m_copyNbSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNb
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveRoute::getCopyNb() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_copyNb;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::ArchiveRoute::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setLastModificationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  m_lastModificationLog = lastModificationLog;
-  m_lastModificationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLastModificationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::ArchiveRoute::getLastModificationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setStorageClassName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setStorageClassName(const std::string &storageClassName) {
-  m_storageClassName = storageClassName;
-  m_storageClassNameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getStorageClassName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveRoute::getStorageClassName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_storageClassName;
-}
-
-//------------------------------------------------------------------------------
-// setTapePoolName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveRoute::setTapePoolName(const std::string &tapePoolName) {
-  m_tapePoolName = tapePoolName;
-  m_tapePoolNameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTapePoolName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveRoute::getTapePoolName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveRoute have been set!");
-  }
-  return m_tapePoolName;
-}

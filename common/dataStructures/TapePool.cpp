@@ -17,18 +17,8 @@
  */
 
 #include "common/dataStructures/TapePool.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::TapePool::TapePool() {  
-  m_commentSet = false;
-  m_creationLogSet = false;
-  m_lastModificationLogSet = false;
-  m_nameSet = false;
-  m_nbPartialTapesSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -37,102 +27,32 @@ cta::common::dataStructures::TapePool::~TapePool() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapePool::allFieldsSet() const {
-  return m_commentSet
-      && m_creationLogSet
-      && m_lastModificationLogSet
-      && m_nameSet
-      && m_nbPartialTapesSet;
+bool cta::common::dataStructures::TapePool::operator==(const TapePool &rhs) const {
+  return comment==rhs.comment
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && name==rhs.name
+      && nbPartialTapes==rhs.nbPartialTapes;
 }
 
 //------------------------------------------------------------------------------
-// setComment
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setComment(const std::string &comment) {
-  m_comment = comment;
-  m_commentSet = true;
+bool cta::common::dataStructures::TapePool::operator!=(const TapePool &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getComment
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::TapePool::getComment() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
-  }
-  return m_comment;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj) {
+  os << "(comment=" << obj.comment
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " name=" << obj.name
+     << " nbPartialTapes=" << obj.nbPartialTapes << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::TapePool::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setLastModificationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  m_lastModificationLog = lastModificationLog;
-  m_lastModificationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLastModificationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::TapePool::getLastModificationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
-  }
-  return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setName(const std::string &name) {
-  m_name = name;
-  m_nameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::TapePool::getName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
-  }
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// setNbPartialTapes
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapePool::setNbPartialTapes(const uint64_t nbPartialTapes) {
-  m_nbPartialTapes = nbPartialTapes;
-  m_nbPartialTapesSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getNbPartialTapes
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::TapePool::getNbPartialTapes() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapePool have been set!");
-  }
-  return m_nbPartialTapes;
-}

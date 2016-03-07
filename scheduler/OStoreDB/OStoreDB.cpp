@@ -394,9 +394,9 @@ void OStoreDB::ArchiveRequestCreation::complete() {
       if (tp.getOwner() != re.getAddressIfSet())
         throw NoSuchTapePool("In OStoreDB::queue: non-existing tape pool found "
             "(dangling pointer): cancelling request creation.");
-      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getDrData().getDrPath(), 
+      tp.addJob(*j, m_request.getAddressIfSet(), m_request.getDrData().drPath, 
         m_request.getFileSize(), 0, //TODO: fix priorities and mount criteria to come from usergroups
-        m_request.getCreationLog().getTime());
+        m_request.getCreationLog().time);
       // Now that we have the tape pool handy, get the retry limits from it and 
       // assign them to the job
       m_request.setJobFailureLimits(j->copyNb, tp.getMaxRetriesWithinMount(), 
@@ -753,18 +753,18 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   ar.setAddress(m_agent->nextId("ArchiveRequest"));
   ar.initialize();
   ar.setArchiveFileID(archiveFileId);
-  ar.setChecksumType(request.getChecksumType());
-  ar.setChecksumValue(request.getChecksumValue());
-  ar.setCreationLog(request.getCreationLog());
-  ar.setDiskpoolName(request.getDiskpoolName());
-  ar.setDiskpoolThroughput(request.getDiskpoolThroughput());
-  ar.setDrData(request.getDrData());
-  ar.setEosFileID(request.getEosFileID());
-  ar.setFileSize(request.getFileSize());
+  ar.setChecksumType(request.checksumType);
+  ar.setChecksumValue(request.checksumValue);
+  ar.setCreationLog(request.creationLog);
+  ar.setDiskpoolName(request.diskpoolName);
+  ar.setDiskpoolThroughput(request.diskpoolThroughput);
+  ar.setDrData(request.drData);
+  ar.setEosFileID(request.eosFileID);
+  ar.setFileSize(request.fileSize);
   ar.setMountPolicy(mountPolicy);
-  ar.setRequester(request.getRequester());
-  ar.setSrcURL(request.getSrcURL());
-  ar.setStorageClass(request.getStorageClass());
+  ar.setRequester(request.requester);
+  ar.setSrcURL(request.srcURL);
+  ar.setStorageClass(request.storageClass);
   // We will need to identity tapepools is order to construct the request
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);

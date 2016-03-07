@@ -17,17 +17,8 @@
  */
 
 #include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveJob::ArchiveJob() {  
-  m_archiveFileIDSet = false;
-  m_copyNumberSet = false;
-  m_requestSet = false;
-  m_tapePoolSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -36,83 +27,30 @@ cta::common::dataStructures::ArchiveJob::~ArchiveJob() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveJob::allFieldsSet() const {
-  return m_archiveFileIDSet
-      && m_copyNumberSet
-      && m_requestSet
-      && m_tapePoolSet;
+bool cta::common::dataStructures::ArchiveJob::operator==(const ArchiveJob &rhs) const {
+  return archiveFileID==rhs.archiveFileID
+      && copyNumber==rhs.copyNumber
+      && request==rhs.request
+      && tapePool==rhs.tapePool;
 }
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveJob::setArchiveFileID(const uint64_t archiveFileID) {
-  m_archiveFileID = archiveFileID;
-  m_archiveFileIDSet = true;
+bool cta::common::dataStructures::ArchiveJob::operator!=(const ArchiveJob &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveJob::getArchiveFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveJob have been set!");
-  }
-  return m_archiveFileID;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveJob &obj) {
+  os << "(archiveFileID=" << obj.archiveFileID
+     << " copyNumber=" << obj.copyNumber
+     << " request=" << obj.request
+     << " tapePool=" << obj.tapePool << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCopyNumber
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveJob::setCopyNumber(const uint64_t copyNumber) {
-  m_copyNumber = copyNumber;
-  m_copyNumberSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCopyNumber
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveJob::getCopyNumber() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveJob have been set!");
-  }
-  return m_copyNumber;
-}
-
-//------------------------------------------------------------------------------
-// setRequest
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveJob::setRequest(const cta::common::dataStructures::ArchiveRequest &request) {
-  m_request = request;
-  m_requestSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRequest
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveRequest cta::common::dataStructures::ArchiveJob::getRequest() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveJob have been set!");
-  }
-  return m_request;
-}
-
-//------------------------------------------------------------------------------
-// setTapePool
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveJob::setTapePool(const std::string &tapePool) {
-  m_tapePool = tapePool;
-  m_tapePoolSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTapePool
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveJob::getTapePool() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveJob have been set!");
-  }
-  return m_tapePool;
-}

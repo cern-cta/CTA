@@ -31,96 +31,30 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ArchiveRequest {
+struct ArchiveRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ArchiveRequest();
-
-  /**
-   * Destructor
-   */
   ~ArchiveRequest() throw();
 
-  void setChecksumType(const std::string &checksumType);
-  std::string getChecksumType() const;
+  bool operator==(const ArchiveRequest &rhs) const;
 
-  void setChecksumValue(const std::string &checksumValue);
-  std::string getChecksumValue() const;
+  bool operator!=(const ArchiveRequest &rhs) const;
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog() const;
+  std::string checksumType;
+  std::string checksumValue;
+  cta::common::dataStructures::EntryLog creationLog;
+  std::string diskpoolName;
+  uint64_t diskpoolThroughput;
+  cta::common::dataStructures::DRData drData;
+  std::string eosFileID;
+  uint64_t fileSize;
+  cta::common::dataStructures::UserIdentity requester;
+  std::string srcURL;
+  std::string storageClass;
 
-  void setDiskpoolName(const std::string &diskpoolName);
-  std::string getDiskpoolName() const;
-
-  void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
-  uint64_t getDiskpoolThroughput() const;
-
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData() const;
-
-  void setEosFileID(const std::string &eosFileID);
-  std::string getEosFileID() const;
-
-  void setFileSize(const uint64_t fileSize);
-  uint64_t getFileSize() const;
-
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
-
-  void setSrcURL(const std::string &srcURL);
-  std::string getSrcURL() const;
-
-  void setStorageClass(const std::string &storageClass);
-  std::string getStorageClass() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  std::string m_checksumType;
-  bool m_checksumTypeSet;
-
-  std::string m_checksumValue;
-  bool m_checksumValueSet;
-
-  cta::common::dataStructures::EntryLog m_creationLog;
-  bool m_creationLogSet;
-
-  std::string m_diskpoolName;
-  bool m_diskpoolNameSet;
-
-  uint64_t m_diskpoolThroughput;
-  bool m_diskpoolThroughputSet;
-
-  cta::common::dataStructures::DRData m_drData;
-  bool m_drDataSet;
-
-  std::string m_eosFileID;
-  bool m_eosFileIDSet;
-
-  uint64_t m_fileSize;
-  bool m_fileSizeSet;
-
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
-
-  std::string m_srcURL;
-  bool m_srcURLSet;
-
-  std::string m_storageClass;
-  bool m_storageClassSet;
-
-}; // class ArchiveRequest
+}; // struct ArchiveRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRequest &obj);

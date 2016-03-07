@@ -17,14 +17,8 @@
  */
 
 #include "common/dataStructures/ListStorageClassRequest.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {  
-  m_requesterSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -33,26 +27,24 @@ cta::common::dataStructures::ListStorageClassRequest::~ListStorageClassRequest()
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ListStorageClassRequest::allFieldsSet() const {
-  return m_requesterSet;
+bool cta::common::dataStructures::ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {
+  return requester==rhs.requester;
 }
 
 //------------------------------------------------------------------------------
-// setRequester
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ListStorageClassRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
-  m_requester = requester;
-  m_requesterSet = true;
+bool cta::common::dataStructures::ListStorageClassRequest::operator!=(const ListStorageClassRequest &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getRequester
+// operator<<
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::ListStorageClassRequest::getRequester() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ListStorageClassRequest have been set!");
-  }
-  return m_requester;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ListStorageClassRequest &obj) {
+  os << "(requester=" << obj.requester << ")";
+  return os;
 }
+

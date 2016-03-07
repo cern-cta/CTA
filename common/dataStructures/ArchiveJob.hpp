@@ -29,54 +29,23 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class ArchiveJob {
+struct ArchiveJob {
 
-public:
-
-  /**
-   * Constructor
-   */
-  ArchiveJob();
-
-  /**
-   * Destructor
-   */
   ~ArchiveJob() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const ArchiveJob &rhs) const;
 
-  void setCopyNumber(const uint64_t copyNumber);
-  uint64_t getCopyNumber() const;
+  bool operator!=(const ArchiveJob &rhs) const;
 
-  void setRequest(const cta::common::dataStructures::ArchiveRequest &request);
-  cta::common::dataStructures::ArchiveRequest getRequest() const;
+  uint64_t archiveFileID;
+  uint64_t copyNumber;
+  cta::common::dataStructures::ArchiveRequest request;
+  std::string tapePool;
 
-  void setTapePool(const std::string &tapePool);
-  std::string getTapePool() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  uint64_t m_copyNumber;
-  bool m_copyNumberSet;
-
-  cta::common::dataStructures::ArchiveRequest m_request;
-  bool m_requestSet;
-
-  std::string m_tapePool;
-  bool m_tapePoolSet;
-
-}; // class ArchiveJob
+}; // struct ArchiveJob
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveJob &obj);

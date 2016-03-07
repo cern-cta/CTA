@@ -231,11 +231,11 @@ uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
   auto payloadMountPolicy = m_payload.mutable_mountpolicy();
-  payloadMountPolicy->set_maxdrives(mountPolicy.getMaxDrives());
-  payloadMountPolicy->set_minbytesqueued(mountPolicy.getMinBytesQueued());
-  payloadMountPolicy->set_minfilesqueued(mountPolicy.getMinFilesQueued());
-  payloadMountPolicy->set_minrequestage(mountPolicy.getMinRequestAge());
-  payloadMountPolicy->set_priority(mountPolicy.getPriority());
+  payloadMountPolicy->set_maxdrives(mountPolicy.maxDrives);
+  payloadMountPolicy->set_minbytesqueued(mountPolicy.minBytesQueued);
+  payloadMountPolicy->set_minfilesqueued(mountPolicy.minFilesQueued);
+  payloadMountPolicy->set_minrequestage(mountPolicy.minRequestAge);
+  payloadMountPolicy->set_priority(mountPolicy.priority);
 }
 
 //------------------------------------------------------------------------------
@@ -245,11 +245,11 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
   checkPayloadReadable();
   cta::common::dataStructures::MountPolicy mountPolicy;
   auto payloadMountPolicy = m_payload.mountpolicy();
-  mountPolicy.setMaxDrives(payloadMountPolicy.maxdrives());
-  mountPolicy.setMinBytesQueued(payloadMountPolicy.minbytesqueued());
-  mountPolicy.setMinFilesQueued(payloadMountPolicy.minfilesqueued());
-  mountPolicy.setMinRequestAge(payloadMountPolicy.minrequestage());
-  mountPolicy.setPriority(payloadMountPolicy.priority());
+  mountPolicy.maxDrives=payloadMountPolicy.maxdrives();
+  mountPolicy.minBytesQueued=payloadMountPolicy.minbytesqueued();
+  mountPolicy.minFilesQueued=payloadMountPolicy.minfilesqueued();
+  mountPolicy.minRequestAge=payloadMountPolicy.minrequestage();
+  mountPolicy.priority=payloadMountPolicy.priority();
   return mountPolicy;
 }
 
@@ -259,11 +259,11 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
 void cta::objectstore::ArchiveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
   checkPayloadWritable();
   auto payloadDrData = m_payload.mutable_drdata();
-  payloadDrData->set_drblob(drData.getDrBlob());
-  payloadDrData->set_drgroup(drData.getDrGroup());
-  payloadDrData->set_drinstance(drData.getDrInstance());
-  payloadDrData->set_drowner(drData.getDrOwner());
-  payloadDrData->set_drpath(drData.getDrPath());
+  payloadDrData->set_drblob(drData.drBlob);
+  payloadDrData->set_drgroup(drData.drGroup);
+  payloadDrData->set_drinstance(drData.drInstance);
+  payloadDrData->set_drowner(drData.drOwner);
+  payloadDrData->set_drpath(drData.drPath);
 }
 
 //------------------------------------------------------------------------------
@@ -273,11 +273,11 @@ cta::common::dataStructures::DRData cta::objectstore::ArchiveRequest::getDrData(
   checkPayloadReadable();
   cta::common::dataStructures::DRData drData;
   auto payloadDrData = m_payload.drdata();
-  drData.setDrBlob(payloadDrData.drblob());
-  drData.setDrGroup(payloadDrData.drgroup());
-  drData.setDrInstance(payloadDrData.drinstance());
-  drData.setDrOwner(payloadDrData.drowner());
-  drData.setDrPath(payloadDrData.drpath());
+  drData.drBlob=payloadDrData.drblob();
+  drData.drGroup=payloadDrData.drgroup();
+  drData.drInstance=payloadDrData.drinstance();
+  drData.drOwner=payloadDrData.drowner();
+  drData.drPath=payloadDrData.drpath();
   return drData;
 }
 
@@ -319,8 +319,8 @@ uint64_t cta::objectstore::ArchiveRequest::getFileSize() {
 void cta::objectstore::ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
-  payloadRequester->set_name(requester.getName());
-  payloadRequester->set_group(requester.getGroup());
+  payloadRequester->set_name(requester.name);
+  payloadRequester->set_group(requester.group);
 }
 
 //------------------------------------------------------------------------------
@@ -330,8 +330,8 @@ cta::common::dataStructures::UserIdentity cta::objectstore::ArchiveRequest::getR
   checkPayloadReadable();
   cta::common::dataStructures::UserIdentity requester;
   auto payloadRequester = m_payload.requester();
-  requester.setName(payloadRequester.name());
-  requester.setGroup(payloadRequester.group());
+  requester.name=payloadRequester.name();
+  requester.group=payloadRequester.group();
   return requester;
 }
 
@@ -373,10 +373,10 @@ std::string cta::objectstore::ArchiveRequest::getStorageClass() {
 void cta::objectstore::ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   checkPayloadWritable();
   auto payloadCreationLog = m_payload.mutable_creationlog();
-  payloadCreationLog->set_time(creationLog.getTime());
-  payloadCreationLog->set_host(creationLog.getHost());
-  payloadCreationLog->set_name(creationLog.getUser().getName());
-  payloadCreationLog->set_group(creationLog.getUser().getGroup());
+  payloadCreationLog->set_time(creationLog.time);
+  payloadCreationLog->set_host(creationLog.host);
+  payloadCreationLog->set_name(creationLog.user.name);
+  payloadCreationLog->set_group(creationLog.user.group);
 }
 
 //------------------------------------------------------------------------------
@@ -387,11 +387,11 @@ cta::common::dataStructures::EntryLog cta::objectstore::ArchiveRequest::getCreat
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::UserIdentity user;
   auto payloadCreationLog = m_payload.creationlog();
-  user.setName(payloadCreationLog.name());
-  user.setGroup(payloadCreationLog.group());
-  creationLog.setUser(user);
-  creationLog.setHost(payloadCreationLog.host());
-  creationLog.setTime(payloadCreationLog.time());
+  user.name=payloadCreationLog.name();
+  user.group=payloadCreationLog.group();
+  creationLog.user=user;
+  creationLog.host=payloadCreationLog.host();
+  creationLog.time=payloadCreationLog.time();
   return creationLog;  
 }
 

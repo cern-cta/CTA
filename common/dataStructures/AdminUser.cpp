@@ -17,17 +17,8 @@
  */
 
 #include "common/dataStructures/AdminUser.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::AdminUser::AdminUser() {  
-  m_commentSet = false;
-  m_creationLogSet = false;
-  m_lastModificationLogSet = false;
-  m_userSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -36,83 +27,30 @@ cta::common::dataStructures::AdminUser::~AdminUser() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::AdminUser::allFieldsSet() const {
-  return m_commentSet
-      && m_creationLogSet
-      && m_lastModificationLogSet
-      && m_userSet;
+bool cta::common::dataStructures::AdminUser::operator==(const AdminUser &rhs) const {
+  return comment==rhs.comment
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && user==rhs.user;
 }
 
 //------------------------------------------------------------------------------
-// setComment
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::AdminUser::setComment(const std::string &comment) {
-  m_comment = comment;
-  m_commentSet = true;
+bool cta::common::dataStructures::AdminUser::operator!=(const AdminUser &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getComment
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::AdminUser::getComment() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminUser have been set!");
-  }
-  return m_comment;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::AdminUser &obj) {
+  os << "(comment=" << obj.comment
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " user=" << obj.user << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::AdminUser::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::AdminUser::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminUser have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setLastModificationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::AdminUser::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  m_lastModificationLog = lastModificationLog;
-  m_lastModificationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLastModificationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::AdminUser::getLastModificationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminUser have been set!");
-  }
-  return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setUser
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::AdminUser::setUser(const cta::common::dataStructures::UserIdentity &user) {
-  m_user = user;
-  m_userSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getUser
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::AdminUser::getUser() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the AdminUser have been set!");
-  }
-  return m_user;
-}

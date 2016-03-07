@@ -17,17 +17,8 @@
  */
 
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::CancelRetrieveRequest::CancelRetrieveRequest() {  
-  m_archiveFileIDSet = false;
-  m_drDataSet = false;
-  m_dstURLSet = false;
-  m_requesterSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -36,83 +27,30 @@ cta::common::dataStructures::CancelRetrieveRequest::~CancelRetrieveRequest() thr
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::CancelRetrieveRequest::allFieldsSet() const {
-  return m_archiveFileIDSet
-      && m_drDataSet
-      && m_dstURLSet
-      && m_requesterSet;
+bool cta::common::dataStructures::CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
+  return archiveFileID==rhs.archiveFileID
+      && drData==rhs.drData
+      && dstURL==rhs.dstURL
+      && requester==rhs.requester;
 }
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::CancelRetrieveRequest::setArchiveFileID(const uint64_t archiveFileID) {
-  m_archiveFileID = archiveFileID;
-  m_archiveFileIDSet = true;
+bool cta::common::dataStructures::CancelRetrieveRequest::operator!=(const CancelRetrieveRequest &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::CancelRetrieveRequest::getArchiveFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the CancelRetrieveRequest have been set!");
-  }
-  return m_archiveFileID;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::CancelRetrieveRequest &obj) {
+  os << "(archiveFileID=" << obj.archiveFileID
+     << " drData=" << obj.drData
+     << " dstURL=" << obj.dstURL
+     << " requester=" << obj.requester << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setDrData
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::CancelRetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
-  m_drData = drData;
-  m_drDataSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrData
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DRData cta::common::dataStructures::CancelRetrieveRequest::getDrData() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the CancelRetrieveRequest have been set!");
-  }
-  return m_drData;
-}
-
-//------------------------------------------------------------------------------
-// setDstURL
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::CancelRetrieveRequest::setDstURL(const std::string &dstURL) {
-  m_dstURL = dstURL;
-  m_dstURLSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDstURL
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::CancelRetrieveRequest::getDstURL() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the CancelRetrieveRequest have been set!");
-  }
-  return m_dstURL;
-}
-
-//------------------------------------------------------------------------------
-// setRequester
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::CancelRetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
-  m_requester = requester;
-  m_requesterSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRequester
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::common::dataStructures::CancelRetrieveRequest::getRequester() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the CancelRetrieveRequest have been set!");
-  }
-  return m_requester;
-}

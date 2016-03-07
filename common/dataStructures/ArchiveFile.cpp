@@ -17,21 +17,8 @@
  */
 
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile::ArchiveFile() {  
-  m_archiveFileIDSet = false;
-  m_checksumTypeSet = false;
-  m_checksumValueSet = false;
-  m_drDataSet = false;
-  m_eosFileIDSet = false;
-  m_fileSizeSet = false;
-  m_storageClassSet = false;
-  m_tapeCopiesSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -40,159 +27,38 @@ cta::common::dataStructures::ArchiveFile::~ArchiveFile() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFile::allFieldsSet() const {
-  return m_archiveFileIDSet
-      && m_checksumTypeSet
-      && m_checksumValueSet
-      && m_drDataSet
-      && m_eosFileIDSet
-      && m_fileSizeSet
-      && m_storageClassSet
-      && m_tapeCopiesSet;
+bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {
+  return archiveFileID==rhs.archiveFileID
+      && checksumType==rhs.checksumType
+      && checksumValue==rhs.checksumValue
+      && drData==rhs.drData
+      && eosFileID==rhs.eosFileID
+      && fileSize==rhs.fileSize
+      && storageClass==rhs.storageClass
+      && tapeCopies==rhs.tapeCopies;
 }
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setArchiveFileID(const uint64_t archiveFileID) {
-  m_archiveFileID = archiveFileID;
-  m_archiveFileIDSet = true;
+bool cta::common::dataStructures::ArchiveFile::operator!=(const ArchiveFile &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveFile::getArchiveFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_archiveFileID;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj) {
+  os << "(archiveFileID=" << obj.archiveFileID
+     << " checksumType=" << obj.checksumType
+     << " checksumValue=" << obj.checksumValue
+     << " drData=" << obj.drData
+     << " eosFileID=" << obj.eosFileID
+     << " fileSize=" << obj.fileSize
+     << " storageClass=" << obj.storageClass
+     << " tapeCopies=" << obj.tapeCopies << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setChecksumType
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setChecksumType(const std::string &checksumType) {
-  m_checksumType = checksumType;
-  m_checksumTypeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getChecksumType
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveFile::getChecksumType() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_checksumType;
-}
-
-//------------------------------------------------------------------------------
-// setChecksumValue
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setChecksumValue(const std::string &checksumValue) {
-  m_checksumValue = checksumValue;
-  m_checksumValueSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getChecksumValue
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveFile::getChecksumValue() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_checksumValue;
-}
-
-//------------------------------------------------------------------------------
-// setDrData
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setDrData(const cta::common::dataStructures::DRData &drData) {
-  m_drData = drData;
-  m_drDataSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getDrData
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DRData cta::common::dataStructures::ArchiveFile::getDrData() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_drData;
-}
-
-//------------------------------------------------------------------------------
-// setEosFileID
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setEosFileID(const std::string &eosFileID) {
-  m_eosFileID = eosFileID;
-  m_eosFileIDSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getEosFileID
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveFile::getEosFileID() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_eosFileID;
-}
-
-//------------------------------------------------------------------------------
-// setFileSize
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setFileSize(const uint64_t fileSize) {
-  m_fileSize = fileSize;
-  m_fileSizeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFileSize
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::ArchiveFile::getFileSize() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_fileSize;
-}
-
-//------------------------------------------------------------------------------
-// setStorageClass
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setStorageClass(const std::string &storageClass) {
-  m_storageClass = storageClass;
-  m_storageClassSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getStorageClass
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::ArchiveFile::getStorageClass() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_storageClass;
-}
-
-//------------------------------------------------------------------------------
-// setTapeCopies
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::ArchiveFile::setTapeCopies(const std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> &tapeCopies) {
-  m_tapeCopies = tapeCopies;
-  m_tapeCopiesSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getTapeCopies
-//------------------------------------------------------------------------------
-std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> cta::common::dataStructures::ArchiveFile::getTapeCopies() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the ArchiveFile have been set!");
-  }
-  return m_tapeCopies;
-}

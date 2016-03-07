@@ -18,33 +18,14 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <stdint.h>
-#include <string>
-
-#include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/TapeFileLocation.hpp"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+#include <iostream>
+#include <map>
 
-struct RetrieveJob {
-
-  ~RetrieveJob() throw();
-
-  bool operator==(const RetrieveJob &rhs) const;
-
-  bool operator!=(const RetrieveJob &rhs) const;
-
-  cta::common::dataStructures::RetrieveRequest request;
-  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> tapeCopies;
-
-}; // struct RetrieveJob
-
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveJob &obj);
+std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> &map);
+std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,std::string> &map);
+std::ostream &operator<<(std::ostream &os, const std::pair<std::string,std::string> &pair);
+std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,std::pair<std::string,std::string>> &map);
+std::ostream &operator<<(std::ostream &os, const std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> &map);
+std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,std::pair<std::string,std::string>> &map);

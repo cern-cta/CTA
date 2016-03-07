@@ -28,48 +28,22 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class TapeFileLocation {
+struct TapeFileLocation {
 
-public:
-
-  /**
-   * Constructor
-   */
-  TapeFileLocation();
-
-  /**
-   * Destructor
-   */
   ~TapeFileLocation() throw();
 
-  void setBlockId(const uint64_t blockId);
-  uint64_t getBlockId() const;
+  bool operator==(const TapeFileLocation &rhs) const;
 
-  void setFSeq(const uint64_t fSeq);
-  uint64_t getFSeq() const;
+  bool operator!=(const TapeFileLocation &rhs) const;
 
-  void setVid(const std::string &vid);
-  std::string getVid() const;
-  
+  uint64_t blockId;
+  uint64_t fSeq;
+  std::string vid;
 
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_blockId;
-  bool m_blockIdSet;
-
-  uint64_t m_fSeq;
-  bool m_fSeqSet;
-
-  std::string m_vid;
-  bool m_vidSet;
-
-}; // class TapeFileLocation
+}; // struct TapeFileLocation
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFileLocation &obj);

@@ -17,16 +17,8 @@
  */
 
 #include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::TapeFileLocation::TapeFileLocation() {  
-  m_blockIdSet = false;
-  m_fSeqSet = false;
-  m_vidSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -35,64 +27,28 @@ cta::common::dataStructures::TapeFileLocation::~TapeFileLocation() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeFileLocation::allFieldsSet() const {
-  return m_blockIdSet
-      && m_fSeqSet
-      && m_vidSet;
+bool cta::common::dataStructures::TapeFileLocation::operator==(const TapeFileLocation &rhs) const {
+  return blockId==rhs.blockId
+      && fSeq==rhs.fSeq
+      && vid==rhs.vid;
 }
 
 //------------------------------------------------------------------------------
-// setBlockId
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::TapeFileLocation::setBlockId(const uint64_t blockId) {
-  m_blockId = blockId;
-  m_blockIdSet = true;
+bool cta::common::dataStructures::TapeFileLocation::operator!=(const TapeFileLocation &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getBlockId
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::TapeFileLocation::getBlockId() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
-  }
-  return m_blockId;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFileLocation &obj) {
+  os << "(blockId=" << obj.blockId
+     << " fSeq=" << obj.fSeq
+     << " vid=" << obj.vid << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setFSeq
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapeFileLocation::setFSeq(const uint64_t fSeq) {
-  m_fSeq = fSeq;
-  m_fSeqSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getFSeq
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::TapeFileLocation::getFSeq() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
-  }
-  return m_fSeq;
-}
-
-//------------------------------------------------------------------------------
-// setVid
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::TapeFileLocation::setVid(const std::string &vid) {
-  m_vid = vid;
-  m_vidSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getVid
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::TapeFileLocation::getVid() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the TapeFileLocation have been set!");
-  }
-  return m_vid;
-}

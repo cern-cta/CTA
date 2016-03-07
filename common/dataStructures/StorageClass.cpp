@@ -17,18 +17,8 @@
  */
 
 #include "common/dataStructures/StorageClass.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::StorageClass::StorageClass() {  
-  m_commentSet = false;
-  m_creationLogSet = false;
-  m_lastModificationLogSet = false;
-  m_nameSet = false;
-  m_nbCopiesSet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -37,102 +27,32 @@ cta::common::dataStructures::StorageClass::~StorageClass() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::StorageClass::allFieldsSet() const {
-  return m_commentSet
-      && m_creationLogSet
-      && m_lastModificationLogSet
-      && m_nameSet
-      && m_nbCopiesSet;
+bool cta::common::dataStructures::StorageClass::operator==(const StorageClass &rhs) const {
+  return comment==rhs.comment
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && name==rhs.name
+      && nbCopies==rhs.nbCopies;
 }
 
 //------------------------------------------------------------------------------
-// setComment
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setComment(const std::string &comment) {
-  m_comment = comment;
-  m_commentSet = true;
+bool cta::common::dataStructures::StorageClass::operator!=(const StorageClass &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getComment
+// operator<<
 //------------------------------------------------------------------------------
-std::string cta::common::dataStructures::StorageClass::getComment() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
-  }
-  return m_comment;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::StorageClass &obj) {
+  os << "(comment=" << obj.comment
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " name=" << obj.name
+     << " nbCopies=" << obj.nbCopies << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::StorageClass::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setLastModificationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  m_lastModificationLog = lastModificationLog;
-  m_lastModificationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLastModificationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::StorageClass::getLastModificationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
-  }
-  return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setName(const std::string &name) {
-  m_name = name;
-  m_nameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::StorageClass::getName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
-  }
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// setNbCopies
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::StorageClass::setNbCopies(const uint64_t nbCopies) {
-  m_nbCopies = nbCopies;
-  m_nbCopiesSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getNbCopies
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::StorageClass::getNbCopies() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the StorageClass have been set!");
-  }
-  return m_nbCopies;
-}

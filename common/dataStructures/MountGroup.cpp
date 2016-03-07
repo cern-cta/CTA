@@ -17,26 +17,8 @@
  */
 
 #include "common/dataStructures/MountGroup.hpp"
+#include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::MountGroup::MountGroup() {  
-  m_archive_minBytesQueuedSet = false;
-  m_archive_minFilesQueuedSet = false;
-  m_archive_minRequestAgeSet = false;
-  m_archive_prioritySet = false;
-  m_commentSet = false;
-  m_creationLogSet = false;
-  m_lastModificationLogSet = false;
-  m_maxDrivesAllowedSet = false;
-  m_nameSet = false;
-  m_retrieve_minBytesQueuedSet = false;
-  m_retrieve_minFilesQueuedSet = false;
-  m_retrieve_minRequestAgeSet = false;
-  m_retrieve_prioritySet = false;
-}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -45,254 +27,48 @@ cta::common::dataStructures::MountGroup::~MountGroup() throw() {
 }
 
 //------------------------------------------------------------------------------
-// allFieldsSet
+// operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::MountGroup::allFieldsSet() const {
-  return m_archive_minBytesQueuedSet
-      && m_archive_minFilesQueuedSet
-      && m_archive_minRequestAgeSet
-      && m_archive_prioritySet
-      && m_commentSet
-      && m_creationLogSet
-      && m_lastModificationLogSet
-      && m_maxDrivesAllowedSet
-      && m_nameSet
-      && m_retrieve_minBytesQueuedSet
-      && m_retrieve_minFilesQueuedSet
-      && m_retrieve_minRequestAgeSet
-      && m_retrieve_prioritySet;
+bool cta::common::dataStructures::MountGroup::operator==(const MountGroup &rhs) const {
+  return archive_minBytesQueued==rhs.archive_minBytesQueued
+      && archive_minFilesQueued==rhs.archive_minFilesQueued
+      && archive_minRequestAge==rhs.archive_minRequestAge
+      && archive_priority==rhs.archive_priority
+      && comment==rhs.comment
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && maxDrivesAllowed==rhs.maxDrivesAllowed
+      && name==rhs.name
+      && retrieve_minBytesQueued==rhs.retrieve_minBytesQueued
+      && retrieve_minFilesQueued==rhs.retrieve_minFilesQueued
+      && retrieve_minRequestAge==rhs.retrieve_minRequestAge
+      && retrieve_priority==rhs.retrieve_priority;
 }
 
 //------------------------------------------------------------------------------
-// setArchive_minBytesQueued
+// operator!=
 //------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setArchive_minBytesQueued(const uint64_t archive_minBytesQueued) {
-  m_archive_minBytesQueued = archive_minBytesQueued;
-  m_archive_minBytesQueuedSet = true;
+bool cta::common::dataStructures::MountGroup::operator!=(const MountGroup &rhs) const {
+  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
-// getArchive_minBytesQueued
+// operator<<
 //------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getArchive_minBytesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_archive_minBytesQueued;
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountGroup &obj) {
+  os << "(archive_minBytesQueued=" << obj.archive_minBytesQueued
+     << " archive_minFilesQueued=" << obj.archive_minFilesQueued
+     << " archive_minRequestAge=" << obj.archive_minRequestAge
+     << " archive_priority=" << obj.archive_priority
+     << " comment=" << obj.comment
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " maxDrivesAllowed=" << obj.maxDrivesAllowed
+     << " name=" << obj.name
+     << " retrieve_minBytesQueued=" << obj.retrieve_minBytesQueued
+     << " retrieve_minFilesQueued=" << obj.retrieve_minFilesQueued
+     << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
+     << " retrieve_priority=" << obj.retrieve_priority << ")";
+  return os;
 }
 
-//------------------------------------------------------------------------------
-// setArchive_minFilesQueued
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setArchive_minFilesQueued(const uint64_t archive_minFilesQueued) {
-  m_archive_minFilesQueued = archive_minFilesQueued;
-  m_archive_minFilesQueuedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getArchive_minFilesQueued
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getArchive_minFilesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_archive_minFilesQueued;
-}
-
-//------------------------------------------------------------------------------
-// setArchive_minRequestAge
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setArchive_minRequestAge(const uint64_t archive_minRequestAge) {
-  m_archive_minRequestAge = archive_minRequestAge;
-  m_archive_minRequestAgeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getArchive_minRequestAge
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getArchive_minRequestAge() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_archive_minRequestAge;
-}
-
-//------------------------------------------------------------------------------
-// setArchive_priority
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setArchive_priority(const uint64_t archive_priority) {
-  m_archive_priority = archive_priority;
-  m_archive_prioritySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getArchive_priority
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getArchive_priority() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_archive_priority;
-}
-
-//------------------------------------------------------------------------------
-// setComment
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setComment(const std::string &comment) {
-  m_comment = comment;
-  m_commentSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getComment
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::MountGroup::getComment() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_comment;
-}
-
-//------------------------------------------------------------------------------
-// setCreationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
-  m_creationLog = creationLog;
-  m_creationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::MountGroup::getCreationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_creationLog;
-}
-
-//------------------------------------------------------------------------------
-// setLastModificationLog
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setLastModificationLog(const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  m_lastModificationLog = lastModificationLog;
-  m_lastModificationLogSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getLastModificationLog
-//------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::common::dataStructures::MountGroup::getLastModificationLog() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_lastModificationLog;
-}
-
-//------------------------------------------------------------------------------
-// setMaxDrivesAllowed
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setMaxDrivesAllowed(const uint64_t maxDrivesAllowed) {
-  m_maxDrivesAllowed = maxDrivesAllowed;
-  m_maxDrivesAllowedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getMaxDrivesAllowed
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getMaxDrivesAllowed() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_maxDrivesAllowed;
-}
-
-//------------------------------------------------------------------------------
-// setName
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setName(const std::string &name) {
-  m_name = name;
-  m_nameSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getName
-//------------------------------------------------------------------------------
-std::string cta::common::dataStructures::MountGroup::getName() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_name;
-}
-
-//------------------------------------------------------------------------------
-// setRetrieve_minBytesQueued
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setRetrieve_minBytesQueued(const uint64_t retrieve_minBytesQueued) {
-  m_retrieve_minBytesQueued = retrieve_minBytesQueued;
-  m_retrieve_minBytesQueuedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRetrieve_minBytesQueued
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getRetrieve_minBytesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_retrieve_minBytesQueued;
-}
-
-//------------------------------------------------------------------------------
-// setRetrieve_minFilesQueued
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setRetrieve_minFilesQueued(const uint64_t retrieve_minFilesQueued) {
-  m_retrieve_minFilesQueued = retrieve_minFilesQueued;
-  m_retrieve_minFilesQueuedSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRetrieve_minFilesQueued
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getRetrieve_minFilesQueued() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_retrieve_minFilesQueued;
-}
-
-//------------------------------------------------------------------------------
-// setRetrieve_minRequestAge
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setRetrieve_minRequestAge(const uint64_t retrieve_minRequestAge) {
-  m_retrieve_minRequestAge = retrieve_minRequestAge;
-  m_retrieve_minRequestAgeSet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRetrieve_minRequestAge
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getRetrieve_minRequestAge() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_retrieve_minRequestAge;
-}
-
-//------------------------------------------------------------------------------
-// setRetrieve_priority
-//------------------------------------------------------------------------------
-void cta::common::dataStructures::MountGroup::setRetrieve_priority(const uint64_t retrieve_priority) {
-  m_retrieve_priority = retrieve_priority;
-  m_retrieve_prioritySet = true;
-}
-
-//------------------------------------------------------------------------------
-// getRetrieve_priority
-//------------------------------------------------------------------------------
-uint64_t cta::common::dataStructures::MountGroup::getRetrieve_priority() const {
-  if(!allFieldsSet()) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not all fields of the MountGroup have been set!");
-  }
-  return m_retrieve_priority;
-}

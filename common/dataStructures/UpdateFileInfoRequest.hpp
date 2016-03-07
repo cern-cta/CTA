@@ -30,54 +30,23 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-class UpdateFileInfoRequest {
+struct UpdateFileInfoRequest {
 
-public:
-
-  /**
-   * Constructor
-   */
-  UpdateFileInfoRequest();
-
-  /**
-   * Destructor
-   */
   ~UpdateFileInfoRequest() throw();
 
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID() const;
+  bool operator==(const UpdateFileInfoRequest &rhs) const;
 
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData() const;
+  bool operator!=(const UpdateFileInfoRequest &rhs) const;
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester() const;
+  uint64_t archiveFileID;
+  cta::common::dataStructures::DRData drData;
+  cta::common::dataStructures::UserIdentity requester;
+  std::string storageClass;
 
-  void setStorageClass(const std::string &storageClass);
-  std::string getStorageClass() const;
-  
-
-private:
-  
-  /**
-   * @return true if all fields have been set, false otherwise
-   */
-  bool allFieldsSet() const;
-
-  uint64_t m_archiveFileID;
-  bool m_archiveFileIDSet;
-
-  cta::common::dataStructures::DRData m_drData;
-  bool m_drDataSet;
-
-  cta::common::dataStructures::UserIdentity m_requester;
-  bool m_requesterSet;
-
-  std::string m_storageClass;
-  bool m_storageClassSet;
-
-}; // class UpdateFileInfoRequest
+}; // struct UpdateFileInfoRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
+
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileInfoRequest &obj);
