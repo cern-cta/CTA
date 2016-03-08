@@ -20,29 +20,29 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <set>
 
 namespace unitTests {
 
 class cta_catalogue_SqliteCatalogueTest : public ::testing::Test {
 public:
-  cta_catalogue_SqliteCatalogueTest() {
-    cta::common::dataStructures::UserIdentity user;
-    user.group = "1";
-    user.name = "2";
-    m_cliIdentity.user = user;
-    m_cliIdentity.host = "cliIdentityHost";
+  cta_catalogue_SqliteCatalogueTest():
+    m_bootstrapComment("bootstrap comment") {
 
-    cta::common::dataStructures::UserIdentity user1;
-    user1.group = "3";
-    user1.name = "4";
-    m_admin1.user = user1;
-    m_admin1.host = "admin1Host";
+    m_cliUI.group = "cli_group_name";
+    m_cliUI.name = "cli_user_name";
+    m_cliSI.user = m_cliUI;
+    m_cliSI.host = "cli_host";
 
-    cta::common::dataStructures::UserIdentity user2;
-    user2.group = "5";
-    user2.name = "6";
-    m_admin2.user = user2;
-    m_admin2.host = "admin2Host";
+    m_bootstrapAdminUI.group = "bootstrap_admin_group_name";
+    m_bootstrapAdminUI.name = "bootstrap_admin_user_name";
+    m_bootstrapAdminSI.user = m_bootstrapAdminUI;
+    m_bootstrapAdminSI.host = "bootstrap_host";
+
+    m_adminUI.group = "admin_group_name";
+    m_adminUI.name = "admin_user_name";
+    m_adminSI.user = m_adminUI;
+    m_adminSI.host = "admin_host";
   }
 
 protected:
@@ -53,9 +53,13 @@ protected:
   virtual void TearDown() {
   }
 
-  cta::common::dataStructures::SecurityIdentity m_cliIdentity;
-  cta::common::dataStructures::SecurityIdentity m_admin1;
-  cta::common::dataStructures::SecurityIdentity m_admin2;
+  const std::string m_bootstrapComment;
+  cta::common::dataStructures::UserIdentity     m_cliUI;
+  cta::common::dataStructures::SecurityIdentity m_cliSI;
+  cta::common::dataStructures::UserIdentity     m_bootstrapAdminUI;
+  cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
+  cta::common::dataStructures::UserIdentity     m_adminUI;
+  cta::common::dataStructures::SecurityIdentity m_adminSI;
 };
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, constructor) {
@@ -71,23 +75,21 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 
-  common::dataStructures::UserIdentity admin1User = m_admin1.user;
-  const std::string bootstrapComment = "createBootstrapAdminAndHostNoAuth";
-  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliIdentity, admin1User, m_admin1.host, bootstrapComment));
+  catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_admin1));
+    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_bootstrapAdminSI));
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(bootstrapComment, admin.comment);
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliIdentity.user.name, creationLog.user.name);
-    ASSERT_EQ(m_cliIdentity.user.group, creationLog.user.group);
-    ASSERT_EQ(m_cliIdentity.host, creationLog.host);
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
       admin.lastModificationLog;
@@ -101,38 +103,73 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 
-  common::dataStructures::UserIdentity admin1User = m_admin1.user;
-  const std::string bootstrapComment = "createBootstrapAdminAndHostNoAuth";
   ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliIdentity, admin1User, m_admin1.host, bootstrapComment));
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_admin1));
+    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_bootstrapAdminSI));
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(bootstrapComment, admin.comment);
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliIdentity.user.name, creationLog.user.name);
-    ASSERT_EQ(m_cliIdentity.user.group, creationLog.user.group);
-    ASSERT_EQ(m_cliIdentity.host, creationLog.host);
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
       admin.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminUserComment = "createAdminUser";
-  common::dataStructures::UserIdentity admin2User = m_admin2.user;
-  ASSERT_NO_THROW(catalogue->createAdminUser(m_admin1, admin2User,
+  const std::string createAdminUserComment = "create admin user comment";
+  ASSERT_NO_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
     createAdminUserComment));
 
   {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = catalogue->getAdminUsers(m_admin1);
-    ASSERT_EQ(2, admins.size());
+    std::list<common::dataStructures::AdminUser> adminList;
+    adminList = catalogue->getAdminUsers(m_bootstrapAdminSI);
+    ASSERT_EQ(2, adminList.size());
+
+    const common::dataStructures::AdminUser elem1 = adminList.front();
+    adminList.pop_front();
+    const common::dataStructures::AdminUser elem2 = adminList.front();
+
+    ASSERT_NE(elem1, elem2);
+    ASSERT_TRUE((elem1.user == m_bootstrapAdminUI && elem2.user == m_adminUI) ||
+      (elem2.user == m_bootstrapAdminUI && elem1.user == m_adminUI));
+
+    if(elem1.user == m_bootstrapAdminUI) {
+      ASSERT_EQ(m_bootstrapAdminUI, elem1.user);
+      ASSERT_EQ(m_bootstrapComment, elem1.comment);
+      ASSERT_EQ(m_cliSI.user, elem1.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, elem1.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, elem1.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, elem1.lastModificationLog.host);
+
+      ASSERT_EQ(m_adminUI, elem2.user);
+      ASSERT_EQ(createAdminUserComment, elem2.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, elem2.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, elem2.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, elem2.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, elem2.lastModificationLog.host);
+    } else {
+      ASSERT_EQ(m_bootstrapAdminUI, elem2.user);
+      ASSERT_EQ(m_bootstrapComment, elem2.comment);
+      ASSERT_EQ(m_cliSI.user, elem2.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, elem2.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, elem2.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, elem2.lastModificationLog.host);
+
+      ASSERT_EQ(m_adminUI, elem1.user);
+      ASSERT_EQ(createAdminUserComment, elem1.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, elem1.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, elem1.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, elem1.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, elem1.lastModificationLog.host);
+    }
   }
 }
 
@@ -142,7 +179,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_notAdmin) {
   std::unique_ptr<catalogue::Catalogue> catalogue;
   ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
 
-  ASSERT_FALSE(catalogue->isAdmin(m_cliIdentity));
+  ASSERT_FALSE(catalogue->isAdmin(m_cliSI));
 }
 
 } // namespace unitTests

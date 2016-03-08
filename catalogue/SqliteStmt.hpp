@@ -90,6 +90,9 @@ public:
   /**
    * Convenience wrapper around sqlite3_column_text().
    *
+   * If sqlite3_column_text() returns NULL then this method returns an empty
+   * string.
+   *
    * @param The index of the column.
    * @return The value of the specified column.
    */
