@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/SqliteCatalogue.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -171,6 +172,41 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
       ASSERT_EQ(m_bootstrapAdminSI.host, elem1.lastModificationLog.host);
     }
   }
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
+  using namespace cta;
+
+  std::unique_ptr<catalogue::Catalogue> catalogue;
+  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+
+  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_bootstrapAdminSI));
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string createAdminUserComment = "create admin user comment";
+  ASSERT_NO_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+    createAdminUserComment));
+
+  ASSERT_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+    createAdminUserComment), exception::Exception);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_notAdmin) {

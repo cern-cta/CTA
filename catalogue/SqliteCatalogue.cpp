@@ -34,8 +34,7 @@ cta::catalogue::SqliteCatalogue::SqliteCatalogue(): m_conn(":memory:") {
 // createSchema
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::createDbSchema() {
-  m_conn.enableForeignKeys();
-  m_conn.execNonQuery(
+  const char *const sql = 
     "CREATE TABLE ADMIN_USER("
       "USER_NAME     TEXT,"
       "GROUP_NAME    TEXT,"
@@ -49,7 +48,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MODIFICATION_USER_NAME  TEXT,"
       "LAST_MODIFICATION_GROUP_NAME TEXT,"
       "LAST_MODIFICATION_HOST_NAME  TEXT,"
-      "LAST_MODIFICATION_TIME       INTEGER);"
+      "LAST_MODIFICATION_TIME       INTEGER,"
+
+      "PRIMARY KEY(USER_NAME)"
+    ");"
 
     "CREATE TABLE ADMIN_HOST("
       "HOST_NAME     TEXT,"
@@ -63,7 +65,12 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MODIFICATION_USER_NAME  TEXT,"
       "LAST_MODIFICATION_GROUP_NAME TEXT,"
       "LAST_MODIFICATION_HOST_NAME  TEXT,"
-      "LAST_MODIFICATION_TIME       INTEGER);");
+      "LAST_MODIFICATION_TIME       INTEGER,"
+
+      "PRIMARY KEY(HOST_NAME)"
+    ");";
+  m_conn.enableForeignKeys();
+  m_conn.execNonQuery(sql);
 }
 
 //------------------------------------------------------------------------------
@@ -228,9 +235,9 @@ std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogu
   std::list<cta::common::dataStructures::AdminUser> admins;
   const char *const sql =
     "SELECT "
-      "USER_NAME     AS USER_NAME,"
-      "GROUP_NAME    AS GROUP_NAME,"
-      "COMMENT       AS COMMENT,"
+      "USER_NAME  AS USER_NAME,"
+      "GROUP_NAME AS GROUP_NAME,"
+      "COMMENT    AS COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
