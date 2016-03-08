@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct DriveState {
 
-  ~DriveState() throw();
 
   bool operator==(const DriveState &rhs) const;
 

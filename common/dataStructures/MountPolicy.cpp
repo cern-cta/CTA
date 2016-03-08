@@ -21,12 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy::~MountPolicy() throw() {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs) const {

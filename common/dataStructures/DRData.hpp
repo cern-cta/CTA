@@ -30,7 +30,6 @@ namespace dataStructures {
 
 struct DRData {
 
-  ~DRData() throw();
 
   bool operator==(const DRData &rhs) const;
 

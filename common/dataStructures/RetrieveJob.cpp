@@ -21,12 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveJob::~RetrieveJob() throw() {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RetrieveJob::operator==(const RetrieveJob &rhs) const {

@@ -30,7 +30,6 @@ namespace dataStructures {
 
 struct ArchiveFileSummary {
 
-  ~ArchiveFileSummary() throw();
 
   bool operator==(const ArchiveFileSummary &rhs) const;
 

@@ -33,7 +33,6 @@ namespace dataStructures {
 
 struct RetrieveRequest {
 
-  ~RetrieveRequest() throw();
 
   bool operator==(const RetrieveRequest &rhs) const;
 

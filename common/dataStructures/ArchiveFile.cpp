@@ -21,12 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile::~ArchiveFile() throw() {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {

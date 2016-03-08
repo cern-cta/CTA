@@ -21,12 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::StorageClass::~StorageClass() throw() {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::StorageClass::operator==(const StorageClass &rhs) const {

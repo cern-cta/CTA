@@ -21,12 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DeleteArchiveRequest::~DeleteArchiveRequest() throw() {
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {

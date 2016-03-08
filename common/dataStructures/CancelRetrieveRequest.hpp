@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct CancelRetrieveRequest {
 
-  ~CancelRetrieveRequest() throw();
 
   bool operator==(const CancelRetrieveRequest &rhs) const;
 

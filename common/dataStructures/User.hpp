@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct User {
 
-  ~User() throw();
 
   bool operator==(const User &rhs) const;
 

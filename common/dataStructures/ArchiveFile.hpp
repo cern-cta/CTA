@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct ArchiveFile {
 
-  ~ArchiveFile() throw();
 
   bool operator==(const ArchiveFile &rhs) const;
 

@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct EntryLog {
 
-  ~EntryLog() throw();
 
   bool operator==(const EntryLog &rhs) const;
 

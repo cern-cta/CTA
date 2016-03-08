@@ -30,7 +30,6 @@ namespace dataStructures {
 
 struct MountPolicy {
 
-  ~MountPolicy() throw();
 
   bool operator==(const MountPolicy &rhs) const;
 

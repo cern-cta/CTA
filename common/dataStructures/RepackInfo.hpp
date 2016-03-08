@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct RepackInfo {
 
-  ~RepackInfo() throw();
 
   bool operator==(const RepackInfo &rhs) const;
 

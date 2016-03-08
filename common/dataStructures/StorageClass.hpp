@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct StorageClass {
 
-  ~StorageClass() throw();
 
   bool operator==(const StorageClass &rhs) const;
 

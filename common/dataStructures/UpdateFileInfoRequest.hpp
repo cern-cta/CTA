@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct UpdateFileInfoRequest {
 
-  ~UpdateFileInfoRequest() throw();
 
   bool operator==(const UpdateFileInfoRequest &rhs) const;
 

@@ -30,7 +30,6 @@ namespace dataStructures {
 
 struct ReadTestResult {
 
-  ~ReadTestResult() throw();
 
   bool operator==(const ReadTestResult &rhs) const;
 

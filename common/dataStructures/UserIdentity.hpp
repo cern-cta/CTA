@@ -30,7 +30,6 @@ namespace dataStructures {
 
 struct UserIdentity {
 
-  ~UserIdentity() throw();
 
   bool operator==(const UserIdentity &rhs) const;
 

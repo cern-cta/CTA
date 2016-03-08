@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct LogicalLibrary {
 
-  ~LogicalLibrary() throw();
 
   bool operator==(const LogicalLibrary &rhs) const;
 

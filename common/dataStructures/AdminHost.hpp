@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct AdminHost {
 
-  ~AdminHost() throw();
 
   bool operator==(const AdminHost &rhs) const;
 

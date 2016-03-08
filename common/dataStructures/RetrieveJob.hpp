@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct RetrieveJob {
 
-  ~RetrieveJob() throw();
 
   bool operator==(const RetrieveJob &rhs) const;
 

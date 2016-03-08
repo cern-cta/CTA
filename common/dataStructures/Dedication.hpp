@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct Dedication {
 
-  ~Dedication() throw();
 
   bool operator==(const Dedication &rhs) const;
 

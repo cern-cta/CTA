@@ -32,7 +32,6 @@ namespace dataStructures {
 
 struct AdminUser {
 
-  ~AdminUser() throw();
 
   bool operator==(const AdminUser &rhs) const;
 

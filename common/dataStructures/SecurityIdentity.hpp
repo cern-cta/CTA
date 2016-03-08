@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct SecurityIdentity {
 
-  ~SecurityIdentity() throw();
 
   bool operator==(const SecurityIdentity &rhs) const;
 

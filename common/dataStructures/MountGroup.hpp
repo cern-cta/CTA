@@ -31,7 +31,6 @@ namespace dataStructures {
 
 struct MountGroup {
 
-  ~MountGroup() throw();
 
   bool operator==(const MountGroup &rhs) const;
 
