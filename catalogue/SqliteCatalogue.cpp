@@ -114,13 +114,13 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
         ":CREATION_TIME);";
     SqliteStmt stmt(m_conn, sql);
 
-    stmt.bind(":USER_NAME", user.getName());
-    stmt.bind(":GROUP_NAME", user.getGroup());
+    stmt.bind(":USER_NAME", user.name);
+    stmt.bind(":GROUP_NAME", user.group);
     stmt.bind(":COMMENT", comment);
 
-    stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
-    stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
-    stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+    stmt.bind(":CREATOR_USER", cliIdentity.user.name);
+    stmt.bind(":CREATOR_GROUP", cliIdentity.user.group);
+    stmt.bind(":CREATOR_HOST", cliIdentity.host);
     stmt.bind(":CREATION_TIME", now);
 
     stmt.step();
@@ -159,9 +159,9 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
     stmt.bind(":HOST_NAME", hostName);
     stmt.bind(":COMMENT", comment);
 
-    stmt.bind(":CREATOR_USER", cliIdentity.getUser().getName());
-    stmt.bind(":CREATOR_GROUP", cliIdentity.getUser().getGroup());
-    stmt.bind(":CREATOR_HOST", cliIdentity.getHost());
+    stmt.bind(":CREATOR_USER", cliIdentity.user.name);
+    stmt.bind(":CREATOR_GROUP", cliIdentity.user.group);
+    stmt.bind(":CREATOR_HOST", cliIdentity.host);
     stmt.bind(":CREATION_TIME", now);
 
     stmt.step();
@@ -251,31 +251,31 @@ std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogu
     common::dataStructures::AdminUser admin;
 
     common::dataStructures::UserIdentity adminUI;
-    adminUI.setName(stmt.columnText(nameToIdx["USER_NAME"]));
-    adminUI.setGroup(stmt.columnText(nameToIdx["GROUP_NAME"]));
-    admin.setUser(adminUI);
+    adminUI.name = stmt.columnText(nameToIdx["USER_NAME"]);
+    adminUI.group = stmt.columnText(nameToIdx["GROUP_NAME"]);
+    admin.user = adminUI;
 
-    admin.setComment(stmt.columnText(nameToIdx["COMMENT"]));
+    admin.comment = stmt.columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.setName(stmt.columnText(nameToIdx["CREATOR_USER"]));
-    creatorUI.setGroup(stmt.columnText(nameToIdx["CREATOR_GROUP"]));
+    creatorUI.name = stmt.columnText(nameToIdx["CREATOR_USER"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATOR_GROUP"]);
 
-    common::dataStructures::EntryLog creationLOg;
-    creationLOg.setUser(creatorUI);
-    creationLOg.setHost(stmt.columnText(nameToIdx["CREATOR_HOST"]));
-    creationLOg.setTime(stmt.columnUint64(nameToIdx["CREATION_TIME"]));
-    admin.setCreationLog(creationLOg);
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATOR_HOST"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_TIME"]);
+    admin.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.setName(stmt.columnText(nameToIdx["UPDATER_USER"]));
-    updaterUI.setGroup(stmt.columnText(nameToIdx["UPDATER_GROUP"]));
+    updaterUI.name = stmt.columnText(nameToIdx["UPDATER_USER"]);
+    updaterUI.group = stmt.columnText(nameToIdx["UPDATER_GROUP"]);
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.setUser(updaterUI);
-    updateLog.setHost(stmt.columnText(nameToIdx["UPDATER_HOST"]));
-    updateLog.setTime(stmt.columnUint64(nameToIdx["UPDATE_TIME"]));
-    admin.setLastModificationLog(updateLog);
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["UPDATER_HOST"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["UPDATE_TIME"]);
+    admin.lastModificationLog = updateLog;
     admins.push_back(admin);
   }
 
