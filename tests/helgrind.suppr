@@ -103,7 +103,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_tape_threading_*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -120,7 +120,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_tape_threading_*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -137,7 +137,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_tape_threading_*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -154,7 +154,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_messages_Mutex*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -171,7 +171,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_messages_Mutex*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -188,7 +188,7 @@
    fun:pthread_mutex_*
    ...
    fun:_ZN9unitTests*castor_messages_Mutex*
-   fun:HandleSehExceptionsInMethodIfSupported<testing::Test, void>
+   ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
