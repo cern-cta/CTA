@@ -173,7 +173,7 @@ private:
   void createDbSchema();
 
   /**
-   * Inserts a row into the ADMIN_USER table.
+   * Inserts the specified row into the ADMIN_USER table.
    *
    * @param user The admin user.
    * @param comment The comment.
@@ -182,6 +182,19 @@ private:
    */
   void insertAdminUser(
     const common::dataStructures::UserIdentity &user,
+    const std::string &comment,
+    const common::dataStructures::EntryLog &creationLog);
+
+  /**
+   * Inserts the specified row into the ADMIN_HOST table.
+   *  
+   * @param hostName The name of the admin host.
+   * @param comment The comment.
+   * @param creationLog The log to be used as both the creation and last
+   * modification logs.
+   */
+  void insertAdminHost(
+    const std::string &hostName,
     const std::string &comment,
     const common::dataStructures::EntryLog &creationLog);
 

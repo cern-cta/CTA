@@ -94,48 +94,9 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   creationLog.user.group = cliIdentity.user.group;
   creationLog.host = cliIdentity.host;
   creationLog.time = now;
+
   insertAdminUser(user, comment, creationLog);
-
-  {
-    const char *const sql =
-      "INSERT INTO ADMIN_HOST("
-        "HOST_NAME,"
-        "COMMENT,"
-
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
-
-        "LAST_MOD_USER_NAME,"
-        "LAST_MOD_GROUP_NAME,"
-        "LAST_MOD_HOST_NAME,"
-        "LAST_MOD_TIME)"
-      "VALUES("
-        ":HOST_NAME,"
-        ":COMMENT,"
-
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
-
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME);";
-    SqliteStmt stmt(m_conn, sql);
-
-    stmt.bind(":HOST_NAME", hostName);
-    stmt.bind(":COMMENT", comment);
-
-    stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-    stmt.bind(":CREATION_LOG_TIME", now);
-
-    stmt.step();
-  }
+  insertAdminHost(hostName, comment, creationLog);
 }
 
 //------------------------------------------------------------------------------
@@ -189,6 +150,53 @@ void cta::catalogue::SqliteCatalogue::insertAdminUser(
 }
 
 //------------------------------------------------------------------------------
+// insertAdminHost
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::insertAdminHost(
+  const std::string &hostName,
+  const std::string &comment,
+  const common::dataStructures::EntryLog &creationLog) {
+  const char *const sql =
+    "INSERT INTO ADMIN_HOST("
+      "HOST_NAME,"
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":HOST_NAME,"
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":HOST_NAME", hostName);
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", creationLog.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", creationLog.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", creationLog.host);
+  stmt.bind(":CREATION_LOG_TIME", creationLog.time);
+
+  stmt.step();
+}
+
+//------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::createAdminUser(
@@ -202,6 +210,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
   creationLog.user.group = cliIdentity.user.group;
   creationLog.host = cliIdentity.host;
   creationLog.time = now;
+
   insertAdminUser(user, comment, creationLog);
 }
 
@@ -290,44 +299,14 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   const uint64_t now = time(NULL);
-  const char *const sql =
-    "INSERT INTO ADMIN_HOST("
-      "HOST_NAME,"
-      "COMMENT,"
 
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_GROUP_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
+  common::dataStructures::EntryLog creationLog;
+  creationLog.user.name = cliIdentity.user.name;
+  creationLog.user.group = cliIdentity.user.group;
+  creationLog.host = cliIdentity.host;
+  creationLog.time = now;
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
-    "VALUES("
-      ":HOST_NAME,"
-      ":COMMENT,"
-
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_GROUP_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
-
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_GROUP_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
-
-  stmt.bind(":HOST_NAME", hostName);
-  stmt.bind(":COMMENT", comment);
-
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
-
-  stmt.step();
+  insertAdminHost(hostName, comment, creationLog);
 }
 
 //------------------------------------------------------------------------------
