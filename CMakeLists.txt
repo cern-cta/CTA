@@ -158,6 +158,18 @@ add_custom_target(fullunittests
   DEPENDS tests/cta-unitTests tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
+add_custom_target(valgrind
+  valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
+  
+  DEPENDS tests/cta-unitTests tests/valgrind.suppr
+  COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
+
+add_custom_target(helgrind
+  valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
+  
+  DEPENDS tests/cta-unitTests tests/helgrind.suppr
+  COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
+
 add_custom_target(shortunittests
   tests/cta-unitTests
   
