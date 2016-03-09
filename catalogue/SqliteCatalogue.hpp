@@ -172,6 +172,19 @@ private:
    */
   void createDbSchema();
 
+  /**
+   * Inserts a row into the ADMIN_USER table.
+   *
+   * @param user The admin user.
+   * @param comment The comment.
+   * @param creationLog The log to be used as both the creation and last
+   * modification logs.
+   */
+  void insertAdminUser(
+    const common::dataStructures::UserIdentity &user,
+    const std::string &comment,
+    const common::dataStructures::EntryLog &creationLog);
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue
