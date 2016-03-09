@@ -96,6 +96,24 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
       admin.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
+
+  {
+    std::list<common::dataStructures::AdminHost> hosts;
+    ASSERT_NO_THROW(hosts = catalogue->getAdminHosts(m_bootstrapAdminSI));
+    ASSERT_EQ(1, hosts.size());
+
+    const common::dataStructures::AdminHost host = hosts.front();
+    ASSERT_EQ(m_bootstrapComment, host.comment);
+
+    const common::dataStructures::EntryLog creationLog = host.creationLog;
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      host.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
@@ -130,46 +148,46 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
     createAdminUserComment));
 
   {
-    std::list<common::dataStructures::AdminUser> adminList;
-    adminList = catalogue->getAdminUsers(m_bootstrapAdminSI);
-    ASSERT_EQ(2, adminList.size());
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = catalogue->getAdminUsers(m_bootstrapAdminSI);
+    ASSERT_EQ(2, admins.size());
 
-    const common::dataStructures::AdminUser elem1 = adminList.front();
-    adminList.pop_front();
-    const common::dataStructures::AdminUser elem2 = adminList.front();
+    const common::dataStructures::AdminUser a1 = admins.front();
+    admins.pop_front();
+    const common::dataStructures::AdminUser a2 = admins.front();
 
-    ASSERT_NE(elem1, elem2);
-    ASSERT_TRUE((elem1.user == m_bootstrapAdminUI && elem2.user == m_adminUI) ||
-      (elem2.user == m_bootstrapAdminUI && elem1.user == m_adminUI));
+    ASSERT_NE(a1, a2);
+    ASSERT_TRUE((a1.user == m_bootstrapAdminUI && a2.user == m_adminUI) ||
+      (a2.user == m_bootstrapAdminUI && a1.user == m_adminUI));
 
-    if(elem1.user == m_bootstrapAdminUI) {
-      ASSERT_EQ(m_bootstrapAdminUI, elem1.user);
-      ASSERT_EQ(m_bootstrapComment, elem1.comment);
-      ASSERT_EQ(m_cliSI.user, elem1.creationLog.user);
-      ASSERT_EQ(m_cliSI.host, elem1.creationLog.host);
-      ASSERT_EQ(m_cliSI.user, elem1.lastModificationLog.user);
-      ASSERT_EQ(m_cliSI.host, elem1.lastModificationLog.host);
+    if(a1.user == m_bootstrapAdminUI) {
+      ASSERT_EQ(m_bootstrapAdminUI, a1.user);
+      ASSERT_EQ(m_bootstrapComment, a1.comment);
+      ASSERT_EQ(m_cliSI.user, a1.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, a1.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, a1.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, a1.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI, elem2.user);
-      ASSERT_EQ(createAdminUserComment, elem2.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user, elem2.creationLog.user);
-      ASSERT_EQ(m_bootstrapAdminSI.host, elem2.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user, elem2.lastModificationLog.user);
-      ASSERT_EQ(m_bootstrapAdminSI.host, elem2.lastModificationLog.host);
+      ASSERT_EQ(m_adminUI, a2.user);
+      ASSERT_EQ(createAdminUserComment, a2.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, a2.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, a2.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, a2.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, a2.lastModificationLog.host);
     } else {
-      ASSERT_EQ(m_bootstrapAdminUI, elem2.user);
-      ASSERT_EQ(m_bootstrapComment, elem2.comment);
-      ASSERT_EQ(m_cliSI.user, elem2.creationLog.user);
-      ASSERT_EQ(m_cliSI.host, elem2.creationLog.host);
-      ASSERT_EQ(m_cliSI.user, elem2.lastModificationLog.user);
-      ASSERT_EQ(m_cliSI.host, elem2.lastModificationLog.host);
+      ASSERT_EQ(m_bootstrapAdminUI, a2.user);
+      ASSERT_EQ(m_bootstrapComment, a2.comment);
+      ASSERT_EQ(m_cliSI.user, a2.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, a2.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, a2.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, a2.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI, elem1.user);
-      ASSERT_EQ(createAdminUserComment, elem1.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user, elem1.creationLog.user);
-      ASSERT_EQ(m_bootstrapAdminSI.host, elem1.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user, elem1.lastModificationLog.user);
-      ASSERT_EQ(m_bootstrapAdminSI.host, elem1.lastModificationLog.host);
+      ASSERT_EQ(m_adminUI, a1.user);
+      ASSERT_EQ(createAdminUserComment, a1.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, a1.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, a1.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, a1.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, a1.lastModificationLog.host);
     }
   }
 }
@@ -201,12 +219,127 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminUserComment = "create admin user comment";
   ASSERT_NO_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
-    createAdminUserComment));
+    "comment 1"));
 
   ASSERT_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
-    createAdminUserComment), exception::Exception);
+    "comment 2"), exception::Exception);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
+  using namespace cta;
+
+  std::unique_ptr<catalogue::Catalogue> catalogue;
+  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+
+  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_bootstrapAdminSI));
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string createAdminHostComment = "create host user comment";
+  const std::string anotherAdminHost = "another_admin_host";
+  ASSERT_NO_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+    anotherAdminHost, createAdminHostComment));
+
+  {
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = catalogue->getAdminHosts(m_bootstrapAdminSI);
+    ASSERT_EQ(2, hosts.size());
+
+    const common::dataStructures::AdminHost h1 = hosts.front();
+    hosts.pop_front();
+    const common::dataStructures::AdminHost h2 = hosts.front();
+
+    ASSERT_NE(h1, h2);
+    ASSERT_TRUE(
+      (h1.name == m_bootstrapAdminSI.host && h2.name == anotherAdminHost)
+      ||
+      (h2.name == anotherAdminHost && h1.name == m_bootstrapAdminSI.host)
+    );
+
+    if(h1.name == m_bootstrapAdminSI.host) {
+      ASSERT_EQ(m_bootstrapAdminSI.host, h1.name);
+      ASSERT_EQ(m_bootstrapComment, h1.comment);
+      ASSERT_EQ(m_cliSI.user, h1.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, h1.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, h1.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, h1.lastModificationLog.host);
+
+      ASSERT_EQ(anotherAdminHost, h2.name);
+      ASSERT_EQ(createAdminHostComment, h2.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, h2.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, h2.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, h2.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, h2.lastModificationLog.host);
+    } else {
+      ASSERT_EQ(m_bootstrapAdminSI.host, h2.name);
+      ASSERT_EQ(m_bootstrapComment, h2.comment);
+      ASSERT_EQ(m_cliSI.user, h2.creationLog.user);
+      ASSERT_EQ(m_cliSI.host, h2.creationLog.host);
+      ASSERT_EQ(m_cliSI.user, h2.lastModificationLog.user);
+      ASSERT_EQ(m_cliSI.host, h2.lastModificationLog.host);
+
+      ASSERT_EQ(anotherAdminHost, h1.name);
+      ASSERT_EQ(createAdminHostComment, h1.comment);
+      ASSERT_EQ(m_bootstrapAdminSI.user, h1.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, h1.creationLog.host);
+      ASSERT_EQ(m_bootstrapAdminSI.user, h1.lastModificationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.host, h1.lastModificationLog.host);
+    }
+  }
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_host_twice) {
+  using namespace cta;
+
+  std::unique_ptr<catalogue::Catalogue> catalogue;
+  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+
+  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    ASSERT_NO_THROW(admins = catalogue->getAdminUsers(m_bootstrapAdminSI));
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string anotherAdminHost = "another_admin_host";
+
+  ASSERT_NO_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+    anotherAdminHost, "comment 1"));
+
+  ASSERT_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+    anotherAdminHost, "coment 2"), exception::Exception);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_notAdmin) {

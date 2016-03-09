@@ -45,10 +45,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "CREATION_LOG_HOST_NAME  TEXT,"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MODIFICATION_USER_NAME  TEXT,"
-      "LAST_MODIFICATION_GROUP_NAME TEXT,"
-      "LAST_MODIFICATION_HOST_NAME  TEXT,"
-      "LAST_MODIFICATION_TIME       INTEGER,"
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(USER_NAME)"
     ");"
@@ -62,10 +62,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "CREATION_LOG_HOST_NAME  TEXT,"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MODIFICATION_USER_NAME  TEXT,"
-      "LAST_MODIFICATION_GROUP_NAME TEXT,"
-      "LAST_MODIFICATION_HOST_NAME  TEXT,"
-      "LAST_MODIFICATION_TIME       INTEGER,"
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(HOST_NAME)"
     ");";
@@ -101,10 +101,10 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
-        "LAST_MODIFICATION_USER_NAME,"
-        "LAST_MODIFICATION_GROUP_NAME,"
-        "LAST_MODIFICATION_HOST_NAME,"
-        "LAST_MODIFICATION_TIME)"
+        "LAST_MOD_USER_NAME,"
+        "LAST_MOD_GROUP_NAME,"
+        "LAST_MOD_HOST_NAME,"
+        "LAST_MOD_TIME)"
       "VALUES("
         ":USER_NAME,"
         ":GROUP_NAME,"
@@ -144,10 +144,10 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
-        "LAST_MODIFICATION_USER_NAME,"
-        "LAST_MODIFICATION_GROUP_NAME,"
-        "LAST_MODIFICATION_HOST_NAME,"
-        "LAST_MODIFICATION_TIME)"
+        "LAST_MOD_USER_NAME,"
+        "LAST_MOD_GROUP_NAME,"
+        "LAST_MOD_HOST_NAME,"
+        "LAST_MOD_TIME)"
       "VALUES("
         ":HOST_NAME,"
         ":COMMENT,"
@@ -178,7 +178,10 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
+void cta::catalogue::SqliteCatalogue::createAdminUser(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::UserIdentity &user,
+  const std::string &comment) {
   const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO ADMIN_USER("
@@ -191,10 +194,10 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(const common::dataStructur
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MODIFICATION_USER_NAME,"
-      "LAST_MODIFICATION_GROUP_NAME,"
-      "LAST_MODIFICATION_HOST_NAME,"
-      "LAST_MODIFICATION_TIME)"
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
     "VALUES("
       ":USER_NAME,"
       ":GROUP_NAME,"
@@ -231,8 +234,10 @@ void cta::catalogue::SqliteCatalogue::deleteAdminUser(const common::dataStructur
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogue::getAdminUsers(const common::dataStructures::SecurityIdentity &requester) const {
-  std::list<cta::common::dataStructures::AdminUser> admins;
+std::list<cta::common::dataStructures::AdminUser>
+  cta::catalogue::SqliteCatalogue::getAdminUsers(
+  const common::dataStructures::SecurityIdentity &requester) const {
+  std::list<common::dataStructures::AdminUser> admins;
   const char *const sql =
     "SELECT "
       "USER_NAME  AS USER_NAME,"
@@ -242,12 +247,12 @@ std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogu
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MODIFICATION_USER_NAME  AS LAST_MODIFICATION_USER_NAME,"
-      "LAST_MODIFICATION_GROUP_NAME AS LAST_MODIFICATION_GROUP_NAME,"
-      "LAST_MODIFICATION_HOST_NAME  AS LAST_MODIFICATION_HOST_NAME,"
-      "LAST_MODIFICATION_TIME       AS LAST_MODIFICATION_TIME "
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ADMIN_USER";
   SqliteStmt stmt(m_conn, sql);
   ColumnNameToIdx  nameToIdx;
@@ -260,6 +265,7 @@ std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogu
     common::dataStructures::UserIdentity adminUI;
     adminUI.name = stmt.columnText(nameToIdx["USER_NAME"]);
     adminUI.group = stmt.columnText(nameToIdx["GROUP_NAME"]);
+
     admin.user = adminUI;
 
     admin.comment = stmt.columnText(nameToIdx["COMMENT"]);
@@ -272,17 +278,20 @@ std::list<cta::common::dataStructures::AdminUser> cta::catalogue::SqliteCatalogu
     creationLog.user = creatorUI;
     creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
     creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
     admin.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MODIFICATION_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MODIFICATION_GROUP_NAME"]);
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MODIFICATION_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MODIFICATION_TIME"]);
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
     admin.lastModificationLog = updateLog;
+
     admins.push_back(admin);
   }
 
@@ -297,7 +306,50 @@ void cta::catalogue::SqliteCatalogue::modifyAdminUserComment(const common::dataS
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createAdminHost(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &hostName,
+  const std::string &comment) {
+  const uint64_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO ADMIN_HOST("
+      "HOST_NAME,"
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":HOST_NAME,"
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":HOST_NAME", hostName);
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
+}
 
 //------------------------------------------------------------------------------
 // deleteAdminHost
@@ -307,7 +359,61 @@ void cta::catalogue::SqliteCatalogue::deleteAdminHost(const common::dataStructur
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogue::getAdminHosts(const common::dataStructures::SecurityIdentity &requester) const { return std::list<cta::common::dataStructures::AdminHost>();}
+std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogue::getAdminHosts(const common::dataStructures::SecurityIdentity &requester) const {
+  std::list<common::dataStructures::AdminHost> hosts;
+  const char *const sql =
+    "SELECT "
+      "HOST_NAME AS HOST_NAME,"
+      "COMMENT   AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM ADMIN_HOST";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::AdminHost host;
+
+    host.name = stmt.columnText(nameToIdx["HOST_NAME"]);
+    host.comment = stmt.columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    host.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    host.lastModificationLog = updateLog;
+
+    hosts.push_back(host);
+  }
+
+  return hosts;
+}
 
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
