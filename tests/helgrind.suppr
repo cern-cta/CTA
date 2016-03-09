@@ -109,8 +109,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
@@ -127,8 +126,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
@@ -145,8 +143,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
@@ -163,8 +160,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
@@ -181,8 +177,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
@@ -199,8 +194,7 @@
    fun:_ZN7testing8TestInfo3RunEv
    fun:_ZN7testing8TestCase3RunEv
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:HandleSehExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
-   fun:HandleExceptionsInMethodIfSupported<testing::internal::UnitTestImpl, bool>
+   ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
