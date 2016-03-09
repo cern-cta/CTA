@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -99,7 +100,7 @@ int cta::catalogue::SqliteStmt::step() {
 
   // Throw an appropriate exception
   exception::Exception ex;
-  ex.getMessage() << __FUNCTION__ << " failed: " << sqlite3_errstr(stepRc) <<
+  ex.getMessage() << __FUNCTION__ << " failed: " << Sqlite::rcToStr(stepRc) <<
     ": For SQL statement " << m_sql;
   throw ex;
 }

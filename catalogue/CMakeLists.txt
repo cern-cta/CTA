@@ -20,6 +20,7 @@ set (CATALOGUE_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   DbLogin.cpp
   DummyCatalogue.cpp
+  Sqlite.cpp
   SqliteCatalogue.cpp
   SqliteConn.cpp
   SqliteStmt.cpp)
