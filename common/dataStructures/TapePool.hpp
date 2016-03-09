@@ -38,6 +38,7 @@ struct TapePool {
 
   std::string comment;
   cta::common::dataStructures::EntryLog creationLog;
+  bool encryption;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string name;
   uint64_t nbPartialTapes;

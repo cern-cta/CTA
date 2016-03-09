@@ -16,39 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/TapePool.hpp"
+#include "common/dataStructures/TapeLog.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapePool::operator==(const TapePool &rhs) const {
-  return comment==rhs.comment
-      && creationLog==rhs.creationLog
-      && encryption==rhs.encryption
-      && lastModificationLog==rhs.lastModificationLog
-      && name==rhs.name
-      && nbPartialTapes==rhs.nbPartialTapes;
+bool cta::common::dataStructures::TapeLog::operator==(const TapeLog &rhs) const {
+  return drive==rhs.drive
+      && time==rhs.time;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapePool::operator!=(const TapePool &rhs) const {
+bool cta::common::dataStructures::TapeLog::operator!=(const TapeLog &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj) {
-  os << "(comment=" << obj.comment
-     << " creationLog=" << obj.creationLog
-     << " encryption=" << obj.encryption
-     << " lastModificationLog=" << obj.lastModificationLog
-     << " name=" << obj.name
-     << " nbPartialTapes=" << obj.nbPartialTapes << ")";
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeLog &obj) {
+  os << "(drive=" << obj.drive
+     << " time=" << obj.time << ")";
   return os;
 }
 

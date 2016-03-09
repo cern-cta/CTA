@@ -23,42 +23,25 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/TapeLog.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
-struct Tape {
+struct TapeLog {
 
 
-  bool operator==(const Tape &rhs) const;
+  bool operator==(const TapeLog &rhs) const;
 
-  bool operator!=(const Tape &rhs) const;
+  bool operator!=(const TapeLog &rhs) const;
 
-  bool busy;
-  uint64_t capacityInBytes;
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  uint64_t dataOnTapeInBytes;
-  bool disabled;
-  std::string encryptionKey;
-  bool full;
-  cta::common::dataStructures::TapeLog labelLog;
-  uint64_t lastFSeq;
-  cta::common::dataStructures::EntryLog lastModificationLog;
-  cta::common::dataStructures::TapeLog lastReadLog;
-  cta::common::dataStructures::TapeLog lastWriteLog;
-  bool lbp;
-  std::string logicalLibraryName;
-  std::string tapePoolName;
-  std::string vid;
+  std::string drive;
+  time_t time;
 
-}; // struct Tape
+}; // struct TapeLog
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
 
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Tape &obj);
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeLog &obj);

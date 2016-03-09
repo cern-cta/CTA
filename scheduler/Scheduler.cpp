@@ -195,8 +195,8 @@ void cta::Scheduler::modifyStorageClassComment(const cta::common::dataStructures
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {
-  m_catalogue.createTapePool(cliIdentity, name, nbPartialTapes, comment);
+void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) {
+  m_catalogue.createTapePool(cliIdentity, name, nbPartialTapes, encryptionValue, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -225,6 +225,13 @@ void cta::Scheduler::modifyTapePoolNbPartialTapes(const cta::common::dataStructu
 //------------------------------------------------------------------------------
 void cta::Scheduler::modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
   m_catalogue.modifyTapePoolComment(cliIdentity, name, comment);
+}
+
+//------------------------------------------------------------------------------
+// setTapePoolEncryption
+//------------------------------------------------------------------------------
+void cta::Scheduler::setTapePoolEncryption(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {
+  m_catalogue.setTapePoolEncryption(cliIdentity, name, encryptionValue);
 }
 
 //------------------------------------------------------------------------------
@@ -295,8 +302,8 @@ void cta::Scheduler::modifyLogicalLibraryComment(const cta::common::dataStructur
 // createTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {
-  m_catalogue.createTape(cliIdentity, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, comment);
+                          const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {
+  m_catalogue.createTape(cliIdentity, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -311,8 +318,8 @@ void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::Tape> cta::Scheduler::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) {
-  return m_catalogue.getTapes(cliIdentity, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, busyValue); 
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) {
+  return m_catalogue.getTapes(cliIdentity, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, busyValue, lbpValue); 
 }
 
 //------------------------------------------------------------------------------
@@ -350,6 +357,34 @@ void cta::Scheduler::modifyTapeCapacityInBytes(const cta::common::dataStructures
 }
 
 //------------------------------------------------------------------------------
+// modifyTapeEncryptionKey
+//------------------------------------------------------------------------------
+void cta::Scheduler::modifyTapeEncryptionKey(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
+  m_catalogue.modifyTapeEncryptionKey(cliIdentity, vid, encryptionKey);
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeLabelLog
+//------------------------------------------------------------------------------
+void cta::Scheduler::modifyTapeLabelLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+  m_catalogue.modifyTapeLabelLog(cliIdentity, vid, drive, timestamp);
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastWrittenLog
+//------------------------------------------------------------------------------
+void cta::Scheduler::modifyTapeLastWrittenLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+  m_catalogue.modifyTapeLastWrittenLog(cliIdentity, vid, drive, timestamp);
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastReadLog
+//------------------------------------------------------------------------------
+void cta::Scheduler::modifyTapeLastReadLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+  m_catalogue.modifyTapeLastReadLog(cliIdentity, vid, drive, timestamp);
+}
+
+//------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
@@ -368,6 +403,13 @@ void cta::Scheduler::setTapeFull(const cta::common::dataStructures::SecurityIden
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {
   m_catalogue.setTapeDisabled(cliIdentity, vid, disabledValue);
+}
+
+//------------------------------------------------------------------------------
+// setTapeLbp
+//------------------------------------------------------------------------------
+void cta::Scheduler::setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
+  m_catalogue.setTapeLbp(cliIdentity, vid, lbpValue);
 }
 
 //------------------------------------------------------------------------------

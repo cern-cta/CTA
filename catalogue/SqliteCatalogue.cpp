@@ -342,7 +342,7 @@ void cta::catalogue::SqliteCatalogue::modifyStorageClassComment(const common::da
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
@@ -363,6 +363,11 @@ void cta::catalogue::SqliteCatalogue::modifyTapePoolNbPartialTapes(const common:
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+
+//------------------------------------------------------------------------------
+// setTapePoolEncryption
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::setTapePoolEncryption(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {}
 
 //------------------------------------------------------------------------------
 // createArchiveRoute
@@ -412,8 +417,8 @@ void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const common::
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
-                          const bool disabledValue, const bool fullValue, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+                          const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTape
@@ -423,9 +428,9 @@ void cta::catalogue::SqliteCatalogue::deleteTape(const common::dataStructures::S
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape> cta::catalogue::SqliteCatalogue::getTapes(const common::dataStructures::SecurityIdentity &cliIdentity,
+std::list<cta::common::dataStructures::Tape> cta::catalogue::SqliteCatalogue::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) { return std::list<cta::common::dataStructures::Tape>();}
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) { return std::list<cta::common::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
 // reclaimTape
@@ -448,6 +453,26 @@ void cta::catalogue::SqliteCatalogue::modifyTapeTapePoolName(const common::dataS
 void cta::catalogue::SqliteCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {}
 
 //------------------------------------------------------------------------------
+// modifyTapeEncryptionKey
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyTapeEncryptionKey(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLabelLog
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyTapeLabelLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastWrittenLog
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyTapeLastWrittenLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastReadLog
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyTapeLastReadLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::setTapeBusy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {}
@@ -461,6 +486,11 @@ void cta::catalogue::SqliteCatalogue::setTapeFull(const common::dataStructures::
 // setTapeDisabled
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {}
+
+//------------------------------------------------------------------------------
+// setTapeLbp
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeComment

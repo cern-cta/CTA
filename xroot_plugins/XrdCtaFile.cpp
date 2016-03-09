@@ -519,7 +519,7 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
     std::list<cta::common::dataStructures::AdminHost> list= m_scheduler->getAdminHosts(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"hostname","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"hostname","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -542,8 +542,8 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
 void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " tp/tapepool add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> [--encryption/-e or --clear/-c] --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--encryption/-e or --clear/-c] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -562,7 +562,13 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       std::stringstream ptn_ss(ptn_s);
       uint64_t ptn = 0;
       ptn_ss >> ptn;
-      m_scheduler->createTapePool(cliIdentity, name, ptn, comment);
+      bool encryption=false;
+      if((hasOption(tokens, "-e", "--encryption") && hasOption(tokens, "-c", "--clear"))) {
+        m_data = help.str();
+        return;
+      }
+      encryption=hasOption(tokens, "-e", "--encryption");
+      m_scheduler->createTapePool(cliIdentity, name, ptn, encryption, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber", false);
@@ -580,6 +586,12 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         ptn_ss >> ptn;
         m_scheduler->modifyTapePoolNbPartialTapes(cliIdentity, name, ptn);
       }
+      if(hasOption(tokens, "-e", "--encryption")) {
+        m_scheduler->setTapePoolEncryption(cliIdentity, name, true);
+      }
+      if(hasOption(tokens, "-c", "--clear")) {
+        m_scheduler->setTapePoolEncryption(cliIdentity, name, false);
+      }
     }
     else { //rm
       m_scheduler->deleteTapePool(cliIdentity, name);
@@ -589,12 +601,13 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     std::list<cta::common::dataStructures::TapePool> list= m_scheduler->getTapePools(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","# partial tapes","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
         currentRow.push_back(std::to_string((unsigned long long)it->nbPartialTapes));
+        if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -658,7 +671,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::list<cta::common::dataStructures::ArchiveRoute> list= m_scheduler->getArchiveRoutes(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","copy number","tapepool","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"storage class","copy number","tapepool","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -714,7 +727,7 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_scheduler->getLogicalLibraries(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -737,11 +750,14 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
 void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
-       << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">] " << std::endl
-       << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--encryptionkey/-k <encryption_key>]" << std::endl
+       << "\t        [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">] " << std::endl
+       << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--encryptionkey/-k <encryption_key>]" << std::endl
+       << "\t        [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">]" << std::endl
        << "\trm      --vid/-v <vid>" << std::endl
        << "\treclaim --vid/-v <vid>" << std::endl
-       << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
+       << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
+       << "\t        [--lbp/-p or --nolbp/-P] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2] || "reclaim" == tokens[2] || "label" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
@@ -769,14 +785,16 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       }
       disabled=hasOption(tokens, "-d", "--disabled");
       full=hasOption(tokens, "-F", "--full");
-      m_scheduler->createTape(cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, comment);
+      std::string encryptionkey = getOptionValue(tokens, "-k", "--encryptionkey", false);
+      m_scheduler->createTape(cliIdentity, vid, logicallibrary, tapepool, encryptionkey, capacity, disabled, full, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
       std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
       std::string capacity_s = getOptionValue(tokens, "-c", "--capacity", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && !hasOption(tokens, "-e", "--enabled")
+      std::string encryptionkey = getOptionValue(tokens, "-k", "--encryptionkey", false);
+      if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && encryptionkey.empty() && !hasOption(tokens, "-e", "--enabled")
               && !hasOption(tokens, "-d", "--disabled") && !hasOption(tokens, "-f", "--free") && !hasOption(tokens, "-F", "--full")) {
         m_data = help.str();
         return;
@@ -799,6 +817,9 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       }
       if(!comment.empty()) {
         m_scheduler->modifyTapeComment(cliIdentity, vid, comment);
+      }
+      if(!encryptionkey.empty()) {
+        m_scheduler->modifyTapeEncryptionKey(cliIdentity, vid, encryptionkey);
       }
       if(hasOption(tokens, "-e", "--enabled")) {
         m_scheduler->setTapeDisabled(cliIdentity, vid, false);
@@ -830,13 +851,15 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
     std::string capacity = getOptionValue(tokens, "-c", "--capacity", false);
     if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) 
             || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full")) 
-            || (hasOption(tokens, "-b", "--busy") && hasOption(tokens, "-n", "--notbusy"))) {
+            || (hasOption(tokens, "-b", "--busy") && hasOption(tokens, "-n", "--notbusy"))
+            || (hasOption(tokens, "-p", "--lbp") && hasOption(tokens, "-P", "--nolbp"))) {
       m_data = help.str();
       return;
     }
     std::string disabled="";
     std::string full="";
     std::string busy="";
+    std::string lbp="";
     if(hasOption(tokens, "-e", "--enabled")) {
       disabled = "false";
     }
@@ -855,22 +878,37 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
     if(hasOption(tokens, "-n", "--notbusy")) {
       busy = "true";
     }
-    std::list<cta::common::dataStructures::Tape> list= m_scheduler->getTapes(cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, busy);
+    if(hasOption(tokens, "-p", "--lbp")) {
+      lbp = "false";
+    }
+    if(hasOption(tokens, "-P", "--nolbp")) {
+      lbp = "true";
+    }
+    std::list<cta::common::dataStructures::Tape> list= m_scheduler->getTapes(cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, busy, lbp);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","logical library","tapepool","capacity","occupancy","last fseq","busy","full","disabled","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","busy","full","disabled","lpb","label drive","label time",
+                                         "last w drive","last w time","last r drive","last r time","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
         currentRow.push_back(it->logicalLibraryName);
         currentRow.push_back(it->tapePoolName);
+        currentRow.push_back(it->encryptionKey);
         currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));
         if(it->busy) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
+        currentRow.push_back(it->labelLog.drive);
+        currentRow.push_back(std::to_string((unsigned long long)it->labelLog.time));
+        currentRow.push_back(it->lastWriteLog.drive);
+        currentRow.push_back(std::to_string((unsigned long long)it->lastWriteLog.time));
+        currentRow.push_back(it->lastReadLog.drive);
+        currentRow.push_back(std::to_string((unsigned long long)it->lastReadLog.time));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -936,7 +974,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     std::list<cta::common::dataStructures::StorageClass> list= m_scheduler->getStorageClasses(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","number of copies","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"storage class","number of copies","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1002,7 +1040,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
     std::list<cta::common::dataStructures::User> list= m_scheduler->getUsers(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"user","group","cta group","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"user","group","cta group","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1124,7 +1162,7 @@ void XrdProFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
     std::list<cta::common::dataStructures::MountGroup> list= m_scheduler->getMountGroups(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1251,7 +1289,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     std::list<cta::common::dataStructures::Dedication> list= m_scheduler->getDedications(cliIdentity);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.uid","c.gid","c.host","c.time","m.uid","m.gid","m.host","m.time","comment"};
+      std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1349,7 +1387,7 @@ void XrdProFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","uid","gid","host","time"};
+      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","group","host","time"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
@@ -1465,7 +1503,7 @@ void XrdProFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","uid","gid","host","time"};
+      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","group","host","time"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;

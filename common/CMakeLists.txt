@@ -29,6 +29,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/StorageClass.cpp
   dataStructures/Tape.cpp
   dataStructures/TapeFileLocation.cpp
+  dataStructures/TapeLog.cpp
   dataStructures/TapePool.cpp
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp

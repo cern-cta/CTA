@@ -30,9 +30,14 @@ bool cta::common::dataStructures::Tape::operator==(const Tape &rhs) const {
       && creationLog==rhs.creationLog
       && dataOnTapeInBytes==rhs.dataOnTapeInBytes
       && disabled==rhs.disabled
+      && encryptionKey==rhs.encryptionKey
       && full==rhs.full
+      && labelLog==rhs.labelLog
       && lastFSeq==rhs.lastFSeq
       && lastModificationLog==rhs.lastModificationLog
+      && lastReadLog==rhs.lastReadLog
+      && lastWriteLog==rhs.lastWriteLog
+      && lbp==rhs.lbp
       && logicalLibraryName==rhs.logicalLibraryName
       && tapePoolName==rhs.tapePoolName
       && vid==rhs.vid;
@@ -55,9 +60,14 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ta
      << " creationLog=" << obj.creationLog
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
      << " disabled=" << obj.disabled
+     << " encryptionKey=" << obj.encryptionKey
      << " full=" << obj.full
+     << " labelLog=" << obj.labelLog
      << " lastFSeq=" << obj.lastFSeq
      << " lastModificationLog=" << obj.lastModificationLog
+     << " lastReadLog=" << obj.lastReadLog
+     << " lastWriteLog=" << obj.lastWriteLog
+     << " lbp=" << obj.lbp
      << " logicalLibraryName=" << obj.logicalLibraryName
      << " tapePoolName=" << obj.tapePoolName
      << " vid=" << obj.vid << ")";

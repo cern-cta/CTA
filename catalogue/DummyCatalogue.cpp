@@ -98,7 +98,7 @@ void cta::catalogue::DummyCatalogue::modifyStorageClassComment(const cta::common
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const std::string &comment) {}
+void cta::catalogue::DummyCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
@@ -119,6 +119,11 @@ void cta::catalogue::DummyCatalogue::modifyTapePoolNbPartialTapes(const cta::com
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+
+//------------------------------------------------------------------------------
+// setTapePoolEncryption
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::setTapePoolEncryption(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {}
 
 //------------------------------------------------------------------------------
 // createArchiveRoute
@@ -168,8 +173,8 @@ void cta::catalogue::DummyCatalogue::modifyLogicalLibraryComment(const cta::comm
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, 
-                          const bool disabledValue, const bool fullValue, const std::string &comment) {}
+void cta::catalogue::DummyCatalogue::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+                          const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // deleteTape
@@ -181,7 +186,7 @@ void cta::catalogue::DummyCatalogue::deleteTape(const cta::common::dataStructure
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::Tape> cta::catalogue::DummyCatalogue::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue) { return std::list<cta::common::dataStructures::Tape>();}
+        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) { return std::list<cta::common::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
 // reclaimTape
@@ -204,6 +209,26 @@ void cta::catalogue::DummyCatalogue::modifyTapeTapePoolName(const cta::common::d
 void cta::catalogue::DummyCatalogue::modifyTapeCapacityInBytes(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {}
 
 //------------------------------------------------------------------------------
+// modifyTapeEncryptionKey
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::modifyTapeEncryptionKey(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLabelLog
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::modifyTapeLabelLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastWrittenLog
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::modifyTapeLastWrittenLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
+// modifyTapeLastReadLog
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::modifyTapeLastReadLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {}
+
+//------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {}
@@ -217,6 +242,11 @@ void cta::catalogue::DummyCatalogue::setTapeFull(const cta::common::dataStructur
 // setTapeDisabled
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {}
+
+//------------------------------------------------------------------------------
+// setTapeLbp
+//------------------------------------------------------------------------------
+void cta::catalogue::DummyCatalogue::setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {}
 
 //------------------------------------------------------------------------------
 // modifyTapeComment
