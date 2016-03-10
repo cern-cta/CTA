@@ -134,6 +134,24 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "STORAGE_CLASS(STORAGE_CLASS_NAME),"
       "FOREIGN KEY(TAPE_POOL_NAME) REFERENCES "
         "TAPE_POOL(TAPE_POOL_NAME)"
+    ");"
+
+    "CREATE TABLE LOGICAL_LIBRARY("
+      "LOGICAL_LIBRARY_NAME TEXT,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(LOGICAL_LIBRARY_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -827,7 +845,53 @@ void cta::catalogue::SqliteCatalogue::modifyArchiveRouteComment(const common::da
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name,
+  const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO LOGICAL_LIBRARY("
+      "LOGICAL_LIBRARY_NAME,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":LOGICAL_LIBRARY_NAME,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":LOGICAL_LIBRARY_NAME", name);
+
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
+}
 
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
@@ -837,7 +901,64 @@ void cta::catalogue::SqliteCatalogue::deleteLogicalLibrary(const std::string &na
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::LogicalLibrary> cta::catalogue::SqliteCatalogue::getLogicalLibraries() const { return std::list<cta::common::dataStructures::LogicalLibrary>();}
+std::list<cta::common::dataStructures::LogicalLibrary>
+  cta::catalogue::SqliteCatalogue::getLogicalLibraries() const {
+  std::list<cta::common::dataStructures::LogicalLibrary> libs;
+  const char *const sql =
+    "SELECT "
+      "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM LOGICAL_LIBRARY";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::LogicalLibrary lib;
+
+    lib.name = stmt.columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
+
+    lib.comment = stmt.columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    lib.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    lib.lastModificationLog = updateLog;
+
+    libs.push_back(lib);
+  }
+
+  return libs;
+}
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
@@ -1109,14 +1230,14 @@ uint64_t cta::catalogue::SqliteCatalogue::getNextArchiveFileId() {
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-  const cta::common::dataStructures::TapeFileLocation tapeFileLocation) {
+  const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) {
 }
 
 //------------------------------------------------------------------------------
 // getCopyNbToTapePoolMap
 //------------------------------------------------------------------------------
 std::map<uint64_t,std::string> cta::catalogue::SqliteCatalogue::
-  getCopyNbToTapePoolMap(const std::string &storageClass) {
+  getCopyNbToTapePoolMap(const std::string &storageClass) const {
   return std::map<uint64_t,std::string>();
 }
 
@@ -1124,7 +1245,8 @@ std::map<uint64_t,std::string> cta::catalogue::SqliteCatalogue::
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
+  getArchiveMountPolicy(const common::dataStructures::UserIdentity &requester)
+  const {
   return common::dataStructures::MountPolicy();
 }
 
@@ -1132,7 +1254,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
+  getRetrieveMountPolicy(const common::dataStructures::UserIdentity &requester)
+  const {
   return common::dataStructures::MountPolicy();
 }
 
@@ -1140,7 +1263,7 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 // isAdmin
 //------------------------------------------------------------------------------
 bool cta::catalogue::SqliteCatalogue::isAdmin(
-  const common::dataStructures::SecurityIdentity &cliIdentity) {
+  const common::dataStructures::SecurityIdentity &cliIdentity) const {
   return userIsAdmin(cliIdentity.user.name) && hostIsAdmin(cliIdentity.host);
 }
 

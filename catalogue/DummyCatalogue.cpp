@@ -435,33 +435,39 @@ uint64_t cta::catalogue::DummyCatalogue::getNextArchiveFileId() {
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-  const cta::common::dataStructures::TapeFileLocation tapeFileLocation) {
+  const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) {
 }
 
 //------------------------------------------------------------------------------
 // getCopyNbToTapePoolMap
 //------------------------------------------------------------------------------  
-std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::getCopyNbToTapePoolMap(const std::string &storageClass) {
+std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::
+  getCopyNbToTapePoolMap(const std::string &storageClass) const {
   return std::map<uint64_t,std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::
+  getArchiveMountPolicy(const common::dataStructures::UserIdentity &requester)
+  const {
   return cta::common::dataStructures::MountPolicy();
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) {
+cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::
+  getRetrieveMountPolicy(const common::dataStructures::UserIdentity &requester)
+  const {
   return cta::common::dataStructures::MountPolicy();
 }
 
 //------------------------------------------------------------------------------
 // isAdmin
 //------------------------------------------------------------------------------
-bool cta::catalogue::DummyCatalogue::isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+bool cta::catalogue::DummyCatalogue::isAdmin(
+  const common::dataStructures::SecurityIdentity &cliIdentity) const {
   return true;
 }

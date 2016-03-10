@@ -185,13 +185,13 @@ public:
    *
    */
   virtual void fileWrittenToTape(
- const cta::common::dataStructures::ArchiveRequest &archiveRequest,
- const cta::common::dataStructures::TapeFileLocation tapeFileLocation) = 0;
+    const cta::common::dataStructures::ArchiveRequest &archiveRequest,
+    const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) = 0;
   
-  virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) = 0;
-  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) = 0;
-  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) = 0;
-  virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) = 0;
+  virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const = 0;
+  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
+  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
+  virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 
 }; // class Catalogue
 

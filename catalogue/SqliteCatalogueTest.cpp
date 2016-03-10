@@ -511,4 +511,47 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice)
     exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
+  using namespace cta;
+      
+  catalogue::SqliteCatalogue catalogue;
+      
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "create logical library";
+  ASSERT_NO_THROW(catalogue.createLogicalLibrary(m_cliSI,
+    logicalLibraryName, comment));
+      
+  const std::list<common::dataStructures::LogicalLibrary> libs =
+    catalogue.getLogicalLibraries();
+      
+  ASSERT_EQ(1, libs.size());
+      
+  const common::dataStructures::LogicalLibrary lib = libs.front();
+  ASSERT_EQ(logicalLibraryName, lib.name);
+  ASSERT_EQ(comment, lib.comment);
+
+  const common::dataStructures::EntryLog creationLog = lib.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    lib.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+  
+TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_name_twice) {
+  using namespace cta;
+  
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "create logical library";
+  ASSERT_NO_THROW(catalogue.createLogicalLibrary(m_cliSI,
+    logicalLibraryName, comment));
+  ASSERT_THROW(catalogue.createLogicalLibrary(m_cliSI,
+    logicalLibraryName, comment),
+    exception::Exception);
+}
+
 } // namespace unitTests
