@@ -70,6 +70,25 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(HOST_NAME)"
+    ");"
+
+    "CREATE TABLE STORAGE_CLASS("
+      "STORAGE_CLASS_NAME TEXT,"
+      "NB_FILES           INTEGER,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(STORAGE_CLASS_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -392,6 +411,51 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
   const std::string &name,
   const uint64_t nbCopies,
   const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO STORAGE_CLASS("
+      "STORAGE_CLASS_NAME,"
+      "NB_FILES,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":STORAGE_CLASS_NAME,"
+      ":NB_FILES,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":STORAGE_CLASS_NAME", name);
+  stmt.bind(":NB_FILES", nbCopies);
+
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
 }
 
 //------------------------------------------------------------------------------
