@@ -395,4 +395,53 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_name_twice) {
     storageClassName, nbCopies, comment), exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool) {
+  using namespace cta;
+      
+  catalogue::SqliteCatalogue catalogue;
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  const std::string comment = "create tape pool";
+  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
+    tapePoolName, nbPartialTapes, is_encrypted, comment));
+      
+  const std::list<common::dataStructures::TapePool> pools =
+    catalogue.getTapePools();
+      
+  ASSERT_EQ(1, pools.size());
+      
+  const common::dataStructures::TapePool pool = pools.front();
+  ASSERT_EQ(tapePoolName, pool.name);
+  ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+  ASSERT_EQ(is_encrypted, pool.encryption);
+  ASSERT_EQ(comment, pool.comment);
+
+  const common::dataStructures::EntryLog creationLog = pool.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    pool.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+  
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_name_twice) {
+  using namespace cta;
+  
+  catalogue::SqliteCatalogue catalogue;
+  
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  const std::string comment = "create tape pool";
+  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
+    tapePoolName, nbPartialTapes, is_encrypted, comment));
+  ASSERT_THROW(catalogue.createTapePool(m_cliSI,
+    tapePoolName, nbPartialTapes, is_encrypted, comment),
+    exception::Exception);
+}
+
 } // namespace unitTests

@@ -89,6 +89,26 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(STORAGE_CLASS_NAME)"
+    ");"
+
+    "CREATE TABLE TAPE_POOL("
+      "TAPE_POOL_NAME   TEXT,"
+      "NB_PARTIAL_TAPES INTEGER,"
+      "IS_ENCRYPTED     INTEGER,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(TAPE_POOL_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -497,7 +517,61 @@ void cta::catalogue::SqliteCatalogue::modifyStorageClassComment(const common::da
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createTapePool(
+  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name,
+  const uint64_t nbPartialTapes,
+  const bool encryptionValue,
+  const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO TAPE_POOL("
+      "TAPE_POOL_NAME,"
+      "NB_PARTIAL_TAPES,"
+      "IS_ENCRYPTED,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":TAPE_POOL_NAME,"
+      ":NB_PARTIAL_TAPES,"
+      ":IS_ENCRYPTED,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":TAPE_POOL_NAME", name);
+  stmt.bind(":NB_PARTIAL_TAPES", nbPartialTapes);
+  stmt.bind(":IS_ENCRYPTED", encryptionValue);
+
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
+}
 
 //------------------------------------------------------------------------------
 // deleteTapePool
@@ -507,7 +581,68 @@ void cta::catalogue::SqliteCatalogue::deleteTapePool(const std::string &name) {}
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::TapePool> cta::catalogue::SqliteCatalogue::getTapePools() const { return std::list<cta::common::dataStructures::TapePool>();}
+std::list<cta::common::dataStructures::TapePool>
+  cta::catalogue::SqliteCatalogue::getTapePools() const {
+  std::list<cta::common::dataStructures::TapePool> pools;
+  const char *const sql =
+    "SELECT "
+      "TAPE_POOL_NAME   AS TAPE_POOL_NAME,"
+      "NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
+      "IS_ENCRYPTED     AS IS_ENCRYPTED,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM TAPE_POOL";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::TapePool pool;
+
+    pool.name = stmt.columnText(nameToIdx["TAPE_POOL_NAME"]);
+    pool.nbPartialTapes = stmt.columnUint64(nameToIdx["NB_PARTIAL_TAPES"]);
+    pool.encryption = stmt.columnUint64(nameToIdx["IS_ENCRYPTED"]);
+
+    pool.comment = stmt.columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    pool.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    pool.lastModificationLog = updateLog;
+
+    pools.push_back(pool);
+  }
+
+  return pools;
+}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
