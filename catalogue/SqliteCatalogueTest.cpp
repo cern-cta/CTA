@@ -28,7 +28,7 @@ namespace unitTests {
 class cta_catalogue_SqliteCatalogueTest : public ::testing::Test {
 public:
   cta_catalogue_SqliteCatalogueTest():
-    m_bootstrapComment("bootstrap comment") {
+    m_bootstrapComment("bootstrap") {
 
     m_cliUI.group = "cli_group_name";
     m_cliUI.name = "cli_user_name";
@@ -134,7 +134,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminUserComment = "create admin user comment";
+  const std::string createAdminUserComment = "create admin user";
   ASSERT_NO_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
     createAdminUserComment));
 
@@ -242,7 +242,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminHostComment = "create host user comment";
+  const std::string createAdminHostComment = "create host user";
   const std::string anotherAdminHost = "another_admin_host";
   ASSERT_NO_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, createAdminHostComment));
@@ -347,6 +347,38 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_true) {
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   ASSERT_TRUE(catalogue.isAdmin(m_bootstrapAdminSI));
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  const std::string comment = "create storage class";
+  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
+    storageClassName, nbCopies, comment));
+
+  const std::list<common::dataStructures::StorageClass> storageClasses =
+    catalogue.getStorageClasses();
+
+  ASSERT_EQ(1, storageClasses.size());
+
+  const common::dataStructures::StorageClass storageClass =
+    storageClasses.front();
+  ASSERT_EQ(storageClassName, storageClass.name);
+  ASSERT_EQ(nbCopies, storageClass.nbCopies);
+  ASSERT_EQ(comment, storageClass.comment);
+
+  const common::dataStructures::EntryLog creationLog = storageClass.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    storageClass.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 } // namespace unitTests

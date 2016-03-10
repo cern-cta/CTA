@@ -74,7 +74,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
 
     "CREATE TABLE STORAGE_CLASS("
       "STORAGE_CLASS_NAME TEXT,"
-      "NB_FILES           INTEGER,"
+      "NB_COPIES          INTEGER,"
 
       "COMMENT TEXT,"
 
@@ -108,25 +108,18 @@ void cta::catalogue::SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
   const common::dataStructures::UserIdentity &user,
   const std::string &hostName,
   const std::string &comment) {
-  const uint64_t now = time(NULL);
-
-  common::dataStructures::EntryLog creationLog;
-  creationLog.user.name = cliIdentity.user.name;
-  creationLog.user.group = cliIdentity.user.group;
-  creationLog.host = cliIdentity.host;
-  creationLog.time = now;
-
-  insertAdminUser(user, comment, creationLog);
-  insertAdminHost(hostName, comment, creationLog);
+  createAdminUser(cliIdentity, user, comment);
+  createAdminHost(cliIdentity, hostName, comment);
 }
 
 //------------------------------------------------------------------------------
-// insertAdminUser
+// createAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::insertAdminUser(
+void cta::catalogue::SqliteCatalogue::createAdminUser(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
   const common::dataStructures::UserIdentity &user,
-  const std::string &comment,
-  const common::dataStructures::EntryLog &creationLog) {
+  const std::string &comment) {
+  const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO ADMIN_USER("
       "USER_NAME,"
@@ -163,79 +156,12 @@ void cta::catalogue::SqliteCatalogue::insertAdminUser(
   stmt.bind(":GROUP_NAME", user.group);
   stmt.bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", creationLog.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", creationLog.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", creationLog.host);
-  stmt.bind(":CREATION_LOG_TIME", creationLog.time);
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
 
   stmt.step();
-}
-
-//------------------------------------------------------------------------------
-// insertAdminHost
-//------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::insertAdminHost(
-  const std::string &hostName,
-  const std::string &comment,
-  const common::dataStructures::EntryLog &creationLog) {
-  const char *const sql =
-    "INSERT INTO ADMIN_HOST("
-      "HOST_NAME,"
-
-      "COMMENT,"
-
-      "CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_GROUP_NAME,"
-      "CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME,"
-
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
-    "VALUES("
-      ":HOST_NAME,"
-
-      ":COMMENT,"
-
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_GROUP_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME,"
-
-      ":CREATION_LOG_USER_NAME,"
-      ":CREATION_LOG_GROUP_NAME,"
-      ":CREATION_LOG_HOST_NAME,"
-      ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
-
-  stmt.bind(":HOST_NAME", hostName);
-  stmt.bind(":COMMENT", comment);
-
-  stmt.bind(":CREATION_LOG_USER_NAME", creationLog.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", creationLog.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", creationLog.host);
-  stmt.bind(":CREATION_LOG_TIME", creationLog.time);
-
-  stmt.step();
-}
-
-//------------------------------------------------------------------------------
-// createAdminUser
-//------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createAdminUser(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
-  const common::dataStructures::UserIdentity &user,
-  const std::string &comment) {
-  const uint64_t now = time(NULL);
-
-  common::dataStructures::EntryLog creationLog;
-  creationLog.user.name = cliIdentity.user.name;
-  creationLog.user.group = cliIdentity.user.group;
-  creationLog.host = cliIdentity.host;
-  creationLog.time = now;
-
-  insertAdminUser(user, comment, creationLog);
 }
 
 //------------------------------------------------------------------------------
@@ -323,14 +249,46 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   const uint64_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO ADMIN_HOST("
+      "HOST_NAME,"
 
-  common::dataStructures::EntryLog creationLog;
-  creationLog.user.name = cliIdentity.user.name;
-  creationLog.user.group = cliIdentity.user.group;
-  creationLog.host = cliIdentity.host;
-  creationLog.time = now;
+      "COMMENT,"
 
-  insertAdminHost(hostName, comment, creationLog);
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":HOST_NAME,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":HOST_NAME", hostName);
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
 }
 
 //------------------------------------------------------------------------------
@@ -415,7 +373,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
   const char *const sql =
     "INSERT INTO STORAGE_CLASS("
       "STORAGE_CLASS_NAME,"
-      "NB_FILES,"
+      "NB_COPIES,"
 
       "COMMENT,"
 
@@ -430,7 +388,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
       "LAST_MOD_TIME)"
     "VALUES("
       ":STORAGE_CLASS_NAME,"
-      ":NB_FILES,"
+      ":NB_COPIES,"
 
       ":COMMENT,"
 
@@ -446,7 +404,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
   SqliteStmt stmt(m_conn, sql);
 
   stmt.bind(":STORAGE_CLASS_NAME", name);
-  stmt.bind(":NB_FILES", nbCopies);
+  stmt.bind(":NB_COPIES", nbCopies);
 
   stmt.bind(":COMMENT", comment);
 
@@ -466,7 +424,65 @@ void cta::catalogue::SqliteCatalogue::deleteStorageClass(const std::string &name
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass> cta::catalogue::SqliteCatalogue::getStorageClasses() const { return std::list<cta::common::dataStructures::StorageClass>();}
+std::list<cta::common::dataStructures::StorageClass>
+  cta::catalogue::SqliteCatalogue::getStorageClasses() const {
+  std::list<common::dataStructures::StorageClass> storageClasses;
+  const char *const sql =
+    "SELECT "
+      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+      "NB_COPIES          AS NB_COPIES,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM STORAGE_CLASS";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::StorageClass storageClass;
+
+    storageClass.name = stmt.columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+    storageClass.nbCopies = stmt.columnUint64(nameToIdx["NB_COPIES"]);
+    storageClass.comment = stmt.columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    storageClass.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    storageClass.lastModificationLog = updateLog;
+
+    storageClasses.push_back(storageClass);
+  }
+
+  return storageClasses;
+}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
