@@ -63,25 +63,17 @@ protected:
   cta::common::dataStructures::SecurityIdentity m_adminSI;
 };
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, constructor) {
-  using namespace cta;
-
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
-}
-
 TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  catalogue->createBootstrapAdminAndHostNoAuth(
+  catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers());
+    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -99,7 +91,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 
   {
     std::list<common::dataStructures::AdminHost> hosts;
-    ASSERT_NO_THROW(hosts = catalogue->getAdminHosts());
+    ASSERT_NO_THROW(hosts = catalogue.getAdminHosts());
     ASSERT_EQ(1, hosts.size());
 
     const common::dataStructures::AdminHost host = hosts.front();
@@ -119,15 +111,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers());
+    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -144,12 +135,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   }
 
   const std::string createAdminUserComment = "create admin user comment";
-  ASSERT_NO_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+  ASSERT_NO_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
     createAdminUserComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    admins = catalogue->getAdminUsers();
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(2, admins.size());
 
     const common::dataStructures::AdminUser a1 = admins.front();
@@ -195,15 +186,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers());
+    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -219,25 +209,24 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  ASSERT_NO_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+  ASSERT_NO_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
     "comment 1"));
 
-  ASSERT_THROW(catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+  ASSERT_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
     "comment 2"), exception::Exception);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers());
+    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -255,12 +244,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
 
   const std::string createAdminHostComment = "create host user comment";
   const std::string anotherAdminHost = "another_admin_host";
-  ASSERT_NO_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+  ASSERT_NO_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, createAdminHostComment));
 
   {
     std::list<common::dataStructures::AdminHost> hosts;
-    hosts = catalogue->getAdminHosts();
+    hosts = catalogue.getAdminHosts();
     ASSERT_EQ(2, hosts.size());
 
     const common::dataStructures::AdminHost h1 = hosts.front();
@@ -309,15 +298,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_host_twice) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue->createBootstrapAdminAndHostNoAuth(
+  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue->getAdminUsers());
+    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -335,20 +323,30 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_host_twice) {
 
   const std::string anotherAdminHost = "another_admin_host";
 
-  ASSERT_NO_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+  ASSERT_NO_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, "comment 1"));
 
-  ASSERT_THROW(catalogue->createAdminHost(m_bootstrapAdminSI,
+  ASSERT_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, "coment 2"), exception::Exception);
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_notAdmin) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_false) {
   using namespace cta;
 
-  std::unique_ptr<catalogue::Catalogue> catalogue;
-  ASSERT_NO_THROW(catalogue.reset(new catalogue::SqliteCatalogue()));
+  catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_FALSE(catalogue->isAdmin(m_cliSI));
+  ASSERT_FALSE(catalogue.isAdmin(m_cliSI));
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_true) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  catalogue.createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+
+  ASSERT_TRUE(catalogue.isAdmin(m_bootstrapAdminSI));
 }
 
 } // namespace unitTests

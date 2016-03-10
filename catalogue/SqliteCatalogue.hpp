@@ -197,6 +197,24 @@ private:
     const std::string &comment,
     const common::dataStructures::EntryLog &creationLog);
 
+  /**
+   * Returns true if the specified user name is listed in the ADMIN_USER table.
+   *
+   * @param userName The name of the user to be search for in the ADMIN_USER
+   * table.
+   * @return true if the specified user name is listed in the ADMIN_USER table.
+   */
+  bool userIsAdmin(const std::string &userName) const;
+
+  /**
+   * Returns true if the specified host name is listed in the ADMIN_HOST table.
+   *
+   * @param userName The name of the host to be search for in the ADMIN_HOST
+   * table.
+   * @return true if the specified host name is listed in the ADMIN_HOST table.
+   */
+  bool hostIsAdmin(const std::string &userName) const;
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue

@@ -36,9 +36,10 @@ cta::catalogue::SqliteCatalogue::SqliteCatalogue(): m_conn(":memory:") {
 void cta::catalogue::SqliteCatalogue::createDbSchema() {
   const char *const sql = 
     "CREATE TABLE ADMIN_USER("
-      "USER_NAME     TEXT,"
-      "GROUP_NAME    TEXT,"
-      "COMMENT       TEXT,"
+      "USER_NAME  TEXT,"
+      "GROUP_NAME TEXT,"
+
+      "COMMENT TEXT,"
 
       "CREATION_LOG_USER_NAME  TEXT,"
       "CREATION_LOG_GROUP_NAME TEXT,"
@@ -54,8 +55,9 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     ");"
 
     "CREATE TABLE ADMIN_HOST("
-      "HOST_NAME     TEXT,"
-      "COMMENT       TEXT,"
+      "HOST_NAME TEXT,"
+
+      "COMMENT TEXT,"
 
       "CREATION_LOG_USER_NAME  TEXT,"
       "CREATION_LOG_GROUP_NAME TEXT,"
@@ -110,6 +112,7 @@ void cta::catalogue::SqliteCatalogue::insertAdminUser(
     "INSERT INTO ADMIN_USER("
       "USER_NAME,"
       "GROUP_NAME,"
+
       "COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
@@ -159,6 +162,7 @@ void cta::catalogue::SqliteCatalogue::insertAdminHost(
   const char *const sql =
     "INSERT INTO ADMIN_HOST("
       "HOST_NAME,"
+
       "COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
@@ -172,6 +176,7 @@ void cta::catalogue::SqliteCatalogue::insertAdminHost(
       "LAST_MOD_TIME)"
     "VALUES("
       ":HOST_NAME,"
+
       ":COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
@@ -229,7 +234,8 @@ std::list<cta::common::dataStructures::AdminUser>
     "SELECT "
       "USER_NAME  AS USER_NAME,"
       "GROUP_NAME AS GROUP_NAME,"
-      "COMMENT    AS COMMENT,"
+
+      "COMMENT AS COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -321,7 +327,8 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
   const char *const sql =
     "SELECT "
       "HOST_NAME AS HOST_NAME,"
-      "COMMENT   AS COMMENT,"
+
+      "COMMENT AS COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -380,7 +387,12 @@ void cta::catalogue::SqliteCatalogue::modifyAdminHostComment(const common::dataS
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createStorageClass(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createStorageClass(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name,
+  const uint64_t nbCopies,
+  const std::string &comment) {
+}
 
 //------------------------------------------------------------------------------
 // deleteStorageClass
@@ -774,5 +786,43 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 //------------------------------------------------------------------------------
 bool cta::catalogue::SqliteCatalogue::isAdmin(
   const common::dataStructures::SecurityIdentity &cliIdentity) {
-  return false;
+  return userIsAdmin(cliIdentity.user.name) && hostIsAdmin(cliIdentity.host);
+}
+
+//------------------------------------------------------------------------------
+// userIsAdmin
+//------------------------------------------------------------------------------
+bool cta::catalogue::SqliteCatalogue::userIsAdmin(const std::string &userName)
+  const {
+  const char *const sql =
+    "SELECT "
+      "USER_NAME AS USER_NAME "
+    "FROM ADMIN_USER WHERE "
+      "USER_NAME = :USER_NAME;";
+  SqliteStmt stmt(m_conn, sql);
+  stmt.bind(":USER_NAME", userName);
+  if(SQLITE_ROW == stmt.step()) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
+// hostIsAdmin
+//------------------------------------------------------------------------------
+bool cta::catalogue::SqliteCatalogue::hostIsAdmin(const std::string &hostName)
+  const {
+  const char *const sql =
+    "SELECT "
+      "HOST_NAME AS HOST_NAME "
+    "FROM ADMIN_HOST WHERE "
+      "HOST_NAME = :HOST_NAME;";
+  SqliteStmt stmt(m_conn, sql);
+  stmt.bind(":HOST_NAME", hostName);
+  if(SQLITE_ROW == stmt.step()) {
+    return true;
+  } else {
+    return false;
+  }
 }
