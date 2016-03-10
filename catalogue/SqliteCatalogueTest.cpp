@@ -381,4 +381,18 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_name_twice) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  const std::string comment = "create storage class";
+  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
+    storageClassName, nbCopies, comment));
+  ASSERT_THROW(catalogue.createStorageClass(m_cliSI,
+    storageClassName, nbCopies, comment), exception::Exception);
+}
+
 } // namespace unitTests
