@@ -444,4 +444,71 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_name_twice) {
     exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRoute) {
+  using namespace cta;
+      
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
+    storageClassName, nbCopies, "create storage class"));
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
+    tapePoolName, nbPartialTapes, is_encrypted, "create tape pool"));
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "create archive route";
+  ASSERT_NO_THROW(catalogue.createArchiveRoute(m_cliSI,
+    storageClassName, copyNb, tapePoolName, comment));
+      
+  const std::list<common::dataStructures::ArchiveRoute> routes =
+    catalogue.getArchiveRoutes();
+      
+  ASSERT_EQ(1, routes.size());
+      
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(comment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+  
+TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice) {
+  using namespace cta;
+  
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
+    storageClassName, nbCopies, "create storage class"));
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
+    tapePoolName, nbPartialTapes, is_encrypted, "create tape pool"));
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "create archive route";
+  ASSERT_NO_THROW(catalogue.createArchiveRoute(m_cliSI,
+    storageClassName, copyNb, tapePoolName, comment));
+  ASSERT_THROW(catalogue.createArchiveRoute(m_cliSI,
+    storageClassName, copyNb, tapePoolName, comment),
+    exception::Exception);
+}
+
 } // namespace unitTests

@@ -109,6 +109,31 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(TAPE_POOL_NAME)"
+    ");"
+
+    "CREATE TABLE ARCHIVE_ROUTE("
+      "STORAGE_CLASS_NAME TEXT,"
+      "COPY_NB            INTEGER,"
+      "TAPE_POOL_NAME     TEXT,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(STORAGE_CLASS_NAME, COPY_NB),"
+
+      "FOREIGN KEY(STORAGE_CLASS_NAME) REFERENCES "
+        "STORAGE_CLASS(STORAGE_CLASS_NAME),"
+      "FOREIGN KEY(TAPE_POOL_NAME) REFERENCES "
+        "TAPE_POOL(TAPE_POOL_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -662,7 +687,61 @@ void cta::catalogue::SqliteCatalogue::setTapePoolEncryption(const cta::common::d
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createArchiveRoute(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &storageClassName,
+  const uint64_t copyNb,
+  const std::string &tapePoolName,
+  const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO ARCHIVE_ROUTE("
+      "STORAGE_CLASS_NAME,"
+      "COPY_NB,"
+      "TAPE_POOL_NAME,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":STORAGE_CLASS_NAME,"
+      ":COPY_NB,"
+      ":TAPE_POOL_NAME,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  SqliteStmt stmt(m_conn, sql);
+
+  stmt.bind(":STORAGE_CLASS_NAME", storageClassName);
+  stmt.bind(":COPY_NB", copyNb);
+  stmt.bind(":TAPE_POOL_NAME", tapePoolName);
+
+  stmt.bind(":COMMENT", comment);
+
+  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt.bind(":CREATION_LOG_TIME", now);
+
+  stmt.step();
+}
 
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
@@ -672,7 +751,68 @@ void cta::catalogue::SqliteCatalogue::deleteArchiveRoute(const std::string &stor
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::SqliteCatalogue::getArchiveRoutes() const { return std::list<cta::common::dataStructures::ArchiveRoute>();}
+std::list<cta::common::dataStructures::ArchiveRoute>
+  cta::catalogue::SqliteCatalogue::getArchiveRoutes() const {
+  std::list<common::dataStructures::ArchiveRoute> routes;
+  const char *const sql =
+    "SELECT "
+      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+      "COPY_NB            AS COPY_NB,"
+      "TAPE_POOL_NAME     AS TAPE_POOL_NAME,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM ARCHIVE_ROUTE";
+  SqliteStmt stmt(m_conn, sql);
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt.step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt.getColumnNameToIdx();
+    }
+    common::dataStructures::ArchiveRoute route;
+
+    route.storageClassName = stmt.columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+    route.copyNb = stmt.columnUint64(nameToIdx["COPY_NB"]);
+    route.tapePoolName = stmt.columnText(nameToIdx["TAPE_POOL_NAME"]);
+
+    route.comment = stmt.columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    route.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    route.lastModificationLog = updateLog;
+
+    routes.push_back(route);
+  }
+
+  return routes;
+}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
