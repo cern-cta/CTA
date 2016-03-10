@@ -1,0 +1,47 @@
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "tapeserver/daemon/SourcedParameter.hpp"
+
+
+namespace cta {
+namespace tape {
+namespace daemon {
+
+template<>
+void SourcedParameter<time_t>::set(const std::string & value, const std::string & source) {     
+  if (!utils::isValidUInt(value)) {
+    std::stringstream err;
+    err << "In SourcedParameter::set: badly formatted integer"
+        << " for category=" << m_category << " key=" << m_key 
+        << " value=\'" << value << "'";
+    throw BadlyFormattedInteger(err.str());
+  }
+  std::istringstream(value) >> m_value;
+  m_source = source;
+  m_set = true;
+}
+
+template<>  
+void SourcedParameter<std::string>::set(const std::string & value, const std::string & source) {
+  m_value = value;
+  m_source = source;
+  m_set = true;
+}
+
+}}} // namespace cta::tape::daemon

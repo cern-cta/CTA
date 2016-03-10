@@ -20,7 +20,7 @@
 
 #include "common/threading/Daemon.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
-#include "tapeserver/daemon/GlobalConfiguration.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
@@ -42,7 +42,7 @@ public:
   TapeDaemon(
     const cta::daemon::CommandLineParams & commandLine,
     log::Logger &log,
-    const GlobalConfiguration &globalConfig,
+    const TapedConfiguration &globalConfig,
     cta::server::ProcessCap &capUtils);
   
   virtual ~TapeDaemon();
@@ -226,7 +226,7 @@ protected:
     throw();
   
   /** The tape server's configuration */
-  const GlobalConfiguration& m_globalConfiguration;
+  const TapedConfiguration& m_globalConfiguration;
 
   /**
    * Object providing utilities for working UNIX capabilities.

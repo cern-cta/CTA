@@ -21,7 +21,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
-#include "tapeserver/daemon/GlobalConfiguration.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TpconfigLines.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
@@ -107,8 +107,8 @@ static int exceptionThrowingMain(
   logStartOfDaemon(log, commandLine);
 
   // Parse /etc/cta/cta.conf and /etc/cta/TPCONFIG for global parameters
-  const GlobalConfiguration globalConfig =
-    GlobalConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
+  const TapedConfiguration globalConfig =
+    TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
