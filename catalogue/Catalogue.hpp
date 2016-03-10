@@ -77,44 +77,43 @@ public:
   virtual void createBootstrapAdminAndHostNoAuth(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) = 0;
 
   virtual void createAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
-  virtual void deleteAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user) = 0;
-  virtual std::list<cta::common::dataStructures::AdminUser> getAdminUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteAdminUser(const cta::common::dataStructures::UserIdentity &user) = 0;
+  virtual std::list<cta::common::dataStructures::AdminUser> getAdminUsers() const = 0;
   virtual void modifyAdminUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
 
   virtual void createAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) = 0;
-  virtual void deleteAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName) = 0;
-  virtual std::list<cta::common::dataStructures::AdminHost> getAdminHosts(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteAdminHost(const std::string &hostName) = 0;
+  virtual std::list<cta::common::dataStructures::AdminHost> getAdminHosts() const = 0;
   virtual void modifyAdminHostComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) = 0;
 
   virtual void createStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies, const std::string &comment) = 0;
-  virtual void deleteStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) = 0;
-  virtual std::list<cta::common::dataStructures::StorageClass> getStorageClasses(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteStorageClass(const std::string &name) = 0;
+  virtual std::list<cta::common::dataStructures::StorageClass> getStorageClasses() const = 0;
   virtual void modifyStorageClassNbCopies(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) = 0;
   virtual void modifyStorageClassComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
 
   virtual void createTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
-  virtual void deleteTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) = 0;
-  virtual std::list<cta::common::dataStructures::TapePool> getTapePools(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteTapePool(const std::string &name) = 0;
+  virtual std::list<cta::common::dataStructures::TapePool> getTapePools() const = 0;
   virtual void modifyTapePoolNbPartialTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) = 0;
   virtual void modifyTapePoolComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
   virtual void setTapePoolEncryption(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) = 0;
 
   virtual void createArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment) = 0;
-  virtual void deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb) = 0;
-  virtual std::list<cta::common::dataStructures::ArchiveRoute> getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) = 0;
+  virtual std::list<cta::common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
   virtual void modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
   virtual void modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
 
   virtual void createLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
-  virtual void deleteLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) = 0;
-  virtual std::list<cta::common::dataStructures::LogicalLibrary> getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteLogicalLibrary(const std::string &name) = 0;
+  virtual std::list<cta::common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
   virtual void modifyLogicalLibraryComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
 
   virtual void createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
                           const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
-  virtual void deleteTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
-  virtual std::list<cta::common::dataStructures::Tape> getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-        const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+  virtual void deleteTape(const std::string &vid) = 0;
+  virtual std::list<cta::common::dataStructures::Tape> getTapes(const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) = 0;
   virtual void reclaimTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
   virtual void modifyTapeLogicalLibraryName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) = 0;
@@ -131,16 +130,16 @@ public:
   virtual void modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
   virtual void createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) = 0;
-  virtual void deleteUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group) = 0;
-  virtual std::list<cta::common::dataStructures::User> getUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteUser(const std::string &name, const std::string &group) = 0;
+  virtual std::list<cta::common::dataStructures::User> getUsers() const = 0;
   virtual void modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) = 0;
   virtual void modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) = 0;
 
   virtual void createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
                                const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
                                const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) = 0;
-  virtual void deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) = 0;
-  virtual std::list<cta::common::dataStructures::MountGroup> getMountGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteMountGroup(const std::string &name) = 0;
+  virtual std::list<cta::common::dataStructures::MountGroup> getMountGroups() const = 0;
   virtual void modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) = 0;
   virtual void modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
   virtual void modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) = 0;
@@ -154,8 +153,8 @@ public:
 
   virtual void createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) = 0;
-  virtual void deleteDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename) = 0;
-  virtual std::list<cta::common::dataStructures::Dedication> getDedications(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual void deleteDedication(const std::string &drivename) = 0;
+  virtual std::list<cta::common::dataStructures::Dedication> getDedications() const = 0;
   virtual void modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) = 0;
   virtual void modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) = 0;
   virtual void modifyDedicationTag(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) = 0;
@@ -164,9 +163,9 @@ public:
   virtual void modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) = 0;
   virtual void modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) = 0;
 
-  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const uint64_t id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;
-  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const uint64_t id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;  
   virtual cta::common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
   

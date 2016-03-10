@@ -45,6 +45,13 @@ cta::Scheduler::~Scheduler() throw() {
 }
 
 //------------------------------------------------------------------------------
+// authorizeCliIdentity
+//------------------------------------------------------------------------------
+void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
+  m_catalogue.isAdmin(cliIdentity);
+}
+
+//------------------------------------------------------------------------------
 // queueArchiveRequest
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchiveRequest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {  
@@ -111,14 +118,14 @@ void cta::Scheduler::createAdminUser(const cta::common::dataStructures::Security
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user) {
-  m_catalogue.deleteAdminUser(cliIdentity, user);
+  m_catalogue.deleteAdminUser(user);
 }
 
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::AdminUser> cta::Scheduler::getAdminUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getAdminUsers(cliIdentity);
+  return m_catalogue.getAdminUsers();
 }
 
 //------------------------------------------------------------------------------
@@ -139,14 +146,14 @@ void cta::Scheduler::createAdminHost(const cta::common::dataStructures::Security
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName) {
-  m_catalogue.deleteAdminHost(cliIdentity, hostName);
+  m_catalogue.deleteAdminHost(hostName);
 }
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::AdminHost> cta::Scheduler::getAdminHosts(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getAdminHosts(cliIdentity); 
+  return m_catalogue.getAdminHosts(); 
 }
 
 //------------------------------------------------------------------------------
@@ -168,14 +175,14 @@ void cta::Scheduler::createStorageClass(const cta::common::dataStructures::Secur
 // deleteStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
-  m_catalogue.deleteStorageClass(cliIdentity, name);
+  m_catalogue.deleteStorageClass(name);
 }
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::getStorageClasses(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getStorageClasses(cliIdentity); 
+  return m_catalogue.getStorageClasses(); 
 }
 
 //------------------------------------------------------------------------------
@@ -203,14 +210,14 @@ void cta::Scheduler::createTapePool(const cta::common::dataStructures::SecurityI
 // deleteTapePool
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
-  m_catalogue.deleteTapePool(cliIdentity, name);
+  m_catalogue.deleteTapePool(name);
 }
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::TapePool> cta::Scheduler::getTapePools(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getTapePools(cliIdentity); 
+  return m_catalogue.getTapePools(); 
 }
 
 //------------------------------------------------------------------------------
@@ -246,14 +253,14 @@ void cta::Scheduler::createArchiveRoute(const cta::common::dataStructures::Secur
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb) {
-  m_catalogue.deleteArchiveRoute(cliIdentity, storageClassName, copyNb);
+  m_catalogue.deleteArchiveRoute(storageClassName, copyNb);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveRoute> cta::Scheduler::getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getArchiveRoutes(cliIdentity); 
+  return m_catalogue.getArchiveRoutes(); 
 }
 
 //------------------------------------------------------------------------------
@@ -281,14 +288,14 @@ void cta::Scheduler::createLogicalLibrary(const cta::common::dataStructures::Sec
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
-  m_catalogue.deleteLogicalLibrary(cliIdentity, name);
+  m_catalogue.deleteLogicalLibrary(name);
 }
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::LogicalLibrary> cta::Scheduler::getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getLogicalLibraries(cliIdentity); 
+  return m_catalogue.getLogicalLibraries(); 
 }
 
 //------------------------------------------------------------------------------
@@ -310,7 +317,7 @@ void cta::Scheduler::createTape(const cta::common::dataStructures::SecurityIdent
 // deleteTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  m_catalogue.deleteTape(cliIdentity, vid);
+  m_catalogue.deleteTape(vid);
 }
 
 //------------------------------------------------------------------------------
@@ -319,7 +326,7 @@ void cta::Scheduler::deleteTape(const cta::common::dataStructures::SecurityIdent
 std::list<cta::common::dataStructures::Tape> cta::Scheduler::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
         const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) {
-  return m_catalogue.getTapes(cliIdentity, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, busyValue, lbpValue); 
+  return m_catalogue.getTapes(vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue, busyValue, lbpValue); 
 }
 
 //------------------------------------------------------------------------------
@@ -431,14 +438,14 @@ void cta::Scheduler::createUser(const cta::common::dataStructures::SecurityIdent
 // deleteUser
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group) {
-  m_catalogue.deleteUser(cliIdentity, name, group);
+  m_catalogue.deleteUser(name, group);
 }
 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::User> cta::Scheduler::getUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getUsers(cliIdentity); 
+  return m_catalogue.getUsers(); 
 }
 
 //------------------------------------------------------------------------------
@@ -468,14 +475,14 @@ void cta::Scheduler::createMountGroup(const cta::common::dataStructures::Securit
 // deleteMountGroup
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {
-  m_catalogue.deleteMountGroup(cliIdentity, name);
+  m_catalogue.deleteMountGroup(name);
 }
 
 //------------------------------------------------------------------------------
 // getMountGroups
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::MountGroup> cta::Scheduler::getMountGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getMountGroups(cliIdentity); 
+  return m_catalogue.getMountGroups(); 
 }
 
 //------------------------------------------------------------------------------
@@ -560,14 +567,14 @@ void cta::Scheduler::createDedication(const cta::common::dataStructures::Securit
 // deleteDedication
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename) {
-  m_catalogue.deleteDedication(cliIdentity, drivename);
+  m_catalogue.deleteDedication(drivename);
 }
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::Dedication> cta::Scheduler::getDedications(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_catalogue.getDedications(cliIdentity); 
+  return m_catalogue.getDedications(); 
 }
 
 //------------------------------------------------------------------------------
@@ -683,7 +690,7 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return m_catalogue.getArchiveFiles(cliIdentity, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path); 
+  return m_catalogue.getArchiveFiles(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path); 
 }
 
 //------------------------------------------------------------------------------
@@ -691,7 +698,7 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::getArchiveFi
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFileSummary cta::Scheduler::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return m_catalogue.getArchiveFileSummary(cliIdentity, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+  return m_catalogue.getArchiveFileSummary(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
 }
 
 //------------------------------------------------------------------------------

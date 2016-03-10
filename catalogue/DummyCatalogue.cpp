@@ -38,12 +38,12 @@ void cta::catalogue::DummyCatalogue::createAdminUser(const cta::common::dataStru
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteAdminUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user) {}
+void cta::catalogue::DummyCatalogue::deleteAdminUser(const cta::common::dataStructures::UserIdentity &user) {}
 
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminUser> cta::catalogue::DummyCatalogue::getAdminUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::AdminUser>();}
+std::list<cta::common::dataStructures::AdminUser> cta::catalogue::DummyCatalogue::getAdminUsers() const { return std::list<cta::common::dataStructures::AdminUser>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
@@ -58,12 +58,12 @@ void cta::catalogue::DummyCatalogue::createAdminHost(const cta::common::dataStru
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteAdminHost(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName) {}
+void cta::catalogue::DummyCatalogue::deleteAdminHost(const std::string &hostName) {}
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminHost> cta::catalogue::DummyCatalogue::getAdminHosts(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::AdminHost>();}
+std::list<cta::common::dataStructures::AdminHost> cta::catalogue::DummyCatalogue::getAdminHosts() const { return std::list<cta::common::dataStructures::AdminHost>();}
 
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
@@ -78,12 +78,12 @@ void cta::catalogue::DummyCatalogue::createStorageClass(const cta::common::dataS
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::DummyCatalogue::deleteStorageClass(const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass> cta::catalogue::DummyCatalogue::getStorageClasses(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::StorageClass>();}
+std::list<cta::common::dataStructures::StorageClass> cta::catalogue::DummyCatalogue::getStorageClasses() const { return std::list<cta::common::dataStructures::StorageClass>();}
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
@@ -103,12 +103,12 @@ void cta::catalogue::DummyCatalogue::createTapePool(const cta::common::dataStruc
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteTapePool(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::DummyCatalogue::deleteTapePool(const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::TapePool> cta::catalogue::DummyCatalogue::getTapePools(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::TapePool>();}
+std::list<cta::common::dataStructures::TapePool> cta::catalogue::DummyCatalogue::getTapePools() const { return std::list<cta::common::dataStructures::TapePool>();}
 
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
@@ -133,12 +133,12 @@ void cta::catalogue::DummyCatalogue::createArchiveRoute(const cta::common::dataS
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteArchiveRoute(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb) {}
+void cta::catalogue::DummyCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) {}
 
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::DummyCatalogue::getArchiveRoutes(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::ArchiveRoute>();}
+std::list<cta::common::dataStructures::ArchiveRoute> cta::catalogue::DummyCatalogue::getArchiveRoutes() const { return std::list<cta::common::dataStructures::ArchiveRoute>();}
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
@@ -158,12 +158,12 @@ void cta::catalogue::DummyCatalogue::createLogicalLibrary(const cta::common::dat
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::DummyCatalogue::deleteLogicalLibrary(const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::LogicalLibrary> cta::catalogue::DummyCatalogue::getLogicalLibraries(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::LogicalLibrary>();}
+std::list<cta::common::dataStructures::LogicalLibrary> cta::catalogue::DummyCatalogue::getLogicalLibraries() const { return std::list<cta::common::dataStructures::LogicalLibrary>();}
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
@@ -179,13 +179,12 @@ void cta::catalogue::DummyCatalogue::createTape(const cta::common::dataStructure
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {}
+void cta::catalogue::DummyCatalogue::deleteTape(const std::string &vid) {}
 
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape> cta::catalogue::DummyCatalogue::getTapes(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-        const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
+std::list<cta::common::dataStructures::Tape> cta::catalogue::DummyCatalogue::getTapes(const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
         const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) { return std::list<cta::common::dataStructures::Tape>();}
 
 //------------------------------------------------------------------------------
@@ -261,12 +260,12 @@ void cta::catalogue::DummyCatalogue::createUser(const cta::common::dataStructure
 //------------------------------------------------------------------------------
 // deleteUser
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group) {}
+void cta::catalogue::DummyCatalogue::deleteUser(const std::string &name, const std::string &group) {}
 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::User> cta::catalogue::DummyCatalogue::getUsers(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::User>();}
+std::list<cta::common::dataStructures::User> cta::catalogue::DummyCatalogue::getUsers() const { return std::list<cta::common::dataStructures::User>();}
 
 //------------------------------------------------------------------------------
 // modifyUserMountGroup
@@ -288,12 +287,12 @@ void cta::catalogue::DummyCatalogue::createMountGroup(const cta::common::dataStr
 //------------------------------------------------------------------------------
 // deleteMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name) {}
+void cta::catalogue::DummyCatalogue::deleteMountGroup(const std::string &name) {}
 
 //------------------------------------------------------------------------------
 // getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::MountGroup> cta::catalogue::DummyCatalogue::getMountGroups(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::MountGroup>();}
+std::list<cta::common::dataStructures::MountGroup> cta::catalogue::DummyCatalogue::getMountGroups() const { return std::list<cta::common::dataStructures::MountGroup>();}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchivePriority
@@ -354,12 +353,12 @@ void cta::catalogue::DummyCatalogue::createDedication(const cta::common::dataStr
 //------------------------------------------------------------------------------
 // deleteDedication
 //------------------------------------------------------------------------------
-void cta::catalogue::DummyCatalogue::deleteDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename) {}
+void cta::catalogue::DummyCatalogue::deleteDedication(const std::string &drivename) {}
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Dedication> cta::catalogue::DummyCatalogue::getDedications(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const { return std::list<cta::common::dataStructures::Dedication>();}
+std::list<cta::common::dataStructures::Dedication> cta::catalogue::DummyCatalogue::getDedications() const { return std::list<cta::common::dataStructures::Dedication>();}
 
 //------------------------------------------------------------------------------
 // modifyDedicationType
@@ -399,7 +398,7 @@ void cta::catalogue::DummyCatalogue::modifyDedicationComment(const cta::common::
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalogue::getArchiveFiles(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalogue::getArchiveFiles(const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return std::list<cta::common::dataStructures::ArchiveFile>(); 
 }
@@ -407,7 +406,7 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::DummyCatalog
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::getArchiveFileSummary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const uint64_t id, const std::string &eosid,
+cta::common::dataStructures::ArchiveFileSummary cta::catalogue::DummyCatalogue::getArchiveFileSummary(const uint64_t id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }

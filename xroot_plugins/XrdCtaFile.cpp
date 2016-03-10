@@ -84,6 +84,14 @@ cta::common::dataStructures::SecurityIdentity XrdProFile::checkClient(const XrdS
 void XrdProFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::string command(tokens[1]);
   
+  std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
+          "ta","tape","sc","storageclass","us","user","mg","mountgroup","de","dedication","re","repack","sh","shrink","ve","verify",
+          "af","archivefile","te","test","dr","drive","rc","reconcile","lpa","listpendingarchives","lpr","listpendingretrieves","lds","listdrivestates"};
+  
+  if (std::find(adminCommands.begin(), adminCommands.end(), command) != adminCommands.end()) {
+    m_scheduler->authorizeCliIdentity(cliIdentity);
+  }
+  
   if     ("bs"  == command || "bootstrap"            == command) {xCom_bootstrap(tokens, cliIdentity);}
   else if("ad"  == command || "admin"                == command) {xCom_admin(tokens, cliIdentity);}
   else if("ah"  == command || "adminhost"            == command) {xCom_adminhost(tokens, cliIdentity);}
