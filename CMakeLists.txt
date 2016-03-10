@@ -25,7 +25,7 @@ set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
 # following:
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++0x -fms-extensions -fstack-protector-all")
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++1y -fstack-protector-all")
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
 # to be tested once we have a stable compilation on CC7:
@@ -44,8 +44,8 @@ execute_process(
   OUTPUT_VARIABLE GCC_VERSION)
 if (CMAKE_COMPILER_IS_GNUCC)
   if (GCC_VERSION VERSION_GREATER 4.4.6)
-    message(STATUS "Detected gcc >= 4.4.7 - switching on support for c++0x")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    message(STATUS "Detected gcc >= 4.4.7 - switching on support for c++1y")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
   endif (GCC_VERSION VERSION_GREATER 4.4.6)
 endif (CMAKE_COMPILER_IS_GNUCC)
 
