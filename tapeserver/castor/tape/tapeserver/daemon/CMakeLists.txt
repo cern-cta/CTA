@@ -26,6 +26,7 @@ include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
+find_package(Protobuf REQUIRED)
 find_package( ZLIB REQUIRED )
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS

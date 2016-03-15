@@ -4,7 +4,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
 
 
-find_package(Protobuf)
+find_package(Protobuf REQUIRED)
 
 set (CTAProtoFiles
   cta.proto)

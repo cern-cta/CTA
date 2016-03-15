@@ -126,7 +126,7 @@ cta::catalogue::ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx()
   } catch(exception::Exception &ne) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed: For SQL statement " << m_sql
-      << ": " << ne.getMessage();
+      << ": " << ne.getMessage().str();
     throw ex;
   }
 

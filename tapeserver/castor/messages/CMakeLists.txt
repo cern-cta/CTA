@@ -23,7 +23,7 @@ include_directories(/usr/include/shift)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
-find_package(Protobuf)
+find_package(Protobuf REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
