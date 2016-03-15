@@ -19,6 +19,7 @@ cmake_minimum_required (VERSION 2.6)
 find_package (binutils REQUIRED)
 find_package (libattr REQUIRED)
 find_package (libcap REQUIRED)
+find_package (libuuid REQUIRED)
 
 set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp

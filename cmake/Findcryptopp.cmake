@@ -14,15 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required (VERSION 2.6)
+# This module will set the following variables:
+#     CRYPTOPP_FOUND
+#     CRYPTOPP_INCLUDE_DIRS
+#     CRYPTOPP_LIBRARIES
 
-list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package (cryptopp REQUIRED)
-find_package (xrootd REQUIRED)
-include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+find_path(CRYPTOPP_INCLUDE_DIRS
+  base64.h
+  PATHS /usr/include/cryptopp
+  NO_DEFAULT_PATH)
 
-add_executable (cta CTACmdMain.cpp CTACmd.cpp)
-target_link_libraries (cta ${XROOTD_XRDCL_LIB} ctacommon cryptopp ctautils)
-install (TARGETS cta DESTINATION usr/bin)
+find_library(CRYPTOPP_LIBRARIES
+  NAME cryptopp
+  PATHS /usr/lib64
+  NO_DEFAULT_PATH)
 
-include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(cryptopp DEFAULT_MSG
+  CRYPTOPP_INCLUDE_DIRS CRYPTOPP_LIBRARIES)
