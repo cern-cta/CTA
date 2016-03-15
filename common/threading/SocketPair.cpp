@@ -1,0 +1,208 @@
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "common/threading/SocketPair.hpp"
+#include "common/exception/Errnum.hpp"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <poll.h>
+#include <memory>
+#include <list>
+
+namespace cta { namespace server {
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+SocketPair::SocketPair() {
+  int fd[2];
+  cta::exception::Errnum::throwOnMinusOne(
+    ::socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd),
+    "In SocketPair::SocketPair(): failed to socketpair(): ");
+  m_parentFd = fd[0];
+  m_childFd = fd[1];
+  if (m_parentFd < 0 || m_childFd < 0) {
+    std::stringstream err;
+    err << "In SocketPair::SocketPair(): unexpected file descriptor: "
+        << "fd[0]=" << fd[0] << " fd[1]=" << fd[1];
+    throw cta::exception::Exception(err.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+SocketPair::~SocketPair() {
+  if (m_parentFd != -1)
+    ::close(m_parentFd);
+  if (m_childFd != -1)
+    ::close(m_childFd);
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::close
+//------------------------------------------------------------------------------
+void SocketPair::close(Side sideToClose) {
+  if (m_currentSide != Side::both)
+    throw CloseAlreadyCalled("In SocketPair::close(): one side was already closed");
+  switch(sideToClose) {
+  case Side::child:
+    ::close(m_childFd);
+    m_childFd = -1;
+    m_currentSide = Side::parent;
+    break;
+  case Side::parent:
+    ::close(m_parentFd);
+    m_parentFd = -1;
+    m_currentSide = Side::child;
+    break;
+  default:
+    throw cta::exception::Exception("In SocketPair::close(): invalid side");
+  }
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::close
+//------------------------------------------------------------------------------
+bool SocketPair::pollFlag() {
+  return m_pollFlag;
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::poll
+//------------------------------------------------------------------------------
+void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
+  std::unique_ptr<struct ::pollfd[]> fds(new ::pollfd[socketPairs.size()]);
+  struct ::pollfd *fdsp=fds.get();
+  std::list<std::string> keys;
+  for (const auto & sp: socketPairs) {
+    keys.push_back(sp.first);
+    fdsp->fd = sp.second->getFdForAccess(sourceToPoll);
+    fdsp->revents = 0;
+    fdsp->events = POLLIN;
+    fdsp++;
+  }
+  int rc=::poll(fds.get(), socketPairs.size(), timeout * 1000);
+  if (rc > 0) {
+    // We have readable fds, copy the results in the provided map
+    fdsp=fds.get();
+    for (const auto & key: keys) {
+      socketPairs.at(key)->m_pollFlag = (fdsp++)->revents & POLLIN;
+    }
+  } else if (!rc) {
+    throw Timeout("In SocketPair::poll(): timeout");
+  } else {
+    throw cta::exception::Errnum("In SocketPair::poll(): failed to poll(): ");
+  }
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::getFdForAccess
+//------------------------------------------------------------------------------
+int SocketPair::getFdForAccess(Side sourceOrDestination) {
+  // First, make sure the source to poll makes sense.
+  // There is an inversion here. If our current side is parent, we should 
+  // read from the child and vice versa.
+  Side sideForThisPair = sourceOrDestination;
+  switch (sideForThisPair) {
+  case Side::current:
+    switch(m_currentSide) {
+    case Side::child:
+      sideForThisPair = Side::parent;
+      goto done;
+    case Side::parent:
+      sideForThisPair = Side::child;
+      goto done;
+    default:
+      throw cta::exception::Exception("In SocketPair::getFdForPoll(): invalid side (current)");
+    }
+  case Side::child:
+    sideForThisPair = Side::parent;
+    break;
+  case Side::parent:
+    sideForThisPair = Side::child;
+    break;
+  default:
+    throw cta::exception::Exception("In SocketPair::poll(): invalid side (both)");
+  }
+  done:
+  // Now make sure the file descriptor is valid.
+  int fd;
+  switch (sideForThisPair) {
+  case Side::child:
+    fd = m_childFd;
+    break;
+  case Side::parent:
+    fd = m_parentFd;
+    break;
+  default:
+    throw cta::exception::Exception("In SocketPair::poll(): invalid sideForThisPair (internal error)");
+  }
+  if (-1 == fd)
+    throw cta::exception::Exception("In SocketPair::poll(): file descriptor is closed");
+  return fd;
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::receive
+//------------------------------------------------------------------------------
+std::string SocketPair::receive(Side source) {
+  int fd=getFdForAccess(source);
+  char buff[2048];
+  struct ::msghdr hdr;
+  struct ::iovec iov;
+  hdr.msg_name = nullptr;
+  hdr.msg_namelen = 0;
+  hdr.msg_iov = &iov;
+  hdr.msg_iovlen = 1;
+  hdr.msg_iov->iov_base = (void*)buff;
+  hdr.msg_iov->iov_len = sizeof(buff);
+  hdr.msg_control = nullptr;
+  hdr.msg_controllen = 0;
+  hdr.msg_flags = 0;
+  ssize_t size=recvmsg(fd, &hdr, MSG_DONTWAIT);
+  if (size > 0) {
+    if (hdr.msg_flags & MSG_TRUNC) {
+      throw Overflow("In SocketPair::receive(): message was truncated.");
+    }
+    std::string ret;
+    ret.append(buff, size);
+    return ret;
+  } else if (!size) {
+    throw PeerDisconnected("In SocketPair::receive(): connection reset by peer.");
+  } else {
+    if (errno == EAGAIN) {
+      throw NothingToReceive("In SocketPair::receive(): nothing to receive.");
+    } else  {
+      throw cta::exception::Errnum("In SocketPair::receive(): failed to recv(): ");
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// SocketPair::send
+//------------------------------------------------------------------------------
+void SocketPair::send(const std::string& msg, Side destination) {
+  int fd=getFdForAccess(destination);
+  cta::exception::Errnum::throwOnMinusOne(::send(fd, msg.data(), msg.size(), 0),
+    "In SocketPair::send(): failed to send(): ");
+}
+
+
+}} // namespace cta::server

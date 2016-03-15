@@ -92,6 +92,7 @@ set (COMMON_LIB_SRC_FILES
   threading/ChildProcess.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
+  threading/SocketPair.cpp
   threading/System.cpp
   threading/Threading.cpp
   utils/utils.cpp
@@ -124,6 +125,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
   threading/DaemonTest.cpp
+  threading/SocketPairTest.cpp
   utils/UtilsTest.cpp
   UserIdentityTest.cpp)
 
