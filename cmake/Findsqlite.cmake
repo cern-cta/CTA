@@ -1,36 +1,28 @@
-IF( SQLITE3_INCLUDE_DIR AND SQLITE3_LIBRARY_RELEASE AND SQLITE3_LIBRARY_DEBUG )
-SET(SQLITE3_FIND_QUIETLY TRUE)
-ENDIF( SQLITE3_INCLUDE_DIR AND SQLITE3_LIBRARY_RELEASE AND SQLITE3_LIBRARY_DEBUG )
-FIND_PATH( SQLITE3_INCLUDE_DIR sqlite3.h )
-FIND_LIBRARY(SQLITE3_LIBRARY_RELEASE NAMES sqlite3 )
-FIND_LIBRARY(SQLITE3_LIBRARY_DEBUG NAMES sqlite3 sqlite3d HINTS /usr/lib/debug/usr/lib/ )
-IF( SQLITE3_LIBRARY_RELEASE OR SQLITE3_LIBRARY_DEBUG AND SQLITE3_INCLUDE_DIR )
-SET( SQLITE3_FOUND TRUE )
-ENDIF( SQLITE3_LIBRARY_RELEASE OR SQLITE3_LIBRARY_DEBUG AND SQLITE3_INCLUDE_DIR )
-IF( SQLITE3_LIBRARY_DEBUG AND SQLITE3_LIBRARY_RELEASE )
-# if the generator supports configuration types then set
-# optimized and debug libraries, or if the CMAKE_BUILD_TYPE has a value
-IF( CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE )
-SET( SQLITE3_LIBRARIES optimized ${SQLITE3_LIBRARY_RELEASE} debug ${SQLITE3_LIBRARY_DEBUG} )
-ELSE( CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE )
-# if there are no configuration types and CMAKE_BUILD_TYPE has no value
-# then just use the release libraries
-SET( SQLITE3_LIBRARIES ${SQLITE3_LIBRARY_RELEASE} )
-ENDIF( CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE )
-ELSEIF( SQLITE3_LIBRARY_RELEASE )
-SET( SQLITE3_LIBRARIES ${SQLITE3_LIBRARY_RELEASE} )
-ELSE( SQLITE3_LIBRARY_DEBUG AND SQLITE3_LIBRARY_RELEASE )
-SET( SQLITE3_LIBRARIES ${SQLITE3_LIBRARY_DEBUG} )
-ENDIF( SQLITE3_LIBRARY_DEBUG AND SQLITE3_LIBRARY_RELEASE )
-IF( SQLITE3_FOUND )
-IF( NOT SQLITE3_FIND_QUIETLY )
-MESSAGE( STATUS "Found Sqlite3 header file in ${SQLITE3_INCLUDE_DIR}")
-MESSAGE( STATUS "Found Sqlite3 libraries: ${SQLITE3_LIBRARIES}")
-ENDIF( NOT SQLITE3_FIND_QUIETLY )
-ELSE(SQLITE3_FOUND)
-IF( SQLITE3_FIND_REQUIRED)
-MESSAGE( FATAL_ERROR "Could not find Sqlite3" )
-ELSE( SQLITE3_FIND_REQUIRED)
-MESSAGE( STATUS "Optional package Sqlite3 was not found" )
-ENDIF( SQLITE3_FIND_REQUIRED)
-ENDIF(SQLITE3_FOUND)
+# The CERN Tape Archive(CTA) project
+# Copyright(C) 2015  CERN
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This module will set the following variables:
+#     SQLITE_FOUND
+#     SQLITE_INCLUDE_DIRS
+
+find_path (SQLITE_INCLUDE_DIRS
+  sqlite3.h
+  PATHS /usr/include
+  NO_DEFAULT_PATH)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(sqlite DEFAULT_MSG
+  SQLITE_INCLUDE_DIRS)
