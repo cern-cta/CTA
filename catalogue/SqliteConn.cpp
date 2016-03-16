@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteConn.hpp"
+#include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
@@ -79,4 +81,27 @@ void cta::catalogue::SqliteConn::execNonQuery(const std::string &sql) {
     sqlite3_free(errMsg);
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// createStmt
+//------------------------------------------------------------------------------
+cta::catalogue::SqliteStmt *cta::catalogue::SqliteConn::createStmt(
+  const std::string &sql) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  sqlite3_stmt *stmt = NULL;
+  const int nByte = -1; // Read SQL up to first null terminator
+  const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt,
+    NULL);
+  if(SQLITE_OK != prepareRc) {
+    sqlite3_finalize(stmt);
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": Failed to prepare SQL statement " << sql << ": " <<
+      sqlite3_errmsg(m_conn);
+    throw ex;
+  }
+
+  return new SqliteStmt(sql, stmt);
 }

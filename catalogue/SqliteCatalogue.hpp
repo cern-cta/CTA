@@ -164,7 +164,7 @@ private:
   /**
    * The connection to the underlying relational database.
    */
-  SqliteConn m_conn;
+  mutable SqliteConn m_conn;
 
   /**
    * Creates the database schema.

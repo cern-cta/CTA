@@ -17,32 +17,31 @@
  */
 
 #include "catalogue/Sqlite.hpp"
+#include "catalogue/SqliteConn.hpp"
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteStmt::SqliteStmt(const SqliteConn &conn,
-  const std::string &sql): m_sql(sql) {
-  m_stmt = NULL;
-  const int nByte = -1; // Read SQL up to first null terminator
-  const int prepareRc = sqlite3_prepare_v2(conn.get(), sql.c_str(), nByte,
-    &m_stmt, NULL);
-  if(SQLITE_OK != prepareRc) {
-    sqlite3_finalize(m_stmt);
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Failed to prepare SQL statement " << sql;
-    throw ex;
-  }
-} 
+cta::catalogue::SqliteStmt::SqliteStmt(const std::string &sql,
+  sqlite3_stmt *const stmt):
+  m_sql(sql),
+  m_stmt(stmt) {
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::catalogue::SqliteStmt::~SqliteStmt() throw() {
   sqlite3_finalize(m_stmt);
+}
+
+//------------------------------------------------------------------------------
+// getSql
+//------------------------------------------------------------------------------
+const std::string &cta::catalogue::SqliteStmt::getSql() const {
+  return m_sql;
 }
 
 //------------------------------------------------------------------------------

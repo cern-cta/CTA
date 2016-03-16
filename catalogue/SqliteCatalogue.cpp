@@ -20,6 +20,7 @@
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <memory>
 #include <sqlite3.h>
 #include <time.h>
 
@@ -152,6 +153,48 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(LOGICAL_LIBRARY_NAME)"
+    ");"
+
+    "CREATE TABLE TAPE("
+      "VID                  TEXT,"
+      "LOGICAL_LIBRARY_NAME TEXT,"
+      "TAPE_POOL_NAME       TEXT,"
+      "ENCRYPTION_KEY       TEXT,"
+      "CAPACITY_IN_BYTES    INTEGER,"
+      "DATA_IN_BYTES        INTEGER,"
+      "LAST_FSEQ            INTEGER,"
+      "IS_BUSY              INTEGER,"
+      "IS_DISABLED          INTEGER,"
+      "IS_FULL              INTEGER,"
+      "LBP_IS_ON            INTEGER,"
+
+      "LABEL_DRIVE TEXT,"
+      "LABEL_TIME  INTEGER,"
+
+      "LAST_READ_DRIVE TEXT,"
+      "LAST_READ_TIME  INTEGER,"
+
+      "LAST_WRITE_DRIVE TEXT,"
+      "LAST_WRITE_TIME  INTEGER,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(VID),"
+
+      "FOREIGN KEY(LOGICAL_LIBRARY_NAME) REFERENCES "
+        "LOGICAL_LIBRARY(LOGICAL_LIBRARY_NAME),"
+      "FOREIGN KEY(TAPE_POOL_NAME) REFERENCES "
+        "TAPE_POOL(TAPE_POOL_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -213,18 +256,18 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":USER_NAME", user.name);
-  stmt.bind(":GROUP_NAME", user.group);
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":USER_NAME", user.name);
+  stmt->bind(":GROUP_NAME", user.group);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -255,41 +298,41 @@ std::list<cta::common::dataStructures::AdminUser>
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ADMIN_USER";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::AdminUser admin;
 
     common::dataStructures::UserIdentity adminUI;
-    adminUI.name = stmt.columnText(nameToIdx["USER_NAME"]);
-    adminUI.group = stmt.columnText(nameToIdx["GROUP_NAME"]);
+    adminUI.name = stmt->columnText(nameToIdx["USER_NAME"]);
+    adminUI.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
 
     admin.user = adminUI;
 
-    admin.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    admin.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     admin.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     admin.lastModificationLog = updateLog;
 
@@ -341,17 +384,17 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":HOST_NAME", hostName);
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":HOST_NAME", hostName);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -380,36 +423,36 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ADMIN_HOST";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::AdminHost host;
 
-    host.name = stmt.columnText(nameToIdx["HOST_NAME"]);
-    host.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    host.name = stmt->columnText(nameToIdx["HOST_NAME"]);
+    host.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     host.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     host.lastModificationLog = updateLog;
 
@@ -464,19 +507,19 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":STORAGE_CLASS_NAME", name);
-  stmt.bind(":NB_COPIES", nbCopies);
+  stmt->bind(":STORAGE_CLASS_NAME", name);
+  stmt->bind(":NB_COPIES", nbCopies);
 
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -507,37 +550,37 @@ std::list<cta::common::dataStructures::StorageClass>
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM STORAGE_CLASS";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::StorageClass storageClass;
 
-    storageClass.name = stmt.columnText(nameToIdx["STORAGE_CLASS_NAME"]);
-    storageClass.nbCopies = stmt.columnUint64(nameToIdx["NB_COPIES"]);
-    storageClass.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    storageClass.name = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+    storageClass.nbCopies = stmt->columnUint64(nameToIdx["NB_COPIES"]);
+    storageClass.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     storageClass.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     storageClass.lastModificationLog = updateLog;
 
@@ -600,20 +643,20 @@ void cta::catalogue::SqliteCatalogue::createTapePool(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":TAPE_POOL_NAME", name);
-  stmt.bind(":NB_PARTIAL_TAPES", nbPartialTapes);
-  stmt.bind(":IS_ENCRYPTED", encryptionValue);
+  stmt->bind(":TAPE_POOL_NAME", name);
+  stmt->bind(":NB_PARTIAL_TAPES", nbPartialTapes);
+  stmt->bind(":IS_ENCRYPTED", encryptionValue);
 
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -645,39 +688,39 @@ std::list<cta::common::dataStructures::TapePool>
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM TAPE_POOL";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::TapePool pool;
 
-    pool.name = stmt.columnText(nameToIdx["TAPE_POOL_NAME"]);
-    pool.nbPartialTapes = stmt.columnUint64(nameToIdx["NB_PARTIAL_TAPES"]);
-    pool.encryption = stmt.columnUint64(nameToIdx["IS_ENCRYPTED"]);
+    pool.name = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
+    pool.nbPartialTapes = stmt->columnUint64(nameToIdx["NB_PARTIAL_TAPES"]);
+    pool.encryption = stmt->columnUint64(nameToIdx["IS_ENCRYPTED"]);
 
-    pool.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    pool.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     pool.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     pool.lastModificationLog = updateLog;
 
@@ -745,20 +788,20 @@ void cta::catalogue::SqliteCatalogue::createArchiveRoute(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":STORAGE_CLASS_NAME", storageClassName);
-  stmt.bind(":COPY_NB", copyNb);
-  stmt.bind(":TAPE_POOL_NAME", tapePoolName);
+  stmt->bind(":STORAGE_CLASS_NAME", storageClassName);
+  stmt->bind(":COPY_NB", copyNb);
+  stmt->bind(":TAPE_POOL_NAME", tapePoolName);
 
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -790,39 +833,39 @@ std::list<cta::common::dataStructures::ArchiveRoute>
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ARCHIVE_ROUTE";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::ArchiveRoute route;
 
-    route.storageClassName = stmt.columnText(nameToIdx["STORAGE_CLASS_NAME"]);
-    route.copyNb = stmt.columnUint64(nameToIdx["COPY_NB"]);
-    route.tapePoolName = stmt.columnText(nameToIdx["TAPE_POOL_NAME"]);
+    route.storageClassName = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+    route.copyNb = stmt->columnUint64(nameToIdx["COPY_NB"]);
+    route.tapePoolName = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
 
-    route.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    route.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     route.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     route.lastModificationLog = updateLog;
 
@@ -879,18 +922,18 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
       ":CREATION_LOG_GROUP_NAME,"
       ":CREATION_LOG_HOST_NAME,"
       ":CREATION_LOG_TIME);";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt.bind(":LOGICAL_LIBRARY_NAME", name);
+  stmt->bind(":LOGICAL_LIBRARY_NAME", name);
 
-  stmt.bind(":COMMENT", comment);
+  stmt->bind(":COMMENT", comment);
 
-  stmt.bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-  stmt.bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-  stmt.bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-  stmt.bind(":CREATION_LOG_TIME", now);
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
 
-  stmt.step();
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -920,37 +963,37 @@ std::list<cta::common::dataStructures::LogicalLibrary>
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM LOGICAL_LIBRARY";
-  SqliteStmt stmt(m_conn, sql);
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
-  while(SQLITE_ROW == stmt.step()) {
+  while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
-      nameToIdx = stmt.getColumnNameToIdx();
+      nameToIdx = stmt->getColumnNameToIdx();
     }
     common::dataStructures::LogicalLibrary lib;
 
-    lib.name = stmt.columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
+    lib.name = stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
 
-    lib.comment = stmt.columnText(nameToIdx["COMMENT"]);
+    lib.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = stmt.columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
-    creatorUI.group = stmt.columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
-    creationLog.host = stmt.columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
-    creationLog.time = stmt.columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
 
     lib.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt.columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt.columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt.columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt.columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
 
     lib.lastModificationLog = updateLog;
 
@@ -968,8 +1011,116 @@ void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const common::
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-                          const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createTape(
+  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid,
+  const std::string &logicalLibraryName,
+  const std::string &tapePoolName,
+  const std::string &encryptionKey,
+  const uint64_t capacityInBytes,
+  const bool disabledValue,
+  const bool fullValue,
+  const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO TAPE("
+      "VID,"
+      "LOGICAL_LIBRARY_NAME,"
+      "TAPE_POOL_NAME,"
+      "ENCRYPTION_KEY,"
+      "CAPACITY_IN_BYTES,"
+      "DATA_IN_BYTES,"
+      "LAST_FSEQ,"
+      "IS_BUSY,"
+      "IS_DISABLED,"
+      "IS_FULL,"
+      "LBP_IS_ON,"
+
+      "LABEL_DRIVE,"
+      "LABEL_TIME,"
+
+      "LAST_READ_DRIVE,"
+      "LAST_READ_TIME,"
+
+      "LAST_WRITE_DRIVE,"
+      "LAST_WRITE_TIME,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":VID,"
+      ":LOGICAL_LIBRARY_NAME,"
+      ":TAPE_POOL_NAME,"
+      ":ENCRYPTION_KEY,"
+      ":CAPACITY_IN_BYTES,"
+      ":DATA_IN_BYTES,"
+      ":LAST_FSEQ,"
+      ":IS_BUSY,"
+      ":IS_DISABLED,"
+      ":IS_FULL,"
+      ":LBP_IS_ON,"
+
+      ":LABEL_DRIVE,"
+      ":LABEL_TIME,"
+
+      ":LAST_READ_DRIVE,"
+      ":LAST_READ_TIME,"
+
+      ":LAST_WRITE_DRIVE,"
+      ":LAST_WRITE_TIME,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+
+  stmt->bind(":VID", vid);
+  stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+  stmt->bind(":TAPE_POOL_NAME", tapePoolName);
+  stmt->bind(":ENCRYPTION_KEY", encryptionKey);
+  stmt->bind(":CAPACITY_IN_BYTES", capacityInBytes);
+  stmt->bind(":DATA_IN_BYTES", 0);
+  stmt->bind(":LAST_FSEQ", 0);
+  stmt->bind(":IS_BUSY", 0);
+  stmt->bind(":IS_DISABLED", disabledValue);
+  stmt->bind(":IS_FULL", fullValue);
+  stmt->bind(":LBP_IS_ON", 1);
+
+  stmt->bind(":LABEL_DRIVE", "");
+  stmt->bind(":LABEL_TIME", 0);
+
+  stmt->bind(":LAST_READ_DRIVE", "");
+  stmt->bind(":LAST_READ_TIME", 0);
+
+  stmt->bind(":LAST_WRITE_DRIVE", "");
+  stmt->bind(":LAST_WRITE_TIME", 0);
+
+  stmt->bind(":COMMENT", comment);
+
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
+
+  stmt->step();
+}
 
 //------------------------------------------------------------------------------
 // deleteTape
@@ -979,8 +1130,110 @@ void cta::catalogue::SqliteCatalogue::deleteTape(const std::string &vid) {}
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape> cta::catalogue::SqliteCatalogue::getTapes(const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) { return std::list<cta::common::dataStructures::Tape>();}
+std::list<cta::common::dataStructures::Tape>
+  cta::catalogue::SqliteCatalogue::getTapes(
+  const std::string &vid,
+  const std::string &logicalLibraryName,
+  const std::string &tapePoolName,
+  const std::string &capacityInBytes,
+  const std::string &disabledValue,
+  const std::string &fullValue,
+  const std::string &busyValue,
+  const std::string &lbpValue) {
+  std::list<cta::common::dataStructures::Tape> tapes;
+  const char *const sql =
+    "SELECT "
+      "VID                  AS VID,"
+      "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+      "TAPE_POOL_NAME       AS TAPE_POOL_NAME,"
+      "ENCRYPTION_KEY       AS ENCRYPTION_KEY,"
+      "CAPACITY_IN_BYTES    AS CAPACITY_IN_BYTES,"
+      "DATA_IN_BYTES        AS DATA_IN_BYTES,"
+      "LAST_FSEQ            AS LAST_FSEQ,"
+      "IS_BUSY              AS IS_BUSY,"
+      "IS_DISABLED          AS IS_DISABLED,"
+      "IS_FULL              AS IS_FULL,"
+      "LBP_IS_ON            AS LBP_IS_ON,"
+
+      "LABEL_DRIVE AS LABEL_DRIVE,"
+      "LABEL_TIME  AS LABEL_TIME,"
+
+      "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+      "LAST_READ_TIME  AS LAST_READ_TIME,"
+
+      "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+      "LAST_WRITE_TIME  AS LAST_WRITE_TIME,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM TAPE";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::Tape tape;
+
+    tape.vid = stmt->columnText(nameToIdx["VID"]);
+    tape.logicalLibraryName = stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
+    tape.tapePoolName = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
+    tape.encryptionKey = stmt->columnText(nameToIdx["ENCRYPTION_KEY"]);
+    tape.capacityInBytes = stmt->columnUint64(nameToIdx["CAPACITY_IN_BYTES"]);
+    tape.dataOnTapeInBytes = stmt->columnUint64(nameToIdx["DATA_IN_BYTES"]);
+    tape.lastFSeq = stmt->columnUint64(nameToIdx["LAST_FSEQ"]);
+    tape.busy = stmt->columnUint64(nameToIdx["IS_BUSY"]);
+    tape.disabled = stmt->columnUint64(nameToIdx["IS_DISABLED"]);
+    tape.full = stmt->columnUint64(nameToIdx["IS_FULL"]);
+    tape.lbp = stmt->columnUint64(nameToIdx["LBP_IS_ON"]);
+
+    tape.labelLog.drive = stmt->columnText(nameToIdx["LABEL_DRIVE"]);
+    tape.labelLog.time = stmt->columnUint64(nameToIdx["LABEL_TIME"]);
+
+    tape.lastReadLog.drive = stmt->columnText(nameToIdx["LAST_READ_DRIVE"]);
+    tape.lastReadLog.time = stmt->columnUint64(nameToIdx["LAST_READ_TIME"]);
+
+    tape.lastWriteLog.drive = stmt->columnText(nameToIdx["LAST_WRITE_DRIVE"]);
+    tape.lastWriteLog.time = stmt->columnUint64(nameToIdx["LAST_WRITE_TIME"]);
+
+    tape.comment = stmt->columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    tape.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    tape.lastModificationLog = updateLog;
+
+    tapes.push_back(tape);
+  }
+
+  return tapes;
+}
 
 //------------------------------------------------------------------------------
 // reclaimTape
@@ -1277,9 +1530,9 @@ bool cta::catalogue::SqliteCatalogue::userIsAdmin(const std::string &userName)
       "USER_NAME AS USER_NAME "
     "FROM ADMIN_USER WHERE "
       "USER_NAME = :USER_NAME;";
-  SqliteStmt stmt(m_conn, sql);
-  stmt.bind(":USER_NAME", userName);
-  if(SQLITE_ROW == stmt.step()) {
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":USER_NAME", userName);
+  if(SQLITE_ROW == stmt->step()) {
     return true;
   } else {
     return false;
@@ -1296,9 +1549,9 @@ bool cta::catalogue::SqliteCatalogue::hostIsAdmin(const std::string &hostName)
       "HOST_NAME AS HOST_NAME "
     "FROM ADMIN_HOST WHERE "
       "HOST_NAME = :HOST_NAME;";
-  SqliteStmt stmt(m_conn, sql);
-  stmt.bind(":HOST_NAME", hostName);
-  if(SQLITE_ROW == stmt.step()) {
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":HOST_NAME", hostName);
+  if(SQLITE_ROW == stmt->step()) {
     return true;
   } else {
     return false;

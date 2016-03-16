@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "catalogue/SqliteConn.hpp"
 #include "catalogue/ColumnNameToIdx.hpp"
 
 #include <map>
@@ -30,6 +29,12 @@ namespace cta {
 namespace catalogue {
 
 /**
+ * Forward decalaration to avoid a circular depedency between SqliteConn and
+ * SqliteStmt.
+ */
+class SqliteConn;
+
+/**
  * A C++ wrapper around an SQLite prepared statement.
  */
 class SqliteStmt {
@@ -38,15 +43,22 @@ public:
   /**
    * Constructor.
    *  
-   * @param conn The SQLite database connection.
    * @param sql The SQL statement.
+   * @param stmt The SQLite prepared statement.
    */
-  SqliteStmt(const SqliteConn &conn, const std::string &sql);
+  SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt);
 
   /**
    * Destructor.
    */
   ~SqliteStmt() throw();
+
+  /**
+   * Returns the SQL statement.
+   *
+   * @return The SQL statement.
+   */
+  const std::string &getSql() const;
 
   /**
    * Returns the underlying prepared statement.
@@ -76,7 +88,7 @@ public:
    *
    * This method throws a exception if sqlite3_step() returns an error.
    *
-   * @return See sqlite3_step() documenetation.
+   * @return See sqlite3_step() documentation.
    */
   int step();
 

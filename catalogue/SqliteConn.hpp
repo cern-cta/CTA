@@ -18,11 +18,18 @@
 
 #pragma once
 
+#include <mutex>
 #include <sqlite3.h>
 #include <string>
 
 namespace cta {
 namespace catalogue {
+
+/**
+ * Forward declaraion to avoid a circular dependency beween SqliteConn and
+ * SqliteStmt.
+ */
+class SqliteStmt;
 
 /**
  * A C++ wrapper around a connectioin an SQLite database.
@@ -61,7 +68,21 @@ public:
    */
   void execNonQuery(const std::string &sql);
 
+  /**
+   * Creates a prepared statement.
+   *
+   * @sql The SQL statement.
+   * @return The prepared statement.
+   */
+  SqliteStmt *createStmt(const std::string &sql);
+
 private:
+
+  /**
+   * Mutex to be used to create a critical section around the database
+   * connection.
+   */
+  std::mutex m_mutex;
 
   /**
    * The database connection.

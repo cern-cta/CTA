@@ -68,12 +68,15 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 
   catalogue::SqliteCatalogue catalogue;
 
+  ASSERT_TRUE(catalogue.getAdminUsers().empty());
+  ASSERT_TRUE(catalogue.getAdminHosts().empty());
+
   catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -91,7 +94,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 
   {
     std::list<common::dataStructures::AdminHost> hosts;
-    ASSERT_NO_THROW(hosts = catalogue.getAdminHosts());
+    hosts = catalogue.getAdminHosts();
     ASSERT_EQ(1, hosts.size());
 
     const common::dataStructures::AdminHost host = hosts.front();
@@ -113,12 +116,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+  ASSERT_TRUE(catalogue.getAdminUsers().empty());
+
+  catalogue.createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -135,8 +140,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   }
 
   const std::string createAdminUserComment = "create admin user";
-  ASSERT_NO_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
-    createAdminUserComment));
+  catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
+    createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -183,17 +188,17 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   }
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_twice) {
   using namespace cta;
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+  catalogue.createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -209,8 +214,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_admin_twice) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  ASSERT_NO_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
-    "comment 1"));
+  catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI, "comment 1");
 
   ASSERT_THROW(catalogue.createAdminUser(m_bootstrapAdminSI, m_adminUI,
     "comment 2"), exception::Exception);
@@ -221,12 +225,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+  ASSERT_TRUE(catalogue.getAdminHosts().empty());
+
+  catalogue.createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -244,8 +250,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
 
   const std::string createAdminHostComment = "create host user";
   const std::string anotherAdminHost = "another_admin_host";
-  ASSERT_NO_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
-    anotherAdminHost, createAdminHostComment));
+  catalogue.createAdminHost(m_bootstrapAdminSI,
+    anotherAdminHost, createAdminHostComment);
 
   {
     std::list<common::dataStructures::AdminHost> hosts;
@@ -295,17 +301,17 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
   }
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_host_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_twice) {
   using namespace cta;
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_NO_THROW(catalogue.createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment));
+  catalogue.createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
-    ASSERT_NO_THROW(admins = catalogue.getAdminUsers());
+    admins = catalogue.getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
@@ -323,8 +329,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_host_twice) {
 
   const std::string anotherAdminHost = "another_admin_host";
 
-  ASSERT_NO_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
-    anotherAdminHost, "comment 1"));
+  catalogue.createAdminHost(m_bootstrapAdminSI, anotherAdminHost, "comment 1");
 
   ASSERT_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, "coment 2"), exception::Exception);
@@ -354,11 +359,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
 
   catalogue::SqliteCatalogue catalogue;
 
+  ASSERT_TRUE(catalogue.getStorageClasses().empty());
+
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
   const std::string comment = "create storage class";
-  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
-    storageClassName, nbCopies, comment));
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
     catalogue.getStorageClasses();
@@ -381,7 +387,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_name_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
   catalogue::SqliteCatalogue catalogue;
@@ -389,8 +395,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_name_twice) {
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
   const std::string comment = "create storage class";
-  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
-    storageClassName, nbCopies, comment));
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
   ASSERT_THROW(catalogue.createStorageClass(m_cliSI,
     storageClassName, nbCopies, comment), exception::Exception);
 }
@@ -399,13 +404,15 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool) {
   using namespace cta;
       
   catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getTapePools().empty());
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
   const std::string comment = "create tape pool";
-  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
-    tapePoolName, nbPartialTapes, is_encrypted, comment));
+  catalogue.createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    comment);
       
   const std::list<common::dataStructures::TapePool> pools =
     catalogue.getTapePools();
@@ -428,7 +435,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
   
-TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_name_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_twice) {
   using namespace cta;
   
   catalogue::SqliteCatalogue catalogue;
@@ -437,8 +444,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_name_twice) {
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
   const std::string comment = "create tape pool";
-  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
-    tapePoolName, nbPartialTapes, is_encrypted, comment));
+  catalogue.createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    comment);
   ASSERT_THROW(catalogue.createTapePool(m_cliSI,
     tapePoolName, nbPartialTapes, is_encrypted, comment),
     exception::Exception);
@@ -449,21 +456,23 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRoute) {
       
   catalogue::SqliteCatalogue catalogue;
 
+  ASSERT_TRUE(catalogue.getArchiveRoutes().empty());
+
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
-  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
-    storageClassName, nbCopies, "create storage class"));
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
-    tapePoolName, nbPartialTapes, is_encrypted, "create tape pool"));
+  catalogue.createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    "create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  ASSERT_NO_THROW(catalogue.createArchiveRoute(m_cliSI,
-    storageClassName, copyNb, tapePoolName, comment));
+  catalogue.createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+    comment);
       
   const std::list<common::dataStructures::ArchiveRoute> routes =
     catalogue.getArchiveRoutes();
@@ -493,19 +502,19 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice)
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
-  ASSERT_NO_THROW(catalogue.createStorageClass(m_cliSI,
-    storageClassName, nbCopies, "create storage class"));
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  ASSERT_NO_THROW(catalogue.createTapePool(m_cliSI,
-    tapePoolName, nbPartialTapes, is_encrypted, "create tape pool"));
+  catalogue.createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    "create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  ASSERT_NO_THROW(catalogue.createArchiveRoute(m_cliSI,
-    storageClassName, copyNb, tapePoolName, comment));
+  catalogue.createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+    comment);
   ASSERT_THROW(catalogue.createArchiveRoute(m_cliSI,
     storageClassName, copyNb, tapePoolName, comment),
     exception::Exception);
@@ -515,11 +524,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   using namespace cta;
       
   catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getLogicalLibraries().empty());
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  ASSERT_NO_THROW(catalogue.createLogicalLibrary(m_cliSI,
-    logicalLibraryName, comment));
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     catalogue.getLogicalLibraries();
@@ -540,18 +550,89 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
   
-TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_name_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
   using namespace cta;
   
   catalogue::SqliteCatalogue catalogue;
 
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  ASSERT_NO_THROW(catalogue.createLogicalLibrary(m_cliSI,
-    logicalLibraryName, comment));
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
   ASSERT_THROW(catalogue.createLogicalLibrary(m_cliSI,
     logicalLibraryName, comment),
     exception::Exception);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTape) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getTapes("", "", "", "", "", "", "", "").empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+
+  const std::list<common::dataStructures::Tape> tapes =
+    catalogue.getTapes("", "", "", "", "", "", "", "");
+
+  ASSERT_EQ(1, tapes.size());
+
+  const common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(encryptionKey, tape.encryptionKey);
+  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_TRUE(disabledValue == tape.disabled);
+  ASSERT_TRUE(fullValue == tape.full);
+  ASSERT_EQ(comment, tape.comment);
+
+  const common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
+  ASSERT_THROW(catalogue.createTape(m_cliSI, vid, logicalLibraryName,
+    tapePoolName, encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment), exception::Exception);
 }
 
 } // namespace unitTests

@@ -46,8 +46,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, create_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 }
 
@@ -63,8 +63,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, select_from_empty_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 
   // Select from the empty table
@@ -75,8 +75,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, select_from_empty_table) {
         "COL2,"
         "COL3 "
       "FROM TEST;";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 }
 
@@ -92,8 +92,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     SqliteStmt stmt(conn, sql);
-     ASSERT_EQ(SQLITE_DONE, stmt.step());
+     std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+     ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 
   // Insert a row into the test table
@@ -107,8 +107,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "'one',"
         "'two',"
         "3);";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 
   // Select the row back from the table
@@ -119,25 +119,25 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "COL2 AS COL2,"
         "COL3 AS COL3 "
       "FROM TEST;";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_ROW, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_ROW, stmt->step());
 
     ColumnNameToIdx nameToIdx;
-    ASSERT_NO_THROW(nameToIdx = stmt.getColumnNameToIdx());
+    ASSERT_NO_THROW(nameToIdx = stmt->getColumnNameToIdx());
 
     std::string col1;
     std::string col2;
     uint64_t col3 = 0;
 
-    ASSERT_NO_THROW(col1 = stmt.columnText(nameToIdx["COL1"]));
-    ASSERT_NO_THROW(col2 = stmt.columnText(nameToIdx["COL2"]));
-    ASSERT_NO_THROW(col3 = stmt.columnUint64(nameToIdx["COL3"]));
+    ASSERT_NO_THROW(col1 = stmt->columnText(nameToIdx["COL1"]));
+    ASSERT_NO_THROW(col2 = stmt->columnText(nameToIdx["COL2"]));
+    ASSERT_NO_THROW(col3 = stmt->columnUint64(nameToIdx["COL3"]));
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
     ASSERT_EQ((uint64_t)3, col3);
 
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 }
 
@@ -153,8 +153,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     SqliteStmt stmt(conn, sql);
-     ASSERT_EQ(SQLITE_DONE, stmt.step());
+     std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+     ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 
   // Insert a row into the test table
@@ -168,11 +168,11 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         ":COL1,"
         ":COL2,"
         ":COL3);";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_NO_THROW(stmt.bind(":COL1", "one"));
-    ASSERT_NO_THROW(stmt.bind(":COL2", "two"));
-    ASSERT_NO_THROW(stmt.bind(":COL3", 3));
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_NO_THROW(stmt->bind(":COL1", "one"));
+    ASSERT_NO_THROW(stmt->bind(":COL2", "two"));
+    ASSERT_NO_THROW(stmt->bind(":COL3", 3));
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 
   // Select the row back from the table
@@ -183,25 +183,25 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         "COL2 AS COL2,"
         "COL3 AS COL3 "
       "FROM TEST;";
-    SqliteStmt stmt(conn, sql);
-    ASSERT_EQ(SQLITE_ROW, stmt.step());
+    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    ASSERT_EQ(SQLITE_ROW, stmt->step());
 
     ColumnNameToIdx nameToIdx;
-    ASSERT_NO_THROW(nameToIdx = stmt.getColumnNameToIdx());
+    ASSERT_NO_THROW(nameToIdx = stmt->getColumnNameToIdx());
 
     std::string col1;
     std::string col2;
     uint64_t col3 = 0;
 
-    ASSERT_NO_THROW(col1 = stmt.columnText(nameToIdx["COL1"]));
-    ASSERT_NO_THROW(col2 = stmt.columnText(nameToIdx["COL2"]));
-    ASSERT_NO_THROW(col3 = stmt.columnUint64(nameToIdx["COL3"]));
+    ASSERT_NO_THROW(col1 = stmt->columnText(nameToIdx["COL1"]));
+    ASSERT_NO_THROW(col2 = stmt->columnText(nameToIdx["COL2"]));
+    ASSERT_NO_THROW(col3 = stmt->columnUint64(nameToIdx["COL3"]));
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
     ASSERT_EQ((uint64_t)3, col3);
 
-    ASSERT_EQ(SQLITE_DONE, stmt.step());
+    ASSERT_EQ(SQLITE_DONE, stmt->step());
   }
 }
 
