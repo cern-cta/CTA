@@ -22,7 +22,7 @@
 #include "common/processCap/ProcessCap.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
-#include "tapeserver/daemon/TpconfigLines.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
 #include "version.h"

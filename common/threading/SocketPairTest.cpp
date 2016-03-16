@@ -96,7 +96,6 @@ TEST(cta_threading_SocketPair, MaxLength) {
   ASSERT_EQ(smallMessage, sp.receive(SocketPair::Side::child));
   ASSERT_EQ(bigMessage, sp.receive(SocketPair::Side::child));
   ASSERT_EQ(hugeMessage, sp.receive(SocketPair::Side::child));
-  //ASSERT_THROW(sp.receive(SocketPair::Side::child), SocketPair::Overflow);
   ASSERT_EQ(smallMessage, sp.receive(SocketPair::Side::child));
 }
 

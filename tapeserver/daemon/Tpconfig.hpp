@@ -28,7 +28,7 @@ namespace cta { namespace tape { namespace daemon {
 /**
  * A list of lines parsed from a TPCONFIG file.
  */
-class TpconfigLines: public std::list<TpconfigLine> {
+class Tpconfig: public std::list<TpconfigLine> {
 public:
 
   CTA_GENERATE_EXCEPTION_CLASS(InvalidArgument);
@@ -38,7 +38,7 @@ public:
    * @param filename The filename of the TPCONFIG file.
    * @return The result of parsing the TPCONFIG file.
    */
-  static TpconfigLines parseFile(const std::string &filename);
+  static Tpconfig parseFile(const std::string &filename);
 }; // class TpconfigLines
 
 }}} // namespace cta::tape::daemon

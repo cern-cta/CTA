@@ -17,6 +17,7 @@
  */
 
 #include "tapeserver/daemon/TpconfigLine.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor.
@@ -25,9 +26,17 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
   const std::string &unitName,
   const std::string &logicalLibrary,
   const std::string &devFilename,
-  const std::string &librarySlot) throw():
+  const std::string &librarySlot):
   unitName(unitName),
   logicalLibrary(logicalLibrary),
   devFilename(devFilename),
   librarySlot(librarySlot) {
+  if (unitName.size() > maxNameLen)
+    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: unitName too long");
+  if (logicalLibrary.size() > maxNameLen)
+    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: logicalLibrary too long");
+  if (devFilename.size() > maxNameLen)
+    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: devFilename too long");
+  if (librarySlot.size() > maxNameLen)
+    throw cta::exception::Exception("In TpconfigLine::TpconfigLine: librarySlot too long");
 }

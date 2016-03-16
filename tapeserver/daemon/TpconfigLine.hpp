@@ -60,10 +60,9 @@ struct TpconfigLine {
     const std::string &unitName,
     const std::string &logicalLibrary,
     const std::string &devFilename,
-    const std::string &librarySlot) throw();
+    const std::string &librarySlot);
   
-  static const size_t maxUnitNameLen;
-  static const size_t maxLogicalLibraryNameLen;
+  static const size_t maxNameLen = 100;
 }; // struct TpconfigLine
 
 }}} // namespace cta::tape::daemon

@@ -7,11 +7,12 @@ add_library(ctatapedaemon
   TapedConfiguration.cpp
   TapeDaemon.cpp
   TpconfigLine.cpp
-  TpconfigLines.cpp)
+  Tpconfig.cpp)
 
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp
-  TapedConfigurationTests.cpp)
+  TapedConfigurationTests.cpp
+  TpconfigTests.cpp)
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon

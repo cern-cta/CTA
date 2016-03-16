@@ -40,7 +40,7 @@ void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
   if (what.size())
     w2 << what << " ";
   w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  getMessage().str(w2.str());
+  getMessage() << w2.str();
 }
 
 void Errnum::throwOnReturnedErrno (const int err, const std::string &context) {
