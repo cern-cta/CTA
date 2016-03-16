@@ -164,15 +164,26 @@ int SocketPair::getFdForAccess(Side sourceOrDestination) {
 //------------------------------------------------------------------------------
 std::string SocketPair::receive(Side source) {
   int fd=getFdForAccess(source);
-  char buff[2048];
+  // First, get the message size (using peek option)
+  ssize_t sizePeek = recv(fd, nullptr, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC);
+  if (!sizePeek) {
+    throw PeerDisconnected("In SocketPair::receive(): connection reset by peer.");
+  } else if (sizePeek < 0) {
+    if (errno == EAGAIN) {
+      throw NothingToReceive("In SocketPair::receive(): nothing to receive.");
+    } else  {
+      throw cta::exception::Errnum("In SocketPair::receive(): failed to recv(): ");
+    }
+  }
+  std::unique_ptr<char[]> buff(new char[sizePeek]);
   struct ::msghdr hdr;
   struct ::iovec iov;
   hdr.msg_name = nullptr;
   hdr.msg_namelen = 0;
   hdr.msg_iov = &iov;
   hdr.msg_iovlen = 1;
-  hdr.msg_iov->iov_base = (void*)buff;
-  hdr.msg_iov->iov_len = sizeof(buff);
+  hdr.msg_iov->iov_base = (void*)buff.get();
+  hdr.msg_iov->iov_len = sizePeek;
   hdr.msg_control = nullptr;
   hdr.msg_controllen = 0;
   hdr.msg_flags = 0;
@@ -182,7 +193,7 @@ std::string SocketPair::receive(Side source) {
       throw Overflow("In SocketPair::receive(): message was truncated.");
     }
     std::string ret;
-    ret.append(buff, size);
+    ret.append(buff.get(), size);
     return ret;
   } else if (!size) {
     throw PeerDisconnected("In SocketPair::receive(): connection reset by peer.");
@@ -190,7 +201,7 @@ std::string SocketPair::receive(Side source) {
     if (errno == EAGAIN) {
       throw NothingToReceive("In SocketPair::receive(): nothing to receive.");
     } else  {
-      throw cta::exception::Errnum("In SocketPair::receive(): failed to recv(): ");
+      throw cta::exception::Errnum("In SocketPair::receive(): failed to recvmsg(): ");
     }
   }
 }

@@ -77,27 +77,26 @@ TEST(cta_threading_SocketPair, Multimessages) {
 }
 
 TEST(cta_threading_SocketPair, MaxLength) {
-  // We should be able to read up to 2048 bytes (this is an internal limit that
-  // could be raised)
-  // Limit to send is higher
-  // 1) prepare messages.
+  // Try to send and receive messages up to 100kB
   std::string smallMessage = "Hello!";
-  std::string maxMessage;
+  std::string bigMessage;
   int i = 0;
-  maxMessage.resize(2048, '.');
-  std::for_each(maxMessage.begin(), maxMessage.end(), [&](char &c){ c='A' + (i++ % 26);});
-  std::string oversizeMessage;
-  oversizeMessage.resize(2049, '.');
+  bigMessage.resize(10*1024, '.');
+  std::for_each(bigMessage.begin(), bigMessage.end(), [&](char &c){ c='A' + (i++ % 26);});
+  std::string hugeMessage;
+  hugeMessage.resize(100*1024, '.');
+  std::for_each(hugeMessage.begin(), hugeMessage.end(), [&](char &c){ c='Z' - (i++ % 26);});
   // 2) send/receive them
   using cta::server::SocketPair;
   cta::server::SocketPair sp;
   sp.send(smallMessage, SocketPair::Side::parent);
-  sp.send(maxMessage, SocketPair::Side::parent);
-  sp.send(oversizeMessage, SocketPair::Side::parent);
+  sp.send(bigMessage, SocketPair::Side::parent);
+  sp.send(hugeMessage, SocketPair::Side::parent);
   sp.send(smallMessage, SocketPair::Side::parent);
   ASSERT_EQ(smallMessage, sp.receive(SocketPair::Side::child));
-  ASSERT_EQ(maxMessage, sp.receive(SocketPair::Side::child));
-  ASSERT_THROW(sp.receive(SocketPair::Side::child), SocketPair::Overflow);
+  ASSERT_EQ(bigMessage, sp.receive(SocketPair::Side::child));
+  ASSERT_EQ(hugeMessage, sp.receive(SocketPair::Side::child));
+  //ASSERT_THROW(sp.receive(SocketPair::Side::child), SocketPair::Overflow);
   ASSERT_EQ(smallMessage, sp.receive(SocketPair::Side::child));
 }
 
