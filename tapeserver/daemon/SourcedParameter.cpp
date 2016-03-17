@@ -18,6 +18,7 @@
 
 #include "tapeserver/daemon/SourcedParameter.hpp"
 #include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include <algorithm>
 
 
@@ -90,6 +91,36 @@ void SourcedParameter<std::string>::set(const std::string & value, const std::st
   m_value = value;
   m_source = source;
   m_set = true;
+}
+
+template<>
+void SourcedParameter<time_t>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"value", m_value});
+}
+
+template<>
+void SourcedParameter<uint64_t>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"value", m_value});
+}
+
+template<>
+void SourcedParameter<std::string>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"value", m_value});
+}
+
+template<>
+void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"maxBytes", m_value.maxBytes});
+  lc.pushOrReplace({"maxFiles", m_value.maxFiles});
+}
+
+template<>
+void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"category", "TPCONFIG Entry"});
+  lc.pushOrReplace({"unitName", m_value.unitName});
+  lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
+  lc.pushOrReplace({"devFilename", m_value.devFilename});
+  lc.pushOrReplace({"librarySlot", m_value.librarySlot});
 }
 
 }}} // namespace cta::tape::daemon

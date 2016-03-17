@@ -21,6 +21,8 @@
 #include "common/exception/Exception.hpp"
 #include "tapeserver/daemon/ConfigurationFile.hpp"
 #include "common/utils/utils.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include <limits>
 
 
@@ -82,12 +84,33 @@ public:
   const std::string & category() { return m_category; }
   const std::string & key() { return m_key; }
   const std::string & source() { return m_source; }
+  
+  void log(log::Logger & logger) {
+    // We log each parameter from a fresh context
+    log::LogContext lc(logger);
+    addLogParams(lc);
+    lc.log(log::INFO, "Configuration entry");
+  }
+  
 private:
   std::string m_category;      ///< The category of the parameter
   std::string m_key;           ///< The key of the parameter
   C m_value;                   ///< The value of the parameter
   std::string m_source;        ///< The source from which the parameter was gotten.
   bool m_set = false;          ///< Flag checking if the parameter was ever set.
+  
+  /// The specific part for each value type.
+  void addLogParamForValue(log::LogContext & lc);
+  
+  /// A log param list representation of the sourced parameter.
+  void addLogParams(log::LogContext & lc) {
+    if (m_category.size())
+      lc.pushOrReplace({"category", m_category});
+    if (m_key.size())
+      lc.pushOrReplace({"key", m_key});
+    addLogParamForValue(lc);
+    lc.pushOrReplace({"source", m_source});
+  }
 };
 
 

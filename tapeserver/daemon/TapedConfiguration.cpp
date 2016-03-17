@@ -58,6 +58,30 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.fileCatalogURL.setFromConfigurationFile(cf, generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
+  
+  // If we get here, the configuration file is good enough to be logged.
+  ret.tpConfigPath.log(log);
+  
+  ret.bufferSize.log(log);
+  ret.bufferCount.log(log);
+  
+  ret.archiveFetchBytesFiles.log(log);
+  ret.archiveFlushBytesFiles.log(log);
+  ret.retrieveFetchBytesFiles.log(log);
+  
+  ret.nbDiskThreads.log(log);
+  
+  ret.wdIdleSessionTimer.log(log);
+  ret.wdMountMaxSecs.log(log);
+  ret.wdNoBlockMoveMaxSecs.log(log);
+  ret.wdScheduleMaxSecs.log(log);
+  
+  ret.objectStoreURL.log(log);
+  ret.fileCatalogURL.log(log);
+  
+  for (auto & i:ret.driveConfigs) {
+    i.second.log(log);
+  }
   return ret;
 }
 

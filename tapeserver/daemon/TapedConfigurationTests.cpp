@@ -21,6 +21,7 @@
 #include "tapeserver/daemon/ConfigurationFile.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tests/TempFile.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 namespace unitTests {
 
@@ -48,6 +49,7 @@ TEST(cta_Daemon, TapedConfiguration) {
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
+  cta::log::StdoutLogger log("unitTests");
   TempFile completeConfFile;
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
@@ -63,8 +65,9 @@ TEST(cta_Daemon, TapedConfigurationFull) {
       "drive1 lib0 /dev/tape1 lib0slot1\n"
       "drive2 lib0 /dev/tape2 lib0slot2");
   completeConfFile.stringAppend(TpConfig.path());
+  // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = 
-    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
+    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogURL.source());
