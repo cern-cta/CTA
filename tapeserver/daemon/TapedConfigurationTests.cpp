@@ -33,15 +33,50 @@ TEST(cta_Daemon, TapedConfiguration) {
   "#A good enough configuration file for taped\n"
   "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
   "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
-  );
+  "taped BufferCount 1\n"
+  "taped TpConfigPath ");
+  TempFile emptyTpConfig;
+  completeConfFile.stringAppend(emptyTpConfig.path());
   ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
-      cta::tape::daemon::SourcedParameter<std::string>::MandatoryParameterNotDefined);
+      cta::tape::daemon::SourcedParameter<uint64_t>::MandatoryParameterNotDefined);
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogURL.source());
   ASSERT_EQ("sqliteFileCatalog:///tmp/dir2", completeConfig.fileCatalogURL.value());
+}
+
+TEST(cta_Daemon, TapedConfigurationFull) {
+  TempFile completeConfFile;
+  completeConfFile.stringFill(
+  "#A good enough configuration file for taped\n"
+  "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
+  "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
+  "taped ArchiveFetchBytesFiles 1,2\n"
+  "taped ArchiveFlushBytesFiles              3 , 4 \n"
+  "taped RetrieveFetchBytesFiles  5,   6\n"
+  "taped BufferCount 1  \n"
+  "taped TpConfigPath ");
+  TempFile TpConfig;
+  TpConfig.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
+      "drive1 lib0 /dev/tape1 lib0slot1\n"
+      "drive2 lib0 /dev/tape2 lib0slot2");
+  completeConfFile.stringAppend(TpConfig.path());
+  auto completeConfig = 
+    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
+  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
+  ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
+  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogURL.source());
+  ASSERT_EQ("sqliteFileCatalog:///tmp/dir2", completeConfig.fileCatalogURL.value());
+  ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
+  ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);
+  ASSERT_EQ(3, completeConfig.archiveFlushBytesFiles.value().maxBytes);
+  ASSERT_EQ(4, completeConfig.archiveFlushBytesFiles.value().maxFiles);
+  ASSERT_EQ(5, completeConfig.retrieveFetchBytesFiles.value().maxBytes);
+  ASSERT_EQ(6, completeConfig.retrieveFetchBytesFiles.value().maxFiles);
+  ASSERT_EQ(3, completeConfig.driveConfigs.size());
+  ASSERT_EQ("/dev/tape1", completeConfig.driveConfigs.at("drive1").value().devFilename);
 }
 
 } // namespace unitTests

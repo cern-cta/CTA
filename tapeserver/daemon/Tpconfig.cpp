@@ -25,11 +25,12 @@
 #include <fstream>
 #include <algorithm>
 
+namespace cta { namespace tape { namespace daemon {
+
 //------------------------------------------------------------------------------
 // parseTpconfigFile
 //------------------------------------------------------------------------------
-cta::tape::daemon::Tpconfig 
-cta::tape::daemon::Tpconfig::parseFile(const std::string &filename) {
+Tpconfig Tpconfig::parseFile(const std::string &filename) {
   Tpconfig ret;
   // Try to open the configuration file, throwing an exception if there is a
   // failure
@@ -75,7 +76,44 @@ cta::tape::daemon::Tpconfig::parseFile(const std::string &filename) {
     // The constructor implicitly validates the lengths 
     const TpconfigLine configLine(unitName, logicalLibarry, devFilePath, librarySlot);
     // Store the value of the data-columns in the output list parameter
-    ret.push_back(TpconfigLine(configLine));
+    // Check for duplication
+    if (ret.count(configLine.unitName)) {
+      DuplicateEntry ex("In Tpconfig::parseFile(): duplicate entry for unit ");
+      ex.getMessage() << configLine.unitName << " at " << filename << ":" << lineNumber
+         << " previous at " << ret.at(configLine.unitName).source();
+      throw ex;
+    }
+    // Check there is not duplicate of the path
+    {
+      auto i = std::find_if(ret.begin(), ret.end(), 
+          [&](decltype(*ret.begin()) i)
+          {return i.second.value().devFilename == configLine.devFilename;});
+      if (ret.end() != i) {
+        DuplicateEntry ex("In Tpconfig::parseFile(): duplicate path for unit ");
+        ex.getMessage() << configLine.unitName << " at " << filename << ":" << lineNumber
+           << " previous at " << i->second.source();
+        throw ex;
+      }
+    }
+    // Check there is not duplicate of the library slot
+    {
+      auto i = std::find_if(ret.begin(), ret.end(), 
+          [&](decltype(*ret.begin()) i)
+          {return i.second.value().librarySlot == configLine.librarySlot;});
+      if (ret.end() != i) {
+        DuplicateEntry ex("In Tpconfig::parseFile(): duplicate library slot for unit ");
+        ex.getMessage() << configLine.unitName << " at " << filename << ":" << lineNumber
+           << " previous at " << i->second.source();
+        throw ex;
+      }
+    }
+    // This is a re-use of the container for the cta.conf representation.
+    // There is no category nor key here.
+    std::stringstream linestr;
+    linestr << filename << ":" << lineNumber;
+    ret.emplace(configLine.unitName, decltype(ret.begin()->second)("", "", configLine, linestr.str()));
   }
   return ret;
 }
+
+}}} // namespace cta::tape::daemon

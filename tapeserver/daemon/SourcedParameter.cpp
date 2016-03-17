@@ -17,6 +17,8 @@
  */
 
 #include "tapeserver/daemon/SourcedParameter.hpp"
+#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
+#include <algorithm>
 
 
 namespace cta {
@@ -26,13 +28,59 @@ namespace daemon {
 template<>
 void SourcedParameter<time_t>::set(const std::string & value, const std::string & source) {     
   if (!utils::isValidUInt(value)) {
-    std::stringstream err;
-    err << "In SourcedParameter::set: badly formatted integer"
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<time_t>::set() : badly formatted integer"
         << " for category=" << m_category << " key=" << m_key 
-        << " value=\'" << value << "'";
-    throw BadlyFormattedInteger(err.str());
+        << " value=\'" << value << "' at:" << source;
+    throw ex;
   }
   std::istringstream(value) >> m_value;
+  m_source = source;
+  m_set = true;
+}
+
+template<>
+void SourcedParameter<uint64_t>::set(const std::string & value, const std::string & source) {     
+  if (!utils::isValidUInt(value)) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<uint64_t>::set() : badly formatted integer"
+        << " for category=" << m_category << " key=" << m_key 
+        << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  std::istringstream(value) >> m_value;
+  m_source = source;
+  m_set = true;
+}
+
+template<>
+void SourcedParameter<FetchReportOrFlushLimits>::set(const std::string & value, 
+  const std::string & source) {
+  // We expect an entry in the form "<size limit>, <file limit>"
+  // There should be one and only one comma in the parameter.
+  if (1 != std::count(value.begin(), value.end(), ',')) {
+    BadlyFormattedSizeFileLimit ex;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only one) comma expected"
+        << " for category=" << m_category << " key=" << m_key 
+        << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  // We can now split the entry
+  std::string bytes, files;
+  size_t commaPos=value.find(',');
+  bytes=value.substr(0, commaPos);
+  files=value.substr(commaPos+1);
+  bytes=utils::trimString(bytes);
+  files=utils::trimString(files);
+  if (!(utils::isValidUInt(bytes)&&utils::isValidUInt(files))) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted integer"
+        << " for category=" << m_category << " key=" << m_key 
+        << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  std::istringstream(bytes) >> m_value.maxBytes;
+  std::istringstream(files) >> m_value.maxFiles;
   m_source = source;
   m_set = true;
 }

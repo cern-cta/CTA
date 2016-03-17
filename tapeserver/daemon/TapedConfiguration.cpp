@@ -18,6 +18,7 @@
 
 #include "TapedConfiguration.hpp"
 #include "ConfigurationFile.hpp"
+#include "Tpconfig.hpp"
 
 namespace cta { namespace tape { namespace daemon {
 //------------------------------------------------------------------------------
@@ -36,13 +37,27 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   // Parse config file
   ConfigurationFile cf(generalConfigPath);
   // Extract configuration from parsed config file
+  // TpConfig
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
+  // Memory management
+  ret.bufferSize.setFromConfigurationFile(cf, generalConfigPath);
+  ret.bufferCount.setFromConfigurationFile(cf, generalConfigPath);
+  // Batched metadata access and tape write flush parameters
+  ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
+  ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
+  ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
+  // Disk file access parameters
+  ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
+  // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
+  // The central storage access configuration
   ret.objectStoreURL.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogURL.setFromConfigurationFile(cf, generalConfigPath);
+  // Extract drive list from tpconfig + parsed config file
+  ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   return ret;
 }
 

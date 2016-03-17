@@ -18,29 +18,15 @@
 
 #pragma once
 
-#include "tapeserver/daemon/TpconfigLine.hpp"
-#include "tapeserver/daemon/SourcedParameter.hpp"
-#include "common/exception/Exception.hpp"
-
-#include <map>
-
 namespace cta { namespace tape { namespace daemon {
 
-/**
- * A map of lines parsed from a TPCONFIG file (key is the drive name)
- */
-class Tpconfig: public std::map<std::string, SourcedParameter<TpconfigLine>> {
-public:
-
-  CTA_GENERATE_EXCEPTION_CLASS(InvalidArgument);
-  CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
-  /**
-   * Parses the specified TPCONFIG file.
-   *
-   * @param filename The filename of the TPCONFIG file.
-   * @return The result of parsing the TPCONFIG file.
-   */
-  static Tpconfig parseFile(const std::string &filename);
-}; // class TpconfigLines
+/** The structure representing the maximum number of bytes and files 
+ cta-taped will fetch or report in one access to the object store*/
+struct FetchReportOrFlushLimits {
+  uint64_t maxBytes;
+  uint64_t maxFiles;
+  FetchReportOrFlushLimits(): maxBytes(0), maxFiles(0) {}
+  FetchReportOrFlushLimits(uint64_t bytes, uint64_t files): maxBytes(bytes), maxFiles(files) {}
+};
 
 }}} // namespace cta::tape::daemon

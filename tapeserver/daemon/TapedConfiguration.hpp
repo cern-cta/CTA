@@ -21,10 +21,11 @@
 #include <map>
 #include <type_traits>
 #include <limits>
-#include "DriveConfiguration.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "SourcedParameter.hpp"
+#include "FetchReportOrFlushLimits.hpp"
+#include "Tpconfig.hpp"
 
 namespace cta {
 namespace tape {
@@ -47,9 +48,39 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   /// Path to the file describing the tape drives (TPCONFIG)
   SourcedParameter<std::string> tpConfigPath = decltype(tpConfigPath)
-     ("taped" , "tpConfigPath", "/etc/cta/TPCONFIG", "Compile time default");
+     ("taped" , "TpConfigPath", "/etc/cta/TPCONFIG", "Compile time default");
   /// Extracted drives configuration.
-  std::map<std::string, DriveConfiguration> driveConfigs;
+  Tpconfig driveConfigs;
+  //----------------------------------------------------------------------------
+  // Memory management
+  //----------------------------------------------------------------------------
+  /// Memory buffer size (with a default of 5MB). TODO-switch to 32MB once validated in CASTOR.
+  SourcedParameter<uint64_t> bufferSize = decltype(bufferSize)
+    ("taped", "BufferSize", 5*1025*1024, "Compile time default");
+  /// Memory buffer count per drive. There is no default to this one.
+  SourcedParameter<uint64_t> bufferCount = decltype(bufferCount)
+    ("taped", "BufferCount");
+  //----------------------------------------------------------------------------
+  // Batched metadata access and tape write flush parameters 
+  //----------------------------------------------------------------------------
+  /// The fetch size for archive requests 
+  SourcedParameter<FetchReportOrFlushLimits> archiveFetchBytesFiles =  
+    decltype(archiveFetchBytesFiles)
+    ("taped", "ArchiveFetchBytesFiles", {80L*1000*1000*1000, 500}, "Compile time default");
+  /// The flush to tape criteria for archiving
+  SourcedParameter<FetchReportOrFlushLimits> archiveFlushBytesFiles =
+    decltype(archiveFlushBytesFiles)
+    ("taped", "ArchiveFlushBytesFiles", {32L*1000*1000*1000, 200}, "Compile time default");
+  /// The fetch and report size for retrieve requests 
+  SourcedParameter<FetchReportOrFlushLimits> retrieveFetchBytesFiles =  
+    decltype(retrieveFetchBytesFiles)
+    ("taped", "RetrieveFetchBytesFiles", {80L*1000*1000*1000, 500}, "Compile time default");
+  //----------------------------------------------------------------------------
+  // Disk file access parameters
+  //----------------------------------------------------------------------------
+  /// Number of disk threads. This is the number of parallel file transfers.
+  SourcedParameter<uint64_t> nbDiskThreads = decltype(nbDiskThreads)
+    ("taped", "NbDiskThreads", 10, "Compile time default");
   //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------

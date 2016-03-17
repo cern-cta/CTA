@@ -23,8 +23,8 @@
 //------------------------------------------------------------------------------
 cta::exception::Exception::Exception(const std::string &context,
   const bool embedBacktrace) : 
-  m_message(context),
   m_backtrace(!embedBacktrace) {
+  m_message << context;
 }
 
 //------------------------------------------------------------------------------

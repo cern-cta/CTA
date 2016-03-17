@@ -75,15 +75,40 @@ TEST(cta_Daemon, Tpconfig_base) {
   ASSERT_EQ(3, tpc.size());
   int i=0;
   for(auto & t: tpc) {
-    ASSERT_EQ("drive", t.unitName.substr(0,5));
-    ASSERT_EQ("lib0", t.logicalLibrary);
-    ASSERT_EQ("/dev/tape", t.devFilename.substr(0,9));
-    ASSERT_EQ("lib0slot", t.librarySlot.substr(0,8));
-    ASSERT_EQ('0'+i, t.unitName.back());
-    ASSERT_EQ('0'+i, t.devFilename.back());
-    ASSERT_EQ('0'+i, t.librarySlot.back());
+    ASSERT_EQ("drive", t.second.value().unitName.substr(0,5));
+    ASSERT_EQ("lib0", t.second.value().logicalLibrary);
+    ASSERT_EQ("/dev/tape", t.second.value().devFilename.substr(0,9));
+    ASSERT_EQ("lib0slot", t.second.value().librarySlot.substr(0,8));
+    ASSERT_EQ('0'+i, t.second.value().unitName.back());
+    ASSERT_EQ('0'+i, t.second.value().devFilename.back());
+    ASSERT_EQ('0'+i, t.second.value().librarySlot.back());
     i++;
   }
+}
+
+TEST(cta_Daemon, Tpconfig_duplicates) {
+  TempFile tf;
+  // Test duplicate unit name
+  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
+      "drive1 lib0 /dev/tape1 lib0slot1\n"
+      "drive0 lib0 /dev/tape2 lib0slot2");
+  ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
+  // Test duplicate path
+  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
+      "drive1 lib0 /dev/tape1 lib0slot1\n"
+      "drive2 lib0 /dev/tape0 lib0slot2");
+  ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
+  // Test duplicate slot
+  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
+      "drive1 lib0 /dev/tape1 lib0slot1\n"
+      "drive2 lib0 /dev/tape2 lib0slot0");
+  ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
+  // No duplication.
+  // Test duplicate slot
+  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
+      "drive1 lib0 /dev/tape1 lib0slot1\n"
+      "drive2 lib0 /dev/tape2 lib0slot2");
+  cta::tape::daemon::Tpconfig::parseFile(tf.path());
 }
 
 } // namespace unitTests
