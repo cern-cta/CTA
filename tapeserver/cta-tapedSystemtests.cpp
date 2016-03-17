@@ -50,12 +50,15 @@ TEST(cta_taped, InvocationTests) {
   {
     // We provide le daemon with an existing (but almost empty) configuration
     // file. The mandatory fields are present.
-    unitTests::TempFile tf;
-    tf.stringAppend(
+    unitTests::TempFile ctaConf, tpConfig;
+    ctaConf.stringAppend(
       "#A good enough configuration file for taped\n"
       "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
-      "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n");
-    Subprocess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", tf.path()}));
+      "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
+      "taped BufferCount 1\n"
+      "taped TpConfigPath ");
+    ctaConf.stringAppend(tpConfig.path());
+    Subprocess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", ctaConf.path()}));
     spNoDrive.wait();
     ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting\" Message=\"No drive found in configuration\""));
     ASSERT_TRUE(spNoDrive.stderr().empty());
