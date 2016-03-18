@@ -20,38 +20,40 @@
 
 #include "catalogue/ColumnNameToIdx.hpp"
 
-#include <map>
+#include <mutex>
+#include <occi.h>
 #include <stdint.h>
-#include <sqlite3.h>
 #include <string>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward decalaration to avoid a circular depedency between SqliteConn and
- * SqliteStmt.
+ * Forward decalaration to avoid a circular depedency between OcciConn and
+ * OcciStmt.
  */
-class SqliteConn;
+class OcciConn;
 
 /**
- * A C++ wrapper around an SQLite prepared statement.
+ * A C++ wrapper around an OCCI prepared statement.
  */
-class SqliteStmt {
+class OcciStmt {
 public:
 
   /**
    * Constructor.
    *  
    * @param sql The SQL statement.
+   * @param conn The database connection.
    * @param stmt The prepared statement.
    */
-  SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt);
+  OcciStmt(const std::string &sql, OcciConn &conn,
+    oracle::occi::Statement *const stmt);
 
   /**
    * Destructor.
    */
-  ~SqliteStmt() throw();
+  ~OcciStmt() throw();
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -64,13 +66,6 @@ public:
    * @return The SQL statement.
    */
   const std::string &getSql() const;
-
-  /**
-   * Returns the underlying prepared statement.
-   *
-   * @return the underlying prepared statemen.
-   */
-  sqlite3_stmt *get() const;
 
   /**
    * Binds an SQL parameter.
@@ -88,41 +83,6 @@ public:
    */ 
   void bind(const std::string &paramName, const std::string &paramValue);
 
-  /**
-   * Convenience wrapper around sqlite3_step().
-   *
-   * This method throws a exception if sqlite3_step() returns an error.
-   *
-   * @return See sqlite3_step() documentation.
-   */
-  int step();
-
-  /**
-   * Returns a map from column name to column index.
-   *
-   * @return a map from column name to column index.
-   */
-  ColumnNameToIdx getColumnNameToIdx() const;
-
-  /**
-   * Convenience wrapper around sqlite3_column_text().
-   *
-   * If sqlite3_column_text() returns NULL then this method returns an empty
-   * string.
-   *
-   * @param The index of the column.
-   * @return The value of the specified column.
-   */
-  std::string columnText(const int colIdx);
-
-  /**
-   * Convenience wrapper around sqlite3_column_int64().
-   *
-   * @param The index of the column.
-   * @return The value of the specified column.
-   */
-  uint64_t columnUint64(const int colIdx);
-
 private:
 
   /**
@@ -136,16 +96,14 @@ private:
   const std::string m_sql;
 
   /**
-   * The prepared statement.
+   * The database connection.
    */
-  sqlite3_stmt *m_stmt;
+  OcciConn &m_conn;
 
   /**
-   * Returns the index of the SQL parameter with the specified name.
-   *
-   * This method throws an exception if the parameter is not found.
+   * The prepared statement.
    */
-  int getParamIndex(const std::string &paramName);
+  oracle::occi::Statement *m_stmt;
 
 }; // class SqlLiteStmt
 

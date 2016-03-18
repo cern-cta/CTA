@@ -34,7 +34,23 @@ cta::catalogue::SqliteStmt::SqliteStmt(const std::string &sql,
 // destructor
 //------------------------------------------------------------------------------
 cta::catalogue::SqliteStmt::~SqliteStmt() throw() {
-  sqlite3_finalize(m_stmt);
+  try {
+    close(); // Idempotent close() method
+  } catch(...) {
+    // Destructor does not throw
+  }
+}
+
+//------------------------------------------------------------------------------
+// close
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteStmt::close() {
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  if(NULL != m_stmt) {
+    sqlite3_finalize(m_stmt);
+    m_stmt = NULL;
+  }
 }
 
 //------------------------------------------------------------------------------

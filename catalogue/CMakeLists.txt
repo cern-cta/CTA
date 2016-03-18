@@ -15,13 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
+find_package (oracle-instantclient REQUIRED)
 find_package (sqlite REQUIRED)
+
+include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   ColumnNameToIdx.cpp
   DbLogin.cpp
   DummyCatalogue.cpp
+  OcciConn.cpp
+  OcciStmt.cpp
   Sqlite.cpp
   SqliteCatalogue.cpp
   SqliteConn.cpp

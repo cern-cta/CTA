@@ -18,36 +18,40 @@
 
 #pragma once
 
+#include "catalogue/DbLogin.hpp"
+
+#include <occi.h>
 #include <mutex>
-#include <sqlite3.h>
 #include <string>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaraion to avoid a circular dependency beween SqliteConn and
- * SqliteStmt.
+ * Forward declaraion to avoid a circular dependency beween OcciConn and
+ * OcciStmt.
  */
-class SqliteStmt;
+class OcciStmt;
 
 /**
- * A C++ wrapper around a connection to an SQLite database.
+ * A C++ wrapper around a connection to an OCCI database.
  */
-class SqliteConn {
+class OcciConn {
 public:
 
   /**
    * Constructor.
    *
-   * @param filename The filename to be passed to the sqlite3_open() function.
+   * @param env The OCCI environment.
+   * @param dbLogin The database connetion details.
    */
-  SqliteConn(const std::string &filename);
+  OcciConn(oracle::occi::Environment *const env,
+    const DbLogin &dbLogin);
 
   /**
    * Destructor.
    */
-  ~SqliteConn() throw();
+  ~OcciConn() throw();
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -55,23 +59,20 @@ public:
   void close();
 
   /**
-   * Returns the underlying database connection.
+   * Returns the underlying OCCI connection.
    *
-   * @return the underlying database connection.
+   * This method will always return a valid pointer.
+   *
+   * @return The underlying OCCI connection.
    */
-  sqlite3 *get() const;
+  oracle::occi::Connection *get() const;
 
   /**
-   * Enables foreign key constraints.
-   */
-  void enableForeignKeys();
-
-  /**
-   * Executes the specified non-query SQL statement.
+   * An alias for the get() method.
    *
-   * @param sql The SQL statement.
+   * @return The underlying OCCI connection.
    */
-  void execNonQuery(const std::string &sql);
+  oracle::occi::Connection *operator->() const;
 
   /**
    * Creates a prepared statement.
@@ -79,7 +80,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  SqliteStmt *createStmt(const std::string &sql);
+  OcciStmt *createStmt(const std::string &sql);
 
 private:
 
@@ -89,11 +90,16 @@ private:
   std::mutex m_mutex;
 
   /**
-   * The database connection.
+   * The OCCI environment.
    */
-  sqlite3 *m_conn;
+  oracle::occi::Environment *m_env;
 
-}; // class SqliteConn
+  /**
+   * The OCCI connection.
+   */
+  oracle::occi::Connection *m_conn;
+
+}; // class OcciConn
 
 } // namespace catalogue
 } // namespace cta

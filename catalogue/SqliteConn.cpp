@@ -39,7 +39,19 @@ cta::catalogue::SqliteConn::SqliteConn(const std::string &filename) {
 // destructor
 //------------------------------------------------------------------------------
 cta::catalogue::SqliteConn::~SqliteConn() throw() {
-  sqlite3_close(m_conn);
+  close();
+}
+
+//------------------------------------------------------------------------------
+// close
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteConn::close() {
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  if(m_conn != NULL) {
+    sqlite3_close(m_conn);
+    m_conn = NULL;
+  }
 }
 
 //------------------------------------------------------------------------------
