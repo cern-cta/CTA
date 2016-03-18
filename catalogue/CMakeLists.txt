@@ -36,6 +36,8 @@ set (CATALOGUE_LIB_SRC_FILES
 add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})
 
+install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 target_link_libraries (ctacatalogue
   ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})

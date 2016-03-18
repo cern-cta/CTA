@@ -121,6 +121,7 @@ CERN Tape Archive:
 The shared libraries
 %files -n cta-lib
 %defattr(-,root,root)
+%attr(0755,root,root) %{_libdir}/libctacatalogue.so
 %attr(0755,root,root) %{_libdir}/libctacommon.so
 %attr(0755,root,root) %{_libdir}/libctanameserver.so
 %attr(0755,root,root) %{_libdir}/libctaremotens.so
