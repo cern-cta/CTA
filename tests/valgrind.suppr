@@ -317,3 +317,119 @@
    fun:start_thread
    fun:clone
 }
+{
+   OCIEnvCreate_1
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta9catalogue7OcciEnvC1Ev
+   fun:_ZN9unitTests42cta_catalogue_OcciEnvTest_constructor_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+}
+{
+   OCIEnvCreate_2
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:slpmadp
+   fun:lpmapd
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta9catalogue7OcciEnvC1Ev
+   fun:_ZN9unitTests42cta_catalogue_OcciEnvTest_constructor_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+}
+{
+   OCIEnvCreate_3
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:slpmadp
+   fun:lpmapd
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta9catalogue7OcciEnvC1Ev
+   fun:_ZN9unitTests42cta_catalogue_OcciEnvTest_constructor_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+}
+{
+   OCIEnvCreate_4
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:slzsetevar
+   fun:lfvSetOHome
+   fun:slpmloclfv
+   fun:slpmloc
+   fun:lpmloadpkg
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+}
+{
+   oracle_misc_1
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:ssMemMalloc
+   fun:sltsmxi
+   fun:lmmhpinit
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpminitm
+   fun:lpminit
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+}
+{
+   OCIEnvCreate_5
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:ssMemMalloc
+   fun:sltsmxi
+   fun:lmmhpinit
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpmloadpkg
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+}
+{
+   oracle_misc_2
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:ssMemCalloc
+   fun:slwmmgetmem
+   fun:lmmstvrt
+   fun:lmmstchnk
+   fun:lmmstsml
+   fun:lmmstmalloc
+   fun:lmmmalloc
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpminitm
+   fun:lpminit
+}

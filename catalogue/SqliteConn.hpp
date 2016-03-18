@@ -32,7 +32,7 @@ namespace catalogue {
 class SqliteStmt;
 
 /**
- * A C++ wrapper around a connection to an SQLite database.
+ * A convenience wrapper around a connection to an SQLite database.
  */
 class SqliteConn {
 public:

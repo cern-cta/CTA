@@ -26,16 +26,22 @@ set (CATALOGUE_LIB_SRC_FILES
   DbLogin.cpp
   DummyCatalogue.cpp
   OcciConn.cpp
+  OcciEnv.cpp
   OcciStmt.cpp
   Sqlite.cpp
   SqliteCatalogue.cpp
   SqliteConn.cpp
   SqliteStmt.cpp)
 
-add_library (ctacatalogue
+add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})
 
+target_link_libraries (ctacatalogue
+  ${ORACLE-INSTANTCLIENT_LIBRARIES}
+  ${SQLITE_LIBRARIES})
+
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  OcciEnvTest.cpp
   SqliteCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
@@ -43,7 +49,6 @@ add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
 
 target_link_libraries (ctacatalogueunittests
-  ctacatalogue
-  ${SQLITE_LIBRARIES})
+  ctacatalogue)
 
 install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -35,7 +35,7 @@ namespace catalogue {
 class OcciConn;
 
 /**
- * A C++ wrapper around an OCCI prepared statement.
+ * A convenience wrapper around an OCCI prepared statement.
  */
 class OcciStmt {
 public:

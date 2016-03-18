@@ -34,7 +34,7 @@ namespace catalogue {
 class OcciStmt;
 
 /**
- * A C++ wrapper around a connection to an OCCI database.
+ * A convenience wrapper around a connection to an OCCI database.
  */
 class OcciConn {
 public:

@@ -35,7 +35,7 @@ namespace catalogue {
 class SqliteConn;
 
 /**
- * A C++ wrapper around an SQLite prepared statement.
+ * A convenience wrapper around an SQLite prepared statement.
  */
 class SqliteStmt {
 public:
