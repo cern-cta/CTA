@@ -340,7 +340,7 @@
    ...
 }
 {
-   oracle_ssMemMalloc
+   oracle_ssMemMalloc_1
    Memcheck:Leak
    match-leak-kinds: possible
    fun:malloc
@@ -348,9 +348,25 @@
    ...
 }
 {
-   oracle_ssMemCalloc
+   oracle_ssMemMalloc_2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:ssMemMalloc
+   ...
+}
+{
+   oracle_ssMemCalloc_1
    Memcheck:Leak
    match-leak-kinds: possible
+   fun:calloc
+   fun:ssMemCalloc
+   ...
+}
+{
+   oracle_ssMemCalloc_2
+   Memcheck:Leak
+   match-leak-kinds: reachable
    fun:calloc
    fun:ssMemCalloc
    ...
@@ -369,7 +385,7 @@
    ...
 }
 {
-   oracle_dbgc_iset_adr_par1
+   oracle_dbgc_iset_adr_par1_1
    Memcheck:Addr16
    fun:__intel_sse2_strcpy
    fun:dbgc_iset_adr_par1
@@ -406,5 +422,30 @@
    oracle_slpmloclfv
    Memcheck:Addr16
    fun:slpmloclfv
+   ...
+}
+{
+   oracle_skgfrpini
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:__alloc_dir
+   fun:skgfrpini
+   ...
+}
+{
+   oracle_lxldalc
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:lxldalc
+   ...
+}
+{
+   oracle_sltskyc
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:sltskyc
    ...
 }
