@@ -383,6 +383,19 @@
    ...
 }
 {
+   oracle_dbgc_iset_adr_par1_3
+   Memcheck:Addr16
+   fun:dbgc_iset_adr_par1
+   ...
+}
+{
+   oracle_dbgc_iset_adr_par1_4
+   Memcheck:Addr4
+   fun:__intel_sse2_strcpy
+   fun:dbgc_iset_adr_par1
+   ...
+}
+{
    oracle_nlstddt_do_alter_trace
    Memcheck:Addr16
    fun:__intel_sse2_strlen
@@ -390,7 +403,7 @@
    ...
 }
 {
-   <insert_a_suppression_name_here>
+   oracle_slpmloclfv
    Memcheck:Addr16
    fun:slpmloclfv
    ...
