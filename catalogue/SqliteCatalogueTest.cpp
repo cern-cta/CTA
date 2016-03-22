@@ -635,4 +635,118 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
     comment), exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getMountGroups().empty());
+
+  const std::string name = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveFilesQueued = 2;
+  const uint64_t minArchiveBytesQueued = 3;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveFilesQueued = 6;
+  const uint64_t minRetrieveBytesQueued = 7;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+  const std::string &comment = "create mount group";
+
+  catalogue.createMountGroup(
+    m_cliSI,
+    name,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    comment);
+
+  const std::list<common::dataStructures::MountGroup> groups =
+    catalogue.getMountGroups();
+
+  ASSERT_EQ(1, groups.size());
+
+  const common::dataStructures::MountGroup group = groups.front();
+
+  ASSERT_EQ(name, group.name);
+
+  ASSERT_EQ(archivePriority, group.archive_priority);
+  ASSERT_EQ(minArchiveFilesQueued, group.archive_minFilesQueued);
+  ASSERT_EQ(minArchiveBytesQueued, group.archive_minBytesQueued);
+  ASSERT_EQ(minArchiveRequestAge, group.archive_minRequestAge);
+
+  ASSERT_EQ(retrievePriority, group.retrieve_priority);
+  ASSERT_EQ(minRetrieveFilesQueued, group.retrieve_minFilesQueued);
+  ASSERT_EQ(minRetrieveBytesQueued, group.retrieve_minBytesQueued);
+  ASSERT_EQ(minRetrieveRequestAge, group.retrieve_minRequestAge);
+
+  ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
+
+  ASSERT_EQ(comment, group.comment);
+
+  const common::dataStructures::EntryLog creationLog = group.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    group.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup_same_twice) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getMountGroups().empty());
+
+  const std::string name = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveFilesQueued = 2;
+  const uint64_t minArchiveBytesQueued = 3;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveFilesQueued = 6;
+  const uint64_t minRetrieveBytesQueued = 7;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+  const std::string &comment = "create mount group";
+
+  catalogue.createMountGroup(
+    m_cliSI,
+    name,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    comment);
+
+  ASSERT_THROW(catalogue.createMountGroup(
+    m_cliSI,
+    name,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    comment), exception::Exception);
+}
+
 } // namespace unitTests

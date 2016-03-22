@@ -195,6 +195,35 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "LOGICAL_LIBRARY(LOGICAL_LIBRARY_NAME),"
       "FOREIGN KEY(TAPE_POOL_NAME) REFERENCES "
         "TAPE_POOL(TAPE_POOL_NAME)"
+    ");"
+    "CREATE TABLE MOUNT_GROUP("
+      "MOUNT_GROUP_NAME,"
+
+      "ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_FILES_QUEUED,"
+      "MIN_ARCHIVE_BYTES_QUEUED,"
+      "MIN_ARCHIVE_REQUEST_AGE,"
+
+      "RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_FILES_QUEUED,"
+      "MIN_RETRIEVE_BYTES_QUEUED,"
+      "MIN_RETRIEVE_REQUEST_AGE,"
+
+      "MAX_DRIVES_ALLOWED,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(MOUNT_GROUP_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -245,6 +274,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
     "VALUES("
       ":USER_NAME,"
       ":GROUP_NAME,"
+
       ":COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
@@ -260,6 +290,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
 
   stmt->bind(":USER_NAME", user.name);
   stmt->bind(":GROUP_NAME", user.group);
+
   stmt->bind(":COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
@@ -387,6 +418,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":HOST_NAME", hostName);
+
   stmt->bind(":COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
@@ -1185,7 +1217,8 @@ std::list<cta::common::dataStructures::Tape>
     common::dataStructures::Tape tape;
 
     tape.vid = stmt->columnText(nameToIdx["VID"]);
-    tape.logicalLibraryName = stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
+    tape.logicalLibraryName =
+      stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
     tape.tapePoolName = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
     tape.encryptionKey = stmt->columnText(nameToIdx["ENCRYPTION_KEY"]);
     tape.capacityInBytes = stmt->columnUint64(nameToIdx["CAPACITY_IN_BYTES"]);
@@ -1303,7 +1336,13 @@ void cta::catalogue::SqliteCatalogue::modifyTapeComment(const common::dataStruct
 //------------------------------------------------------------------------------
 // createUser
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createUser(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name,
+  const std::string &group,
+  const std::string &mountGroup,
+  const std::string &comment) {
+}
 
 //------------------------------------------------------------------------------
 // deleteUser
@@ -1328,9 +1367,98 @@ void cta::catalogue::SqliteCatalogue::modifyUserComment(const common::dataStruct
 //------------------------------------------------------------------------------
 // createMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
-                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::createMountGroup(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name,
+  const uint64_t archivePriority,
+  const uint64_t minArchiveFilesQueued, 
+  const uint64_t minArchiveBytesQueued,
+  const uint64_t minArchiveRequestAge,
+  const uint64_t retrievePriority,
+  const uint64_t minRetrieveFilesQueued,
+  const uint64_t minRetrieveBytesQueued,
+  const uint64_t minRetrieveRequestAge,
+  const uint64_t maxDrivesAllowed,
+  const std::string &comment) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO MOUNT_GROUP("
+      "MOUNT_GROUP_NAME,"
+
+      "ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_FILES_QUEUED,"
+      "MIN_ARCHIVE_BYTES_QUEUED,"
+      "MIN_ARCHIVE_REQUEST_AGE,"
+
+      "RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_FILES_QUEUED,"
+      "MIN_RETRIEVE_BYTES_QUEUED,"
+      "MIN_RETRIEVE_REQUEST_AGE,"
+
+      "MAX_DRIVES_ALLOWED,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":MOUNT_GROUP_NAME,"
+
+      ":ARCHIVE_PRIORITY,"
+      ":MIN_ARCHIVE_FILES_QUEUED,"
+      ":MIN_ARCHIVE_BYTES_QUEUED,"
+      ":MIN_ARCHIVE_REQUEST_AGE,"
+
+      ":RETRIEVE_PRIORITY,"
+      ":MIN_RETRIEVE_FILES_QUEUED,"
+      ":MIN_RETRIEVE_BYTES_QUEUED,"
+      ":MIN_RETRIEVE_REQUEST_AGE,"
+
+      ":MAX_DRIVES_ALLOWED,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+
+  stmt->bind(":MOUNT_GROUP_NAME", name);
+
+  stmt->bind(":ARCHIVE_PRIORITY", archivePriority);
+  stmt->bind(":MIN_ARCHIVE_FILES_QUEUED", minArchiveFilesQueued);
+  stmt->bind(":MIN_ARCHIVE_BYTES_QUEUED", minArchiveBytesQueued);
+  stmt->bind(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
+
+  stmt->bind(":RETRIEVE_PRIORITY", retrievePriority);
+  stmt->bind(":MIN_RETRIEVE_FILES_QUEUED", minRetrieveFilesQueued);
+  stmt->bind(":MIN_RETRIEVE_BYTES_QUEUED", minRetrieveBytesQueued);
+  stmt->bind(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
+
+  stmt->bind(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
+
+  stmt->bind(":COMMENT", comment);
+
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
+
+  stmt->step();
+}
 
 //------------------------------------------------------------------------------
 // deleteMountGroup
@@ -1340,7 +1468,96 @@ void cta::catalogue::SqliteCatalogue::deleteMountGroup(const std::string &name) 
 //------------------------------------------------------------------------------
 // getMountGroups
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::getMountGroups() const { return std::list<cta::common::dataStructures::MountGroup>();}
+std::list<cta::common::dataStructures::MountGroup>
+  cta::catalogue::SqliteCatalogue::getMountGroups() const {
+  std::list<cta::common::dataStructures::MountGroup> groups;
+  const char *const sql =
+    "SELECT "
+      "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
+
+      "ARCHIVE_PRIORITY         AS ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_FILES_QUEUED AS MIN_ARCHIVE_FILES_QUEUED,"
+      "MIN_ARCHIVE_BYTES_QUEUED AS MIN_ARCHIVE_BYTES_QUEUED,"
+      "MIN_ARCHIVE_REQUEST_AGE  AS MIN_ARCHIVE_REQUEST_AGE,"
+
+      "RETRIEVE_PRIORITY         AS RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_FILES_QUEUED AS MIN_RETRIEVE_FILES_QUEUED,"
+      "MIN_RETRIEVE_BYTES_QUEUED AS MIN_RETRIEVE_BYTES_QUEUED,"
+      "MIN_RETRIEVE_REQUEST_AGE  AS MIN_RETRIEVE_REQUEST_AGE,"
+
+      "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM MOUNT_GROUP";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::MountGroup group;
+
+    group.name = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
+
+    group.archive_priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
+    group.archive_minFilesQueued =
+      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_FILES_QUEUED"]);
+    group.archive_minBytesQueued =
+      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_BYTES_QUEUED"]);
+    group.archive_minRequestAge =
+      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
+
+    group.retrieve_priority =
+      stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
+    group.retrieve_minFilesQueued =
+      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_FILES_QUEUED"]);
+    group.retrieve_minBytesQueued =
+      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_BYTES_QUEUED"]);
+    group.retrieve_minRequestAge =
+      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
+
+    group.maxDrivesAllowed =
+      stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
+
+    group.comment = stmt->columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    group.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    group.lastModificationLog = updateLog;
+
+    groups.push_back(group);
+  }
+
+  return groups;
+}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchivePriority
