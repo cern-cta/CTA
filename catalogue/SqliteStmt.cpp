@@ -28,6 +28,12 @@ cta::catalogue::SqliteStmt::SqliteStmt(const std::string &sql,
   sqlite3_stmt *const stmt):
   m_sql(sql),
   m_stmt(stmt) {
+  if(NULL == stmt) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": The prepared statement is a NULL pointer";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------

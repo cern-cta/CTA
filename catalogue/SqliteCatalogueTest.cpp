@@ -749,4 +749,97 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup_same_twice) {
     comment), exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getUsers().empty());
+
+  const std::string mountGroupName = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveFilesQueued = 2;
+  const uint64_t minArchiveBytesQueued = 3;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveFilesQueued = 6;
+  const uint64_t minRetrieveBytesQueued = 7;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  catalogue.createMountGroup(
+    m_cliSI,
+    mountGroupName,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+
+  const std::string comment = "create user";
+  const std::string name = "name";
+  const std::string group = "group";
+  catalogue.createUser(m_cliSI, name, group, mountGroupName, comment);
+
+  std::list<common::dataStructures::User> users;
+  users = catalogue.getUsers();
+  ASSERT_EQ(1, users.size());
+
+  const common::dataStructures::User user = users.front();
+
+  ASSERT_EQ(name, user.name);
+  ASSERT_EQ(group, user.group);
+  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(comment, user.comment);
+  ASSERT_EQ(m_cliSI.user, user.creationLog.user);
+  ASSERT_EQ(m_cliSI.host, user.creationLog.host);
+  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getUsers().empty());
+
+  const std::string mountGroupName = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveFilesQueued = 2;
+  const uint64_t minArchiveBytesQueued = 3;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveFilesQueued = 6;
+  const uint64_t minRetrieveBytesQueued = 7;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  catalogue.createMountGroup(
+    m_cliSI,
+    mountGroupName,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+  
+  const std::string comment = "create user";
+  const std::string name = "name";
+  const std::string group = "group";
+  const std::string mountGroup = "mount_group";
+  catalogue.createUser(m_cliSI, name, group, mountGroup, comment);
+  ASSERT_THROW(catalogue.createUser(m_cliSI, name, group, mountGroup, comment),
+    exception::Exception);
+}
+
 } // namespace unitTests

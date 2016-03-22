@@ -37,8 +37,8 @@ cta::catalogue::SqliteCatalogue::SqliteCatalogue(): m_conn(":memory:") {
 void cta::catalogue::SqliteCatalogue::createDbSchema() {
   const char *const sql = 
     "CREATE TABLE ADMIN_USER("
-      "USER_NAME  TEXT,"
-      "GROUP_NAME TEXT,"
+      "ADMIN_USER_NAME  TEXT,"
+      "ADMIN_GROUP_NAME TEXT,"
 
       "COMMENT TEXT,"
 
@@ -52,11 +52,11 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_HOST_NAME  TEXT,"
       "LAST_MOD_TIME       INTEGER,"
 
-      "PRIMARY KEY(USER_NAME)"
+      "PRIMARY KEY(ADMIN_USER_NAME)"
     ");"
 
     "CREATE TABLE ADMIN_HOST("
-      "HOST_NAME TEXT,"
+      "ADMIN_HOST_NAME TEXT,"
 
       "COMMENT TEXT,"
 
@@ -70,7 +70,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_HOST_NAME  TEXT,"
       "LAST_MOD_TIME       INTEGER,"
 
-      "PRIMARY KEY(HOST_NAME)"
+      "PRIMARY KEY(ADMIN_HOST_NAME)"
     ");"
 
     "CREATE TABLE STORAGE_CLASS("
@@ -197,19 +197,19 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "TAPE_POOL(TAPE_POOL_NAME)"
     ");"
     "CREATE TABLE MOUNT_GROUP("
-      "MOUNT_GROUP_NAME,"
+      "MOUNT_GROUP_NAME TEXT,"
 
-      "ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_FILES_QUEUED,"
-      "MIN_ARCHIVE_BYTES_QUEUED,"
-      "MIN_ARCHIVE_REQUEST_AGE,"
+      "ARCHIVE_PRIORITY         INTEGER,"
+      "MIN_ARCHIVE_FILES_QUEUED INTEGER,"
+      "MIN_ARCHIVE_BYTES_QUEUED INTEGER,"
+      "MIN_ARCHIVE_REQUEST_AGE  INTEGER,"
 
-      "RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_FILES_QUEUED,"
-      "MIN_RETRIEVE_BYTES_QUEUED,"
-      "MIN_RETRIEVE_REQUEST_AGE,"
+      "RETRIEVE_PRIORITY         INTEGER,"
+      "MIN_RETRIEVE_FILES_QUEUED INTEGER,"
+      "MIN_RETRIEVE_BYTES_QUEUED INTEGER,"
+      "MIN_RETRIEVE_REQUEST_AGE  INTEGER,"
 
-      "MAX_DRIVES_ALLOWED,"
+      "MAX_DRIVES_ALLOWED INTEGER,"
 
       "COMMENT TEXT,"
 
@@ -224,6 +224,27 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(MOUNT_GROUP_NAME)"
+    ");"
+    "CREATE TABLE USER("
+      "USER_NAME  TEXT,"
+      "GROUP_NAME TEXT,"
+      "MOUNT_GROUP_NAME TEXT,"
+
+      "COMMENT TEXT,"
+
+      "CREATION_LOG_USER_NAME  TEXT,"
+      "CREATION_LOG_GROUP_NAME TEXT,"
+      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_TIME       INTEGER,"
+
+      "LAST_MOD_USER_NAME  TEXT,"
+      "LAST_MOD_GROUP_NAME TEXT,"
+      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_TIME       INTEGER,"
+
+      "PRIMARY KEY(USER_NAME),"
+      "FOREIGN KEY(MOUNT_GROUP_NAME) REFERENCES "
+        "MOUNT_GROUP(MOUNT_GROUP_NAME)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -257,8 +278,8 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
   const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO ADMIN_USER("
-      "USER_NAME,"
-      "GROUP_NAME,"
+      "ADMIN_USER_NAME,"
+      "ADMIN_GROUP_NAME,"
 
       "COMMENT,"
 
@@ -272,8 +293,8 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       "LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME)"
     "VALUES("
-      ":USER_NAME,"
-      ":GROUP_NAME,"
+      ":ADMIN_USER_NAME,"
+      ":ADMIN_GROUP_NAME,"
 
       ":COMMENT,"
 
@@ -288,8 +309,8 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       ":CREATION_LOG_TIME);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":USER_NAME", user.name);
-  stmt->bind(":GROUP_NAME", user.group);
+  stmt->bind(":ADMIN_USER_NAME", user.name);
+  stmt->bind(":ADMIN_GROUP_NAME", user.group);
 
   stmt->bind(":COMMENT", comment);
 
@@ -314,8 +335,8 @@ std::list<cta::common::dataStructures::AdminUser>
   std::list<common::dataStructures::AdminUser> admins;
   const char *const sql =
     "SELECT "
-      "USER_NAME  AS USER_NAME,"
-      "GROUP_NAME AS GROUP_NAME,"
+      "ADMIN_USER_NAME  AS ADMIN_USER_NAME,"
+      "ADMIN_GROUP_NAME AS ADMIN_GROUP_NAME,"
 
       "COMMENT AS COMMENT,"
 
@@ -328,7 +349,7 @@ std::list<cta::common::dataStructures::AdminUser>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM ADMIN_USER";
+    "FROM ADMIN_USER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -338,8 +359,8 @@ std::list<cta::common::dataStructures::AdminUser>
     common::dataStructures::AdminUser admin;
 
     common::dataStructures::UserIdentity adminUI;
-    adminUI.name = stmt->columnText(nameToIdx["USER_NAME"]);
-    adminUI.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
+    adminUI.name = stmt->columnText(nameToIdx["ADMIN_USER_NAME"]);
+    adminUI.group = stmt->columnText(nameToIdx["ADMIN_GROUP_NAME"]);
 
     admin.user = adminUI;
 
@@ -388,7 +409,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
   const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO ADMIN_HOST("
-      "HOST_NAME,"
+      "ADMIN_HOST_NAME,"
 
       "COMMENT,"
 
@@ -402,7 +423,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
       "LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME)"
     "VALUES("
-      ":HOST_NAME,"
+      ":ADMIN_HOST_NAME,"
 
       ":COMMENT,"
 
@@ -417,7 +438,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
       ":CREATION_LOG_TIME);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":HOST_NAME", hostName);
+  stmt->bind(":ADMIN_HOST_NAME", hostName);
 
   stmt->bind(":COMMENT", comment);
 
@@ -441,7 +462,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
   std::list<common::dataStructures::AdminHost> hosts;
   const char *const sql =
     "SELECT "
-      "HOST_NAME AS HOST_NAME,"
+      "ADMIN_HOST_NAME AS ADMIN_HOST_NAME,"
 
       "COMMENT AS COMMENT,"
 
@@ -454,7 +475,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM ADMIN_HOST";
+    "FROM ADMIN_HOST;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -463,7 +484,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
     }
     common::dataStructures::AdminHost host;
 
-    host.name = stmt->columnText(nameToIdx["HOST_NAME"]);
+    host.name = stmt->columnText(nameToIdx["ADMIN_HOST_NAME"]);
     host.comment = stmt->columnText(nameToIdx["COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
@@ -581,7 +602,7 @@ std::list<cta::common::dataStructures::StorageClass>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM STORAGE_CLASS";
+    "FROM STORAGE_CLASS;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -719,7 +740,7 @@ std::list<cta::common::dataStructures::TapePool>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM TAPE_POOL";
+    "FROM TAPE_POOL;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -864,7 +885,7 @@ std::list<cta::common::dataStructures::ArchiveRoute>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM ARCHIVE_ROUTE";
+    "FROM ARCHIVE_ROUTE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -994,7 +1015,7 @@ std::list<cta::common::dataStructures::LogicalLibrary>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM LOGICAL_LIBRARY";
+    "FROM LOGICAL_LIBRARY;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -1207,7 +1228,7 @@ std::list<cta::common::dataStructures::Tape>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM TAPE";
+    "FROM TAPE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -1342,6 +1363,54 @@ void cta::catalogue::SqliteCatalogue::createUser(
   const std::string &group,
   const std::string &mountGroup,
   const std::string &comment) {
+  const uint64_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO USER("
+      "USER_NAME,"
+      "GROUP_NAME,"
+      "MOUNT_GROUP_NAME,"
+
+      "COMMENT,"
+
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME)"
+    "VALUES("
+      ":USER_NAME,"
+      ":GROUP_NAME,"
+      ":MOUNT_GROUP_NAME,"
+
+      ":COMMENT,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
+
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_GROUP_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME);";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+
+  stmt->bind(":USER_NAME", name);
+  stmt->bind(":GROUP_NAME", group);
+  stmt->bind(":MOUNT_GROUP_NAME", mountGroup);
+
+  stmt->bind(":COMMENT", comment);
+
+  stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+  stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+  stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+  stmt->bind(":CREATION_LOG_TIME", now);
+
+  stmt->step();
 }
 
 //------------------------------------------------------------------------------
@@ -1352,7 +1421,69 @@ void cta::catalogue::SqliteCatalogue::deleteUser(const std::string &name, const 
 //------------------------------------------------------------------------------
 // getUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::User> cta::catalogue::SqliteCatalogue::getUsers() const { return std::list<cta::common::dataStructures::User>();}
+std::list<cta::common::dataStructures::User>
+  cta::catalogue::SqliteCatalogue::getUsers() const {
+  std::list<common::dataStructures::User> users;
+  const char *const sql =
+    "SELECT "
+      "USER_NAME        AS USER_NAME,"
+      "GROUP_NAME       AS GROUP_NAME,"
+      "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
+
+      "COMMENT AS COMMENT,"
+
+      "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
+      "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+
+      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
+      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
+      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
+      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+    "FROM USER;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  ColumnNameToIdx  nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::User user;
+
+    common::dataStructures::UserIdentity adminUI;
+    user.name = stmt->columnText(nameToIdx["USER_NAME"]);
+    user.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
+    user.mountGroupName = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
+
+    user.comment = stmt->columnText(nameToIdx["COMMENT"]);
+
+    common::dataStructures::UserIdentity creatorUI;
+    creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
+    creatorUI.group = stmt->columnText(nameToIdx["CREATION_LOG_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog creationLog;
+    creationLog.user = creatorUI;
+    creationLog.host = stmt->columnText(nameToIdx["CREATION_LOG_HOST_NAME"]);
+    creationLog.time = stmt->columnUint64(nameToIdx["CREATION_LOG_TIME"]);
+
+    user.creationLog = creationLog;
+
+    common::dataStructures::UserIdentity updaterUI;
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+
+    common::dataStructures::EntryLog updateLog;
+    updateLog.user = updaterUI;
+    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+
+    user.lastModificationLog = updateLog;
+
+    users.push_back(user);
+  }
+
+  return users;
+}
 
 //------------------------------------------------------------------------------
 // modifyUserMountGroup
@@ -1498,7 +1629,7 @@ std::list<cta::common::dataStructures::MountGroup>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM MOUNT_GROUP";
+    "FROM MOUNT_GROUP;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx  nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -1744,11 +1875,11 @@ bool cta::catalogue::SqliteCatalogue::userIsAdmin(const std::string &userName)
   const {
   const char *const sql =
     "SELECT "
-      "USER_NAME AS USER_NAME "
+      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
     "FROM ADMIN_USER WHERE "
-      "USER_NAME = :USER_NAME;";
+      "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":USER_NAME", userName);
+  stmt->bind(":ADMIN_USER_NAME", userName);
   if(SQLITE_ROW == stmt->step()) {
     return true;
   } else {
@@ -1763,11 +1894,11 @@ bool cta::catalogue::SqliteCatalogue::hostIsAdmin(const std::string &hostName)
   const {
   const char *const sql =
     "SELECT "
-      "HOST_NAME AS HOST_NAME "
+      "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
     "FROM ADMIN_HOST WHERE "
-      "HOST_NAME = :HOST_NAME;";
+      "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":HOST_NAME", hostName);
+  stmt->bind(":ADMIN_HOST_NAME", hostName);
   if(SQLITE_ROW == stmt->step()) {
     return true;
   } else {
