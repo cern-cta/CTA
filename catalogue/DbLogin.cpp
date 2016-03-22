@@ -89,7 +89,7 @@ namespace {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::DbLogin::DbLogin(
+cta::catalogue::DbLogin::DbLogin(
   const std::string &username,
   const std::string &password,
   const std::string &database):
@@ -101,7 +101,8 @@ cta::DbLogin::DbLogin(
 //------------------------------------------------------------------------------
 // readFromFile
 //------------------------------------------------------------------------------
-cta::DbLogin cta::DbLogin::readFromFile(const std::string &filename) {
+cta::catalogue::DbLogin cta::catalogue::DbLogin::readFromFile(
+  const std::string &filename) {
   const std::string fileFormat = "username/password@database";
   const std::list<std::string> lines = readNonEmptyLines(filename);
 

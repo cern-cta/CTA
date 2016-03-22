@@ -18,46 +18,39 @@
 
 #pragma once
 
-#include <occi.h>
 #include <mutex>
-#include <string>
+#include <occi.h>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaraion to avoid a circular dependency beween OcciConn and
- * OcciEnv.
- */
-class OcciEnv;
-
-/**
- * Forward declaraion to avoid a circular dependency beween OcciConn and
+ * Forward declaraion to avoid a circular dependency beween OcciRset and
  * OcciStmt.
  */
 class OcciStmt;
 
 /**
- * A convenience wrapper around a connection to an OCCI database.
+ * A convenience wrapper around an OCCI result set.
  */
-class OcciConn {
+class OcciRset {
 public:
 
   /**
    * Constructor.
    *
-   * This method will throw an exception if the OCCI connection is a NULL
+   * This constructor will throw an exception if the result set is a NULL
    * pointer.
    *
-   * @param env The OCCI environment.
-   * @param conn The OCCI connection.
+   * @param stmt The OCCI statement.
+   * @param rset The OCCI result set.
    */
-  OcciConn(OcciEnv &env, oracle::occi::Connection *const conn);
+  OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset);
 
   /**
    * Destructor.
    */
-  ~OcciConn() throw();
+  ~OcciRset() throw();
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -65,28 +58,20 @@ public:
   void close();
 
   /**
-   * Returns the underlying OCCI connection.
+   * Returns the underlying OCCI result set.
    *
    * This method will always return a valid pointer.
    *
-   * @return The underlying OCCI connection.
+   * @return The underlying OCCI result set.
    */
-  oracle::occi::Connection *get() const;
+  oracle::occi::ResultSet *get() const;
 
   /**
    * An alias for the get() method.
    *
-   * @return The underlying OCCI connection.
+   * @return The underlying OCCI result set.
    */
-  oracle::occi::Connection *operator->() const;
-
-  /**
-   * Creates a prepared statement.
-   *
-   * @sql The SQL statement.
-   * @return The prepared statement.
-   */
-  OcciStmt *createStmt(const std::string &sql);
+  oracle::occi::ResultSet *operator->() const;
 
 private:
 
@@ -96,16 +81,16 @@ private:
   std::mutex m_mutex;
 
   /**
-   * The OCCI environment.
+   * The OCCI statement.
    */
-  OcciEnv &m_env;
+  OcciStmt &m_stmt;
 
   /**
-   * The OCCI connection.
+   * The OCCI result set.
    */
-  oracle::occi::Connection *m_conn;
+  oracle::occi::ResultSet *m_rset;
 
-}; // class OcciConn
+}; // class OcciRset
 
 } // namespace catalogue
 } // namespace cta

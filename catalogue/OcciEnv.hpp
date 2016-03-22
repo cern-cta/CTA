@@ -23,6 +23,9 @@
 namespace cta {
 namespace catalogue {
 
+class DbLogin;
+class OcciConn;
+
 /**
  * A convenience wrapper around an OCCI environment.
  */
@@ -56,6 +59,14 @@ public:
    * @return The underlying OCCI environment.
    */
   oracle::occi::Environment *operator->() const;
+
+  /**
+   * Creates an OCCI connection.
+   *
+   * @param dbLogin The details of the database connection.
+   * @return The newly created OCCI connection.
+   */
+  OcciConn *createConn(const DbLogin &dbLogin);
 
 private:
 

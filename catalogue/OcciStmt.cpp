@@ -28,6 +28,12 @@ cta::catalogue::OcciStmt::OcciStmt(const std::string &sql, OcciConn &conn,
   m_sql(sql),
   m_conn(conn),
   m_stmt(stmt) {
+  if(NULL == stmt) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": OCCI statment is a NULL pointer";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -58,6 +64,20 @@ void cta::catalogue::OcciStmt::close() {
 //------------------------------------------------------------------------------
 const std::string &cta::catalogue::OcciStmt::getSql() const {
   return m_sql;
+}
+
+//------------------------------------------------------------------------------
+// get
+//------------------------------------------------------------------------------
+oracle::occi::Statement *cta::catalogue::OcciStmt::get() const {
+  return m_stmt;
+}
+
+//------------------------------------------------------------------------------
+// operator->
+//------------------------------------------------------------------------------
+oracle::occi::Statement *cta::catalogue::OcciStmt::operator->() const {
+  return get();
 }
 
 //------------------------------------------------------------------------------

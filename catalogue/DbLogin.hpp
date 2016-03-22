@@ -21,6 +21,7 @@
 #include <string>
 
 namespace cta {
+namespace catalogue {
 
 /**
  * A set of database login details.
@@ -67,4 +68,5 @@ struct DbLogin {
 
 }; // class DbLogin
 
+} // namespace catalogue
 } // namespace cta

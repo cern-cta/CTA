@@ -16,22 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/OcciConn.hpp"
-#include "catalogue/OcciEnv.hpp"
+#include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn::OcciConn(OcciEnv &env,
-  oracle::occi::Connection *const conn):
-  m_env(env),
-  m_conn(conn) {
-  if(NULL == conn) {
+cta::catalogue::OcciRset::OcciRset(OcciStmt &stmt,
+  oracle::occi::ResultSet *const rset):
+  m_stmt(stmt),
+  m_rset(rset) {
+  if(NULL == rset) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << "failed"
-      ": The OCCI connection is a NULL pointer";
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": The result set is a NULL pointer";
     throw ex;
   }
 }
@@ -39,52 +38,36 @@ cta::catalogue::OcciConn::OcciConn(OcciEnv &env,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn::~OcciConn() throw() {
+cta::catalogue::OcciRset::~OcciRset() throw() {
   try {
-    close(); // Idempotent close() mthod
+    close(); // Idempotenet close()
   } catch(...) {
-    // Destructor should not throw any exceptions
+    // Destructor does not throw
   }
 }
 
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciConn::close() {
+void cta::catalogue::OcciRset::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_conn != NULL) {
-    m_env->terminateConnection(m_conn);
-    m_conn = NULL;
+  if(NULL != m_rset) {
+    m_stmt->closeResultSet(m_rset);
+    m_rset = NULL;
   }
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::Connection *cta::catalogue::OcciConn::get() const {
-  return m_conn;
+oracle::occi::ResultSet *cta::catalogue::OcciRset::get() const {
+  return m_rset;
 }
 
 //------------------------------------------------------------------------------
-// operator->()
+// operator->
 //------------------------------------------------------------------------------
-oracle::occi::Connection *cta::catalogue::OcciConn::operator->() const {
+oracle::occi::ResultSet *cta::catalogue::OcciRset::operator->() const {
   return get();
-}
-
-//------------------------------------------------------------------------------
-// createStmt
-//------------------------------------------------------------------------------
-cta::catalogue::OcciStmt *cta::catalogue::OcciConn::createStmt(
-  const std::string &sql) {
-  oracle::occi::Statement *const stmt = m_conn->createStatement(sql.c_str());
-  if(NULL == stmt) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": oracle::occi::createStatement() return a NULL pointer";
-    throw ex;
-  }
-
-  return new OcciStmt(sql, *this, stmt);
 }

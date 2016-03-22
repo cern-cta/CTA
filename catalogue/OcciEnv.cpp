@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/DbLogin.hpp"
+#include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnv.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -28,7 +30,7 @@ cta::catalogue::OcciEnv::OcciEnv() {
   if(NULL == m_env) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed"
-      ": createEnvironment() returned a NULL pointer";
+      ": oracle::occi::createEnvironment() returned a NULL pointer";
     throw ex;
   }
 }
@@ -54,4 +56,22 @@ oracle::occi::Environment *cta::catalogue::OcciEnv::get() const {
 //------------------------------------------------------------------------------
 oracle::occi::Environment *cta::catalogue::OcciEnv::operator->() const {
   return get();
+}
+
+//------------------------------------------------------------------------------
+// creatConn
+//------------------------------------------------------------------------------
+cta::catalogue::OcciConn *cta::catalogue::OcciEnv::createConn(
+  const DbLogin &dbLogin) {
+  oracle::occi::Connection *const conn = m_env->createConnection(
+    dbLogin.username,
+    dbLogin.password,
+    dbLogin.database);
+  if(NULL == conn) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": oracle::occi::createConnection() returned a NULL pointer";
+    throw ex;
+  }
+  return new OcciConn(*this, conn);
 }

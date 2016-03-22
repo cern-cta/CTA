@@ -42,6 +42,9 @@ public:
 
   /**
    * Constructor.
+   *
+   * This constructor will throw an exception if the OCCI statement is a NULL
+   * pointer.
    *  
    * @param sql The SQL statement.
    * @param conn The database connection.
@@ -68,6 +71,20 @@ public:
   const std::string &getSql() const;
 
   /**
+   * Returns the underlying OCCI result set.
+   *
+   * @return The underlying OCCI result set.
+   */
+  oracle::occi::Statement *get() const;
+
+  /**
+   * Alias for the get() method.
+   *
+   * @return The underlying OCCI result set.
+   */
+  oracle::occi::Statement *operator->() const;
+
+  /**
    * Binds an SQL parameter.
    *
    * @param paramName The name of the parameter.
@@ -86,7 +103,7 @@ public:
 private:
 
   /**
-   * Mutex used to serialize access to the prepared statement.
+   * Mutex used to serialize access to this object.
    */
   std::mutex m_mutex;
 

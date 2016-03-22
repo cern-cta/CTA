@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciConn.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -34,15 +35,15 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_OcciConnTest, constructor) {
+TEST_F(cta_catalogue_OcciConnTest, constructor_null_connection) {
+  using namespace cta;
   using namespace cta::catalogue;
 
-  // WARNING - The database whose connection details are specified in the
-  // following database configuration file will be destroyed
-  const std::string testDbConfigFile = "cta_catalogue_test_db.conf";
-  const DbLogin dbLogin = DbLogin::readFromFile(testDbConfigFile);
-
-
+  OcciEnv env;
+  oracle::occi::Connection *const underlyingOcciConn = NULL;
+  std::unique_ptr<OcciConn> conn;
+  ASSERT_THROW(conn.reset(new OcciConn(env, underlyingOcciConn)),
+    exception::Exception);
 }
 
 } // namespace unitTests

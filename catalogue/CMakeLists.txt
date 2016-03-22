@@ -27,6 +27,7 @@ set (CATALOGUE_LIB_SRC_FILES
   DummyCatalogue.cpp
   OcciConn.cpp
   OcciEnv.cpp
+  OcciRset.cpp
   OcciStmt.cpp
   Sqlite.cpp
   SqliteCatalogue.cpp
@@ -43,6 +44,7 @@ target_link_libraries (ctacatalogue
   ${SQLITE_LIBRARIES})
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  OcciConnTest.cpp
   OcciEnvTest.cpp
   SqliteCatalogueTest.cpp
   SqliteStmtTest.cpp)
