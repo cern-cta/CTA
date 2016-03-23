@@ -842,4 +842,80 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
     exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "").empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+
+  common::dataStructures::ArchiveFile file;
+  file.archiveFileID = 1234; // Should be ignored
+  file.eosFileID = "EOS_file_ID";
+  file.fileSize = 1;
+  file.checksumType = "checksum_type";
+  file.checksumValue = "cheskum_value";
+  file.storageClass = storageClassName;
+
+  file.drData.drInstance = "recovery_instance";
+  file.drData.drPath = "recovery_path";
+  file.drData.drOwner = "recovery_owner";
+  file.drData.drGroup = "recovery_group";
+  file.drData.drBlob = "recovery_blob";
+
+  catalogue.createArchiveFile(file);
+
+  std::list<common::dataStructures::ArchiveFile> files;
+  files = catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "");
+  ASSERT_EQ(1, files.size());
+
+  const common::dataStructures::ArchiveFile frontFile = files.front();
+
+  ASSERT_EQ(file.eosFileID, frontFile.eosFileID);
+  ASSERT_EQ(file.fileSize, frontFile.fileSize);
+  ASSERT_EQ(file.checksumType, frontFile.checksumType);
+  ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
+  ASSERT_EQ(file.storageClass, frontFile.storageClass);
+
+  ASSERT_EQ(file.drData.drInstance, frontFile.drData.drInstance);
+  ASSERT_EQ(file.drData.drPath, frontFile.drData.drPath);
+  ASSERT_EQ(file.drData.drOwner, frontFile.drData.drOwner);
+  ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
+  ASSERT_EQ(file.drData.drBlob, frontFile.drData.drBlob);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "").empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+  common::dataStructures::ArchiveFile file;
+  file.archiveFileID = 1234; // Should be ignored
+  file.eosFileID = "EOS_file_ID";
+  file.fileSize = 1;
+  file.checksumType = "checksum_type";
+  file.checksumValue = "cheskum_value";
+  file.storageClass = storageClassName;
+
+  file.drData.drInstance = "recovery_instance";
+  file.drData.drPath = "recovery_path";
+  file.drData.drOwner = "recovery_owner";
+  file.drData.drGroup = "recovery_group";
+  file.drData.drBlob = "recovery_blob";
+
+  catalogue.createArchiveFile(file);
+  ASSERT_THROW(catalogue.createArchiveFile(file), exception::Exception);
+}
+
 } // namespace unitTests

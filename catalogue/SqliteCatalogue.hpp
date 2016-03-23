@@ -129,6 +129,19 @@ public:
   virtual void modifyDedicationUntil(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp);
   virtual void modifyDedicationComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment);
 
+  /**
+   * Creates the specified archive file without any tape copies and returns its
+   * unique identifier.
+   *
+   * @param archiveFile The archive file to be created.  Note that the
+   * archiveFileID atrribute of the file shall be ignored.
+   * @return The unique identifier of the newly created archive file.  TBD -
+   * Eric suggests that this method should return the idenitifer of the archive
+   * file and the destination tape pools, in other words the Catalogue should
+   * resolve the archive routes of the archive file given the value of its
+   * storageClass attribute.
+   */
+  virtual uint64_t createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
   virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const uint64_t id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
   virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const uint64_t id, const std::string &eosid,
@@ -188,6 +201,19 @@ private:
    * @return true if the specified host name is listed in the ADMIN_HOST table.
    */
   bool hostIsAdmin(const std::string &userName) const;
+
+  /**
+   * Returns the unique identifier of the specified archive file.  Note that
+   * this method is required by SqliteCatalogue because SQLite does not support
+   * the SQL syntax: "INSERT INTO ... VALUES ... RETURNING ... INTO ...".
+   *
+   * @param diskInstance The name of teh disk storage instance within which the
+   * specified disk file identifier is unique.
+   * @param diskFileId The disk identifier of the file.
+   * @return The unique identifier of the specified archive file.
+   */
+  uint64_t getArchiveFileId(const std::string &diskInstance,
+    const std::string &diskFileId) const;
 
 }; // class SqliteCatalogue
 

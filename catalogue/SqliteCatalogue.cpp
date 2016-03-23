@@ -245,6 +245,38 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "PRIMARY KEY(USER_NAME),"
       "FOREIGN KEY(MOUNT_GROUP_NAME) REFERENCES "
         "MOUNT_GROUP(MOUNT_GROUP_NAME)"
+    ");"
+    "CREATE TABLE ARCHIVE_FILE("
+      "ARCHIVE_FILE_ID    INTEGER AUTO INCREMENT,"
+      "DISK_INSTANCE      STRING,"
+      "DISK_FILE_ID       STRING,"
+      "FILE_SIZE          INTEGER,"
+      "CHECKSUM_TYPE      STRING,"
+      "CHECKSUM_VALUE     STRING,"
+      "STORAGE_CLASS_NAME STRING,"
+      "CREATION_TIME      INTEGER,"
+
+      "RECOVERY_PATH     STRING,"
+      "RECOVERY_OWNER    STRING,"
+      "RECOVERY_GROUP    STRING,"
+      "RECOVERY_BLOB     STRING,"
+
+      "PRIMARY KEY(ARCHIVE_FILE_ID),"
+      "FOREIGN KEY(STORAGE_CLASS_NAME) "
+        "REFERENCES STORAGE_CLASS(STORAGE_CLASS_NAME),"
+      "UNIQUE(DISK_INSTANCE, DISK_FILE_ID)"
+    ");"
+    "CREATE TABLE TAPE_FILE("
+      "VID             STRING,"
+      "FSEQ            INTEGER,"
+      "BLOCK_ID        INTEGER,"
+      "CREATION_TIME   INTEGER,"
+      "ARCHIVE_FILE_ID INTEGER,"
+
+      "PRIMARY KEY(VID, FSEQ),"
+      "FOREIGN KEY(ARCHIVE_FILE_ID) "
+        "REFERENCES ARCHIVE_FILE(ARCHIVE_FILE_ID),"
+      "UNIQUE(FSEQ, BLOCK_ID)"
     ");";
   m_conn.enableForeignKeys();
   m_conn.execNonQuery(sql);
@@ -351,7 +383,7 @@ std::list<cta::common::dataStructures::AdminUser>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ADMIN_USER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -477,7 +509,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ADMIN_HOST;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -604,7 +636,7 @@ std::list<cta::common::dataStructures::StorageClass>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM STORAGE_CLASS;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -742,7 +774,7 @@ std::list<cta::common::dataStructures::TapePool>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM TAPE_POOL;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -887,7 +919,7 @@ std::list<cta::common::dataStructures::ArchiveRoute>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM ARCHIVE_ROUTE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -1017,7 +1049,7 @@ std::list<cta::common::dataStructures::LogicalLibrary>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM LOGICAL_LIBRARY;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -1230,7 +1262,7 @@ std::list<cta::common::dataStructures::Tape>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM TAPE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -1443,7 +1475,7 @@ std::list<cta::common::dataStructures::User>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM USER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -1631,7 +1663,7 @@ std::list<cta::common::dataStructures::MountGroup>
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
     "FROM MOUNT_GROUP;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  ColumnNameToIdx  nameToIdx;
+  ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
@@ -1792,11 +1824,141 @@ void cta::catalogue::SqliteCatalogue::modifyDedicationUntil(const common::dataSt
 void cta::catalogue::SqliteCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
+// createArchiveFile
+//------------------------------------------------------------------------------
+uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
+  const common::dataStructures::ArchiveFile &archiveFile) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO ARCHIVE_FILE("
+      "DISK_INSTANCE,"
+      "DISK_FILE_ID,"
+      "FILE_SIZE,"
+      "CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME,"
+      "CREATION_TIME,"
+
+      "RECOVERY_PATH,"
+      "RECOVERY_OWNER,"
+      "RECOVERY_GROUP,"
+      "RECOVERY_BLOB)"
+
+    "VALUES("
+      ":DISK_INSTANCE,"
+      ":DISK_FILE_ID,"
+      ":FILE_SIZE,"
+      ":CHECKSUM_TYPE,"
+      ":CHECKSUM_VALUE,"
+      ":STORAGE_CLASS_NAME,"
+      ":CREATION_TIME,"
+
+      ":RECOVERY_PATH,"
+      ":RECOVERY_OWNER,"
+      ":RECOVERY_GROUP,"
+      ":RECOVERY_BLOB);";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+
+  stmt->bind(":DISK_INSTANCE", archiveFile.drData.drInstance);
+  stmt->bind(":DISK_FILE_ID", archiveFile.eosFileID);
+  stmt->bind(":FILE_SIZE", archiveFile.fileSize);
+  stmt->bind(":CHECKSUM_TYPE", archiveFile.checksumType);
+  stmt->bind(":CHECKSUM_VALUE", archiveFile.checksumValue);
+  stmt->bind(":STORAGE_CLASS_NAME", archiveFile.storageClass);
+  stmt->bind(":CREATION_TIME", now);
+
+  stmt->bind(":RECOVERY_PATH", archiveFile.drData.drPath);
+  stmt->bind(":RECOVERY_OWNER", archiveFile.drData.drOwner);
+  stmt->bind(":RECOVERY_GROUP",  archiveFile.drData.drGroup);
+  stmt->bind(":RECOVERY_BLOB", archiveFile.drData.drBlob);
+
+  stmt->step();
+
+  return getArchiveFileId(archiveFile.drData.drInstance, archiveFile.eosFileID);
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileId
+//------------------------------------------------------------------------------
+uint64_t cta::catalogue::SqliteCatalogue::getArchiveFileId(
+  const std::string &diskInstance, const std::string &diskFileId) const {
+  const char *const sql =
+    "SELECT "
+      "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+    "FROM ARCHIVE_FILE WHERE "
+      "DISK_INSTANCE = :DISK_INSTANCE AND "
+      "DISK_FILE_ID = :DISK_FILE_ID;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":DISK_INSTANCE", diskInstance);
+  stmt->bind(":DISK_FILE_ID", diskFileId);
+
+  if(SQLITE_ROW != stmt->step()) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": Could not find archive file from disk instance " << diskInstance <<
+      " with disk file ID " << diskFileId;
+    throw ex;
+  } else {
+    const ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
+    return stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
+  }
+}
+
+//------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::catalogue::SqliteCatalogue::getArchiveFiles(const uint64_t id, const std::string &eosid,
-        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return std::list<cta::common::dataStructures::ArchiveFile>(); 
+std::list<cta::common::dataStructures::ArchiveFile>
+  cta::catalogue::SqliteCatalogue::getArchiveFiles(
+  const uint64_t id,
+  const std::string &eosid,
+  const std::string &copynb,
+  const std::string &tapepool,
+  const std::string &vid,
+  const std::string &owner,
+  const std::string &group,
+  const std::string &storageclass,
+  const std::string &path) {
+  std::list<cta::common::dataStructures::ArchiveFile> files;
+  const char *const sql =
+    "SELECT "
+      "DISK_INSTANCE      AS DISK_INSTANCE,"
+      "DISK_FILE_ID       AS DISK_FILE_ID,"
+      "FILE_SIZE          AS FILE_SIZE,"
+      "CHECKSUM_TYPE      AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+      "CREATION_TIME      AS CREATION_TIME,"
+
+      "RECOVERY_PATH      AS RECOVERY_PATH,"
+      "RECOVERY_OWNER     AS RECOVERY_OWNER,"
+      "RECOVERY_GROUP     AS RECOVERY_GROUP,"
+      "RECOVERY_BLOB      AS RECOVERY_BLOB "
+
+    "FROM ARCHIVE_FILE;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::ArchiveFile file;
+
+    file.archiveFileID = id;
+    file.eosFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
+    file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
+    file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
+    file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+
+    file.drData.drInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file.drData.drPath = stmt->columnText(nameToIdx["RECOVERY_PATH"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
+    file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
+    file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
+
+    files.push_back(file);
+  }
+  return files;
 }
 
 //------------------------------------------------------------------------------
@@ -1810,8 +1972,52 @@ cta::common::dataStructures::ArchiveFileSummary cta::catalogue::SqliteCatalogue:
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::getArchiveFileById(const uint64_t id){
-  return cta::common::dataStructures::ArchiveFile();
+cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
+  getArchiveFileById(const uint64_t id) {
+  const char *const sql =
+    "SELECT "
+      "DISK_INSTANCE      AS DISK_INSTANCE,"
+      "DISK_FILE_ID       AS DISK_FILE_ID,"
+      "FILE_SIZE          AS FILE_SIZE,"
+      "CHECKSUM_TYPE      AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+      "CREATION_TIME      AS CREATION_TIME,"
+
+      "RECOVERY_PATH      AS RECOVERY_PATH,"
+      "RECOVERY_OWNER     AS RECOVERY_OWNER,"
+      "RECOVERY_GROUP     AS RECOVERY_GROUP,"
+      "RECOVERY_BLOB      AS RECOVERY_BLOB "
+
+    "FROM ARCHIVE_FILE WHERE "
+      "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":ARCHIVE_FILE_ID", id);
+
+  if(SQLITE_ROW != stmt->step()) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": Could not find archive file with ID " << id;
+    throw ex;
+  } else {
+    const ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
+    cta::common::dataStructures::ArchiveFile file;
+
+    file.archiveFileID = id;
+    file.eosFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
+    file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
+    file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
+    file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+
+    file.drData.drInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file.drData.drPath = stmt->columnText(nameToIdx["RECOVERY_PATH"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
+    file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
+    file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
+
+    return file;
+  }
 }
           
 //------------------------------------------------------------------------------
