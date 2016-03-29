@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "catalogue/Catalogue.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -53,10 +54,15 @@ public:
   virtual int sync(XrdSfsAio *aiop);
   virtual int truncate(XrdSfsFileOffset fsize);
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
-  XrdProFile(cta::Scheduler *scheduler, const char *user=0, int MonID=0);
+  XrdProFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, const char *user=0, int MonID=0);
   ~XrdProFile();
   
 protected:
+
+  /**
+   * The catalogue object pointer.
+   */
+  cta::catalogue::Catalogue *m_catalogue;
   
   /**
    * The scheduler object pointer

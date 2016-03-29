@@ -306,7 +306,15 @@ int XrdProFile::getCXinfo(char cxtype[4], int &cxrsz) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdProFile::XrdProFile(cta::Scheduler *scheduler, const char *user, int MonID): error(user, MonID), m_scheduler(scheduler), m_data("") {  
+XrdProFile::XrdProFile(
+  cta::catalogue::Catalogue *catalogue,
+  cta::Scheduler *scheduler,
+  const char *user,
+  int MonID):
+  error(user, MonID),
+  m_catalogue(catalogue),
+  m_scheduler(scheduler),
+  m_data("") {  
 }
 
 //------------------------------------------------------------------------------
@@ -428,7 +436,7 @@ void XrdProFile::xCom_bootstrap(const std::vector<std::string> &tokens, const ct
   cta::common::dataStructures::UserIdentity adminUser;
   adminUser.name=user;
   adminUser.group=group;
-  m_scheduler->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
+  m_catalogue->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
 }
 
 //------------------------------------------------------------------------------
@@ -458,18 +466,18 @@ void XrdProFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
         return;
       }
       if("add" == tokens[2]) { //add
-        m_scheduler->createAdminUser(cliIdentity, adminUser, comment);
+        m_catalogue->createAdminUser(cliIdentity, adminUser, comment);
       }
       else { //ch
-        m_scheduler->modifyAdminUserComment(cliIdentity, adminUser, comment);
+        m_catalogue->modifyAdminUserComment(cliIdentity, adminUser, comment);
       }
     }
     else { //rm
-      m_scheduler->deleteAdminUser(cliIdentity, adminUser);
+      m_catalogue->deleteAdminUser(adminUser);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::AdminUser> list= m_scheduler->getAdminUsers(cliIdentity);
+    std::list<cta::common::dataStructures::AdminUser> list= m_catalogue->getAdminUsers();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","group","c.user","c.group","c.host","c.time","m.user","m.group","m.host","m.time","comment"};
@@ -513,18 +521,18 @@ void XrdProFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
         return;
       }
       if("add" == tokens[2]) { //add
-        m_scheduler->createAdminHost(cliIdentity, hostname, comment);
+        m_catalogue->createAdminHost(cliIdentity, hostname, comment);
       }
       else { //ch
-        m_scheduler->modifyAdminHostComment(cliIdentity, hostname, comment);
+        m_catalogue->modifyAdminHostComment(cliIdentity, hostname, comment);
       }
     }
     else { //rm
-      m_scheduler->deleteAdminHost(cliIdentity, hostname);
+      m_catalogue->deleteAdminHost(hostname);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::AdminHost> list= m_scheduler->getAdminHosts(cliIdentity);
+    std::list<cta::common::dataStructures::AdminHost> list= m_catalogue->getAdminHosts();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"hostname","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -576,7 +584,7 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         return;
       }
       encryption=hasOption(tokens, "-e", "--encryption");
-      m_scheduler->createTapePool(cliIdentity, name, ptn, encryption, comment);
+      m_catalogue->createTapePool(cliIdentity, name, ptn, encryption, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber", false);
@@ -586,27 +594,27 @@ void XrdProFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         return;
       }
       if(!comment.empty()) {
-        m_scheduler->modifyTapePoolComment(cliIdentity, name, comment);
+        m_catalogue->modifyTapePoolComment(cliIdentity, name, comment);
       }
       if(!ptn_s.empty()) {
         std::stringstream ptn_ss(ptn_s);
         uint64_t ptn = 0;
         ptn_ss >> ptn;
-        m_scheduler->modifyTapePoolNbPartialTapes(cliIdentity, name, ptn);
+        m_catalogue->modifyTapePoolNbPartialTapes(cliIdentity, name, ptn);
       }
       if(hasOption(tokens, "-e", "--encryption")) {
-        m_scheduler->setTapePoolEncryption(cliIdentity, name, true);
+        m_catalogue->setTapePoolEncryption(cliIdentity, name, true);
       }
       if(hasOption(tokens, "-c", "--clear")) {
-        m_scheduler->setTapePoolEncryption(cliIdentity, name, false);
+        m_catalogue->setTapePoolEncryption(cliIdentity, name, false);
       }
     }
     else { //rm
-      m_scheduler->deleteTapePool(cliIdentity, name);
+      m_catalogue->deleteTapePool(name);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::TapePool> list= m_scheduler->getTapePools(cliIdentity);
+    std::list<cta::common::dataStructures::TapePool> list= m_catalogue->getTapePools();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","# partial tapes","encrypt","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -655,7 +663,7 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
         m_data = help.str();
         return;
       }
-      m_scheduler->createArchiveRoute(cliIdentity, scn, cn, tapepool, comment);
+      m_catalogue->createArchiveRoute(cliIdentity, scn, cn, tapepool, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
@@ -665,18 +673,18 @@ void XrdProFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
         return;
       }
       if(!comment.empty()) {
-        m_scheduler->modifyArchiveRouteComment(cliIdentity, scn, cn, comment);
+        m_catalogue->modifyArchiveRouteComment(cliIdentity, scn, cn, comment);
       }
       if(!tapepool.empty()) {
-        m_scheduler->modifyArchiveRouteTapePoolName(cliIdentity, scn, cn, tapepool);
+        m_catalogue->modifyArchiveRouteTapePoolName(cliIdentity, scn, cn, tapepool);
       }
     }
     else { //rm
-      m_scheduler->deleteArchiveRoute(cliIdentity, scn, cn);
+      m_catalogue->deleteArchiveRoute(scn, cn);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::ArchiveRoute> list= m_scheduler->getArchiveRoutes(cliIdentity);
+    std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue->getArchiveRoutes();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"storage class","copy number","tapepool","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -721,18 +729,18 @@ void XrdProFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
         return;
       }
       if("add" == tokens[2]) { //add
-        m_scheduler->createLogicalLibrary(cliIdentity, hostname, comment);
+        m_catalogue->createLogicalLibrary(cliIdentity, hostname, comment);
       }
       else { //ch
-        m_scheduler->modifyLogicalLibraryComment(cliIdentity, hostname, comment);
+        m_catalogue->modifyLogicalLibraryComment(cliIdentity, hostname, comment);
       }
     }
     else { //rm
-      m_scheduler->deleteLogicalLibrary(cliIdentity, hostname);
+      m_catalogue->deleteLogicalLibrary(hostname);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::LogicalLibrary> list= m_scheduler->getLogicalLibraries(cliIdentity);
+    std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue->getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -794,7 +802,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       disabled=hasOption(tokens, "-d", "--disabled");
       full=hasOption(tokens, "-F", "--full");
       std::string encryptionkey = getOptionValue(tokens, "-k", "--encryptionkey", false);
-      m_scheduler->createTape(cliIdentity, vid, logicallibrary, tapepool, encryptionkey, capacity, disabled, full, comment);
+      m_catalogue->createTape(cliIdentity, vid, logicallibrary, tapepool, encryptionkey, capacity, disabled, full, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
@@ -812,22 +820,22 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
         return;
       }
       if(!logicallibrary.empty()) {
-        m_scheduler->modifyTapeLogicalLibraryName(cliIdentity, vid, logicallibrary);
+        m_catalogue->modifyTapeLogicalLibraryName(cliIdentity, vid, logicallibrary);
       }
       if(!tapepool.empty()) {
-        m_scheduler->modifyTapeTapePoolName(cliIdentity, vid, tapepool);
+        m_catalogue->modifyTapeTapePoolName(cliIdentity, vid, tapepool);
       }
       if(!capacity_s.empty()) {
         std::stringstream capacity_ss(capacity_s);
         uint64_t capacity = 0;
         capacity_ss >> capacity;
-        m_scheduler->modifyTapeCapacityInBytes(cliIdentity, vid, capacity);
+        m_catalogue->modifyTapeCapacityInBytes(cliIdentity, vid, capacity);
       }
       if(!comment.empty()) {
-        m_scheduler->modifyTapeComment(cliIdentity, vid, comment);
+        m_catalogue->modifyTapeComment(cliIdentity, vid, comment);
       }
       if(!encryptionkey.empty()) {
-        m_scheduler->modifyTapeEncryptionKey(cliIdentity, vid, encryptionkey);
+        m_catalogue->modifyTapeEncryptionKey(cliIdentity, vid, encryptionkey);
       }
       if(hasOption(tokens, "-e", "--enabled")) {
         m_scheduler->setTapeDisabled(cliIdentity, vid, false);
@@ -843,13 +851,13 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       }
     }
     else if("reclaim" == tokens[2]) { //reclaim
-      m_scheduler->reclaimTape(cliIdentity, vid);
+      m_catalogue->reclaimTape(cliIdentity, vid);
     }
     else if("label" == tokens[2]) { //label
       m_scheduler->labelTape(cliIdentity, vid, hasOption(tokens, "-f", "--force"), hasOption(tokens, "-l", "--lbp"), getOptionValue(tokens, "-t", "--tag", false));
     }
     else { //rm
-      m_scheduler->deleteTape(cliIdentity, vid);
+      m_catalogue->deleteTape(vid);
     }
   }
   else if("ls" == tokens[2]) { //ls
@@ -892,7 +900,7 @@ void XrdProFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
     if(hasOption(tokens, "-P", "--nolbp")) {
       lbp = "true";
     }
-    std::list<cta::common::dataStructures::Tape> list= m_scheduler->getTapes(cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, busy, lbp);
+    std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(vid, logicallibrary, tapepool, capacity, disabled, full, busy, lbp);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","busy","full","disabled","lpb","label drive","label time",
@@ -955,7 +963,7 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
       std::stringstream cn_ss(cn_s);
       uint64_t cn = 0;
       cn_ss >> cn;
-      m_scheduler->createStorageClass(cliIdentity, scn, cn, comment);
+      m_catalogue->createStorageClass(cliIdentity, scn, cn, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
@@ -965,21 +973,21 @@ void XrdProFile::xCom_storageclass(const std::vector<std::string> &tokens, const
         return;
       }
       if(!comment.empty()) {
-        m_scheduler->modifyStorageClassComment(cliIdentity, scn, comment);
+        m_catalogue->modifyStorageClassComment(cliIdentity, scn, comment);
       }
       if(!cn_s.empty()) {  
         std::stringstream cn_ss(cn_s);
         uint64_t cn = 0;
         cn_ss >> cn;
-        m_scheduler->modifyStorageClassNbCopies(cliIdentity, scn, cn);
+        m_catalogue->modifyStorageClassNbCopies(cliIdentity, scn, cn);
       }
     }
     else { //rm
-      m_scheduler->deleteStorageClass(cliIdentity, scn);
+      m_catalogue->deleteStorageClass(scn);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::StorageClass> list= m_scheduler->getStorageClasses(cliIdentity);
+    std::list<cta::common::dataStructures::StorageClass> list= m_catalogue->getStorageClasses();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"storage class","number of copies","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -1024,7 +1032,7 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      m_scheduler->createUser(cliIdentity, user, group, mountgroup, comment);
+      m_catalogue->createUser(cliIdentity, user, group, mountgroup, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
@@ -1034,18 +1042,18 @@ void XrdProFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         return;
       }
       if(!comment.empty()) {
-        m_scheduler->modifyUserComment(cliIdentity, user, group, comment);
+        m_catalogue->modifyUserComment(cliIdentity, user, group, comment);
       }
       if(!mountgroup.empty()) {
-        m_scheduler->modifyUserMountGroup(cliIdentity, user, group, mountgroup);
+        m_catalogue->modifyUserMountGroup(cliIdentity, user, group, mountgroup);
       }
     }
     else { //rm
-      m_scheduler->deleteUser(cliIdentity, user, group);
+      m_catalogue->deleteUser(user, group);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::User> list= m_scheduler->getUsers(cliIdentity);
+    std::list<cta::common::dataStructures::User> list= m_catalogue->getUsers();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","group","cta group","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -1113,7 +1121,7 @@ void XrdProFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
         uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
         uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
-        m_scheduler->createMountGroup(cliIdentity, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
+        m_catalogue->createMountGroup(cliIdentity, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
         if(archivepriority_s.empty()&&minarchivefilesqueued_s.empty()&&minarchivebytesqueued_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
@@ -1123,51 +1131,51 @@ void XrdProFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         }
         if(!archivepriority_s.empty()) {
           uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
-          m_scheduler->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
+          m_catalogue->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
         }
         if(!minarchivefilesqueued_s.empty()) {
           uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
-          m_scheduler->modifyMountGroupArchiveMinFilesQueued(cliIdentity, group, minarchivefilesqueued);
+          m_catalogue->modifyMountGroupArchiveMinFilesQueued(cliIdentity, group, minarchivefilesqueued);
         }
         if(!minarchivebytesqueued_s.empty()) {
           uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
-          m_scheduler->modifyMountGroupArchiveMinBytesQueued(cliIdentity, group, minarchivebytesqueued);
+          m_catalogue->modifyMountGroupArchiveMinBytesQueued(cliIdentity, group, minarchivebytesqueued);
         }
         if(!minarchiverequestage_s.empty()) {
           uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
-          m_scheduler->modifyMountGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
+          m_catalogue->modifyMountGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
         }
         if(!retrievepriority_s.empty()) {
           uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
-          m_scheduler->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
+          m_catalogue->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
         }
         if(!minretrievefilesqueued_s.empty()) {
           uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
-          m_scheduler->modifyMountGroupRetrieveMinFilesQueued(cliIdentity, group, minretrievefilesqueued);
+          m_catalogue->modifyMountGroupRetrieveMinFilesQueued(cliIdentity, group, minretrievefilesqueued);
         }
         if(!minretrievebytesqueued_s.empty()) {
           uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
-          m_scheduler->modifyMountGroupRetrieveMinBytesQueued(cliIdentity, group, minretrievebytesqueued);
+          m_catalogue->modifyMountGroupRetrieveMinBytesQueued(cliIdentity, group, minretrievebytesqueued);
         }
         if(!minretrieverequestage_s.empty()) {
           uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
-          m_scheduler->modifyMountGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
+          m_catalogue->modifyMountGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
         }
         if(!maxdrivesallowed_s.empty()) {
           uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
-          m_scheduler->modifyMountGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
+          m_catalogue->modifyMountGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
         }
         if(!comment.empty()) {
-          m_scheduler->modifyMountGroupComment(cliIdentity, group, comment);
+          m_catalogue->modifyMountGroupComment(cliIdentity, group, comment);
         }
       }
     }
     else { //rm
-      m_scheduler->deleteMountGroup(cliIdentity, group);
+      m_catalogue->deleteMountGroup(group);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::MountGroup> list= m_scheduler->getMountGroups(cliIdentity);
+    std::list<cta::common::dataStructures::MountGroup> list= m_catalogue->getMountGroups();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -1244,7 +1252,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_scheduler->createDedication(cliIdentity, drive, type, mountgroup, tag, vid, from, until, comment);
+        m_catalogue->createDedication(cliIdentity, drive, type, mountgroup, tag, vid, from, until, comment);
       }
       else if("ch" == tokens[2]) { //ch
         if((comment.empty()&&from_s.empty()&&until_s.empty()&&mountgroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
@@ -1252,7 +1260,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           return;
         }
         if(!comment.empty()) {
-          m_scheduler->modifyDedicationComment(cliIdentity, drive, comment);
+          m_catalogue->modifyDedicationComment(cliIdentity, drive, comment);
         }
         if(!from_s.empty()) {
           struct tm time;
@@ -1261,7 +1269,7 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
             return;
           }
           time_t from = mktime(&time);  // timestamp in current timezone
-          m_scheduler->modifyDedicationFrom(cliIdentity, drive, from);
+          m_catalogue->modifyDedicationFrom(cliIdentity, drive, from);
         }
         if(!until_s.empty()) {
           struct tm time;
@@ -1270,31 +1278,31 @@ void XrdProFile::xCom_dedication(const std::vector<std::string> &tokens, const c
             return;
           }
           time_t until = mktime(&time);  // timestamp in current timezone
-          m_scheduler->modifyDedicationUntil(cliIdentity, drive, until);
+          m_catalogue->modifyDedicationUntil(cliIdentity, drive, until);
         }
         if(!mountgroup.empty()) {
-          m_scheduler->modifyDedicationMountGroup(cliIdentity, drive, mountgroup);
+          m_catalogue->modifyDedicationMountGroup(cliIdentity, drive, mountgroup);
         }
         if(!vid.empty()) {
-          m_scheduler->modifyDedicationVid(cliIdentity, drive, vid);
+          m_catalogue->modifyDedicationVid(cliIdentity, drive, vid);
         }
         if(!tag.empty()) {
-          m_scheduler->modifyDedicationTag(cliIdentity, drive, tag);
+          m_catalogue->modifyDedicationTag(cliIdentity, drive, tag);
         }
         if(readonly) {
-          m_scheduler->modifyDedicationType(cliIdentity, drive, cta::common::dataStructures::DedicationType::readonly);          
+          m_catalogue->modifyDedicationType(cliIdentity, drive, cta::common::dataStructures::DedicationType::readonly);          
         }
         if(writeonly) {
-          m_scheduler->modifyDedicationType(cliIdentity, drive, cta::common::dataStructures::DedicationType::writeonly);
+          m_catalogue->modifyDedicationType(cliIdentity, drive, cta::common::dataStructures::DedicationType::writeonly);
         }
       }
     }
     else { //rm
-      m_scheduler->deleteDedication(cliIdentity, drive);
+      m_catalogue->deleteDedication(drive);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::Dedication> list= m_scheduler->getDedications(cliIdentity);
+    std::list<cta::common::dataStructures::Dedication> list= m_catalogue->getDedications();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -1562,7 +1570,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
     }
     uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
     if(!summary) {
-      std::list<cta::common::dataStructures::ArchiveFile> list=m_scheduler->getArchiveFiles(cliIdentity, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+      std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       if(list.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
@@ -1591,7 +1599,7 @@ void XrdProFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_scheduler->getArchiveFileSummary(cliIdentity, id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};
@@ -1862,7 +1870,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
           currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
-          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->request.archiveFileID);
+          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
           currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
           currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
           currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
@@ -1888,7 +1896,7 @@ void XrdProFile::xCom_listpendingretrieves(const std::vector<std::string> &token
         currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
         uint64_t size=0;
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          cta::common::dataStructures::ArchiveFile file = m_scheduler->getArchiveFileById(jt->request.archiveFileID);
+          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
           size += file.fileSize;
         }
         currentRow.push_back(std::to_string((unsigned long long)size));

@@ -84,7 +84,7 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
 {  
-  return new cta::xrootPlugins::XrdProFile(&m_scheduler, user, MonID);
+  return new cta::xrootPlugins::XrdProFile(&m_catalogue, &m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------

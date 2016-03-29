@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/SqliteCatalogue.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "remotens/EosNS.hpp"
@@ -85,7 +85,7 @@ protected:
   /**
    * The CTA catalogue of tapes and tape files.
    */
-  cta::catalogue::DummyCatalogue m_catalogue;
+  cta::catalogue::SqliteCatalogue m_catalogue;
   
   /**
    * The database or object store holding all CTA persistent objects

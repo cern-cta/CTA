@@ -64,6 +64,13 @@ public:
   SchedulerTest() throw() {
   }
 
+  class FailedToGetCatalogue: public std::exception {
+  public:
+    const char *what() const throw() {
+      return "Failed to get catalogue";
+    }
+  };
+
   class FailedToGetScheduler: public std::exception {
   public:
     const char *what() const throw() {
@@ -86,6 +93,14 @@ public:
     m_db.reset();
   }
 
+  cta::catalogue::Catalogue &getCatalogue() {
+    cta::catalogue::Catalogue *const ptr = m_catalogue.get();
+    if(NULL == ptr) {
+      throw FailedToGetCatalogue();
+    }
+    return *ptr;
+  }
+    
   cta::Scheduler &getScheduler() {
     cta::Scheduler *const ptr = m_scheduler.get();
     if(NULL == ptr) {
@@ -111,6 +126,7 @@ private:
 TEST_P(SchedulerTest, archive_to_new_file) {
   using namespace cta;
 
+  catalogue::Catalogue &catalogue = getCatalogue();
   Scheduler &scheduler = getScheduler();
 
   const std::string storageClassName = "TestStorageClass";
@@ -122,19 +138,19 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost;
   s_adminOnAdminHost.user=admin;
   s_adminOnAdminHost.host="host1";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(catalogue.createStorageClass(s_adminOnAdminHost, storageClassName,
     nbCopies, storageClassComment));
 
   const std::string tapePoolName = "TestTapePool";
   const uint16_t nbPartialTapes = 1;
   const std::string tapePoolComment = "Tape-pool comment";
   const bool tapePoolEncryption = false;
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
+  ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, tapePoolName,
     nbPartialTapes, tapePoolEncryption, tapePoolComment));
 
   const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));
   
   cta::common::dataStructures::EntryLog creationLog;
