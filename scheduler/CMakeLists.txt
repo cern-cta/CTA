@@ -40,7 +40,8 @@ add_library (ctaschedulerunittests SHARED
 #  mockDB/MockSchedulerDatabase.cpp
 #  mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
-  SchedulerDatabaseTest.cpp)
+  SchedulerDatabaseTest.cpp
+  SchedulerTest.cpp)
 
 target_link_libraries (ctaschedulerunittests 
   ctascheduler)
