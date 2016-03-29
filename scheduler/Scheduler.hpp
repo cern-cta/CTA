@@ -20,23 +20,13 @@
 
 #include "catalogue/Catalogue.hpp"
 
-#include "common/dataStructures/AdminHost.hpp"
-#include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
-#include "common/dataStructures/Dedication.hpp"
-#include "common/dataStructures/DedicationType.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
-#include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/DriveState.hpp"
-#include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/ListStorageClassRequest.hpp"
-#include "common/dataStructures/LogicalLibrary.hpp"
-#include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
@@ -44,22 +34,14 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
-#include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
-#include "common/dataStructures/MountGroup.hpp"
-#include "common/dataStructures/User.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 
 #include "common/exception/Exception.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-
-#include "common/forwardDeclarations.hpp"
 
 #include <list>
 #include <map>

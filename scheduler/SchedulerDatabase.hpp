@@ -35,11 +35,44 @@
 #include "common/DriveState.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
-#include "common/forwardDeclarations.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 
 namespace cta {
+// Forward declarations for opaque references.
+namespace common {
+namespace admin {
+  class AdminHost;
+  class AdminUser;
+} // cta::common::admin
+namespace archiveNS {
+  class ArchiveFile;
+  class ArchiveDirIterator;
+  class ArchiveFileStatus;
+} // cta::common::archiveNS
+namespace archiveRoute {
+  class ArchiveRoute;
+} // cta::common::archiveRoute
+} // cta::common
+class ArchiveToFileRequest;
+class ArchiveToTapeCopyRequest;
+class LogicalLibrary;
+class RetrieveRequestDump;
+class RetrieveToFileRequest;
+class SchedulerDatabase;
+class SecurityIdentity;
+class StorageClass;
+class Tape;
+class TapeMount;
+class TapeSession;
+class TapePool;
+class UserIdentity;
+} /// cta
+
+namespace cta {
+
+class ArchiveToFileRequest;
+
 /**
  * Abstract class defining the interface to the database of a tape resource
  * scheduler.
