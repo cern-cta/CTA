@@ -33,9 +33,7 @@
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
-  NameServer &ns,
-  SchedulerDatabase &db,
-  RemoteNS &remoteNS): m_catalogue(catalogue), m_db(db) {
+  SchedulerDatabase &db): m_catalogue(catalogue), m_db(db) {
 }
 
 //------------------------------------------------------------------------------

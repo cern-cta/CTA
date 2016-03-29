@@ -570,7 +570,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
   cta::catalogue::DummyCatalogue catalogue;
-  cta::Scheduler scheduler(catalogue, mockNs, osdb, eosNs);
+  cta::Scheduler scheduler(catalogue, osdb);
 
   castor::tape::System::realWrapper sysWrapper;
 

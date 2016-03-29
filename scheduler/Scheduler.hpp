@@ -81,9 +81,7 @@ public:
    */
   Scheduler(
     cta::catalogue::Catalogue &catalogue,
-    NameServer &ns,
-    SchedulerDatabase &db,
-    RemoteNS &remoteNS);
+    SchedulerDatabase &db);
 
   /**
    * Destructor.

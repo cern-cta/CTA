@@ -264,7 +264,7 @@ XrdProFilesystem::XrdProFilesystem():
       .release()),
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()),
-  m_scheduler(m_catalogue, m_ns, m_scheddb, m_remoteStorage)
+  m_scheduler(m_catalogue, m_scheddb)
 {  
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.

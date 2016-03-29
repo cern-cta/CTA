@@ -16,9 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nameserver/mockNS/MockNameServerFactory.hpp"
-#include "nameserver/NameServer.hpp"
-#include "remotens/MockRemoteNS.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
@@ -49,13 +46,10 @@ namespace unitTests {
  * This structure is used to parameterize scheduler tests.
  */
 struct SchedulerTestParam {
-  cta::NameServerFactory &nsFactory;
   cta::SchedulerDatabaseFactory &dbFactory;
 
   SchedulerTestParam(
-    cta::NameServerFactory &nsFactory,
     cta::SchedulerDatabaseFactory &dbFactory):
-    nsFactory(nsFactory),
     dbFactory(dbFactory) {
  }
 }; // struct SchedulerTestParam
@@ -70,13 +64,6 @@ public:
   SchedulerTest() throw() {
   }
 
-  class FailedToGetMockRemoteNS: public std::exception {
-  public:
-    const char *what() const throw() {
-      return "Failed to get mock remote NS";
-    }
-  };
-
   class FailedToGetScheduler: public std::exception {
   public:
     const char *what() const throw() {
@@ -88,27 +75,15 @@ public:
     using namespace cta;
 
     const SchedulerTestParam &param = GetParam();
-    m_ns = param.nsFactory.create();
     m_db = param.dbFactory.create();
-    m_mockRemoteNS.reset(new MockRemoteNS());
     m_catalogue.reset(new cta::catalogue::SqliteCatalogue());
     
-    m_scheduler.reset(new cta::Scheduler(*(m_catalogue.get()), *(m_ns.get()), *(m_db.get()), *(m_mockRemoteNS.get())));
+    m_scheduler.reset(new cta::Scheduler(*(m_catalogue.get()), *(m_db.get())));
   }
 
   virtual void TearDown() {
     m_scheduler.reset();
-    m_mockRemoteNS.reset();
     m_db.reset();
-    m_ns.reset();
-  }
-
-  cta::MockRemoteNS &getMockRemoteNs() {
-    cta::MockRemoteNS *const ptr = m_mockRemoteNS.get();
-    if(NULL == ptr) {
-      throw FailedToGetMockRemoteNS();
-    }
-    return *ptr;
   }
 
   cta::Scheduler &getScheduler() {
@@ -127,9 +102,7 @@ private:
   // Prevent assignment
   SchedulerTest & operator= (const SchedulerTest &);
 
-  std::unique_ptr<cta::NameServer> m_ns;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
-  std::unique_ptr<cta::MockRemoteNS> m_mockRemoteNS;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
@@ -2572,13 +2545,11 @@ TEST_P(SchedulerTest, setOwner_statFile_top_level) {
   }
 }
 */
-static cta::MockNameServerFactory mockNsFactory;
-
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, mockDbFactory)));
+  ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #endif
 
 #define TEST_VFS
@@ -2586,7 +2557,7 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactoryVFS)));
+  ::testing::Values(SchedulerTestParam(OStoreDBFactoryVFS)));
 #endif
 
 #undef TEST_RADOS
@@ -2594,7 +2565,7 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTest,
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(mockNsFactory, OStoreDBFactoryRados)));
+  ::testing::Values(SchedulerTestParam(OStoreDBFactoryRados)));
 #endif
 } // namespace unitTests
 

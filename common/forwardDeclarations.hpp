@@ -37,9 +37,6 @@ namespace archiveRoute {
 class ArchiveToFileRequest;
 class ArchiveToTapeCopyRequest;
 class LogicalLibrary;
-class NameServer;
-class RemoteNS;
-class RemotePathAndStatus;
 class RetrieveRequestDump;
 class RetrieveToFileRequest;
 class SchedulerDatabase;
