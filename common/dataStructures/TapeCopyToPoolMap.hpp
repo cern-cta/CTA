@@ -19,6 +19,7 @@
 #pragma once
 
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace cta {
@@ -26,9 +27,9 @@ namespace common {
 namespace dataStructures {
 
 /**
- * Map from tape copy number to destination tape pool.
+ * Map from tape copy number to destination tape pool name.
  */
-typedef std::map<uint64_t, std::string> TapeCopyRoutes;
+typedef std::map<uint64_t, std::string> TapeCopyToPoolMap;
 
 } // namespace dataStructures
 } // namespace common

@@ -30,6 +30,13 @@ namespace dataStructures {
 
 struct MountPolicy {
 
+  MountPolicy():
+    maxDrives(0),
+    minBytesQueued(0),
+    minFilesQueued(0),
+    minRequestAge(0),
+    priority(0) {
+  }
 
   bool operator==(const MountPolicy &rhs) const;
 

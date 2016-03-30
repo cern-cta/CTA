@@ -167,8 +167,21 @@ public:
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
     const cta::common::dataStructures::TapeFileLocation &tapeFileLocation);
 
-  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
-    cta::common::dataStructures::MountGroup> prepareForNewFile(
+  /**
+   * Prepares the catalogue for a new archive file and returns the information
+   * required to queue the associated archive request.
+   *
+   * @param storageClass The storage class of the file to be archived.  This
+   * will be used by the Catalogue to determine the destinate tape pool for
+   * each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return A triplet of archive file ID, tape copy to tape pool map and mount
+   * group.
+   */
+  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyToPoolMap,
+    cta::common::dataStructures::MountPolicy> prepareForNewFile(
     const std::string &storageClass, const std::string &user);
   
   virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const;

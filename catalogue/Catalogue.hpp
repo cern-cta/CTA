@@ -49,9 +49,9 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
-#include "common/dataStructures/TapeCopyRoutes.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/dataStructures/Tape.hpp"
+#include "common/dataStructures/TapeCopyToPoolMap.hpp"
+#include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/MountGroup.hpp"
@@ -188,11 +188,13 @@ public:
    * will be used by the Catalogue to determine the destinate tape pool for
    * each tape copy.
    * @param user The user for whom the file is to be archived.  This will be
-   * used by the Catalogue to determine the mount group of the archive request.
-   * @return A triplet of archive file ID, tape copy routes and mount group.
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return A triplet of archive file ID, tape copy to tape pool map and mount
+   * group.
    */
-  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
-    cta::common::dataStructures::MountGroup> prepareForNewFile(
+  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyToPoolMap,
+    cta::common::dataStructures::MountPolicy> prepareForNewFile(
     const std::string &storageClass, const std::string &user) = 0;
 
   /**

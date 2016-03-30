@@ -2043,13 +2043,14 @@ void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
 //------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
-std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
-  cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::prepareForNewFile(
-    const std::string &storageClass, const std::string &user) {
+std::tuple<uint64_t, cta::common::dataStructures::TapeCopyToPoolMap,
+  cta::common::dataStructures::MountPolicy>
+  cta::catalogue::SqliteCatalogue::prepareForNewFile(
+  const std::string &storageClass, const std::string &user) {
   const uint64_t fileId = 0;
-  const common::dataStructures::TapeCopyRoutes routes;
-  const common::dataStructures::MountGroup mountGroup;
-  return std::make_tuple(fileId, routes, mountGroup);
+  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
+  const common::dataStructures::MountPolicy mountPolicy;
+  return std::make_tuple(fileId, copyToPoolMap, mountPolicy);
 }
 
 //------------------------------------------------------------------------------
