@@ -30,11 +30,11 @@ namespace cta { namespace xrootPlugins {
 
 /**
  * This class represents the heart of the xroot server plugin: it inherits from 
- * XrdSfsFile and it is used by XrdProFilesystem whenever a command is executed 
+ * XrdSfsFile and it is used by XrdCtaFilesystem whenever a command is executed 
  * (that is when a new file path is requested by the user). All function 
  * documentation can be found in XrdSfs/XrdSfsInterface.hh.
  */
-class XrdProFile : public XrdSfsFile {
+class XrdCtaFile : public XrdSfsFile {
   
 public:
   
@@ -54,8 +54,8 @@ public:
   virtual int sync(XrdSfsAio *aiop);
   virtual int truncate(XrdSfsFileOffset fsize);
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
-  XrdProFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, const char *user=0, int MonID=0);
-  ~XrdProFile();
+  XrdCtaFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, const char *user=0, int MonID=0);
+  ~XrdCtaFile();
   
 protected:
 

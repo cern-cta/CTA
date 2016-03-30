@@ -36,7 +36,7 @@ namespace cta { namespace xrootPlugins {
  * XrdSfsGetFileSystem when the latter is called by the xroot server to load the
  * plugin. All function documentation can be found in XrdSfs/XrdSfsInterface.hh.
  */
-class XrdProFilesystem : public ::XrdSfsFileSystem {
+class XrdCtaFilesystem : public ::XrdSfsFileSystem {
 public:
   virtual XrdSfsDirectory *newDir(char *user=0, int MonID=0);
   virtual XrdSfsFile *newFile(char *user=0, int MonID=0);
@@ -57,8 +57,8 @@ public:
   virtual int stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0,const char *opaque = 0);
   virtual int stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
-  XrdProFilesystem();
-  ~XrdProFilesystem();
+  XrdCtaFilesystem();
+  ~XrdCtaFilesystem();
   
 protected:
   
@@ -96,6 +96,6 @@ protected:
    * The scheduler.
    */
   cta::Scheduler m_scheduler; 
-}; // XrdProFilesystem
+}; // XrdCtaFilesystem
 
 }}

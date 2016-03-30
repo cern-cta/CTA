@@ -36,7 +36,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
-#include "xroot_plugins/XrdProFilesystem.hpp"
+#include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
 
 #include <memory>
@@ -45,14 +45,14 @@
 #include <sstream>
 #include <sys/types.h>
 
-XrdVERSIONINFO(XrdSfsGetFileSystem,XrdPro)
+XrdVERSIONINFO(XrdSfsGetFileSystem,XrdCta)
 
 extern "C"
 {
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     try {
-      return new cta::xrootPlugins::XrdProFilesystem();
+      return new cta::xrootPlugins::XrdCtaFilesystem();
     } catch (cta::exception::Exception &ex) {
       std::cout << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
       return NULL;
@@ -71,7 +71,7 @@ namespace cta { namespace xrootPlugins {
 //------------------------------------------------------------------------------
 // FSctl
 //------------------------------------------------------------------------------
-int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
+int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
   (void)cmd; (void)args; (void)eInfo; (void)client;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -81,15 +81,15 @@ int XrdProFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 // newFile
 //------------------------------------------------------------------------------
-XrdSfsFile * XrdProFilesystem::newFile(char *user, int MonID)
+XrdSfsFile * XrdCtaFilesystem::newFile(char *user, int MonID)
 {  
-  return new cta::xrootPlugins::XrdProFile(&m_catalogue, &m_scheduler, user, MonID);
+  return new cta::xrootPlugins::XrdCtaFile(&m_catalogue, &m_scheduler, user, MonID);
 }
 
 //------------------------------------------------------------------------------
 // newDir
 //------------------------------------------------------------------------------
-XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
+XrdSfsDirectory * XrdCtaFilesystem::newDir(char *user, int MonID)
 {
   (void)user; (void)MonID;
   return NULL;
@@ -98,7 +98,7 @@ XrdSfsDirectory * XrdProFilesystem::newDir(char *user, int MonID)
 //------------------------------------------------------------------------------
 // fsctl
 //------------------------------------------------------------------------------
-int XrdProFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
+int XrdCtaFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
   (void)cmd; (void)args; (void)eInfo; (void)client;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -108,7 +108,7 @@ int XrdProFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInf
 //------------------------------------------------------------------------------
 // getStats
 //------------------------------------------------------------------------------
-int XrdProFilesystem::getStats(char *buff, int blen)
+int XrdCtaFilesystem::getStats(char *buff, int blen)
 {
   (void)buff; (void)blen;
   return SFS_OK;
@@ -117,7 +117,7 @@ int XrdProFilesystem::getStats(char *buff, int blen)
 //------------------------------------------------------------------------------
 // getVersion
 //------------------------------------------------------------------------------
-const char * XrdProFilesystem::getVersion()
+const char * XrdCtaFilesystem::getVersion()
 {
   return NULL;
 }
@@ -125,7 +125,7 @@ const char * XrdProFilesystem::getVersion()
 //------------------------------------------------------------------------------
 // exists
 //------------------------------------------------------------------------------
-int XrdProFilesystem::exists(const char *path, XrdSfsFileExistence &eFlag, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::exists(const char *path, XrdSfsFileExistence &eFlag, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)eFlag; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -135,7 +135,7 @@ int XrdProFilesystem::exists(const char *path, XrdSfsFileExistence &eFlag, XrdOu
 //------------------------------------------------------------------------------
 // mkdir
 //------------------------------------------------------------------------------
-int XrdProFilesystem::mkdir(const char *path, XrdSfsMode mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::mkdir(const char *path, XrdSfsMode mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)mode; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -145,7 +145,7 @@ int XrdProFilesystem::mkdir(const char *path, XrdSfsMode mode, XrdOucErrInfo &eI
 //------------------------------------------------------------------------------
 // prepare
 //------------------------------------------------------------------------------
-int XrdProFilesystem::prepare(XrdSfsPrep &pargs, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
+int XrdCtaFilesystem::prepare(XrdSfsPrep &pargs, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
   (void)pargs; (void)eInfo; (void)client;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -155,7 +155,7 @@ int XrdProFilesystem::prepare(XrdSfsPrep &pargs, XrdOucErrInfo &eInfo, const Xrd
 //------------------------------------------------------------------------------
 // rem
 //------------------------------------------------------------------------------
-int XrdProFilesystem::rem(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::rem(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -165,7 +165,7 @@ int XrdProFilesystem::rem(const char *path, XrdOucErrInfo &eInfo, const XrdSecEn
 //------------------------------------------------------------------------------
 // remdir
 //------------------------------------------------------------------------------
-int XrdProFilesystem::remdir(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::remdir(const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -175,7 +175,7 @@ int XrdProFilesystem::remdir(const char *path, XrdOucErrInfo &eInfo, const XrdSe
 //------------------------------------------------------------------------------
 // rename
 //------------------------------------------------------------------------------
-int XrdProFilesystem::rename(const char *oPath, const char *nPath, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaqueO, const char *opaqueN)
+int XrdCtaFilesystem::rename(const char *oPath, const char *nPath, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaqueO, const char *opaqueN)
 {
   (void)oPath; (void)nPath; (void)eInfo; (void)client; (void)opaqueO; (void)opaqueN;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -185,7 +185,7 @@ int XrdProFilesystem::rename(const char *oPath, const char *nPath, XrdOucErrInfo
 //------------------------------------------------------------------------------
 // stat
 //------------------------------------------------------------------------------
-int XrdProFilesystem::stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
+int XrdCtaFilesystem::stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
 {
   (void)Name; (void)buf; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -195,7 +195,7 @@ int XrdProFilesystem::stat(const char *Name, struct ::stat *buf, XrdOucErrInfo &
 //------------------------------------------------------------------------------
 // stat
 //------------------------------------------------------------------------------
-int XrdProFilesystem::stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)mode; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -205,7 +205,7 @@ int XrdProFilesystem::stat(const char *path, mode_t &mode, XrdOucErrInfo &eInfo,
 //------------------------------------------------------------------------------
 // truncate
 //------------------------------------------------------------------------------
-int XrdProFilesystem::truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
+int XrdCtaFilesystem::truncate(const char *path, XrdSfsFileOffset fsize, XrdOucErrInfo &eInfo, const XrdSecEntity *client, const char *opaque)
 {
   (void)path; (void)fsize; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -215,7 +215,7 @@ int XrdProFilesystem::truncate(const char *path, XrdSfsFileOffset fsize, XrdOucE
 //------------------------------------------------------------------------------
 // chksum
 //------------------------------------------------------------------------------
-int XrdProFilesystem::chksum(csFunc Func, const char *csName, const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
+int XrdCtaFilesystem::chksum(csFunc Func, const char *csName, const char *path, XrdOucErrInfo &eInfo, const XrdSecEntity *client,const char *opaque)
 {
   (void)Func; (void)csName; (void)path; (void)eInfo; (void)client; (void)opaque;
   eInfo.setErrInfo(ENOTSUP, "Not supported.");
@@ -225,7 +225,7 @@ int XrdProFilesystem::chksum(csFunc Func, const char *csName, const char *path, 
 //------------------------------------------------------------------------------
 // chmod
 //------------------------------------------------------------------------------
-int XrdProFilesystem::chmod(
+int XrdCtaFilesystem::chmod(
   const char *path,
   XrdSfsMode mode,
   XrdOucErrInfo &eInfo,
@@ -239,7 +239,7 @@ int XrdProFilesystem::chmod(
 //------------------------------------------------------------------------------
 // Disc
 //------------------------------------------------------------------------------
-void XrdProFilesystem::Disc(const XrdSecEntity *client)
+void XrdCtaFilesystem::Disc(const XrdSecEntity *client)
 {
   (void)client;
 }
@@ -247,7 +247,7 @@ void XrdProFilesystem::Disc(const XrdSecEntity *client)
 //------------------------------------------------------------------------------
 // EnvInfo
 //------------------------------------------------------------------------------
-void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
+void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 {
   (void)envP;
 }
@@ -255,7 +255,7 @@ void XrdProFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::XrdProFilesystem():
+XrdCtaFilesystem::XrdCtaFilesystem():
   m_ns(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath")),
   m_remoteStorage(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort")), 
   m_backend(cta::objectstore::BackendFactory::createBackend(
@@ -275,7 +275,7 @@ XrdProFilesystem::XrdProFilesystem():
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-XrdProFilesystem::~XrdProFilesystem() {
+XrdCtaFilesystem::~XrdCtaFilesystem() {
 }
 
 }}
