@@ -114,8 +114,6 @@ public:
 
   virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
   
-  virtual std::unique_ptr<TapeMount> _old_getNextMount(const std::string &logicalLibraryName, const std::string & driveName);
-  
   virtual void authorizeCliIdentity(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
 
 private:

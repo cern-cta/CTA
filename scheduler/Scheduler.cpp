@@ -269,11 +269,3 @@ std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveState
 std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
   return std::unique_ptr<TapeMount>();
 }
-
-//------------------------------------------------------------------------------
-// getNextMount
-//------------------------------------------------------------------------------
-std::unique_ptr<cta::TapeMount> cta::Scheduler::_old_getNextMount(const std::string &logicalLibraryName, const std::string & driveName) {
-  throw cta::exception::Exception(std::string(__FUNCTION__)+" Error: not implemented!");
-  return std::unique_ptr<TapeMount>();
-}
