@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string>
 #include <map>
+#include <tuple>
 
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
@@ -48,6 +49,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
+#include "common/dataStructures/TapeCopyRoutes.hpp"
 #include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapePool.hpp"
@@ -177,6 +179,21 @@ public:
    * @return The next identifier to be used for a new archive file.
    */
   virtual uint64_t getNextArchiveFileId() = 0;
+
+  /**
+   * Prepares the catalogue for a new archive file and returns the information
+   * required to queue the associated archive request.
+   *
+   * @param storageClass The storage class of the file to be archived.  This
+   * will be used by the Catalogue to determine the destinate tape pool for
+   * each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount group of the archive request.
+   * @return A triplet of archive file ID, tape copy routes and mount group.
+   */
+  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
+    cta::common::dataStructures::MountGroup> prepareForNewFile(
+    const std::string &storageClass, const std::string &user) = 0;
 
   /**
    * Notifies the catalogue that a file has been written to tape.

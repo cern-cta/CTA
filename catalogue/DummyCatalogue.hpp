@@ -146,6 +146,10 @@ public:
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
     const cta::common::dataStructures::TapeFileLocation &tapeFileLocation);
+
+  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
+    cta::common::dataStructures::MountGroup> prepareForNewFile(
+    const std::string &storageClass, const std::string &user);
   
   std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const;
   

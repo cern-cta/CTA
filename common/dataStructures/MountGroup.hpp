@@ -31,6 +31,17 @@ namespace dataStructures {
 
 struct MountGroup {
 
+  MountGroup():
+    archive_minBytesQueued(0),
+    archive_minFilesQueued(0),
+    archive_minRequestAge(0),
+    archive_priority(0),
+    maxDrivesAllowed(0),
+    retrieve_minBytesQueued(0),
+    retrieve_minFilesQueued(0),
+    retrieve_minRequestAge(0),
+    retrieve_priority(0) {
+  }
 
   bool operator==(const MountGroup &rhs) const;
 

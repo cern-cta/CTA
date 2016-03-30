@@ -2041,6 +2041,18 @@ void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
 }
 
 //------------------------------------------------------------------------------
+// prepareForNewFile
+//------------------------------------------------------------------------------
+std::tuple<uint64_t, cta::common::dataStructures::TapeCopyRoutes,
+  cta::common::dataStructures::MountGroup> cta::catalogue::SqliteCatalogue::prepareForNewFile(
+    const std::string &storageClass, const std::string &user) {
+  const uint64_t fileId = 0;
+  const common::dataStructures::TapeCopyRoutes routes;
+  const common::dataStructures::MountGroup mountGroup;
+  return std::make_tuple(fileId, routes, mountGroup);
+}
+
+//------------------------------------------------------------------------------
 // getCopyNbToTapePoolMap
 //------------------------------------------------------------------------------
 std::map<uint64_t,std::string> cta::catalogue::SqliteCatalogue::
