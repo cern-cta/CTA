@@ -201,8 +201,25 @@ public:
     const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) = 0;
   
   virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
-  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
-  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
+
+  /**
+   * Returns the archive mount policy for the specified end user.
+   *
+   * @param user The name of the end user.
+   * @return The archive mount policy.
+   */
+  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(
+    const std::string &user) const = 0;
+
+  /**
+   * Returns the retrieve mount policy for the specified end user.
+   *
+   * @param user The name of the end user.
+   * @return The retrieve mount policy.
+   */
+  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(
+    const std::string &user) const = 0;
+
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 
 }; // class Catalogue

@@ -2044,11 +2044,31 @@ cta::common::dataStructures::ArchiveFileQueueCriteria
   const std::string &storageClass, const std::string &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     getTapeCopyToPoolMap(storageClass);
-  common::dataStructures::MountPolicy mountPolicy;
+  const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClass);
+
+  // Check that the number of archive routes is correct
+  if(copyToPoolMap.empty()) {
+    exception::Exception ex;
+    ex.getMessage() << "Storage class " << storageClass << " has no archive"
+      " routes";
+    throw ex;
+  }
+  if(copyToPoolMap.size() != expectedNbRoutes) {
+    exception::Exception ex;
+    ex.getMessage() << "Storage class " << storageClass << " does not have the"
+      " expected number of archive routes routes: expected=" << expectedNbRoutes
+      << ", actual=" << copyToPoolMap.size();
+    throw ex;
+  }
+
+  common::dataStructures::MountPolicy mountPolicy = getArchiveMountPolicy(user);
+
+  // Now that we have both the archive routes and the mount policy it's safe to
+  // consume an archive file identifier
   const uint64_t archiveFileId = m_nextArchiveFileId++;
-  const common::dataStructures::ArchiveFileQueueCriteria queueCriteria(
-    archiveFileId, copyToPoolMap, mountPolicy);
-  return common::dataStructures::ArchiveFileQueueCriteria();
+
+  return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId,
+    copyToPoolMap, mountPolicy);
 }
 
 //------------------------------------------------------------------------------
@@ -2086,7 +2106,7 @@ uint64_t cta::catalogue::SqliteCatalogue::getExpectedNbArchiveRoutes(
   uint64_t nbRoutes = 0;
   const char *const sql =
     "SELECT "
-      "COUNT(*) AS NB_ROUTES"
+      "COUNT(*) AS NB_ROUTES "
     "FROM ARCHIVE_ROUTE WHERE "
       "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
@@ -2105,18 +2125,74 @@ uint64_t cta::catalogue::SqliteCatalogue::getExpectedNbArchiveRoutes(
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getArchiveMountPolicy(const common::dataStructures::UserIdentity &requester)
-  const {
-  return common::dataStructures::MountPolicy();
+  getArchiveMountPolicy(const std::string &user) const {
+  const char *const sql =
+    "SELECT "
+      "ARCHIVE_PRIORITY         AS ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_FILES_QUEUED AS MIN_ARCHIVE_FILES_QUEUED,"
+      "MIN_ARCHIVE_BYTES_QUEUED AS MIN_ARCHIVE_BYTES_QUEUED,"
+      "MIN_ARCHIVE_REQUEST_AGE  AS MIN_ARCHIVE_REQUEST_AGE,"
+
+      "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
+    "FROM MOUNT_GROUP INNER JOIN END_USER ON "
+      "MOUNT_GROUP.MOUNT_GROUP_NAME = END_USER.MOUNT_GROUP_NAME "
+    "WHERE "
+      "USER_NAME = :USER_NAME;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":USER_NAME", user);
+  ColumnNameToIdx nameToIdx;
+  if(SQLITE_ROW == stmt->step()) {
+    nameToIdx = stmt->getColumnNameToIdx();
+    common::dataStructures::MountPolicy policy;
+    policy.priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
+    policy.minFilesQueued = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_FILES_QUEUED"]);
+    policy.minBytesQueued = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_BYTES_QUEUED"]);
+    policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
+    policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
+    return policy;
+  } else {
+    exception::Exception ex;
+    ex.getMessage() << "Failed to find an archive mount policy for user " <<
+      user;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getRetrieveMountPolicy(const common::dataStructures::UserIdentity &requester)
-  const {
-  return common::dataStructures::MountPolicy();
+  getRetrieveMountPolicy(const std::string &user) const {
+  const char *const sql =
+    "SELECT "
+      "RETRIEVE_PRIORITY         AS RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_FILES_QUEUED AS MIN_RETRIEVE_FILES_QUEUED,"
+      "MIN_RETRIEVE_BYTES_QUEUED AS MIN_RETRIEVE_BYTES_QUEUED,"
+      "MIN_RETRIEVE_REQUEST_AGE  AS MIN_RETRIEVE_REQUEST_AGE,"
+
+      "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
+    "FROM MOUNT_GROUP INNER JOIN END_USER ON "
+      "MOUNT_GROUP.MOUNT_GROUP_NAME = END_USER.MOUNT_GROUP_NAME "
+    "WHERE "
+      "USER_NAME = :USER_NAME;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":USER_NAME", user);
+  ColumnNameToIdx nameToIdx;
+  if(SQLITE_ROW == stmt->step()) {
+    nameToIdx = stmt->getColumnNameToIdx();
+    common::dataStructures::MountPolicy policy;
+    policy.priority = stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
+    policy.minFilesQueued = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_FILES_QUEUED"]);
+    policy.minBytesQueued = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_BYTES_QUEUED"]);
+    policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
+    policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
+    return policy;
+  } else {
+    exception::Exception ex;
+    ex.getMessage() << "Failed to find a retrieve mount policy for user " <<
+      user;
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------

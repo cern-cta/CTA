@@ -789,9 +789,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
     "create mount group");
 
   const std::string comment = "create user";
-  const std::string name = "name";
+  const std::string userName = "user_name";
   const std::string group = "group";
-  catalogue.createUser(m_cliSI, name, group, mountGroupName, comment);
+  catalogue.createUser(m_cliSI, userName, group, mountGroupName, comment);
 
   std::list<common::dataStructures::User> users;
   users = catalogue.getUsers();
@@ -799,13 +799,31 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 
   const common::dataStructures::User user = users.front();
 
-  ASSERT_EQ(name, user.name);
+  ASSERT_EQ(userName, user.name);
   ASSERT_EQ(group, user.group);
   ASSERT_EQ(mountGroupName, user.mountGroupName);
   ASSERT_EQ(comment, user.comment);
   ASSERT_EQ(m_cliSI.user, user.creationLog.user);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
+
+  const common::dataStructures::MountPolicy archivePolicy =
+    catalogue.getArchiveMountPolicy(userName);
+
+  ASSERT_EQ(archivePriority, archivePolicy.priority);
+  ASSERT_EQ(minArchiveFilesQueued, archivePolicy.minFilesQueued);
+  ASSERT_EQ(minArchiveBytesQueued, archivePolicy.minBytesQueued);
+  ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
+
+  const common::dataStructures::MountPolicy retrievePolicy =
+    catalogue.getRetrieveMountPolicy(userName);
+
+  ASSERT_EQ(retrievePriority, retrievePolicy.priority);
+  ASSERT_EQ(minRetrieveFilesQueued, retrievePolicy.minFilesQueued);
+  ASSERT_EQ(minRetrieveBytesQueued, retrievePolicy.minBytesQueued);
+  ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, retrievePolicy.maxDrives);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
@@ -923,6 +941,134 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
 
   catalogue.createArchiveFile(file);
   ASSERT_THROW(catalogue.createArchiveFile(file), exception::Exception);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
+  using namespace cta;
+
+  catalogue::SqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getUsers().empty());
+
+  const std::string mountGroupName = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveFilesQueued = 2;
+  const uint64_t minArchiveBytesQueued = 3;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveFilesQueued = 6;
+  const uint64_t minRetrieveBytesQueued = 7;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  catalogue.createMountGroup(
+    m_cliSI,
+    mountGroupName,
+    archivePriority,
+    minArchiveFilesQueued,
+    minArchiveBytesQueued,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveFilesQueued,
+    minRetrieveBytesQueued,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+
+  const std::string userComment = "create user";
+  const std::string userName = "user_name";
+  const std::string group = "group";
+  catalogue.createUser(m_cliSI, userName, group, mountGroupName, userComment);
+
+  std::list<common::dataStructures::User> users;
+  users = catalogue.getUsers();
+  ASSERT_EQ(1, users.size());
+
+  const common::dataStructures::User user = users.front();
+
+  ASSERT_EQ(userName, user.name);
+  ASSERT_EQ(group, user.group);
+  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(userComment, user.comment);
+  ASSERT_EQ(m_cliSI.user, user.creationLog.user);
+  ASSERT_EQ(m_cliSI.host, user.creationLog.host);
+  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+
+  const common::dataStructures::MountPolicy archivePolicy =
+    catalogue.getArchiveMountPolicy(userName);
+
+  ASSERT_EQ(archivePriority, archivePolicy.priority);
+  ASSERT_EQ(minArchiveFilesQueued, archivePolicy.minFilesQueued);
+  ASSERT_EQ(minArchiveBytesQueued, archivePolicy.minBytesQueued);
+  ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
+
+  const common::dataStructures::MountPolicy retrievePolicy =
+    catalogue.getRetrieveMountPolicy(userName);
+
+  ASSERT_EQ(retrievePriority, retrievePolicy.priority);
+  ASSERT_EQ(minRetrieveFilesQueued, retrievePolicy.minFilesQueued);
+  ASSERT_EQ(minRetrieveBytesQueued, retrievePolicy.minBytesQueued);
+  ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, retrievePolicy.maxDrives);
+
+  ASSERT_TRUE(catalogue.getArchiveRoutes().empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  catalogue.createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    "create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "create archive route";
+  catalogue.createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+    archiveRouteComment);
+      
+  const std::list<common::dataStructures::ArchiveRoute> routes =
+    catalogue.getArchiveRoutes();
+      
+  ASSERT_EQ(1, routes.size());
+      
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
+    catalogue.getTapeCopyToPoolMap(storageClassName);
+  ASSERT_EQ(1, copyToPoolMap.size());
+  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
+  ASSERT_EQ(copyNb, maplet.first);
+  ASSERT_EQ(tapePoolName, maplet.second);
+
+  const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+    catalogue.prepareForNewFile(storageClassName, userName);
+
+  ASSERT_EQ(1, queueCriteria.fileId);
+  ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
+  ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
+  ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
+  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.priority);
+  ASSERT_EQ(minArchiveFilesQueued, queueCriteria.mountPolicy.minFilesQueued);
+  ASSERT_EQ(minArchiveBytesQueued, queueCriteria.mountPolicy.minBytesQueued);
+  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrives);
 }
 
 } // namespace unitTests

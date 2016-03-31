@@ -452,8 +452,7 @@ cta::common::dataStructures::TapeCopyToPoolMap cta::catalogue::DummyCatalogue::
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::
-  getArchiveMountPolicy(const common::dataStructures::UserIdentity &requester)
-  const {
+  getArchiveMountPolicy(const std::string &user) const {
   return cta::common::dataStructures::MountPolicy();
 }
 
@@ -461,8 +460,7 @@ cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::DummyCatalogue::
-  getRetrieveMountPolicy(const common::dataStructures::UserIdentity &requester)
-  const {
+  getRetrieveMountPolicy(const std::string &user) const {
   return cta::common::dataStructures::MountPolicy();
 }
 
