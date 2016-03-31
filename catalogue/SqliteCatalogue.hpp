@@ -177,12 +177,10 @@ public:
    * @param user The user for whom the file is to be archived.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
-   * @return A triplet of archive file ID, tape copy to tape pool map and mount
-   * group.
+   * @return The information required to queue the associated archive request.
    */
-  virtual std::tuple<uint64_t, cta::common::dataStructures::TapeCopyToPoolMap,
-    cta::common::dataStructures::MountPolicy> prepareForNewFile(
-    const std::string &storageClass, const std::string &user);
+  virtual cta::common::dataStructures::ArchiveFileQueueCriteria 
+    prepareForNewFile(const std::string &storageClass, const std::string &user); 
   
   virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const;
   virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const;
