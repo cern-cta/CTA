@@ -24,3 +24,15 @@
 cta::common::dataStructures::ArchiveFileQueueCriteria::
   ArchiveFileQueueCriteria(): fileId(0) {
 }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveFileQueueCriteria::ArchiveFileQueueCriteria(
+  const uint64_t fileId,
+  const TapeCopyToPoolMap &copyToPoolMap,
+  const MountPolicy &mountPolicy):
+  fileId(fileId),
+  copyToPoolMap(copyToPoolMap),
+  mountPolicy(mountPolicy) {
+}

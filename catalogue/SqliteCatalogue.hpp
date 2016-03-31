@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <atomic>
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/SqliteConn.hpp"
 
@@ -151,13 +152,6 @@ public:
   virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force);
 
   /**
-   * Returns the next identifier to be used for a new archive file.
-   *
-   * @return The next identifier to be used for a new archive file.
-   */
-  virtual uint64_t getNextArchiveFileId();
-
-  /**
    * Notifies the catalogue that a file has been written to tape.
    *
    * @param archiveRequest The identifier of the archive file.
@@ -181,8 +175,8 @@ public:
    */
   virtual cta::common::dataStructures::ArchiveFileQueueCriteria 
     prepareForNewFile(const std::string &storageClass, const std::string &user); 
-  
-  virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const;
+
+  virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
   virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const;
   virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const;
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
@@ -193,6 +187,11 @@ private:
    * The connection to the underlying relational database.
    */
   mutable SqliteConn m_conn;
+
+  /**
+   * The next unique identifier to be used for an archive file.
+   */
+  std::atomic<uint64_t> m_nextArchiveFileId;
 
   /**
    * Creates the database schema.
@@ -229,6 +228,16 @@ private:
    */
   uint64_t getArchiveFileId(const std::string &diskInstance,
     const std::string &diskFileId) const;
+
+  /**
+   * Returns the expected number of archive routes for the specified storage
+   * class as specified by the call to the createStorageClass() method as
+   * opposed to the actual number entered so far using the createArchiveRoute()
+   * method.
+   *
+   * @return The expected number of archive routes.
+   */
+  uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
 
 }; // class SqliteCatalogue
 

@@ -175,13 +175,6 @@ public:
   virtual void setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) = 0;
 
   /**
-   * Returns the next identifier to be used for a new archive file.
-   *
-   * @return The next identifier to be used for a new archive file.
-   */
-  virtual uint64_t getNextArchiveFileId() = 0;
-
-  /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
    *
@@ -207,7 +200,7 @@ public:
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
     const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) = 0;
   
-  virtual std::map<uint64_t,std::string> getCopyNbToTapePoolMap(const std::string &storageClass) const = 0;
+  virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
   virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
   virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &requester) const = 0;
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;

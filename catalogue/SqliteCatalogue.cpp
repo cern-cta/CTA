@@ -27,7 +27,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteCatalogue::SqliteCatalogue(): m_conn(":memory:") {
+cta::catalogue::SqliteCatalogue::SqliteCatalogue():
+  m_conn(":memory:"),
+  m_nextArchiveFileId(1) {
   createDbSchema();
 }
 
@@ -37,96 +39,96 @@ cta::catalogue::SqliteCatalogue::SqliteCatalogue(): m_conn(":memory:") {
 void cta::catalogue::SqliteCatalogue::createDbSchema() {
   const char *const sql = 
     "CREATE TABLE ADMIN_USER("
-      "ADMIN_USER_NAME  TEXT,"
-      "ADMIN_GROUP_NAME TEXT,"
+      "ADMIN_USER_NAME  VARCHAR2(100),"
+      "ADMIN_GROUP_NAME VARCHAR2(100),"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(ADMIN_USER_NAME)"
     ");"
 
     "CREATE TABLE ADMIN_HOST("
-      "ADMIN_HOST_NAME TEXT,"
+      "ADMIN_HOST_NAME VARCHAR2(100),"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(ADMIN_HOST_NAME)"
     ");"
 
     "CREATE TABLE STORAGE_CLASS("
-      "STORAGE_CLASS_NAME TEXT,"
+      "STORAGE_CLASS_NAME VARCHAR2(100),"
       "NB_COPIES          INTEGER,"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(STORAGE_CLASS_NAME)"
     ");"
 
     "CREATE TABLE TAPE_POOL("
-      "TAPE_POOL_NAME   TEXT,"
+      "TAPE_POOL_NAME   VARCHAR2(100),"
       "NB_PARTIAL_TAPES INTEGER,"
       "IS_ENCRYPTED     INTEGER,"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(TAPE_POOL_NAME)"
     ");"
 
     "CREATE TABLE ARCHIVE_ROUTE("
-      "STORAGE_CLASS_NAME TEXT,"
+      "STORAGE_CLASS_NAME VARCHAR2(100),"
       "COPY_NB            INTEGER,"
-      "TAPE_POOL_NAME     TEXT,"
+      "TAPE_POOL_NAME     VARCHAR2(100),"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(STORAGE_CLASS_NAME, COPY_NB),"
@@ -138,28 +140,28 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     ");"
 
     "CREATE TABLE LOGICAL_LIBRARY("
-      "LOGICAL_LIBRARY_NAME TEXT,"
+      "LOGICAL_LIBRARY_NAME VARCHAR2(100),"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(LOGICAL_LIBRARY_NAME)"
     ");"
 
     "CREATE TABLE TAPE("
-      "VID                  TEXT,"
-      "LOGICAL_LIBRARY_NAME TEXT,"
-      "TAPE_POOL_NAME       TEXT,"
-      "ENCRYPTION_KEY       TEXT,"
+      "VID                  VARCHAR2(100),"
+      "LOGICAL_LIBRARY_NAME VARCHAR2(100),"
+      "TAPE_POOL_NAME       VARCHAR2(100),"
+      "ENCRYPTION_KEY       VARCHAR2(100),"
       "CAPACITY_IN_BYTES    INTEGER,"
       "DATA_IN_BYTES        INTEGER,"
       "LAST_FSEQ            INTEGER,"
@@ -168,25 +170,25 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "IS_FULL              INTEGER,"
       "LBP_IS_ON            INTEGER,"
 
-      "LABEL_DRIVE TEXT,"
+      "LABEL_DRIVE VARCHAR2(100),"
       "LABEL_TIME  INTEGER,"
 
-      "LAST_READ_DRIVE TEXT,"
+      "LAST_READ_DRIVE VARCHAR2(100),"
       "LAST_READ_TIME  INTEGER,"
 
-      "LAST_WRITE_DRIVE TEXT,"
+      "LAST_WRITE_DRIVE VARCHAR2(100),"
       "LAST_WRITE_TIME  INTEGER,"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(VID),"
@@ -197,7 +199,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "TAPE_POOL(TAPE_POOL_NAME)"
     ");"
     "CREATE TABLE MOUNT_GROUP("
-      "MOUNT_GROUP_NAME TEXT,"
+      "MOUNT_GROUP_NAME VARCHAR2(100),"
 
       "ARCHIVE_PRIORITY         INTEGER,"
       "MIN_ARCHIVE_FILES_QUEUED INTEGER,"
@@ -211,35 +213,35 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
 
       "MAX_DRIVES_ALLOWED INTEGER,"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(MOUNT_GROUP_NAME)"
     ");"
-    "CREATE TABLE USER("
-      "USER_NAME  TEXT,"
-      "GROUP_NAME TEXT,"
-      "MOUNT_GROUP_NAME TEXT,"
+    "CREATE TABLE END_USER("
+      "USER_NAME  VARCHAR2(100),"
+      "GROUP_NAME VARCHAR2(100),"
+      "MOUNT_GROUP_NAME VARCHAR2(100),"
 
-      "COMMENT TEXT,"
+      "USER_COMMENT VARCHAR2(1000),"
 
-      "CREATION_LOG_USER_NAME  TEXT,"
-      "CREATION_LOG_GROUP_NAME TEXT,"
-      "CREATION_LOG_HOST_NAME  TEXT,"
+      "CREATION_LOG_USER_NAME  VARCHAR2(100),"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100),"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100),"
       "CREATION_LOG_TIME       INTEGER,"
 
-      "LAST_MOD_USER_NAME  TEXT,"
-      "LAST_MOD_GROUP_NAME TEXT,"
-      "LAST_MOD_HOST_NAME  TEXT,"
+      "LAST_MOD_USER_NAME  VARCHAR2(100),"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100),"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100),"
       "LAST_MOD_TIME       INTEGER,"
 
       "PRIMARY KEY(USER_NAME),"
@@ -247,19 +249,19 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "MOUNT_GROUP(MOUNT_GROUP_NAME)"
     ");"
     "CREATE TABLE ARCHIVE_FILE("
-      "ARCHIVE_FILE_ID    INTEGER AUTO INCREMENT,"
-      "DISK_INSTANCE      STRING,"
-      "DISK_FILE_ID       STRING,"
+      "ARCHIVE_FILE_ID    INTEGER,"
+      "DISK_INSTANCE      VARCHAR2(100),"
+      "DISK_FILE_ID       VARCHAR2(100),"
       "FILE_SIZE          INTEGER,"
-      "CHECKSUM_TYPE      STRING,"
-      "CHECKSUM_VALUE     STRING,"
-      "STORAGE_CLASS_NAME STRING,"
+      "CHECKSUM_TYPE      VARCHAR2(100),"
+      "CHECKSUM_VALUE     VARCHAR2(100),"
+      "STORAGE_CLASS_NAME VARCHAR2(100),"
       "CREATION_TIME      INTEGER,"
 
-      "RECOVERY_PATH     STRING,"
-      "RECOVERY_OWNER    STRING,"
-      "RECOVERY_GROUP    STRING,"
-      "RECOVERY_BLOB     STRING,"
+      "RECOVERY_PATH     VARCHAR2(2000),"
+      "RECOVERY_OWNER    VARCHAR2(100),"
+      "RECOVERY_GROUP    VARCHAR2(100),"
+      "RECOVERY_BLOB     VARCHAR2(100),"
 
       "PRIMARY KEY(ARCHIVE_FILE_ID),"
       "FOREIGN KEY(STORAGE_CLASS_NAME) "
@@ -267,7 +269,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "UNIQUE(DISK_INSTANCE, DISK_FILE_ID)"
     ");"
     "CREATE TABLE TAPE_FILE("
-      "VID             STRING,"
+      "VID             VARCHAR2(100),"
       "FSEQ            INTEGER,"
       "BLOCK_ID        INTEGER,"
       "CREATION_TIME   INTEGER,"
@@ -313,7 +315,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       "ADMIN_USER_NAME,"
       "ADMIN_GROUP_NAME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -328,7 +330,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       ":ADMIN_USER_NAME,"
       ":ADMIN_GROUP_NAME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -344,7 +346,7 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
   stmt->bind(":ADMIN_USER_NAME", user.name);
   stmt->bind(":ADMIN_GROUP_NAME", user.group);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -370,7 +372,7 @@ std::list<cta::common::dataStructures::AdminUser>
       "ADMIN_USER_NAME  AS ADMIN_USER_NAME,"
       "ADMIN_GROUP_NAME AS ADMIN_GROUP_NAME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -396,7 +398,7 @@ std::list<cta::common::dataStructures::AdminUser>
 
     admin.user = adminUI;
 
-    admin.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    admin.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -443,7 +445,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
     "INSERT INTO ADMIN_HOST("
       "ADMIN_HOST_NAME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -457,7 +459,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
     "VALUES("
       ":ADMIN_HOST_NAME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -472,7 +474,7 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
 
   stmt->bind(":ADMIN_HOST_NAME", hostName);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -496,7 +498,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
     "SELECT "
       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -517,7 +519,7 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
     common::dataStructures::AdminHost host;
 
     host.name = stmt->columnText(nameToIdx["ADMIN_HOST_NAME"]);
-    host.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    host.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -566,7 +568,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
       "STORAGE_CLASS_NAME,"
       "NB_COPIES,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -581,7 +583,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
       ":STORAGE_CLASS_NAME,"
       ":NB_COPIES,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -597,7 +599,7 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
   stmt->bind(":STORAGE_CLASS_NAME", name);
   stmt->bind(":NB_COPIES", nbCopies);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -623,7 +625,7 @@ std::list<cta::common::dataStructures::StorageClass>
       "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
       "NB_COPIES          AS NB_COPIES,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -645,7 +647,7 @@ std::list<cta::common::dataStructures::StorageClass>
 
     storageClass.name = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
     storageClass.nbCopies = stmt->columnUint64(nameToIdx["NB_COPIES"]);
-    storageClass.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    storageClass.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -701,7 +703,7 @@ void cta::catalogue::SqliteCatalogue::createTapePool(
       "NB_PARTIAL_TAPES,"
       "IS_ENCRYPTED,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -717,7 +719,7 @@ void cta::catalogue::SqliteCatalogue::createTapePool(
       ":NB_PARTIAL_TAPES,"
       ":IS_ENCRYPTED,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -734,7 +736,7 @@ void cta::catalogue::SqliteCatalogue::createTapePool(
   stmt->bind(":NB_PARTIAL_TAPES", nbPartialTapes);
   stmt->bind(":IS_ENCRYPTED", encryptionValue);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -761,7 +763,7 @@ std::list<cta::common::dataStructures::TapePool>
       "NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
       "IS_ENCRYPTED     AS IS_ENCRYPTED,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -785,7 +787,7 @@ std::list<cta::common::dataStructures::TapePool>
     pool.nbPartialTapes = stmt->columnUint64(nameToIdx["NB_PARTIAL_TAPES"]);
     pool.encryption = stmt->columnUint64(nameToIdx["IS_ENCRYPTED"]);
 
-    pool.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    pool.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -846,7 +848,7 @@ void cta::catalogue::SqliteCatalogue::createArchiveRoute(
       "COPY_NB,"
       "TAPE_POOL_NAME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -862,7 +864,7 @@ void cta::catalogue::SqliteCatalogue::createArchiveRoute(
       ":COPY_NB,"
       ":TAPE_POOL_NAME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -879,7 +881,7 @@ void cta::catalogue::SqliteCatalogue::createArchiveRoute(
   stmt->bind(":COPY_NB", copyNb);
   stmt->bind(":TAPE_POOL_NAME", tapePoolName);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -906,7 +908,7 @@ std::list<cta::common::dataStructures::ArchiveRoute>
       "COPY_NB            AS COPY_NB,"
       "TAPE_POOL_NAME     AS TAPE_POOL_NAME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -930,7 +932,7 @@ std::list<cta::common::dataStructures::ArchiveRoute>
     route.copyNb = stmt->columnUint64(nameToIdx["COPY_NB"]);
     route.tapePoolName = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
 
-    route.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    route.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -982,7 +984,7 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
     "INSERT INTO LOGICAL_LIBRARY("
       "LOGICAL_LIBRARY_NAME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -996,7 +998,7 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
     "VALUES("
       ":LOGICAL_LIBRARY_NAME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -1011,7 +1013,7 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
 
   stmt->bind(":LOGICAL_LIBRARY_NAME", name);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -1036,7 +1038,7 @@ std::list<cta::common::dataStructures::LogicalLibrary>
     "SELECT "
       "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -1058,7 +1060,7 @@ std::list<cta::common::dataStructures::LogicalLibrary>
 
     lib.name = stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
 
-    lib.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    lib.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -1130,7 +1132,7 @@ void cta::catalogue::SqliteCatalogue::createTape(
       "LAST_WRITE_DRIVE,"
       "LAST_WRITE_TIME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -1163,7 +1165,7 @@ void cta::catalogue::SqliteCatalogue::createTape(
       ":LAST_WRITE_DRIVE,"
       ":LAST_WRITE_TIME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -1197,7 +1199,7 @@ void cta::catalogue::SqliteCatalogue::createTape(
   stmt->bind(":LAST_WRITE_DRIVE", "");
   stmt->bind(":LAST_WRITE_TIME", 0);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -1249,7 +1251,7 @@ std::list<cta::common::dataStructures::Tape>
       "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
       "LAST_WRITE_TIME  AS LAST_WRITE_TIME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -1291,7 +1293,7 @@ std::list<cta::common::dataStructures::Tape>
     tape.lastWriteLog.drive = stmt->columnText(nameToIdx["LAST_WRITE_DRIVE"]);
     tape.lastWriteLog.time = stmt->columnUint64(nameToIdx["LAST_WRITE_TIME"]);
 
-    tape.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    tape.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -1397,12 +1399,12 @@ void cta::catalogue::SqliteCatalogue::createUser(
   const std::string &comment) {
   const uint64_t now = time(NULL);
   const char *const sql =
-    "INSERT INTO USER("
+    "INSERT INTO END_USER("
       "USER_NAME,"
       "GROUP_NAME,"
       "MOUNT_GROUP_NAME,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -1418,7 +1420,7 @@ void cta::catalogue::SqliteCatalogue::createUser(
       ":GROUP_NAME,"
       ":MOUNT_GROUP_NAME,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -1435,7 +1437,7 @@ void cta::catalogue::SqliteCatalogue::createUser(
   stmt->bind(":GROUP_NAME", group);
   stmt->bind(":MOUNT_GROUP_NAME", mountGroup);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -1462,7 +1464,7 @@ std::list<cta::common::dataStructures::User>
       "GROUP_NAME       AS GROUP_NAME,"
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -1473,7 +1475,7 @@ std::list<cta::common::dataStructures::User>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM USER;";
+    "FROM END_USER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
@@ -1487,7 +1489,7 @@ std::list<cta::common::dataStructures::User>
     user.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
     user.mountGroupName = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
 
-    user.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    user.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -1560,7 +1562,7 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
 
       "MAX_DRIVES_ALLOWED,"
 
-      "COMMENT,"
+      "USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME,"
@@ -1586,7 +1588,7 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
 
       ":MAX_DRIVES_ALLOWED,"
 
-      ":COMMENT,"
+      ":USER_COMMENT,"
 
       ":CREATION_LOG_USER_NAME,"
       ":CREATION_LOG_GROUP_NAME,"
@@ -1613,7 +1615,7 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
 
   stmt->bind(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
 
-  stmt->bind(":COMMENT", comment);
+  stmt->bind(":USER_COMMENT", comment);
 
   stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
   stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
@@ -1650,7 +1652,7 @@ std::list<cta::common::dataStructures::MountGroup>
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
 
-      "COMMENT AS COMMENT,"
+      "USER_COMMENT AS USER_COMMENT,"
 
       "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
       "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
@@ -1692,7 +1694,7 @@ std::list<cta::common::dataStructures::MountGroup>
     group.maxDrivesAllowed =
       stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
 
-    group.comment = stmt->columnText(nameToIdx["COMMENT"]);
+    group.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = stmt->columnText(nameToIdx["CREATION_LOG_USER_NAME"]);
@@ -2026,13 +2028,6 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
 void cta::catalogue::SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {}
 
 //------------------------------------------------------------------------------
-// getNextArchiveFileId
-//------------------------------------------------------------------------------
-uint64_t cta::catalogue::SqliteCatalogue::getNextArchiveFileId() {
-  return 0;
-}
-
-//------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
@@ -2046,15 +2041,63 @@ void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
 cta::common::dataStructures::ArchiveFileQueueCriteria
   cta::catalogue::SqliteCatalogue::prepareForNewFile(
   const std::string &storageClass, const std::string &user) {
+  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
+    getTapeCopyToPoolMap(storageClass);
+  common::dataStructures::MountPolicy mountPolicy;
+  const uint64_t archiveFileId = m_nextArchiveFileId++;
+  const common::dataStructures::ArchiveFileQueueCriteria queueCriteria(
+    archiveFileId, copyToPoolMap, mountPolicy);
   return common::dataStructures::ArchiveFileQueueCriteria();
 }
 
 //------------------------------------------------------------------------------
-// getCopyNbToTapePoolMap
+// getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-std::map<uint64_t,std::string> cta::catalogue::SqliteCatalogue::
-  getCopyNbToTapePoolMap(const std::string &storageClass) const {
-  return std::map<uint64_t,std::string>();
+cta::common::dataStructures::TapeCopyToPoolMap cta::catalogue::SqliteCatalogue::
+  getTapeCopyToPoolMap(const std::string &storageClass) const {
+  cta::common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
+  const char *const sql =
+    "SELECT "
+      "COPY_NB        AS COPY_NB,"
+      "TAPE_POOL_NAME AS TAPE_POOL_NAME "
+    "FROM ARCHIVE_ROUTE WHERE "
+      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if (nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    const uint64_t copyNb = stmt->columnUint64(nameToIdx["COPY_NB"]);
+    const std::string tapePoolName = stmt->columnText(nameToIdx["TAPE_POOL_NAME"]);
+    copyToPoolMap[copyNb] = tapePoolName;
+  }
+
+  return copyToPoolMap;
+}
+
+//------------------------------------------------------------------------------
+// getExpectedNbArchiveRoutes
+//------------------------------------------------------------------------------
+uint64_t cta::catalogue::SqliteCatalogue::getExpectedNbArchiveRoutes(
+  const std::string &storageClass) const {
+  uint64_t nbRoutes = 0;
+  const char *const sql =
+    "SELECT "
+      "COUNT(*) AS NB_ROUTES"
+    "FROM ARCHIVE_ROUTE WHERE "
+      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if (nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    nbRoutes = stmt->columnUint64(nameToIdx["NB_ROUTES"]);
+  }
+  return nbRoutes;
 }
 
 //------------------------------------------------------------------------------

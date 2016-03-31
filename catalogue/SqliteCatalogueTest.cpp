@@ -493,6 +493,13 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRoute) {
   const common::dataStructures::EntryLog lastModificationLog =
     route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
+    catalogue.getTapeCopyToPoolMap(storageClassName);
+  ASSERT_EQ(1, copyToPoolMap.size());
+  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
+  ASSERT_EQ(copyNb, maplet.first);
+  ASSERT_EQ(tapePoolName, maplet.second);
 }
   
 TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice) {

@@ -424,13 +424,6 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::DummyCatalogue::getArch
 void cta::catalogue::DummyCatalogue::setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {}
 
 //------------------------------------------------------------------------------
-// getNextArchiveFileId
-//------------------------------------------------------------------------------
-uint64_t cta::catalogue::DummyCatalogue::getNextArchiveFileId() {
-  return 0;
-}
-
-//------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void cta::catalogue::DummyCatalogue::fileWrittenToTape(
@@ -448,11 +441,11 @@ cta::common::dataStructures::ArchiveFileQueueCriteria
 } 
 
 //------------------------------------------------------------------------------
-// getCopyNbToTapePoolMap
+// getTapeCopyToPoolMap
 //------------------------------------------------------------------------------  
-std::map<uint64_t,std::string> cta::catalogue::DummyCatalogue::
-  getCopyNbToTapePoolMap(const std::string &storageClass) const {
-  return std::map<uint64_t,std::string>();
+cta::common::dataStructures::TapeCopyToPoolMap cta::catalogue::DummyCatalogue::
+  getTapeCopyToPoolMap(const std::string &storageClass) const {
+  return cta::common::dataStructures::TapeCopyToPoolMap();
 }
 
 //------------------------------------------------------------------------------

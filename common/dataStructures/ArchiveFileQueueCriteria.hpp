@@ -41,6 +41,18 @@ struct ArchiveFileQueueCriteria {
   ArchiveFileQueueCriteria();
 
   /**
+   * Constructor.
+   *
+   * @param fileId The unique archive-file identifier.
+   * @param copyToPoolMap The map from tape copy number to tape pool name.
+   * @param mountPolicy The mount policy.
+   */
+  ArchiveFileQueueCriteria(
+    const uint64_t fileId,
+    const TapeCopyToPoolMap &copyToPoolMap,
+    const MountPolicy &mountPolicy);
+
+  /**
    * The unique archive-file identifier.
    */
   uint64_t fileId;
