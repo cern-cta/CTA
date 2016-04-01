@@ -21,6 +21,13 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::TapeFileLocation::TapeFileLocation():
+  blockId(0),
+  fSeq(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::TapeFileLocation::operator==(const TapeFileLocation &rhs) const {

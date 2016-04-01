@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct StorageClass {
 
+  StorageClass();
 
   bool operator==(const StorageClass &rhs) const;
 

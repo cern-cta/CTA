@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct DeleteArchiveRequest {
 
+  DeleteArchiveRequest();
 
   bool operator==(const DeleteArchiveRequest &rhs) const;
 

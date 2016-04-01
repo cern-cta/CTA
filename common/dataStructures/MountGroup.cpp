@@ -21,12 +21,21 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::MountGroup::MountGroup():
+  archive_minRequestAge(0),
+  archive_priority(0),
+  maxDrivesAllowed(0),
+  retrieve_minBytesQueued(0),
+  retrieve_minRequestAge(0),
+  retrieve_priority(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::MountGroup::operator==(const MountGroup &rhs) const {
-  return archive_minBytesQueued==rhs.archive_minBytesQueued
-      && archive_minFilesQueued==rhs.archive_minFilesQueued
-      && archive_minRequestAge==rhs.archive_minRequestAge
+  return archive_minRequestAge==rhs.archive_minRequestAge
       && archive_priority==rhs.archive_priority
       && comment==rhs.comment
       && creationLog==rhs.creationLog
@@ -34,7 +43,6 @@ bool cta::common::dataStructures::MountGroup::operator==(const MountGroup &rhs) 
       && maxDrivesAllowed==rhs.maxDrivesAllowed
       && name==rhs.name
       && retrieve_minBytesQueued==rhs.retrieve_minBytesQueued
-      && retrieve_minFilesQueued==rhs.retrieve_minFilesQueued
       && retrieve_minRequestAge==rhs.retrieve_minRequestAge
       && retrieve_priority==rhs.retrieve_priority;
 }
@@ -50,9 +58,7 @@ bool cta::common::dataStructures::MountGroup::operator!=(const MountGroup &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountGroup &obj) {
-  os << "(archive_minBytesQueued=" << obj.archive_minBytesQueued
-     << " archive_minFilesQueued=" << obj.archive_minFilesQueued
-     << " archive_minRequestAge=" << obj.archive_minRequestAge
+  os << "(archive_minRequestAge=" << obj.archive_minRequestAge
      << " archive_priority=" << obj.archive_priority
      << " comment=" << obj.comment
      << " creationLog=" << obj.creationLog
@@ -60,7 +66,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Mo
      << " maxDrivesAllowed=" << obj.maxDrivesAllowed
      << " name=" << obj.name
      << " retrieve_minBytesQueued=" << obj.retrieve_minBytesQueued
-     << " retrieve_minFilesQueued=" << obj.retrieve_minFilesQueued
      << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
      << " retrieve_priority=" << obj.retrieve_priority << ")";
   return os;

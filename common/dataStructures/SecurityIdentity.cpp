@@ -21,6 +21,11 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::SecurityIdentity::operator==(const SecurityIdentity &rhs) const {

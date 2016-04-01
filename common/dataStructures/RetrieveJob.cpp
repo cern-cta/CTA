@@ -21,6 +21,11 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::RetrieveJob::RetrieveJob() {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RetrieveJob::operator==(const RetrieveJob &rhs) const {

@@ -30,6 +30,7 @@ namespace dataStructures {
 
 struct TapeFileLocation {
 
+  TapeFileLocation();
 
   bool operator==(const TapeFileLocation &rhs) const;
 

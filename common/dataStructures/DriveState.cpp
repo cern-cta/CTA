@@ -21,6 +21,15 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::DriveState::DriveState():
+  bytesTransferedInSession(0),
+  filesTransferedInSession(0),
+  latestBandwidth(0),
+  sessionId(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DriveState::operator==(const DriveState &rhs) const {

@@ -31,15 +31,18 @@ namespace dataStructures {
 
 struct LogicalLibrary {
 
+  LogicalLibrary();
 
   bool operator==(const LogicalLibrary &rhs) const;
 
   bool operator!=(const LogicalLibrary &rhs) const;
 
+  uint64_t archive_minBytesQueued;
   std::string comment;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string name;
+  uint64_t retrieve_minBytesQueued;
 
 }; // struct LogicalLibrary
 

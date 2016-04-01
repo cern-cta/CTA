@@ -21,6 +21,12 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveRoute::ArchiveRoute():
+  copyNb(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveRoute::operator==(const ArchiveRoute &rhs) const {

@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct ArchiveJob {
 
+  ArchiveJob();
 
   bool operator==(const ArchiveJob &rhs) const;
 

@@ -21,6 +21,13 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::Dedication::Dedication():
+  fromTimestamp(0),
+  untilTimestamp(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::Dedication::operator==(const Dedication &rhs) const {

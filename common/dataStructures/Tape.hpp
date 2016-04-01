@@ -32,6 +32,7 @@ namespace dataStructures {
 
 struct Tape {
 
+  Tape();
 
   bool operator==(const Tape &rhs) const;
 

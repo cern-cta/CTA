@@ -21,6 +21,14 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::Tape::Tape():
+  capacityInBytes(0),
+  dataOnTapeInBytes(0),
+  lastFSeq(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::Tape::operator==(const Tape &rhs) const {

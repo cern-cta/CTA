@@ -712,8 +712,8 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
 void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
+       << "\tadd --name/-n <logical_library_name> --minarchivebytesqueued/-a <minBytesQueued> --minretrievebytesqueued/-r <minBytesQueued> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <logical_library_name> [--minarchivebytesqueued/-a <minBytesQueued>] [--minretrievebytesqueued/-r <minBytesQueued>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -724,15 +724,33 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty()) {
-        m_data = help.str();
-        return;
-      }
+      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued", false);
+      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued", false);
       if("add" == tokens[2]) { //add
-        m_catalogue->createLogicalLibrary(cliIdentity, hostname, comment);
+        if(minarchivebytesqueued_s.empty()||minretrievebytesqueued_s.empty()||comment.empty()) {
+          m_data = help.str();
+          return;
+        }
+        uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
+        uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+        m_catalogue->createLogicalLibrary(cliIdentity, hostname, minarchivebytesqueued, minretrievebytesqueued, comment);
       }
       else { //ch
-        m_catalogue->modifyLogicalLibraryComment(cliIdentity, hostname, comment);
+        if(minarchivebytesqueued_s.empty()&&minretrievebytesqueued_s.empty()&&comment.empty()) {
+          m_data = help.str();
+          return;
+        }
+        if(!minarchivebytesqueued_s.empty()) {
+          uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
+          m_catalogue->modifyLogicalLibraryMinArchiveBytesQueued(cliIdentity, group, minarchivebytesqueued);
+        }
+        if(!minretrievebytesqueued_s.empty()) {
+          uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+          m_catalogue->modifyLogicalLibraryMinRetrieveBytesQueued(cliIdentity, group, minretrievebytesqueued);
+        }
+        if(!comment.empty()) {
+          m_catalogue->modifyLogicalLibraryComment(cliIdentity, hostname, comment);
+        }
       }
     }
     else { //rm
@@ -743,11 +761,13 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue->getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","min archive bytes","min retrieve bytes","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
+        currentRow.push_back(it->archive_minBytesQueued);
+        currentRow.push_back(it->retrieve_minBytesQueued);
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1081,12 +1101,10 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
 void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " mg/mountgroup add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <mountgroup_name> --archivepriority/--ap <priority_value> --minarchivefilesqueued/--af <minFilesQueued> --minarchivebytesqueued/--ab <minBytesQueued> " << std::endl
-       << "\t    --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value> --minretrievefilesqueued/--rf <minFilesQueued> " << std::endl
-       << "\t    --minretrievebytesqueued/--rb <minBytesQueued> --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <mountgroup_name> [--archivepriority/--ap <priority_value>] [--minarchivefilesqueued/--af <minFilesQueued>] [--minarchivebytesqueued/--ab <minBytesQueued>] " << std::endl
-       << "\t   [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>] [--minretrievefilesqueued/--rf <minFilesQueued>] " << std::endl
-       << "\t   [--minretrievebytesqueued/--rb <minBytesQueued>] [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <mountgroup_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
+       << "\t    --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <mountgroup_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
+       << "\t   [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <mountgroup_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {

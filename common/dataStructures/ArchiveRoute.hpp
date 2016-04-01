@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct ArchiveRoute {
 
+  ArchiveRoute();
 
   bool operator==(const ArchiveRoute &rhs) const;
 

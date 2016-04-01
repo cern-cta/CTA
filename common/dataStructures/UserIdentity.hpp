@@ -30,6 +30,7 @@ namespace dataStructures {
 
 struct UserIdentity {
 
+  UserIdentity();
 
   bool operator==(const UserIdentity &rhs) const;
 

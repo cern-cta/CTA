@@ -21,6 +21,15 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::WriteTestResult::WriteTestResult():
+  noOfFilesWritten(0),
+  totalBytesWritten(0),
+  totalFilesWritten(0),
+  totalTimeInSeconds(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::WriteTestResult::operator==(const WriteTestResult &rhs) const {

@@ -21,6 +21,12 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::CancelRetrieveRequest::CancelRetrieveRequest():
+  archiveFileID(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {

@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct AdminHost {
 
+  AdminHost();
 
   bool operator==(const AdminHost &rhs) const;
 

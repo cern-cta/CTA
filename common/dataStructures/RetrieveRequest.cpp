@@ -21,6 +21,13 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::RetrieveRequest::RetrieveRequest():
+  archiveFileID(0),
+  diskpoolThroughput(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RetrieveRequest::operator==(const RetrieveRequest &rhs) const {

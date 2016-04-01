@@ -21,6 +21,16 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::VerifyInfo::VerifyInfo():
+  filesFailed(0),
+  filesToVerify(0),
+  filesVerified(0),
+  totalFiles(0),
+  totalSize(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::VerifyInfo::operator==(const VerifyInfo &rhs) const {

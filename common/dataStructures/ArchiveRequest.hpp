@@ -33,6 +33,7 @@ namespace dataStructures {
 
 struct ArchiveRequest {
 
+  ArchiveRequest();
 
   bool operator==(const ArchiveRequest &rhs) const;
 

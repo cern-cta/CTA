@@ -32,6 +32,7 @@ namespace dataStructures {
 
 struct RetrieveJob {
 
+  RetrieveJob();
 
   bool operator==(const RetrieveJob &rhs) const;
 

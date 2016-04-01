@@ -32,6 +32,7 @@ namespace dataStructures {
 
 struct DriveState {
 
+  DriveState();
 
   bool operator==(const DriveState &rhs) const;
 

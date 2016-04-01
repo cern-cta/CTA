@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct ListStorageClassRequest {
 
+  ListStorageClassRequest();
 
   bool operator==(const ListStorageClassRequest &rhs) const;
 

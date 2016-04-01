@@ -30,6 +30,7 @@ namespace dataStructures {
 
 struct DRData {
 
+  DRData();
 
   bool operator==(const DRData &rhs) const;
 

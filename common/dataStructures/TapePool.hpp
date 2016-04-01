@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct TapePool {
 
+  TapePool();
 
   bool operator==(const TapePool &rhs) const;
 

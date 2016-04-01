@@ -21,6 +21,13 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveRequest::ArchiveRequest():
+  diskpoolThroughput(0),
+  fileSize(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveRequest::operator==(const ArchiveRequest &rhs) const {

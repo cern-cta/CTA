@@ -21,6 +21,17 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::RepackInfo::RepackInfo():
+  filesArchived(0),
+  filesFailed(0),
+  filesToArchive(0),
+  filesToRetrieve(0),
+  totalFiles(0),
+  totalSize(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RepackInfo::operator==(const RepackInfo &rhs) const {

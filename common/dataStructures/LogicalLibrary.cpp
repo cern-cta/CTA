@@ -21,13 +21,22 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::LogicalLibrary::LogicalLibrary():
+  archive_minBytesQueued(0),
+  retrieve_minBytesQueued(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::LogicalLibrary::operator==(const LogicalLibrary &rhs) const {
-  return comment==rhs.comment
+  return archive_minBytesQueued==rhs.archive_minBytesQueued
+      && comment==rhs.comment
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && name==rhs.name;
+      && name==rhs.name
+      && retrieve_minBytesQueued==rhs.retrieve_minBytesQueued;
 }
 
 //------------------------------------------------------------------------------
@@ -41,10 +50,12 @@ bool cta::common::dataStructures::LogicalLibrary::operator!=(const LogicalLibrar
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::LogicalLibrary &obj) {
-  os << "(comment=" << obj.comment
+  os << "(archive_minBytesQueued=" << obj.archive_minBytesQueued
+     << " comment=" << obj.comment
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " name=" << obj.name << ")";
+     << " name=" << obj.name
+     << " retrieve_minBytesQueued=" << obj.retrieve_minBytesQueued << ")";
   return os;
 }
 

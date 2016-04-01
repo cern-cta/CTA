@@ -31,24 +31,12 @@ namespace dataStructures {
 
 struct MountGroup {
 
-  MountGroup():
-    archive_minBytesQueued(0),
-    archive_minFilesQueued(0),
-    archive_minRequestAge(0),
-    archive_priority(0),
-    maxDrivesAllowed(0),
-    retrieve_minBytesQueued(0),
-    retrieve_minFilesQueued(0),
-    retrieve_minRequestAge(0),
-    retrieve_priority(0) {
-  }
+  MountGroup();
 
   bool operator==(const MountGroup &rhs) const;
 
   bool operator!=(const MountGroup &rhs) const;
 
-  uint64_t archive_minBytesQueued;
-  uint64_t archive_minFilesQueued;
   uint64_t archive_minRequestAge;
   uint64_t archive_priority;
   std::string comment;
@@ -57,7 +45,6 @@ struct MountGroup {
   uint64_t maxDrivesAllowed;
   std::string name;
   uint64_t retrieve_minBytesQueued;
-  uint64_t retrieve_minFilesQueued;
   uint64_t retrieve_minRequestAge;
   uint64_t retrieve_priority;
 

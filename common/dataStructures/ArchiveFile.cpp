@@ -21,6 +21,13 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveFile::ArchiveFile():
+  archiveFileID(0),
+  fileSize(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {

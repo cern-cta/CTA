@@ -30,6 +30,7 @@ namespace dataStructures {
 
 struct TapeLog {
 
+  TapeLog();
 
   bool operator==(const TapeLog &rhs) const;
 

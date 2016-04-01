@@ -21,6 +21,11 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {

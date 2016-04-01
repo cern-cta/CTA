@@ -31,6 +31,7 @@ namespace dataStructures {
 
 struct VerifyInfo {
 
+  VerifyInfo();
 
   bool operator==(const VerifyInfo &rhs) const;
 

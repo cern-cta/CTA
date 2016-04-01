@@ -30,6 +30,7 @@ namespace dataStructures {
 
 struct WriteTestResult {
 
+  WriteTestResult();
 
   bool operator==(const WriteTestResult &rhs) const;
 

@@ -21,6 +21,15 @@
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ReadTestResult::ReadTestResult():
+  noOfFilesRead(0),
+  totalBytesRead(0),
+  totalFilesRead(0),
+  totalTimeInSeconds(0) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ReadTestResult::operator==(const ReadTestResult &rhs) const {
