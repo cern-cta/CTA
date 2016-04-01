@@ -536,9 +536,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  const uint64_t minArchiveBytesQueued = 1;
-  const uint64_t minRetrieveBytesQueued = 2;
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment);
+  const uint64_t archiveMinBytesQueued = 1;
+  const uint64_t retrieveMinBytesQueued = 2;
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     catalogue.getLogicalLibraries();
@@ -548,8 +548,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_EQ(comment, lib.comment);
-  ASSERT_EQ(minArchiveBytesQueued, lib.archive_minBytesQueued);
-  ASSERT_EQ(minRetrieveBytesQueued, lib.retrieve_minBytesQueued);
+  ASSERT_EQ(archiveMinBytesQueued, lib.archiveMinBytesQueued);
+  ASSERT_EQ(retrieveMinBytesQueued, lib.retrieveMinBytesQueued);
 
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
@@ -568,11 +568,11 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
 
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  const uint64_t minArchiveBytesQueued = 1;
-  const uint64_t minRetrieveBytesQueued = 2;
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment);
+  const uint64_t archiveMinBytesQueued = 1;
+  const uint64_t retrieveMinBytesQueued = 2;
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment);
   ASSERT_THROW(catalogue.createLogicalLibrary(m_cliSI,
-    logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment),
+    logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment),
     exception::Exception);
 }
 

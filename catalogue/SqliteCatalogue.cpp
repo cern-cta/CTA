@@ -54,7 +54,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
       "LAST_MOD_TIME       INTEGER       NOT NULL,"
 
-      "PRIMARY KEY(ADMIN_USER_NAME)"
+      "CONSTRAINT ADMIN_USER_PK PRIMARY KEY(ADMIN_USER_NAME)"
     ");"
 
     "CREATE TABLE ADMIN_HOST("
@@ -140,7 +140,9 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     ");"
 
     "CREATE TABLE LOGICAL_LIBRARY("
-      "LOGICAL_LIBRARY_NAME VARCHAR2(100) NOT NULL,"
+      "LOGICAL_LIBRARY_NAME      VARCHAR2(100) NOT NULL,"
+      "ARCHIVE_MIN_BYTES_QUEUED  INTEGER       NOT NULL,"
+      "RETRIEVE_MIN_BYTES_QUEUED INTEGER       NOT NULL,"
 
       "USER_COMMENT VARCHAR2(1000) NOT NULL,"
 
@@ -201,15 +203,11 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "CREATE TABLE MOUNT_GROUP("
       "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
 
-      "ARCHIVE_PRIORITY         INTEGER NOT NULL,"
-      "MIN_ARCHIVE_FILES_QUEUED INTEGER NOT NULL,"
-      "MIN_ARCHIVE_BYTES_QUEUED INTEGER NOT NULL,"
-      "MIN_ARCHIVE_REQUEST_AGE  INTEGER NOT NULL,"
+      "ARCHIVE_PRIORITY        INTEGER NOT NULL,"
+      "ARCHIVE_MIN_REQUEST_AGE INTEGER NOT NULL,"
 
-      "RETRIEVE_PRIORITY         INTEGER NOT NULL,"
-      "MIN_RETRIEVE_FILES_QUEUED INTEGER NOT NULL,"
-      "MIN_RETRIEVE_BYTES_QUEUED INTEGER NOT NULL,"
-      "MIN_RETRIEVE_REQUEST_AGE  INTEGER NOT NULL,"
+      "RETRIEVE_PRIORITY        INTEGER NOT NULL,"
+      "RETRIEVE_MIN_REQUEST_AGE INTEGER NOT NULL,"
 
       "MAX_DRIVES_ALLOWED INTEGER NOT NULL,"
 
@@ -979,13 +977,15 @@ void cta::catalogue::SqliteCatalogue::modifyArchiveRouteComment(const common::da
 void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
-  const uint64_t minarchivebytesqueued,
-  const uint64_t minretrievebytesqueued,
+  const uint64_t archiveMinBytesQueued,
+  const uint64_t retrieveMinBytesQueued,
   const std::string &comment) {
   const time_t now = time(NULL);
   const char *const sql =
     "INSERT INTO LOGICAL_LIBRARY("
       "LOGICAL_LIBRARY_NAME,"
+      "ARCHIVE_MIN_BYTES_QUEUED,"
+      "RETRIEVE_MIN_BYTES_QUEUED,"
 
       "USER_COMMENT,"
 
@@ -1000,6 +1000,8 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
       "LAST_MOD_TIME)"
     "VALUES("
       ":LOGICAL_LIBRARY_NAME,"
+      ":ARCHIVE_MIN_BYTES_QUEUED,"
+      ":RETRIEVE_MIN_BYTES_QUEUED,"
 
       ":USER_COMMENT,"
 
@@ -1015,6 +1017,8 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":LOGICAL_LIBRARY_NAME", name);
+  stmt->bind(":ARCHIVE_MIN_BYTES_QUEUED", archiveMinBytesQueued);
+  stmt->bind(":RETRIEVE_MIN_BYTES_QUEUED", retrieveMinBytesQueued);
 
   stmt->bind(":USER_COMMENT", comment);
 
@@ -1039,7 +1043,9 @@ std::list<cta::common::dataStructures::LogicalLibrary>
   std::list<cta::common::dataStructures::LogicalLibrary> libs;
   const char *const sql =
     "SELECT "
-      "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+      "LOGICAL_LIBRARY_NAME      AS LOGICAL_LIBRARY_NAME,"
+      "ARCHIVE_MIN_BYTES_QUEUED  AS ARCHIVE_MIN_BYTES_QUEUED,"
+      "RETRIEVE_MIN_BYTES_QUEUED AS RETRIEVE_MIN_BYTES_QUEUED,"
 
       "USER_COMMENT AS USER_COMMENT,"
 
@@ -1062,6 +1068,8 @@ std::list<cta::common::dataStructures::LogicalLibrary>
     common::dataStructures::LogicalLibrary lib;
 
     lib.name = stmt->columnText(nameToIdx["LOGICAL_LIBRARY_NAME"]);
+    lib.archiveMinBytesQueued = stmt->columnUint64(nameToIdx["ARCHIVE_MIN_BYTES_QUEUED"]);
+    lib.retrieveMinBytesQueued = stmt->columnUint64(nameToIdx["RETRIEVE_MIN_BYTES_QUEUED"]);
 
     lib.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
@@ -1101,12 +1109,12 @@ void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const common::
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinArchiveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const minarchivebytesqueued) {}
+void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinArchiveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const archiveMinBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinRetrieveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const minretrievebytesqueued) {}
+void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinRetrieveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const retrieveMinBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // createTape
@@ -1560,10 +1568,10 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
       "MOUNT_GROUP_NAME,"
 
       "ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_REQUEST_AGE,"
+      "ARCHIVE_MIN_REQUEST_AGE,"
 
       "RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_REQUEST_AGE,"
+      "RETRIEVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED,"
 
@@ -1582,10 +1590,10 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
       ":MOUNT_GROUP_NAME,"
 
       ":ARCHIVE_PRIORITY,"
-      ":MIN_ARCHIVE_REQUEST_AGE,"
+      ":ARCHIVE_MIN_REQUEST_AGE,"
 
       ":RETRIEVE_PRIORITY,"
-      ":MIN_RETRIEVE_REQUEST_AGE,"
+      ":RETRIEVE_MIN_REQUEST_AGE,"
 
       ":MAX_DRIVES_ALLOWED,"
 
@@ -1605,10 +1613,10 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
   stmt->bind(":MOUNT_GROUP_NAME", name);
 
   stmt->bind(":ARCHIVE_PRIORITY", archivePriority);
-  stmt->bind(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
+  stmt->bind(":ARCHIVE_MIN_REQUEST_AGE", minArchiveRequestAge);
 
   stmt->bind(":RETRIEVE_PRIORITY", retrievePriority);
-  stmt->bind(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
+  stmt->bind(":RETRIEVE_MIN_REQUEST_AGE", minRetrieveRequestAge);
 
   stmt->bind(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
 
@@ -1638,10 +1646,10 @@ std::list<cta::common::dataStructures::MountGroup>
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
       "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
+      "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
 
       "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_REQUEST_AGE AS MIN_RETRIEVE_REQUEST_AGE,"
+      "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
 
@@ -1669,12 +1677,12 @@ std::list<cta::common::dataStructures::MountGroup>
 
     group.archive_priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
     group.archive_minRequestAge =
-      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
+      stmt->columnUint64(nameToIdx["ARCHIVE_MIN_REQUEST_AGE"]);
 
     group.retrieve_priority =
       stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
     group.retrieve_minRequestAge =
-      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
+      stmt->columnUint64(nameToIdx["RETRIEVE_MIN_REQUEST_AGE"]);
 
     group.maxDrivesAllowed =
       stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
@@ -1722,7 +1730,7 @@ void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinFilesQueued(cons
 //------------------------------------------------------------------------------
 // modifyMountGroupArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupArchiveMinRequestAge
@@ -1742,7 +1750,7 @@ void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinFilesQueued(con
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveBytesQueued) {}
+void cta::catalogue::SqliteCatalogue::modifyMountGroupRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) {}
 
 //------------------------------------------------------------------------------
 // modifyMountGroupRetrieveMinRequestAge
@@ -2112,8 +2120,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
   getArchiveMountPolicy(const std::string &user) const {
   const char *const sql =
     "SELECT "
-      "ARCHIVE_PRIORITY         AS ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_REQUEST_AGE  AS MIN_ARCHIVE_REQUEST_AGE,"
+      "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
+      "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
     "FROM MOUNT_GROUP INNER JOIN END_USER ON "
@@ -2127,7 +2135,7 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     nameToIdx = stmt->getColumnNameToIdx();
     common::dataStructures::MountPolicy policy;
     policy.priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
-    policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
+    policy.minRequestAge = stmt->columnUint64(nameToIdx["ARCHIVE_MIN_REQUEST_AGE"]);
     policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
     return policy;
   } else {
@@ -2145,8 +2153,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
   getRetrieveMountPolicy(const std::string &user) const {
   const char *const sql =
     "SELECT "
-      "RETRIEVE_PRIORITY         AS RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_REQUEST_AGE  AS MIN_RETRIEVE_REQUEST_AGE,"
+      "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
+      "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
     "FROM MOUNT_GROUP INNER JOIN END_USER ON "
@@ -2160,7 +2168,7 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     nameToIdx = stmt->getColumnNameToIdx();
     common::dataStructures::MountPolicy policy;
     policy.priority = stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
-    policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
+    policy.minRequestAge = stmt->columnUint64(nameToIdx["RETRIEVE_MIN_REQUEST_AGE"]);
     policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
     return policy;
   } else {

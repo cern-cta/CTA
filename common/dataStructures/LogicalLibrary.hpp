@@ -37,12 +37,12 @@ struct LogicalLibrary {
 
   bool operator!=(const LogicalLibrary &rhs) const;
 
-  uint64_t archive_minBytesQueued;
+  uint64_t archiveMinBytesQueued;
   std::string comment;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string name;
-  uint64_t retrieve_minBytesQueued;
+  uint64_t retrieveMinBytesQueued;
 
 }; // struct LogicalLibrary
 

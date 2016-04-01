@@ -24,19 +24,19 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::LogicalLibrary::LogicalLibrary():
-  archive_minBytesQueued(0),
-  retrieve_minBytesQueued(0) {}
+  archiveMinBytesQueued(0),
+  retrieveMinBytesQueued(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::LogicalLibrary::operator==(const LogicalLibrary &rhs) const {
-  return archive_minBytesQueued==rhs.archive_minBytesQueued
+  return archiveMinBytesQueued==rhs.archiveMinBytesQueued
       && comment==rhs.comment
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
       && name==rhs.name
-      && retrieve_minBytesQueued==rhs.retrieve_minBytesQueued;
+      && retrieveMinBytesQueued==rhs.retrieveMinBytesQueued;
 }
 
 //------------------------------------------------------------------------------
@@ -50,12 +50,12 @@ bool cta::common::dataStructures::LogicalLibrary::operator!=(const LogicalLibrar
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::LogicalLibrary &obj) {
-  os << "(archive_minBytesQueued=" << obj.archive_minBytesQueued
+  os << "(archiveMinBytesQueued=" << obj.archiveMinBytesQueued
      << " comment=" << obj.comment
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " name=" << obj.name
-     << " retrieve_minBytesQueued=" << obj.retrieve_minBytesQueued << ")";
+     << " retrieveMinBytesQueued=" << obj.retrieveMinBytesQueued << ")";
   return os;
 }
 
