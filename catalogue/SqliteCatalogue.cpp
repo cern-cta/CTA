@@ -1537,12 +1537,8 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint64_t archivePriority,
-  const uint64_t minArchiveFilesQueued, 
-  const uint64_t minArchiveBytesQueued,
   const uint64_t minArchiveRequestAge,
   const uint64_t retrievePriority,
-  const uint64_t minRetrieveFilesQueued,
-  const uint64_t minRetrieveBytesQueued,
   const uint64_t minRetrieveRequestAge,
   const uint64_t maxDrivesAllowed,
   const std::string &comment) {
@@ -1552,13 +1548,9 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
       "MOUNT_GROUP_NAME,"
 
       "ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_FILES_QUEUED,"
-      "MIN_ARCHIVE_BYTES_QUEUED,"
       "MIN_ARCHIVE_REQUEST_AGE,"
 
       "RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_FILES_QUEUED,"
-      "MIN_RETRIEVE_BYTES_QUEUED,"
       "MIN_RETRIEVE_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED,"
@@ -1578,13 +1570,9 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
       ":MOUNT_GROUP_NAME,"
 
       ":ARCHIVE_PRIORITY,"
-      ":MIN_ARCHIVE_FILES_QUEUED,"
-      ":MIN_ARCHIVE_BYTES_QUEUED,"
       ":MIN_ARCHIVE_REQUEST_AGE,"
 
       ":RETRIEVE_PRIORITY,"
-      ":MIN_RETRIEVE_FILES_QUEUED,"
-      ":MIN_RETRIEVE_BYTES_QUEUED,"
       ":MIN_RETRIEVE_REQUEST_AGE,"
 
       ":MAX_DRIVES_ALLOWED,"
@@ -1605,13 +1593,9 @@ void cta::catalogue::SqliteCatalogue::createMountGroup(
   stmt->bind(":MOUNT_GROUP_NAME", name);
 
   stmt->bind(":ARCHIVE_PRIORITY", archivePriority);
-  stmt->bind(":MIN_ARCHIVE_FILES_QUEUED", minArchiveFilesQueued);
-  stmt->bind(":MIN_ARCHIVE_BYTES_QUEUED", minArchiveBytesQueued);
   stmt->bind(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
 
   stmt->bind(":RETRIEVE_PRIORITY", retrievePriority);
-  stmt->bind(":MIN_RETRIEVE_FILES_QUEUED", minRetrieveFilesQueued);
-  stmt->bind(":MIN_RETRIEVE_BYTES_QUEUED", minRetrieveBytesQueued);
   stmt->bind(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
 
   stmt->bind(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
@@ -1641,15 +1625,11 @@ std::list<cta::common::dataStructures::MountGroup>
     "SELECT "
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
-      "ARCHIVE_PRIORITY         AS ARCHIVE_PRIORITY,"
-      "MIN_ARCHIVE_FILES_QUEUED AS MIN_ARCHIVE_FILES_QUEUED,"
-      "MIN_ARCHIVE_BYTES_QUEUED AS MIN_ARCHIVE_BYTES_QUEUED,"
-      "MIN_ARCHIVE_REQUEST_AGE  AS MIN_ARCHIVE_REQUEST_AGE,"
+      "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,"
 
-      "RETRIEVE_PRIORITY         AS RETRIEVE_PRIORITY,"
-      "MIN_RETRIEVE_FILES_QUEUED AS MIN_RETRIEVE_FILES_QUEUED,"
-      "MIN_RETRIEVE_BYTES_QUEUED AS MIN_RETRIEVE_BYTES_QUEUED,"
-      "MIN_RETRIEVE_REQUEST_AGE  AS MIN_RETRIEVE_REQUEST_AGE,"
+      "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_REQUEST_AGE AS MIN_RETRIEVE_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
 
@@ -1676,19 +1656,11 @@ std::list<cta::common::dataStructures::MountGroup>
     group.name = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
 
     group.archive_priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
-    group.archive_minFilesQueued =
-      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_FILES_QUEUED"]);
-    group.archive_minBytesQueued =
-      stmt->columnUint64(nameToIdx["MIN_ARCHIVE_BYTES_QUEUED"]);
     group.archive_minRequestAge =
       stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
 
     group.retrieve_priority =
       stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
-    group.retrieve_minFilesQueued =
-      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_FILES_QUEUED"]);
-    group.retrieve_minBytesQueued =
-      stmt->columnUint64(nameToIdx["MIN_RETRIEVE_BYTES_QUEUED"]);
     group.retrieve_minRequestAge =
       stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
 

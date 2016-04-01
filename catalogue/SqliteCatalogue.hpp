@@ -102,9 +102,16 @@ public:
   virtual void modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup);
   virtual void modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment);
 
-  virtual void createMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveFilesQueued, 
-                               const uint64_t minArchiveBytesQueued, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveFilesQueued,
-                               const uint64_t minRetrieveBytesQueued, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment);
+  virtual void createMountGroup(
+    const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &name,
+    const uint64_t archivePriority,
+    const uint64_t minArchiveRequestAge,
+    const uint64_t retrievePriority,
+    const uint64_t minRetrieveRequestAge,
+    const uint64_t maxDrivesAllowed,
+    const std::string &comment);
+
   virtual void deleteMountGroup(const std::string &name);
   virtual std::list<cta::common::dataStructures::MountGroup> getMountGroups() const;
   virtual void modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority);
