@@ -766,8 +766,8 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->archive_minBytesQueued));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minBytesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->archiveMinBytesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieveMinBytesQueued));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
