@@ -171,6 +171,112 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   return ret;
 }
 
+/* Old getMountInfo
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
+  OStoreDB::getMountInfo() {
+  //Allocate the getMountInfostructure to return.
+  assertAgentSet();
+  std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo(
+    m_objectStore, *m_agent));
+  TapeMountDecisionInfo & tmdi=*privateRet;
+  // Get all the tape pools and tapes with queues (potential mounts)
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  // Take an exclusive lock on the scheduling and fetch it.
+  tmdi.m_schedulerGlobalLock.reset(
+    new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
+  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
+  tmdi.m_lockTaken = true;
+  tmdi.m_schedulerGlobalLock->fetch();
+  auto tpl = re.dumpTapePools();
+  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+    // Get the tape pool object
+    objectstore::TapePool tpool(tpp->address, m_objectStore);
+    // debug utility variable
+    std::string __attribute__((__unused__)) poolName = tpp->tapePool;
+    objectstore::ScopedSharedLock tpl(tpool);
+    tpool.fetch();
+    // If there are files queued, we create an entry for this tape pool in the
+    // mount candidates list.
+    if (tpool.getJobsSummary().files) {
+      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+      auto & m = tmdi.potentialMounts.back();
+      m.tapePool = tpp->tapePool;
+      m.type = cta::MountType::ARCHIVE;
+      m.bytesQueued = tpool.getJobsSummary().bytes;
+      m.filesQueued = tpool.getJobsSummary().files;      
+      m.oldestJobStartTime = tpool.getJobsSummary().oldestJobStartTime;
+      m.priority = tpool.getJobsSummary().priority;
+      
+      m.mountCriteria.maxFilesQueued = 
+          tpool.getMountCriteriaByDirection().archive.maxFilesQueued;
+      m.mountCriteria.maxBytesQueued = 
+          tpool.getMountCriteriaByDirection().archive.maxBytesQueued;
+      m.mountCriteria.maxAge = 
+          tpool.getMountCriteriaByDirection().archive.maxAge;
+      m.mountCriteria.quota = 
+          tpool.getMountCriteriaByDirection().archive.quota;
+      m.logicalLibrary = "";
+
+    }
+    // For each tape in the pool, list the tapes with work
+    auto tl = tpool.dumpTapesAndFetchStatus();
+    for (auto tp = tl.begin(); tp!= tl.end(); tp++) {
+      objectstore::Tape t(tp->address, m_objectStore);
+      objectstore::ScopedSharedLock tl(t);
+      t.fetch();
+      if (t.getJobsSummary().files) {
+        tmdi.potentialMounts.push_back(PotentialMount());
+        auto & m = tmdi.potentialMounts.back();
+        m.type = cta::MountType::RETRIEVE;
+        m.bytesQueued = t.getJobsSummary().bytes;
+        m.filesQueued = t.getJobsSummary().files;
+        m.oldestJobStartTime = t.getJobsSummary().oldestJobStartTime;
+        m.priority = t.getJobsSummary().priority;
+        m.vid = t.getVid();
+        m.logicalLibrary = t.getLogicalLibrary();
+        
+        m.mountCriteria.maxFilesQueued = 
+            tpool.getMountCriteriaByDirection().retrieve.maxFilesQueued;
+        m.mountCriteria.maxBytesQueued = 
+            tpool.getMountCriteriaByDirection().retrieve.maxBytesQueued;
+        m.mountCriteria.maxAge = 
+            tpool.getMountCriteriaByDirection().retrieve.maxAge;
+        m.mountCriteria.quota = 
+            tpool.getMountCriteriaByDirection().retrieve.quota;
+        m.logicalLibrary = t.getLogicalLibrary();
+      }
+    }
+  }
+  // Dedication information comes here
+  // TODO
+  // 
+  // Collect information about the existing mounts
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedSharedLock drl(dr);
+  dr.fetch();
+  auto dl = dr.dumpDrives();
+  using common::DriveStatus;
+  std::set<int> activeDriveStatuses = {
+    (int)DriveStatus::Starting,
+    (int)DriveStatus::Mounting,
+    (int)DriveStatus::Transfering,
+    (int)DriveStatus::Unloading,
+    (int)DriveStatus::Unmounting,
+    (int)DriveStatus::DrainingToDisk };
+  for (auto d=dl.begin(); d!= dl.end(); d++) {
+    if (activeDriveStatuses.count((int)d->status)) {
+      tmdi.existingMounts.push_back(ExistingMount());
+      tmdi.existingMounts.back().type = d->mountType;
+      tmdi.existingMounts.back().tapePool = d->currentTapePool;
+    }
+  }
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  return ret;
+}
+*/
+
 void OStoreDB::createStorageClass(const std::string& name,
   const uint16_t nbCopies, const cta::CreationLog& creationLog) {
   RootEntry re(m_objectStore);
