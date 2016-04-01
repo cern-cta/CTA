@@ -24,11 +24,10 @@
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs) const {
-  return maxDrives==rhs.maxDrives
-      && minBytesQueued==rhs.minBytesQueued
-      && minFilesQueued==rhs.minFilesQueued
-      && minRequestAge==rhs.minRequestAge
-      && priority==rhs.priority;
+  return
+    maxDrives==rhs.maxDrives         &&
+    minRequestAge==rhs.minRequestAge &&
+    priority==rhs.priority;
 }
 
 //------------------------------------------------------------------------------
@@ -42,11 +41,11 @@ bool cta::common::dataStructures::MountPolicy::operator!=(const MountPolicy &rhs
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj) {
-  os << "(maxDrives=" << obj.maxDrives
-     << " minBytesQueued=" << obj.minBytesQueued
-     << " minFilesQueued=" << obj.minFilesQueued
+  os << "("
+     <<  "maxDrives=" << obj.maxDrives
      << " minRequestAge=" << obj.minRequestAge
-     << " priority=" << obj.priority << ")";
+     << " priority=" << obj.priority
+     << ")";
   return os;
 }
 

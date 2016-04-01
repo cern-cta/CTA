@@ -908,14 +908,10 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
 
   const std::string mountGroupName = "mount_group";
   const uint64_t archivePriority = 1;
-  const uint64_t minArchiveFilesQueued = 2;
-  const uint64_t minArchiveBytesQueued = 3;
-  const uint64_t minArchiveRequestAge = 4;
-  const uint64_t retrievePriority = 5;
-  const uint64_t minRetrieveFilesQueued = 6;
-  const uint64_t minRetrieveBytesQueued = 7;
-  const uint64_t minRetrieveRequestAge = 8;
-  const uint64_t maxDrivesAllowed = 9;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
 
   catalogue.createMountGroup(
     m_cliSI,
@@ -950,8 +946,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
     catalogue.getArchiveMountPolicy(userName);
 
   ASSERT_EQ(archivePriority, archivePolicy.priority);
-  ASSERT_EQ(minArchiveFilesQueued, archivePolicy.minFilesQueued);
-  ASSERT_EQ(minArchiveBytesQueued, archivePolicy.minBytesQueued);
   ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
 
@@ -959,8 +953,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
     catalogue.getRetrieveMountPolicy(userName);
 
   ASSERT_EQ(retrievePriority, retrievePolicy.priority);
-  ASSERT_EQ(minRetrieveFilesQueued, retrievePolicy.minFilesQueued);
-  ASSERT_EQ(minRetrieveBytesQueued, retrievePolicy.minBytesQueued);
   ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, retrievePolicy.maxDrives);
 
@@ -1017,8 +1009,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
   ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.priority);
-  ASSERT_EQ(minArchiveFilesQueued, queueCriteria.mountPolicy.minFilesQueued);
-  ASSERT_EQ(minArchiveBytesQueued, queueCriteria.mountPolicy.minBytesQueued);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrives);
 }
