@@ -39,6 +39,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
+  dataStructures/LogicalLibrary.cpp
   dataStructures/MountGroup.cpp
   dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp

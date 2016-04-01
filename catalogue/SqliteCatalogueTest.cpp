@@ -536,7 +536,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
+  const uint64_t minArchiveBytesQueued = 1;
+  const uint64_t minRetrieveBytesQueued = 2;
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     catalogue.getLogicalLibraries();
@@ -546,6 +548,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_EQ(comment, lib.comment);
+  ASSERT_EQ(minArchiveBytesQueued, lib.archive_minBytesQueued);
+  ASSERT_EQ(minRetrieveBytesQueued, lib.retrieve_minBytesQueued);
 
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
@@ -564,9 +568,11 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
 
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
+  const uint64_t minArchiveBytesQueued = 1;
+  const uint64_t minRetrieveBytesQueued = 2;
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment);
   ASSERT_THROW(catalogue.createLogicalLibrary(m_cliSI,
-    logicalLibraryName, comment),
+    logicalLibraryName, minArchiveBytesQueued, minRetrieveBytesQueued, comment),
     exception::Exception);
 }
 
@@ -586,7 +592,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape) {
   const bool fullValue = false;
   const std::string comment = "create tape";
 
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, 1, 2,
     "create logical library");
   catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
   catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
@@ -632,7 +638,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
   const bool fullValue = false;
   const std::string comment = "create tape";
 
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, 1, 2,
     "create logical library");
   catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
   catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,

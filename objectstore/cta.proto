@@ -429,8 +429,6 @@ message EntryLog {
 }
 
 message MountPolicy {
-  required uint64 minBytesQueued = 8981;
-  required uint64 minFilesQueued = 8983;
   required uint64 minRequestAge = 8985;
   required uint64 priority = 8987;
   required uint64 maxDrives = 8989;

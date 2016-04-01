@@ -27,7 +27,6 @@ cta::common::dataStructures::MountGroup::MountGroup():
   archive_minRequestAge(0),
   archive_priority(0),
   maxDrivesAllowed(0),
-  retrieve_minBytesQueued(0),
   retrieve_minRequestAge(0),
   retrieve_priority(0) {}
 
@@ -42,7 +41,6 @@ bool cta::common::dataStructures::MountGroup::operator==(const MountGroup &rhs) 
       && lastModificationLog==rhs.lastModificationLog
       && maxDrivesAllowed==rhs.maxDrivesAllowed
       && name==rhs.name
-      && retrieve_minBytesQueued==rhs.retrieve_minBytesQueued
       && retrieve_minRequestAge==rhs.retrieve_minRequestAge
       && retrieve_priority==rhs.retrieve_priority;
 }
@@ -65,7 +63,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Mo
      << " lastModificationLog=" << obj.lastModificationLog
      << " maxDrivesAllowed=" << obj.maxDrivesAllowed
      << " name=" << obj.name
-     << " retrieve_minBytesQueued=" << obj.retrieve_minBytesQueued
      << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
      << " retrieve_priority=" << obj.retrieve_priority << ")";
   return os;

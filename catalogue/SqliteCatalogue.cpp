@@ -979,6 +979,8 @@ void cta::catalogue::SqliteCatalogue::modifyArchiveRouteComment(const common::da
 void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
+  const uint64_t minarchivebytesqueued,
+  const uint64_t minretrievebytesqueued,
   const std::string &comment) {
   const time_t now = time(NULL);
   const char *const sql =
@@ -1095,6 +1097,16 @@ std::list<cta::common::dataStructures::LogicalLibrary>
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
 void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {}
+
+//------------------------------------------------------------------------------
+// modifyLogicalLibraryComment
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinArchiveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const minarchivebytesqueued) {}
+
+//------------------------------------------------------------------------------
+// modifyLogicalLibraryComment
+//------------------------------------------------------------------------------
+void cta::catalogue::SqliteCatalogue::modifyLogicalLibraryMinRetrieveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const minretrievebytesqueued) {}
 
 //------------------------------------------------------------------------------
 // createTape

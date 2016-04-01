@@ -717,8 +717,8 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string hostname = getOptionValue(tokens, "-n", "--name", false);
-    if(hostname.empty()) {
+    std::string name = getOptionValue(tokens, "-n", "--name", false);
+    if(name.empty()) {
       m_data = help.str();
       return;
     }
@@ -733,7 +733,7 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
         }
         uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
         uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
-        m_catalogue->createLogicalLibrary(cliIdentity, hostname, minarchivebytesqueued, minretrievebytesqueued, comment);
+        m_catalogue->createLogicalLibrary(cliIdentity, name, minarchivebytesqueued, minretrievebytesqueued, comment);
       }
       else { //ch
         if(minarchivebytesqueued_s.empty()&&minretrievebytesqueued_s.empty()&&comment.empty()) {
@@ -742,19 +742,19 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
         }
         if(!minarchivebytesqueued_s.empty()) {
           uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
-          m_catalogue->modifyLogicalLibraryMinArchiveBytesQueued(cliIdentity, group, minarchivebytesqueued);
+          m_catalogue->modifyLogicalLibraryMinArchiveBytesQueued(cliIdentity, name, minarchivebytesqueued);
         }
         if(!minretrievebytesqueued_s.empty()) {
           uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
-          m_catalogue->modifyLogicalLibraryMinRetrieveBytesQueued(cliIdentity, group, minretrievebytesqueued);
+          m_catalogue->modifyLogicalLibraryMinRetrieveBytesQueued(cliIdentity, name, minretrievebytesqueued);
         }
         if(!comment.empty()) {
-          m_catalogue->modifyLogicalLibraryComment(cliIdentity, hostname, comment);
+          m_catalogue->modifyLogicalLibraryComment(cliIdentity, name, comment);
         }
       }
     }
     else { //rm
-      m_catalogue->deleteLogicalLibrary(hostname);
+      m_catalogue->deleteLogicalLibrary(name);
     }
   }
   else if("ls" == tokens[2]) { //ls
@@ -766,8 +766,8 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(it->archive_minBytesQueued);
-        currentRow.push_back(it->retrieve_minBytesQueued);
+        currentRow.push_back(std::to_string((unsigned long long)it->archive_minBytesQueued));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minBytesQueued));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1115,49 +1115,33 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {      
       std::string archivepriority_s = getOptionValue(tokens, "--ap", "--archivepriority", false);
-      std::string minarchivefilesqueued_s = getOptionValue(tokens, "--af", "--minarchivefilesqueued", false);
-      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued", false);
       std::string minarchiverequestage_s = getOptionValue(tokens, "--aa", "--minarchiverequestage", false);
       std::string retrievepriority_s = getOptionValue(tokens, "--rp", "--retrievepriority", false);
-      std::string minretrievefilesqueued_s = getOptionValue(tokens, "--rf", "--minretrievefilesqueued", false);
-      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued", false);
       std::string minretrieverequestage_s = getOptionValue(tokens, "--ra", "--minretrieverequestage", false);
       std::string maxdrivesallowed_s = getOptionValue(tokens, "-d", "--maxdrivesallowed", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
-        if(archivepriority_s.empty()||minarchivefilesqueued_s.empty()||minarchivebytesqueued_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
-                ||minretrievefilesqueued_s.empty()||minretrievebytesqueued_s.empty()||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
+        if(archivepriority_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
+                ||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
           m_data = help.str();
           return;
         }
         uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
-        uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
-        uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
         uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
         uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
-        uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
-        uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
         uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
         uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
-        m_catalogue->createMountGroup(cliIdentity, group, archivepriority, minarchivefilesqueued, minarchivebytesqueued, minarchiverequestage, retrievepriority, minretrievefilesqueued, minretrievebytesqueued, minretrieverequestage, maxdrivesallowed, comment);
+        m_catalogue->createMountGroup(cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
-        if(archivepriority_s.empty()&&minarchivefilesqueued_s.empty()&&minarchivebytesqueued_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
-                &&minretrievefilesqueued_s.empty()&&minretrievebytesqueued_s.empty()&&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
+        if(archivepriority_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
+                &&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
           m_data = help.str();
           return;
         }
         if(!archivepriority_s.empty()) {
           uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
           m_catalogue->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
-        }
-        if(!minarchivefilesqueued_s.empty()) {
-          uint64_t minarchivefilesqueued; std::stringstream minarchivefilesqueued_ss; minarchivefilesqueued_ss << minarchivefilesqueued_s; minarchivefilesqueued_ss >> minarchivefilesqueued;
-          m_catalogue->modifyMountGroupArchiveMinFilesQueued(cliIdentity, group, minarchivefilesqueued);
-        }
-        if(!minarchivebytesqueued_s.empty()) {
-          uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
-          m_catalogue->modifyMountGroupArchiveMinBytesQueued(cliIdentity, group, minarchivebytesqueued);
         }
         if(!minarchiverequestage_s.empty()) {
           uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
@@ -1166,14 +1150,6 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         if(!retrievepriority_s.empty()) {
           uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
           m_catalogue->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
-        }
-        if(!minretrievefilesqueued_s.empty()) {
-          uint64_t minretrievefilesqueued; std::stringstream minretrievefilesqueued_ss; minretrievefilesqueued_ss << minretrievefilesqueued_s; minretrievefilesqueued_ss >> minretrievefilesqueued;
-          m_catalogue->modifyMountGroupRetrieveMinFilesQueued(cliIdentity, group, minretrievefilesqueued);
-        }
-        if(!minretrievebytesqueued_s.empty()) {
-          uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
-          m_catalogue->modifyMountGroupRetrieveMinBytesQueued(cliIdentity, group, minretrievebytesqueued);
         }
         if(!minretrieverequestage_s.empty()) {
           uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
@@ -1202,12 +1178,8 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
         currentRow.push_back(std::to_string((unsigned long long)it->archive_priority));
-        currentRow.push_back(std::to_string((unsigned long long)it->archive_minFilesQueued));
-        currentRow.push_back(std::to_string((unsigned long long)it->archive_minBytesQueued));
         currentRow.push_back(std::to_string((unsigned long long)it->archive_minRequestAge));
         currentRow.push_back(std::to_string((unsigned long long)it->retrieve_priority));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minFilesQueued));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minBytesQueued));
         currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minRequestAge));
         currentRow.push_back(std::to_string((unsigned long long)it->maxDrivesAllowed));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);

@@ -44,7 +44,6 @@ struct MountGroup {
   cta::common::dataStructures::EntryLog lastModificationLog;
   uint64_t maxDrivesAllowed;
   std::string name;
-  uint64_t retrieve_minBytesQueued;
   uint64_t retrieve_minRequestAge;
   uint64_t retrieve_priority;
 
