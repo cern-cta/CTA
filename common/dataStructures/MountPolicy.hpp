@@ -32,6 +32,8 @@ struct MountPolicy {
 
   MountPolicy():
     maxDrives(0),
+    minBytesQueued(0),
+    minFilesQueued(0),
     minRequestAge(0),
     priority(0) {
   }
@@ -41,6 +43,8 @@ struct MountPolicy {
   bool operator!=(const MountPolicy &rhs) const;
 
   uint64_t maxDrives;
+  uint64_t minBytesQueued;
+  uint64_t minFilesQueued;
   uint64_t minRequestAge;
   uint64_t priority;
 

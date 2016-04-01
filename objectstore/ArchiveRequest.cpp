@@ -232,6 +232,8 @@ void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStr
   checkPayloadWritable();
   auto payloadMountPolicy = m_payload.mutable_mountpolicy();
   payloadMountPolicy->set_maxdrives(mountPolicy.maxDrives);
+  payloadMountPolicy->set_minbytesqueued(mountPolicy.minBytesQueued);
+  payloadMountPolicy->set_minfilesqueued(mountPolicy.minFilesQueued);
   payloadMountPolicy->set_minrequestage(mountPolicy.minRequestAge);
   payloadMountPolicy->set_priority(mountPolicy.priority);
 }
@@ -244,6 +246,8 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
   cta::common::dataStructures::MountPolicy mountPolicy;
   auto payloadMountPolicy = m_payload.mountpolicy();
   mountPolicy.maxDrives=payloadMountPolicy.maxdrives();
+  mountPolicy.minBytesQueued=payloadMountPolicy.minbytesqueued();
+  mountPolicy.minFilesQueued=payloadMountPolicy.minfilesqueued();
   mountPolicy.minRequestAge=payloadMountPolicy.minrequestage();
   mountPolicy.priority=payloadMountPolicy.priority();
   return mountPolicy;

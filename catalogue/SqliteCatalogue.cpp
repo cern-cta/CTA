@@ -2101,6 +2101,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
   const char *const sql =
     "SELECT "
       "ARCHIVE_PRIORITY         AS ARCHIVE_PRIORITY,"
+      "MIN_ARCHIVE_FILES_QUEUED AS MIN_ARCHIVE_FILES_QUEUED,"
+      "MIN_ARCHIVE_BYTES_QUEUED AS MIN_ARCHIVE_BYTES_QUEUED,"
       "MIN_ARCHIVE_REQUEST_AGE  AS MIN_ARCHIVE_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
@@ -2115,6 +2117,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     nameToIdx = stmt->getColumnNameToIdx();
     common::dataStructures::MountPolicy policy;
     policy.priority = stmt->columnUint64(nameToIdx["ARCHIVE_PRIORITY"]);
+    policy.minFilesQueued = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_FILES_QUEUED"]);
+    policy.minBytesQueued = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_BYTES_QUEUED"]);
     policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_ARCHIVE_REQUEST_AGE"]);
     policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
     return policy;
@@ -2134,6 +2138,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
   const char *const sql =
     "SELECT "
       "RETRIEVE_PRIORITY         AS RETRIEVE_PRIORITY,"
+      "MIN_RETRIEVE_FILES_QUEUED AS MIN_RETRIEVE_FILES_QUEUED,"
+      "MIN_RETRIEVE_BYTES_QUEUED AS MIN_RETRIEVE_BYTES_QUEUED,"
       "MIN_RETRIEVE_REQUEST_AGE  AS MIN_RETRIEVE_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
@@ -2148,6 +2154,8 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     nameToIdx = stmt->getColumnNameToIdx();
     common::dataStructures::MountPolicy policy;
     policy.priority = stmt->columnUint64(nameToIdx["RETRIEVE_PRIORITY"]);
+    policy.minFilesQueued = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_FILES_QUEUED"]);
+    policy.minBytesQueued = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_BYTES_QUEUED"]);
     policy.minRequestAge = stmt->columnUint64(nameToIdx["MIN_RETRIEVE_REQUEST_AGE"]);
     policy.maxDrives = stmt->columnUint64(nameToIdx["MAX_DRIVES_ALLOWED"]);
     return policy;
