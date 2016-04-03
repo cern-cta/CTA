@@ -67,13 +67,13 @@ void OStoreDB::setAgent(objectstore::Agent& agent) {
 void OStoreDB::assertAgentSet() {
   if (!m_agent)
     throw AgentNotSet("In OStoreDB::assertAgentSet: Agent pointer not set");
-  }
+}
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
   //Allocate the getMountInfostructure to return.
   assertAgentSet();
-  std::unique_ptr<TapeMountDecisionInfo> privateRet (new TapeMountDecisionInfo(
+  std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
     m_objectStore, *m_agent));
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
