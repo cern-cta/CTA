@@ -20,6 +20,8 @@
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
 #include "TapePool.hpp"
+#include "TapePoolQueue.hpp"
+#include "TapeQueue.hpp"
 #include "DriveRegister.hpp"
 #include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
@@ -568,6 +570,111 @@ auto cta::objectstore::RootEntry::dumpTapePools() -> std::list<TapePoolDump> {
     ret.back().tapePool = i->name();
     ret.back().nbPartialTapes = i->nbpartialtapes();
     ret.back().log.deserialize(i->log());
+  }
+  return ret;
+}
+
+// =============================================================================
+// ========== Tape pool queues manipulations =========================================
+// =============================================================================
+
+
+// This operator will be used in the following usage of the findElement
+// removeOccurences
+namespace {
+  bool operator==(const std::string &tp,
+    const cta::objectstore::serializers::TapePoolQueuePointer & tpp) {
+    return tpp.name() == tp;
+  }
+}
+
+std::string cta::objectstore::RootEntry::addOrGetTapePoolQueueAndCommit(const std::string& tapePool, Agent& agent) {
+  checkPayloadWritable();
+  // Check the tape pool does not already exist
+  try {
+    return serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool).address();
+  } catch (serializers::NotFound &) {}
+  // Insert the tape pool, then its pointer, with agent intent log update
+  // First generate the intent. We expect the agent to be passed locked.
+  std::string tapePoolQueueAddress = agent.nextId("tapePoolQueue");
+  // TODO Do we expect the agent to be passed locked or not: to be clarified.
+  ScopedExclusiveLock agl(agent);
+  agent.fetch();
+  agent.addToOwnership(tapePoolQueueAddress);
+  agent.commit();
+  // Then create the tape pool object
+  TapePool tp(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  tp.initialize(tapePool);
+  tp.setOwner(agent.getAddressIfSet());
+  tp.setBackupOwner("root");
+  tp.insert();
+  ScopedExclusiveLock tpl(tp);
+  // Now move the tape pool's ownership to the root entry
+  auto * tpp = m_payload.mutable_tapepoolqueuepointers()->Add();
+  tpp->set_address(tapePoolQueueAddress);
+  // We must commit here to ensure the tape pool object is referenced.
+  commit();
+  // Now update the tape pool's ownership.
+  tp.setOwner(getAddressIfSet());
+  tp.setBackupOwner(getAddressIfSet());
+  tp.commit();
+  // ... and clean up the agent
+  agent.removeFromOwnership(tapePoolQueueAddress);
+  agent.commit();
+  return tapePoolQueueAddress;
+}
+
+void cta::objectstore::RootEntry::removeTapePoolQueueAndCommit(const std::string& tapePool) {
+  checkPayloadWritable();
+  // find the address of the tape pool object
+  try {
+    auto tpp = serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool);
+    // Open the tape pool object
+    TapePoolQueue tp (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+    ScopedExclusiveLock tpl(tp);
+    tp.fetch();
+    // Verify this is the tapepool we're looking for.
+    if (tp.getName() != tapePool) {
+      std::stringstream err;
+      err << "Unexpected tape pool name found in object pointed to for tape pool: "
+          << tapePool << " found: " << tp.getName();
+      throw WrongTapePoolQueue(err.str());
+    }
+    // Check the tape pool is empty
+    if (!tp.isEmpty()) {
+      throw TapePoolQueueNotEmpty ("In RootEntry::removeTapePoolQueueAndCommit: trying to "
+          "remove a non-empty tape pool");
+    }
+    // We can delete the pool
+    tp.remove();
+    // ... and remove it from our entry
+    serializers::removeOccurences(m_payload.mutable_tapepoolqueuepointers(), tapePool);
+    // We commit for safety and symmetry with the add operation
+    commit();
+  } catch (serializers::NotFound &) {
+    // No such tape pool. Nothing to to.
+    throw NoSuchTapePoolQueue("In RootEntry::removeTapePoolQueueAndCommit: trying to remove non-existing tape pool");
+  }
+}
+
+std::string cta::objectstore::RootEntry::getTapePoolQueueAddress(const std::string& tapePool) {
+  checkPayloadReadable();
+  try {
+    auto & tpp = serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool);
+    return tpp.address();
+  } catch (serializers::NotFound &) {
+    throw NotAllocated("In RootEntry::getTapePoolQueueAddress: tape pool not allocated");
+  }
+}
+
+auto cta::objectstore::RootEntry::dumpTapePoolQueues() -> std::list<TapePoolQueueDump> {
+  checkPayloadReadable();
+  std::list<TapePoolQueueDump> ret;
+  auto & tpl = m_payload.tapepoolqueuepointers();
+  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
+    ret.push_back(TapePoolQueueDump());
+    ret.back().address = i->address();
+    ret.back().tapePool = i->name();
   }
   return ret;
 }

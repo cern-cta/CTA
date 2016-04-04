@@ -155,6 +155,24 @@ public:
   };
   std::list<TapePoolDump> dumpTapePools();
   
+  // TapePoolQueue Manipulations =====================================================
+  CTA_GENERATE_EXCEPTION_CLASS(TapePoolQueueNotEmpty);
+  CTA_GENERATE_EXCEPTION_CLASS(WrongTapePoolQueue);
+  /** This function implicitly creates the tape pool structure and updates 
+   * the pointer to it. It needs to implicitly commit the object to the store. */
+  std::string addOrGetTapePoolQueueAndCommit(const std::string & tapePool, Agent & agent);
+  /** This function implicitly deletes the tape pool structure. 
+   * Fails if it not empty*/
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePoolQueue);
+  void removeTapePoolQueueAndCommit(const std::string & tapePool);
+  std::string getTapePoolQueueAddress(const std::string & tapePool);
+  class TapePoolQueueDump {
+  public:
+    std::string tapePool;
+    std::string address;
+  };
+  std::list<TapePoolQueueDump> dumpTapePoolQueues();
+  
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);
   std::string getDriveRegisterAddress();  

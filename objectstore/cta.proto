@@ -14,6 +14,8 @@ enum ObjectType {
   SchedulerGlobalLock_t = 8;
   ArchiveRequest_t = 9;
   RetrieveRequest_t = 10;
+  TapePoolQueue_t = 11;
+  TapeQueue_t = 12;
   GenericObject_t = 1000;
 }
 
@@ -136,18 +138,32 @@ message SchedulerGlobalLockPointer {
   required CreationLog log = 111;
 }
 
+// Pointer to the tapepool queue
+message TapePoolQueuePointer {
+  required string address = 120;
+  required string name = 121;
+}
+
+// Pointer to the tape queue
+message TapeQueuePointer {
+  required string address = 130;
+  required string vid = 131;
+}
+
 // The root entry. This entry contains all the most static information, i.e.
 // the admin handled configuration information
 message RootEntry {
   repeated AdminHost adminhosts = 1000;
-  repeated AdminUser adminusers = 1001;
-  repeated StorageClass storageclasses = 1002;
-  repeated TapePoolPointer tapepoolpointers = 1003;
-  repeated Library libraries = 1004;
-  optional DriveRegisterPointer driveregisterpointer = 1005;
-  optional AgentRegisterPointer agentregisterpointer = 1006;
-  optional string agentregisterintent = 1007;
-  optional SchedulerGlobalLockPointer schedulerlockpointer = 1008;
+  repeated AdminUser adminusers = 1010;
+  repeated StorageClass storageclasses = 1020;
+  repeated TapePoolPointer tapepoolpointers = 1030;
+  repeated Library libraries = 1040;
+  repeated TapePoolQueuePointer tapepoolqueuepointers = 1050; //new queues by tapepool name that will replace the old archive queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
+  repeated TapeQueuePointer tapequeuepointers = 1060; //new queues by tape vid that will replace the old retrieve queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
+  optional DriveRegisterPointer driveregisterpointer = 1070;
+  optional AgentRegisterPointer agentregisterpointer = 1080;
+  optional string agentregisterintent = 1090;
+  optional SchedulerGlobalLockPointer schedulerlockpointer = 1100;
 }
 
 //=========== Sub-objects ======================================================
@@ -461,4 +477,20 @@ message RetrieveRequest {
   required User requester = 9150;
   required EntryLog creationLog = 9151;
   repeated RetrieveJobEntry jobs = 9152;
+}
+
+message TapePoolQueue {
+  required string tapepoolname = 10000;
+  repeated ArchiveJobPointer pendingarchivejobs = 10010;
+  repeated ArchiveJobPointer orphanedarchivejobsnscreation = 10020;
+  repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 10030;
+  required uint64 ArchiveJobsTotalSize = 10040;
+  required uint64 oldestJobCreationTime = 10050;
+}
+
+message TapeQueue {
+  required string vid = 10100;
+  repeated RetrieveJobPointer retrievejobs = 10110;
+  required uint64 retrievejobstotalsize = 10120;
+  required uint64 oldestjobtime = 10130;
 }

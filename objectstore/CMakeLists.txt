@@ -42,6 +42,8 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/SchedulerGlobalLock.hpp
   objectstore/Tape.hpp
   objectstore/TapePool.hpp
+  objectstore/TapeQueue.hpp
+  objectstore/TapePoolQueue.hpp
   objectstore/UserIdentity.hpp)
 
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -57,6 +59,8 @@ add_library (ctaobjectstore SHARED
   AgentWatchdog.cpp
   TapePool.cpp
   Tape.cpp
+  TapePoolQueue.cpp
+  TapeQueue.cpp
   ArchiveToFileRequest.cpp
   ArchiveRequest.cpp
   RetrieveToFileRequest.cpp
