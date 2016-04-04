@@ -21,6 +21,8 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/TapePool.hpp"
 #include "objectstore/Tape.hpp"
+#include "objectstore/TapePoolQueue.hpp"
+#include "objectstore/TapeQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/ArchiveToFileRequest.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
@@ -494,7 +496,7 @@ void OStoreDB::ArchiveRequestCreation::complete() {
   std::list<std::string> linkedTapePools;
   try {
     for (auto j=jl.begin(); j!=jl.end(); j++) {
-      objectstore::TapePool tp(j->tapePoolAddress, m_objectStore);
+      objectstore::TapePoolQueue tp(j->tapePoolAddress, m_objectStore);
       ScopedExclusiveLock tpl(tp);
       tp.fetch();
       if (tp.getOwner() != re.getAddressIfSet())
@@ -503,10 +505,6 @@ void OStoreDB::ArchiveRequestCreation::complete() {
       tp.addJob(*j, m_request.getAddressIfSet(), m_request.getDrData().drPath, 
         m_request.getFileSize(), 0, //TODO: fix priorities and mount criteria to come from usergroups
         m_request.getCreationLog().time);
-      // Now that we have the tape pool handy, get the retry limits from it and 
-      // assign them to the job
-      m_request.setJobFailureLimits(j->copyNb, tp.getMaxRetriesWithinMount(), 
-        tp.getMaxTotalRetries());
       tp.commit();
       linkedTapePools.push_back(j->tapePoolAddress);
     }
@@ -878,12 +876,12 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   auto & cl = copyNbToPoolMap;
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto copy=cl.begin(); copy != cl.end(); copy++) {
-    std::string tpaddr = re.getTapePoolAddress(copy->second);
+    std::string tpaddr = re.getTapePoolQueueAddress(copy->second);
     ar.addJob(copy->first, copy->second, tpaddr);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy->first;
-    jl.back().tapePool = copy->second;
-    jl.back().tapePoolAddress = tpaddr;
+    jl.back().tapePoolQueue = copy->second;
+    jl.back().tapePoolQueueAddress = tpaddr;
   }
   if (!jl.size()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");

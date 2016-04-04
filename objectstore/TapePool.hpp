@@ -97,25 +97,6 @@ public:
     const std::string& archiveToFileAddress,
     const std::string & path, uint64_t size);
   
-  void addJob(const ArchiveRequest::JobDump & job,
-    const std::string & archiveToFileAddress, const std::string & path,
-    uint64_t size, uint64_t priority, time_t startTime);
-  /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
-    const std::string & archiveToFileAddress, 
-    const std::string & path, uint64_t size);
-  /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,
-    const std::string& archiveToFileAddress, const std::string & path,
-    uint64_t size);
-  /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addOrphanedJobPendingNsDeletion(const ArchiveRequest::JobDump& job,
-    const std::string& archiveToFileAddress,
-    const std::string & path, uint64_t size);
-  
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;

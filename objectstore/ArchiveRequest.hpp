@@ -110,6 +110,8 @@ public:
     uint16_t copyNb;
     std::string tapePool;
     std::string tapePoolAddress;
+    std::string tapePoolQueue;
+    std::string tapePoolQueueAddress;
   };
   
   std::list<JobDump> dumpJobs();
