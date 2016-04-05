@@ -263,7 +263,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
       .release()),
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()),
-  m_scheduler(m_catalogue, m_scheddb)
+  m_scheduler(m_catalogue, m_scheddb, 5, 2*1000*1000)
 {  
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.

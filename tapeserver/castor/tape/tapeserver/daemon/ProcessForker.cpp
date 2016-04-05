@@ -570,7 +570,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
   cta::catalogue::SqliteCatalogue catalogue;
-  cta::Scheduler scheduler(catalogue, osdb);
+  cta::Scheduler scheduler(catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
 
   castor::tape::System::realWrapper sysWrapper;
 

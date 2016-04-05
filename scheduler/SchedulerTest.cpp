@@ -85,7 +85,7 @@ public:
     m_db = param.dbFactory.create();
     m_catalogue.reset(new cta::catalogue::SqliteCatalogue());
     
-    m_scheduler.reset(new cta::Scheduler(*(m_catalogue.get()), *(m_db.get())));
+    m_scheduler.reset(new cta::Scheduler(*(m_catalogue.get()), *(m_db.get()), 5, 2*1000*1000));
   }
 
   virtual void TearDown() {

@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
-  SchedulerDatabase &db): m_catalogue(catalogue), m_db(db) {
+  SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount): m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount), m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
 }
 
 //------------------------------------------------------------------------------
