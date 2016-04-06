@@ -139,7 +139,6 @@ CREATE TABLE TAPE(
   CAPACITY_IN_BYTES    INTEGER       NOT NULL,
   DATA_IN_BYTES        INTEGER       NOT NULL,
   LAST_FSEQ            INTEGER       NOT NULL,
-  IS_BUSY              INTEGER       NOT NULL,
   IS_DISABLED          INTEGER       NOT NULL,
   IS_FULL              INTEGER       NOT NULL,
   LBP_IS_ON            INTEGER       NOT NULL,
