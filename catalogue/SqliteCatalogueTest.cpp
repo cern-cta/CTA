@@ -153,32 +153,32 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
     const common::dataStructures::AdminUser a2 = admins.front();
 
     ASSERT_NE(a1, a2);
-    ASSERT_TRUE((a1.user == m_bootstrapAdminUI && a2.user == m_adminUI) ||
-      (a2.user == m_bootstrapAdminUI && a1.user == m_adminUI));
+    ASSERT_TRUE((a1.name == m_bootstrapAdminUI.name && a2.name == m_adminUI.name) ||
+      (a2.name == m_bootstrapAdminUI.name && a1.name == m_adminUI.name));
 
-    if(a1.user == m_bootstrapAdminUI) {
-      ASSERT_EQ(m_bootstrapAdminUI, a1.user);
+    if(a1.name == m_bootstrapAdminUI.name) {
+      ASSERT_EQ(m_bootstrapAdminUI.name, a1.name);
       ASSERT_EQ(m_bootstrapComment, a1.comment);
       ASSERT_EQ(m_cliSI.user, a1.creationLog.user);
       ASSERT_EQ(m_cliSI.host, a1.creationLog.host);
       ASSERT_EQ(m_cliSI.user, a1.lastModificationLog.user);
       ASSERT_EQ(m_cliSI.host, a1.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI, a2.user);
+      ASSERT_EQ(m_adminUI.name, a2.name);
       ASSERT_EQ(createAdminUserComment, a2.comment);
       ASSERT_EQ(m_bootstrapAdminSI.user, a2.creationLog.user);
       ASSERT_EQ(m_bootstrapAdminSI.host, a2.creationLog.host);
       ASSERT_EQ(m_bootstrapAdminSI.user, a2.lastModificationLog.user);
       ASSERT_EQ(m_bootstrapAdminSI.host, a2.lastModificationLog.host);
     } else {
-      ASSERT_EQ(m_bootstrapAdminUI, a2.user);
+      ASSERT_EQ(m_bootstrapAdminUI.name, a2.name);
       ASSERT_EQ(m_bootstrapComment, a2.comment);
       ASSERT_EQ(m_cliSI.user, a2.creationLog.user);
       ASSERT_EQ(m_cliSI.host, a2.creationLog.host);
       ASSERT_EQ(m_cliSI.user, a2.lastModificationLog.user);
       ASSERT_EQ(m_cliSI.host, a2.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI, a1.user);
+      ASSERT_EQ(m_adminUI.name, a1.name);
       ASSERT_EQ(createAdminUserComment, a1.comment);
       ASSERT_EQ(m_bootstrapAdminSI.user, a1.creationLog.user);
       ASSERT_EQ(m_bootstrapAdminSI.host, a1.creationLog.host);
@@ -764,8 +764,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 
   const std::string comment = "create user";
   const std::string userName = "user_name";
-  const std::string group = "group";
-  catalogue.createUser(m_cliSI, userName, group, mountGroupName, comment);
+  catalogue.createUser(m_cliSI, userName, mountGroupName, comment);
 
   std::list<common::dataStructures::User> users;
   users = catalogue.getUsers();
@@ -774,7 +773,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   const common::dataStructures::User user = users.front();
 
   ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(group, user.group);
   ASSERT_EQ(mountGroupName, user.mountGroupName);
   ASSERT_EQ(comment, user.comment);
   ASSERT_EQ(m_cliSI.user, user.creationLog.user);
@@ -822,10 +820,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
   
   const std::string comment = "create user";
   const std::string name = "name";
-  const std::string group = "group";
   const std::string mountGroup = "mount_group";
-  catalogue.createUser(m_cliSI, name, group, mountGroup, comment);
-  ASSERT_THROW(catalogue.createUser(m_cliSI, name, group, mountGroup, comment),
+  catalogue.createUser(m_cliSI, name, mountGroup, comment);
+  ASSERT_THROW(catalogue.createUser(m_cliSI, name, mountGroup, comment),
     exception::Exception);
 }
 
@@ -931,8 +928,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
 
   const std::string userComment = "create user";
   const std::string userName = "user_name";
-  const std::string group = "group";
-  catalogue.createUser(m_cliSI, userName, group, mountGroupName, userComment);
+  catalogue.createUser(m_cliSI, userName, mountGroupName, userComment);
 
   std::list<common::dataStructures::User> users;
   users = catalogue.getUsers();
@@ -941,7 +937,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   const common::dataStructures::User user = users.front();
 
   ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(group, user.group);
   ASSERT_EQ(mountGroupName, user.mountGroupName);
   ASSERT_EQ(userComment, user.comment);
   ASSERT_EQ(m_cliSI.user, user.creationLog.user);

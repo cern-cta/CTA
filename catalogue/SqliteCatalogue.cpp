@@ -39,8 +39,7 @@ cta::catalogue::SqliteCatalogue::SqliteCatalogue():
 void cta::catalogue::SqliteCatalogue::createDbSchema() {
   const char *const sql = 
     "CREATE TABLE ADMIN_USER("
-      "ADMIN_USER_NAME  VARCHAR2(100) NOT NULL,"
-      "ADMIN_GROUP_NAME VARCHAR2(100) NOT NULL,"
+      "ADMIN_USER_NAME VARCHAR2(100) NOT NULL,"
 
       "USER_COMMENT VARCHAR2(1000) NOT NULL,"
 
@@ -167,7 +166,6 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "CAPACITY_IN_BYTES    INTEGER       NOT NULL,"
       "DATA_IN_BYTES        INTEGER       NOT NULL,"
       "LAST_FSEQ            INTEGER       NOT NULL,"
-      "IS_BUSY              INTEGER       NOT NULL,"
       "IS_DISABLED          INTEGER       NOT NULL,"
       "IS_FULL              INTEGER       NOT NULL,"
       "LBP_IS_ON            INTEGER       NOT NULL,"
@@ -226,8 +224,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "PRIMARY KEY(MOUNT_GROUP_NAME)"
     ");"
     "CREATE TABLE END_USER("
-      "USER_NAME  VARCHAR2(100) NOT NULL,"
-      "GROUP_NAME VARCHAR2(100) NOT NULL,"
+      "USER_NAME VARCHAR2(100) NOT NULL,"
 
       "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
 
@@ -258,9 +255,9 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "CREATION_TIME      INTEGER       NOT NULL,"
 
       "RECOVERY_PATH  VARCHAR2(2000) NOT NULL,"
-      "RECOVERY_OWNER VARCHAR2(100) NOT NULL,"
-      "RECOVERY_GROUP VARCHAR2(100) NOT NULL,"
-      "RECOVERY_BLOB  VARCHAR2(100) NOT NULL,"
+      "RECOVERY_OWNER VARCHAR2(100)  NOT NULL,"
+      "RECOVERY_GROUP VARCHAR2(100)  NOT NULL,"
+      "RECOVERY_BLOB  VARCHAR2(2000) NOT NULL,"
 
       "PRIMARY KEY(ARCHIVE_FILE_ID),"
       "FOREIGN KEY(STORAGE_CLASS_NAME) "
@@ -312,7 +309,6 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
   const char *const sql =
     "INSERT INTO ADMIN_USER("
       "ADMIN_USER_NAME,"
-      "ADMIN_GROUP_NAME,"
 
       "USER_COMMENT,"
 
@@ -327,7 +323,6 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       "LAST_MOD_TIME)"
     "VALUES("
       ":ADMIN_USER_NAME,"
-      ":ADMIN_GROUP_NAME,"
 
       ":USER_COMMENT,"
 
@@ -343,7 +338,6 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":ADMIN_USER_NAME", user.name);
-  stmt->bind(":ADMIN_GROUP_NAME", user.group);
 
   stmt->bind(":USER_COMMENT", comment);
 
@@ -368,8 +362,7 @@ std::list<cta::common::dataStructures::AdminUser>
   std::list<common::dataStructures::AdminUser> admins;
   const char *const sql =
     "SELECT "
-      "ADMIN_USER_NAME  AS ADMIN_USER_NAME,"
-      "ADMIN_GROUP_NAME AS ADMIN_GROUP_NAME,"
+      "ADMIN_USER_NAME AS ADMIN_USER_NAME,"
 
       "USER_COMMENT AS USER_COMMENT,"
 
@@ -391,11 +384,7 @@ std::list<cta::common::dataStructures::AdminUser>
     }
     common::dataStructures::AdminUser admin;
 
-    common::dataStructures::UserIdentity adminUI;
-    adminUI.name = stmt->columnText(nameToIdx["ADMIN_USER_NAME"]);
-    adminUI.group = stmt->columnText(nameToIdx["ADMIN_GROUP_NAME"]);
-
-    admin.user = adminUI;
+    admin.name = stmt->columnText(nameToIdx["ADMIN_USER_NAME"]);
 
     admin.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
 
@@ -1139,7 +1128,6 @@ void cta::catalogue::SqliteCatalogue::createTape(
       "CAPACITY_IN_BYTES,"
       "DATA_IN_BYTES,"
       "LAST_FSEQ,"
-      "IS_BUSY,"
       "IS_DISABLED,"
       "IS_FULL,"
       "LBP_IS_ON,"
@@ -1172,7 +1160,6 @@ void cta::catalogue::SqliteCatalogue::createTape(
       ":CAPACITY_IN_BYTES,"
       ":DATA_IN_BYTES,"
       ":LAST_FSEQ,"
-      ":IS_BUSY,"
       ":IS_DISABLED,"
       ":IS_FULL,"
       ":LBP_IS_ON,"
@@ -1206,7 +1193,6 @@ void cta::catalogue::SqliteCatalogue::createTape(
   stmt->bind(":CAPACITY_IN_BYTES", capacityInBytes);
   stmt->bind(":DATA_IN_BYTES", 0);
   stmt->bind(":LAST_FSEQ", 0);
-  stmt->bind(":IS_BUSY", 0);
   stmt->bind(":IS_DISABLED", disabledValue);
   stmt->bind(":IS_FULL", fullValue);
   stmt->bind(":LBP_IS_ON", 1);
@@ -1258,7 +1244,6 @@ std::list<cta::common::dataStructures::Tape>
       "CAPACITY_IN_BYTES    AS CAPACITY_IN_BYTES,"
       "DATA_IN_BYTES        AS DATA_IN_BYTES,"
       "LAST_FSEQ            AS LAST_FSEQ,"
-      "IS_BUSY              AS IS_BUSY,"
       "IS_DISABLED          AS IS_DISABLED,"
       "IS_FULL              AS IS_FULL,"
       "LBP_IS_ON            AS LBP_IS_ON,"
@@ -1300,7 +1285,6 @@ std::list<cta::common::dataStructures::Tape>
     tape.capacityInBytes = stmt->columnUint64(nameToIdx["CAPACITY_IN_BYTES"]);
     tape.dataOnTapeInBytes = stmt->columnUint64(nameToIdx["DATA_IN_BYTES"]);
     tape.lastFSeq = stmt->columnUint64(nameToIdx["LAST_FSEQ"]);
-    tape.busy = stmt->columnUint64(nameToIdx["IS_BUSY"]);
     tape.disabled = stmt->columnUint64(nameToIdx["IS_DISABLED"]);
     tape.full = stmt->columnUint64(nameToIdx["IS_FULL"]);
     tape.lbp = stmt->columnUint64(nameToIdx["LBP_IS_ON"]);
@@ -1415,14 +1399,12 @@ void cta::catalogue::SqliteCatalogue::modifyTapeComment(const common::dataStruct
 void cta::catalogue::SqliteCatalogue::createUser(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
-  const std::string &group,
   const std::string &mountGroup,
   const std::string &comment) {
   const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO END_USER("
       "USER_NAME,"
-      "GROUP_NAME,"
       "MOUNT_GROUP_NAME,"
 
       "USER_COMMENT,"
@@ -1438,7 +1420,6 @@ void cta::catalogue::SqliteCatalogue::createUser(
       "LAST_MOD_TIME)"
     "VALUES("
       ":USER_NAME,"
-      ":GROUP_NAME,"
       ":MOUNT_GROUP_NAME,"
 
       ":USER_COMMENT,"
@@ -1455,7 +1436,6 @@ void cta::catalogue::SqliteCatalogue::createUser(
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":USER_NAME", name);
-  stmt->bind(":GROUP_NAME", group);
   stmt->bind(":MOUNT_GROUP_NAME", mountGroup);
 
   stmt->bind(":USER_COMMENT", comment);
@@ -1482,7 +1462,6 @@ std::list<cta::common::dataStructures::User>
   const char *const sql =
     "SELECT "
       "USER_NAME        AS USER_NAME,"
-      "GROUP_NAME       AS GROUP_NAME,"
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
       "USER_COMMENT AS USER_COMMENT,"
@@ -1507,7 +1486,6 @@ std::list<cta::common::dataStructures::User>
 
     common::dataStructures::UserIdentity adminUI;
     user.name = stmt->columnText(nameToIdx["USER_NAME"]);
-    user.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
     user.mountGroupName = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
 
     user.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);

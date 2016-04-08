@@ -32,7 +32,7 @@ bool cta::common::dataStructures::AdminUser::operator==(const AdminUser &rhs) co
   return comment==rhs.comment
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && user==rhs.user;
+      && name==rhs.name;
 }
 
 //------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ad
   os << "(comment=" << obj.comment
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " user=" << obj.user << ")";
+     << " name=" << obj.name << ")";
   return os;
 }
 

@@ -484,8 +484,8 @@ void XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
-        currentRow.push_back(it->user.name);
-        currentRow.push_back(it->user.group);
+        currentRow.push_back(it->name);
+        currentRow.push_back("N/A");
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1052,7 +1052,7 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      m_catalogue->createUser(cliIdentity, user, group, mountgroup, comment);
+      m_catalogue->createUser(cliIdentity, user, mountgroup, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);

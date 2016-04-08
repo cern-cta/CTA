@@ -41,7 +41,7 @@ struct AdminUser {
   std::string comment;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  cta::common::dataStructures::UserIdentity user;
+  std::string name;
 
 }; // struct AdminUser
 

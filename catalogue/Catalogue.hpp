@@ -134,7 +134,12 @@ public:
   virtual void setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup, const std::string &comment) = 0;
+  virtual void createUser(
+    const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &name,
+    const std::string &mountGroup,
+    const std::string &comment) = 0;
+
   virtual void deleteUser(const std::string &name, const std::string &group) = 0;
   virtual std::list<cta::common::dataStructures::User> getUsers() const = 0;
   virtual void modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) = 0;

@@ -123,7 +123,7 @@ private:
 
 }; // class SchedulerTest
 
-TEST_P(SchedulerTest, archive_to_new_file) {
+TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   using namespace cta;
 
   catalogue::Catalogue &catalogue = getCatalogue();
