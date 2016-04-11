@@ -129,15 +129,65 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   catalogue::Catalogue &catalogue = getCatalogue();
   Scheduler &scheduler = getScheduler();
 
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
   cta::common::dataStructures::UserIdentity admin;
   admin.name="admin1";
   admin.group="group1";
   cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost;
   s_adminOnAdminHost.user=admin;
   s_adminOnAdminHost.host="host1";
+
+  const std::string mountGroupName = "mount_group";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+  const std::string mountGroupComment = "create mount group";
+
+  ASSERT_TRUE(catalogue.getMountGroups().empty());
+
+  catalogue.createMountGroup(
+    s_adminOnAdminHost,
+    mountGroupName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    mountGroupComment);
+
+  const std::list<common::dataStructures::MountGroup> groups =
+    catalogue.getMountGroups();
+  ASSERT_EQ(1, groups.size());
+  const common::dataStructures::MountGroup group = groups.front();
+  ASSERT_EQ(mountGroupName, group.name);
+  ASSERT_EQ(archivePriority, group.archive_priority);
+  ASSERT_EQ(minArchiveRequestAge, group.archive_minRequestAge);
+  ASSERT_EQ(retrievePriority, group.retrieve_priority);
+  ASSERT_EQ(minRetrieveRequestAge, group.retrieve_minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
+  ASSERT_EQ(mountGroupComment, group.comment);
+
+  const std::string userComment = "create user";
+  const std::string userName = "user_name";
+  catalogue.createUser(s_adminOnAdminHost, userName, mountGroupName, userComment);
+
+  std::list<common::dataStructures::User> users;
+  users = catalogue.getUsers();
+  ASSERT_EQ(1, users.size());
+
+  const common::dataStructures::User user = users.front();
+
+  ASSERT_EQ(userName, user.name);
+  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(userComment, user.comment);
+  ASSERT_EQ(s_adminOnAdminHost.user, user.creationLog.user);
+  ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);
+  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+
+  const std::string storageClassName = "TestStorageClass";
+  const uint16_t nbCopies = 1;
+  const std::string storageClassComment = "Storage-class comment";
   ASSERT_NO_THROW(catalogue.createStorageClass(s_adminOnAdminHost, storageClassName,
     nbCopies, storageClassComment));
 
@@ -172,10 +222,13 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   request.drData=drData;
   request.eosFileID="eosFileID";
   request.fileSize=100*1000*1000;
-  request.requester=admin;
+  cta::common::dataStructures::UserIdentity requester;
+  requester.name = userName;
+  requester.group = "userGroup";
+  request.requester = requester;
   request.srcURL="srcURL";
   request.storageClass=storageClassName;
-  
+
   scheduler.queueArchiveRequest(s_adminOnAdminHost, request);
 
   {
