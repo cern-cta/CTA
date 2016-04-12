@@ -129,7 +129,6 @@ void cta::objectstore::RetrieveRequest::setDrData(const cta::common::dataStructu
   auto payloadDrData = m_payload.mutable_drdata();
   payloadDrData->set_drblob(drData.drBlob);
   payloadDrData->set_drgroup(drData.drGroup);
-  payloadDrData->set_drinstance(drData.drInstance);
   payloadDrData->set_drowner(drData.drOwner);
   payloadDrData->set_drpath(drData.drPath);
 }
@@ -143,7 +142,6 @@ cta::common::dataStructures::DRData cta::objectstore::RetrieveRequest::getDrData
   auto payloadDrData = m_payload.drdata();
   drData.drBlob=payloadDrData.drblob();
   drData.drGroup=payloadDrData.drgroup();
-  drData.drInstance=payloadDrData.drinstance();
   drData.drOwner=payloadDrData.drowner();
   drData.drPath=payloadDrData.drpath();
   return drData;
@@ -284,7 +282,6 @@ std::string cta::objectstore::RetrieveRequest::dump() {
   json_object * jlog = json_object_new_object();
   json_object_object_add(jlog, "drblob", json_object_new_string(m_payload.drdata().drblob().c_str()));
   json_object_object_add(jlog, "drgroup", json_object_new_string(m_payload.drdata().drgroup().c_str()));
-  json_object_object_add(jlog, "drinstance", json_object_new_string(m_payload.drdata().drinstance().c_str()));
   json_object_object_add(jlog, "drowner", json_object_new_string(m_payload.drdata().drowner().c_str()));
   json_object_object_add(jlog, "drpath", json_object_new_string(m_payload.drdata().drpath().c_str()));
   json_object_object_add(jo, "drdata", jlog);

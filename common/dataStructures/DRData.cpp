@@ -29,8 +29,7 @@ cta::common::dataStructures::DRData::DRData() {}
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DRData::operator==(const DRData &rhs) const {
-  return drInstance==rhs.drInstance
-      && drPath==rhs.drPath
+  return drPath==rhs.drPath
       && drOwner==rhs.drOwner
       && drGroup==rhs.drGroup
       && drBlob==rhs.drBlob;
@@ -47,8 +46,7 @@ bool cta::common::dataStructures::DRData::operator!=(const DRData &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DRData &obj) {
-  os << "(drInstance=" << obj.drInstance
-     << " drPath=" << obj.drPath
+  os << "(drPath=" << obj.drPath
      << " drOwner=" << obj.drOwner
      << " drGroup=" << obj.drGroup
      << " drBlob=" << obj.drBlob << ")";

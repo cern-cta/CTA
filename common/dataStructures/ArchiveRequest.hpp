@@ -44,6 +44,7 @@ struct ArchiveRequest {
 
   cta::common::dataStructures::UserIdentity requester;
   std::string diskFileID;
+  std::string instance;
   std::string srcURL;
   uint64_t fileSize;
   std::string checksumType;

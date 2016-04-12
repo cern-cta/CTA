@@ -432,7 +432,6 @@ message User {
 message DRData {
   required string drBlob = 8900;
   required string drGroup = 8910;
-  required string drInstance = 8920;
   required string drOwner = 8930;
   required string drPath = 8940;
 }
@@ -458,7 +457,8 @@ message ArchiveRequest {
   required string diskpoolName = 9020;
   required uint64 diskpoolThroughput = 9030;
   required DRData drData = 9040;
-  required string eosFileID = 9050;
+  required string diskFileID = 9050;
+  required string instance = 9055;
   required uint64 fileSize = 9060;
   required User requester = 9070;
   required string srcURL = 9080;

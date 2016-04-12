@@ -1832,7 +1832,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
       ":RECOVERY_BLOB);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":DISK_INSTANCE", archiveFile.drData.drInstance);
+  stmt->bind(":DISK_INSTANCE", archiveFile.instance);
   stmt->bind(":DISK_FILE_ID", archiveFile.diskFileID);
   stmt->bind(":FILE_SIZE", archiveFile.fileSize);
   stmt->bind(":CHECKSUM_TYPE", archiveFile.checksumType);
@@ -1847,7 +1847,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
 
   stmt->step();
 
-  return getArchiveFileId(archiveFile.drData.drInstance, archiveFile.diskFileID);
+  return getArchiveFileId(archiveFile.instance, archiveFile.diskFileID);
 }
 
 //------------------------------------------------------------------------------
@@ -1923,7 +1923,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
     file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
     file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
 
-    file.drData.drInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file.instance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
     file.drData.drPath = stmt->columnText(nameToIdx["RECOVERY_PATH"]);
     file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
@@ -1983,7 +1983,7 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
     file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
     file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
 
-    file.drData.drInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file.instance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
     file.drData.drPath = stmt->columnText(nameToIdx["RECOVERY_PATH"]);
     file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);

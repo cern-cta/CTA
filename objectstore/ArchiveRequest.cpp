@@ -257,7 +257,6 @@ void cta::objectstore::ArchiveRequest::setDrData(const cta::common::dataStructur
   auto payloadDrData = m_payload.mutable_drdata();
   payloadDrData->set_drblob(drData.drBlob);
   payloadDrData->set_drgroup(drData.drGroup);
-  payloadDrData->set_drinstance(drData.drInstance);
   payloadDrData->set_drowner(drData.drOwner);
   payloadDrData->set_drpath(drData.drPath);
 }
@@ -271,26 +270,41 @@ cta::common::dataStructures::DRData cta::objectstore::ArchiveRequest::getDrData(
   auto payloadDrData = m_payload.drdata();
   drData.drBlob=payloadDrData.drblob();
   drData.drGroup=payloadDrData.drgroup();
-  drData.drInstance=payloadDrData.drinstance();
   drData.drOwner=payloadDrData.drowner();
   drData.drPath=payloadDrData.drpath();
   return drData;
 }
 
 //------------------------------------------------------------------------------
-// setEosFileID
+// setDiskFileID
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setEosFileID(const std::string &eosFileID) {
+void cta::objectstore::ArchiveRequest::setDiskFileID(const std::string &diskFileID) {
   checkPayloadWritable();
-  m_payload.set_eosfileid(eosFileID);
+  m_payload.set_diskfileid(diskFileID);
 }
 
 //------------------------------------------------------------------------------
-// getEosFileID
+// getDiskFileID
 //------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getEosFileID() {
+std::string cta::objectstore::ArchiveRequest::getDiskFileID() {
   checkPayloadReadable();
-  return m_payload.eosfileid();
+  return m_payload.diskfileid();
+}
+
+//------------------------------------------------------------------------------
+// setInstance
+//------------------------------------------------------------------------------
+void cta::objectstore::ArchiveRequest::setInstance(const std::string &instance) {
+  checkPayloadWritable();
+  m_payload.set_instance(instance);
+}
+
+//------------------------------------------------------------------------------
+// getInstance
+//------------------------------------------------------------------------------
+std::string cta::objectstore::ArchiveRequest::getInstance() {
+  checkPayloadReadable();
+  return m_payload.instance();
 }
 
 //------------------------------------------------------------------------------
@@ -535,7 +549,8 @@ std::string cta::objectstore::ArchiveRequest::dump() {
   json_object_object_add(jo, "checksumvalue", json_object_new_string(m_payload.checksumvalue().c_str()));
   json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
   json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
-  json_object_object_add(jo, "eosfileid", json_object_new_string(m_payload.eosfileid().c_str()));
+  json_object_object_add(jo, "diskfileid", json_object_new_string(m_payload.diskfileid().c_str()));
+  json_object_object_add(jo, "instance", json_object_new_string(m_payload.instance().c_str()));
   json_object_object_add(jo, "filesize", json_object_new_int64(m_payload.filesize()));
   json_object_object_add(jo, "srcurl", json_object_new_string(m_payload.srcurl().c_str()));
   json_object_object_add(jo, "storageclass", json_object_new_string(m_payload.storageclass().c_str()));
@@ -569,7 +584,6 @@ std::string cta::objectstore::ArchiveRequest::dump() {
   json_object * jlog = json_object_new_object();
   json_object_object_add(jlog, "drblob", json_object_new_string(m_payload.drdata().drblob().c_str()));
   json_object_object_add(jlog, "drgroup", json_object_new_string(m_payload.drdata().drgroup().c_str()));
-  json_object_object_add(jlog, "drinstance", json_object_new_string(m_payload.drdata().drinstance().c_str()));
   json_object_object_add(jlog, "drowner", json_object_new_string(m_payload.drdata().drowner().c_str()));
   json_object_object_add(jlog, "drpath", json_object_new_string(m_payload.drdata().drpath().c_str()));
   json_object_object_add(jo, "drdata", jlog);

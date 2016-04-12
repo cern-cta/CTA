@@ -210,7 +210,6 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   cta::common::dataStructures::DRData drData;
   drData.drBlob="blob";
   drData.drGroup="group2";
-  drData.drInstance="cms";
   drData.drOwner="cms_user";
   drData.drPath="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
@@ -221,6 +220,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   request.diskpoolThroughput=200*1000*1000;
   request.drData=drData;
   request.diskFileID="diskFileID";
+  request.instance="cms";
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = userName;

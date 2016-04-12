@@ -84,8 +84,11 @@ public:
   void setDrData(const cta::common::dataStructures::DRData &drData);
   cta::common::dataStructures::DRData getDrData();
 
-  void setEosFileID(const std::string &eosFileID);
-  std::string getEosFileID();
+  void setDiskFileID(const std::string &diskFileID);
+  std::string getDiskFileID();  
+
+  void setInstance(const std::string &instance);
+  std::string getInstance();
 
   void setFileSize(const uint64_t fileSize);
   uint64_t getFileSize();

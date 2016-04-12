@@ -1574,13 +1574,13 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
             currentRow.push_back(it->diskFileID);
+            currentRow.push_back(it->instance);
             currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
             currentRow.push_back(it->checksumType);
             currentRow.push_back(it->checksumValue);
             currentRow.push_back(it->storageClass);
             currentRow.push_back(it->drData.drOwner);
             currentRow.push_back(it->drData.drGroup);
-            currentRow.push_back(it->drData.drInstance);
             currentRow.push_back(it->drData.drPath);    
             currentRow.push_back(std::to_string((unsigned long long)it->creationTime));          
             responseTable.push_back(currentRow);
@@ -1742,7 +1742,7 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
   std::list<cta::common::dataStructures::ArchiveFile> list = m_scheduler->reconcile(cliIdentity);  
   if(list.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
+    std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","instance","size","checksum type","checksum value","storage class","owner","group","path"};
     responseTable.push_back(header);    
     for(auto it = list.cbegin(); it != list.cend(); it++) {
       for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
@@ -1753,13 +1753,13 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
         currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
         currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
         currentRow.push_back(it->diskFileID);
+        currentRow.push_back(it->instance);
         currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
         currentRow.push_back(it->checksumType);
         currentRow.push_back(it->checksumValue);
         currentRow.push_back(it->storageClass);
         currentRow.push_back(it->drData.drOwner);
         currentRow.push_back(it->drData.drGroup);
-        currentRow.push_back(it->drData.drInstance);
         currentRow.push_back(it->drData.drPath);          
         responseTable.push_back(currentRow);
       }
@@ -1789,7 +1789,7 @@ void XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
   if(result.size()>0) {
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","EOS id","checksum type","checksum value","size","user","group","instance","path","diskpool","diskpool throughput"};
+      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path","diskpool","diskpool throughput"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
@@ -1799,12 +1799,12 @@ void XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
           currentRow.push_back(jt->request.storageClass);
           currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
           currentRow.push_back(jt->request.diskFileID);
+          currentRow.push_back(jt->request.instance);
           currentRow.push_back(jt->request.checksumType);
           currentRow.push_back(jt->request.checksumValue);         
           currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
           currentRow.push_back(jt->request.requester.name);
           currentRow.push_back(jt->request.requester.group);
-          currentRow.push_back(jt->request.drData.drInstance);
           currentRow.push_back(jt->request.drData.drPath);
           currentRow.push_back(jt->request.diskpoolName);
           currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
@@ -1854,7 +1854,7 @@ void XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &token
   if(result.size()>0) {
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","instance","path","diskpool","diskpool throughput"};
+      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path","diskpool","diskpool throughput"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
@@ -1868,7 +1868,6 @@ void XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &token
           currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
           currentRow.push_back(jt->request.requester.name);
           currentRow.push_back(jt->request.requester.group);
-          currentRow.push_back(jt->request.drData.drInstance);
           currentRow.push_back(jt->request.drData.drPath);
           currentRow.push_back(jt->request.diskpoolName);
           currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
@@ -1935,8 +1934,8 @@ void XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --eosid <EOS_unique_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
-                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --dr_instance <DR_instance> --dr_path <DR_path> --dr_owner <DR_owner>" << std::endl
+  help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
+                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --dr_path <DR_path> --dr_owner <DR_owner>" << std::endl
                     << "\t--dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -1946,21 +1945,21 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
   std::string group = getOptionValue(tokens, "", "--group", encoded);
-  std::string eosid = getOptionValue(tokens, "", "--eosid", encoded);
+  std::string diskid = getOptionValue(tokens, "", "--diskid", encoded);
+  std::string instance = getOptionValue(tokens, "", "--instance", encoded);
   std::string srcurl = getOptionValue(tokens, "", "--srcurl", encoded);
   std::string size_s = getOptionValue(tokens, "", "--size", encoded);
   std::string checksumtype = getOptionValue(tokens, "", "--checksumtype", encoded);
   std::string checksumvalue = getOptionValue(tokens, "", "--checksumvalue", encoded);
   std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
-  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
   std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
   std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
   std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
   std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
   std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
   std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
-  if(user.empty() || group.empty() || eosid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
-          || storageclass.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+  if(user.empty() || group.empty() || diskid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
+          || storageclass.empty() || instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
     return;
   }
@@ -1972,7 +1971,6 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   cta::common::dataStructures::DRData drData;
   drData.drBlob=dr_blob;
   drData.drGroup=dr_ownergroup;
-  drData.drInstance=dr_instance;
   drData.drOwner=dr_owner;
   drData.drPath=dr_path;
   cta::common::dataStructures::ArchiveRequest request;
@@ -1981,7 +1979,8 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   request.diskpoolName=diskpool;
   request.diskpoolThroughput=throughput;
   request.drData=drData;
-  request.diskFileID=eosid;
+  request.diskFileID=diskid;
+  request.instance=instance;
   request.fileSize=size;
   request.requester=originator;
   request.srcURL=srcurl;
@@ -2009,14 +2008,13 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
-  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
   std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
   std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
   std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
   std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
   std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
   std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
     return;
   }
@@ -2028,7 +2026,6 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   cta::common::dataStructures::DRData drData;
   drData.drBlob=dr_blob;
   drData.drGroup=dr_ownergroup;
-  drData.drInstance=dr_instance;
   drData.drOwner=dr_owner;
   drData.drPath=dr_path;
   cta::common::dataStructures::RetrieveRequest request;
@@ -2087,12 +2084,11 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
-  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
   std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
   std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
   std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
   std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
     m_data = help.str();
     return;
   }
@@ -2103,7 +2099,6 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   cta::common::dataStructures::DRData drData;
   drData.drBlob=dr_blob;
   drData.drGroup=dr_ownergroup;
-  drData.drInstance=dr_instance;
   drData.drOwner=dr_owner;
   drData.drPath=dr_path;
   cta::common::dataStructures::CancelRetrieveRequest request;
@@ -2131,12 +2126,11 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
-  std::string dr_instance = getOptionValue(tokens, "", "--dr_instance", encoded);
   std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
   std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
   std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
   std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || dr_instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
     m_data = help.str();
     return;
   }
@@ -2147,7 +2141,6 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   cta::common::dataStructures::DRData drData;
   drData.drBlob=dr_blob;
   drData.drGroup=dr_ownergroup;
-  drData.drInstance=dr_instance;
   drData.drOwner=dr_owner;
   drData.drPath=dr_path;
   cta::common::dataStructures::UpdateFileInfoRequest request;

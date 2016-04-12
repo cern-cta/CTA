@@ -39,7 +39,6 @@ struct DRData {
 
   bool operator!=(const DRData &rhs) const;
 
-  std::string drInstance;
   std::string drPath;
   std::string drOwner;
   std::string drGroup;

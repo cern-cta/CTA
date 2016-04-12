@@ -43,6 +43,7 @@ struct ArchiveFile {
 
   uint64_t archiveFileID;
   std::string diskFileID;
+  std::string instance;
   uint64_t fileSize;
   std::string checksumType;
   std::string checksumValue;
