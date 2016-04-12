@@ -24,24 +24,24 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveRequest::ArchiveRequest():
-  diskpoolThroughput(0),
-  fileSize(0) {}
+  fileSize(0),
+  diskpoolThroughput(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
-  return checksumType==rhs.checksumType
+  return requester==rhs.requester
+      && eosFileID==rhs.eosFileID
+      && srcURL==rhs.srcURL
+      && fileSize==rhs.fileSize
+      && checksumType==rhs.checksumType
       && checksumValue==rhs.checksumValue
-      && creationLog==rhs.creationLog
+      && storageClass==rhs.storageClass
+      && drData==rhs.drData
       && diskpoolName==rhs.diskpoolName
       && diskpoolThroughput==rhs.diskpoolThroughput
-      && drData==rhs.drData
-      && eosFileID==rhs.eosFileID
-      && fileSize==rhs.fileSize
-      && requester==rhs.requester
-      && srcURL==rhs.srcURL
-      && storageClass==rhs.storageClass;
+      && creationLog==rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -55,17 +55,17 @@ bool cta::common::dataStructures::ArchiveRequest::operator!=(const ArchiveReques
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRequest &obj) {
-  os << "(checksumType=" << obj.checksumType
+  os << "(requester=" << obj.requester
+     << " eosFileID=" << obj.eosFileID
+     << " srcURL=" << obj.srcURL
+     << " fileSize=" << obj.fileSize
+     << " checksumType=" << obj.checksumType
      << " checksumValue=" << obj.checksumValue
-     << " creationLog=" << obj.creationLog
+     << " storageClass=" << obj.storageClass
+     << " drData=" << obj.drData
      << " diskpoolName=" << obj.diskpoolName
      << " diskpoolThroughput=" << obj.diskpoolThroughput
-     << " drData=" << obj.drData
-     << " eosFileID=" << obj.eosFileID
-     << " fileSize=" << obj.fileSize
-     << " requester=" << obj.requester
-     << " srcURL=" << obj.srcURL
-     << " storageClass=" << obj.storageClass << ")";
+     << " creationLog=" << obj.creationLog << ")";
   return os;
 }
 

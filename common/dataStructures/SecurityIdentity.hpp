@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds the information about who's issued the CTA command and from which host
+ */
 struct SecurityIdentity {
 
   SecurityIdentity();
@@ -37,8 +40,8 @@ struct SecurityIdentity {
 
   bool operator!=(const SecurityIdentity &rhs) const;
 
-  std::string host;
   cta::common::dataStructures::UserIdentity user;
+  std::string host;
 
 }; // struct SecurityIdentity
 

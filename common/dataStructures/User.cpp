@@ -29,12 +29,12 @@ cta::common::dataStructures::User::User() {}
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::User::operator==(const User &rhs) const {
-  return comment==rhs.comment
-      && creationLog==rhs.creationLog
+  return name==rhs.name
       && group==rhs.group
-      && lastModificationLog==rhs.lastModificationLog
       && mountGroupName==rhs.mountGroupName
-      && name==rhs.name;
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -48,12 +48,12 @@ bool cta::common::dataStructures::User::operator!=(const User &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::User &obj) {
-  os << "(comment=" << obj.comment
-     << " creationLog=" << obj.creationLog
+  os << "(name=" << obj.name
      << " group=" << obj.group
-     << " lastModificationLog=" << obj.lastModificationLog
      << " mountGroupName=" << obj.mountGroupName
-     << " name=" << obj.name << ")";
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

@@ -24,26 +24,26 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::VerifyInfo::VerifyInfo():
-  filesFailed(0),
-  filesToVerify(0),
-  filesVerified(0),
   totalFiles(0),
-  totalSize(0) {}
+  totalSize(0),
+  filesToVerify(0),
+  filesFailed(0),
+  filesVerified(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::VerifyInfo::operator==(const VerifyInfo &rhs) const {
-  return creationLog==rhs.creationLog
-      && errors==rhs.errors
-      && filesFailed==rhs.filesFailed
-      && filesToVerify==rhs.filesToVerify
-      && filesVerified==rhs.filesVerified
+  return vid==rhs.vid
       && tag==rhs.tag
       && totalFiles==rhs.totalFiles
       && totalSize==rhs.totalSize
+      && filesToVerify==rhs.filesToVerify
+      && filesFailed==rhs.filesFailed
+      && filesVerified==rhs.filesVerified
       && verifyStatus==rhs.verifyStatus
-      && vid==rhs.vid;
+      && creationLog==rhs.creationLog
+      && errors==rhs.errors;
 }
 
 //------------------------------------------------------------------------------
@@ -57,16 +57,16 @@ bool cta::common::dataStructures::VerifyInfo::operator!=(const VerifyInfo &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::VerifyInfo &obj) {
-  os << "(creationLog=" << obj.creationLog
-     << " errors=" << obj.errors
-     << " filesFailed=" << obj.filesFailed
-     << " filesToVerify=" << obj.filesToVerify
-     << " filesVerified=" << obj.filesVerified
+  os << "(vid=" << obj.vid
      << " tag=" << obj.tag
      << " totalFiles=" << obj.totalFiles
      << " totalSize=" << obj.totalSize
+     << " filesToVerify=" << obj.filesToVerify
+     << " filesFailed=" << obj.filesFailed
+     << " filesVerified=" << obj.filesVerified
      << " verifyStatus=" << obj.verifyStatus
-     << " vid=" << obj.vid << ")";
+     << " creationLog=" << obj.creationLog
+     << " errors=" << obj.errors << ")";
   return os;
 }
 

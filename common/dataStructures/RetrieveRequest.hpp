@@ -31,6 +31,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all the command line parameters of a CTA retrieve command
+ */
 struct RetrieveRequest {
 
   RetrieveRequest();
@@ -39,13 +42,13 @@ struct RetrieveRequest {
 
   bool operator!=(const RetrieveRequest &rhs) const;
 
+  cta::common::dataStructures::UserIdentity requester;
   uint64_t archiveFileID;
-  cta::common::dataStructures::EntryLog creationLog;
+  std::string dstURL;
+  cta::common::dataStructures::DRData drData;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
-  cta::common::dataStructures::DRData drData;
-  std::string dstURL;
-  cta::common::dataStructures::UserIdentity requester;
+  cta::common::dataStructures::EntryLog creationLog;
 
 }; // struct RetrieveRequest
 

@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * A tape pool is a logical grouping of tapes, it is used to separate VOs, types of data, and multiple copies of data
+ */
 struct TapePool {
 
   TapePool();
@@ -37,12 +40,12 @@ struct TapePool {
 
   bool operator!=(const TapePool &rhs) const;
 
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  bool encryption;
-  cta::common::dataStructures::EntryLog lastModificationLog;
   std::string name;
   uint64_t nbPartialTapes;
+  bool encryption;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 
 }; // struct TapePool
 

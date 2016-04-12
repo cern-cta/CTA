@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the host on which an admin is allowed to issue CTA commands
+ */
 struct AdminHost {
 
   AdminHost();
@@ -37,10 +40,10 @@ struct AdminHost {
 
   bool operator!=(const AdminHost &rhs) const;
 
-  std::string comment;
+  std::string name;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string name;
+  std::string comment;
 
 }; // struct AdminHost
 

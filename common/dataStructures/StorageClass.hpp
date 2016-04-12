@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct specifies the number of copies that a file tagged with it should have. it may also indicate the VO owning the file and what kind of data the file contains
+ */
 struct StorageClass {
 
   StorageClass();
@@ -37,11 +40,11 @@ struct StorageClass {
 
   bool operator!=(const StorageClass &rhs) const;
 
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
   std::string name;
   uint64_t nbCopies;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 
 }; // struct StorageClass
 

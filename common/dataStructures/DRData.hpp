@@ -28,6 +28,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all the data necessary to rebuild the original disk based file in case of disaster
+ */
 struct DRData {
 
   DRData();
@@ -36,11 +39,11 @@ struct DRData {
 
   bool operator!=(const DRData &rhs) const;
 
-  std::string drBlob;
-  std::string drGroup;
   std::string drInstance;
-  std::string drOwner;
   std::string drPath;
+  std::string drOwner;
+  std::string drGroup;
+  std::string drBlob;
 
 }; // struct DRData
 

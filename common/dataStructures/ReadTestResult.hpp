@@ -28,6 +28,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the result of a read test operation
+ */
 struct ReadTestResult {
 
   ReadTestResult();
@@ -36,14 +39,14 @@ struct ReadTestResult {
 
   bool operator!=(const ReadTestResult &rhs) const;
 
-  std::map<uint64_t,std::pair<std::string,std::string>> checksums;
   std::string driveName;
-  std::map<uint64_t,std::string> errors;
+  std::string vid;
   uint64_t noOfFilesRead;
+  std::map<uint64_t,std::string> errors;
+  std::map<uint64_t,std::pair<std::string,std::string>> checksums;
   uint64_t totalBytesRead;
   uint64_t totalFilesRead;
   uint64_t totalTimeInSeconds;
-  std::string vid;
 
 }; // struct ReadTestResult
 

@@ -31,13 +31,13 @@ cta::common::dataStructures::RetrieveRequest::RetrieveRequest():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
-  return archiveFileID==rhs.archiveFileID
-      && creationLog==rhs.creationLog
+  return requester==rhs.requester
+      && archiveFileID==rhs.archiveFileID
+      && dstURL==rhs.dstURL
+      && drData==rhs.drData
       && diskpoolName==rhs.diskpoolName
       && diskpoolThroughput==rhs.diskpoolThroughput
-      && drData==rhs.drData
-      && dstURL==rhs.dstURL
-      && requester==rhs.requester;
+      && creationLog==rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -51,13 +51,13 @@ bool cta::common::dataStructures::RetrieveRequest::operator!=(const RetrieveRequ
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveRequest &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
-     << " creationLog=" << obj.creationLog
+  os << "(requester=" << obj.requester
+     << " archiveFileID=" << obj.archiveFileID
+     << " dstURL=" << obj.dstURL
+     << " drData=" << obj.drData
      << " diskpoolName=" << obj.diskpoolName
      << " diskpoolThroughput=" << obj.diskpoolThroughput
-     << " drData=" << obj.drData
-     << " dstURL=" << obj.dstURL
-     << " requester=" << obj.requester << ")";
+     << " creationLog=" << obj.creationLog << ")";
   return os;
 }
 

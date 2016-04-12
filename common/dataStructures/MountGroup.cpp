@@ -24,25 +24,25 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountGroup::MountGroup():
-  archive_minRequestAge(0),
   archive_priority(0),
-  maxDrivesAllowed(0),
+  archive_minRequestAge(0),
+  retrieve_priority(0),
   retrieve_minRequestAge(0),
-  retrieve_priority(0) {}
+  maxDrivesAllowed(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::MountGroup::operator==(const MountGroup &rhs) const {
-  return archive_minRequestAge==rhs.archive_minRequestAge
+  return name==rhs.name
       && archive_priority==rhs.archive_priority
-      && comment==rhs.comment
+      && archive_minRequestAge==rhs.archive_minRequestAge
+      && retrieve_priority==rhs.retrieve_priority
+      && retrieve_minRequestAge==rhs.retrieve_minRequestAge
+      && maxDrivesAllowed==rhs.maxDrivesAllowed
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && maxDrivesAllowed==rhs.maxDrivesAllowed
-      && name==rhs.name
-      && retrieve_minRequestAge==rhs.retrieve_minRequestAge
-      && retrieve_priority==rhs.retrieve_priority;
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -56,15 +56,15 @@ bool cta::common::dataStructures::MountGroup::operator!=(const MountGroup &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountGroup &obj) {
-  os << "(archive_minRequestAge=" << obj.archive_minRequestAge
+  os << "(name=" << obj.name
      << " archive_priority=" << obj.archive_priority
-     << " comment=" << obj.comment
+     << " archive_minRequestAge=" << obj.archive_minRequestAge
+     << " retrieve_priority=" << obj.retrieve_priority
+     << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
+     << " maxDrivesAllowed=" << obj.maxDrivesAllowed
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " maxDrivesAllowed=" << obj.maxDrivesAllowed
-     << " name=" << obj.name
-     << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
-     << " retrieve_priority=" << obj.retrieve_priority << ")";
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

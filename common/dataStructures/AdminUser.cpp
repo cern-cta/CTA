@@ -29,10 +29,10 @@ cta::common::dataStructures::AdminUser::AdminUser() {}
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::AdminUser::operator==(const AdminUser &rhs) const {
-  return comment==rhs.comment
+  return name==rhs.name
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && name==rhs.name;
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -46,10 +46,10 @@ bool cta::common::dataStructures::AdminUser::operator!=(const AdminUser &rhs) co
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::AdminUser &obj) {
-  os << "(comment=" << obj.comment
+  os << "(name=" << obj.name
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " name=" << obj.name << ")";
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

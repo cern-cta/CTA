@@ -28,6 +28,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds location information of a specific tape file
+ */
 struct TapeFileLocation {
 
   TapeFileLocation();
@@ -36,10 +39,10 @@ struct TapeFileLocation {
 
   bool operator!=(const TapeFileLocation &rhs) const;
 
+  std::string vid;
+  uint64_t fSeq;
   uint64_t blockId;
   time_t creationTime;
-  uint64_t fSeq;
-  std::string vid;
 
 }; // struct TapeFileLocation
 

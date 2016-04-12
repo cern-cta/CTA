@@ -30,12 +30,12 @@ cta::common::dataStructures::ArchiveRoute::ArchiveRoute():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
-  return comment==rhs.comment
+  return storageClassName==rhs.storageClassName
       && copyNb==rhs.copyNb
+      && tapePoolName==rhs.tapePoolName
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && storageClassName==rhs.storageClassName
-      && tapePoolName==rhs.tapePoolName;
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -49,12 +49,12 @@ bool cta::common::dataStructures::ArchiveRoute::operator!=(const ArchiveRoute &r
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRoute &obj) {
-  os << "(comment=" << obj.comment
+  os << "(storageClassName=" << obj.storageClassName
      << " copyNb=" << obj.copyNb
+     << " tapePoolName=" << obj.tapePoolName
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " storageClassName=" << obj.storageClassName
-     << " tapePoolName=" << obj.tapePoolName << ")";
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

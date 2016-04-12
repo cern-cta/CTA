@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the request to cancel and ongoing retrieval
+ */
 struct CancelRetrieveRequest {
 
   CancelRetrieveRequest();
@@ -38,10 +41,10 @@ struct CancelRetrieveRequest {
 
   bool operator!=(const CancelRetrieveRequest &rhs) const;
 
-  uint64_t archiveFileID;
-  cta::common::dataStructures::DRData drData;
-  std::string dstURL;
   cta::common::dataStructures::UserIdentity requester;
+  uint64_t archiveFileID;
+  std::string dstURL;
+  cta::common::dataStructures::DRData drData;
 
 }; // struct CancelRetrieveRequest
 

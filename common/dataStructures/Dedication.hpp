@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * The tape drive dedication parameters go here
+ */
 struct Dedication {
 
   Dedication();
@@ -38,16 +41,16 @@ struct Dedication {
 
   bool operator!=(const Dedication &rhs) const;
 
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::DedicationType dedicationType;
   std::string driveName;
-  uint64_t fromTimestamp;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  cta::common::dataStructures::DedicationType dedicationType;
   std::string mountGroup;
   std::string tag;
-  uint64_t untilTimestamp;
   std::string vid;
+  uint64_t fromTimestamp;
+  uint64_t untilTimestamp;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 
 }; // struct Dedication
 

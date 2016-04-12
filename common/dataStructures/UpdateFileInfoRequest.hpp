@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This request is issued by the disk based system to update some of the metadata of a specific file
+ */
 struct UpdateFileInfoRequest {
 
   UpdateFileInfoRequest();
@@ -38,10 +41,10 @@ struct UpdateFileInfoRequest {
 
   bool operator!=(const UpdateFileInfoRequest &rhs) const;
 
-  uint64_t archiveFileID;
-  cta::common::dataStructures::DRData drData;
   cta::common::dataStructures::UserIdentity requester;
+  uint64_t archiveFileID;
   std::string storageClass;
+  cta::common::dataStructures::DRData drData;
 
 }; // struct UpdateFileInfoRequest
 

@@ -25,22 +25,22 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFile::ArchiveFile():
   archiveFileID(0),
-  creationTime(0),
-  fileSize(0) {}
+  fileSize(0),
+  creationTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {
   return archiveFileID==rhs.archiveFileID
-      && checksumType==rhs.checksumType
-      && checksumValue==rhs.checksumValue
-      && creationTime==rhs.creationTime
-      && drData==rhs.drData
       && eosFileID==rhs.eosFileID
       && fileSize==rhs.fileSize
+      && checksumType==rhs.checksumType
+      && checksumValue==rhs.checksumValue
       && storageClass==rhs.storageClass
-      && tapeCopies==rhs.tapeCopies;
+      && drData==rhs.drData
+      && tapeCopies==rhs.tapeCopies
+      && creationTime==rhs.creationTime;
 }
 
 //------------------------------------------------------------------------------
@@ -55,14 +55,14 @@ bool cta::common::dataStructures::ArchiveFile::operator!=(const ArchiveFile &rhs
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj) {
   os << "(archiveFileID=" << obj.archiveFileID
-     << " checksumType=" << obj.checksumType
-     << " checksumValue=" << obj.checksumValue
-     << " creationTime=" << obj.creationTime
-     << " drData=" << obj.drData
      << " eosFileID=" << obj.eosFileID
      << " fileSize=" << obj.fileSize
+     << " checksumType=" << obj.checksumType
+     << " checksumValue=" << obj.checksumValue
      << " storageClass=" << obj.storageClass
-     << " tapeCopies=" << obj.tapeCopies << ")";
+     << " drData=" << obj.drData
+     << " tapeCopies=" << obj.tapeCopies
+     << " creationTime=" << obj.creationTime << ")";
   return os;
 }
 

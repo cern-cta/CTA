@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * The archive job contains the original request, and all data needed to queue the request in the system
+ */
 struct ArchiveJob {
 
   ArchiveJob();
@@ -37,10 +40,10 @@ struct ArchiveJob {
 
   bool operator!=(const ArchiveJob &rhs) const;
 
-  uint64_t archiveFileID;
-  uint64_t copyNumber;
   cta::common::dataStructures::ArchiveRequest request;
   std::string tapePool;
+  uint64_t copyNumber;
+  uint64_t archiveFileID;
 
 }; // struct ArchiveJob
 

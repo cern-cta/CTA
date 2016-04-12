@@ -30,9 +30,9 @@ cta::common::dataStructures::EntryLog::EntryLog():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::EntryLog::operator==(const EntryLog &rhs) const {
-  return host==rhs.host
-      && time==rhs.time
-      && user==rhs.user;
+  return user==rhs.user
+      && host==rhs.host
+      && time==rhs.time;
 }
 
 //------------------------------------------------------------------------------
@@ -46,9 +46,9 @@ bool cta::common::dataStructures::EntryLog::operator!=(const EntryLog &rhs) cons
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::EntryLog &obj) {
-  os << "(host=" << obj.host
-     << " time=" << obj.time
-     << " user=" << obj.user << ")";
+  os << "(user=" << obj.user
+     << " host=" << obj.host
+     << " time=" << obj.time << ")";
   return os;
 }
 

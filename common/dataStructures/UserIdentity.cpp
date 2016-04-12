@@ -29,8 +29,8 @@ cta::common::dataStructures::UserIdentity::UserIdentity() {}
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::UserIdentity::operator==(const UserIdentity &rhs) const {
-  return group==rhs.group
-      && name==rhs.name;
+  return name==rhs.name
+      && group==rhs.group;
 }
 
 //------------------------------------------------------------------------------
@@ -44,8 +44,8 @@ bool cta::common::dataStructures::UserIdentity::operator!=(const UserIdentity &r
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UserIdentity &obj) {
-  os << "(group=" << obj.group
-     << " name=" << obj.name << ")";
+  os << "(name=" << obj.name
+     << " group=" << obj.group << ")";
   return os;
 }
 

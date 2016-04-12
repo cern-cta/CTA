@@ -33,14 +33,14 @@ cta::common::dataStructures::WriteTestResult::WriteTestResult():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::WriteTestResult::operator==(const WriteTestResult &rhs) const {
-  return checksums==rhs.checksums
-      && driveName==rhs.driveName
-      && errors==rhs.errors
+  return driveName==rhs.driveName
+      && vid==rhs.vid
       && noOfFilesWritten==rhs.noOfFilesWritten
+      && errors==rhs.errors
+      && checksums==rhs.checksums
       && totalBytesWritten==rhs.totalBytesWritten
       && totalFilesWritten==rhs.totalFilesWritten
-      && totalTimeInSeconds==rhs.totalTimeInSeconds
-      && vid==rhs.vid;
+      && totalTimeInSeconds==rhs.totalTimeInSeconds;
 }
 
 //------------------------------------------------------------------------------
@@ -54,14 +54,14 @@ bool cta::common::dataStructures::WriteTestResult::operator!=(const WriteTestRes
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::WriteTestResult &obj) {
-  os << "(checksums=" << obj.checksums
-     << " driveName=" << obj.driveName
-     << " errors=" << obj.errors
+  os << "(driveName=" << obj.driveName
+     << " vid=" << obj.vid
      << " noOfFilesWritten=" << obj.noOfFilesWritten
+     << " errors=" << obj.errors
+     << " checksums=" << obj.checksums
      << " totalBytesWritten=" << obj.totalBytesWritten
      << " totalFilesWritten=" << obj.totalFilesWritten
-     << " totalTimeInSeconds=" << obj.totalTimeInSeconds
-     << " vid=" << obj.vid << ")";
+     << " totalTimeInSeconds=" << obj.totalTimeInSeconds << ")";
   return os;
 }
 

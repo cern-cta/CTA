@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the administrative user which contains the username of the admin
+ */
 struct AdminUser {
 
   AdminUser();
@@ -37,10 +40,10 @@ struct AdminUser {
 
   bool operator!=(const AdminUser &rhs) const;
 
-  std::string comment;
+  std::string name;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string name;
+  std::string comment;
 
 }; // struct AdminUser
 

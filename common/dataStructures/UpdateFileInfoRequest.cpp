@@ -30,10 +30,10 @@ cta::common::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::UpdateFileInfoRequest::operator==(const UpdateFileInfoRequest &rhs) const {
-  return archiveFileID==rhs.archiveFileID
-      && drData==rhs.drData
-      && requester==rhs.requester
-      && storageClass==rhs.storageClass;
+  return requester==rhs.requester
+      && archiveFileID==rhs.archiveFileID
+      && storageClass==rhs.storageClass
+      && drData==rhs.drData;
 }
 
 //------------------------------------------------------------------------------
@@ -47,10 +47,10 @@ bool cta::common::dataStructures::UpdateFileInfoRequest::operator!=(const Update
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileInfoRequest &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
-     << " drData=" << obj.drData
-     << " requester=" << obj.requester
-     << " storageClass=" << obj.storageClass << ")";
+  os << "(requester=" << obj.requester
+     << " archiveFileID=" << obj.archiveFileID
+     << " storageClass=" << obj.storageClass
+     << " drData=" << obj.drData << ")";
   return os;
 }
 

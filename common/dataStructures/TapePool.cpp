@@ -30,12 +30,12 @@ cta::common::dataStructures::TapePool::TapePool():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::TapePool::operator==(const TapePool &rhs) const {
-  return comment==rhs.comment
-      && creationLog==rhs.creationLog
+  return name==rhs.name
+      && nbPartialTapes==rhs.nbPartialTapes
       && encryption==rhs.encryption
+      && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && name==rhs.name
-      && nbPartialTapes==rhs.nbPartialTapes;
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -49,12 +49,12 @@ bool cta::common::dataStructures::TapePool::operator!=(const TapePool &rhs) cons
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj) {
-  os << "(comment=" << obj.comment
-     << " creationLog=" << obj.creationLog
+  os << "(name=" << obj.name
+     << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
+     << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " name=" << obj.name
-     << " nbPartialTapes=" << obj.nbPartialTapes << ")";
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

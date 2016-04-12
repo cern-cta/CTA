@@ -31,6 +31,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all the command line parameters of a CTA archive command
+ */
 struct ArchiveRequest {
 
   ArchiveRequest();
@@ -39,17 +42,17 @@ struct ArchiveRequest {
 
   bool operator!=(const ArchiveRequest &rhs) const;
 
+  cta::common::dataStructures::UserIdentity requester;
+  std::string eosFileID;
+  std::string srcURL;
+  uint64_t fileSize;
   std::string checksumType;
   std::string checksumValue;
-  cta::common::dataStructures::EntryLog creationLog;
+  std::string storageClass;
+  cta::common::dataStructures::DRData drData;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
-  cta::common::dataStructures::DRData drData;
-  std::string eosFileID;
-  uint64_t fileSize;
-  cta::common::dataStructures::UserIdentity requester;
-  std::string srcURL;
-  std::string storageClass;
+  cta::common::dataStructures::EntryLog creationLog;
 
 }; // struct ArchiveRequest
 

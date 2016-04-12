@@ -30,10 +30,10 @@ cta::common::dataStructures::CancelRetrieveRequest::CancelRetrieveRequest():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
-  return archiveFileID==rhs.archiveFileID
-      && drData==rhs.drData
+  return requester==rhs.requester
+      && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
-      && requester==rhs.requester;
+      && drData==rhs.drData;
 }
 
 //------------------------------------------------------------------------------
@@ -47,10 +47,10 @@ bool cta::common::dataStructures::CancelRetrieveRequest::operator!=(const Cancel
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::CancelRetrieveRequest &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
-     << " drData=" << obj.drData
+  os << "(requester=" << obj.requester
+     << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
-     << " requester=" << obj.requester << ")";
+     << " drData=" << obj.drData << ")";
   return os;
 }
 

@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * The archive route specifies which tape pool will be used as a destination of a specific copy of a storage class
+ */
 struct ArchiveRoute {
 
   ArchiveRoute();
@@ -37,12 +40,12 @@ struct ArchiveRoute {
 
   bool operator!=(const ArchiveRoute &rhs) const;
 
-  std::string comment;
+  std::string storageClassName;
   uint64_t copyNb;
+  std::string tapePoolName;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string storageClassName;
-  std::string tapePoolName;
+  std::string comment;
 
 }; // struct ArchiveRoute
 

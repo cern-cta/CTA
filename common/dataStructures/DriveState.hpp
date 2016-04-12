@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all drive state information, used to display the equivalent of the old "showqueues -x -D" CASTOR command
+ */
 struct DriveState {
 
   DriveState();
@@ -38,19 +41,19 @@ struct DriveState {
 
   bool operator!=(const DriveState &rhs) const;
 
-  uint64_t bytesTransferedInSession;
-  time_t currentStateStartTime;
-  std::string currentTapePool;
-  std::string currentVid;
-  uint64_t filesTransferedInSession;
-  std::string host;
-  uint64_t latestBandwidth;
-  std::string logicalLibrary;
-  cta::common::dataStructures::MountType mountType;
   std::string name;
+  std::string host;
+  std::string logicalLibrary;
   uint64_t sessionId;
+  uint64_t bytesTransferedInSession;
+  uint64_t filesTransferedInSession;
+  uint64_t latestBandwidth;
   time_t sessionStartTime;
+  time_t currentStateStartTime;
+  cta::common::dataStructures::MountType mountType;
   cta::common::dataStructures::DriveStatus status;
+  std::string currentVid;
+  std::string currentTapePool;
 
 }; // struct DriveState
 

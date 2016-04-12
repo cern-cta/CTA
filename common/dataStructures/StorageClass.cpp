@@ -30,11 +30,11 @@ cta::common::dataStructures::StorageClass::StorageClass():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::StorageClass::operator==(const StorageClass &rhs) const {
-  return comment==rhs.comment
+  return name==rhs.name
+      && nbCopies==rhs.nbCopies
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && name==rhs.name
-      && nbCopies==rhs.nbCopies;
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -48,11 +48,11 @@ bool cta::common::dataStructures::StorageClass::operator!=(const StorageClass &r
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::StorageClass &obj) {
-  os << "(comment=" << obj.comment
+  os << "(name=" << obj.name
+     << " nbCopies=" << obj.nbCopies
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " name=" << obj.name
-     << " nbCopies=" << obj.nbCopies << ")";
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

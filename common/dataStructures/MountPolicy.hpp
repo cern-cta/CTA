@@ -28,6 +28,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is a subset of the mount group (which specifies the minimum criteria needed to warrant a mount), containing information of either archivals or retrievals
+ */
 struct MountPolicy {
 
   MountPolicy();
@@ -36,9 +39,9 @@ struct MountPolicy {
 
   bool operator!=(const MountPolicy &rhs) const;
 
-  uint64_t maxDrives;
-  uint64_t minRequestAge;
   uint64_t priority;
+  uint64_t minRequestAge;
+  uint64_t maxDrives;
 
 }; // struct MountPolicy
 

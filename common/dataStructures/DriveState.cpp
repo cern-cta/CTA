@@ -24,30 +24,30 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::DriveState::DriveState():
+  sessionId(0),
   bytesTransferedInSession(0),
-  currentStateStartTime(0),
   filesTransferedInSession(0),
   latestBandwidth(0),
-  sessionId(0),
-  sessionStartTime(0) {}
+  sessionStartTime(0),
+  currentStateStartTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DriveState::operator==(const DriveState &rhs) const {
-  return bytesTransferedInSession==rhs.bytesTransferedInSession
-      && currentStateStartTime==rhs.currentStateStartTime
-      && currentTapePool==rhs.currentTapePool
-      && currentVid==rhs.currentVid
-      && filesTransferedInSession==rhs.filesTransferedInSession
+  return name==rhs.name
       && host==rhs.host
-      && latestBandwidth==rhs.latestBandwidth
       && logicalLibrary==rhs.logicalLibrary
-      && mountType==rhs.mountType
-      && name==rhs.name
       && sessionId==rhs.sessionId
+      && bytesTransferedInSession==rhs.bytesTransferedInSession
+      && filesTransferedInSession==rhs.filesTransferedInSession
+      && latestBandwidth==rhs.latestBandwidth
       && sessionStartTime==rhs.sessionStartTime
-      && status==rhs.status;
+      && currentStateStartTime==rhs.currentStateStartTime
+      && mountType==rhs.mountType
+      && status==rhs.status
+      && currentVid==rhs.currentVid
+      && currentTapePool==rhs.currentTapePool;
 }
 
 //------------------------------------------------------------------------------
@@ -61,19 +61,19 @@ bool cta::common::dataStructures::DriveState::operator!=(const DriveState &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DriveState &obj) {
-  os << "(bytesTransferedInSession=" << obj.bytesTransferedInSession
-     << " currentStateStartTime=" << obj.currentStateStartTime
-     << " currentTapePool=" << obj.currentTapePool
-     << " currentVid=" << obj.currentVid
-     << " filesTransferedInSession=" << obj.filesTransferedInSession
+  os << "(name=" << obj.name
      << " host=" << obj.host
-     << " latestBandwidth=" << obj.latestBandwidth
      << " logicalLibrary=" << obj.logicalLibrary
-     << " mountType=" << obj.mountType
-     << " name=" << obj.name
      << " sessionId=" << obj.sessionId
+     << " bytesTransferedInSession=" << obj.bytesTransferedInSession
+     << " filesTransferedInSession=" << obj.filesTransferedInSession
+     << " latestBandwidth=" << obj.latestBandwidth
      << " sessionStartTime=" << obj.sessionStartTime
-     << " status=" << obj.status << ")";
+     << " currentStateStartTime=" << obj.currentStateStartTime
+     << " mountType=" << obj.mountType
+     << " status=" << obj.status
+     << " currentVid=" << obj.currentVid
+     << " currentTapePool=" << obj.currentTapePool << ")";
   return os;
 }
 

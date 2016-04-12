@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all tape metadata information
+ */
 struct Tape {
 
   Tape();
@@ -38,23 +41,23 @@ struct Tape {
 
   bool operator!=(const Tape &rhs) const;
 
-  bool busy;
-  uint64_t capacityInBytes;
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  uint64_t dataOnTapeInBytes;
-  bool disabled;
-  std::string encryptionKey;
-  bool full;
-  cta::common::dataStructures::TapeLog labelLog;
+  std::string vid;
   uint64_t lastFSeq;
-  cta::common::dataStructures::EntryLog lastModificationLog;
-  cta::common::dataStructures::TapeLog lastReadLog;
-  cta::common::dataStructures::TapeLog lastWriteLog;
-  bool lbp;
   std::string logicalLibraryName;
   std::string tapePoolName;
-  std::string vid;
+  uint64_t capacityInBytes;
+  uint64_t dataOnTapeInBytes;
+  std::string encryptionKey;
+  bool lbp;
+  bool busy;
+  bool full;
+  bool disabled;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
+  cta::common::dataStructures::TapeLog labelLog;
+  cta::common::dataStructures::TapeLog lastWriteLog;
+  cta::common::dataStructures::TapeLog lastReadLog;
 
 }; // struct Tape
 

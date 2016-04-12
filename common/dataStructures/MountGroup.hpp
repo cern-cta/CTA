@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * Specifies the minimum criteria needed to warrant a mount
+ */
 struct MountGroup {
 
   MountGroup();
@@ -37,15 +40,15 @@ struct MountGroup {
 
   bool operator!=(const MountGroup &rhs) const;
 
-  uint64_t archive_minRequestAge;
+  std::string name;
   uint64_t archive_priority;
-  std::string comment;
+  uint64_t archive_minRequestAge;
+  uint64_t retrieve_priority;
+  uint64_t retrieve_minRequestAge;
+  uint64_t maxDrivesAllowed;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  uint64_t maxDrivesAllowed;
-  std::string name;
-  uint64_t retrieve_minRequestAge;
-  uint64_t retrieve_priority;
+  std::string comment;
 
 }; // struct MountGroup
 

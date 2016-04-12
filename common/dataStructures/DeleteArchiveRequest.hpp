@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is a request to delete an existing archive file or to cancel and ongoing archival
+ */
 struct DeleteArchiveRequest {
 
   DeleteArchiveRequest();
@@ -37,8 +40,8 @@ struct DeleteArchiveRequest {
 
   bool operator!=(const DeleteArchiveRequest &rhs) const;
 
-  uint64_t archiveFileID;
   cta::common::dataStructures::UserIdentity requester;
+  uint64_t archiveFileID;
 
 }; // struct DeleteArchiveRequest
 

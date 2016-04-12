@@ -33,14 +33,14 @@ cta::common::dataStructures::ReadTestResult::ReadTestResult():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ReadTestResult::operator==(const ReadTestResult &rhs) const {
-  return checksums==rhs.checksums
-      && driveName==rhs.driveName
-      && errors==rhs.errors
+  return driveName==rhs.driveName
+      && vid==rhs.vid
       && noOfFilesRead==rhs.noOfFilesRead
+      && errors==rhs.errors
+      && checksums==rhs.checksums
       && totalBytesRead==rhs.totalBytesRead
       && totalFilesRead==rhs.totalFilesRead
-      && totalTimeInSeconds==rhs.totalTimeInSeconds
-      && vid==rhs.vid;
+      && totalTimeInSeconds==rhs.totalTimeInSeconds;
 }
 
 //------------------------------------------------------------------------------
@@ -54,14 +54,14 @@ bool cta::common::dataStructures::ReadTestResult::operator!=(const ReadTestResul
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ReadTestResult &obj) {
-  os << "(checksums=" << obj.checksums
-     << " driveName=" << obj.driveName
-     << " errors=" << obj.errors
+  os << "(driveName=" << obj.driveName
+     << " vid=" << obj.vid
      << " noOfFilesRead=" << obj.noOfFilesRead
+     << " errors=" << obj.errors
+     << " checksums=" << obj.checksums
      << " totalBytesRead=" << obj.totalBytesRead
      << " totalFilesRead=" << obj.totalFilesRead
-     << " totalTimeInSeconds=" << obj.totalTimeInSeconds
-     << " vid=" << obj.vid << ")";
+     << " totalTimeInSeconds=" << obj.totalTimeInSeconds << ")";
   return os;
 }
 

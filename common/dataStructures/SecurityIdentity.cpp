@@ -29,8 +29,8 @@ cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {}
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
-  return host==rhs.host
-      && user==rhs.user;
+  return user==rhs.user
+      && host==rhs.host;
 }
 
 //------------------------------------------------------------------------------
@@ -44,8 +44,8 @@ bool cta::common::dataStructures::SecurityIdentity::operator!=(const SecurityIde
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::SecurityIdentity &obj) {
-  os << "(host=" << obj.host
-     << " user=" << obj.user << ")";
+  os << "(user=" << obj.user
+     << " host=" << obj.host << ")";
   return os;
 }
 

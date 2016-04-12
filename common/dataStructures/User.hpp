@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the disk system user that triggered the retrieve/archive request
+ */
 struct User {
 
   User();
@@ -37,12 +40,12 @@ struct User {
 
   bool operator!=(const User &rhs) const;
 
-  std::string comment;
-  cta::common::dataStructures::EntryLog creationLog;
-  std::string group;
-  cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string mountGroupName;
   std::string name;
+  std::string group;
+  std::string mountGroupName;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 
 }; // struct User
 

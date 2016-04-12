@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * The logical library is an attribute of both drives and tapes, it declares which tapes can be mounted in which drives
+ */
 struct LogicalLibrary {
 
   LogicalLibrary();
@@ -37,12 +40,12 @@ struct LogicalLibrary {
 
   bool operator!=(const LogicalLibrary &rhs) const;
 
+  std::string name;
   uint64_t archiveMinBytesQueued;
-  std::string comment;
+  uint64_t retrieveMinBytesQueued;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string name;
-  uint64_t retrieveMinBytesQueued;
+  std::string comment;
 
 }; // struct LogicalLibrary
 

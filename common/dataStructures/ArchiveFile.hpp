@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds all the CTA file metadata
+ */
 struct ArchiveFile {
 
   ArchiveFile();
@@ -39,14 +42,14 @@ struct ArchiveFile {
   bool operator!=(const ArchiveFile &rhs) const;
 
   uint64_t archiveFileID;
-  std::string checksumType;
-  std::string checksumValue;
-  time_t creationTime;
-  cta::common::dataStructures::DRData drData;
   std::string eosFileID;
   uint64_t fileSize;
+  std::string checksumType;
+  std::string checksumValue;
   std::string storageClass;
+  cta::common::dataStructures::DRData drData;
   std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> tapeCopies;
+  time_t creationTime;
 
 }; // struct ArchiveFile
 

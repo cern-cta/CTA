@@ -31,16 +31,16 @@ cta::common::dataStructures::Dedication::Dedication():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::Dedication::operator==(const Dedication &rhs) const {
-  return comment==rhs.comment
-      && creationLog==rhs.creationLog
+  return driveName==rhs.driveName
       && dedicationType==rhs.dedicationType
-      && driveName==rhs.driveName
-      && fromTimestamp==rhs.fromTimestamp
-      && lastModificationLog==rhs.lastModificationLog
       && mountGroup==rhs.mountGroup
       && tag==rhs.tag
+      && vid==rhs.vid
+      && fromTimestamp==rhs.fromTimestamp
       && untilTimestamp==rhs.untilTimestamp
-      && vid==rhs.vid;
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -54,16 +54,16 @@ bool cta::common::dataStructures::Dedication::operator!=(const Dedication &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dedication &obj) {
-  os << "(comment=" << obj.comment
-     << " creationLog=" << obj.creationLog
+  os << "(driveName=" << obj.driveName
      << " dedicationType=" << obj.dedicationType
-     << " driveName=" << obj.driveName
-     << " fromTimestamp=" << obj.fromTimestamp
-     << " lastModificationLog=" << obj.lastModificationLog
      << " mountGroup=" << obj.mountGroup
      << " tag=" << obj.tag
+     << " vid=" << obj.vid
+     << " fromTimestamp=" << obj.fromTimestamp
      << " untilTimestamp=" << obj.untilTimestamp
-     << " vid=" << obj.vid << ")";
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

@@ -28,6 +28,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds the username and group name of a given user
+ */
 struct UserIdentity {
 
   UserIdentity();
@@ -36,8 +39,8 @@ struct UserIdentity {
 
   bool operator!=(const UserIdentity &rhs) const;
 
-  std::string group;
   std::string name;
+  std::string group;
 
 }; // struct UserIdentity
 

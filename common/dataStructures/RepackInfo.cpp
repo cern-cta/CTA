@@ -24,29 +24,29 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RepackInfo::RepackInfo():
-  filesArchived(0),
-  filesFailed(0),
-  filesToArchive(0),
-  filesToRetrieve(0),
   totalFiles(0),
-  totalSize(0) {}
+  totalSize(0),
+  filesToRetrieve(0),
+  filesToArchive(0),
+  filesFailed(0),
+  filesArchived(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::RepackInfo::operator==(const RepackInfo &rhs) const {
-  return creationLog==rhs.creationLog
-      && errors==rhs.errors
-      && filesArchived==rhs.filesArchived
-      && filesFailed==rhs.filesFailed
-      && filesToArchive==rhs.filesToArchive
-      && filesToRetrieve==rhs.filesToRetrieve
-      && repackStatus==rhs.repackStatus
-      && repackType==rhs.repackType
+  return vid==rhs.vid
       && tag==rhs.tag
       && totalFiles==rhs.totalFiles
       && totalSize==rhs.totalSize
-      && vid==rhs.vid;
+      && filesToRetrieve==rhs.filesToRetrieve
+      && filesToArchive==rhs.filesToArchive
+      && filesFailed==rhs.filesFailed
+      && filesArchived==rhs.filesArchived
+      && repackType==rhs.repackType
+      && repackStatus==rhs.repackStatus
+      && errors==rhs.errors
+      && creationLog==rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -60,18 +60,18 @@ bool cta::common::dataStructures::RepackInfo::operator!=(const RepackInfo &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RepackInfo &obj) {
-  os << "(creationLog=" << obj.creationLog
-     << " errors=" << obj.errors
-     << " filesArchived=" << obj.filesArchived
-     << " filesFailed=" << obj.filesFailed
-     << " filesToArchive=" << obj.filesToArchive
-     << " filesToRetrieve=" << obj.filesToRetrieve
-     << " repackStatus=" << obj.repackStatus
-     << " repackType=" << obj.repackType
+  os << "(vid=" << obj.vid
      << " tag=" << obj.tag
      << " totalFiles=" << obj.totalFiles
      << " totalSize=" << obj.totalSize
-     << " vid=" << obj.vid << ")";
+     << " filesToRetrieve=" << obj.filesToRetrieve
+     << " filesToArchive=" << obj.filesToArchive
+     << " filesFailed=" << obj.filesFailed
+     << " filesArchived=" << obj.filesArchived
+     << " repackType=" << obj.repackType
+     << " repackStatus=" << obj.repackStatus
+     << " errors=" << obj.errors
+     << " creationLog=" << obj.creationLog << ")";
   return os;
 }
 

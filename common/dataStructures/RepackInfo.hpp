@@ -30,6 +30,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This is the repack information for a given tape
+ */
 struct RepackInfo {
 
   RepackInfo();
@@ -38,18 +41,18 @@ struct RepackInfo {
 
   bool operator!=(const RepackInfo &rhs) const;
 
-  cta::common::dataStructures::EntryLog creationLog;
-  std::map<uint64_t,std::string> errors;
-  uint64_t filesArchived;
-  uint64_t filesFailed;
-  uint64_t filesToArchive;
-  uint64_t filesToRetrieve;
-  std::string repackStatus;
-  cta::common::dataStructures::RepackType repackType;
+  std::string vid;
   std::string tag;
   uint64_t totalFiles;
   uint64_t totalSize;
-  std::string vid;
+  uint64_t filesToRetrieve;
+  uint64_t filesToArchive;
+  uint64_t filesFailed;
+  uint64_t filesArchived;
+  cta::common::dataStructures::RepackType repackType;
+  std::string repackStatus;
+  std::map<uint64_t,std::string> errors;
+  cta::common::dataStructures::EntryLog creationLog;
 
 }; // struct RepackInfo
 

@@ -30,8 +30,8 @@ cta::common::dataStructures::DeleteArchiveRequest::DeleteArchiveRequest():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
-  return archiveFileID==rhs.archiveFileID
-      && requester==rhs.requester;
+  return requester==rhs.requester
+      && archiveFileID==rhs.archiveFileID;
 }
 
 //------------------------------------------------------------------------------
@@ -45,8 +45,8 @@ bool cta::common::dataStructures::DeleteArchiveRequest::operator!=(const DeleteA
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DeleteArchiveRequest &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
-     << " requester=" << obj.requester << ")";
+  os << "(requester=" << obj.requester
+     << " archiveFileID=" << obj.archiveFileID << ")";
   return os;
 }
 

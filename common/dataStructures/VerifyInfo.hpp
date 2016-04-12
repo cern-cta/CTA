@@ -29,6 +29,9 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+/*
+ * This struct holds the information of a verify operation on a given tape
+ */
 struct VerifyInfo {
 
   VerifyInfo();
@@ -37,16 +40,16 @@ struct VerifyInfo {
 
   bool operator!=(const VerifyInfo &rhs) const;
 
-  cta::common::dataStructures::EntryLog creationLog;
-  std::map<uint64_t,std::string> errors;
-  uint64_t filesFailed;
-  uint64_t filesToVerify;
-  uint64_t filesVerified;
+  std::string vid;
   std::string tag;
   uint64_t totalFiles;
   uint64_t totalSize;
+  uint64_t filesToVerify;
+  uint64_t filesFailed;
+  uint64_t filesVerified;
   std::string verifyStatus;
-  std::string vid;
+  cta::common::dataStructures::EntryLog creationLog;
+  std::map<uint64_t,std::string> errors;
 
 }; // struct VerifyInfo
 

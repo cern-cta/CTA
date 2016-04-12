@@ -24,17 +24,17 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveJob::ArchiveJob():
-  archiveFileID(0),
-  copyNumber(0) {}
+  copyNumber(0),
+  archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveJob::operator==(const ArchiveJob &rhs) const {
-  return archiveFileID==rhs.archiveFileID
+  return request==rhs.request
+      && tapePool==rhs.tapePool
       && copyNumber==rhs.copyNumber
-      && request==rhs.request
-      && tapePool==rhs.tapePool;
+      && archiveFileID==rhs.archiveFileID;
 }
 
 //------------------------------------------------------------------------------
@@ -48,10 +48,10 @@ bool cta::common::dataStructures::ArchiveJob::operator!=(const ArchiveJob &rhs) 
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveJob &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
+  os << "(request=" << obj.request
+     << " tapePool=" << obj.tapePool
      << " copyNumber=" << obj.copyNumber
-     << " request=" << obj.request
-     << " tapePool=" << obj.tapePool << ")";
+     << " archiveFileID=" << obj.archiveFileID << ")";
   return os;
 }
 

@@ -24,31 +24,31 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::Tape::Tape():
+  lastFSeq(0),
   capacityInBytes(0),
-  dataOnTapeInBytes(0),
-  lastFSeq(0) {}
+  dataOnTapeInBytes(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::Tape::operator==(const Tape &rhs) const {
-  return busy==rhs.busy
-      && capacityInBytes==rhs.capacityInBytes
-      && comment==rhs.comment
-      && creationLog==rhs.creationLog
-      && dataOnTapeInBytes==rhs.dataOnTapeInBytes
-      && disabled==rhs.disabled
-      && encryptionKey==rhs.encryptionKey
-      && full==rhs.full
-      && labelLog==rhs.labelLog
+  return vid==rhs.vid
       && lastFSeq==rhs.lastFSeq
-      && lastModificationLog==rhs.lastModificationLog
-      && lastReadLog==rhs.lastReadLog
-      && lastWriteLog==rhs.lastWriteLog
-      && lbp==rhs.lbp
       && logicalLibraryName==rhs.logicalLibraryName
       && tapePoolName==rhs.tapePoolName
-      && vid==rhs.vid;
+      && capacityInBytes==rhs.capacityInBytes
+      && dataOnTapeInBytes==rhs.dataOnTapeInBytes
+      && encryptionKey==rhs.encryptionKey
+      && lbp==rhs.lbp
+      && busy==rhs.busy
+      && full==rhs.full
+      && disabled==rhs.disabled
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && comment==rhs.comment
+      && labelLog==rhs.labelLog
+      && lastWriteLog==rhs.lastWriteLog
+      && lastReadLog==rhs.lastReadLog;
 }
 
 //------------------------------------------------------------------------------
@@ -62,23 +62,23 @@ bool cta::common::dataStructures::Tape::operator!=(const Tape &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Tape &obj) {
-  os << "(busy=" << obj.busy
-     << " capacityInBytes=" << obj.capacityInBytes
-     << " comment=" << obj.comment
-     << " creationLog=" << obj.creationLog
-     << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
-     << " disabled=" << obj.disabled
-     << " encryptionKey=" << obj.encryptionKey
-     << " full=" << obj.full
-     << " labelLog=" << obj.labelLog
+  os << "(vid=" << obj.vid
      << " lastFSeq=" << obj.lastFSeq
-     << " lastModificationLog=" << obj.lastModificationLog
-     << " lastReadLog=" << obj.lastReadLog
-     << " lastWriteLog=" << obj.lastWriteLog
-     << " lbp=" << obj.lbp
      << " logicalLibraryName=" << obj.logicalLibraryName
      << " tapePoolName=" << obj.tapePoolName
-     << " vid=" << obj.vid << ")";
+     << " capacityInBytes=" << obj.capacityInBytes
+     << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
+     << " encryptionKey=" << obj.encryptionKey
+     << " lbp=" << obj.lbp
+     << " busy=" << obj.busy
+     << " full=" << obj.full
+     << " disabled=" << obj.disabled
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " comment=" << obj.comment
+     << " labelLog=" << obj.labelLog
+     << " lastWriteLog=" << obj.lastWriteLog
+     << " lastReadLog=" << obj.lastReadLog << ")";
   return os;
 }
 
