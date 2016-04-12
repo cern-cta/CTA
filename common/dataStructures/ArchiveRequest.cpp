@@ -32,7 +32,7 @@ cta::common::dataStructures::ArchiveRequest::ArchiveRequest():
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
   return requester==rhs.requester
-      && eosFileID==rhs.eosFileID
+      && diskFileID==rhs.diskFileID
       && srcURL==rhs.srcURL
       && fileSize==rhs.fileSize
       && checksumType==rhs.checksumType
@@ -56,7 +56,7 @@ bool cta::common::dataStructures::ArchiveRequest::operator!=(const ArchiveReques
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRequest &obj) {
   os << "(requester=" << obj.requester
-     << " eosFileID=" << obj.eosFileID
+     << " diskFileID=" << obj.diskFileID
      << " srcURL=" << obj.srcURL
      << " fileSize=" << obj.fileSize
      << " checksumType=" << obj.checksumType

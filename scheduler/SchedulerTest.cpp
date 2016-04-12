@@ -220,7 +220,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   request.diskpoolName="diskpool1";
   request.diskpoolThroughput=200*1000*1000;
   request.drData=drData;
-  request.eosFileID="eosFileID";
+  request.diskFileID="diskFileID";
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = userName;

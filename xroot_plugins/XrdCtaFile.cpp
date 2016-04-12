@@ -1563,7 +1563,7 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       if(list.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = {"id","copy no","vid","fseq","block id","EOS id","size","checksum type","checksum value","storage class","owner","group","instance","path"};
+        std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
         if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = list.cbegin(); it != list.cend(); it++) {
           for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
@@ -1573,7 +1573,7 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
             currentRow.push_back(jt->second.vid);
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-            currentRow.push_back(it->eosFileID);
+            currentRow.push_back(it->diskFileID);
             currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
             currentRow.push_back(it->checksumType);
             currentRow.push_back(it->checksumValue);
@@ -1581,7 +1581,8 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
             currentRow.push_back(it->drData.drOwner);
             currentRow.push_back(it->drData.drGroup);
             currentRow.push_back(it->drData.drInstance);
-            currentRow.push_back(it->drData.drPath);          
+            currentRow.push_back(it->drData.drPath);    
+            currentRow.push_back(std::to_string((unsigned long long)it->creationTime));          
             responseTable.push_back(currentRow);
           }
         }
@@ -1751,7 +1752,7 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
         currentRow.push_back(jt->second.vid);
         currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
         currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-        currentRow.push_back(it->eosFileID);
+        currentRow.push_back(it->diskFileID);
         currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
         currentRow.push_back(it->checksumType);
         currentRow.push_back(it->checksumValue);
@@ -1797,7 +1798,7 @@ void XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
           currentRow.push_back(std::to_string((unsigned long long)jt->archiveFileID));
           currentRow.push_back(jt->request.storageClass);
           currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
-          currentRow.push_back(jt->request.eosFileID);
+          currentRow.push_back(jt->request.diskFileID);
           currentRow.push_back(jt->request.checksumType);
           currentRow.push_back(jt->request.checksumValue);         
           currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
@@ -1980,7 +1981,7 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   request.diskpoolName=diskpool;
   request.diskpoolThroughput=throughput;
   request.drData=drData;
-  request.eosFileID=eosid;
+  request.diskFileID=eosid;
   request.fileSize=size;
   request.requester=originator;
   request.srcURL=srcurl;

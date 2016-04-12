@@ -840,7 +840,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
 
   common::dataStructures::ArchiveFile file;
   file.archiveFileID = 1234; // Should be ignored
-  file.eosFileID = "EOS_file_ID";
+  file.diskFileID = "EOS_file_ID";
   file.fileSize = 1;
   file.checksumType = "checksum_type";
   file.checksumValue = "cheskum_value";
@@ -860,7 +860,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
 
   const common::dataStructures::ArchiveFile frontFile = files.front();
 
-  ASSERT_EQ(file.eosFileID, frontFile.eosFileID);
+  ASSERT_EQ(file.diskFileID, frontFile.diskFileID);
   ASSERT_EQ(file.fileSize, frontFile.fileSize);
   ASSERT_EQ(file.checksumType, frontFile.checksumType);
   ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
@@ -886,7 +886,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
     "create storage class");
   common::dataStructures::ArchiveFile file;
   file.archiveFileID = 1234; // Should be ignored
-  file.eosFileID = "EOS_file_ID";
+  file.diskFileID = "EOS_file_ID";
   file.fileSize = 1;
   file.checksumType = "checksum_type";
   file.checksumValue = "cheskum_value";

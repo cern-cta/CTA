@@ -33,7 +33,7 @@ cta::common::dataStructures::ArchiveFile::ArchiveFile():
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {
   return archiveFileID==rhs.archiveFileID
-      && eosFileID==rhs.eosFileID
+      && diskFileID==rhs.diskFileID
       && fileSize==rhs.fileSize
       && checksumType==rhs.checksumType
       && checksumValue==rhs.checksumValue
@@ -55,7 +55,7 @@ bool cta::common::dataStructures::ArchiveFile::operator!=(const ArchiveFile &rhs
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj) {
   os << "(archiveFileID=" << obj.archiveFileID
-     << " eosFileID=" << obj.eosFileID
+     << " diskFileID=" << obj.diskFileID
      << " fileSize=" << obj.fileSize
      << " checksumType=" << obj.checksumType
      << " checksumValue=" << obj.checksumValue

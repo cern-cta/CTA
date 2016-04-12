@@ -863,7 +863,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   ar.setDiskpoolName(request.diskpoolName);
   ar.setDiskpoolThroughput(request.diskpoolThroughput);
   ar.setDrData(request.drData);
-  ar.setEosFileID(request.eosFileID);
+  ar.setEosFileID(request.diskFileID);
   ar.setFileSize(request.fileSize);
   ar.setMountPolicy(mountPolicy);
   ar.setRequester(request.requester);

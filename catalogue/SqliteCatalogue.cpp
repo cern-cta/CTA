@@ -1833,7 +1833,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":DISK_INSTANCE", archiveFile.drData.drInstance);
-  stmt->bind(":DISK_FILE_ID", archiveFile.eosFileID);
+  stmt->bind(":DISK_FILE_ID", archiveFile.diskFileID);
   stmt->bind(":FILE_SIZE", archiveFile.fileSize);
   stmt->bind(":CHECKSUM_TYPE", archiveFile.checksumType);
   stmt->bind(":CHECKSUM_VALUE", archiveFile.checksumValue);
@@ -1847,7 +1847,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
 
   stmt->step();
 
-  return getArchiveFileId(archiveFile.drData.drInstance, archiveFile.eosFileID);
+  return getArchiveFileId(archiveFile.drData.drInstance, archiveFile.diskFileID);
 }
 
 //------------------------------------------------------------------------------
@@ -1917,7 +1917,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
     common::dataStructures::ArchiveFile file;
 
     file.archiveFileID = id;
-    file.eosFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
     file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
     file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
@@ -1977,7 +1977,7 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
     cta::common::dataStructures::ArchiveFile file;
 
     file.archiveFileID = id;
-    file.eosFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
     file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
     file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);

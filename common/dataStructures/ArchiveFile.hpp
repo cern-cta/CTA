@@ -42,7 +42,7 @@ struct ArchiveFile {
   bool operator!=(const ArchiveFile &rhs) const;
 
   uint64_t archiveFileID;
-  std::string eosFileID;
+  std::string diskFileID;
   uint64_t fileSize;
   std::string checksumType;
   std::string checksumValue;

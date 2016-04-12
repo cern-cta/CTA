@@ -43,7 +43,7 @@ struct ArchiveRequest {
   bool operator!=(const ArchiveRequest &rhs) const;
 
   cta::common::dataStructures::UserIdentity requester;
-  std::string eosFileID;
+  std::string diskFileID;
   std::string srcURL;
   uint64_t fileSize;
   std::string checksumType;
