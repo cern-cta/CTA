@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFile::ArchiveFile():
   archiveFileID(0),
+  creationTime(0),
   fileSize(0) {}
 
 //------------------------------------------------------------------------------
@@ -34,6 +35,7 @@ bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs
   return archiveFileID==rhs.archiveFileID
       && checksumType==rhs.checksumType
       && checksumValue==rhs.checksumValue
+      && creationTime==rhs.creationTime
       && drData==rhs.drData
       && eosFileID==rhs.eosFileID
       && fileSize==rhs.fileSize
@@ -55,6 +57,7 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
   os << "(archiveFileID=" << obj.archiveFileID
      << " checksumType=" << obj.checksumType
      << " checksumValue=" << obj.checksumValue
+     << " creationTime=" << obj.creationTime
      << " drData=" << obj.drData
      << " eosFileID=" << obj.eosFileID
      << " fileSize=" << obj.fileSize

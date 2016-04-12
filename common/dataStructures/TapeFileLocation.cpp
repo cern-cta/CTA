@@ -25,6 +25,7 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::TapeFileLocation::TapeFileLocation():
   blockId(0),
+  creationTime(0),
   fSeq(0) {}
 
 //------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ cta::common::dataStructures::TapeFileLocation::TapeFileLocation():
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::TapeFileLocation::operator==(const TapeFileLocation &rhs) const {
   return blockId==rhs.blockId
+      && creationTime==rhs.creationTime
       && fSeq==rhs.fSeq
       && vid==rhs.vid;
 }
@@ -48,6 +50,7 @@ bool cta::common::dataStructures::TapeFileLocation::operator!=(const TapeFileLoc
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFileLocation &obj) {
   os << "(blockId=" << obj.blockId
+     << " creationTime=" << obj.creationTime
      << " fSeq=" << obj.fSeq
      << " vid=" << obj.vid << ")";
   return os;

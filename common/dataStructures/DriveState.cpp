@@ -25,9 +25,11 @@
 //------------------------------------------------------------------------------
 cta::common::dataStructures::DriveState::DriveState():
   bytesTransferedInSession(0),
+  currentStateStartTime(0),
   filesTransferedInSession(0),
   latestBandwidth(0),
-  sessionId(0) {}
+  sessionId(0),
+  sessionStartTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==

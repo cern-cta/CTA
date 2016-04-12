@@ -24,7 +24,6 @@
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {

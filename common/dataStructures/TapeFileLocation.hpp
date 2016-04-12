@@ -37,6 +37,7 @@ struct TapeFileLocation {
   bool operator!=(const TapeFileLocation &rhs) const;
 
   uint64_t blockId;
+  time_t creationTime;
   uint64_t fSeq;
   std::string vid;
 

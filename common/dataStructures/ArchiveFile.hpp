@@ -41,6 +41,7 @@ struct ArchiveFile {
   uint64_t archiveFileID;
   std::string checksumType;
   std::string checksumValue;
+  time_t creationTime;
   cta::common::dataStructures::DRData drData;
   std::string eosFileID;
   uint64_t fileSize;
