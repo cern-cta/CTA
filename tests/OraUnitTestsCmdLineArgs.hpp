@@ -16,16 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/Catalogue.hpp"
+#include <string>
 
-namespace cta {
-namespace catalogue {
+struct CmdLineArgs {
+  /**
+   * The oracle database connection string.
+   */
+  std::string oraDbConnFile;
+};
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-Catalogue::~Catalogue() {
-}
-
-} // namespace catalogue
-} // namespace cta
+/**
+ * Declaration of the global variable used to store the command-line arguments so that they are visible to the tests.
+ */
+extern CmdLineArgs g_cmdLineArgs;

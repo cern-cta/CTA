@@ -19,15 +19,17 @@
 #include "catalogue/ColumnNameToIdx.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // addNameToIdx
 //------------------------------------------------------------------------------
-void cta::catalogue::ColumnNameToIdx::add(const std::string &name,
-  const int idx) {
+void ColumnNameToIdx::add(const std::string &name, const int idx) {
   if(m_nameToIdx.end() != m_nameToIdx.find(name)) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed: Column name " << name <<
-      " is a duplicate";
+    " is a duplicate";
     throw ex;
   }
   m_nameToIdx[name] = idx;
@@ -36,7 +38,7 @@ void cta::catalogue::ColumnNameToIdx::add(const std::string &name,
 //------------------------------------------------------------------------------
 // getIdx
 //------------------------------------------------------------------------------
-int cta::catalogue::ColumnNameToIdx::getIdx(const std::string &name) const {
+int ColumnNameToIdx::getIdx(const std::string &name) const {
   auto it = m_nameToIdx.find(name);
   if(m_nameToIdx.end() == it) {
     exception::Exception ex;
@@ -49,13 +51,16 @@ int cta::catalogue::ColumnNameToIdx::getIdx(const std::string &name) const {
 //------------------------------------------------------------------------------
 // operator[]
 //------------------------------------------------------------------------------
-int cta::catalogue::ColumnNameToIdx::operator[](const std::string &name) const {
+int ColumnNameToIdx::operator[](const std::string &name) const {
   return getIdx(name);
 }
 
 //------------------------------------------------------------------------------
 // empty
 //------------------------------------------------------------------------------
-bool cta::catalogue::ColumnNameToIdx::empty() const {
+bool ColumnNameToIdx::empty() const {
   return m_nameToIdx.empty();
 }
+
+} // namespace catalogue
+} // namespace cta

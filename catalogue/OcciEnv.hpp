@@ -23,11 +23,14 @@
 namespace cta {
 namespace catalogue {
 
-class DbLogin;
 class OcciConn;
 
 /**
  * A convenience wrapper around an OCCI environment.
+ *
+ * Please note that this wrapper does not expose any data types that are
+ * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
+ * does not expose the std::string data type.
  */
 class OcciEnv {
 public:
@@ -63,10 +66,18 @@ public:
   /**
    * Creates an OCCI connection.
    *
-   * @param dbLogin The details of the database connection.
+   * This method will throw an exception if either the username, password ori
+   * database parameters are NULL pointers.
+   *
+   * @param username The name of the database user.
+   * @param password The database password.
+   * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  OcciConn *createConn(const DbLogin &dbLogin);
+  OcciConn *createConn(
+    const char *const username,
+    const char *const password,
+    const char *const database);
 
 private:
 

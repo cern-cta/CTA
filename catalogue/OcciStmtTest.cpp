@@ -19,6 +19,7 @@
 #include "catalogue/DbLogin.hpp"
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciConn.hpp"
+#include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
@@ -27,7 +28,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_OcciConnTest : public ::testing::Test {
+class cta_catalogue_OcciStmtTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -37,44 +38,7 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_OcciConnTest, constructor_null_connection) {
-  using namespace cta;
-  using namespace cta::catalogue;
-
-  OcciEnv env;
-  oracle::occi::Connection *const underlyingOcciConn = NULL;
-  std::unique_ptr<OcciConn> conn;
-  ASSERT_THROW(conn.reset(new OcciConn(env, underlyingOcciConn)),
-    std::exception);
-}
-
-TEST_F(cta_catalogue_OcciConnTest, constructor_real_connection) {
-  using namespace cta;
-  using namespace cta::catalogue;
-
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
-  OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
-    dbLogin.username.c_str(),
-    dbLogin.password.c_str(),
-    dbLogin.database.c_str()));
-}
-
-TEST_F(cta_catalogue_OcciConnTest, createStmt_null_sql) {
-  using namespace cta;
-  using namespace cta::catalogue;
-
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
-  OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
-    dbLogin.username.c_str(),
-    dbLogin.password.c_str(),
-    dbLogin.database.c_str()));
-  const char *const sql = NULL;
-  ASSERT_THROW(conn->createStmt(sql), std::exception);
-}
-
-TEST_F(cta_catalogue_OcciConnTest, createStmt) {
+TEST_F(cta_catalogue_OcciStmtTest, execute) {
   using namespace cta;
   using namespace cta::catalogue;
 
@@ -86,6 +50,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT * FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<OcciRset> rset(stmt->execute());
 }
 
 } // namespace unitTests

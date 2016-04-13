@@ -23,19 +23,28 @@
 #include <mutex>
 #include <occi.h>
 #include <stdint.h>
-#include <string>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward decalaration to avoid a circular depedency between OcciConn and
- * OcciStmt.
+ * Forward declaration to avoid a circular dependency between OcciStmt and
+ * OcciConn.
  */
 class OcciConn;
 
 /**
+ * Forward declaration to avoid a circular dependency between OcciStmt and
+ * OcciRset.
+ */
+class OcciRset;
+
+/**
  * A convenience wrapper around an OCCI prepared statement.
+ *
+ * Please note that this wrapper does not expose any data types that are
+ * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
+ * does not expose the std::string data type.
  */
 class OcciStmt {
 public:
@@ -43,14 +52,14 @@ public:
   /**
    * Constructor.
    *
-   * This constructor will throw an exception if the OCCI statement is a NULL
-   * pointer.
-   *  
+   * This constructor will throw an exception if either the sql or stmt
+   * parameters are NULL.
+   *
    * @param sql The SQL statement.
    * @param conn The database connection.
    * @param stmt The prepared statement.
    */
-  OcciStmt(const std::string &sql, OcciConn &conn,
+  OcciStmt(const char *const sql, OcciConn &conn,
     oracle::occi::Statement *const stmt);
 
   /**
@@ -68,7 +77,7 @@ public:
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
+  const char *getSql() const;
 
   /**
    * Returns the underlying OCCI result set.
@@ -90,7 +99,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bind(const std::string &paramName, const uint64_t paramValue);
+  void bind(const char *const paramName, const uint64_t paramValue);
 
   /** 
    * Binds an SQL parameter.
@@ -98,7 +107,12 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  void bind(const std::string &paramName, const std::string &paramValue);
+  void bind(const char*paramName, const char *paramValue);
+
+  /**
+   *  Executes the statement and returns the result set.
+   */
+  OcciRset *execute();
 
 private:
 
@@ -110,7 +124,7 @@ private:
   /**
    * The SQL statement.
    */
-  const std::string m_sql;
+  char *m_sql;
 
   /**
    * The database connection.
@@ -122,7 +136,7 @@ private:
    */
   oracle::occi::Statement *m_stmt;
 
-}; // class SqlLiteStmt
+}; // class OcciStmt
 
 } // namespace catalogue
 } // namespace cta

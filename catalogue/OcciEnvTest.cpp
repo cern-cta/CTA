@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/DbLogin.hpp"
+#include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnv.hpp"
 
 #include <gtest/gtest.h>
-#include <memory>
 
 namespace unitTests {
 
@@ -35,8 +36,40 @@ protected:
 
 TEST_F(cta_catalogue_OcciEnvTest, constructor) {
   using namespace cta::catalogue;
-
   OcciEnv env;
+}
+
+TEST_F(cta_catalogue_OcciEnvTest, createConn_null_username) {
+  using namespace cta::catalogue;
+  OcciEnv env;
+
+  const char *const username = NULL;
+  const char *const password = "Not NULL";
+  const char *const database = "Not NULL";
+
+  ASSERT_THROW(env.createConn(username, password, database), std::exception);
+}
+
+TEST_F(cta_catalogue_OcciEnvTest, createConn_null_password) {
+  using namespace cta::catalogue;
+  OcciEnv env;
+
+  const char *const username = "Not NULL";
+  const char *const password = NULL;
+  const char *const database = "Not NULL";
+
+  ASSERT_THROW(env.createConn(username, password, database), std::exception);
+}
+
+TEST_F(cta_catalogue_OcciEnvTest, createConn_null_database) {
+  using namespace cta::catalogue;
+  OcciEnv env;
+
+  const char *const username = "Not NULL";
+  const char *const password = "Not NULL";
+  const char *const database = NULL;
+
+  ASSERT_THROW(env.createConn(username, password, database), std::exception);
 }
 
 } // namespace unitTests

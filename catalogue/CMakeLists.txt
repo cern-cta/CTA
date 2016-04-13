@@ -39,12 +39,11 @@ add_library (ctacatalogue SHARED
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
+  ctacommon
   ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  OcciConnTest.cpp
-  OcciEnvTest.cpp
   SqliteCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
@@ -55,3 +54,16 @@ target_link_libraries (ctacatalogueunittests
   ctacatalogue)
 
 install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set (CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES
+  OcciConnTest.cpp
+  OcciEnvTest.cpp
+  OcciStmtTest.cpp)
+
+add_library (ctacatalogueoraunittests SHARED
+  ${CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES})
+
+target_link_libraries (ctacatalogueoraunittests
+  ctacatalogue)
+
+install(TARGETS ctacatalogueoraunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

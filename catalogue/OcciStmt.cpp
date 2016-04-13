@@ -16,30 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciStmt.hpp"
-#include "common/exception/Exception.hpp"
+
+#include <cstring>
+#include <stdexcept>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciStmt::OcciStmt(const std::string &sql, OcciConn &conn,
+cta::catalogue::OcciStmt::OcciStmt(const char *const sql, OcciConn &conn,
   oracle::occi::Statement *const stmt):
-  m_sql(sql),
   m_conn(conn),
   m_stmt(stmt) {
   if(NULL == stmt) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": OCCI statment is a NULL pointer";
+    std::runtime_error ex(std::string(__FUNCTION__) + " failed"
+      ": OCCI statment is a NULL pointer");
     throw ex;
   }
+
+  // Work with C strings because they haven't changed with respect to _GLIBCXX_USE_CXX11_ABI
+  const std::size_t sqlLen = std::strlen(sql);
+  m_sql = new char[sqlLen + 1];
+  std::memcpy(m_sql, sql, sqlLen);
+  m_sql[sqlLen] = '\0';
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::catalogue::OcciStmt::~OcciStmt() throw() {
+  delete m_sql;
+
   try {
     close(); // Idempotent close() method
   } catch(...) {
@@ -62,7 +73,7 @@ void cta::catalogue::OcciStmt::close() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &cta::catalogue::OcciStmt::getSql() const {
+const char *cta::catalogue::OcciStmt::getSql() const {
   return m_sql;
 }
 
@@ -83,19 +94,22 @@ oracle::occi::Statement *cta::catalogue::OcciStmt::operator->() const {
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciStmt::bind(const std::string &paramName,
-  const uint64_t paramValue) {
-  exception::Exception ex;
-  ex.getMessage() << __FUNCTION__ << " is not implemented";
+void cta::catalogue::OcciStmt::bind(const char *paramName, const uint64_t paramValue) {
+  std::runtime_error ex(std::string(__FUNCTION__) + " is not implemented");
   throw ex;
 }
 
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciStmt::bind(const std::string &paramName,
-  const std::string &paramValue) {
-  exception::Exception ex;
-  ex.getMessage() << __FUNCTION__ << " is not implemented";
+void cta::catalogue::OcciStmt::bind(const char *paramName, const char *paramValue) {
+  std::runtime_error ex(std::string(__FUNCTION__) + " is not implemented");
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// execute
+//------------------------------------------------------------------------------
+cta::catalogue::OcciRset *cta::catalogue::OcciStmt::execute() {
+  return NULL;
 }

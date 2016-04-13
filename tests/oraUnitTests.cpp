@@ -16,21 +16,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <sqlite3.h>
-#include <google/protobuf/stubs/common.h>
+#include "tests/OraUnitTestsCmdLineArgs.hpp"
 
-int main(int argc, char** argv) {
-  // The unit tests use SQLite it must be initialized before they are run
-  if(SQLITE_OK != sqlite3_initialize()) {
-    std::cerr << "Failed to initialize SQLite" << std::endl;
-    return 1; // Error
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <iostream>
+
+/**
+ * Prints the usage message of this unit-test program to the specified output stream.
+ */
+static void printUsage(std::ostream &os) {
+  os <<
+    "Usage:" << std::endl <<
+    '\t' << "cta-oraUnitTest [Google test options] databaseConnectionFile" << std::endl;
+}
+
+/**
+ * Parses the specified command-line arguments.  This should be called after Google test has consumed all of its
+ * command-line options from the command-line.
+ */
+static CmdLineArgs parseCmdLine(const int argc, char ** argv) {
+  if(argc != 2) {
+    std::cerr << "Invalid number of command-line arguments";
+    printUsage(std::cerr);
+    exit(1);
   }
 
+  CmdLineArgs cmdLineArgs;
+  cmdLineArgs.oraDbConnFile = argv[1];
+
+  return cmdLineArgs;
+}
+
+int main(int argc, char** argv) {
   // The following line must be executed to initialize Google Mock
   // (and Google Test) before running the tests.
   ::testing::InitGoogleMock(&argc, argv);
+
+  // Google test will consume its options from the command-line and leave everything else
+  g_cmdLineArgs = parseCmdLine(argc, argv);
+
   const int ret = RUN_ALL_TESTS();
 
   // Close standard in, out and error so that valgrind can be used with the
@@ -40,15 +65,6 @@ int main(int argc, char** argv) {
   close(0);
   close(1);
   close(2);
-
-  // The unit tests used SQLite and so it should shutodwn in order to release
-  // its resources
-  if(SQLITE_OK != sqlite3_shutdown()) {
-    std::cerr << "Failed to shutdown SQLite" << std::endl;
-    return 1; // Error
-  }
-  
-  ::google::protobuf::ShutdownProtobufLibrary();
 
   return ret;
 }

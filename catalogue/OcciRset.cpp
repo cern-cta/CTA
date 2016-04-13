@@ -16,9 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
-#include "common/exception/Exception.hpp"
+
+#include <stdexcept>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -28,10 +32,7 @@ cta::catalogue::OcciRset::OcciRset(OcciStmt &stmt,
   m_stmt(stmt),
   m_rset(rset) {
   if(NULL == rset) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": The result set is a NULL pointer";
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: rset is NULL");
   }
 }
 
@@ -40,7 +41,7 @@ cta::catalogue::OcciRset::OcciRset(OcciStmt &stmt,
 //------------------------------------------------------------------------------
 cta::catalogue::OcciRset::~OcciRset() throw() {
   try {
-    close(); // Idempotenet close()
+    close(); // Idempotent close()
   } catch(...) {
     // Destructor does not throw
   }

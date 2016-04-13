@@ -16,10 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciStmt.hpp"
-#include "common/exception/Exception.hpp"
+
+#include <stdexcept>
+#include <string>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -29,10 +34,8 @@ cta::catalogue::OcciConn::OcciConn(OcciEnv &env,
   m_env(env),
   m_conn(conn) {
   if(NULL == conn) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << "failed"
-      ": The OCCI connection is a NULL pointer";
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed"
+      ": The OCCI connection is a NULL pointer");
   }
 }
 
@@ -76,15 +79,18 @@ oracle::occi::Connection *cta::catalogue::OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-cta::catalogue::OcciStmt *cta::catalogue::OcciConn::createStmt(
-  const std::string &sql) {
-  oracle::occi::Statement *const stmt = m_conn->createStatement(sql.c_str());
-  if(NULL == stmt) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": oracle::occi::createStatement() return a NULL pointer";
-    throw ex;
-  }
+cta::catalogue::OcciStmt *cta::catalogue::OcciConn::createStmt(const char *sql) {
+  try {
+    if(NULL == sql) throw std::runtime_error("sql is NULL");
 
-  return new OcciStmt(sql, *this, stmt);
+    oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
+    if (NULL == stmt) {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed"
+        ": oracle::occi::createStatement() returned a NULL pointer");
+    }
+
+    return new OcciStmt(sql, *this, stmt);
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + "failed: " + ne.what());
+  }
 }
