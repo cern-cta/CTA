@@ -1985,7 +1985,7 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   request.requester=originator;
   request.srcURL=srcurl;
   request.storageClass=storageclass;  
-  uint64_t archiveFileId = m_scheduler->queueArchiveRequest(cliIdentity, request);
+  uint64_t archiveFileId = m_scheduler->queueArchive(cliIdentity, request);
   std::stringstream res_ss;
   res_ss << archiveFileId << std::endl;
   m_data = res_ss.str();
@@ -2035,7 +2035,7 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   request.archiveFileID=id;
   request.requester=originator;
   request.dstURL=dsturl;
-  m_scheduler->queueRetrieveRequest(cliIdentity, request);
+  m_scheduler->queueRetrieve(cliIdentity, request);
 }
 
 //------------------------------------------------------------------------------
@@ -2064,7 +2064,7 @@ void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id;
   request.requester=originator;
-  m_scheduler->deleteArchiveRequest(cliIdentity, request);
+  m_scheduler->deleteArchive(cliIdentity, request);
 }
 
 //------------------------------------------------------------------------------
@@ -2106,7 +2106,7 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   request.archiveFileID=id;
   request.requester=originator;
   request.dstURL=dsturl;
-  m_scheduler->cancelRetrieveRequest(cliIdentity, request);
+  m_scheduler->cancelRetrieve(cliIdentity, request);
 }
 
 //------------------------------------------------------------------------------
@@ -2148,7 +2148,7 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   request.archiveFileID=id;
   request.requester=originator;
   request.storageClass=storageclass;
-  m_scheduler->updateFileInfoRequest(cliIdentity, request);
+  m_scheduler->updateFileInfo(cliIdentity, request);
 }
 
 //------------------------------------------------------------------------------
@@ -2174,7 +2174,7 @@ void XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
   originator.group=group;
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
-  m_scheduler->listStorageClassRequest(cliIdentity, request);
+  m_scheduler->listStorageClass(cliIdentity, request);
 }
   
 //------------------------------------------------------------------------------

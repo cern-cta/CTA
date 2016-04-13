@@ -229,7 +229,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   request.srcURL="srcURL";
   request.storageClass=storageClassName;
 
-  scheduler.queueArchiveRequest(s_adminOnAdminHost, request);
+  scheduler.queueArchive(s_adminOnAdminHost, request);
 
   {
     decltype(scheduler.getPendingArchiveJobs(s_adminOnAdminHost)) rqsts;
