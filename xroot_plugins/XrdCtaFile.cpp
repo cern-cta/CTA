@@ -39,11 +39,6 @@ namespace cta { namespace xrootPlugins {
 // checkClient
 //------------------------------------------------------------------------------
 cta::common::dataStructures::SecurityIdentity XrdCtaFile::checkClient(const XrdSecEntity *client) {
-// TEMPORARILY commented out host check for demo purposes:
-//  if(!client || !client->host || strncmp(client->host, "localhost", 9))
-//  {
-//    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] operation possible only from localhost");
-//  }
   cta::common::dataStructures::SecurityIdentity cliIdentity;
   struct passwd pwd;
   struct passwd *result;
@@ -420,6 +415,22 @@ void XrdCtaFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, 
 }
 
 //------------------------------------------------------------------------------
+// stringParameterToUint64
+//------------------------------------------------------------------------------
+uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const {
+  try {
+    return stoull(parameterName);
+  } catch(std::invalid_argument &ex) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" has an invalid argument");
+  } catch(std::out_of_range &ex) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - The value of parameter: "+parameterName+" is out of range");
+  } catch(...) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Unknown error while converting parameter: "+parameterName+" to a uint64_t");
+  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------
 // xCom_bootstrap
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
@@ -575,9 +586,7 @@ void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         m_data = help.str();
         return;
       }
-      std::stringstream ptn_ss(ptn_s);
-      uint64_t ptn = 0;
-      ptn_ss >> ptn;
+      uint64_t ptn = stringParameterToUint64("--partialtapesnumber", ptn_s);
       bool encryption=false;
       if((hasOption(tokens, "-e", "--encryption") && hasOption(tokens, "-c", "--clear"))) {
         m_data = help.str();
@@ -597,9 +606,7 @@ void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
         m_catalogue->modifyTapePoolComment(cliIdentity, name, comment);
       }
       if(!ptn_s.empty()) {
-        std::stringstream ptn_ss(ptn_s);
-        uint64_t ptn = 0;
-        ptn_ss >> ptn;
+        uint64_t ptn = stringParameterToUint64("--partialtapesnumber", ptn_s);
         m_catalogue->modifyTapePoolNbPartialTapes(cliIdentity, name, ptn);
       }
       if(hasOption(tokens, "-e", "--encryption")) {
@@ -653,9 +660,7 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       m_data = help.str();
       return;
     }    
-    std::stringstream cn_ss(cn_s);
-    uint64_t cn = 0;
-    cn_ss >> cn;
+    uint64_t cn = stringParameterToUint64("--copynb", cn_s);
     if("add" == tokens[2]) { //add
       std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
@@ -731,8 +736,8 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
           m_data = help.str();
           return;
         }
-        uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
-        uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+        uint64_t minarchivebytesqueued = stringParameterToUint64("--minarchivebytesqueued", minarchivebytesqueued_s);
+        uint64_t minretrievebytesqueued = stringParameterToUint64("--minretrievebytesqueued", minretrievebytesqueued_s);
         m_catalogue->createLogicalLibrary(cliIdentity, name, minarchivebytesqueued, minretrievebytesqueued, comment);
       }
       else { //ch
@@ -741,11 +746,11 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
           return;
         }
         if(!minarchivebytesqueued_s.empty()) {
-          uint64_t minarchivebytesqueued; std::stringstream minarchivebytesqueued_ss; minarchivebytesqueued_ss << minarchivebytesqueued_s; minarchivebytesqueued_ss >> minarchivebytesqueued;
+          uint64_t minarchivebytesqueued = stringParameterToUint64("--minarchivebytesqueued", minarchivebytesqueued_s);
           m_catalogue->modifyLogicalLibraryMinArchiveBytesQueued(cliIdentity, name, minarchivebytesqueued);
         }
         if(!minretrievebytesqueued_s.empty()) {
-          uint64_t minretrievebytesqueued; std::stringstream minretrievebytesqueued_ss; minretrievebytesqueued_ss << minretrievebytesqueued_s; minretrievebytesqueued_ss >> minretrievebytesqueued;
+          uint64_t minretrievebytesqueued = stringParameterToUint64("--minretrievebytesqueued", minretrievebytesqueued_s);
           m_catalogue->modifyLogicalLibraryMinRetrieveBytesQueued(cliIdentity, name, minretrievebytesqueued);
         }
         if(!comment.empty()) {
@@ -809,9 +814,7 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      std::stringstream capacity_ss(capacity_s);
-      int capacity = 0;
-      capacity_ss >> capacity;
+      uint64_t capacity = stringParameterToUint64("--capacity", capacity_s);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       bool disabled=false;
       bool full=false;
@@ -846,9 +849,7 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
         m_catalogue->modifyTapeTapePoolName(cliIdentity, vid, tapepool);
       }
       if(!capacity_s.empty()) {
-        std::stringstream capacity_ss(capacity_s);
-        uint64_t capacity = 0;
-        capacity_ss >> capacity;
+        uint64_t capacity = stringParameterToUint64("--capacity", capacity_s);
         m_catalogue->modifyTapeCapacityInBytes(cliIdentity, vid, capacity);
       }
       if(!comment.empty()) {
@@ -980,9 +981,7 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
         m_data = help.str();
         return;
       }  
-      std::stringstream cn_ss(cn_s);
-      uint64_t cn = 0;
-      cn_ss >> cn;
+      uint64_t cn = stringParameterToUint64("--copynb", cn_s);
       m_catalogue->createStorageClass(cliIdentity, scn, cn, comment);
     }
     else if("ch" == tokens[2]) { //ch
@@ -996,9 +995,7 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
         m_catalogue->modifyStorageClassComment(cliIdentity, scn, comment);
       }
       if(!cn_s.empty()) {  
-        std::stringstream cn_ss(cn_s);
-        uint64_t cn = 0;
-        cn_ss >> cn;
+        uint64_t cn = stringParameterToUint64("--copynb", cn_s);
         m_catalogue->modifyStorageClassNbCopies(cliIdentity, scn, cn);
       }
     }
@@ -1126,11 +1123,11 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
           m_data = help.str();
           return;
         }
-        uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
-        uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
-        uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
-        uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
-        uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
+        uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
+        uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
+        uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
+        uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
+        uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
         m_catalogue->createMountGroup(cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
@@ -1140,23 +1137,23 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
           return;
         }
         if(!archivepriority_s.empty()) {
-          uint64_t archivepriority; std::stringstream archivepriority_ss; archivepriority_ss << archivepriority_s; archivepriority_ss >> archivepriority;
+          uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
           m_catalogue->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
         }
         if(!minarchiverequestage_s.empty()) {
-          uint64_t minarchiverequestage; std::stringstream minarchiverequestage_ss; minarchiverequestage_ss << minarchiverequestage_s; minarchiverequestage_ss >> minarchiverequestage;
+          uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
           m_catalogue->modifyMountGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
         }
         if(!retrievepriority_s.empty()) {
-          uint64_t retrievepriority; std::stringstream retrievepriority_ss; retrievepriority_ss << retrievepriority_s; retrievepriority_ss >> retrievepriority;
+          uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
           m_catalogue->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
         }
         if(!minretrieverequestage_s.empty()) {
-          uint64_t minretrieverequestage; std::stringstream minretrieverequestage_ss; minretrieverequestage_ss << minretrieverequestage_s; minretrieverequestage_ss >> minretrieverequestage;
+          uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
           m_catalogue->modifyMountGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
         }
         if(!maxdrivesallowed_s.empty()) {
-          uint64_t maxdrivesallowed; std::stringstream maxdrivesallowed_ss; maxdrivesallowed_ss << maxdrivesallowed_s; maxdrivesallowed_ss >> maxdrivesallowed;
+          uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
           m_catalogue->modifyMountGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
         }
         if(!comment.empty()) {
@@ -1473,9 +1470,7 @@ void XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
       }
       uint64_t numberOfFiles=0; //0 means do a complete verification
       if(!numberOfFiles_s.empty()) {
-        std::stringstream numberOfFiles_ss;
-        numberOfFiles_ss << numberOfFiles_s;
-        numberOfFiles_ss >> numberOfFiles;
+        numberOfFiles = stringParameterToUint64("--partial", numberOfFiles_s);
       }
       m_scheduler->verify(cliIdentity, vid, tag, numberOfFiles);
     }
@@ -1627,8 +1622,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
       return;
     }    
     bool checkchecksum = hasOption(tokens, "-c", "--checkchecksum");
-    uint64_t firstfseq; std::stringstream firstfseq_ss; firstfseq_ss << firstfseq_s; firstfseq_ss >> firstfseq;
-    uint64_t lastfseq; std::stringstream lastfseq_ss; lastfseq_ss << lastfseq_s; lastfseq_ss >> lastfseq;
+    uint64_t firstfseq = stringParameterToUint64("--firstfseq", firstfseq_s);
+    uint64_t lastfseq = stringParameterToUint64("--lastfseq", lastfseq_s);
     cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag);   
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
@@ -1670,8 +1665,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      uint64_t number; std::stringstream number_ss; number_ss << number_s; number_ss >> number;
-      uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
+      uint64_t number = stringParameterToUint64("--number", number_s);
+      uint64_t size = stringParameterToUint64("--size", size_s);
       cta::common::dataStructures::TestSourceType type;
       if(input=="zero") { //zero
         type = cta::common::dataStructures::TestSourceType::devzero;
@@ -1962,8 +1957,8 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
     m_data = help.str();
     return;
   }
-  uint64_t size; std::stringstream size_ss; size_ss << size_s; size_ss >> size;
-  uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
+  uint64_t size = stringParameterToUint64("--size", size_s);
+  uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
   originator.group=group;
@@ -2017,8 +2012,8 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
     m_data = help.str();
     return;
   }
-  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
-  uint64_t throughput; std::stringstream throughput_ss; throughput_ss << throughput_s; throughput_ss >> throughput;
+  uint64_t id = stringParameterToUint64("--id", id_s);
+  uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
   originator.group=group;
@@ -2056,7 +2051,7 @@ void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
     m_data = help.str();
     return;
   }
-  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
   originator.group=group;
@@ -2091,7 +2086,7 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
     m_data = help.str();
     return;
   }
-  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
   originator.group=group;
@@ -2133,7 +2128,7 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
     m_data = help.str();
     return;
   }
-  uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
+  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
   originator.group=group;

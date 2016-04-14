@@ -188,6 +188,15 @@ protected:
    * @return the help string
    */
   std::string getGenericHelp(const std::string &programName) const;
+  
+  /**
+   * Converts a parameter string into a uint64_t (throws a cta::exception if it fails)
+   * 
+   * @param  parameterName The name of the parameter
+   * @param  parameterValue The value of the parameter
+   * @return the conversion result
+   */
+  uint64_t stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const;
 };
 
 }}
