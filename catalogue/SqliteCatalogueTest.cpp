@@ -831,7 +831,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
@@ -855,7 +855,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
   catalogue.createArchiveFile(file);
 
   std::list<common::dataStructures::ArchiveFile> files;
-  files = catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "");
+  files = catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "");
   ASSERT_EQ(1, files.size());
 
   const common::dataStructures::ArchiveFile frontFile = files.front();
@@ -878,7 +878,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getArchiveFiles(0, "", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;

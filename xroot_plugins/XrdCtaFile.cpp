@@ -1558,9 +1558,8 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       m_data = help.str();
       return;
     }
-    uint64_t id; std::stringstream id_ss; id_ss << id_s; id_ss >> id;
     if(!summary) {
-      std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+      std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id_s, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       if(list.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
@@ -1590,7 +1589,7 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(id, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(id_s, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};

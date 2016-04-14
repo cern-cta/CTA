@@ -152,9 +152,9 @@ public:
    * storageClass attribute.
    */
   virtual uint64_t createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
-  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const uint64_t id, const std::string &eosid,
+  virtual std::list<cta::common::dataStructures::ArchiveFile> getArchiveFiles(const std::string &id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
-  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const uint64_t id, const std::string &eosid,
+  virtual cta::common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const std::string &id, const std::string &eosid,
    const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
   virtual cta::common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id);
   

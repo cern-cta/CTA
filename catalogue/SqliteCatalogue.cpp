@@ -1882,7 +1882,7 @@ uint64_t cta::catalogue::SqliteCatalogue::getArchiveFileId(
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveFile>
   cta::catalogue::SqliteCatalogue::getArchiveFiles(
-  const uint64_t id,
+  const std::string &id,
   const std::string &eosid,
   const std::string &copynb,
   const std::string &tapepool,
@@ -1894,6 +1894,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
   std::list<cta::common::dataStructures::ArchiveFile> files;
   const char *const sql =
     "SELECT "
+      "ARCHIVE_FILE_ID    AS ARCHIVE_FILE_ID,"
       "DISK_INSTANCE      AS DISK_INSTANCE,"
       "DISK_FILE_ID       AS DISK_FILE_ID,"
       "FILE_SIZE          AS FILE_SIZE,"
@@ -1916,7 +1917,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
     }
     common::dataStructures::ArchiveFile file;
 
-    file.archiveFileID = id;
+    file.archiveFileID = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
     file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
     file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
@@ -1937,7 +1938,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary cta::catalogue::SqliteCatalogue::getArchiveFileSummary(const uint64_t id, const std::string &eosid,
+cta::common::dataStructures::ArchiveFileSummary cta::catalogue::SqliteCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   return cta::common::dataStructures::ArchiveFileSummary(); 
 }
