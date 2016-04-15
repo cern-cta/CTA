@@ -152,14 +152,14 @@ configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
 configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
 add_custom_target(fullunittests
   tests/cta-unitTests
-  COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
+  COMMAND valgrind --track-fds=yes --child-silent-after-fork=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
   COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
   
   DEPENDS tests/cta-unitTests tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
 add_custom_target(valgrind
-  valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
+  valgrind --track-fds=yes --child-silent-after-fork=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
   
   DEPENDS tests/cta-unitTests tests/valgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)

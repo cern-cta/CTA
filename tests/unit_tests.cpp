@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <sqlite3.h>
+#include <google/protobuf/stubs/common.h>
 
 int main(int argc, char** argv) {
   // The unit tests use SQLite it must be initialized before they are run
@@ -46,6 +47,8 @@ int main(int argc, char** argv) {
     std::cerr << "Failed to shutdown SQLite" << std::endl;
     return 1; // Error
   }
+  
+  ::google::protobuf::ShutdownProtobufLibrary();
 
   return ret;
 }

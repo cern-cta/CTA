@@ -19,6 +19,7 @@
 #include "ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
 #include <sys/epoll.h>
+#include <unistd.h>
 #include <algorithm>
 
 namespace cta {
@@ -29,6 +30,10 @@ ProcessManager::ProcessManager() {
   m_epollFd = ::epoll_create1(0);
   cta::exception::Errnum::throwOnMinusOne(m_epollFd,
       "In ProcessManager::ProcessManager(), failed to create an epoll file descriptor: ");
+}
+
+ProcessManager::~ProcessManager() {
+  ::close(m_epollFd);
 }
 
 void ProcessManager::addHandler(std::unique_ptr<SubprocessHandler>&& handler) {

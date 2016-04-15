@@ -32,6 +32,7 @@ namespace daemon {
 class ProcessManager {
 public:
   ProcessManager();
+  ~ProcessManager();
   /** Function passing ownership of a subprocess handler to the manager. */
   void addHandler(std::unique_ptr<SubprocessHandler> && handler);
   /** Function allowing a SubprocessHandler to register a file descriptor to epoll */
