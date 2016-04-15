@@ -1,0 +1,99 @@
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <chrono>
+#include <string>
+
+namespace cta {
+namespace tape {
+namespace daemon {
+
+/** 
+ * The interface to classes managing subprocesses. It allows an external loop
+ * to handle global polling and timeouts for a set of them. Several children
+ * classes are expected to be developed: a DriveHandler, a GarbageCollector
+ * handler and a SignalHandler (using signalfd()).
+ * The main loop will typically be:
+ * statuses[] = [all]->getInitialStatus(); // This implicitly registers the right fds in epoll (if needed)
+ * loop forever
+ *   if statuses[any].shutdownRequested
+ *     [all]->shutdown()
+ *   if statuses[all].completedShutdown()
+ *     exit;
+ *   if statuses[any].killRequested
+ *     [all]->kill()
+ *     exit;
+ *   if statuses[any].forkRequested()
+ *     [all]->prepareToFork()
+ *     if [requester]->fork() == child
+ *        exit([requester]->runChild())
+ *     else
+ *        statuses[] = [all]->postFork()
+ *   Compute the next timeout statuses[all].timeToTimeout
+ *   epoll()
+ * 
+ * This loop allows cooperative preparation for forking, and cleanup after the 
+ * fork. This could be as simple as a pre-fork noop and a closing of child
+ * communication sockets post fork (child side).
+ */
+class SubprocessHandler {
+public:
+  /** The subprocess handler constructor. It will remember its index, as a helper to
+   * the manager */
+  SubprocessHandler(const std::string & index);
+  const std::string index;          ///< The index of the subprocess (as a helper to the manager)
+  virtual ~SubprocessHandler();
+  /** An enum allowing the description of the environment (child or parent) */
+  enum class ForkState { parent, child, notForking };
+  /** The return type for the functions (getStatus, handleEvent, handleTimeout)
+   * that will return a status */
+  struct ProcessingStatus {
+    bool shutdownRequested = false; ///< Does the process handler require to shutdown all processes?
+    bool shutdownComplete = false;  ///< Did this process complete its shutdown?
+    bool killRequested = false;     ///< Does the process handler require killing all processes
+    bool forkRequested = false;     ///< Does the procerss handler request to fork a new process?
+    /// Instant of the next timeout for the process handler. Defaults to end of times.
+    std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
+    /// A extra state variable used in the return value of fork()
+    ForkState forkState = ForkState::notForking; ///< 
+  };
+  /** Noop function returning status. */
+  virtual ProcessingStatus getInitialStatus() = 0;
+  /** Function called to process events, as the object's address comes out of epoll. */
+  virtual ProcessingStatus processEvent() = 0;
+  /** Function called to process timeouts. */
+  virtual ProcessingStatus processTimeout() = 0;
+  /** Instructs the handler to initiate a clean shutdown */
+  virtual void shutdown() = 0;
+  /** Instructs the handler to kill its subprocess immediately. The process 
+   * should be gone upon return. */
+  virtual void kill() = 0;
+  /** Instructs the handler to prepare for a fork */
+  virtual void prepareForFork() = 0;
+  /** Instructs the handler to proceed with the fork it requested (returns 
+   * which side of the fork we are in) */
+  virtual ProcessingStatus fork() = 0;
+  /** Instructs the handler to run the intended function. We are in the new 
+   * process and it's all his. This function should return the exit() code or 
+   * call exit() itself */
+  virtual int runChild() = 0;
+};
+
+}}} // namespace cta::tape::daemon

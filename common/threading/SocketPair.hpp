@@ -65,14 +65,14 @@ public:
     Side sourceToPoll = Side::current);
   /// Flag holding the result of a poll for a given socketpair.
   bool pollFlag();
+  /// An helper function getting the right file descriptor for
+  /// a given source or destination. With checks.
+  int getFdForAccess(Side sourceOrDestination);
 private:
   int m_parentFd = -1;               ///< The file descriptor for the 
   int m_childFd = -1;
   Side m_currentSide = Side::both;
   bool m_pollFlag = false;
-  /// An internal helper function getting the right file descriptor for
-  /// a given source or destination. With checks.
-  int getFdForAccess(Side sourceOrDestination);
 };
 
 }} // namespace cta::server

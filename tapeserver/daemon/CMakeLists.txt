@@ -4,6 +4,8 @@ add_library(ctatapedaemon
   CommandLineParams.cpp
   ConfigurationFile.cpp
   SourcedParameter.cpp
+  SubprocessHandler.cpp
+  ProcessManager.cpp
   TapedConfiguration.cpp
   TapeDaemon.cpp
   TpconfigLine.cpp
@@ -12,7 +14,8 @@ add_library(ctatapedaemon
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp)
+  TpconfigTests.cpp
+  ProcessManagerTests.cpp)
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon

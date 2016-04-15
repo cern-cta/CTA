@@ -116,46 +116,49 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
 // SocketPair::getFdForAccess
 //------------------------------------------------------------------------------
 int SocketPair::getFdForAccess(Side sourceOrDestination) {
-  // First, make sure the source to poll makes sense.
-  // There is an inversion here. If our current side is parent, we should 
-  // read from the child and vice versa.
+  // First, make sure the source to access makes sense.
+  // There is a double inversion here. If our current side is parent, we should 
+  // read from the child and vice versa. And then then talking to parent, we use
+  // the child socket, and vice-versa.
   Side sideForThisPair = sourceOrDestination;
   switch (sideForThisPair) {
   case Side::current:
     switch(m_currentSide) {
     case Side::child:
+      // We are child: we talk to parent
       sideForThisPair = Side::parent;
       goto done;
     case Side::parent:
       sideForThisPair = Side::child;
       goto done;
     default:
-      throw cta::exception::Exception("In SocketPair::getFdForPoll(): invalid side (current)");
+      throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid side (current)");
     }
   case Side::child:
-    sideForThisPair = Side::parent;
-    break;
   case Side::parent:
-    sideForThisPair = Side::child;
+    // User wants to talk to child/parent. We just record the fact.
+    sideForThisPair = sourceOrDestination;
     break;
   default:
-    throw cta::exception::Exception("In SocketPair::poll(): invalid side (both)");
+    throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid side (both)");
   }
   done:
   // Now make sure the file descriptor is valid.
   int fd;
   switch (sideForThisPair) {
   case Side::child:
-    fd = m_childFd;
-    break;
-  case Side::parent:
+    // To talk to child, we use the parent side socket ...
     fd = m_parentFd;
     break;
+  case Side::parent:
+    // ... and vice versa.
+    fd = m_childFd;
+    break;
   default:
-    throw cta::exception::Exception("In SocketPair::poll(): invalid sideForThisPair (internal error)");
+    throw cta::exception::Exception("In SocketPair::getFdForAccess(): invalid sideForThisPair (internal error)");
   }
   if (-1 == fd)
-    throw cta::exception::Exception("In SocketPair::poll(): file descriptor is closed");
+    throw cta::exception::Exception("In SocketPair::getFdForAccess(): file descriptor is closed");
   return fd;
 }
 
@@ -214,6 +217,5 @@ void SocketPair::send(const std::string& msg, Side destination) {
   cta::exception::Errnum::throwOnMinusOne(::send(fd, msg.data(), msg.size(), 0),
     "In SocketPair::send(): failed to send(): ");
 }
-
 
 }} // namespace cta::server

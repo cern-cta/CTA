@@ -21,6 +21,7 @@
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include <google/protobuf/service.h>
+#include <limits.h>
 
 namespace cta { namespace tape { namespace daemon {
 
@@ -44,9 +45,7 @@ int TapeDaemon::main() {
     exceptionThrowingMain();
   } catch (cta::exception::Exception &ex) {
     // Log the error
-    std::list<log::Param> params = {
-      log::Param("Message", ex.getMessage().str())};
-    m_log(log::ERR, "Aborting", params);
+    m_log(log::ERR, "Aborting", {{"Message", ex.getMessage().str()}});
     return 1;
   }
 
@@ -57,7 +56,7 @@ int TapeDaemon::main() {
 // getHostName
 //------------------------------------------------------------------------------
 std::string cta::tape::daemon::TapeDaemon::getHostName() const {
-  char nameBuf[81];
+  char nameBuf[HOST_NAME_MAX + 1];
   if(gethostname(nameBuf, sizeof(nameBuf)))
     throw cta::exception::Errnum("Failed to get host name");
   return nameBuf;
@@ -119,9 +118,8 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
   const std::string &text) {
   try {
     m_capUtils.setProcText(text);
-    std::list<log::Param> params =
-      {log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(log::INFO, "Set process capabilities", params);
+    m_log(log::INFO, "Set process capabilities", 
+      {{"capabilities", m_capUtils.getProcText()}});
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set process capabilities to '" << text <<
