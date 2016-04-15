@@ -48,6 +48,19 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
+add_executable(cta-unitTests-multiProcess
+  unit_tests.cpp
+  ${GMOCK_SRC})
+
+target_link_libraries(cta-unitTests-multiProcess
+  ctadaemonunittests-multiprocess
+  ctacommon
+  ${GMOCK_LIB}
+  gtest
+  pthread
+  protobuf
+  sqlite3)
+
 add_library(unitTestHelper
   TempFile.cpp)
 
@@ -72,7 +85,7 @@ target_link_libraries(cta-systemTests
   gtest
   pthread)
 
-install(TARGETS cta-unitTests cta-systemTests DESTINATION usr/bin)
+install(TARGETS cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

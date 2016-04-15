@@ -14,11 +14,18 @@ add_library(ctatapedaemon
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp
+  TpconfigTests.cpp)
+
+add_library(ctadaemonunittests-multiprocess SHARED
   ProcessManagerTests.cpp)
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
   unitTestHelper)
 
+target_link_libraries(ctadaemonunittests-multiprocess
+  ctatapedaemon
+  unitTestHelper)
+
 install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctadaemonunittests-multiprocess DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

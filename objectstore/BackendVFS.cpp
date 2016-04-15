@@ -50,6 +50,9 @@ BackendVFS::BackendVFS() : m_deleteOnExit(true) {
   } else {
     throw cta::exception::Errnum("Failed to create temporary directory");
   }
+  #ifdef DEBUG_PRINT_LOGS
+  std::cout << "In BackendVFS::BackendVFS(): created object store" << m_root << std::endl;
+  #endif
 }
 
 BackendVFS::BackendVFS(std::string path):
@@ -82,6 +85,9 @@ BackendVFS::~BackendVFS() {
   if (m_deleteOnExit) {
     // Delete the created directories recursively
     nftw (m_root.c_str(), deleteFileOrDirectory, 100, FTW_DEPTH);
+    #ifdef DEBUG_PRINT_LOGS
+    std::cout << "In BackendVFS::BackendVFS(): deleted object store" << m_root << std::endl;
+    #endif
   }
 }
 

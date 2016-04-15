@@ -147,6 +147,7 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so
 %attr(0755,root,root) %{_libdir}/libcta-tapedSystemTests.so
 %attr(0755,root,root) %{_bindir}/cta-unitTests
+%attr(0755,root,root) %{_bindir}/cta-unitTests-multiProcess
 %attr(0755,root,root) %{_bindir}/cta-valgrindUnitTests.sh
 %attr(0755,root,root) %{_bindir}/cta-unitPlusSystemTests.sh
 %attr(0755,root,root) %{_libdir}/libctacatalogueunittests.so
@@ -168,4 +169,6 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_libdir}/libctatapeserverutilsunittests.so
 %attr(0755,root,root) %{_libdir}/libctautilsunittests.so
 %attr(0755,root,root) %{_libdir}/libctadaemonunittests.so
+%attr(0755,root,root) %{_bindir}/cta-systemTests
+%attr(0755,root,root) %{_libdir}/libctadaemonunittests-multiprocess.so
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
