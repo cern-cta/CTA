@@ -78,6 +78,12 @@ public:
     // Just wait forever for an echo request
     EchoRequestRepy echo;
     memset(&echo, '\0', sizeof(echo));
+    cta::server::SocketPair::pollMap pm;
+    pm["0"] = &m_socketPair;
+    cta::server::SocketPair::poll(pm, 1);
+    if (!m_socketPair.pollFlag()) {
+      throw cta::exception::Exception("In EchoProcess::runChild(): failed to receive parent's data after 1 second");
+    }
     std::string echoString = m_socketPair.receive();
     echoString.copy((char*)&echo, sizeof(echo));
     if (echo.magic != 0xdeadbeef) return EXIT_FAILURE;
