@@ -24,39 +24,32 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all the CTA file metadata
+ * This struct holds all the command line parameters of a CTA UpdateFileStorageClass command
  */
-struct ArchiveFile {
+struct UpdateFileStorageClassRequest {
 
-  ArchiveFile();
+  UpdateFileStorageClassRequest();
 
-  bool operator==(const ArchiveFile &rhs) const;
+  bool operator==(const UpdateFileStorageClassRequest &rhs) const;
 
-  bool operator!=(const ArchiveFile &rhs) const;
+  bool operator!=(const UpdateFileStorageClassRequest &rhs) const;
 
+  cta::common::dataStructures::UserIdentity requester;
   uint64_t archiveFileID;
-  std::string diskFileID;
-  std::string instance;
-  uint64_t fileSize;
-  std::string checksumType;
-  std::string checksumValue;
   std::string storageClass;
   cta::common::dataStructures::DRData drData;
-  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> tapeCopies;
-  time_t creationTime;
-  time_t lastUpdateTime;
 
-}; // struct ArchiveFile
+}; // struct UpdateFileStorageClassRequest
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
 
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj);
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileStorageClassRequest &obj);

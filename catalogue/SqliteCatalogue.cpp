@@ -254,6 +254,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "CHECKSUM_VALUE     VARCHAR2(100) NOT NULL,"
       "STORAGE_CLASS_NAME VARCHAR2(100) NOT NULL,"
       "CREATION_TIME      INTEGER       NOT NULL,"
+      "LASTUPDATE_TIME    INTEGER       NOT NULL,"
 
       "RECOVERY_PATH  VARCHAR2(2000) NOT NULL,"
       "RECOVERY_OWNER VARCHAR2(100)  NOT NULL,"
@@ -1816,6 +1817,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
       "CHECKSUM_VALUE,"
       "STORAGE_CLASS_NAME,"
       "CREATION_TIME,"
+      "LASTUPDATE_TIME,"
 
       "RECOVERY_PATH,"
       "RECOVERY_OWNER,"
@@ -1830,6 +1832,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
       ":CHECKSUM_VALUE,"
       ":STORAGE_CLASS_NAME,"
       ":CREATION_TIME,"
+      ":LASTUPDATE_TIME,"
 
       ":RECOVERY_PATH,"
       ":RECOVERY_OWNER,"
@@ -1844,6 +1847,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
   stmt->bind(":CHECKSUM_VALUE", archiveFile.checksumValue);
   stmt->bind(":STORAGE_CLASS_NAME", archiveFile.storageClass);
   stmt->bind(":CREATION_TIME", now);
+  stmt->bind(":LASTUPDATE_TIME", now);
 
   stmt->bind(":RECOVERY_PATH", archiveFile.drData.drPath);
   stmt->bind(":RECOVERY_OWNER", archiveFile.drData.drOwner);
@@ -1907,6 +1911,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
       "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
       "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
       "CREATION_TIME      AS CREATION_TIME,"
+      "LASTUPDATE_TIME    AS LASTUPDATE_TIME,"
 
       "RECOVERY_PATH      AS RECOVERY_PATH,"
       "RECOVERY_OWNER     AS RECOVERY_OWNER,"
@@ -1934,6 +1939,9 @@ std::list<cta::common::dataStructures::ArchiveFile>
     file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
     file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
+    
+    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
+    file.lastUpdateTime = stmt->columnUint64(nameToIdx["LASTUPDATE_TIME"]);
 
     files.push_back(file);
   }
@@ -1962,6 +1970,7 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
       "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
       "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
       "CREATION_TIME      AS CREATION_TIME,"
+      "LASTUPDATE_TIME    AS LASTUPDATE_TIME,"
 
       "RECOVERY_PATH      AS RECOVERY_PATH,"
       "RECOVERY_OWNER     AS RECOVERY_OWNER,"
@@ -1994,6 +2003,9 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
     file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
     file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
+    
+    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
+    file.lastUpdateTime = stmt->columnUint64(nameToIdx["LASTUPDATE_TIME"]);
 
     return file;
   }

@@ -16,36 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/UpdateFileInfoRequest.hpp"
+#include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest():
+cta::common::dataStructures::UpdateFileStorageClassRequest::UpdateFileStorageClassRequest():
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileInfoRequest::operator==(const UpdateFileInfoRequest &rhs) const {
-  return archiveFileID==rhs.archiveFileID
+bool cta::common::dataStructures::UpdateFileStorageClassRequest::operator==(const UpdateFileStorageClassRequest &rhs) const {
+  return requester==rhs.requester
+      && archiveFileID==rhs.archiveFileID
+      && storageClass==rhs.storageClass
       && drData==rhs.drData;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileInfoRequest::operator!=(const UpdateFileInfoRequest &rhs) const {
+bool cta::common::dataStructures::UpdateFileStorageClassRequest::operator!=(const UpdateFileStorageClassRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileInfoRequest &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileStorageClassRequest &obj) {
+  os << "(requester=" << obj.requester
+     << " archiveFileID=" << obj.archiveFileID
+     << " storageClass=" << obj.storageClass
      << " drData=" << obj.drData << ")";
   return os;
 }

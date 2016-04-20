@@ -36,6 +36,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
+#include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 
@@ -75,6 +76,7 @@ public:
   virtual void deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request);
   virtual void cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request);
   virtual void updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request);
+  virtual void updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
   virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request);
 
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const std::string &tag);

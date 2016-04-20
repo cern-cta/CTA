@@ -26,7 +26,8 @@
 cta::common::dataStructures::ArchiveFile::ArchiveFile():
   archiveFileID(0),
   fileSize(0),
-  creationTime(0) {}
+  creationTime(0),
+  lastUpdateTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -41,7 +42,8 @@ bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs
       && storageClass==rhs.storageClass
       && drData==rhs.drData
       && tapeCopies==rhs.tapeCopies
-      && creationTime==rhs.creationTime;
+      && creationTime==rhs.creationTime
+      && lastUpdateTime==rhs.lastUpdateTime;
 }
 
 //------------------------------------------------------------------------------
@@ -64,7 +66,8 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
      << " storageClass=" << obj.storageClass
      << " drData=" << obj.drData
      << " tapeCopies=" << obj.tapeCopies
-     << " creationTime=" << obj.creationTime << ")";
+     << " creationTime=" << obj.creationTime
+     << " lastUpdateTime=" << obj.lastUpdateTime << ")";
   return os;
 }
 

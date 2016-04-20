@@ -50,7 +50,7 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 }
 
 //------------------------------------------------------------------------------
-// queueArchiveRequest
+// queueArchive
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {  
   const cta::common::dataStructures::ArchiveFileQueueCriteria criteria = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
@@ -61,35 +61,42 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
 }
 
 //------------------------------------------------------------------------------
-// queueRetrieveRequest
+// queueRetrieve
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request) {
 
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveRequest
+// deleteArchive
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request) {
 
 }
 
 //------------------------------------------------------------------------------
-// cancelRetrieveRequest
+// cancelRetrieve
 //------------------------------------------------------------------------------
 void cta::Scheduler::cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request) {
 
 }
 
 //------------------------------------------------------------------------------
-// updateFileInfoRequest
+// updateFileInfo
 //------------------------------------------------------------------------------
 void cta::Scheduler::updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request) {
 
 }
 
 //------------------------------------------------------------------------------
-// listStorageClassRequest
+// updateFileStorageClass
+//------------------------------------------------------------------------------
+void cta::Scheduler::updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request) {
+
+}
+
+//------------------------------------------------------------------------------
+// listStorageClass
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request) {
   return std::list<cta::common::dataStructures::StorageClass>();

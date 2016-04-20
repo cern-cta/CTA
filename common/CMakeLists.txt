@@ -57,6 +57,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TapePool.cpp
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
+  dataStructures/UpdateFileStorageClassRequest.cpp
   dataStructures/UserIdentity.cpp
   dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp

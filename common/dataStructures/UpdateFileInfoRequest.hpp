@@ -24,14 +24,13 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /*
- * This request is issued by the disk based system to update some of the metadata of a specific file
+ * This struct holds all the command line parameters of a CTA UpdateFileInfo command
  */
 struct UpdateFileInfoRequest {
 
@@ -41,9 +40,7 @@ struct UpdateFileInfoRequest {
 
   bool operator!=(const UpdateFileInfoRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
   uint64_t archiveFileID;
-  std::string storageClass;
   cta::common::dataStructures::DRData drData;
 
 }; // struct UpdateFileInfoRequest

@@ -87,33 +87,34 @@ void XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const c
     m_scheduler->authorizeCliIdentity(cliIdentity);
   }
   
-  if     ("bs"  == command || "bootstrap"            == command) {xCom_bootstrap(tokens, cliIdentity);}
-  else if("ad"  == command || "admin"                == command) {xCom_admin(tokens, cliIdentity);}
-  else if("ah"  == command || "adminhost"            == command) {xCom_adminhost(tokens, cliIdentity);}
-  else if("tp"  == command || "tapepool"             == command) {xCom_tapepool(tokens, cliIdentity);}
-  else if("ar"  == command || "archiveroute"         == command) {xCom_archiveroute(tokens, cliIdentity);}
-  else if("ll"  == command || "logicallibrary"       == command) {xCom_logicallibrary(tokens, cliIdentity);}
-  else if("ta"  == command || "tape"                 == command) {xCom_tape(tokens, cliIdentity);}
-  else if("sc"  == command || "storageclass"         == command) {xCom_storageclass(tokens, cliIdentity);}
-  else if("us"  == command || "user"                 == command) {xCom_user(tokens, cliIdentity);}
-  else if("mg"  == command || "mountgroup"           == command) {xCom_mountgroup(tokens, cliIdentity);}
-  else if("de"  == command || "dedication"           == command) {xCom_dedication(tokens, cliIdentity);}
-  else if("re"  == command || "repack"               == command) {xCom_repack(tokens, cliIdentity);}
-  else if("sh"  == command || "shrink"               == command) {xCom_shrink(tokens, cliIdentity);}
-  else if("ve"  == command || "verify"               == command) {xCom_verify(tokens, cliIdentity);}
-  else if("af"  == command || "archivefile"          == command) {xCom_archivefile(tokens, cliIdentity);}
-  else if("te"  == command || "test"                 == command) {xCom_test(tokens, cliIdentity);}
-  else if("dr"  == command || "drive"                == command) {xCom_drive(tokens, cliIdentity);}
-  else if("rc"  == command || "reconcile"            == command) {xCom_reconcile(tokens, cliIdentity);}
-  else if("lpa" == command || "listpendingarchives"  == command) {xCom_listpendingarchives(tokens, cliIdentity);}
-  else if("lpr" == command || "listpendingretrieves" == command) {xCom_listpendingretrieves(tokens, cliIdentity);}
-  else if("lds" == command || "listdrivestates"      == command) {xCom_listdrivestates(tokens, cliIdentity);}
-  else if("a"   == command || "archive"              == command) {xCom_archive(tokens, cliIdentity);}
-  else if("r"   == command || "retrieve"             == command) {xCom_retrieve(tokens, cliIdentity);}
-  else if("da"  == command || "deletearchive"        == command) {xCom_deletearchive(tokens, cliIdentity);}
-  else if("cr"  == command || "cancelretrieve"       == command) {xCom_cancelretrieve(tokens, cliIdentity);}
-  else if("ufi" == command || "updatefileinfo"       == command) {xCom_updatefileinfo(tokens, cliIdentity);}
-  else if("lsc" == command || "liststorageclass"     == command) {xCom_liststorageclass(tokens, cliIdentity);}
+  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap(tokens, cliIdentity);}
+  else if("ad"   == command || "admin"                  == command) {xCom_admin(tokens, cliIdentity);}
+  else if("ah"   == command || "adminhost"              == command) {xCom_adminhost(tokens, cliIdentity);}
+  else if("tp"   == command || "tapepool"               == command) {xCom_tapepool(tokens, cliIdentity);}
+  else if("ar"   == command || "archiveroute"           == command) {xCom_archiveroute(tokens, cliIdentity);}
+  else if("ll"   == command || "logicallibrary"         == command) {xCom_logicallibrary(tokens, cliIdentity);}
+  else if("ta"   == command || "tape"                   == command) {xCom_tape(tokens, cliIdentity);}
+  else if("sc"   == command || "storageclass"           == command) {xCom_storageclass(tokens, cliIdentity);}
+  else if("us"   == command || "user"                   == command) {xCom_user(tokens, cliIdentity);}
+  else if("mg"   == command || "mountgroup"             == command) {xCom_mountgroup(tokens, cliIdentity);}
+  else if("de"   == command || "dedication"             == command) {xCom_dedication(tokens, cliIdentity);}
+  else if("re"   == command || "repack"                 == command) {xCom_repack(tokens, cliIdentity);}
+  else if("sh"   == command || "shrink"                 == command) {xCom_shrink(tokens, cliIdentity);}
+  else if("ve"   == command || "verify"                 == command) {xCom_verify(tokens, cliIdentity);}
+  else if("af"   == command || "archivefile"            == command) {xCom_archivefile(tokens, cliIdentity);}
+  else if("te"   == command || "test"                   == command) {xCom_test(tokens, cliIdentity);}
+  else if("dr"   == command || "drive"                  == command) {xCom_drive(tokens, cliIdentity);}
+  else if("rc"   == command || "reconcile"              == command) {xCom_reconcile(tokens, cliIdentity);}
+  else if("lpa"  == command || "listpendingarchives"    == command) {xCom_listpendingarchives(tokens, cliIdentity);}
+  else if("lpr"  == command || "listpendingretrieves"   == command) {xCom_listpendingretrieves(tokens, cliIdentity);}
+  else if("lds"  == command || "listdrivestates"        == command) {xCom_listdrivestates(tokens, cliIdentity);}
+  else if("a"    == command || "archive"                == command) {xCom_archive(tokens, cliIdentity);}
+  else if("r"    == command || "retrieve"               == command) {xCom_retrieve(tokens, cliIdentity);}
+  else if("da"   == command || "deletearchive"          == command) {xCom_deletearchive(tokens, cliIdentity);}
+  else if("cr"   == command || "cancelretrieve"         == command) {xCom_cancelretrieve(tokens, cliIdentity);}
+  else if("ufi"  == command || "updatefileinfo"         == command) {xCom_updatefileinfo(tokens, cliIdentity);}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {xCom_updatefilestorageclass(tokens, cliIdentity);}
+  else if("lsc"  == command || "liststorageclass"       == command) {xCom_liststorageclass(tokens, cliIdentity);}
   
   else {m_data = getGenericHelp(tokens[0]);}
 }
@@ -2107,11 +2108,11 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
 }
 
 //------------------------------------------------------------------------------
-// xCom_updatefileinfo
+// xCom_updatefilestorageclass
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --dr_path <DR_path>" << std::endl
+  help << tokens[0] << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --dr_path <DR_path>" << std::endl
                     << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -2140,11 +2141,45 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   drData.drGroup=dr_ownergroup;
   drData.drOwner=dr_owner;
   drData.drPath=dr_path;
-  cta::common::dataStructures::UpdateFileInfoRequest request;
+  cta::common::dataStructures::UpdateFileStorageClassRequest request;
   request.drData=drData;
   request.archiveFileID=id;
   request.requester=originator;
   request.storageClass=storageclass;
+  m_scheduler->updateFileStorageClass(cliIdentity, request);
+}
+
+//------------------------------------------------------------------------------
+// xCom_updatefileinfo
+//------------------------------------------------------------------------------
+void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+  std::stringstream help;
+  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --dr_path <DR_path>" << std::endl
+                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
+  if(encoded_s!="true" && encoded_s!="false") {
+    m_data = help.str();
+    return;
+  }
+  bool encoded = encoded_s=="true"?true:false;
+  std::string id_s = getOptionValue(tokens, "", "--id", encoded);
+  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
+  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
+  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
+  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  if(id_s.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+    m_data = help.str();
+    return;
+  }
+  uint64_t id = stringParameterToUint64("--id", id_s);
+  cta::common::dataStructures::DRData drData;
+  drData.drBlob=dr_blob;
+  drData.drGroup=dr_ownergroup;
+  drData.drOwner=dr_owner;
+  drData.drPath=dr_path;
+  cta::common::dataStructures::UpdateFileInfoRequest request;
+  request.drData=drData;
+  request.archiveFileID=id;
   m_scheduler->updateFileInfo(cliIdentity, request);
 }
 
@@ -2215,6 +2250,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " liststorageclass/lsc"                         << std::endl;
   help << programName << " retrieve/r"                                   << std::endl;
   help << programName << " updatefileinfo/ufi"                           << std::endl;
+  help << programName << " updatefilestorageclass/ufsc"                  << std::endl;
   return help.str();
 }
 
