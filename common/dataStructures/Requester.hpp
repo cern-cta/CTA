@@ -30,15 +30,15 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This is the disk system user that triggered the retrieve/archive request
+ * This is the disk system user that triggered the request (any of: archival, retrieval, deletion of an archive file, cancel of an ongoing retrieval, update of a file metadata, listing of storage classes). It may or may not be the owner of the file (basically there's no relationship between the two)
  */
-struct User {
+struct Requester {
 
-  User();
+  Requester();
 
-  bool operator==(const User &rhs) const;
+  bool operator==(const Requester &rhs) const;
 
-  bool operator!=(const User &rhs) const;
+  bool operator!=(const Requester &rhs) const;
 
   std::string name;
   std::string group;
@@ -47,10 +47,10 @@ struct User {
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct User
+}; // struct Requester
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
 
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::User &obj);
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Requester &obj);

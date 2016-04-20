@@ -223,8 +223,9 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
 
       "PRIMARY KEY(MOUNT_GROUP_NAME)"
     ");"
-    "CREATE TABLE END_USER("
+    "CREATE TABLE REQUESTER("
       "USER_NAME VARCHAR2(100) NOT NULL,"
+      "GROUP_NAME VARCHAR2(100) NOT NULL,"
 
       "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
 
@@ -240,7 +241,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
       "LAST_MOD_TIME       INTEGER       NOT NULL,"
 
-      "PRIMARY KEY(USER_NAME),"
+      "PRIMARY KEY(USER_NAME, GROUP_NAME),"
       "FOREIGN KEY(MOUNT_GROUP_NAME) REFERENCES "
         "MOUNT_GROUP(MOUNT_GROUP_NAME)"
     ");"
@@ -1394,17 +1395,18 @@ void cta::catalogue::SqliteCatalogue::setTapeLbp(const cta::common::dataStructur
 void cta::catalogue::SqliteCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
-// createUser
+// createRequester
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::createUser(
+void cta::catalogue::SqliteCatalogue::createRequester(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &name,
+  const cta::common::dataStructures::UserIdentity &user,
   const std::string &mountGroup,
   const std::string &comment) {
   const uint64_t now = time(NULL);
   const char *const sql =
-    "INSERT INTO END_USER("
+    "INSERT INTO REQUESTER("
       "USER_NAME,"
+      "GROUP_NAME,"
       "MOUNT_GROUP_NAME,"
 
       "USER_COMMENT,"
@@ -1420,6 +1422,7 @@ void cta::catalogue::SqliteCatalogue::createUser(
       "LAST_MOD_TIME)"
     "VALUES("
       ":USER_NAME,"
+      ":GROUP_NAME,"
       ":MOUNT_GROUP_NAME,"
 
       ":USER_COMMENT,"
@@ -1435,7 +1438,8 @@ void cta::catalogue::SqliteCatalogue::createUser(
       ":CREATION_LOG_TIME);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":USER_NAME", name);
+  stmt->bind(":USER_NAME", user.name);
+  stmt->bind(":GROUP_NAME", user.group);
   stmt->bind(":MOUNT_GROUP_NAME", mountGroup);
 
   stmt->bind(":USER_COMMENT", comment);
@@ -1449,19 +1453,20 @@ void cta::catalogue::SqliteCatalogue::createUser(
 }
 
 //------------------------------------------------------------------------------
-// deleteUser
+// deleteRequester
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::deleteUser(const std::string &name, const std::string &group) {}
+void cta::catalogue::SqliteCatalogue::deleteRequester(const cta::common::dataStructures::UserIdentity &user) {}
 
 //------------------------------------------------------------------------------
-// getUsers
+// getRequesters
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::User>
-  cta::catalogue::SqliteCatalogue::getUsers() const {
-  std::list<common::dataStructures::User> users;
+std::list<cta::common::dataStructures::Requester>
+  cta::catalogue::SqliteCatalogue::getRequesters() const {
+  std::list<common::dataStructures::Requester> users;
   const char *const sql =
     "SELECT "
       "USER_NAME        AS USER_NAME,"
+      "GROUP_NAME       AS GROUP_NAME,"
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
       "USER_COMMENT AS USER_COMMENT,"
@@ -1475,17 +1480,17 @@ std::list<cta::common::dataStructures::User>
       "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
       "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME       AS LAST_MOD_TIME "
-    "FROM END_USER;";
+    "FROM REQUESTER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
   while(SQLITE_ROW == stmt->step()) {
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
     }
-    common::dataStructures::User user;
-
-    common::dataStructures::UserIdentity adminUI;
+    common::dataStructures::Requester user;
+    
     user.name = stmt->columnText(nameToIdx["USER_NAME"]);
+    user.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
     user.mountGroupName = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
 
     user.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
@@ -1519,14 +1524,14 @@ std::list<cta::common::dataStructures::User>
 }
 
 //------------------------------------------------------------------------------
-// modifyUserMountGroup
+// modifyRequesterMountGroup
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) {}
+void cta::catalogue::SqliteCatalogue::modifyRequesterMountGroup(const common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountGroup) {}
 
 //------------------------------------------------------------------------------
-// modifyUserComment
+// modifyRequesterComment
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteCatalogue::modifyUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) {}
+void cta::catalogue::SqliteCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {}
 
 //------------------------------------------------------------------------------
 // createMountGroup
@@ -2012,7 +2017,7 @@ void cta::catalogue::SqliteCatalogue::fileWrittenToTape(
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFileQueueCriteria
   cta::catalogue::SqliteCatalogue::prepareForNewFile(
-  const std::string &storageClass, const std::string &user) {
+  const std::string &storageClass, const cta::common::dataStructures::UserIdentity &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     getTapeCopyToPoolMap(storageClass);
   const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClass);
@@ -2096,19 +2101,21 @@ uint64_t cta::catalogue::SqliteCatalogue::getExpectedNbArchiveRoutes(
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getArchiveMountPolicy(const std::string &user) const {
+  getArchiveMountPolicy(const cta::common::dataStructures::UserIdentity &user) const {
   const char *const sql =
     "SELECT "
       "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
       "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
-    "FROM MOUNT_GROUP INNER JOIN END_USER ON "
-      "MOUNT_GROUP.MOUNT_GROUP_NAME = END_USER.MOUNT_GROUP_NAME "
+    "FROM MOUNT_GROUP INNER JOIN REQUESTER ON "
+      "MOUNT_GROUP.MOUNT_GROUP_NAME = REQUESTER.MOUNT_GROUP_NAME "
     "WHERE "
-      "USER_NAME = :USER_NAME;";
+      "USER_NAME = :USER_NAME AND "
+      "GROUP_NAME = :GROUP_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":USER_NAME", user);
+  stmt->bind(":USER_NAME", user.name);
+  stmt->bind(":GROUP_NAME", user.group);
   ColumnNameToIdx nameToIdx;
   if(SQLITE_ROW == stmt->step()) {
     nameToIdx = stmt->getColumnNameToIdx();
@@ -2129,19 +2136,21 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
 // getRetrieveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
-  getRetrieveMountPolicy(const std::string &user) const {
+  getRetrieveMountPolicy(const cta::common::dataStructures::UserIdentity &user) const {
   const char *const sql =
     "SELECT "
       "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
       "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED "
-    "FROM MOUNT_GROUP INNER JOIN END_USER ON "
-      "MOUNT_GROUP.MOUNT_GROUP_NAME = END_USER.MOUNT_GROUP_NAME "
+    "FROM MOUNT_GROUP INNER JOIN REQUESTER ON "
+      "MOUNT_GROUP.MOUNT_GROUP_NAME = REQUESTER.MOUNT_GROUP_NAME "
     "WHERE "
-      "USER_NAME = :USER_NAME;";
+      "USER_NAME = :USER_NAME AND "
+      "GROUP_NAME = :GROUP_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":USER_NAME", user);
+  stmt->bind(":USER_NAME", user.name);
+  stmt->bind(":GROUP_NAME", user.group);
   ColumnNameToIdx nameToIdx;
   if(SQLITE_ROW == stmt->step()) {
     nameToIdx = stmt->getColumnNameToIdx();

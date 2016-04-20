@@ -743,7 +743,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getUsers().empty());
+  ASSERT_TRUE(catalogue.getRequesters().empty());
 
   const std::string mountGroupName = "mount_group";
   const uint64_t archivePriority = 1;
@@ -764,13 +764,17 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 
   const std::string comment = "create user";
   const std::string userName = "user_name";
-  catalogue.createUser(m_cliSI, userName, mountGroupName, comment);
+  const std::string group = "group";
+  cta::common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name=userName;
+  userIdentity.group=group;
+  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, comment);
 
-  std::list<common::dataStructures::User> users;
-  users = catalogue.getUsers();
+  std::list<common::dataStructures::Requester> users;
+  users = catalogue.getRequesters();
   ASSERT_EQ(1, users.size());
 
-  const common::dataStructures::User user = users.front();
+  const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountGroupName, user.mountGroupName);
@@ -780,14 +784,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
   const common::dataStructures::MountPolicy archivePolicy =
-    catalogue.getArchiveMountPolicy(userName);
+    catalogue.getArchiveMountPolicy(userIdentity);
 
   ASSERT_EQ(archivePriority, archivePolicy.priority);
   ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
 
   const common::dataStructures::MountPolicy retrievePolicy =
-    catalogue.getRetrieveMountPolicy(userName);
+    catalogue.getRetrieveMountPolicy(userIdentity);
 
   ASSERT_EQ(retrievePriority, retrievePolicy.priority);
   ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
@@ -799,7 +803,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getUsers().empty());
+  ASSERT_TRUE(catalogue.getRequesters().empty());
 
   const std::string mountGroupName = "mount_group";
   const uint64_t archivePriority = 1;
@@ -821,8 +825,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
   const std::string comment = "create user";
   const std::string name = "name";
   const std::string mountGroup = "mount_group";
-  catalogue.createUser(m_cliSI, name, mountGroup, comment);
-  ASSERT_THROW(catalogue.createUser(m_cliSI, name, mountGroup, comment),
+  const std::string group = "group";
+  cta::common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name=name;
+  userIdentity.group=group;
+  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, comment);
+  ASSERT_THROW(catalogue.createRequester(m_cliSI, userIdentity, mountGroup, comment),
     exception::Exception);
 }
 
@@ -907,7 +915,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getUsers().empty());
+  ASSERT_TRUE(catalogue.getRequesters().empty());
 
   const std::string mountGroupName = "mount_group";
   const uint64_t archivePriority = 1;
@@ -928,13 +936,17 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
 
   const std::string userComment = "create user";
   const std::string userName = "user_name";
-  catalogue.createUser(m_cliSI, userName, mountGroupName, userComment);
+  const std::string group = "group";
+  cta::common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name=userName;
+  userIdentity.group=group;
+  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, userComment);
 
-  std::list<common::dataStructures::User> users;
-  users = catalogue.getUsers();
+  std::list<common::dataStructures::Requester> users;
+  users = catalogue.getRequesters();
   ASSERT_EQ(1, users.size());
 
-  const common::dataStructures::User user = users.front();
+  const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountGroupName, user.mountGroupName);
@@ -944,14 +956,14 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
   const common::dataStructures::MountPolicy archivePolicy =
-    catalogue.getArchiveMountPolicy(userName);
+    catalogue.getArchiveMountPolicy(userIdentity);
 
   ASSERT_EQ(archivePriority, archivePolicy.priority);
   ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
 
   const common::dataStructures::MountPolicy retrievePolicy =
-    catalogue.getRetrieveMountPolicy(userName);
+    catalogue.getRetrieveMountPolicy(userIdentity);
 
   ASSERT_EQ(retrievePriority, retrievePolicy.priority);
   ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
@@ -1003,7 +1015,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(tapePoolName, maplet.second);
 
   const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-    catalogue.prepareForNewFile(storageClassName, userName);
+    catalogue.prepareForNewFile(storageClassName, userIdentity);
 
   ASSERT_EQ(1, queueCriteria.fileId);
   ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());

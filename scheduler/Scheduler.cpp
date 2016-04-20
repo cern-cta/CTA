@@ -53,7 +53,7 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 // queueArchiveRequest
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {  
-  const cta::common::dataStructures::ArchiveFileQueueCriteria criteria = m_catalogue.prepareForNewFile(request.storageClass, request.requester.name);
+  const cta::common::dataStructures::ArchiveFileQueueCriteria criteria = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
   std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> requestCreation(m_db.queue(request, criteria.fileId, criteria.copyToPoolMap, criteria.mountPolicy));
   requestCreation->complete();
   

@@ -98,11 +98,11 @@ public:
   virtual void setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue); // internal function (noCLI)
   virtual void modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment);
 
-  virtual void createUser(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &mountGroup, const std::string &comment);
-  virtual void deleteUser(const std::string &name, const std::string &group);
-  virtual std::list<cta::common::dataStructures::User> getUsers() const;
-  virtual void modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup);
-  virtual void modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment);
+  virtual void createRequester(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountGroup, const std::string &comment);
+  virtual void deleteRequester(const cta::common::dataStructures::UserIdentity &user);
+  virtual std::list<cta::common::dataStructures::Requester> getRequesters() const;
+  virtual void modifyRequesterMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountGroup);
+  virtual void modifyRequesterComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment);
 
   virtual void createMountGroup(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
@@ -183,7 +183,7 @@ public:
    * @return The information required to queue the associated archive request.
    */
   virtual cta::common::dataStructures::ArchiveFileQueueCriteria 
-    prepareForNewFile(const std::string &storageClass, const std::string &user); 
+    prepareForNewFile(const std::string &storageClass, const cta::common::dataStructures::UserIdentity &user); 
 
   virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
 
@@ -194,7 +194,7 @@ public:
    * @return The archive mount policy.
    */
   virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(
-    const std::string &user) const;
+    const cta::common::dataStructures::UserIdentity &user) const;
 
   /**
    * Returns the retrieve mount policy for the specified end user.
@@ -203,7 +203,7 @@ public:
    * @return The retrieve mount policy.
    */
   virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(
-    const std::string &user) const;
+    const cta::common::dataStructures::UserIdentity &user) const;
 
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
 

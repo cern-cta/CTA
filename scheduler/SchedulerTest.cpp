@@ -170,13 +170,17 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
 
   const std::string userComment = "create user";
   const std::string userName = "user_name";
-  catalogue.createUser(s_adminOnAdminHost, userName, mountGroupName, userComment);
+  const std::string userGroup = "group";
+  cta::common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name=userName;
+  userIdentity.group=userGroup;
+  catalogue.createRequester(s_adminOnAdminHost, userIdentity, mountGroupName, userComment);
 
-  std::list<common::dataStructures::User> users;
-  users = catalogue.getUsers();
+  std::list<common::dataStructures::Requester> users;
+  users = catalogue.getRequesters();
   ASSERT_EQ(1, users.size());
 
-  const common::dataStructures::User user = users.front();
+  const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountGroupName, user.mountGroupName);

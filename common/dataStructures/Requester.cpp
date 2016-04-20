@@ -16,19 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/User.hpp"
+#include "common/dataStructures/Requester.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::User::User() {}
+cta::common::dataStructures::Requester::Requester() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::User::operator==(const User &rhs) const {
+bool cta::common::dataStructures::Requester::operator==(const Requester &rhs) const {
   return name==rhs.name
       && group==rhs.group
       && mountGroupName==rhs.mountGroupName
@@ -40,14 +40,14 @@ bool cta::common::dataStructures::User::operator==(const User &rhs) const {
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::User::operator!=(const User &rhs) const {
+bool cta::common::dataStructures::Requester::operator!=(const Requester &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::User &obj) {
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Requester &obj) {
   os << "(name=" << obj.name
      << " group=" << obj.group
      << " mountGroupName=" << obj.mountGroupName

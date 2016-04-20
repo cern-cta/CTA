@@ -1041,7 +1041,10 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
     if(user.empty()||group.empty()) {
       m_data = help.str();
       return;
-    }  
+    }
+    cta::common::dataStructures::UserIdentity userIdentity;
+    userIdentity.name=user;
+    userIdentity.group=group;
     if("add" == tokens[2]) { //add
       std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
@@ -1049,7 +1052,7 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         m_data = help.str();
         return;
       }
-      m_catalogue->createUser(cliIdentity, user, mountgroup, comment);
+      m_catalogue->createRequester(cliIdentity, userIdentity, mountgroup, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
@@ -1059,18 +1062,18 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         return;
       }
       if(!comment.empty()) {
-        m_catalogue->modifyUserComment(cliIdentity, user, group, comment);
+        m_catalogue->modifyRequesterComment(cliIdentity, userIdentity, comment);
       }
       if(!mountgroup.empty()) {
-        m_catalogue->modifyUserMountGroup(cliIdentity, user, group, mountgroup);
+        m_catalogue->modifyRequesterMountGroup(cliIdentity, userIdentity, mountgroup);
       }
     }
     else { //rm
-      m_catalogue->deleteUser(user, group);
+      m_catalogue->deleteRequester(userIdentity);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::User> list= m_catalogue->getUsers();
+    std::list<cta::common::dataStructures::Requester> list= m_catalogue->getRequesters();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","group","cta group","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};

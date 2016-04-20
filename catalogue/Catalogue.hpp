@@ -46,6 +46,7 @@
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
+#include "common/dataStructures/Requester.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -56,7 +57,6 @@
 #include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/MountGroup.hpp"
-#include "common/dataStructures/User.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
@@ -134,16 +134,16 @@ public:
   virtual void setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void createUser(
+  virtual void createRequester(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &name,
+    const cta::common::dataStructures::UserIdentity &user,
     const std::string &mountGroup,
     const std::string &comment) = 0;
 
-  virtual void deleteUser(const std::string &name, const std::string &group) = 0;
-  virtual std::list<cta::common::dataStructures::User> getUsers() const = 0;
-  virtual void modifyUserMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &mountGroup) = 0;
-  virtual void modifyUserComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &group, const std::string &comment) = 0;
+  virtual void deleteRequester(const cta::common::dataStructures::UserIdentity &user) = 0;
+  virtual std::list<cta::common::dataStructures::Requester> getRequesters() const = 0;
+  virtual void modifyRequesterMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountGroup) = 0;
+  virtual void modifyRequesterComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
 
    virtual void createMountGroup(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, 
@@ -201,7 +201,7 @@ public:
    * @return The information required to queue the associated archive request.
    */
   virtual cta::common::dataStructures::ArchiveFileQueueCriteria
-    prepareForNewFile(const std::string &storageClass, const std::string &user)
+    prepareForNewFile(const std::string &storageClass, const cta::common::dataStructures::UserIdentity &user)
     = 0;
 
   /**
@@ -223,7 +223,7 @@ public:
    * @return The archive mount policy.
    */
   virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(
-    const std::string &user) const = 0;
+    const cta::common::dataStructures::UserIdentity &user) const = 0;
 
   /**
    * Returns the retrieve mount policy for the specified end user.
@@ -232,7 +232,7 @@ public:
    * @return The retrieve mount policy.
    */
   virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(
-    const std::string &user) const = 0;
+    const cta::common::dataStructures::UserIdentity &user) const = 0;
 
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 
