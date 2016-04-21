@@ -938,8 +938,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   const std::string userName = "user_name";
   const std::string group = "group";
   cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=userName;
-  userIdentity.group=group;
+  userIdentity.name = userName;
+  userIdentity.group = group;
   catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, userComment);
 
   std::list<common::dataStructures::Requester> users;
