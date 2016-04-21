@@ -96,7 +96,7 @@ target_link_libraries(cta-systemTests
   gtest
   pthread)
 
-install(TARGETS cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
+install(TARGETS cta-oraUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
