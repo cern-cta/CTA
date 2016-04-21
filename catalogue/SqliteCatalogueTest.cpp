@@ -536,9 +536,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  const uint64_t archiveMinBytesQueued = 1;
-  const uint64_t retrieveMinBytesQueued = 2;
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment);
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     catalogue.getLogicalLibraries();
@@ -548,8 +546,6 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_EQ(comment, lib.comment);
-  ASSERT_EQ(archiveMinBytesQueued, lib.archiveMinBytesQueued);
-  ASSERT_EQ(retrieveMinBytesQueued, lib.retrieveMinBytesQueued);
 
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
@@ -568,11 +564,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
 
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
-  const uint64_t archiveMinBytesQueued = 1;
-  const uint64_t retrieveMinBytesQueued = 2;
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment);
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
   ASSERT_THROW(catalogue.createLogicalLibrary(m_cliSI,
-    logicalLibraryName, archiveMinBytesQueued, retrieveMinBytesQueued, comment),
+    logicalLibraryName, comment),
     exception::Exception);
 }
 
@@ -592,7 +586,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape) {
   const bool fullValue = false;
   const std::string comment = "create tape";
 
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, 1, 2,
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
     "create logical library");
   catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
   catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
@@ -638,7 +632,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
   const bool fullValue = false;
   const std::string comment = "create tape";
 
-  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName, 1, 2,
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
     "create logical library");
   catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
   catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
@@ -648,12 +642,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
     comment), exception::Exception);
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {
   using namespace cta;
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getMountGroups().empty());
+  ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
   const std::string name = "mount_group";
   const uint64_t archivePriority = 1;
@@ -663,7 +657,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup) {
   const uint64_t maxDrivesAllowed = 5;
   const std::string &comment = "create mount group";
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     m_cliSI,
     name,
     archivePriority,
@@ -673,12 +667,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup) {
     maxDrivesAllowed,
     comment);
 
-  const std::list<common::dataStructures::MountGroup> groups =
-    catalogue.getMountGroups();
+  const std::list<common::dataStructures::MountPolicy> groups =
+    catalogue.getMountPolicies();
 
   ASSERT_EQ(1, groups.size());
 
-  const common::dataStructures::MountGroup group = groups.front();
+  const common::dataStructures::MountPolicy group = groups.front();
 
   ASSERT_EQ(name, group.name);
 
@@ -702,12 +696,12 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup_same_twice) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy_same_twice) {
   using namespace cta;
 
   catalogue::SqliteCatalogue catalogue;
 
-  ASSERT_TRUE(catalogue.getMountGroups().empty());
+  ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
   const std::string name = "mount_group";
   const uint64_t archivePriority = 1;
@@ -717,7 +711,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup_same_twice) {
   const uint64_t maxDrivesAllowed = 9;
   const std::string &comment = "create mount group";
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     m_cliSI,
     name,
     archivePriority,
@@ -727,7 +721,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountGroup_same_twice) {
     maxDrivesAllowed,
     comment);
 
-  ASSERT_THROW(catalogue.createMountGroup(
+  ASSERT_THROW(catalogue.createMountPolicy(
     m_cliSI,
     name,
     archivePriority,
@@ -745,16 +739,16 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 
-  const std::string mountGroupName = "mount_group";
+  const std::string mountPolicyName = "mount_group";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 4;
   const uint64_t retrievePriority = 5;
   const uint64_t minRetrieveRequestAge = 8;
   const uint64_t maxDrivesAllowed = 9;
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     m_cliSI,
-    mountGroupName,
+    mountPolicyName,
     archivePriority,
     minArchiveRequestAge,
     retrievePriority,
@@ -768,7 +762,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   cta::common::dataStructures::UserIdentity userIdentity;
   userIdentity.name=userName;
   userIdentity.group=group;
-  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, comment);
+  catalogue.createRequester(m_cliSI, userIdentity, mountPolicyName, comment);
 
   std::list<common::dataStructures::Requester> users;
   users = catalogue.getRequesters();
@@ -777,25 +771,20 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(comment, user.comment);
   ASSERT_EQ(m_cliSI.user, user.creationLog.user);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
-  const common::dataStructures::MountPolicy archivePolicy =
-    catalogue.getArchiveMountPolicy(userIdentity);
+  const common::dataStructures::MountPolicy policy =
+    catalogue.getMountPolicyForAUser(userIdentity);
 
-  ASSERT_EQ(archivePriority, archivePolicy.priority);
-  ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
-
-  const common::dataStructures::MountPolicy retrievePolicy =
-    catalogue.getRetrieveMountPolicy(userIdentity);
-
-  ASSERT_EQ(retrievePriority, retrievePolicy.priority);
-  ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, retrievePolicy.maxDrives);
+  ASSERT_EQ(archivePriority, policy.archive_priority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archive_minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
+  ASSERT_EQ(retrievePriority, policy.retrieve_priority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieve_minRequestAge);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
@@ -805,16 +794,16 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 
-  const std::string mountGroupName = "mount_group";
+  const std::string mountPolicyName = "mount_group";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 4;
   const uint64_t retrievePriority = 5;
   const uint64_t minRetrieveRequestAge = 8;
   const uint64_t maxDrivesAllowed = 9;
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     m_cliSI,
-    mountGroupName,
+    mountPolicyName,
     archivePriority,
     minArchiveRequestAge,
     retrievePriority,
@@ -824,13 +813,13 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
   
   const std::string comment = "create user";
   const std::string name = "name";
-  const std::string mountGroup = "mount_group";
+  const std::string mountPolicy = "mount_group";
   const std::string group = "group";
   cta::common::dataStructures::UserIdentity userIdentity;
   userIdentity.name=name;
   userIdentity.group=group;
-  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, comment);
-  ASSERT_THROW(catalogue.createRequester(m_cliSI, userIdentity, mountGroup, comment),
+  catalogue.createRequester(m_cliSI, userIdentity, mountPolicyName, comment);
+  ASSERT_THROW(catalogue.createRequester(m_cliSI, userIdentity, mountPolicy, comment),
     exception::Exception);
 }
 
@@ -917,16 +906,16 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 
-  const std::string mountGroupName = "mount_group";
+  const std::string mountPolicyName = "mount_group";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 2;
   const uint64_t retrievePriority = 3;
   const uint64_t minRetrieveRequestAge = 4;
   const uint64_t maxDrivesAllowed = 5;
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     m_cliSI,
-    mountGroupName,
+    mountPolicyName,
     archivePriority,
     minArchiveRequestAge,
     retrievePriority,
@@ -938,9 +927,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   const std::string userName = "user_name";
   const std::string group = "group";
   cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = userName;
-  userIdentity.group = group;
-  catalogue.createRequester(m_cliSI, userIdentity, mountGroupName, userComment);
+  userIdentity.name=userName;
+  userIdentity.group=group;
+  catalogue.createRequester(m_cliSI, userIdentity, mountPolicyName, userComment);
 
   std::list<common::dataStructures::Requester> users;
   users = catalogue.getRequesters();
@@ -949,25 +938,20 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(userComment, user.comment);
   ASSERT_EQ(m_cliSI.user, user.creationLog.user);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
-  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+  ASSERT_EQ(user.creationLog, user.lastModificationLog);  
 
-  const common::dataStructures::MountPolicy archivePolicy =
-    catalogue.getArchiveMountPolicy(userIdentity);
+  const common::dataStructures::MountPolicy policy =
+    catalogue.getMountPolicyForAUser(userIdentity);
 
-  ASSERT_EQ(archivePriority, archivePolicy.priority);
-  ASSERT_EQ(minArchiveRequestAge, archivePolicy.minRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, archivePolicy.maxDrives);
-
-  const common::dataStructures::MountPolicy retrievePolicy =
-    catalogue.getRetrieveMountPolicy(userIdentity);
-
-  ASSERT_EQ(retrievePriority, retrievePolicy.priority);
-  ASSERT_EQ(minRetrieveRequestAge, retrievePolicy.minRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, retrievePolicy.maxDrives);
+  ASSERT_EQ(archivePriority, policy.archive_priority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archive_minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
+  ASSERT_EQ(retrievePriority, policy.retrieve_priority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieve_minRequestAge);
 
   ASSERT_TRUE(catalogue.getArchiveRoutes().empty());
 
@@ -1021,9 +1005,9 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
   ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
   ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
-  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.priority);
-  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.minRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrives);
+  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archive_priority);
+  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archive_minRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 }
 
 } // namespace unitTests

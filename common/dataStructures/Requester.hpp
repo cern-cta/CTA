@@ -42,7 +42,7 @@ struct Requester {
 
   std::string name;
   std::string group;
-  std::string mountGroupName;
+  std::string mountPolicy;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string comment;

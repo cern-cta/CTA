@@ -40,7 +40,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/EntryLog.cpp
   dataStructures/ListStorageClassRequest.cpp
   dataStructures/LogicalLibrary.cpp
-  dataStructures/MountGroup.cpp
   dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp
   dataStructures/ReadTestResult.cpp

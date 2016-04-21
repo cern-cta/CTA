@@ -33,7 +33,6 @@ cta::common::dataStructures::Dedication::Dedication():
 bool cta::common::dataStructures::Dedication::operator==(const Dedication &rhs) const {
   return driveName==rhs.driveName
       && dedicationType==rhs.dedicationType
-      && mountGroup==rhs.mountGroup
       && tag==rhs.tag
       && vid==rhs.vid
       && fromTimestamp==rhs.fromTimestamp
@@ -56,7 +55,6 @@ bool cta::common::dataStructures::Dedication::operator!=(const Dedication &rhs) 
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dedication &obj) {
   os << "(driveName=" << obj.driveName
      << " dedicationType=" << obj.dedicationType
-     << " mountGroup=" << obj.mountGroup
      << " tag=" << obj.tag
      << " vid=" << obj.vid
      << " fromTimestamp=" << obj.fromTimestamp

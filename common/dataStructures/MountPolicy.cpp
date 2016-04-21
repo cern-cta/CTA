@@ -24,17 +24,25 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy::MountPolicy():
-  priority(0),
-  minRequestAge(0),
-  maxDrives(0) {}
+  archive_priority(0),
+  archive_minRequestAge(0),
+  retrieve_priority(0),
+  retrieve_minRequestAge(0),
+  maxDrivesAllowed(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs) const {
-  return priority==rhs.priority
-      && minRequestAge==rhs.minRequestAge
-      && maxDrives==rhs.maxDrives;
+  return name==rhs.name
+      && archive_priority==rhs.archive_priority
+      && archive_minRequestAge==rhs.archive_minRequestAge
+      && retrieve_priority==rhs.retrieve_priority
+      && retrieve_minRequestAge==rhs.retrieve_minRequestAge
+      && maxDrivesAllowed==rhs.maxDrivesAllowed
+      && creationLog==rhs.creationLog
+      && lastModificationLog==rhs.lastModificationLog
+      && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
@@ -48,9 +56,15 @@ bool cta::common::dataStructures::MountPolicy::operator!=(const MountPolicy &rhs
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj) {
-  os << "(priority=" << obj.priority
-     << " minRequestAge=" << obj.minRequestAge
-     << " maxDrives=" << obj.maxDrives << ")";
+  os << "(name=" << obj.name
+     << " archive_priority=" << obj.archive_priority
+     << " archive_minRequestAge=" << obj.archive_minRequestAge
+     << " retrieve_priority=" << obj.retrieve_priority
+     << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
+     << " maxDrivesAllowed=" << obj.maxDrivesAllowed
+     << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog
+     << " comment=" << obj.comment << ")";
   return os;
 }
 

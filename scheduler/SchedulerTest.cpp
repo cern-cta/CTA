@@ -136,37 +136,37 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   s_adminOnAdminHost.user=admin;
   s_adminOnAdminHost.host="host1";
 
-  const std::string mountGroupName = "mount_group";
+  const std::string mountPolicyName = "mount_group";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 2;
   const uint64_t retrievePriority = 3;
   const uint64_t minRetrieveRequestAge = 4;
   const uint64_t maxDrivesAllowed = 5;
-  const std::string mountGroupComment = "create mount group";
+  const std::string mountPolicyComment = "create mount group";
 
-  ASSERT_TRUE(catalogue.getMountGroups().empty());
+  ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
-  catalogue.createMountGroup(
+  catalogue.createMountPolicy(
     s_adminOnAdminHost,
-    mountGroupName,
+    mountPolicyName,
     archivePriority,
     minArchiveRequestAge,
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    mountGroupComment);
+    mountPolicyComment);
 
-  const std::list<common::dataStructures::MountGroup> groups =
-    catalogue.getMountGroups();
+  const std::list<common::dataStructures::MountPolicy> groups =
+    catalogue.getMountPolicies();
   ASSERT_EQ(1, groups.size());
-  const common::dataStructures::MountGroup group = groups.front();
-  ASSERT_EQ(mountGroupName, group.name);
+  const common::dataStructures::MountPolicy group = groups.front();
+  ASSERT_EQ(mountPolicyName, group.name);
   ASSERT_EQ(archivePriority, group.archive_priority);
   ASSERT_EQ(minArchiveRequestAge, group.archive_minRequestAge);
   ASSERT_EQ(retrievePriority, group.retrieve_priority);
   ASSERT_EQ(minRetrieveRequestAge, group.retrieve_minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
-  ASSERT_EQ(mountGroupComment, group.comment);
+  ASSERT_EQ(mountPolicyComment, group.comment);
 
   const std::string userComment = "create user";
   const std::string userName = "user_name";
@@ -174,7 +174,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   cta::common::dataStructures::UserIdentity userIdentity;
   userIdentity.name=userName;
   userIdentity.group=userGroup;
-  catalogue.createRequester(s_adminOnAdminHost, userIdentity, mountGroupName, userComment);
+  catalogue.createRequester(s_adminOnAdminHost, userIdentity, mountPolicyName, userComment);
 
   std::list<common::dataStructures::Requester> users;
   users = catalogue.getRequesters();
@@ -183,7 +183,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   const common::dataStructures::Requester user = users.front();
 
   ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountGroupName, user.mountGroupName);
+  ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(userComment, user.comment);
   ASSERT_EQ(s_adminOnAdminHost.user, user.creationLog.user);
   ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);

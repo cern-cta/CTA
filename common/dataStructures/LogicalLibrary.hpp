@@ -41,8 +41,6 @@ struct LogicalLibrary {
   bool operator!=(const LogicalLibrary &rhs) const;
 
   std::string name;
-  uint64_t archiveMinBytesQueued;
-  uint64_t retrieveMinBytesQueued;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string comment;

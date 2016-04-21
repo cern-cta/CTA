@@ -43,7 +43,6 @@ struct Dedication {
 
   std::string driveName;
   cta::common::dataStructures::DedicationType dedicationType;
-  std::string mountGroup;
   std::string tag;
   std::string vid;
   uint64_t fromTimestamp;

@@ -80,7 +80,7 @@ void XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   std::string command(tokens[1]);
   
   std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
-          "ta","tape","sc","storageclass","us","user","mg","mountgroup","de","dedication","re","repack","sh","shrink","ve","verify",
+          "ta","tape","sc","storageclass","us","user","mg","mountpolicy","de","dedication","re","repack","sh","shrink","ve","verify",
           "af","archivefile","te","test","dr","drive","rc","reconcile","lpa","listpendingarchives","lpr","listpendingretrieves","lds","listdrivestates"};
   
   if (std::find(adminCommands.begin(), adminCommands.end(), command) != adminCommands.end()) {
@@ -96,7 +96,7 @@ void XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const c
   else if("ta"   == command || "tape"                   == command) {xCom_tape(tokens, cliIdentity);}
   else if("sc"   == command || "storageclass"           == command) {xCom_storageclass(tokens, cliIdentity);}
   else if("us"   == command || "user"                   == command) {xCom_user(tokens, cliIdentity);}
-  else if("mg"   == command || "mountgroup"             == command) {xCom_mountgroup(tokens, cliIdentity);}
+  else if("mg"   == command || "mountpolicy"            == command) {xCom_mountpolicy(tokens, cliIdentity);}
   else if("de"   == command || "dedication"             == command) {xCom_dedication(tokens, cliIdentity);}
   else if("re"   == command || "repack"                 == command) {xCom_repack(tokens, cliIdentity);}
   else if("sh"   == command || "shrink"                 == command) {xCom_shrink(tokens, cliIdentity);}
@@ -718,8 +718,8 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
 void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <logical_library_name> --minarchivebytesqueued/-a <minBytesQueued> --minretrievebytesqueued/-r <minBytesQueued> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <logical_library_name> [--minarchivebytesqueued/-a <minBytesQueued>] [--minretrievebytesqueued/-r <minBytesQueued>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -730,33 +730,19 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      std::string minarchivebytesqueued_s = getOptionValue(tokens, "--ab", "--minarchivebytesqueued", false);
-      std::string minretrievebytesqueued_s = getOptionValue(tokens, "--rb", "--minretrievebytesqueued", false);
       if("add" == tokens[2]) { //add
-        if(minarchivebytesqueued_s.empty()||minretrievebytesqueued_s.empty()||comment.empty()) {
+        if(comment.empty()) {
           m_data = help.str();
           return;
         }
-        uint64_t minarchivebytesqueued = stringParameterToUint64("--minarchivebytesqueued", minarchivebytesqueued_s);
-        uint64_t minretrievebytesqueued = stringParameterToUint64("--minretrievebytesqueued", minretrievebytesqueued_s);
-        m_catalogue->createLogicalLibrary(cliIdentity, name, minarchivebytesqueued, minretrievebytesqueued, comment);
+        m_catalogue->createLogicalLibrary(cliIdentity, name, comment);
       }
       else { //ch
-        if(minarchivebytesqueued_s.empty()&&minretrievebytesqueued_s.empty()&&comment.empty()) {
+        if(comment.empty()) {
           m_data = help.str();
           return;
         }
-        if(!minarchivebytesqueued_s.empty()) {
-          uint64_t minarchivebytesqueued = stringParameterToUint64("--minarchivebytesqueued", minarchivebytesqueued_s);
-          m_catalogue->modifyLogicalLibraryMinArchiveBytesQueued(cliIdentity, name, minarchivebytesqueued);
-        }
-        if(!minretrievebytesqueued_s.empty()) {
-          uint64_t minretrievebytesqueued = stringParameterToUint64("--minretrievebytesqueued", minretrievebytesqueued_s);
-          m_catalogue->modifyLogicalLibraryMinRetrieveBytesQueued(cliIdentity, name, minretrievebytesqueued);
-        }
-        if(!comment.empty()) {
-          m_catalogue->modifyLogicalLibraryComment(cliIdentity, name, comment);
-        }
+        m_catalogue->modifyLogicalLibraryComment(cliIdentity, name, comment);
       }
     }
     else { //rm
@@ -767,13 +753,11 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue->getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","min archive bytes","min retrieve bytes","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->archiveMinBytesQueued));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieveMinBytesQueued));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1032,8 +1016,8 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
 void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " us/user add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <user_name> --group/-g <group_name> --mountgroup/-u <mount_group_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <user_name> --group/-g <group_name> [--mountgroup/-u <mount_group_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <user_name> --group/-g <group_name> --mountpolicy/-u <mount_group_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <user_name> --group/-g <group_name> [--mountpolicy/-u <mount_group_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -1047,26 +1031,26 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
     userIdentity.name=user;
     userIdentity.group=group;
     if("add" == tokens[2]) { //add
-      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
+      std::string mountpolicy = getOptionValue(tokens, "-u", "--mountpolicy", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty()||mountgroup.empty()) {
+      if(comment.empty()||mountpolicy.empty()) {
         m_data = help.str();
         return;
       }
-      m_catalogue->createRequester(cliIdentity, userIdentity, mountgroup, comment);
+      m_catalogue->createRequester(cliIdentity, userIdentity, mountpolicy, comment);
     }
     else if("ch" == tokens[2]) { //ch
-      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
+      std::string mountpolicy = getOptionValue(tokens, "-u", "--mountpolicy", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-      if(comment.empty()&&mountgroup.empty()) {
+      if(comment.empty()&&mountpolicy.empty()) {
         m_data = help.str();
         return;
       }
       if(!comment.empty()) {
         m_catalogue->modifyRequesterComment(cliIdentity, userIdentity, comment);
       }
-      if(!mountgroup.empty()) {
-        m_catalogue->modifyRequesterMountGroup(cliIdentity, userIdentity, mountgroup);
+      if(!mountpolicy.empty()) {
+        m_catalogue->modifyRequesterMountPolicy(cliIdentity, userIdentity, mountpolicy);
       }
     }
     else { //rm
@@ -1083,7 +1067,7 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
         currentRow.push_back(it->group);
-        currentRow.push_back(it->mountGroupName);
+        currentRow.push_back(it->mountPolicy);
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1097,16 +1081,16 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
 }
 
 //------------------------------------------------------------------------------
-// xCom_mountgroup
+// xCom_mountpolicy
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " mg/mountgroup add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <mountgroup_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
+  help << tokens[0] << " mg/mountpolicy add/ch/rm/ls:" << std::endl
+       << "\tadd --name/-n <mountpolicy_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
        << "\t    --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <mountgroup_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
+       << "\tch  --name/-n <mountpolicy_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
        << "\t   [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <mountgroup_name>" << std::endl
+       << "\trm  --name/-n <mountpolicy_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string group = getOptionValue(tokens, "-n", "--name", false);
@@ -1132,7 +1116,7 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
         uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
         uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
-        m_catalogue->createMountGroup(cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
+        m_catalogue->createMountPolicy(cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
         if(archivepriority_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
@@ -1142,35 +1126,35 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
         }
         if(!archivepriority_s.empty()) {
           uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
-          m_catalogue->modifyMountGroupArchivePriority(cliIdentity, group, archivepriority);
+          m_catalogue->modifyMountPolicyArchivePriority(cliIdentity, group, archivepriority);
         }
         if(!minarchiverequestage_s.empty()) {
           uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
-          m_catalogue->modifyMountGroupArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
+          m_catalogue->modifyMountPolicyArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
         }
         if(!retrievepriority_s.empty()) {
           uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
-          m_catalogue->modifyMountGroupRetrievePriority(cliIdentity, group, retrievepriority);
+          m_catalogue->modifyMountPolicyRetrievePriority(cliIdentity, group, retrievepriority);
         }
         if(!minretrieverequestage_s.empty()) {
           uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
-          m_catalogue->modifyMountGroupRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
+          m_catalogue->modifyMountPolicyRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
         }
         if(!maxdrivesallowed_s.empty()) {
           uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
-          m_catalogue->modifyMountGroupMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
+          m_catalogue->modifyMountPolicyMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
         }
         if(!comment.empty()) {
-          m_catalogue->modifyMountGroupComment(cliIdentity, group, comment);
+          m_catalogue->modifyMountPolicyComment(cliIdentity, group, comment);
         }
       }
     }
     else { //rm
-      m_catalogue->deleteMountGroup(group);
+      m_catalogue->deleteMountPolicy(group);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::MountGroup> list= m_catalogue->getMountGroups();
+    std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue->getMountPolicies();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
@@ -1201,8 +1185,8 @@ void XrdCtaFile::xCom_mountgroup(const std::vector<std::string> &tokens, const c
 void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " de/dedication add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--mountgroup/-u <mount_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--mountgroup/-u <mount_group_name>] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
+       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
@@ -1214,14 +1198,13 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     if("add" == tokens[2] || "ch" == tokens[2]) {
       bool readonly = hasOption(tokens, "-r", "--readonly");
       bool writeonly = hasOption(tokens, "-w", "--writeonly");
-      std::string mountgroup = getOptionValue(tokens, "-u", "--mountgroup", false);
       std::string vid = getOptionValue(tokens, "-v", "--vid", false);
       std::string tag = getOptionValue(tokens, "-t", "--tag", false);
       std::string from_s = getOptionValue(tokens, "-f", "--from", false);
       std::string until_s = getOptionValue(tokens, "-u", "--until", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
-        if(comment.empty()||from_s.empty()||until_s.empty()||(mountgroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if(comment.empty()||from_s.empty()||until_s.empty()||(vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
           return;
         }
@@ -1243,10 +1226,10 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_catalogue->createDedication(cliIdentity, drive, type, mountgroup, tag, vid, from, until, comment);
+        m_catalogue->createDedication(cliIdentity, drive, type, tag, vid, from, until, comment);
       }
       else if("ch" == tokens[2]) { //ch
-        if((comment.empty()&&from_s.empty()&&until_s.empty()&&mountgroup.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if((comment.empty()&&from_s.empty()&&until_s.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
           return;
         }
@@ -1271,9 +1254,6 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           time_t until = mktime(&time);  // timestamp in current timezone
           m_catalogue->modifyDedicationUntil(cliIdentity, drive, until);
         }
-        if(!mountgroup.empty()) {
-          m_catalogue->modifyDedicationMountGroup(cliIdentity, drive, mountgroup);
-        }
         if(!vid.empty()) {
           m_catalogue->modifyDedicationVid(cliIdentity, drive, vid);
         }
@@ -1296,7 +1276,7 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     std::list<cta::common::dataStructures::Dedication> list= m_catalogue->getDedications();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"drive","type","vid","user group","tag","from","until","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"drive","type","vid","tag","from","until","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1315,7 +1295,6 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
         currentRow.push_back(it->driveName);
         currentRow.push_back(type_s);
         currentRow.push_back(it->vid);
-        currentRow.push_back(it->mountGroup);
         currentRow.push_back(it->tag);
         currentRow.push_back(timeToString(it->fromTimestamp));
         currentRow.push_back(timeToString(it->untilTimestamp));
@@ -2237,7 +2216,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " tapepool/tp       add/ch/rm/ls"               << std::endl;
   help << programName << " test/te           read/write"                 << std::endl;
   help << programName << " user/us           add/ch/rm/ls"               << std::endl;
-  help << programName << " mountgroup/mg     add/ch/rm/ls"               << std::endl;
+  help << programName << " mountpolicy/mp    add/ch/rm/ls"               << std::endl;
   help << programName << " verify/ve         add/rm/ls/err"              << std::endl;
   help << "" << std::endl;
   help << "CTA EOS commands:" << std::endl;

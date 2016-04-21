@@ -23,13 +23,14 @@
 #include <stdint.h>
 #include <string>
 
+#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /*
- * This is a subset of the mount group (which specifies the minimum criteria needed to warrant a mount), containing information of either archivals or retrievals
+ * Specifies the minimum criteria needed to warrant a mount
  */
 struct MountPolicy {
 
@@ -39,9 +40,15 @@ struct MountPolicy {
 
   bool operator!=(const MountPolicy &rhs) const;
 
-  uint64_t priority;
-  uint64_t minRequestAge;
-  uint64_t maxDrives;
+  std::string name;
+  uint64_t archive_priority;
+  uint64_t archive_minRequestAge;
+  uint64_t retrieve_priority;
+  uint64_t retrieve_minRequestAge;
+  uint64_t maxDrivesAllowed;
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 
 }; // struct MountPolicy
 

@@ -231,9 +231,9 @@ uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
   auto payloadMountPolicy = m_payload.mutable_mountpolicy();
-  payloadMountPolicy->set_maxdrives(mountPolicy.maxDrives);
-  payloadMountPolicy->set_minrequestage(mountPolicy.minRequestAge);
-  payloadMountPolicy->set_priority(mountPolicy.priority);
+  payloadMountPolicy->set_maxdrives(mountPolicy.maxDrivesAllowed);
+  payloadMountPolicy->set_minrequestage(mountPolicy.archive_minRequestAge);
+  payloadMountPolicy->set_priority(mountPolicy.archive_priority);
 }
 
 //------------------------------------------------------------------------------
@@ -243,9 +243,9 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
   checkPayloadReadable();
   cta::common::dataStructures::MountPolicy mountPolicy;
   auto payloadMountPolicy = m_payload.mountpolicy();
-  mountPolicy.maxDrives=payloadMountPolicy.maxdrives();
-  mountPolicy.minRequestAge=payloadMountPolicy.minrequestage();
-  mountPolicy.priority=payloadMountPolicy.priority();
+  mountPolicy.maxDrivesAllowed=payloadMountPolicy.maxdrives();
+  mountPolicy.archive_minRequestAge=payloadMountPolicy.minrequestage();
+  mountPolicy.archive_priority=payloadMountPolicy.priority();
   return mountPolicy;
 }
 

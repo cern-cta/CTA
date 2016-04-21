@@ -31,7 +31,7 @@ cta::common::dataStructures::Requester::Requester() {}
 bool cta::common::dataStructures::Requester::operator==(const Requester &rhs) const {
   return name==rhs.name
       && group==rhs.group
-      && mountGroupName==rhs.mountGroupName
+      && mountPolicy==rhs.mountPolicy
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
       && comment==rhs.comment;
@@ -50,7 +50,7 @@ bool cta::common::dataStructures::Requester::operator!=(const Requester &rhs) co
 std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Requester &obj) {
   os << "(name=" << obj.name
      << " group=" << obj.group
-     << " mountGroupName=" << obj.mountGroupName
+     << " mountPolicy=" << obj.mountPolicy
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";

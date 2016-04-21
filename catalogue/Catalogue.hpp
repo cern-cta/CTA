@@ -56,7 +56,6 @@
 #include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
-#include "common/dataStructures/MountGroup.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
@@ -108,12 +107,10 @@ public:
   virtual void modifyArchiveRouteTapePoolName(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
   virtual void modifyArchiveRouteComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
 
-  virtual void createLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued, const uint64_t retrieveMinBytesQueued, const std::string &comment) = 0;
+  virtual void createLogicalLibrary(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
   virtual std::list<cta::common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
   virtual void modifyLogicalLibraryComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
-  virtual void modifyLogicalLibraryMinArchiveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const archiveMinBytesQueued) = 0;
-  virtual void modifyLogicalLibraryMinRetrieveBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, uint64_t const retrieveMinBytesQueued) = 0;
 
   virtual void createTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
                           const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
@@ -137,15 +134,15 @@ public:
   virtual void createRequester(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
     const cta::common::dataStructures::UserIdentity &user,
-    const std::string &mountGroup,
+    const std::string &mountPolicy,
     const std::string &comment) = 0;
 
   virtual void deleteRequester(const cta::common::dataStructures::UserIdentity &user) = 0;
   virtual std::list<cta::common::dataStructures::Requester> getRequesters() const = 0;
-  virtual void modifyRequesterMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountGroup) = 0;
+  virtual void modifyRequesterMountPolicy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
 
-   virtual void createMountGroup(
+   virtual void createMountPolicy(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, 
     const std::string &name, 
     const uint64_t archivePriority, 
@@ -155,25 +152,24 @@ public:
     const uint64_t maxDrivesAllowed, 
     const std::string &comment) = 0;
 
-  virtual void deleteMountGroup(const std::string &name) = 0;
-  virtual std::list<cta::common::dataStructures::MountGroup> getMountGroups() const = 0;
-  virtual void modifyMountGroupArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) = 0;
-  virtual void modifyMountGroupArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
-  virtual void modifyMountGroupArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) = 0;
-  virtual void modifyMountGroupArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
-  virtual void modifyMountGroupRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) = 0;
-  virtual void modifyMountGroupRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) = 0;
-  virtual void modifyMountGroupRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) = 0;
-  virtual void modifyMountGroupRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
-  virtual void modifyMountGroupMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
-  virtual void modifyMountGroupComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
+  virtual void deleteMountPolicy(const std::string &name) = 0;
+  virtual std::list<cta::common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+  virtual void modifyMountPolicyArchivePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) = 0;
+  virtual void modifyMountPolicyArchiveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
+  virtual void modifyMountPolicyArchiveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) = 0;
+  virtual void modifyMountPolicyArchiveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
+  virtual void modifyMountPolicyRetrievePriority(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) = 0;
+  virtual void modifyMountPolicyRetrieveMinFilesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) = 0;
+  virtual void modifyMountPolicyRetrieveMinBytesQueued(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) = 0;
+  virtual void modifyMountPolicyRetrieveMinRequestAge(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
+  virtual void modifyMountPolicyMaxDrivesAllowed(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
+  virtual void modifyMountPolicyComment(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, const std::string &mountGroup,
+  virtual void createDedication(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType, 
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) = 0;
   virtual void deleteDedication(const std::string &drivename) = 0;
   virtual std::list<cta::common::dataStructures::Dedication> getDedications() const = 0;
   virtual void modifyDedicationType(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) = 0;
-  virtual void modifyDedicationMountGroup(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &mountGroup) = 0;
   virtual void modifyDedicationTag(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) = 0;
   virtual void modifyDedicationVid(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) = 0;
   virtual void modifyDedicationFrom(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) = 0;
@@ -217,22 +213,12 @@ public:
   virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 
   /**
-   * Returns the archive mount policy for the specified end user.
+   * Returns the mount policy for the specified end user.
    *
    * @param user The name of the end user.
-   * @return The archive mount policy.
+   * @return The mount policy.
    */
-  virtual cta::common::dataStructures::MountPolicy getArchiveMountPolicy(
-    const cta::common::dataStructures::UserIdentity &user) const = 0;
-
-  /**
-   * Returns the retrieve mount policy for the specified end user.
-   *
-   * @param user The name of the end user.
-   * @return The retrieve mount policy.
-   */
-  virtual cta::common::dataStructures::MountPolicy getRetrieveMountPolicy(
-    const cta::common::dataStructures::UserIdentity &user) const = 0;
+  virtual cta::common::dataStructures::MountPolicy getMountPolicyForAUser(const cta::common::dataStructures::UserIdentity &user) const = 0;
 
   virtual bool isAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 

@@ -137,7 +137,7 @@ protected:
   void xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
   void xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
   void xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  void xCom_mountgroup(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  void xCom_mountpolicy(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
   void xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
   void xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
   void xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
