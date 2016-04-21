@@ -198,6 +198,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "FOREIGN KEY(TAPE_POOL_NAME) REFERENCES "
         "TAPE_POOL(TAPE_POOL_NAME)"
     ");"
+
     "CREATE TABLE MOUNT_GROUP("
       "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
 
@@ -223,9 +224,9 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
 
       "PRIMARY KEY(MOUNT_GROUP_NAME)"
     ");"
+
     "CREATE TABLE REQUESTER("
-      "USER_NAME VARCHAR2(100) NOT NULL,"
-      "GROUP_NAME VARCHAR2(100) NOT NULL,"
+      "REQUESTER_NAME VARCHAR2(100) NOT NULL,"
 
       "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
 
@@ -241,10 +242,33 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
       "LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
       "LAST_MOD_TIME       INTEGER       NOT NULL,"
 
-      "PRIMARY KEY(USER_NAME, GROUP_NAME),"
+      "PRIMARY KEY(REQUESTER_NAME),"
       "FOREIGN KEY(MOUNT_GROUP_NAME) REFERENCES "
         "MOUNT_GROUP(MOUNT_GROUP_NAME)"
     ");"
+
+     "CREATE TABLE REQUESTER_GROUP("
+      "REQUESTER_GROUP_NAME VARCHAR2(100) NOT NULL,"
+
+      "MOUNT_GROUP_NAME VARCHAR2(100) NOT NULL,"
+
+      "USER_COMMENT VARCHAR2(1000) NOT NULL,"
+
+      "CREATION_LOG_USER_NAME  VARCHAR2(100) NOT NULL,"
+      "CREATION_LOG_GROUP_NAME VARCHAR2(100) NOT NULL,"
+      "CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
+      "CREATION_LOG_TIME       INTEGER       NOT NULL,"
+
+      "LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
+      "LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
+      "LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
+      "LAST_MOD_TIME       INTEGER       NOT NULL,"
+
+      "PRIMARY KEY(REQUESTER_GROUP_NAME),"
+      "FOREIGN KEY(MOUNT_GROUP_NAME) REFERENCES "
+        "MOUNT_GROUP(MOUNT_GROUP_NAME)"
+    ");"
+
     "CREATE TABLE ARCHIVE_FILE("
       "ARCHIVE_FILE_ID    INTEGER       NOT NULL,"
       "DISK_INSTANCE      VARCHAR2(100) NOT NULL,"
@@ -266,6 +290,7 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
         "REFERENCES STORAGE_CLASS(STORAGE_CLASS_NAME),"
       "UNIQUE(DISK_INSTANCE, DISK_FILE_ID)"
     ");"
+
     "CREATE TABLE TAPE_FILE("
       "VID             VARCHAR2(100) NOT NULL,"
       "FSEQ            INTEGER       NOT NULL,"
@@ -1406,8 +1431,7 @@ void cta::catalogue::SqliteCatalogue::createRequester(
   const uint64_t now = time(NULL);
   const char *const sql =
     "INSERT INTO REQUESTER("
-      "USER_NAME,"
-      "GROUP_NAME,"
+      "REQUESTER_NAME,"
       "MOUNT_GROUP_NAME,"
 
       "USER_COMMENT,"
@@ -1422,8 +1446,7 @@ void cta::catalogue::SqliteCatalogue::createRequester(
       "LAST_MOD_HOST_NAME,"
       "LAST_MOD_TIME)"
     "VALUES("
-      ":USER_NAME,"
-      ":GROUP_NAME,"
+      ":REQUESTER_NAME,"
       ":MOUNT_GROUP_NAME,"
 
       ":USER_COMMENT,"
@@ -1439,8 +1462,7 @@ void cta::catalogue::SqliteCatalogue::createRequester(
       ":CREATION_LOG_TIME);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":USER_NAME", user.name);
-  stmt->bind(":GROUP_NAME", user.group);
+  stmt->bind(":REQUESTER_NAME", user.name);
   stmt->bind(":MOUNT_GROUP_NAME", mountGroup);
 
   stmt->bind(":USER_COMMENT", comment);
@@ -1466,8 +1488,7 @@ std::list<cta::common::dataStructures::Requester>
   std::list<common::dataStructures::Requester> users;
   const char *const sql =
     "SELECT "
-      "USER_NAME        AS USER_NAME,"
-      "GROUP_NAME       AS GROUP_NAME,"
+      "REQUESTER_NAME   AS REQUESTER_NAME,"
       "MOUNT_GROUP_NAME AS MOUNT_GROUP_NAME,"
 
       "USER_COMMENT AS USER_COMMENT,"
@@ -1490,8 +1511,8 @@ std::list<cta::common::dataStructures::Requester>
     }
     common::dataStructures::Requester user;
     
-    user.name = stmt->columnText(nameToIdx["USER_NAME"]);
-    user.group = stmt->columnText(nameToIdx["GROUP_NAME"]);
+    user.name = stmt->columnText(nameToIdx["REQUESTER_NAME"]);
+    user.group = "N/A";
     user.mountGroupName = stmt->columnText(nameToIdx["MOUNT_GROUP_NAME"]);
 
     user.comment = stmt->columnText(nameToIdx["USER_COMMENT"]);
@@ -2123,11 +2144,9 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     "FROM MOUNT_GROUP INNER JOIN REQUESTER ON "
       "MOUNT_GROUP.MOUNT_GROUP_NAME = REQUESTER.MOUNT_GROUP_NAME "
     "WHERE "
-      "USER_NAME = :USER_NAME AND "
-      "GROUP_NAME = :GROUP_NAME;";
+      "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":USER_NAME", user.name);
-  stmt->bind(":GROUP_NAME", user.group);
+  stmt->bind(":REQUESTER_NAME", user.name);
   ColumnNameToIdx nameToIdx;
   if(SQLITE_ROW == stmt->step()) {
     nameToIdx = stmt->getColumnNameToIdx();
@@ -2158,11 +2177,9 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     "FROM MOUNT_GROUP INNER JOIN REQUESTER ON "
       "MOUNT_GROUP.MOUNT_GROUP_NAME = REQUESTER.MOUNT_GROUP_NAME "
     "WHERE "
-      "USER_NAME = :USER_NAME AND "
-      "GROUP_NAME = :GROUP_NAME;";
+      "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":USER_NAME", user.name);
-  stmt->bind(":GROUP_NAME", user.group);
+  stmt->bind(":REQUESTER_NAME", user.name);
   ColumnNameToIdx nameToIdx;
   if(SQLITE_ROW == stmt->step()) {
     nameToIdx = stmt->getColumnNameToIdx();
