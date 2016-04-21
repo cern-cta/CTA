@@ -26,11 +26,13 @@
 #include <stdexcept>
 #include <string>
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn::OcciConn(OcciEnv &env,
-  oracle::occi::Connection *const conn):
+OcciConn::OcciConn(OcciEnv &env, oracle::occi::Connection *const conn):
   m_env(env),
   m_conn(conn) {
   if(NULL == conn) {
@@ -42,7 +44,7 @@ cta::catalogue::OcciConn::OcciConn(OcciEnv &env,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn::~OcciConn() throw() {
+OcciConn::~OcciConn() throw() {
   try {
     close(); // Idempotent close() mthod
   } catch(...) {
@@ -53,7 +55,7 @@ cta::catalogue::OcciConn::~OcciConn() throw() {
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciConn::close() {
+void OcciConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   if(m_conn != NULL) {
@@ -65,21 +67,21 @@ void cta::catalogue::OcciConn::close() {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::Connection *cta::catalogue::OcciConn::get() const {
+oracle::occi::Connection *OcciConn::get() const {
   return m_conn;
 }
 
 //------------------------------------------------------------------------------
 // operator->()
 //------------------------------------------------------------------------------
-oracle::occi::Connection *cta::catalogue::OcciConn::operator->() const {
+oracle::occi::Connection *OcciConn::operator->() const {
   return get();
 }
 
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-cta::catalogue::OcciStmt *cta::catalogue::OcciConn::createStmt(const char *sql) {
+OcciStmt *OcciConn::createStmt(const char *const sql) {
   try {
     if(NULL == sql) throw std::runtime_error("sql is NULL");
 
@@ -94,3 +96,6 @@ cta::catalogue::OcciStmt *cta::catalogue::OcciConn::createStmt(const char *sql) 
     throw std::runtime_error(std::string(__FUNCTION__) + "failed: " + ne.what());
   }
 }
+
+} // namespace catalogue
+} // namespace cta

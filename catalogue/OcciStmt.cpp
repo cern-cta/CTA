@@ -25,18 +25,16 @@
 #include <cstring>
 #include <stdexcept>
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciStmt::OcciStmt(const char *const sql, OcciConn &conn,
-  oracle::occi::Statement *const stmt):
+OcciStmt::OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
   m_conn(conn),
   m_stmt(stmt) {
-  if(NULL == stmt) {
-    std::runtime_error ex(std::string(__FUNCTION__) + " failed"
-      ": OCCI statment is a NULL pointer");
-    throw ex;
-  }
+  if(NULL == stmt) throw std::runtime_error(std::string(__FUNCTION__) + " failed: stmt is NULL");
 
   // Work with C strings because they haven't changed with respect to _GLIBCXX_USE_CXX11_ABI
   const std::size_t sqlLen = std::strlen(sql);
@@ -48,12 +46,12 @@ cta::catalogue::OcciStmt::OcciStmt(const char *const sql, OcciConn &conn,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciStmt::~OcciStmt() throw() {
+OcciStmt::~OcciStmt() throw() {
   delete m_sql;
 
   try {
     close(); // Idempotent close() method
-  } catch(...) {
+  } catch (...) {
     // Destructor does not throw
   }
 }
@@ -61,10 +59,10 @@ cta::catalogue::OcciStmt::~OcciStmt() throw() {
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciStmt::close() {
+void OcciStmt::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(NULL != m_stmt) {
+  if (NULL != m_stmt) {
     m_conn->terminateStatement(m_stmt);
     m_stmt = NULL;
   }
@@ -73,28 +71,28 @@ void cta::catalogue::OcciStmt::close() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const char *cta::catalogue::OcciStmt::getSql() const {
+const char *OcciStmt::getSql() const {
   return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::Statement *cta::catalogue::OcciStmt::get() const {
+oracle::occi::Statement *OcciStmt::get() const {
   return m_stmt;
 }
 
 //------------------------------------------------------------------------------
 // operator->
 //------------------------------------------------------------------------------
-oracle::occi::Statement *cta::catalogue::OcciStmt::operator->() const {
+oracle::occi::Statement *OcciStmt::operator->() const {
   return get();
 }
 
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciStmt::bind(const char *paramName, const uint64_t paramValue) {
+void OcciStmt::bind(const char *paramName, const uint64_t paramValue) {
   std::runtime_error ex(std::string(__FUNCTION__) + " is not implemented");
   throw ex;
 }
@@ -102,7 +100,7 @@ void cta::catalogue::OcciStmt::bind(const char *paramName, const uint64_t paramV
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciStmt::bind(const char *paramName, const char *paramValue) {
+void OcciStmt::bind(const char *paramName, const char *paramValue) {
   std::runtime_error ex(std::string(__FUNCTION__) + " is not implemented");
   throw ex;
 }
@@ -110,6 +108,9 @@ void cta::catalogue::OcciStmt::bind(const char *paramName, const char *paramValu
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-cta::catalogue::OcciRset *cta::catalogue::OcciStmt::execute() {
+OcciRset *OcciStmt::execute() {
   return NULL;
 }
+
+} // namespace catalogue
+} // namespace cta

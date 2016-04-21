@@ -25,10 +25,13 @@
 
 #include <stdexcept>
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciEnv::OcciEnv() {
+OcciEnv::OcciEnv() {
   using namespace oracle::occi;
   m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
   if(NULL == m_env) {
@@ -40,7 +43,7 @@ cta::catalogue::OcciEnv::OcciEnv() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciEnv::~OcciEnv() throw() {
+OcciEnv::~OcciEnv() throw() {
   using namespace oracle::occi;
 
   Environment::terminateEnvironment(m_env);
@@ -49,21 +52,21 @@ cta::catalogue::OcciEnv::~OcciEnv() throw() {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::Environment *cta::catalogue::OcciEnv::get() const {
+oracle::occi::Environment *OcciEnv::get() const {
   return m_env;
 }
 
 //------------------------------------------------------------------------------
 // operator->
 //------------------------------------------------------------------------------
-oracle::occi::Environment *cta::catalogue::OcciEnv::operator->() const {
+oracle::occi::Environment *OcciEnv::operator->() const {
   return get();
 }
 
 //------------------------------------------------------------------------------
-// creatConn
+// createConn
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn *cta::catalogue::OcciEnv::createConn(
+cta::catalogue::OcciConn *OcciEnv::createConn(
   const char *const username,
   const char *const password,
   const char *const database) {
@@ -82,3 +85,6 @@ cta::catalogue::OcciConn *cta::catalogue::OcciEnv::createConn(
     throw std::runtime_error(std::string(__FUNCTION__) + " failed:" + ne.what());
   }
 }
+
+} // namespace catalogue
+} // namespace cta

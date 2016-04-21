@@ -32,64 +32,69 @@
 #include <string.h>
 
 namespace {
-  using namespace cta;
 
-  /**
-   * Reads the entire contents of the specified files and returns a list of the
-   * non-empty lines.
-   *
-   * A line is considered not empty if it contains characters that are not white
-   * space and are not part of a comment.
-   *
-   * @return A list of the non-empty lines.
-   */
-  std::list<std::string> readNonEmptyLines(
-    const std::string &filename) {
+using namespace cta;
 
-    std::ifstream file(filename);
-    if(!file) {
-      exception::Exception ex;
-      ex.getMessage() << "Failed to open " << filename;
-      throw ex;
-    }
+/**
+ * Reads the entire contents of the specified files and returns a list of the
+ * non-empty lines.
+ *
+ * A line is considered not empty if it contains characters that are not white
+ * space and are not part of a comment.
+ *
+ * @return A list of the non-empty lines.
+ */
+std::list<std::string> readNonEmptyLines(
+  const std::string &filename) {
 
-    std::list<std::string> lines;
-    std::string line;
-
-    while(std::getline(file, line)) {
-      // Remove the newline character if there is one
-      {
-        const std::string::size_type newlinePos = line.find("\n");
-        if(newlinePos != std::string::npos) {
-          line = line.substr(0, newlinePos);
-        }
-      }
-
-      // If there is a comment, then remove it from the line
-      {
-        const std::string::size_type startOfComment = line.find("#");
-        if(startOfComment != std::string::npos) {
-          line = line.substr(0, startOfComment);
-        }
-      }
-
-      // Left and right trim the line of whitespace
-      line = utils::trimString(std::string(line));
-
-      // If the line is not empty
-      if(!line.empty()) {
-        lines.push_back(line);
-      }
-    }
-
-    return lines;
+  std::ifstream file(filename);
+  if(!file) {
+    exception::Exception ex;
+    ex.getMessage() << "Failed to open " << filename;
+    throw ex;
   }
+
+  std::list<std::string> lines;
+  std::string line;
+
+  while(std::getline(file, line)) {
+    // Remove the newline character if there is one
+    {
+      const std::string::size_type newlinePos = line.find("\n");
+      if(newlinePos != std::string::npos) {
+        line = line.substr(0, newlinePos);
+      }
+    }
+
+    // If there is a comment, then remove it from the line
+    {
+      const std::string::size_type startOfComment = line.find("#");
+      if(startOfComment != std::string::npos) {
+        line = line.substr(0, startOfComment);
+      }
+    }
+
+    // Left and right trim the line of whitespace
+    line = utils::trimString(std::string(line));
+
+    // If the line is not empty
+    if(!line.empty()) {
+      lines.push_back(line);
+    }
+  }
+
+  return lines;
 }
+
+} // anonymous namespace
+
+namespace cta {
+namespace catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::DbLogin::DbLogin(
+DbLogin::DbLogin(
   const std::string &username,
   const std::string &password,
   const std::string &database):
@@ -101,8 +106,7 @@ cta::catalogue::DbLogin::DbLogin(
 //------------------------------------------------------------------------------
 // readFromFile
 //------------------------------------------------------------------------------
-cta::catalogue::DbLogin cta::catalogue::DbLogin::readFromFile(
-  const std::string &filename) {
+DbLogin DbLogin::readFromFile(const std::string &filename) {
   const std::string fileFormat = "username/password@database";
   const std::list<std::string> lines = readNonEmptyLines(filename);
 
@@ -130,3 +134,6 @@ cta::catalogue::DbLogin cta::catalogue::DbLogin::readFromFile(
 
   return DbLogin(userAndPass[0], userAndPass[1], userPassAndDb[1]);
 }
+
+} // namesapce catalogue
+} // namespace cta

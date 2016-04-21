@@ -24,22 +24,22 @@
 
 #include <stdexcept>
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciRset::OcciRset(OcciStmt &stmt,
-  oracle::occi::ResultSet *const rset):
+OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
   m_stmt(stmt),
   m_rset(rset) {
-  if(NULL == rset) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: rset is NULL");
-  }
+  if(NULL == rset) throw std::runtime_error(std::string(__FUNCTION__) + " failed: rset is NULL");
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::OcciRset::~OcciRset() throw() {
+OcciRset::~OcciRset() throw() {
   try {
     close(); // Idempotent close()
   } catch(...) {
@@ -50,7 +50,7 @@ cta::catalogue::OcciRset::~OcciRset() throw() {
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::OcciRset::close() {
+void OcciRset::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   if(NULL != m_rset) {
@@ -62,13 +62,16 @@ void cta::catalogue::OcciRset::close() {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::ResultSet *cta::catalogue::OcciRset::get() const {
+oracle::occi::ResultSet *OcciRset::get() const {
   return m_rset;
 }
 
 //------------------------------------------------------------------------------
 // operator->
 //------------------------------------------------------------------------------
-oracle::occi::ResultSet *cta::catalogue::OcciRset::operator->() const {
+oracle::occi::ResultSet *OcciRset::operator->() const {
   return get();
 }
+
+} // namespace catalogue
+} // namespace cta
