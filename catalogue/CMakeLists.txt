@@ -43,7 +43,15 @@ target_link_libraries (ctacatalogue
   ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})
 
-set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+add_custom_command(OUTPUT catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_schema.sql | sed 's/$$/\"/' > catalogue_schema.cpp
+  DEPENDS catalogue_schema.sql)
+
+add_custom_command(OUTPUT SqliteCatalogue.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogue.cpp_before_SQL_schema > SqliteCatalogue.cpp
+  DEPENDS catalogue_schema.cpp)
+
+set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   SqliteCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
