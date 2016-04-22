@@ -31,9 +31,7 @@ namespace common {
 namespace dataStructures {
 
 /**
- * This struct holds all the CTA file metadata (the lastUpdateTime is used for 
- * reconciliation purposes: if a file has not been updated for a long time by 
- * the disk system, it has to be checked against it) 
+ * This struct holds all the CTA file metadata 
  */
 struct ArchiveFile {
 
@@ -53,7 +51,7 @@ struct ArchiveFile {
   cta::common::dataStructures::DRData drData;
   std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> tapeCopies;
   time_t creationTime;
-  time_t lastUpdateTime;
+  time_t reconciliationTime;
 
 }; // struct ArchiveFile
 
