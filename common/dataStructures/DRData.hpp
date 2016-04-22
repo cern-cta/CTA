@@ -29,7 +29,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all the data necessary to rebuild the original disk based file in case of disaster
+ * This struct holds all the data necessary to rebuild the original disk based 
+ * file in case of disaster 
  */
 struct DRData {
 

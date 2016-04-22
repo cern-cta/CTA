@@ -30,7 +30,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This is the administrative user which contains the username of the admin
+ * This is the administrative user which contains the username of the admin 
  */
 struct AdminUser {
 

@@ -30,7 +30,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct is used across almost all administrative metadata, specifying who, when, where created and modified a given metadata object
+ * This struct is used across almost all administrative metadata, specifying 
+ * who, when, where created and modified a given metadata object 
  */
 struct EntryLog {
 

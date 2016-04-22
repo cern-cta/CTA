@@ -29,7 +29,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct contains information about which drive was responsible for a specific tape operation (read/write/label) and when did it happen
+ * This struct contains information about which drive was responsible for a 
+ * specific tape operation (read/write/label) and when did it happen 
  */
 struct TapeLog {
 

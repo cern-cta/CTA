@@ -30,7 +30,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all the command line parameters of a CTA UpdateFileInfo command
+ * This struct holds all the command line parameters of a CTA UpdateFileInfo 
+ * command 
  */
 struct UpdateFileInfoRequest {
 

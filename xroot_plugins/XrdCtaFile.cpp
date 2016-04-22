@@ -1551,7 +1551,7 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
             currentRow.push_back(it->diskFileID);
-            currentRow.push_back(it->instance);
+            currentRow.push_back(it->diskInstance);
             currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
             currentRow.push_back(it->checksumType);
             currentRow.push_back(it->checksumValue);
@@ -1730,7 +1730,7 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
         currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
         currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
         currentRow.push_back(it->diskFileID);
-        currentRow.push_back(it->instance);
+        currentRow.push_back(it->diskInstance);
         currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
         currentRow.push_back(it->checksumType);
         currentRow.push_back(it->checksumValue);

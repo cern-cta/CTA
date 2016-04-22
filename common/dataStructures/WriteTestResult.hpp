@@ -29,7 +29,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This is the result of a write test operation
+ * This is the result of a write test operation 
  */
 struct WriteTestResult {
 

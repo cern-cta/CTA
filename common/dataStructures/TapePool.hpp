@@ -30,7 +30,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * A tape pool is a logical grouping of tapes, it is used to separate VOs, types of data, and multiple copies of data
+ * A tape pool is a logical grouping of tapes, it is used to separate VOs, types 
+ * of data, and multiple copies of data 
  */
 struct TapePool {
 

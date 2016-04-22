@@ -29,7 +29,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds location information of a specific tape file
+ * This struct holds location information of a specific tape file 
  */
 struct TapeFileLocation {
 

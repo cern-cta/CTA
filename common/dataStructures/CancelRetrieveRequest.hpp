@@ -31,7 +31,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This is the request to cancel and ongoing retrieval
+ * This is the request to cancel and ongoing retrieval 
  */
 struct CancelRetrieveRequest {
 

@@ -31,7 +31,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * The retrieve job contains the original request, and all data needed to queue the request in the system
+ * The retrieve job contains the original request, and all data needed to queue 
+ * the request in the system 
  */
 struct RetrieveJob {
 

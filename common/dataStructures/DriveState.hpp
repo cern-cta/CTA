@@ -31,7 +31,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all drive state information, used to display the equivalent of the old "showqueues -x -D" CASTOR command
+ * This struct holds all drive state information, used to display the equivalent 
+ * of the old "showqueues -x -D" CASTOR command 
  */
 struct DriveState {
 

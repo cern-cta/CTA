@@ -843,7 +843,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
   file.checksumValue = "cheskum_value";
   file.storageClass = storageClassName;
 
-  file.instance = "recovery_instance";
+  file.diskInstance = "recovery_instance";
   file.drData.drPath = "recovery_path";
   file.drData.drOwner = "recovery_owner";
   file.drData.drGroup = "recovery_group";
@@ -863,7 +863,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
   ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
   ASSERT_EQ(file.storageClass, frontFile.storageClass);
 
-  ASSERT_EQ(file.instance, frontFile.instance);
+  ASSERT_EQ(file.diskInstance, frontFile.diskInstance);
   ASSERT_EQ(file.drData.drPath, frontFile.drData.drPath);
   ASSERT_EQ(file.drData.drOwner, frontFile.drData.drOwner);
   ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
@@ -889,7 +889,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
   file.checksumValue = "cheskum_value";
   file.storageClass = storageClassName;
 
-  file.instance = "recovery_instance";
+  file.diskInstance = "recovery_instance";
   file.drData.drPath = "recovery_path";
   file.drData.drOwner = "recovery_owner";
   file.drData.drGroup = "recovery_group";

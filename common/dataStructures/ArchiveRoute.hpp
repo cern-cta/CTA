@@ -30,7 +30,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * The archive route specifies which tape pool will be used as a destination of a specific copy of a storage class
+ * The archive route specifies which tape pool will be used as a destination of 
+ * a specific copy of a storage class 
  */
 struct ArchiveRoute {
 

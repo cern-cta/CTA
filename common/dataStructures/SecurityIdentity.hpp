@@ -30,7 +30,8 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds the information about who's issued the CTA command and from which host
+ * This struct holds the information about who's issued the CTA command and from 
+ * which host 
  */
 struct SecurityIdentity {
 

@@ -29,7 +29,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds the username and group name of a given user
+ * This struct holds the username and group name of a given user 
  */
 struct UserIdentity {
 

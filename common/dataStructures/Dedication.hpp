@@ -31,7 +31,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * The tape drive dedication parameters go here
+ * The tape drive dedication parameters go here 
  */
 struct Dedication {
 

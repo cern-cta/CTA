@@ -31,7 +31,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all tape metadata information
+ * This struct holds all tape metadata information 
  */
 struct Tape {
 

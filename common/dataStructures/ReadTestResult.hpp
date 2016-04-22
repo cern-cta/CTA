@@ -29,7 +29,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This is the result of a read test operation
+ * This is the result of a read test operation 
  */
 struct ReadTestResult {
 

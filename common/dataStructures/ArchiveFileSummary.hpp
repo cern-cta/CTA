@@ -29,7 +29,7 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct is used to hold stats of a list of files (when listing them)
+ * This struct is used to hold stats of a list of files (when listing them) 
  */
 struct ArchiveFileSummary {
 

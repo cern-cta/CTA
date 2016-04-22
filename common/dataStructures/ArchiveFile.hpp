@@ -31,7 +31,9 @@ namespace common {
 namespace dataStructures {
 
 /*
- * This struct holds all the CTA file metadata
+ * This struct holds all the CTA file metadata (the lastUpdateTime is used for 
+ * reconciliation purposes: if a file has not been updated for a long time by 
+ * the disk system, it has to be checked against it) 
  */
 struct ArchiveFile {
 
@@ -43,7 +45,7 @@ struct ArchiveFile {
 
   uint64_t archiveFileID;
   std::string diskFileID;
-  std::string instance;
+  std::string diskInstance;
   uint64_t fileSize;
   std::string checksumType;
   std::string checksumValue;
