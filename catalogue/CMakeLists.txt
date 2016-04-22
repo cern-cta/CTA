@@ -30,6 +30,7 @@ set (CATALOGUE_LIB_SRC_FILES
   OcciStmt.cpp
   Sqlite.cpp
   SqliteCatalogue.cpp
+  SqliteCatalogueSchema.cpp
   SqliteConn.cpp
   SqliteStmt.cpp)
 
@@ -47,8 +48,8 @@ add_custom_command(OUTPUT catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_schema.sql | sed 's/$$/\"/' > catalogue_schema.cpp
   DEPENDS catalogue_schema.sql)
 
-add_custom_command(OUTPUT SqliteCatalogue.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogue.cpp_before_SQL_schema > SqliteCatalogue.cpp
+add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   DEPENDS catalogue_schema.cpp)
 
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
