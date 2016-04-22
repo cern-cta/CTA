@@ -48,10 +48,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT ADMIN_USER_PK PRIMARY KEY(ADMIN_USER_NAME)"
     ");"
@@ -66,10 +66,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT ADMIN_HOST_PK PRIMARY KEY(ADMIN_HOST_NAME)"
     ");"
@@ -85,10 +85,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT STORAGE_CLASS_PK PRIMARY KEY(STORAGE_CLASS_NAME)"
     ");"
@@ -105,10 +105,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT TAPE_POOL_PK PRIMARY KEY(TAPE_POOL_NAME)"
     ");"
@@ -125,10 +125,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT ARCHIVE_ROUTE_PK PRIMARY KEY(STORAGE_CLASS_NAME, COPY_NB),"
 
@@ -148,10 +148,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT LOGICAL_LIBRARY_PK PRIMARY KEY(LOGICAL_LIBRARY_NAME)"
     ");"
@@ -183,10 +183,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT TAPE_PK PRIMARY KEY(VID),"
 
@@ -214,10 +214,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT MOUNT_POLICY_PK PRIMARY KEY(MOUNT_POLICY_NAME)"
     ");"
@@ -234,10 +234,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT REQUESTER_PK PRIMARY KEY(REQUESTER_NAME),"
 
@@ -257,10 +257,10 @@ void cta::catalogue::SqliteCatalogue::createDbSchema() {
     "  CREATION_LOG_HOST_NAME  VARCHAR2(100) NOT NULL,"
     "  CREATION_LOG_TIME       INTEGER       NOT NULL,"
 
-    "  LAST_MOD_USER_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_GROUP_NAME VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_HOST_NAME  VARCHAR2(100) NOT NULL,"
-    "  LAST_MOD_TIME       INTEGER       NOT NULL,"
+    "  LAST_UPDATE_USER_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_GROUP_NAME VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_HOST_NAME  VARCHAR2(100) NOT NULL,"
+    "  LAST_UPDATE_TIME       INTEGER       NOT NULL,"
 
     "  CONSTRAINT REQUESTER_GROUP_PK PRIMARY KEY(REQUESTER_GROUP_NAME),"
 
@@ -347,10 +347,10 @@ void cta::catalogue::SqliteCatalogue::createAdminUser(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":ADMIN_USER_NAME,"
 
@@ -401,10 +401,10 @@ std::list<cta::common::dataStructures::AdminUser>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM ADMIN_USER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -430,13 +430,13 @@ std::list<cta::common::dataStructures::AdminUser>
     admin.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     admin.lastModificationLog = updateLog;
 
@@ -470,10 +470,10 @@ void cta::catalogue::SqliteCatalogue::createAdminHost(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":ADMIN_HOST_NAME,"
 
@@ -523,10 +523,10 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM ADMIN_HOST;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -551,13 +551,13 @@ std::list<cta::common::dataStructures::AdminHost> cta::catalogue::SqliteCatalogu
     host.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     host.lastModificationLog = updateLog;
 
@@ -593,10 +593,10 @@ void cta::catalogue::SqliteCatalogue::createStorageClass(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":STORAGE_CLASS_NAME,"
       ":NB_COPIES,"
@@ -650,10 +650,10 @@ std::list<cta::common::dataStructures::StorageClass>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM STORAGE_CLASS;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -679,13 +679,13 @@ std::list<cta::common::dataStructures::StorageClass>
     storageClass.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     storageClass.lastModificationLog = updateLog;
 
@@ -728,10 +728,10 @@ void cta::catalogue::SqliteCatalogue::createTapePool(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":TAPE_POOL_NAME,"
       ":NB_PARTIAL_TAPES,"
@@ -788,10 +788,10 @@ std::list<cta::common::dataStructures::TapePool>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM TAPE_POOL;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -819,13 +819,13 @@ std::list<cta::common::dataStructures::TapePool>
     pool.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     pool.lastModificationLog = updateLog;
 
@@ -873,10 +873,10 @@ void cta::catalogue::SqliteCatalogue::createArchiveRoute(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":STORAGE_CLASS_NAME,"
       ":COPY_NB,"
@@ -933,10 +933,10 @@ std::list<cta::common::dataStructures::ArchiveRoute>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM ARCHIVE_ROUTE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -964,13 +964,13 @@ std::list<cta::common::dataStructures::ArchiveRoute>
     route.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     route.lastModificationLog = updateLog;
 
@@ -1009,10 +1009,10 @@ void cta::catalogue::SqliteCatalogue::createLogicalLibrary(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":LOGICAL_LIBRARY_NAME,"
 
@@ -1063,10 +1063,10 @@ std::list<cta::common::dataStructures::LogicalLibrary>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM LOGICAL_LIBRARY;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -1092,13 +1092,13 @@ std::list<cta::common::dataStructures::LogicalLibrary>
     lib.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     lib.lastModificationLog = updateLog;
 
@@ -1156,10 +1156,10 @@ void cta::catalogue::SqliteCatalogue::createTape(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":VID,"
       ":LOGICAL_LIBRARY_NAME,"
@@ -1272,10 +1272,10 @@ std::list<cta::common::dataStructures::Tape>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM TAPE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -1320,13 +1320,13 @@ std::list<cta::common::dataStructures::Tape>
     tape.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     tape.lastModificationLog = updateLog;
 
@@ -1422,10 +1422,10 @@ void cta::catalogue::SqliteCatalogue::createRequester(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":REQUESTER_NAME,"
       ":MOUNT_POLICY_NAME,"
@@ -1479,10 +1479,10 @@ std::list<cta::common::dataStructures::Requester>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM REQUESTER;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -1510,13 +1510,13 @@ std::list<cta::common::dataStructures::Requester>
     user.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     user.lastModificationLog = updateLog;
 
@@ -1568,10 +1568,10 @@ void cta::catalogue::SqliteCatalogue::createMountPolicy(
       "CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME)"
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME)"
     "VALUES("
       ":MOUNT_POLICY_NAME,"
 
@@ -1646,10 +1646,10 @@ std::list<cta::common::dataStructures::MountPolicy>
       "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM MOUNT_POLICY;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -1687,13 +1687,13 @@ std::list<cta::common::dataStructures::MountPolicy>
     policy.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     policy.lastModificationLog = updateLog;
 
@@ -2129,10 +2129,10 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
       "MOUNT_POLICY.CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
       "MOUNT_POLICY.CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
 
-      "MOUNT_POLICY.LAST_MOD_USER_NAME  AS LAST_MOD_USER_NAME,"
-      "MOUNT_POLICY.LAST_MOD_GROUP_NAME AS LAST_MOD_GROUP_NAME,"
-      "MOUNT_POLICY.LAST_MOD_HOST_NAME  AS LAST_MOD_HOST_NAME,"
-      "MOUNT_POLICY.LAST_MOD_TIME       AS LAST_MOD_TIME "
+      "MOUNT_POLICY.LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "MOUNT_POLICY.LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
+      "MOUNT_POLICY.LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
+      "MOUNT_POLICY.LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
     "FROM MOUNT_POLICY INNER JOIN REQUESTER ON "
       "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
     "WHERE "
@@ -2172,13 +2172,13 @@ cta::common::dataStructures::MountPolicy cta::catalogue::SqliteCatalogue::
     policy.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = stmt->columnText(nameToIdx["LAST_MOD_USER_NAME"]);
-    updaterUI.group = stmt->columnText(nameToIdx["LAST_MOD_GROUP_NAME"]);
+    updaterUI.name = stmt->columnText(nameToIdx["LAST_UPDATE_USER_NAME"]);
+    updaterUI.group = stmt->columnText(nameToIdx["LAST_UPDATE_GROUP_NAME"]);
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
-    updateLog.host = stmt->columnText(nameToIdx["LAST_MOD_HOST_NAME"]);
-    updateLog.time = stmt->columnUint64(nameToIdx["LAST_MOD_TIME"]);
+    updateLog.host = stmt->columnText(nameToIdx["LAST_UPDATE_HOST_NAME"]);
+    updateLog.time = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
 
     policy.lastModificationLog = updateLog;
     return policy;
