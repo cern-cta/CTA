@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This is the disk system user that triggered the request (any of: archival, 
  * retrieval, deletion of an archive file, cancel of an ongoing retrieval, 
  * update of a file metadata, listing of storage classes). It may or may not be 

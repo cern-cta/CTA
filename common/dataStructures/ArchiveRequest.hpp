@@ -31,7 +31,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This struct holds all the command line parameters of a CTA archive command 
  */
 struct ArchiveRequest {

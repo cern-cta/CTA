@@ -30,7 +30,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This is the repack information for a given tape 
  */
 struct RepackInfo {

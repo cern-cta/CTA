@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This is the host on which an admin is allowed to issue CTA commands 
  */
 struct AdminHost {

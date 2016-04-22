@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * The logical library is an attribute of both drives and tapes, it declares 
  * which tapes can be mounted in which drives 
  */

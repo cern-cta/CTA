@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This request tells CTA to list all storage classes 
  */
 struct ListStorageClassRequest {

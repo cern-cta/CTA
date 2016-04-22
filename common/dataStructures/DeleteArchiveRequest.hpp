@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This is a request to delete an existing archive file or to cancel and ongoing 
  * archival 
  */

@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * Specifies the minimum criteria needed to warrant a mount 
  */
 struct MountPolicy {

@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * The archive job contains the original request, and all data needed to queue 
  * the request in the system 
  */

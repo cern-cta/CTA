@@ -29,7 +29,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * This struct specifies the number of copies that a file tagged with it should 
  * have. it may also indicate the VO owning the file and what kind of data the 
  * file contains 

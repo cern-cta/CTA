@@ -30,7 +30,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-/*
+/**
  * The tape drive dedication parameters go here 
  */
 struct Dedication {
