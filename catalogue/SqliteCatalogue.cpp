@@ -1547,7 +1547,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
       "CHECKSUM_VALUE,"
       "STORAGE_CLASS_NAME,"
       "CREATION_TIME,"
-      "LAST_UPDATE_TIME,"
+      "RECONCILIATION_TIME,"
 
       "RECOVERY_PATH,"
       "RECOVERY_OWNER,"
@@ -1562,7 +1562,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
       ":CHECKSUM_VALUE,"
       ":STORAGE_CLASS_NAME,"
       ":CREATION_TIME,"
-      ":LAST_UPDATE_TIME,"
+      ":RECONCILIATION_TIME,"
 
       ":RECOVERY_PATH,"
       ":RECOVERY_OWNER,"
@@ -1577,7 +1577,7 @@ uint64_t cta::catalogue::SqliteCatalogue::createArchiveFile(
   stmt->bind(":CHECKSUM_VALUE", archiveFile.checksumValue);
   stmt->bind(":STORAGE_CLASS_NAME", archiveFile.storageClass);
   stmt->bind(":CREATION_TIME", now);
-  stmt->bind(":LAST_UPDATE_TIME", now);
+  stmt->bind(":RECONCILIATION_TIME", now);
 
   stmt->bind(":RECOVERY_PATH", archiveFile.drData.drPath);
   stmt->bind(":RECOVERY_OWNER", archiveFile.drData.drOwner);
@@ -1633,20 +1633,20 @@ std::list<cta::common::dataStructures::ArchiveFile>
   std::list<cta::common::dataStructures::ArchiveFile> files;
   const char *const sql =
     "SELECT "
-      "ARCHIVE_FILE_ID    AS ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE      AS DISK_INSTANCE,"
-      "DISK_FILE_ID       AS DISK_FILE_ID,"
-      "FILE_SIZE          AS FILE_SIZE,"
-      "CHECKSUM_TYPE      AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "CREATION_TIME      AS CREATION_TIME,"
-      "LAST_UPDATE_TIME   AS LAST_UPDATE_TIME,"
+      "ARCHIVE_FILE_ID     AS ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE       AS DISK_INSTANCE,"
+      "DISK_FILE_ID        AS DISK_FILE_ID,"
+      "FILE_SIZE           AS FILE_SIZE,"
+      "CHECKSUM_TYPE       AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE      AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME  AS STORAGE_CLASS_NAME,"
+      "CREATION_TIME       AS CREATION_TIME,"
+      "RECONCILIATION_TIME AS RECONCILIATION_TIME,"
 
-      "RECOVERY_PATH      AS RECOVERY_PATH,"
-      "RECOVERY_OWNER     AS RECOVERY_OWNER,"
-      "RECOVERY_GROUP     AS RECOVERY_GROUP,"
-      "RECOVERY_BLOB      AS RECOVERY_BLOB "
+      "RECOVERY_PATH       AS RECOVERY_PATH,"
+      "RECOVERY_OWNER      AS RECOVERY_OWNER,"
+      "RECOVERY_GROUP      AS RECOVERY_GROUP,"
+      "RECOVERY_BLOB       AS RECOVERY_BLOB "
 
     "FROM ARCHIVE_FILE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
@@ -1671,7 +1671,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
     file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
     
     file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
-    file.lastUpdateTime = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
+    file.reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
 
     files.push_back(file);
   }
@@ -1693,19 +1693,20 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
   getArchiveFileById(const uint64_t id) {
   const char *const sql =
     "SELECT "
-      "DISK_INSTANCE      AS DISK_INSTANCE,"
-      "DISK_FILE_ID       AS DISK_FILE_ID,"
-      "FILE_SIZE          AS FILE_SIZE,"
-      "CHECKSUM_TYPE      AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE     AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-      "CREATION_TIME      AS CREATION_TIME,"
-      "LAST_UPDATE_TIME   AS LAST_UPDATE_TIME,"
+      "ARCHIVE_FILE_ID     AS ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE       AS DISK_INSTANCE,"
+      "DISK_FILE_ID        AS DISK_FILE_ID,"
+      "FILE_SIZE           AS FILE_SIZE,"
+      "CHECKSUM_TYPE       AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE      AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME  AS STORAGE_CLASS_NAME,"
+      "CREATION_TIME       AS CREATION_TIME,"
+      "RECONCILIATION_TIME AS RECONCILIATION_TIME,"
 
-      "RECOVERY_PATH      AS RECOVERY_PATH,"
-      "RECOVERY_OWNER     AS RECOVERY_OWNER,"
-      "RECOVERY_GROUP     AS RECOVERY_GROUP,"
-      "RECOVERY_BLOB      AS RECOVERY_BLOB "
+      "RECOVERY_PATH       AS RECOVERY_PATH,"
+      "RECOVERY_OWNER      AS RECOVERY_OWNER,"
+      "RECOVERY_GROUP      AS RECOVERY_GROUP,"
+      "RECOVERY_BLOB       AS RECOVERY_BLOB "
 
     "FROM ARCHIVE_FILE WHERE "
       "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
@@ -1735,7 +1736,7 @@ cta::common::dataStructures::ArchiveFile cta::catalogue::SqliteCatalogue::
     file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
     
     file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
-    file.lastUpdateTime = stmt->columnUint64(nameToIdx["LAST_UPDATE_TIME"]);
+    file.reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
 
     return file;
   }
