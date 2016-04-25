@@ -1077,4 +1077,92 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
   ASSERT_EQ(tapeFile.blockId, tapeFiles.front().blockId);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, getTapeLastFseq_no_such_tape) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+  const std::string vid = "V12345";
+  ASSERT_THROW(catalogue.getTapeLastFSeq(vid), exception::Exception);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, getTapeLastFseq) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getTapes("", "", "", "", "", "", "", "").empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+
+  const std::list<common::dataStructures::Tape> tapes =
+    catalogue.getTapes("", "", "", "", "", "", "", "");
+
+  ASSERT_EQ(1, tapes.size());
+
+  const common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(encryptionKey, tape.encryptionKey);
+  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_TRUE(disabledValue == tape.disabled);
+  ASSERT_TRUE(fullValue == tape.full);
+  ASSERT_EQ(comment, tape.comment);
+
+  const common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  ASSERT_EQ(0, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 1);
+  ASSERT_EQ(1, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 2);
+  ASSERT_EQ(2, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 3);
+  ASSERT_EQ(3, catalogue.getTapeLastFSeq(vid));
+
+  // An increment greater than 1 should not be allowed
+  ASSERT_THROW(catalogue.setTapeLastFSeq(vid, 5), exception::Exception);
+
+  catalogue.setTapeLastFSeq(vid, 4);
+  ASSERT_EQ(4, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 5);
+  ASSERT_EQ(5, catalogue.getTapeLastFSeq(vid));
+
+  // A decrement should not be allowed
+  ASSERT_THROW(catalogue.setTapeLastFSeq(vid, 4), exception::Exception);
+
+  catalogue.setTapeLastFSeq(vid, 6);
+  ASSERT_EQ(6, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 7);
+  ASSERT_EQ(7, catalogue.getTapeLastFSeq(vid));
+
+  // Keeping the same lats FSeq should not be allowed
+  ASSERT_THROW(catalogue.setTapeLastFSeq(vid, 7), exception::Exception);
+
+  catalogue.setTapeLastFSeq(vid, 8);
+  ASSERT_EQ(8, catalogue.getTapeLastFSeq(vid));
+  catalogue.setTapeLastFSeq(vid, 9);
+  ASSERT_EQ(9, catalogue.getTapeLastFSeq(vid));
+}
+
 } // namespace unitTests

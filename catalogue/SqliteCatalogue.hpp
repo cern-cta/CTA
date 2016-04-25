@@ -18,10 +18,11 @@
 
 #pragma once
 
-#include <atomic>
-#include <common/archiveNS/TapeFileLocation.hpp>
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/SqliteConn.hpp"
+
+#include <atomic>
+#include <mutex>
 
 namespace cta {
 namespace common {
@@ -198,6 +199,11 @@ public:
 protected:
 
   /**
+   * Mutex to be used to a take a global lock on the in-memory database.
+   */
+  std::mutex m_mutex;
+
+  /**
    * The connection to the underlying relational database.
    */
   mutable SqliteConn m_conn;
@@ -275,6 +281,22 @@ protected:
    * @return The list of all the tape files in the catalogue.
    */
   std::list<common::dataStructures::TapeFileLocation> getTapeFiles() const;
+
+  /**
+   * Sets the last FSeq of the specified tape to the specified value.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param lastFseq The new value of the last FSeq.
+   */
+  void setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq);
+
+  /**
+   * Returns the last FSeq of the speficied tape.
+   *
+   * @param vid The volume identifier of the tape.
+   * @return The last FSeq.
+   */
+  uint64_t getTapeLastFSeq(const std::string &vid) const;
 
 }; // class SqliteCatalogue
 

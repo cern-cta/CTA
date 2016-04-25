@@ -2033,5 +2033,49 @@ std::list<common::dataStructures::TapeFileLocation> SqliteCatalogue::getTapeFile
   return files;
 }
 
+//------------------------------------------------------------------------------
+// setTapeLastFseq
+//------------------------------------------------------------------------------
+void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  const uint64_t currentValue = getTapeLastFSeq(vid);
+  if(lastFSeq != currentValue + 1) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed: The last FSeq MUST be incremented by exactly one: "
+      "currentValue=" << currentValue << ",nextValue=" << lastFSeq;
+    throw ex;
+  }
+  const char *const sql =
+    "UPDATE TAPE SET "
+      "LAST_FSEQ = :LAST_FSEQ "
+    "WHERE "
+      "VID=:VID;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":VID", vid);
+  stmt->bind(":LAST_FSEQ", lastFSeq);
+  stmt->step();
+}
+
+//------------------------------------------------------------------------------
+// getTapeLastFSeq
+//------------------------------------------------------------------------------
+uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
+  const char *const sql =
+    "SELECT "
+      "LAST_FSEQ AS LAST_FSEQ "
+    "FROM TAPE WHERE "
+      "VID = :VID;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":VID", vid);
+  if(SQLITE_ROW != stmt->step()) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed: No such tape with vid=" << vid;
+    throw ex;
+  }
+  ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
+  return stmt->columnUint64(nameToIdx["LAST_FSEQ"]);
+}
+
 } // namespace catalogue
 } // namespace cta
