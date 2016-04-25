@@ -21,11 +21,13 @@
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteStmt::SqliteStmt(const std::string &sql,
-  sqlite3_stmt *const stmt):
+SqliteStmt::SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt):
   m_sql(sql),
   m_stmt(stmt) {
   if(NULL == stmt) {
@@ -39,7 +41,7 @@ cta::catalogue::SqliteStmt::SqliteStmt(const std::string &sql,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteStmt::~SqliteStmt() throw() {
+SqliteStmt::~SqliteStmt() throw() {
   try {
     close(); // Idempotent close() method
   } catch(...) {
@@ -50,7 +52,7 @@ cta::catalogue::SqliteStmt::~SqliteStmt() throw() {
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteStmt::close() {
+void SqliteStmt::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   if(NULL != m_stmt) {
@@ -62,14 +64,14 @@ void cta::catalogue::SqliteStmt::close() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &cta::catalogue::SqliteStmt::getSql() const {
+const std::string &SqliteStmt::getSql() const {
   return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-sqlite3_stmt *cta::catalogue::SqliteStmt::get() const {
+sqlite3_stmt *SqliteStmt::get() const {
   if(NULL == m_stmt) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed: NULL pointer";
@@ -81,8 +83,7 @@ sqlite3_stmt *cta::catalogue::SqliteStmt::get() const {
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
-  const uint64_t paramValue) {
+void SqliteStmt::bind(const std::string &paramName, const uint64_t paramValue) {
   const int paramIdx = getParamIndex(paramName);
   const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx,
     (sqlite3_int64)paramValue);
@@ -96,8 +97,7 @@ void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
-  const std::string &paramValue) {
+void SqliteStmt::bind(const std::string &paramName, const std::string &paramValue) {
   const int paramIdx = getParamIndex(paramName);
   const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1,
     SQLITE_TRANSIENT);
@@ -111,7 +111,7 @@ void cta::catalogue::SqliteStmt::bind(const std::string &paramName,
 //------------------------------------------------------------------------------
 // step
 //------------------------------------------------------------------------------
-int cta::catalogue::SqliteStmt::step() {
+int SqliteStmt::step() {
   const int stepRc = sqlite3_step(m_stmt);
 
   // Return the result if sqlite_3_step was sucessful
@@ -129,8 +129,7 @@ int cta::catalogue::SqliteStmt::step() {
 //------------------------------------------------------------------------------
 // getColumnNameToIdx
 //------------------------------------------------------------------------------
-cta::catalogue::ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx()
-  const {
+ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx() const {
   ColumnNameToIdx nameToIdx;
 
   try {
@@ -157,7 +156,7 @@ cta::catalogue::ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx()
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-std::string cta::catalogue::SqliteStmt::columnText(const int colIdx) {
+std::string SqliteStmt::columnText(const int colIdx) {
   const char *const colValue = (const char *)sqlite3_column_text(m_stmt,
     colIdx);
   if(NULL == colValue) {
@@ -170,14 +169,14 @@ std::string cta::catalogue::SqliteStmt::columnText(const int colIdx) {
 //------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
-uint64_t cta::catalogue::SqliteStmt::columnUint64(const int colIdx) {
+uint64_t SqliteStmt::columnUint64(const int colIdx) {
   return (uint64_t)sqlite3_column_int64(m_stmt, colIdx);
 } 
 
 //------------------------------------------------------------------------------
 // getParamIndex
 //------------------------------------------------------------------------------
-int cta::catalogue::SqliteStmt::getParamIndex(const std::string &paramName) {
+int SqliteStmt::getParamIndex(const std::string &paramName) {
   const int index = sqlite3_bind_parameter_index(m_stmt, paramName.c_str());
   if(0 == index) {
     exception::Exception ex;
@@ -188,3 +187,6 @@ int cta::catalogue::SqliteStmt::getParamIndex(const std::string &paramName) {
   }
   return index;
 }
+
+} // namespace catalogue
+} // namespace cta

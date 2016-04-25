@@ -21,10 +21,13 @@
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace catalogue {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteConn::SqliteConn(const std::string &filename) {
+SqliteConn::SqliteConn(const std::string &filename) {
   m_conn = NULL;
   if(sqlite3_open(filename.c_str(), &m_conn)) {
     sqlite3_close(m_conn);
@@ -38,14 +41,14 @@ cta::catalogue::SqliteConn::SqliteConn(const std::string &filename) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteConn::~SqliteConn() throw() {
+SqliteConn::~SqliteConn() throw() {
   close();
 }
 
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteConn::close() {
+void SqliteConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   if(m_conn != NULL) {
@@ -57,7 +60,7 @@ void cta::catalogue::SqliteConn::close() {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-sqlite3 *cta::catalogue::SqliteConn::get() const {
+sqlite3 *SqliteConn::get() const {
   if(NULL == m_conn) {
     throw exception::Exception("Failed to get SQLite database connection"
       ": NULL pointer");
@@ -68,7 +71,7 @@ sqlite3 *cta::catalogue::SqliteConn::get() const {
 //------------------------------------------------------------------------------
 // enableForeignKeys
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteConn::enableForeignKeys() {
+void SqliteConn::enableForeignKeys() {
   try {
     execNonQuery("PRAGMA foreign_keys = ON;");
   } catch(exception::Exception &ne) {
@@ -82,7 +85,7 @@ void cta::catalogue::SqliteConn::enableForeignKeys() {
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void cta::catalogue::SqliteConn::execNonQuery(const std::string &sql) {
+void SqliteConn::execNonQuery(const std::string &sql) {
   int (*callback)(void*,int,char**,char**) = NULL;
   void *callbackArg = NULL;
   char *errMsg = NULL;
@@ -98,7 +101,7 @@ void cta::catalogue::SqliteConn::execNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-cta::catalogue::SqliteStmt *cta::catalogue::SqliteConn::createStmt(
+SqliteStmt *SqliteConn::createStmt(
   const std::string &sql) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -117,3 +120,6 @@ cta::catalogue::SqliteStmt *cta::catalogue::SqliteConn::createStmt(
 
   return new SqliteStmt(sql, stmt);
 }
+
+} // namespace catalogue
+} // namespace cta

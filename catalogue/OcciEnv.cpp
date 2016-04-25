@@ -66,7 +66,7 @@ oracle::occi::Environment *OcciEnv::operator->() const {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-cta::catalogue::OcciConn *OcciEnv::createConn(
+OcciConn *OcciEnv::createConn(
   const char *const username,
   const char *const password,
   const char *const database) {

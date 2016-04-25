@@ -249,6 +249,11 @@ protected:
    */
   uint64_t createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
 
+  /**
+   * Creates the specified tape file.
+   */
+  void createTapeFile();
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue
