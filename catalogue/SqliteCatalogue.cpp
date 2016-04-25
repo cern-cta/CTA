@@ -19,6 +19,7 @@
 #include "catalogue/SqliteCatalogue.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteStmt.hpp"
+#include "common/dataStructures/TapeFileLocation.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <memory>
@@ -1538,11 +1539,12 @@ void SqliteCatalogue::modifyDedicationComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // createArchiveFile
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::createArchiveFile(
+void SqliteCatalogue::createArchiveFile(
   const common::dataStructures::ArchiveFile &archiveFile) {
   const time_t now = time(NULL);
   const char *const sql =
     "INSERT INTO ARCHIVE_FILE("
+      "ARCHIVE_FILE_ID,"
       "DISK_INSTANCE,"
       "DISK_FILE_ID,"
       "FILE_SIZE,"
@@ -1558,6 +1560,7 @@ uint64_t SqliteCatalogue::createArchiveFile(
       "RECOVERY_BLOB)"
 
     "VALUES("
+      ":ARCHIVE_FILE_ID,"
       ":DISK_INSTANCE,"
       ":DISK_FILE_ID,"
       ":FILE_SIZE,"
@@ -1573,6 +1576,7 @@ uint64_t SqliteCatalogue::createArchiveFile(
       ":RECOVERY_BLOB);";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
+  stmt->bind(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
   stmt->bind(":DISK_INSTANCE", archiveFile.diskInstance);
   stmt->bind(":DISK_FILE_ID", archiveFile.diskFileID);
   stmt->bind(":FILE_SIZE", archiveFile.fileSize);
@@ -1588,15 +1592,12 @@ uint64_t SqliteCatalogue::createArchiveFile(
   stmt->bind(":RECOVERY_BLOB", archiveFile.drData.drBlob);
 
   stmt->step();
-
-  return getArchiveFileId(archiveFile.diskInstance, archiveFile.diskFileID);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getArchiveFileId(
-  const std::string &diskInstance, const std::string &diskFileId) const {
+uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const {
   const char *const sql =
     "SELECT "
       "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
@@ -1974,7 +1975,62 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName)
 //------------------------------------------------------------------------------
 // createTapeFile
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createTapeFile() {
+void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFileLocation &tapeFile,
+  const uint64_t archiveFileId) {
+  const time_t now = time(NULL);
+  const char *const sql =
+    "INSERT INTO TAPE_FILE("
+      "VID,"
+      "FSEQ,"
+      "BLOCK_ID,"
+      "CREATION_TIME,"
+      "ARCHIVE_FILE_ID)"
+    "VALUES("
+      ":VID,"
+      ":FSEQ,"
+      ":BLOCK_ID,"
+      ":CREATION_TIME,"
+      ":ARCHIVE_FILE_ID);";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+
+  stmt->bind(":VID", tapeFile.vid);
+  stmt->bind(":FSEQ", tapeFile.fSeq);
+  stmt->bind(":BLOCK_ID", tapeFile.blockId);
+  stmt->bind(":CREATION_TIME", now);
+  stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
+
+  stmt->step();
+}
+
+//------------------------------------------------------------------------------
+// getTapeFiles
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::TapeFileLocation> SqliteCatalogue::getTapeFiles() const {
+  std::list<cta::common::dataStructures::TapeFileLocation> files;
+  const char *const sql =
+    "SELECT "
+      "VID           AS VID,"
+      "FSEQ          AS FSEQ,"
+      "BLOCK_ID      AS BLOCK_ID,"
+      "CREATION_TIME AS CREATION_TIME "
+    "FROM TAPE_FILE;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::TapeFileLocation file;
+
+    file.vid = stmt->columnText(nameToIdx["VID"]);
+    file.fSeq = stmt->columnUint64(nameToIdx["FSEQ"]);
+    file.blockId = stmt->columnUint64(nameToIdx["BLOCK_ID"]);
+    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
+
+    files.push_back(file);
+  }
+
+  return files;
 }
 
 } // namespace catalogue

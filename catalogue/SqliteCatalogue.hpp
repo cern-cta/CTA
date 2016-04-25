@@ -19,8 +19,22 @@
 #pragma once
 
 #include <atomic>
+#include <common/archiveNS/TapeFileLocation.hpp>
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/SqliteConn.hpp"
+
+namespace cta {
+namespace common {
+namespace dataStructures {
+
+/**
+ * Forward declaration.
+ */
+class TapeFileLocation;
+
+} // namespace dataStructures
+} // namespace catalogue
+} // namespace cta
 
 namespace cta {
 namespace catalogue {
@@ -240,19 +254,27 @@ protected:
   uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
 
   /**
-   * Creates the specified archive file without any tape copies and returns its
-   * unique identifier.
+   * Creates the specified archive file without any tape copies.
    *
-   * @param archiveFile The archive file to be created.  Note that the
-   * archiveFileID attribute of the file shall be ignored.
-   * @return The unique identifier of the newly created archive file.
+   * @param archiveFile The archive file to be created.
    */
-  uint64_t createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
+  void createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
 
   /**
    * Creates the specified tape file.
+   *
+   * @param tapeFile The tape file.
+   * @param archiveFileId The identifier of the archive file of which the tape
+   * file is a copy.
    */
-  void createTapeFile();
+  void createTapeFile(const common::dataStructures::TapeFileLocation &tapeFile, const uint64_t archiveFileId);
+
+  /**
+   * Returns the list of all the tape files in the catalogue.
+   *
+   * @return The list of all the tape files in the catalogue.
+   */
+  std::list<common::dataStructures::TapeFileLocation> getTapeFiles() const;
 
 }; // class SqliteCatalogue
 

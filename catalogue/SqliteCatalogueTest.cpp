@@ -836,7 +836,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
     "create storage class");
 
   common::dataStructures::ArchiveFile file;
-  file.archiveFileID = 1234; // Should be ignored
+  file.archiveFileID = 1234;
   file.diskFileID = "EOS_file_ID";
   file.fileSize = 1;
   file.checksumType = "checksum_type";
@@ -857,6 +857,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
 
   const common::dataStructures::ArchiveFile frontFile = files.front();
 
+  ASSERT_EQ(file.archiveFileID, frontFile.archiveFileID);
   ASSERT_EQ(file.diskFileID, frontFile.diskFileID);
   ASSERT_EQ(file.fileSize, frontFile.fileSize);
   ASSERT_EQ(file.checksumType, frontFile.checksumType);
@@ -1008,6 +1009,72 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archive_priority);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archive_minRequestAge);
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+
+  common::dataStructures::ArchiveFile file;
+  file.archiveFileID = 1234;
+  file.diskFileID = "EOS_file_ID";
+  file.fileSize = 1;
+  file.checksumType = "checksum_type";
+  file.checksumValue = "cheskum_value";
+  file.storageClass = storageClassName;
+
+  file.diskInstance = "recovery_instance";
+  file.drData.drPath = "recovery_path";
+  file.drData.drOwner = "recovery_owner";
+  file.drData.drGroup = "recovery_group";
+  file.drData.drBlob = "recovery_blob";
+
+  catalogue.createArchiveFile(file);
+
+  std::list<common::dataStructures::ArchiveFile> files;
+  files = catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "");
+  ASSERT_EQ(1, files.size());
+
+  const common::dataStructures::ArchiveFile frontFile = files.front();
+
+  ASSERT_EQ(file.archiveFileID, frontFile.archiveFileID);
+  ASSERT_EQ(file.diskFileID, frontFile.diskFileID);
+  ASSERT_EQ(file.fileSize, frontFile.fileSize);
+  ASSERT_EQ(file.checksumType, frontFile.checksumType);
+  ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
+  ASSERT_EQ(file.storageClass, frontFile.storageClass);
+
+  ASSERT_EQ(file.diskInstance, frontFile.diskInstance);
+  ASSERT_EQ(file.drData.drPath, frontFile.drData.drPath);
+  ASSERT_EQ(file.drData.drOwner, frontFile.drData.drOwner);
+  ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
+  ASSERT_EQ(file.drData.drBlob, frontFile.drData.drBlob);
+
+  ASSERT_TRUE(catalogue.getTapeFiles().empty());
+
+  common::dataStructures::TapeFileLocation tapeFile;
+  tapeFile.vid = "VID";
+  tapeFile.fSeq = 5678;
+  tapeFile.blockId = 9012;
+
+  const uint64_t archiveFileId = 1234;
+
+  catalogue.createTapeFile(tapeFile, archiveFileId);
+
+  const std::list<common::dataStructures::TapeFileLocation> tapeFiles = catalogue.getTapeFiles();
+
+  ASSERT_EQ(1, tapeFiles.size());
+  ASSERT_EQ(tapeFile.vid, tapeFiles.front().vid);
+  ASSERT_EQ(tapeFile.fSeq, tapeFiles.front().fSeq);
+  ASSERT_EQ(tapeFile.blockId, tapeFiles.front().blockId);
 }
 
 } // namespace unitTests

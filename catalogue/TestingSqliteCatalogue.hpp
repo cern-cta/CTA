@@ -38,6 +38,8 @@ public:
   }
 
   using SqliteCatalogue::createArchiveFile;
+  using SqliteCatalogue::createTapeFile;
+  using SqliteCatalogue::getTapeFiles;
 
 }; // class TestingSqliteCatalogue
 
