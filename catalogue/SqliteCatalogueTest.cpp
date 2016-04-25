@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/TestingSqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
@@ -66,7 +66,7 @@ protected:
 TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getAdminUsers().empty());
   ASSERT_TRUE(catalogue.getAdminHosts().empty());
@@ -114,7 +114,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createBootstrapAdminAndHostNoAuth) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getAdminUsers().empty());
 
@@ -191,7 +191,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
@@ -223,7 +223,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminUser_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getAdminHosts().empty());
 
@@ -304,7 +304,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
@@ -338,7 +338,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_false) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_FALSE(catalogue.isAdmin(m_cliSI));
 }
@@ -346,7 +346,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_false) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_true) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   catalogue.createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
@@ -357,7 +357,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_true) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getStorageClasses().empty());
 
@@ -390,7 +390,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
@@ -403,7 +403,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createStorageClass_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool) {
   using namespace cta;
       
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getTapePools().empty());
       
@@ -438,7 +438,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_twice) {
   using namespace cta;
   
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
   
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -454,7 +454,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapePool_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRoute) {
   using namespace cta;
       
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getArchiveRoutes().empty());
 
@@ -505,7 +505,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRoute) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice) {
   using namespace cta;
   
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
@@ -530,7 +530,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveRouteTapePool_same_twice)
 TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
   using namespace cta;
       
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getLogicalLibraries().empty());
       
@@ -560,7 +560,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
   using namespace cta;
   
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
@@ -573,7 +573,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createLogicalLibrary_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createTape) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getTapes("", "", "", "", "", "", "", "").empty());
 
@@ -621,7 +621,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
@@ -645,7 +645,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
@@ -699,7 +699,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
@@ -735,7 +735,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 
@@ -790,7 +790,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 
@@ -826,7 +826,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
 
@@ -873,7 +873,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
 
@@ -902,7 +902,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createArchiveFile_same_twice) {
 TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   using namespace cta;
 
-  catalogue::SqliteCatalogue catalogue;
+  catalogue::TestingSqliteCatalogue catalogue;
 
   ASSERT_TRUE(catalogue.getRequesters().empty());
 

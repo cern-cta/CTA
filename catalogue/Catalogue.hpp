@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include <string>
 #include <map>
-#include <tuple>
 
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
