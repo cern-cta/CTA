@@ -51,7 +51,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/SecurityIdentity.cpp
   dataStructures/StorageClass.cpp
   dataStructures/Tape.cpp
-  dataStructures/TapeFileLocation.cpp
+  dataStructures/TapeFile.cpp
   dataStructures/TapeLog.cpp
   dataStructures/TapePool.cpp
   dataStructures/TestSourceType.cpp

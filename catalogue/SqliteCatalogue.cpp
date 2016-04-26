@@ -19,7 +19,7 @@
 #include "catalogue/SqliteCatalogue.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteStmt.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <memory>
@@ -1756,7 +1756,7 @@ void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 void SqliteCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-  const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) {
+  const cta::common::dataStructures::TapeFile &tapeFileLocation) {
 }
 
 //------------------------------------------------------------------------------
@@ -1975,7 +1975,7 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName)
 //------------------------------------------------------------------------------
 // createTapeFile
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFileLocation &tapeFile,
+void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
   const time_t now = time(NULL);
   const char *const sql =
@@ -2005,8 +2005,8 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFileLocat
 //------------------------------------------------------------------------------
 // getTapeFiles
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeFileLocation> SqliteCatalogue::getTapeFiles() const {
-  std::list<cta::common::dataStructures::TapeFileLocation> files;
+std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() const {
+  std::list<cta::common::dataStructures::TapeFile> files;
   const char *const sql =
     "SELECT "
       "VID           AS VID,"
@@ -2020,7 +2020,7 @@ std::list<common::dataStructures::TapeFileLocation> SqliteCatalogue::getTapeFile
     if(nameToIdx.empty()) {
       nameToIdx = stmt->getColumnNameToIdx();
     }
-    common::dataStructures::TapeFileLocation file;
+    common::dataStructures::TapeFile file;
 
     file.vid = stmt->columnText(nameToIdx["VID"]);
     file.fSeq = stmt->columnUint64(nameToIdx["FSEQ"]);

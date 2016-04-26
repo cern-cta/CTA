@@ -31,23 +31,23 @@ namespace dataStructures {
 /**
  * This struct holds location information of a specific tape file 
  */
-struct TapeFileLocation {
+struct TapeFile {
 
-  TapeFileLocation();
+  TapeFile();
 
-  bool operator==(const TapeFileLocation &rhs) const;
+  bool operator==(const TapeFile &rhs) const;
 
-  bool operator!=(const TapeFileLocation &rhs) const;
+  bool operator!=(const TapeFile &rhs) const;
 
   std::string vid;
   uint64_t fSeq;
   uint64_t blockId;
   time_t creationTime;
 
-}; // struct TapeFileLocation
+}; // struct TapeFile
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
 
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFileLocation &obj);
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFile &obj);

@@ -52,7 +52,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
@@ -207,7 +207,7 @@ public:
    */
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-    const cta::common::dataStructures::TapeFileLocation &tapeFileLocation) = 0;
+    const cta::common::dataStructures::TapeFile &tapeFileLocation) = 0;
   
   virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 

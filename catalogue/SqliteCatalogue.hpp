@@ -31,7 +31,7 @@ namespace dataStructures {
 /**
  * Forward declaration.
  */
-class TapeFileLocation;
+class TapeFile;
 
 } // namespace dataStructures
 } // namespace catalogue
@@ -167,7 +167,7 @@ public:
    */
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-    const cta::common::dataStructures::TapeFileLocation &tapeFileLocation);
+    const cta::common::dataStructures::TapeFile &tapeFileLocation);
 
   /**
    * Prepares the catalogue for a new archive file and returns the information
@@ -273,14 +273,14 @@ protected:
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
-  void createTapeFile(const common::dataStructures::TapeFileLocation &tapeFile, const uint64_t archiveFileId);
+  void createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 
   /**
    * Returns the list of all the tape files in the catalogue.
    *
    * @return The list of all the tape files in the catalogue.
    */
-  std::list<common::dataStructures::TapeFileLocation> getTapeFiles() const;
+  std::list<common::dataStructures::TapeFile> getTapeFiles() const;
 
   /**
    * Sets the last FSeq of the specified tape to the specified value.

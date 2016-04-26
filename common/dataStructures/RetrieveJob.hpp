@@ -24,7 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 
 namespace cta {
 namespace common {
@@ -43,7 +43,7 @@ struct RetrieveJob {
   bool operator!=(const RetrieveJob &rhs) const;
 
   cta::common::dataStructures::RetrieveRequest request;
-  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFileLocation>> tapeCopies;
+  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFile>> tapeCopies;
 
 }; // struct RetrieveJob
 

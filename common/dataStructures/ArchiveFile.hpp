@@ -24,7 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/DRData.hpp"
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 
 namespace cta {
 namespace common {
@@ -49,7 +49,7 @@ struct ArchiveFile {
   std::string checksumValue;
   std::string storageClass;
   cta::common::dataStructures::DRData drData;
-  std::map<uint64_t,cta::common::dataStructures::TapeFileLocation> tapeCopies;
+  std::map<uint64_t,cta::common::dataStructures::TapeFile> tapeCopies;
   time_t creationTime;
   time_t reconciliationTime;
 

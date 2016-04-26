@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::TapeFileLocation::TapeFileLocation():
+cta::common::dataStructures::TapeFile::TapeFile():
   fSeq(0),
   blockId(0),
   creationTime(0) {}
@@ -31,7 +31,7 @@ cta::common::dataStructures::TapeFileLocation::TapeFileLocation():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeFileLocation::operator==(const TapeFileLocation &rhs) const {
+bool cta::common::dataStructures::TapeFile::operator==(const TapeFile &rhs) const {
   return vid==rhs.vid
       && fSeq==rhs.fSeq
       && blockId==rhs.blockId
@@ -41,14 +41,14 @@ bool cta::common::dataStructures::TapeFileLocation::operator==(const TapeFileLoc
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeFileLocation::operator!=(const TapeFileLocation &rhs) const {
+bool cta::common::dataStructures::TapeFile::operator!=(const TapeFile &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFileLocation &obj) {
+std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFile &obj) {
   os << "(vid=" << obj.vid
      << " fSeq=" << obj.fSeq
      << " blockId=" << obj.blockId

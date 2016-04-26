@@ -1060,7 +1060,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
 
   ASSERT_TRUE(catalogue.getTapeFiles().empty());
 
-  common::dataStructures::TapeFileLocation tapeFile;
+  common::dataStructures::TapeFile tapeFile;
   tapeFile.vid = "VID";
   tapeFile.fSeq = 5678;
   tapeFile.blockId = 9012;
@@ -1069,7 +1069,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
 
   catalogue.createTapeFile(tapeFile, archiveFileId);
 
-  const std::list<common::dataStructures::TapeFileLocation> tapeFiles = catalogue.getTapeFiles();
+  const std::list<common::dataStructures::TapeFile> tapeFiles = catalogue.getTapeFiles();
 
   ASSERT_EQ(1, tapeFiles.size());
   ASSERT_EQ(tapeFile.vid, tapeFiles.front().vid);
