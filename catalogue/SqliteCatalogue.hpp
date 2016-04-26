@@ -298,6 +298,16 @@ protected:
    */
   uint64_t getTapeLastFSeq(const std::string &vid) const;
 
+  /**
+   * Returns the specified archive file or an empty list if it does not exist.
+   * Please note that the list with contain either 0 or 1 element.
+   *
+   * @param archiveFileId The identifier of the archive file.
+   * @return A single element list containing the file if the file exists else
+   * an empty list.
+   */
+  std::list<common::dataStructures::ArchiveFile> getArchiveFile(const uint64_t archiveFileId) const;
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue

@@ -2077,5 +2077,69 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
   return stmt->columnUint64(nameToIdx["LAST_FSEQ"]);
 }
 
+//------------------------------------------------------------------------------
+// getArchiveFile
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
+  // The list of files should either end up empty or only contain one element
+  std::list<cta::common::dataStructures::ArchiveFile> files;
+  const char *const sql =
+    "SELECT "
+      "ARCHIVE_FILE_ID     AS ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE       AS DISK_INSTANCE,"
+      "DISK_FILE_ID        AS DISK_FILE_ID,"
+      "FILE_SIZE           AS FILE_SIZE,"
+      "CHECKSUM_TYPE       AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE      AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME  AS STORAGE_CLASS_NAME,"
+      "CREATION_TIME       AS CREATION_TIME,"
+      "RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+
+      "RECOVERY_PATH       AS RECOVERY_PATH,"
+      "RECOVERY_OWNER      AS RECOVERY_OWNER,"
+      "RECOVERY_GROUP      AS RECOVERY_GROUP,"
+      "RECOVERY_BLOB       AS RECOVERY_BLOB "
+
+    "FROM ARCHIVE_FILE WHERE "
+      "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
+
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+    }
+    common::dataStructures::ArchiveFile file;
+
+    file.archiveFileID = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
+    file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
+    file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
+    file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
+    file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+
+    file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file.drData.drPath = stmt->columnText(nameToIdx["RECOVERY_PATH"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["RECOVERY_OWNER"]);
+    file.drData.drGroup = stmt->columnText(nameToIdx["RECOVERY_GROUP"]);
+    file.drData.drBlob = stmt->columnText(nameToIdx["RECOVERY_BLOB"]);
+
+    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
+    file.reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
+
+    files.push_back(file);
+  }
+
+  if(1 < files.size()) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed: Found more than one archive file with same unique identifier"
+      ": archiveFileId=" << archiveFileId;
+    throw ex;
+  }
+
+  return files;
+}
+
 } // namespace catalogue
 } // namespace cta

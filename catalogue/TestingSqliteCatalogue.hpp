@@ -39,9 +39,10 @@ public:
 
   using SqliteCatalogue::createArchiveFile;
   using SqliteCatalogue::createTapeFile;
+  using SqliteCatalogue::getArchiveFile;
   using SqliteCatalogue::getTapeFiles;
-  using SqliteCatalogue::setTapeLastFSeq;
   using SqliteCatalogue::getTapeLastFSeq;
+  using SqliteCatalogue::setTapeLastFSeq;
 
 }; // class TestingSqliteCatalogue
 
