@@ -65,6 +65,8 @@ private:
   RunPartStatus runKillManagement();
   /// subpart for run(): handle forking
   RunPartStatus runForkManagement();
+  /// subpart for run(): handle SIGCHLD
+  RunPartStatus runSigChildManagement();
   /// subpart for run(): handle events and timeouts. Does not return any value.
   void runEventLoop();
 };

@@ -35,6 +35,7 @@ public:
   SubprocessHandler::ProcessingStatus fork() override;
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
   void kill() override;
+  SubprocessHandler::ProcessingStatus processSigChild() override;
   void prepareForFork() override;
   SubprocessHandler::ProcessingStatus processEvent() override;
   SubprocessHandler::ProcessingStatus processTimeout() override;
@@ -49,6 +50,7 @@ private:
   int m_sigFd;
   bool m_shutdownRequested=false;
   bool m_shutdownAcknowlegded=false;
+  bool m_sigChildPending=false;
   std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
           decltype(m_shutdownStartTime)::max();
   std::chrono::nanoseconds m_timeoutDuration=

@@ -55,8 +55,11 @@ SignalHandler::~SignalHandler() {
 }
 
 SubprocessHandler::ProcessingStatus SignalHandler::getInitialStatus() {
-  // On initiation, we expect nothing but signals, i.e. default status.
-  return SubprocessHandler::ProcessingStatus();
+  // On initiation, we expect nothing but signals, i.e. default status
+  // except we are considered shutdown at all times.
+  SubprocessHandler::ProcessingStatus ret;
+  ret.shutdownComplete = true;
+  return ret;
 }
 
 SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
@@ -98,7 +101,9 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     }
     break;
   case SIGCHLD:
-    // TODO: add SIGCHLD handling.
+    // We will request the processing of sigchild until it is acknowledged (by receiving
+    // it ourselves)
+    m_sigChildPending = true;
     break;
   }
   SubprocessHandler::ProcessingStatus ret;
@@ -106,6 +111,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   // for it
   ret.shutdownRequested = m_shutdownRequested && !m_shutdownAcknowlegded;
   ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+  ret.sigChild = m_sigChildPending;
   ret.shutdownComplete = true; // We are always ready to leave.
   return ret;
 }
@@ -122,18 +128,33 @@ SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
   // If we reach timeout, it means it's time to kill child processes
   SubprocessHandler::ProcessingStatus ret;
   ret.killRequested = true;
+  ret.shutdownComplete = true;
   return ret;
 }
+
+SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
+  // Our sigchild is now acknowledged
+  m_sigChildPending = false;
+  SubprocessHandler::ProcessingStatus ret;
+  ret.shutdownRequested = m_shutdownRequested;
+  ret.shutdownComplete = true;
+  if (m_shutdownRequested) {
+    ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+  }
+  return ret;
+}
+
 
 SubprocessHandler::ProcessingStatus SignalHandler::shutdown() {
   // We received (back) our own shutdown: consider it acknowledged
   m_shutdownAcknowlegded = true;
   SubprocessHandler::ProcessingStatus ret;
-  ret.shutdownComplete = m_shutdownAcknowlegded;
+  ret.shutdownComplete = true;
   // if we ever asked for shutdown, we have a timeout
   if (m_shutdownRequested) {
     ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
   }
+  ret.sigChild = m_sigChildPending;
   return ret;
 }
 

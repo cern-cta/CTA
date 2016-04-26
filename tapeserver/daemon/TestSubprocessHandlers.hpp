@@ -60,9 +60,12 @@ public:
     echo.counter = 666;
     std::string echoString;
     echoString.append((char*)&echo, sizeof(echo));
-    m_socketPair.send(echoString);
+    try {
+      m_socketPair.send(echoString);
+    } catch (...) {}
     // Register the file descriptor.
     m_processManager.addFile(m_socketPair.getFdForAccess(cta::server::SocketPair::Side::child), this);
+    m_socketPairRegistered=true;
     ret.nextTimeout = m_subprocessLaunchTime + m_timeoutLength;
     ret.forkState = SubprocessHandler::ForkState::parent;
     return ret;
@@ -73,6 +76,7 @@ public:
   }
   
   int runChild() override {
+    if (m_crashingChild) return EXIT_FAILURE;
     // Just wait forever for an echo request
     EchoRequestRepy echo;
     memset(&echo, '\0', sizeof(echo));
@@ -91,6 +95,18 @@ public:
     m_socketPair.send(echoString);
     return EXIT_SUCCESS;
   }
+  
+  SubprocessHandler::ProcessingStatus processSigChild() override {
+    // Check out child process's status. If the child process is still around,
+    // waitpid will return 0. Non zero if process completed (and status needs to 
+    // be picked up) and -1 if the process is entirely gone.
+    if (!m_subprocessComplete && ::waitpid(m_childProcess, nullptr, WNOHANG)) {
+      m_subprocessComplete = true;
+    }
+    SubprocessHandler::ProcessingStatus ret;
+    ret.shutdownComplete = m_subprocessComplete;
+    return ret;
+  }
 
   void kill() override {
     // Send kill signal to child.
@@ -99,31 +115,35 @@ public:
 
   SubprocessHandler::ProcessingStatus processEvent() override {
     // We expect to read from the child through the socket pair.
-    auto echoString = m_socketPair.receive();
-    EchoRequestRepy echo;
-    auto size=echoString.copy((char*)&echo, sizeof(echo));
-    if (size!=sizeof(echo)) {
-      std::stringstream err;
-      err << "In EchoSubprocess::processEvent(): unexpected size for echo: "
-          "expected: " << sizeof(echo) << " received: " << size;
-      throw cta::exception::Exception(err.str());
-    }
-    if (echo.magic != 0xdeadbeef) {
-      std::stringstream err;
-      err << "In EchoSubprocess::processEvent(): unexpected magic number: "
-          "expected: " << std::hex << 0xdeadbeef << " received: " << echo.magic;
-      throw cta::exception::Exception(err.str());
-    }
-    if (echo.counter != 667) {
-      std::stringstream err;
-      err << "In EchoSubprocess::processEvent(): unexpected counter: "
-          "expected: " << 667 << " received: " << echo.counter;
-      throw cta::exception::Exception(err.str());
-    }
+    try {
+      auto echoString = m_socketPair.receive();
+      EchoRequestRepy echo;
+      auto size=echoString.copy((char*)&echo, sizeof(echo));
+      if (size!=sizeof(echo)) {
+        std::stringstream err;
+        err << "In EchoSubprocess::processEvent(): unexpected size for echo: "
+            "expected: " << sizeof(echo) << " received: " << size;
+        throw cta::exception::Exception(err.str());
+      }
+      if (echo.magic != 0xdeadbeef) {
+        std::stringstream err;
+        err << "In EchoSubprocess::processEvent(): unexpected magic number: "
+            "expected: " << std::hex << 0xdeadbeef << " received: " << echo.magic;
+        throw cta::exception::Exception(err.str());
+      }
+      if (echo.counter != 667) {
+        std::stringstream err;
+        err << "In EchoSubprocess::processEvent(): unexpected counter: "
+            "expected: " << 667 << " received: " << echo.counter;
+        throw cta::exception::Exception(err.str());
+      }
+      m_echoReceived = true;
+      ::waitpid(m_childProcess, nullptr, 0);
+      m_subprocessComplete = true;
+    } catch (...) {}
     SubprocessHandler::ProcessingStatus ret;
-    ::waitpid(m_childProcess, nullptr, 0);
-    m_processManager.removeFile(m_socketPair.getFdForAccess(cta::server::SocketPair::Side::child));
-    ret.shutdownComplete = true;
+    unregisterSocketpair();
+    ret.shutdownComplete = m_subprocessComplete;
     return ret;
   }
   
@@ -142,6 +162,7 @@ public:
 private:
   typedef cta::tape::daemon::SubprocessHandler SubprocessHandler;
   cta::server::SocketPair m_socketPair;
+  bool m_socketPairRegistered=false;
   cta::tape::daemon::ProcessManager & m_processManager;
   bool m_subprocesLaunched=false;
   bool m_subprocessComplete=false;
@@ -152,6 +173,19 @@ private:
     uint32_t magic = 0xdeadbeef;
     uint32_t counter = 0;
   };
+  
+  void unregisterSocketpair() {
+    if (m_socketPairRegistered) {
+      m_processManager.removeFile(m_socketPair.getFdForAccess(cta::server::SocketPair::Side::child));
+      m_socketPairRegistered=false;
+    }
+  }
+  
+  bool m_crashingChild=false;
+  bool m_echoReceived=false;
+public:
+  void setCrashingShild(bool doCrash) { m_crashingChild = doCrash; }
+  bool echoReceived() { return m_echoReceived; }
 };
 
 /** A simple subprocess recording status changes and reporting them */
@@ -161,7 +195,9 @@ public:
   virtual ~ProbeSubprocess() {}
   
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
-    return SubprocessHandler::ProcessingStatus();
+    SubprocessHandler::ProcessingStatus ret;
+    ret.shutdownComplete = m_shutdownAsked && m_honorShutdown;
+    return ret;
   }
   
   void prepareForFork() override { }
@@ -181,6 +217,14 @@ public:
     m_killAsked = true;
   }
   
+  SubprocessHandler::ProcessingStatus processSigChild() override {
+    m_sigChildReceived = true;
+    SubprocessHandler::ProcessingStatus ret;
+    ret.shutdownComplete = m_shutdownAsked && m_honorShutdown;
+    return ret;
+  }
+
+  
   SubprocessHandler::ProcessingStatus processEvent() override {
     throw cta::exception::Exception("In ProbeSubprocess::processEvent(): should not have been called");
   }
@@ -197,12 +241,15 @@ public:
   
   bool sawKill() { return m_killAsked; }
   
+  bool sawSigChild() { return m_sigChildReceived; }
+  
   void setHonorShutdown(bool doHonor) { m_honorShutdown = doHonor; }
   
 private:
   bool m_shutdownAsked=false;
   bool m_killAsked=false;
   bool m_honorShutdown=true;
+  bool m_sigChildReceived=false;
 };
 
 }

@@ -25,12 +25,17 @@ namespace unitTests {
 
 TEST(cta_Daemon, ProcessManager) {
   cta::tape::daemon::ProcessManager pm;
-  std::unique_ptr<EchoSubprocess> es(new EchoSubprocess("Echo subprocess", pm));
-  // downcast pointer
-  std::unique_ptr<cta::tape::daemon::SubprocessHandler> sph = std::move(es);
-  pm.addHandler(std::move(sph));
-  pm.run();
+  {
+    std::unique_ptr<EchoSubprocess> es(new EchoSubprocess("Echo subprocess", pm));
+    // downcast pointer
+    std::unique_ptr<cta::tape::daemon::SubprocessHandler> sph = std::move(es);
+    pm.addHandler(std::move(sph));
+    pm.run();
+  }
+  EchoSubprocess & es = dynamic_cast<EchoSubprocess&>(pm.at("Echo subprocess"));
+  ASSERT_TRUE(es.echoReceived());
 }
+
 
 // TODO: process manager managing several handlers.
 

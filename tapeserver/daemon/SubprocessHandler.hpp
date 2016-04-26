@@ -69,6 +69,7 @@ public:
     bool shutdownComplete = false;  ///< Did this process complete its shutdown?
     bool killRequested = false;     ///< Does the process handler require killing all processes
     bool forkRequested = false;     ///< Does the procerss handler request to fork a new process?
+    bool sigChild = false;           ///< Did the process see a SIGCHLD?
     /// Instant of the next timeout for the process handler. Defaults to end of times.
     std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
     /// A extra state variable used in the return value of fork()
@@ -80,6 +81,8 @@ public:
   virtual ProcessingStatus processEvent() = 0;
   /** Function called to process timeouts. */
   virtual ProcessingStatus processTimeout() = 0;
+  /** Function called when SIGCHLD is received */
+  virtual ProcessingStatus processSigChild() = 0;
   /** Instructs the handler to initiate a clean shutdown and update its status */
   virtual ProcessingStatus shutdown() = 0;
   /** Instructs the handler to kill its subprocess immediately. The process 

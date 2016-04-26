@@ -65,6 +65,9 @@ int ProcessManager::run() {
   // The first statuses were updated at subprocess registration, so we do
   // not need an initialization.
   while(true) {
+    // Manage sigChild requests
+    auto sigChildStatus = runSigChildManagement();
+    if (sigChildStatus.doExit) return sigChildStatus.exitCode;
     // Manage shutdown requests and completions.
     auto shutdownStatus = runShutdownManagement();
     if (shutdownStatus.doExit) return shutdownStatus.exitCode;
@@ -155,6 +158,27 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
   return RunPartStatus();
 }
 
+ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
+  // If any process received sigChild, we signal it to all processes
+  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), 
+      m_subprocessHandlers.cend(), 
+      [](const SubprocessAndStatus &i){return i.status.sigChild;});
+  if  (sigChild) {
+    for(auto & sp: m_subprocessHandlers) { sp.status = sp.handler->processSigChild(); }
+  }
+  // If all processes completed their shutdown, we can exit
+  bool shutdownComplete=true;
+  for (auto & sp: m_subprocessHandlers) { shutdownComplete &= sp.status.shutdownComplete; }
+  if (shutdownComplete) {
+    RunPartStatus ret;
+    ret.doExit = true;
+    ret.exitCode = EXIT_SUCCESS;
+    return ret;
+  }
+  return RunPartStatus();
+}
+
+
 void ProcessManager::runEventLoop() {
   // Compute the next timeout. Epoll expects milliseconds.
   std::chrono::time_point<std::chrono::steady_clock> nextTimeout = decltype(nextTimeout)::max();
@@ -165,7 +189,7 @@ void ProcessManager::runEventLoop() {
       sp.status = sp.handler->processTimeout();
       // If the handler requested kill, shutdown or fork, we can go back to handlers, 
       // which means we exit from the loop here.
-      if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested) return;
+      if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.sigChild) return;
       // If new timeout is still in the past, we overlook it
       // TODO: log
       if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
