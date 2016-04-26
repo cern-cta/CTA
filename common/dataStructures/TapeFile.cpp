@@ -26,6 +26,8 @@
 cta::common::dataStructures::TapeFile::TapeFile():
   fSeq(0),
   blockId(0),
+  compressedSize(0),
+  copyNb(0),
   creationTime(0) {}
 
 //------------------------------------------------------------------------------

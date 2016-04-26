@@ -1985,6 +1985,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
       "VID,"
       "FSEQ,"
       "BLOCK_ID,"
+      "COMPRESSED_SIZE,"
       "COPY_NB,"
       "CREATION_TIME,"
       "ARCHIVE_FILE_ID)"
@@ -1992,6 +1993,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
       ":VID,"
       ":FSEQ,"
       ":BLOCK_ID,"
+      ":COMPRESSED_SIZE,"
       ":COPY_NB,"
       ":CREATION_TIME,"
       ":ARCHIVE_FILE_ID);";
@@ -2000,6 +2002,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
   stmt->bind(":VID", tapeFile.vid);
   stmt->bind(":FSEQ", tapeFile.fSeq);
   stmt->bind(":BLOCK_ID", tapeFile.blockId);
+  stmt->bind(":COMPRESSED_SIZE", tapeFile.compressedSize);
   stmt->bind(":COPY_NB", tapeFile.copyNb);
   stmt->bind(":CREATION_TIME", now);
   stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
@@ -2014,11 +2017,12 @@ std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() cons
   std::list<cta::common::dataStructures::TapeFile> files;
   const char *const sql =
     "SELECT "
-      "VID           AS VID,"
-      "FSEQ          AS FSEQ,"
-      "BLOCK_ID      AS BLOCK_ID,"
-      "COPY_NB       AS COPY_NB,"
-      "CREATION_TIME AS CREATION_TIME "
+      "VID             AS VID,"
+      "FSEQ            AS FSEQ,"
+      "BLOCK_ID        AS BLOCK_ID,"
+      "COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+      "COPY_NB         AS COPY_NB,"
+      "CREATION_TIME   AS CREATION_TIME "
     "FROM TAPE_FILE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   ColumnNameToIdx nameToIdx;
@@ -2031,6 +2035,7 @@ std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() cons
     file.vid = stmt->columnText(nameToIdx["VID"]);
     file.fSeq = stmt->columnUint64(nameToIdx["FSEQ"]);
     file.blockId = stmt->columnUint64(nameToIdx["BLOCK_ID"]);
+    file.compressedSize = stmt->columnUint64(nameToIdx["COMPRESSED_SIZE"]);
     file.copyNb = stmt->columnUint64(nameToIdx["COPY_NB"]);
     file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
 
