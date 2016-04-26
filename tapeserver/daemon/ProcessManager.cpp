@@ -33,6 +33,11 @@ ProcessManager::ProcessManager() {
 }
 
 ProcessManager::~ProcessManager() {
+  // First, make sure we delete all handlers. We cannot rely on the implicit 
+  // destructor of m_subprocessHandlers. The handlers will unregister themselves
+  // from epoll at that point.
+  m_subprocessHandlers.clear();
+  // We can now close the epoll fd.
   ::close(m_epollFd);
 }
 
@@ -75,6 +80,15 @@ int ProcessManager::run() {
   }
 }
 
+SubprocessHandler& ProcessManager::at(const std::string& name) {
+  for (auto & sp: m_subprocessHandlers) {
+    if (name == sp.handler.get()->index) {
+      return *sp.handler.get();
+    }
+  }
+  throw cta::exception::Exception("In ProcessManager::at(): entry not found");
+}
+
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
@@ -82,7 +96,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       m_subprocessHandlers.cend(), 
       [](const SubprocessAndStatus &i){return i.status.shutdownRequested;});
   if (anyAskedShutdown) {
-    for(auto & sp: m_subprocessHandlers) { sp.handler->shutdown(); }
+    for(auto & sp: m_subprocessHandlers) { sp.status = sp.handler->shutdown(); }
   }
   // If all processes completed their shutdown, we can exit
   bool shutdownComplete=true;
@@ -149,6 +163,9 @@ void ProcessManager::runEventLoop() {
     // come with a new status)
     if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
       sp.status = sp.handler->processTimeout();
+      // If the handler requested kill, shutdown or fork, we can go back to handlers, 
+      // which means we exit from the loop here.
+      if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested) return;
       // If new timeout is still in the past, we overlook it
       // TODO: log
       if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {

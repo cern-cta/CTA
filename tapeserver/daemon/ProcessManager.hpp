@@ -43,6 +43,8 @@ public:
    * the whole process. Implements the loop described in the header file for
    * SubprocessHandler class. */
   int run();
+  /** Get reference to a given handler */
+  SubprocessHandler & at(const std::string & name);
 private:
   int m_epollFd;   ///< The file descriptor for the epoll interface
   /// Structure allowing the follow up of subprocesses

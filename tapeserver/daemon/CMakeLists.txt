@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 add_library(ctatapedaemon
   CommandLineParams.cpp
   ConfigurationFile.cpp
+  SignalHandler.cpp
   SourcedParameter.cpp
   SubprocessHandler.cpp
   ProcessManager.cpp
@@ -17,7 +18,8 @@ add_library(ctadaemonunittests SHARED
   TpconfigTests.cpp)
 
 add_library(ctadaemonunittests-multiprocess SHARED
-  ProcessManagerTests.cpp)
+  ProcessManagerTests.cpp
+  SignalHandlerTests.cpp)
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon

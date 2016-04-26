@@ -80,8 +80,8 @@ public:
   virtual ProcessingStatus processEvent() = 0;
   /** Function called to process timeouts. */
   virtual ProcessingStatus processTimeout() = 0;
-  /** Instructs the handler to initiate a clean shutdown */
-  virtual void shutdown() = 0;
+  /** Instructs the handler to initiate a clean shutdown and update its status */
+  virtual ProcessingStatus shutdown() = 0;
   /** Instructs the handler to kill its subprocess immediately. The process 
    * should be gone upon return. */
   virtual void kill() = 0;
