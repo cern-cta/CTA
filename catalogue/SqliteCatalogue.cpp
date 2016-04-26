@@ -1756,9 +1756,9 @@ void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 void SqliteCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::ArchiveRequest &archiveRequest,
+  const uint64_t archiveFileId,
   const cta::common::dataStructures::TapeFile &tapeFileLocation) {
 
-  const uint64_t archiveFileId = 0;
   std::list<common::dataStructures::ArchiveFile> files = getArchiveFile(archiveFileId);
 }
 

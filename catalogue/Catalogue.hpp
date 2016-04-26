@@ -202,12 +202,14 @@ public:
   /**
    * Notifies the catalogue that a file has been written to tape.
    *
-   * @param archiveRequest The identifier of the archive file.
-   *
+   * @param archiveRequest The request to archive the file.
+   * @param archiveFileId The identifier of the archive file.
+   * @param tapeFile The file written to tape.
    */
   virtual void fileWrittenToTape(
     const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-    const cta::common::dataStructures::TapeFile &tapeFileLocation) = 0;
+    const uint64_t archiveFileId,
+    const cta::common::dataStructures::TapeFile &tapeFile) = 0;
   
   virtual cta::common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 
