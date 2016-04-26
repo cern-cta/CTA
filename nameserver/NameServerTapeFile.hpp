@@ -43,12 +43,6 @@ struct NameServerTapeFile {
   bool operator==(const NameServerTapeFile &rhs) const;
 
   /**
-   * The copy number of the tape file where copy numbers start from 1.
-   * Please note that copy number 0 is an invalid copy number.
-   */
-  uint16_t copyNb;
-
-  /**
    * The location of the file on tape.
    */
   TapeFileLocation tapeFileLocation;

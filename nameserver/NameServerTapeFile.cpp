@@ -22,7 +22,6 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::NameServerTapeFile::NameServerTapeFile():
-  copyNb(0),
   size(0),
   compressedSize(0) {
 }
@@ -31,8 +30,7 @@ cta::NameServerTapeFile::NameServerTapeFile():
 // operator==
 //------------------------------------------------------------------------------
 bool cta::NameServerTapeFile::operator==(const NameServerTapeFile &rhs) const {
-  return copyNb           == rhs.copyNb           &&
-         tapeFileLocation == rhs.tapeFileLocation &&
+  return tapeFileLocation == rhs.tapeFileLocation &&
          size             == rhs.size             &&
          compressedSize   == rhs.compressedSize   &&
          checksum         == rhs.checksum;
