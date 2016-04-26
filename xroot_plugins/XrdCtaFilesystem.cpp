@@ -256,7 +256,6 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
-  m_ns(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath")),
   m_remoteStorage(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort")), 
   m_backend(cta::objectstore::BackendFactory::createBackend(
     castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))

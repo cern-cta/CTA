@@ -557,7 +557,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     zmqContext.get());
   
   cta::EosNS eosNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort"));
-  cta::MockNameServer mockNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "MockNameServerPath"));
+  cta::MockNameServer mockNs;
   std::unique_ptr<cta::objectstore::Backend> backend(
     cta::objectstore::BackendFactory::createBackend(
       castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))

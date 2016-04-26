@@ -64,8 +64,6 @@ set (COMMON_LIB_SRC_FILES
   admin/AdminHost.cpp
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
-  archiveNS/ArchiveDirEntry.cpp
-  archiveNS/ArchiveDirIterator.cpp
   archiveNS/ArchiveFile.cpp
   archiveNS/ArchiveFileStatus.cpp
   archiveNS/StorageClass.cpp

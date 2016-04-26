@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveDirIterator.hpp"
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
 #include "common/SecurityIdentity.hpp"
@@ -45,55 +44,9 @@ class MockNameServer: public NameServer {
 public:
 
   /**
-   * Constructor.
-   */
-  MockNameServer();
-  
-  /**
-   * Constructor for an already existing mock name server temporary directory
-   *
-   * @param path The already existing mock name server temporary directory
-   */
-  MockNameServer(const std::string &path);
-
-  /**
    * Destructor.
    */
-  ~MockNameServer() throw();  
-
-  void createStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies); 
-
-  void createStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies, const uint32_t id);
-
-  void deleteStorageClass(const SecurityIdentity &cliIdentity, const std::string &name);
-
-  void updateStorageClass(const SecurityIdentity &cliIdentity, const std::string &name, const uint16_t nbCopies);
-  
-  void setDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path, const std::string &storageClassName);
-  
-  void clearDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path);
-  
-  std::string getDirStorageClass(const SecurityIdentity &cliIdentity, const std::string &path) const;
-  
-  void createFile(const SecurityIdentity &cliIdentity, const std::string &path, const mode_t mode, const Checksum & checkcum, const uint64_t size);
-
-  void setOwner(const SecurityIdentity &cliIdentity, const std::string &path, const UserIdentity &owner);
-
-  UserIdentity getOwner(const SecurityIdentity &cliIdentity, const std::string &path) const;
-  
-  void createDir(const SecurityIdentity &cliIdentity, const std::string &path, const mode_t mode);
-  
-  void deleteFile(const SecurityIdentity &cliIdentity, const std::string &path);
-  
-  void deleteDir(const SecurityIdentity &cliIdentity, const std::string &path);
-  
-  std::unique_ptr<common::archiveNS::ArchiveFileStatus> statFile(const SecurityIdentity &cliIdentity, const std::string &path) const;
-  
-  common::archiveNS::ArchiveDirIterator getDirContents(const SecurityIdentity &cliIdentity, const std::string &path) const;
-  
-  std::string getVidOfFile(const SecurityIdentity &cliIdentity, const std::string &path, const uint16_t copyNb) const;
-  
-  void assertStorageClassIsNotInUse(const SecurityIdentity &cliIdentity, const std::string &storageClass, const std::string &path) const;
+  ~MockNameServer();
 
   /**
    * Add the specified tape file entry to the archive namespace.
@@ -106,110 +59,6 @@ public:
     const SecurityIdentity &cliIdentity,
     const std::string &path,
     const NameServerTapeFile &tapeFile);
-
-  /**
-   * Gets the tape entries from the archive namespace corresponding the archive
-   * with the specified path.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the archive file.
-   * @return The tape file entries.
-   */
-  std::list<NameServerTapeFile> getTapeFiles(
-    const SecurityIdentity &cliIdentity,
-    const std::string &path) const;
-  
-  /**
-   * Delete the specified tape file entry from the archive namespace.
-   *
-   * @param requester The identity of the requester.
-   * @param path The absolute path of the archive file.
-   * @param copyNb The tape copy to delete.
-   */
-  virtual void deleteTapeFile(
-    const SecurityIdentity &cliIdentity,
-    const std::string &path,
-    const uint16_t copyNb);
-
-private:
-  
-  /**
-   * Converts a NameServerTapeFile to a string to be used as an extended attribute
-   * 
-   * @param tapeFile The NameServerTapeFile object
-   * @return the converted string
-   */
-  std::string fromNameServerTapeFileToString(const cta::NameServerTapeFile &tapeFile) const;
-  
-  /**
-   * Converts a string (the value of an extended attribute) to a NameServerTapeFile
-   * 
-   * @param xAttributeString The value of an extended attribute
-   * @return the NameServerTapeFile object resulting from the conversion
-   */
-  cta::NameServerTapeFile fromStringToNameServerTapeFile(const std::string &xAttributeString) const;
-
-  std::string m_fsDir;
-  
-  void assertBasePathAccessible() const;
-  
-  void assertFsDirExists(const std::string &path) const;
-  
-  void assertFsFileExists(const std::string &path) const;
-  
-  void assertChecksumOrSetIfMissing(const std::string &path, const std::string &checksum);
-  
-  void assertFsPathDoesNotExist(const std::string &path) const;
-  
-  std::list<cta::common::archiveNS::ArchiveDirEntry> getDirEntries(const SecurityIdentity &cliIdentity, const std::string &path) const;
-
-  /**
-   * Throws an exception if the specified user is not the owner of the
-   * specified namespace entry.
-   *
-   * @param requester The identity of the requester.
-   * @param user The user.
-   * @param path The absolute path of the namespace entry.
-   */
-  void assertIsOwner(const SecurityIdentity &cliIdentity, const UserIdentity &user, const std::string &path) const;
-
-  /**
-   * Returns the directory entry corresponding to the specified path.
-   *
-   * @param requester The identity of the requester.
-   * @param The absolute path of the namespace entry.
-   */
-  common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
-    const SecurityIdentity &cliIdentity,
-    const std::string &path) const;
-
-  /**
-   * Returns the directory entry corresponding to the specified path and stat()
-   * result.
-   *
-   * @param requester The identity of the requester.
-   * @param The absolute path of the namespace entry.
-   * @param statResult The result of running stat().
-   */
-  common::archiveNS::ArchiveDirEntry getArchiveDirEntry(
-    const SecurityIdentity &cliIdentity,
-    const std::string &path,
-    const struct stat statResult) const;
-  
-  /**
-   * Returns the next integer to be used as the file ID of a new file
-   */
-  uint64_t getNextFileID();
-  
-  /**
-   * Mutex to serialize access to the file system modification functions
-   */
-  std::mutex m_mutex;
-  
-  /**
-   * Flag that determines whether the base path of the mock name server needs to be deleted by the destructor
-   */
-  bool m_deleteOnExit;
 
 }; // class MockNameServer
 
