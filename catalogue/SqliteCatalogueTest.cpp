@@ -1062,6 +1062,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
 
   common::dataStructures::TapeFile tapeFile;
   tapeFile.vid = "VID";
+  tapeFile.copyNb = 1;
   tapeFile.fSeq = 5678;
   tapeFile.blockId = 9012;
 
@@ -1073,6 +1074,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile) {
 
   ASSERT_EQ(1, tapeFiles.size());
   ASSERT_EQ(tapeFile.vid, tapeFiles.front().vid);
+  ASSERT_EQ(tapeFile.copyNb, tapeFiles.front().copyNb);
   ASSERT_EQ(tapeFile.fSeq, tapeFiles.front().fSeq);
   ASSERT_EQ(tapeFile.blockId, tapeFiles.front().blockId);
 }
