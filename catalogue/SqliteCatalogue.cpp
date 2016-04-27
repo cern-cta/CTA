@@ -1548,7 +1548,7 @@ void SqliteCatalogue::createArchiveFile(
       "DISK_INSTANCE,"
       "DISK_FILE_ID,"
       "DISK_FILE_PATH,"
-      "DISK_FILE_OWNER,"
+      "DISK_FILE_USER,"
       "DISK_FILE_GROUP,"
       "DISK_FILE_RECOVERY_BLOB,"
       "FILE_SIZE,"
@@ -1562,7 +1562,7 @@ void SqliteCatalogue::createArchiveFile(
       ":DISK_INSTANCE,"
       ":DISK_FILE_ID,"
       ":DISK_FILE_PATH,"
-      ":DISK_FILE_OWNER,"
+      ":DISK_FILE_USER,"
       ":DISK_FILE_GROUP,"
       ":DISK_FILE_RECOVERY_BLOB,"
       ":FILE_SIZE,"
@@ -1577,7 +1577,7 @@ void SqliteCatalogue::createArchiveFile(
   stmt->bind(":DISK_INSTANCE", archiveFile.diskInstance);
   stmt->bind(":DISK_FILE_ID", archiveFile.diskFileID);
   stmt->bind(":DISK_FILE_PATH", archiveFile.drData.drPath);
-  stmt->bind(":DISK_FILE_OWNER", archiveFile.drData.drOwner);
+  stmt->bind(":DISK_FILE_USER", archiveFile.drData.drOwner);
   stmt->bind(":DISK_FILE_GROUP",  archiveFile.drData.drGroup);
   stmt->bind(":DISK_FILE_RECOVERY_BLOB", archiveFile.drData.drBlob);
   stmt->bind(":FILE_SIZE", archiveFile.fileSize);
@@ -1637,7 +1637,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
       "DISK_INSTANCE           AS DISK_INSTANCE,"
       "DISK_FILE_ID            AS DISK_FILE_ID,"
       "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_OWNER         AS DISK_FILE_OWNER,"
+      "DISK_FILE_USER          AS DISK_FILE_USER,"
       "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
       "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
       "FILE_SIZE               AS FILE_SIZE,"
@@ -1659,7 +1659,7 @@ std::list<cta::common::dataStructures::ArchiveFile>
     file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
     file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_OWNER"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
     file.drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
@@ -1693,7 +1693,7 @@ cta::common::dataStructures::ArchiveFile SqliteCatalogue::
       "DISK_INSTANCE           AS DISK_INSTANCE,"
       "DISK_FILE_ID            AS DISK_FILE_ID,"
       "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_OWNER         AS DISK_FILE_OWNER,"
+      "DISK_FILE_USER          AS DISK_FILE_USER,"
       "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
       "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
       "FILE_SIZE               AS FILE_SIZE,"
@@ -1721,7 +1721,7 @@ cta::common::dataStructures::ArchiveFile SqliteCatalogue::
     file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
     file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_OWNER"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
     file.drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
@@ -2094,7 +2094,7 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(c
       "DISK_INSTANCE           AS DISK_INSTANCE,"
       "DISK_FILE_ID            AS DISK_FILE_ID,"
       "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_OWNER         AS DISK_FILE_OWNER,"
+      "DISK_FILE_USER          AS DISK_FILE_USER,"
       "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
       "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
       "FILE_SIZE               AS FILE_SIZE,"
@@ -2119,7 +2119,7 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(c
     file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
     file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
     file.drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_OWNER"]);
+    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
     file.drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
     file.drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
     file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
