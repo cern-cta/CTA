@@ -47,7 +47,7 @@ void ProcessManager::addHandler(std::unique_ptr<SubprocessHandler>&& handler) {
   m_subprocessHandlers.back().status = m_subprocessHandlers.back().handler->getInitialStatus();
   log::ScopedParamContainer params(m_logContext);
   params.add("SubprocessName", m_subprocessHandlers.back().handler->index);
-  m_logContext.log(log::INFO, "Adding handler for subprocess handler");
+  m_logContext.log(log::INFO, "Adding handler for subprocess");
 }
 
 void ProcessManager::addFile(int fd, SubprocessHandler* sh) {
