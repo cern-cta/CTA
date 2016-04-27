@@ -20,6 +20,7 @@
 #include "catalogue/SqliteConn.hpp"
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -122,7 +123,7 @@ int SqliteStmt::step() {
   // Throw an appropriate exception
   exception::Exception ex;
   ex.getMessage() << __FUNCTION__ << " failed: " << Sqlite::rcToStr(stepRc) <<
-    ": For SQL statement " << m_sql;
+    ": For SQL statement " << utils::singleSpaceString(m_sql);
   throw ex;
 }
 
@@ -145,7 +146,7 @@ ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx() const {
     }
   } catch(exception::Exception &ne) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: For SQL statement " << m_sql
+    ex.getMessage() << __FUNCTION__ << " failed: For SQL statement " << utils::singleSpaceString(m_sql)
       << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -182,7 +183,7 @@ int SqliteStmt::getParamIndex(const std::string &paramName) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed"
       ": Bind parameter " << paramName << " not found in SQL statement " <<
-      m_sql;
+      utils::singleSpaceString(m_sql);
     throw ex;
   }
   return index;

@@ -20,6 +20,7 @@
 #include "catalogue/SqliteConn.hpp"
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -92,7 +93,7 @@ void SqliteConn::execNonQuery(const std::string &sql) {
   if(SQLITE_OK != sqlite3_exec(m_conn, sql.c_str(), callback, callbackArg,
     &errMsg)) {
     exception::Exception ex;
-    ex.getMessage() << "Failed to execute non-query: " << sql << ": " << errMsg;
+    ex.getMessage() << "Failed to execute non-query: " << utils::singleSpaceString(sql) << ": " << errMsg;
     sqlite3_free(errMsg);
     throw ex;
   }
@@ -113,7 +114,7 @@ SqliteStmt *SqliteConn::createStmt(
     sqlite3_finalize(stmt);
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed"
-      ": Failed to prepare SQL statement " << sql << ": " <<
+      ": Failed to prepare SQL statement " << utils::singleSpaceString(sql) << ": " <<
       sqlite3_errmsg(m_conn);
     throw ex;
   }

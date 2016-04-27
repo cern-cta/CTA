@@ -254,6 +254,58 @@ std::string cta::utils::trimString(const std::string &s) throw() {
   return std::string(it1, it2);
 }
 
+//------------------------------------------------------------------------------
+// singleSpaceString
+//------------------------------------------------------------------------------
+std::string cta::utils::singleSpaceString(const std::string &str) throw() {
+  bool inWhitespace = false;
+  bool strContainsNonWhiteSpace = false;
+
+  // Output string stream used to construct the result
+  std::ostringstream result;
+
+  // For each character in the original string
+  for(std::string::const_iterator itor = str.begin(); itor != str.end();
+    itor++) {
+
+    // If the character is a space or a tab
+    if(*itor == ' ' || *itor == '\t') {
+
+      // Remember we are in whitespace
+      inWhitespace = true;
+
+    // Else the character is not a space or a tab
+    } else {
+
+      // If we are leaving whitespace
+      if(inWhitespace) {
+
+        // Remember we have left whitespace
+        inWhitespace = false;
+
+        // Remember str contains non-whitespace
+        strContainsNonWhiteSpace = true;
+
+        // Insert a single space into the output string stream
+        result << " ";
+      }
+
+      // Insert the character into the output string stream
+      result << *itor;
+
+    }
+  }
+
+  // If str is not emtpy and does not contain any non-whitespace characters
+  // then nothing has been written to the result stream, therefore write a
+  // single space
+  if(!str.empty() && !strContainsNonWhiteSpace) {
+    result << " ";
+  }
+
+  return result.str();
+}
+
 //-----------------------------------------------------------------------------
 // generateUuid
 //-----------------------------------------------------------------------------
