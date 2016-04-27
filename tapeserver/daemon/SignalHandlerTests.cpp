@@ -20,13 +20,17 @@
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "TestSubprocessHandlers.hpp"
+#include "common/log/StringLogger.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace unitTests {
 using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
-  cta::tape::daemon::ProcessManager pm;
+  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::LogContext lc(dlog);
+  cta::tape::daemon::ProcessManager pm(lc);
   {
     // Add the signal handler to the manager
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
@@ -48,7 +52,9 @@ TEST(cta_Daemon, SignalHandlerShutdown) {
 }
 
 TEST(cta_Daemon, SignalHandlerKill) {
-  cta::tape::daemon::ProcessManager pm;
+  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::LogContext lc(dlog);
+  cta::tape::daemon::ProcessManager pm(lc);
   {
     // Add the signal handler to the manager
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
@@ -73,7 +79,9 @@ TEST(cta_Daemon, SignalHandlerKill) {
 }
 
 TEST(cta_Daemon, SignalHandlerSigChild) {
-  cta::tape::daemon::ProcessManager pm;
+  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::LogContext lc(dlog);
+  cta::tape::daemon::ProcessManager pm(lc);
   {
     // Add the signal handler to the manager
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));

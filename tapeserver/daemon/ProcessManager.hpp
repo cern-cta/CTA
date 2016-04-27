@@ -19,6 +19,7 @@
 #pragma once
 
 #include "SubprocessHandler.hpp"
+#include "common/log/LogContext.hpp"
 #include <memory>
 #include <list>
 
@@ -31,7 +32,7 @@ namespace daemon {
  */
 class ProcessManager {
 public:
-  ProcessManager();
+  ProcessManager(log::LogContext & log);
   ~ProcessManager();
   /** Function passing ownership of a subprocess handler to the manager. */
   void addHandler(std::unique_ptr<SubprocessHandler> && handler);
@@ -45,8 +46,11 @@ public:
   int run();
   /** Get reference to a given handler */
   SubprocessHandler & at(const std::string & name);
+  /** Get reference to the log context */
+  log::LogContext & logContext();
 private:
   int m_epollFd;   ///< The file descriptor for the epoll interface
+  log::LogContext & m_logContext; ///< The log context
   /// Structure allowing the follow up of subprocesses
   struct SubprocessAndStatus {
     SubprocessHandler::ProcessingStatus status;

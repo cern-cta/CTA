@@ -26,7 +26,7 @@ namespace cta {
 namespace tape {
 namespace daemon {
 
-ProcessManager::ProcessManager() {
+ProcessManager::ProcessManager(log::LogContext & log): m_logContext(log) {
   m_epollFd = ::epoll_create1(0);
   cta::exception::Errnum::throwOnMinusOne(m_epollFd,
       "In ProcessManager::ProcessManager(), failed to create an epoll file descriptor: ");
@@ -45,6 +45,9 @@ void ProcessManager::addHandler(std::unique_ptr<SubprocessHandler>&& handler) {
   m_subprocessHandlers.push_back(SubprocessAndStatus());
   m_subprocessHandlers.back().handler = std::move(handler);
   m_subprocessHandlers.back().status = m_subprocessHandlers.back().handler->getInitialStatus();
+  log::ScopedParamContainer params(m_logContext);
+  params.add("SubprocessName", m_subprocessHandlers.back().handler->index);
+  m_logContext.log(log::INFO, "Adding handler for subprocess handler");
 }
 
 void ProcessManager::addFile(int fd, SubprocessHandler* sh) {
@@ -60,7 +63,6 @@ void ProcessManager::removeFile(int fd) {
       "In ProcessManager::removeFile(), failed to ::epoll_ctl(EPOLL_CTL_DEL): ");
 }
 
-// TODO: add logging. add names to subprocesses
 int ProcessManager::run() {
   // The first statuses were updated at subprocess registration, so we do
   // not need an initialization.
@@ -92,19 +94,38 @@ SubprocessHandler& ProcessManager::at(const std::string& name) {
   throw cta::exception::Exception("In ProcessManager::at(): entry not found");
 }
 
+log::LogContext& ProcessManager::logContext() {
+  return m_logContext;
+}
+
+
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
   bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), 
       m_subprocessHandlers.cend(), 
-      [](const SubprocessAndStatus &i){return i.status.shutdownRequested;});
+      [&](const SubprocessAndStatus &i){
+        if (i.status.shutdownRequested) {
+          log::ScopedParamContainer params(m_logContext);
+          params.add("SubprocessName", i.handler->index);
+          m_logContext.log(log::INFO, "Subprocess requested shutdown");
+        }
+        return i.status.shutdownRequested;
+      });
   if (anyAskedShutdown) {
-    for(auto & sp: m_subprocessHandlers) { sp.status = sp.handler->shutdown(); }
+    for(auto & sp: m_subprocessHandlers) {
+      sp.status = sp.handler->shutdown();
+      log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", sp.handler->index)
+            .add("ShutdownComplete", sp.status.shutdownComplete);
+      m_logContext.log(log::INFO, "Signaled shutdown to subprocess handler");
+    }
   }
   // If all processes completed their shutdown, we can exit
   bool shutdownComplete=true;
   for (auto & sp: m_subprocessHandlers) { shutdownComplete &= sp.status.shutdownComplete; }
   if (shutdownComplete) {
+    m_logContext.log(log::INFO, "All subprocesses completed shutdown. Exiting.");
     RunPartStatus ret;
     ret.doExit = true;
     ret.exitCode = EXIT_SUCCESS;
@@ -117,9 +138,21 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
   bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), 
       m_subprocessHandlers.cend(), 
-      [](const SubprocessAndStatus &i){return i.status.killRequested;});
+      [&](const SubprocessAndStatus &i){
+        if (i.status.killRequested) {
+          log::ScopedParamContainer params(m_logContext);
+          params.add("SubprocessName", i.handler->index);
+          m_logContext.log(log::INFO, "Subprocess requested kill");
+        }
+        return i.status.killRequested;
+      });
   if (anyAskedKill) {
-    for(auto & sp: m_subprocessHandlers) { sp.handler->kill(); }
+    for(auto & sp: m_subprocessHandlers) { 
+      sp.handler->kill(); 
+      log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", sp.handler->index);
+      m_logContext.log(log::INFO, "Instructed handler to kill subprocess");
+    }
     RunPartStatus ret;
     ret.doExit = true;
     ret.exitCode = EXIT_SUCCESS;
@@ -133,14 +166,26 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
   // prepare all processes and handlers for the fork
   for(auto & sp: m_subprocessHandlers) {
     if(sp.status.forkRequested) {
+      {
+        log::ScopedParamContainer params(m_logContext);
+        params.add("SubprocessName", sp.handler->index);
+        m_logContext.log(log::INFO, "Subprocess handler requested forking");
+      }
       for (auto & sp2:m_subprocessHandlers) {
         sp2.handler->prepareForFork();
+        log::ScopedParamContainer params(m_logContext);
+        params.add("SubprocessName", sp2.handler->index);
+        m_logContext.log(log::INFO, "Subprocess handler prepared for forking");
       }
+      log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", sp.handler->index);
+      m_logContext.log(log::INFO, "Subprocess handler will fork");
       auto newStatus = sp.handler->fork();
       switch (newStatus.forkState) {
       case SubprocessHandler::ForkState::child:
         // TODO: cleanup other processes (needed?)
         // We are in the child side: run the subprocess and exit.
+        m_logContext.log(log::INFO, "In child process. Running child.");
         ::exit(sp.handler->runChild());
         break;
       case SubprocessHandler::ForkState::parent:
@@ -162,9 +207,21 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   // If any process received sigChild, we signal it to all processes
   bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), 
       m_subprocessHandlers.cend(), 
-      [](const SubprocessAndStatus &i){return i.status.sigChild;});
-  if  (sigChild) {
-    for(auto & sp: m_subprocessHandlers) { sp.status = sp.handler->processSigChild(); }
+      [&](const SubprocessAndStatus &i){
+        if (i.status.sigChild) {
+          log::ScopedParamContainer params(m_logContext);
+          params.add("SubprocessName", i.handler->index);
+          m_logContext.log(log::INFO, "Handler received SIGCHILD. Propagating to all handlers.");
+        }
+        return i.status.sigChild;
+      });
+  if (sigChild) {
+    for(auto & sp: m_subprocessHandlers) {
+      sp.status = sp.handler->processSigChild();
+      log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", sp.handler->index);
+      m_logContext.log(log::INFO, "Propagated SIGCHILD.");
+    }
   }
   // If all processes completed their shutdown, we can exit
   bool shutdownComplete=true;
@@ -191,7 +248,6 @@ void ProcessManager::runEventLoop() {
       // which means we exit from the loop here.
       if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.sigChild) return;
       // If new timeout is still in the past, we overlook it
-      // TODO: log
       if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
         continue;
       }

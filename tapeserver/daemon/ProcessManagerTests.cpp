@@ -20,11 +20,15 @@
 
 #include "ProcessManager.hpp"
 #include "TestSubprocessHandlers.hpp"
+#include "common/log/StringLogger.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace unitTests {
 
 TEST(cta_Daemon, ProcessManager) {
-  cta::tape::daemon::ProcessManager pm;
+  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::LogContext lc(dlog);
+  cta::tape::daemon::ProcessManager pm(lc);
   {
     std::unique_ptr<EchoSubprocess> es(new EchoSubprocess("Echo subprocess", pm));
     // downcast pointer
@@ -36,7 +40,6 @@ TEST(cta_Daemon, ProcessManager) {
   ASSERT_TRUE(es.echoReceived());
 }
 
-
-// TODO: process manager managing several handlers.
+// Bigger layouts are tested in specific handler's unit tests (like SignalHandler)
 
 } //namespace unitTests

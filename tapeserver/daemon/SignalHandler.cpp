@@ -19,6 +19,7 @@
 #include "SignalHandler.hpp"
 #include "ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/LogContext.hpp"
 #include <signal.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
@@ -76,6 +77,15 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
         "got=" << rc << " expected=" << sizeof(sigInf);
     throw cta::exception::Exception(err.str());
   }
+  // Prepare logging the signal
+  log::ScopedParamContainer params(m_processManager.logContext());
+  if (char * signalName = ::strsignal(sigInf.ssi_signo)) {
+    params.add("signal", signalName);
+  } else {
+    params.add("signal", sigInf.ssi_signo);
+  }
+  params.add("senderPID", sigInf.ssi_pid)
+     .add("senderUID", sigInf.ssi_uid);
   // Handle the signal
   switch (sigInf.ssi_signo) {
   case SIGHUP:
@@ -89,8 +99,11 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGPOLL:
   case SIGURG:
   case SIGVTALRM:
-    // TODO: Log ignored signal
+  {
+    
+    m_processManager.logContext().log(log::INFO, "In signal handler, ignoring signal");
     break;
+  }
   case SIGINT:
   case SIGTERM:
     // We will now require shutdown (if not already done)
@@ -98,12 +111,16 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     if (!m_shutdownRequested) {
       m_shutdownRequested=true;
       m_shutdownStartTime=std::chrono::steady_clock::now();
+      m_processManager.logContext().log(log::INFO, "In signal handler, initiating shutdown");
+    } else {
+      m_processManager.logContext().log(log::INFO, "In signal handler, shutdown already initiated: ignoring");
     }
     break;
   case SIGCHLD:
     // We will request the processing of sigchild until it is acknowledged (by receiving
     // it ourselves)
     m_sigChildPending = true;
+    m_processManager.logContext().log(log::INFO, "In signal handler, received SIGCHLD and propagations to other handlers");
     break;
   }
   SubprocessHandler::ProcessingStatus ret;
