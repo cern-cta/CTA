@@ -92,3 +92,11 @@ std::string cta::Checksum::str() const {
   }
   return oss.str();
 }
+
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &cta::operator<<(std::ostream &os, const Checksum &checksum) {
+  os << checksum.str();
+  return os;
+}

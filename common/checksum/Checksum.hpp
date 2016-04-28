@@ -18,9 +18,11 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
+
+#include <ostream>
 #include <sstream>
 #include <typeinfo>
-#include "common/exception/Exception.hpp"
 
 namespace cta {
 
@@ -142,5 +144,13 @@ private:
   std::string m_byteArray;
 
 }; // class Checksum
+
+/**
+ * Writes the specified Checksum object to the specified ooutput stream.
+ *
+ * @param os The output stream.
+ * @param checksum The checksum.
+ */
+std::ostream &operator<<(std::ostream &os, const Checksum &checksum);
 
 } // namespace cta

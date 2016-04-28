@@ -24,6 +24,7 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   ColumnNameToIdx.cpp
   DbLogin.cpp
+  TapeFileWritten.cpp
   OcciConn.cpp
   OcciEnv.cpp
   OcciRset.cpp
