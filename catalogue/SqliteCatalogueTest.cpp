@@ -1247,7 +1247,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
   }
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, file1WrittenToTape) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
   using namespace cta;
 
   catalogue::TestingSqliteCatalogue catalogue;
@@ -1342,6 +1342,28 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, file1WrittenToTape) {
   file1Written.copyNb               = 1;
   catalogue.fileWrittenToTape(file1Written);
 
+  {
+    std::unique_ptr<common::dataStructures::ArchiveFile> retrievedFile = catalogue.getArchiveFile(archiveFileId);
+    ASSERT_TRUE(NULL != retrievedFile.get());
+
+    ASSERT_EQ(file.archiveFileID, retrievedFile->archiveFileID);
+    ASSERT_EQ(file.diskFileID, retrievedFile->diskFileID);
+    ASSERT_EQ(file.fileSize, retrievedFile->fileSize);
+    ASSERT_EQ(file.checksumType, retrievedFile->checksumType);
+    ASSERT_EQ(file.checksumValue, retrievedFile->checksumValue);
+    ASSERT_EQ(file.storageClass, retrievedFile->storageClass);
+
+    ASSERT_EQ(file.diskInstance, retrievedFile->diskInstance);
+    ASSERT_EQ(file.drData.drPath, retrievedFile->drData.drPath);
+    ASSERT_EQ(file.drData.drOwner, retrievedFile->drData.drOwner);
+    ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
+    ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
+
+    ASSERT_EQ(1, retrievedFile->tapeCopies.size());
+
+    ASSERT_EQ(1, catalogue.getTapeFiles().size());
+  }
+
   catalogue::TapeFileWritten file2Written;
   file2Written.archiveFileId        = file.archiveFileID;
   file2Written.diskInstance         = "PUBLIC";
@@ -1354,11 +1376,33 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, file1WrittenToTape) {
   file2Written.checksum             = Checksum(std::string("adler32:0X") + file.checksumValue);
   file2Written.storageClassName     = file.storageClass;
   file2Written.vid                  = "VID123";
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4321;
+  file2Written.fSeq                 = 2;
+  file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
-  file2Written.copyNb               =2 ;
+  file2Written.copyNb               = 2;
   catalogue.fileWrittenToTape(file2Written);
+
+  {
+    std::unique_ptr<common::dataStructures::ArchiveFile> retrievedFile = catalogue.getArchiveFile(archiveFileId);
+    ASSERT_TRUE(NULL != retrievedFile.get());
+
+    ASSERT_EQ(file.archiveFileID, retrievedFile->archiveFileID);
+    ASSERT_EQ(file.diskFileID, retrievedFile->diskFileID);
+    ASSERT_EQ(file.fileSize, retrievedFile->fileSize);
+    ASSERT_EQ(file.checksumType, retrievedFile->checksumType);
+    ASSERT_EQ(file.checksumValue, retrievedFile->checksumValue);
+    ASSERT_EQ(file.storageClass, retrievedFile->storageClass);
+
+    ASSERT_EQ(file.diskInstance, retrievedFile->diskInstance);
+    ASSERT_EQ(file.drData.drPath, retrievedFile->drData.drPath);
+    ASSERT_EQ(file.drData.drOwner, retrievedFile->drData.drOwner);
+    ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
+    ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
+
+    ASSERT_EQ(2, retrievedFile->tapeCopies.size());
+
+    ASSERT_EQ(2, catalogue.getTapeFiles().size());
+  }
 }
 
 } // namespace unitTests

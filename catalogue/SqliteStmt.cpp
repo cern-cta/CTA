@@ -158,13 +158,20 @@ ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx() const {
 // columnText
 //------------------------------------------------------------------------------
 std::string SqliteStmt::columnText(const int colIdx) {
-  const char *const colValue = (const char *)sqlite3_column_text(m_stmt,
-    colIdx);
+  const char *const colValue = (const char *)sqlite3_column_text(m_stmt, colIdx);
   if(NULL == colValue) {
     return "";
   } else  {
     return colValue;
   }
+}
+
+//------------------------------------------------------------------------------
+// columnTextIsNull
+//------------------------------------------------------------------------------
+bool SqliteStmt::columnTextIsNull(const int colIdx) {
+  const char *const colValue = (const char *)sqlite3_column_text(m_stmt, colIdx);
+  return NULL == colValue;
 }
 
 //------------------------------------------------------------------------------

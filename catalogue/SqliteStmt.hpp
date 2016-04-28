@@ -110,15 +110,23 @@ public:
    * If sqlite3_column_text() returns NULL then this method returns an empty
    * string.
    *
-   * @param The index of the column.
+   * @param colIdx The index of the column.
    * @return The value of the specified column.
    */
   std::string columnText(const int colIdx);
 
   /**
+   * Returns true if the specified text column contains a null value.
+   *
+   * @param colIdx The index of the column.
+   * @return True if the column value is null.
+   */
+  bool columnTextIsNull(const int colIdx);
+
+  /**
    * Convenience wrapper around sqlite3_column_int64().
    *
-   * @param The index of the column.
+   * @param colIdx The index of the column.
    * @return The value of the specified column.
    */
   uint64_t columnUint64(const int colIdx);

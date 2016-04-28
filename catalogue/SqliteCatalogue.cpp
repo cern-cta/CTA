@@ -1707,13 +1707,37 @@ void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdent
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
+  const time_t now = time(NULL);
   std::lock_guard<std::mutex> m_lock(m_mutex);
 
-  std::unique_ptr<common::dataStructures::ArchiveFile> file = getArchiveFile(event.archiveFileId);
-  // If the archive file exists
-  if(NULL != file.get()) {
+  std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(event.archiveFileId);
 
+  // If the archive file does not already exist then create one
+  if(NULL == archiveFile.get()) {
+    archiveFile.reset(new common::dataStructures::ArchiveFile);
+    archiveFile->archiveFileID = event.archiveFileId;
+    archiveFile->diskFileID = event.diskFileId;
+    archiveFile->diskInstance = event.diskInstance;
+    archiveFile->fileSize = event.size;
+    archiveFile->checksumType = "HELP";
+    archiveFile->checksumValue = "HELP";
+    archiveFile->storageClass = event.storageClassName;
+    archiveFile->drData.drBlob = event.diskFileRecoveryBlob;
+    archiveFile->drData.drGroup = event.diskFileGroup;
+    archiveFile->drData.drOwner = event.diskFileUser;
+    archiveFile->drData.drPath = event.diskFilePath;
+    createArchiveFile(*archiveFile);
   }
+
+  // Create the tape file
+  common::dataStructures::TapeFile tapeFile;
+  tapeFile.vid            = event.vid;
+  tapeFile.fSeq           = event.fSeq;
+  tapeFile.blockId        = event.blockId;
+  tapeFile.compressedSize = event.compressedSize;
+  tapeFile.copyNb         = event.copyNb;
+  tapeFile.creationTime   = now;
+  createTapeFile(tapeFile, event.archiveFileId);
 }
 
 //------------------------------------------------------------------------------
@@ -2051,41 +2075,65 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
   std::unique_ptr<cta::common::dataStructures::ArchiveFile> file;
   const char *const sql =
     "SELECT "
-      "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE           AS DISK_INSTANCE,"
-      "DISK_FILE_ID            AS DISK_FILE_ID,"
-      "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_USER          AS DISK_FILE_USER,"
-      "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
-      "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-      "FILE_SIZE               AS FILE_SIZE,"
-      "CHECKSUM_TYPE           AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE          AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME      AS STORAGE_CLASS_NAME,"
-      "CREATION_TIME           AS CREATION_TIME,"
-      "RECONCILIATION_TIME     AS RECONCILIATION_TIME "
-    "FROM ARCHIVE_FILE WHERE "
-      "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE                AS DISK_INSTANCE,"
+      "DISK_FILE_ID                 AS DISK_FILE_ID,"
+      "DISK_FILE_PATH               AS DISK_FILE_PATH,"
+      "DISK_FILE_USER               AS DISK_FILE_USER,"
+      "DISK_FILE_GROUP              AS DISK_FILE_GROUP,"
+      "DISK_FILE_RECOVERY_BLOB      AS DISK_FILE_RECOVERY_BLOB,"
+      "FILE_SIZE                    AS FILE_SIZE,"
+      "CHECKSUM_TYPE                AS CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE               AS CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME           AS STORAGE_CLASS_NAME,"
+      "ARCHIVE_FILE.CREATION_TIME   AS ARCHIVE_FILE_CREATION_TIME,"
+      "RECONCILIATION_TIME          AS RECONCILIATION_TIME,"
+      "VID                          AS VID,"
+      "FSEQ                         AS FSEQ,"
+      "BLOCK_ID                     AS BLOCK_ID,"
+      "COMPRESSED_SIZE              AS COMPRESSED_SIZE,"
+      "COPY_NB                      AS COPY_NB,"
+      "TAPE_FILE.CREATION_TIME      AS TAPE_FILE_CREATION_TIME "
+    "FROM ARCHIVE_FILE LEFT OUTER JOIN TAPE_FILE ON "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+    "WHERE "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
 
-  if(SQLITE_ROW == stmt->step()) {
-    const ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
-    file.reset(new common::dataStructures::ArchiveFile);
+  ColumnNameToIdx nameToIdx;
+  while(SQLITE_ROW == stmt->step()) {
+    if(nameToIdx.empty()) {
+      nameToIdx = stmt->getColumnNameToIdx();
+      file.reset(new common::dataStructures::ArchiveFile);
 
-    file->archiveFileID = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
-    file->diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
-    file->diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
-    file->drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file->drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
-    file->drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
-    file->drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
-    file->fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
-    file->checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
-    file->checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
-    file->storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
-    file->creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
-    file->reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
+      file->archiveFileID      = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
+      file->diskInstance       = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+      file->diskFileID         = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+      file->drData.drPath      = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
+      file->drData.drOwner     = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
+      file->drData.drGroup     = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
+      file->drData.drBlob      = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
+      file->fileSize           = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
+      file->checksumType       = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
+      file->checksumValue      = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
+      file->storageClass       = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+      file->creationTime       = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_CREATION_TIME"]);
+      file->reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
+    }
+
+    // If there is a tape file (SQL statement contains an outer join so this
+    // check is necessary)
+    if(!stmt->columnTextIsNull(nameToIdx["VID"])) {
+      // Add the tape file to the archive file's in-memory structure
+      common::dataStructures::TapeFile tapeFile;
+      tapeFile.vid = stmt->columnText(nameToIdx["VID"]);
+      tapeFile.fSeq = stmt->columnUint64(nameToIdx["FSEQ"]);
+      tapeFile.blockId = stmt->columnUint64(nameToIdx["BLOCK_ID"]);
+      tapeFile.compressedSize = stmt->columnUint64(nameToIdx["COMPRESSED_SIZE"]);
+      tapeFile.creationTime = stmt->columnUint64(nameToIdx["TAPE_FILE_CREATION_TIME"]);
+      file->tapeCopies[stmt->columnUint64(nameToIdx["COPY_NB"])] = tapeFile;
+    }
   }
 
   return file;
