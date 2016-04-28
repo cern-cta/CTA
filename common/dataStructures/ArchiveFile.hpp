@@ -46,11 +46,11 @@ struct ArchiveFile {
   std::string diskInstance;
   uint64_t fileSize;
   /**
-   * The human readable checksum type. Ex: adler32 
+   * The human readable checksum type. Ex: ADLER32 
    */
   std::string checksumType;
   /**
-   * The human readable checksum value. Ex: 0x1292ab12 
+   * The human readable checksum value. Ex: 0X1292AB12 
    */
   std::string checksumValue;
   std::string storageClass;
