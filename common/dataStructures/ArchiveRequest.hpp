@@ -47,7 +47,13 @@ struct ArchiveRequest {
   std::string instance;
   std::string srcURL;
   uint64_t fileSize;
+  /**
+   * The human readable checksum type. Ex: adler32 
+   */
   std::string checksumType;
+  /**
+   * The human readable checksum value. Ex: 0x1292ab12 
+   */
   std::string checksumValue;
   std::string storageClass;
   cta::common::dataStructures::DRData drData;
