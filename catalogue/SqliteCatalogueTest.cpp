@@ -1176,7 +1176,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
   const uint64_t archiveFileId = 1234;
 
   ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
-  ASSERT_TRUE(catalogue.getArchiveFile(archiveFileId).empty());
+  ASSERT_TRUE(NULL == catalogue.getArchiveFile(archiveFileId).get());
 
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 2;
@@ -1223,24 +1223,21 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
   }
 
   {
-    std::list<common::dataStructures::ArchiveFile> files;
-    files = catalogue.getArchiveFile(archiveFileId);
-    ASSERT_EQ(1, files.size());
+    std::unique_ptr<common::dataStructures::ArchiveFile> retrievedFile = catalogue.getArchiveFile(archiveFileId);
+    ASSERT_TRUE(NULL != retrievedFile.get());
 
-    const common::dataStructures::ArchiveFile frontFile = files.front();
+    ASSERT_EQ(file.archiveFileID, retrievedFile->archiveFileID);
+    ASSERT_EQ(file.diskFileID, retrievedFile->diskFileID);
+    ASSERT_EQ(file.fileSize, retrievedFile->fileSize);
+    ASSERT_EQ(file.checksumType, retrievedFile->checksumType);
+    ASSERT_EQ(file.checksumValue, retrievedFile->checksumValue);
+    ASSERT_EQ(file.storageClass, retrievedFile->storageClass);
 
-    ASSERT_EQ(file.archiveFileID, frontFile.archiveFileID);
-    ASSERT_EQ(file.diskFileID, frontFile.diskFileID);
-    ASSERT_EQ(file.fileSize, frontFile.fileSize);
-    ASSERT_EQ(file.checksumType, frontFile.checksumType);
-    ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
-    ASSERT_EQ(file.storageClass, frontFile.storageClass);
-
-    ASSERT_EQ(file.diskInstance, frontFile.diskInstance);
-    ASSERT_EQ(file.drData.drPath, frontFile.drData.drPath);
-    ASSERT_EQ(file.drData.drOwner, frontFile.drData.drOwner);
-    ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
-    ASSERT_EQ(file.drData.drBlob, frontFile.drData.drBlob);
+    ASSERT_EQ(file.diskInstance, retrievedFile->diskInstance);
+    ASSERT_EQ(file.drData.drPath, retrievedFile->drData.drPath);
+    ASSERT_EQ(file.drData.drOwner, retrievedFile->drData.drOwner);
+    ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
+    ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }

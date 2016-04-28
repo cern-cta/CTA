@@ -1685,54 +1685,17 @@ cta::common::dataStructures::ArchiveFileSummary SqliteCatalogue::getArchiveFileS
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile SqliteCatalogue::
-  getArchiveFileById(const uint64_t id) {
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE           AS DISK_INSTANCE,"
-      "DISK_FILE_ID            AS DISK_FILE_ID,"
-      "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_USER          AS DISK_FILE_USER,"
-      "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
-      "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-      "FILE_SIZE               AS FILE_SIZE,"
-      "CHECKSUM_TYPE           AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE          AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME      AS STORAGE_CLASS_NAME,"
-      "CREATION_TIME           AS CREATION_TIME,"
-      "RECONCILIATION_TIME     AS RECONCILIATION_TIME "
+cta::common::dataStructures::ArchiveFile SqliteCatalogue::getArchiveFileById(const uint64_t id) {
+  std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(id));
 
-    "FROM ARCHIVE_FILE WHERE "
-      "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ARCHIVE_FILE_ID", id);
-
-  if(SQLITE_ROW != stmt->step()) {
+  // Throw an exception if the archive file does not exist
+  if(NULL == file.get()) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Could not find archive file with ID " << id;
-    throw ex;
-  } else {
-    const ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
-    cta::common::dataStructures::ArchiveFile file;
-
-    file.archiveFileID = id;
-    file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
-    file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
-    file.drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
-    file.drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
-    file.drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
-    file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
-    file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
-    file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
-    file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
-    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
-    file.reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
-
-    return file;
+    ex.getMessage() << __FUNCTION__ << " failed: No such archive file with ID " << id;
+    throw(ex);
   }
+
+  return *file;
 }
           
 //------------------------------------------------------------------------------
@@ -1749,8 +1712,9 @@ void SqliteCatalogue::fileWrittenToTape(
   const cta::common::dataStructures::TapeFile &tapeFileLocation) {
   std::lock_guard<std::mutex> m_lock(m_mutex);
 
-  std::list<common::dataStructures::ArchiveFile> files = getArchiveFile(archiveFileId);
-  if(files.empty()) {
+  std::unique_ptr<common::dataStructures::ArchiveFile> file = getArchiveFile(archiveFileId);
+  // If the archive file exists
+  if(NULL != file.get()) {
 
   }
 }
@@ -2085,9 +2049,9 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
 //------------------------------------------------------------------------------
 // getArchiveFile
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
+std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
   // The list of files should either end up empty or only contain one element
-  std::list<cta::common::dataStructures::ArchiveFile> files;
+  std::unique_ptr<cta::common::dataStructures::ArchiveFile> file;
   const char *const sql =
     "SELECT "
       "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
@@ -2108,38 +2072,26 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(c
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
 
-  ColumnNameToIdx nameToIdx;
-  while(SQLITE_ROW == stmt->step()) {
-    if(nameToIdx.empty()) {
-      nameToIdx = stmt->getColumnNameToIdx();
-    }
-    common::dataStructures::ArchiveFile file;
+  if(SQLITE_ROW == stmt->step()) {
+    const ColumnNameToIdx nameToIdx = stmt->getColumnNameToIdx();
+    file.reset(new common::dataStructures::ArchiveFile);
 
-    file.archiveFileID = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
-    file.diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
-    file.diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
-    file.drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
-    file.drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
-    file.drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
-    file.drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
-    file.fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
-    file.checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
-    file.checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
-    file.storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
-    file.creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
-    file.reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
-
-    files.push_back(file);
+    file->archiveFileID = stmt->columnUint64(nameToIdx["ARCHIVE_FILE_ID"]);
+    file->diskInstance = stmt->columnText(nameToIdx["DISK_INSTANCE"]);
+    file->diskFileID = stmt->columnText(nameToIdx["DISK_FILE_ID"]);
+    file->drData.drPath = stmt->columnText(nameToIdx["DISK_FILE_PATH"]);
+    file->drData.drOwner = stmt->columnText(nameToIdx["DISK_FILE_USER"]);
+    file->drData.drGroup = stmt->columnText(nameToIdx["DISK_FILE_GROUP"]);
+    file->drData.drBlob = stmt->columnText(nameToIdx["DISK_FILE_RECOVERY_BLOB"]);
+    file->fileSize = stmt->columnUint64(nameToIdx["FILE_SIZE"]);
+    file->checksumType = stmt->columnText(nameToIdx["CHECKSUM_TYPE"]);
+    file->checksumValue = stmt->columnText(nameToIdx["CHECKSUM_VALUE"]);
+    file->storageClass = stmt->columnText(nameToIdx["STORAGE_CLASS_NAME"]);
+    file->creationTime = stmt->columnUint64(nameToIdx["CREATION_TIME"]);
+    file->reconciliationTime = stmt->columnUint64(nameToIdx["RECONCILIATION_TIME"]);
   }
 
-  if(1 < files.size()) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: Found more than one archive file with same unique identifier"
-      ": archiveFileId=" << archiveFileId;
-    throw ex;
-  }
-
-  return files;
+  return file;
 }
 
 } // namespace catalogue
