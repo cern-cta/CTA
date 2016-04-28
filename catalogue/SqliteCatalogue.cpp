@@ -1706,13 +1706,10 @@ void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(
-  const cta::common::dataStructures::ArchiveRequest &archiveRequest,
-  const uint64_t archiveFileId,
-  const cta::common::dataStructures::TapeFile &tapeFileLocation) {
+void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
   std::lock_guard<std::mutex> m_lock(m_mutex);
 
-  std::unique_ptr<common::dataStructures::ArchiveFile> file = getArchiveFile(archiveFileId);
+  std::unique_ptr<common::dataStructures::ArchiveFile> file = getArchiveFile(event.archiveFileId);
   // If the archive file exists
   if(NULL != file.get()) {
 
@@ -1807,7 +1804,7 @@ uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageC
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy SqliteCatalogue::
-  getMountPolicyForAUser(const cta::common::dataStructures::UserIdentity &user) const {
+  getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const {
   const char *const sql =
     "SELECT "
       "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"

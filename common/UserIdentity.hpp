@@ -18,13 +18,14 @@
 
 #pragma once
 
+#include <ostream>
 #include <stdint.h>
 #include <string>
 
 namespace cta {
 
 /**
- * Class reprsenting the identity of a user.
+ * Class representing the identity of a user.
  */
 struct UserIdentity {
 

@@ -211,7 +211,14 @@ namespace utils {
    * @returns true if the string is a valid unsigned integer, else false.
    */
   bool isValidUInt(const std::string &str) throw();
-  
+
+  /**
+   * Converts the specified string to uppercase.
+   *
+   * @param In/out parameter: The string to be converted.
+   */
+  void toUpper(std::string &str);
+
   /**
    * Gets the short host name from the system
    * 

@@ -58,6 +58,7 @@
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "TapeFileWritten.hpp"
 
 namespace cta {
 
@@ -212,15 +213,10 @@ public:
   /**
    * Notifies the catalogue that a file has been written to tape.
    *
-   * @param archiveRequest The request to archive the file.
-   * @param archiveFileId The identifier of the archive file.
-   * @param tapeFile The file written to tape.
+   * @param event The tape file written event.
    */
-  virtual void fileWrittenToTape(
-    const common::dataStructures::ArchiveRequest &archiveRequest,
-    const uint64_t archiveFileId,
-    const common::dataStructures::TapeFile &tapeFile) = 0;
-  
+  virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
+
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 
   /**

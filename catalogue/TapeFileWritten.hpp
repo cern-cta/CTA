@@ -91,7 +91,7 @@ struct TapeFileWritten {
   uint64_t size;
 
   /**
-   * The checksum of the tape file.
+   * Checksum of the tape file contents.
    */
   Checksum checksum;
 

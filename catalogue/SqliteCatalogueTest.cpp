@@ -1219,6 +1219,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
     ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, frontFile.drData.drBlob);
 
+    ASSERT_TRUE(file.tapeCopies.empty());
+
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
 
@@ -1239,8 +1241,124 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
     ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
+    ASSERT_TRUE(file.tapeCopies.empty());
+
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, file1WrittenToTape) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(NULL == catalogue.getArchiveFile(archiveFileId).get());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+
+  common::dataStructures::ArchiveFile file;
+  file.archiveFileID = archiveFileId;
+  file.diskFileID = "EOS_file_ID";
+  file.fileSize = 1;
+  file.checksumType = "checksum_type";
+  file.checksumValue = "checksum_value";
+  file.storageClass = storageClassName;
+
+  file.diskInstance = "recovery_instance";
+  file.drData.drPath = "recovery_path";
+  file.drData.drOwner = "recovery_owner";
+  file.drData.drGroup = "recovery_group";
+  file.drData.drBlob = "recovery_blob";
+
+  catalogue.createArchiveFile(file);
+
+  {
+    std::list<common::dataStructures::ArchiveFile> files;
+    files = catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "");
+    ASSERT_EQ(1, files.size());
+
+    const common::dataStructures::ArchiveFile frontFile = files.front();
+
+    ASSERT_EQ(file.archiveFileID, frontFile.archiveFileID);
+    ASSERT_EQ(file.diskFileID, frontFile.diskFileID);
+    ASSERT_EQ(file.fileSize, frontFile.fileSize);
+    ASSERT_EQ(file.checksumType, frontFile.checksumType);
+    ASSERT_EQ(file.checksumValue, frontFile.checksumValue);
+    ASSERT_EQ(file.storageClass, frontFile.storageClass);
+
+    ASSERT_EQ(file.diskInstance, frontFile.diskInstance);
+    ASSERT_EQ(file.drData.drPath, frontFile.drData.drPath);
+    ASSERT_EQ(file.drData.drOwner, frontFile.drData.drOwner);
+    ASSERT_EQ(file.drData.drGroup, frontFile.drData.drGroup);
+    ASSERT_EQ(file.drData.drBlob, frontFile.drData.drBlob);
+
+    ASSERT_TRUE(file.tapeCopies.empty());
+
+    ASSERT_TRUE(catalogue.getTapeFiles().empty());
+  }
+
+  {
+    std::unique_ptr<common::dataStructures::ArchiveFile> retrievedFile = catalogue.getArchiveFile(archiveFileId);
+    ASSERT_TRUE(NULL != retrievedFile.get());
+
+    ASSERT_EQ(file.archiveFileID, retrievedFile->archiveFileID);
+    ASSERT_EQ(file.diskFileID, retrievedFile->diskFileID);
+    ASSERT_EQ(file.fileSize, retrievedFile->fileSize);
+    ASSERT_EQ(file.checksumType, retrievedFile->checksumType);
+    ASSERT_EQ(file.checksumValue, retrievedFile->checksumValue);
+    ASSERT_EQ(file.storageClass, retrievedFile->storageClass);
+
+    ASSERT_EQ(file.diskInstance, retrievedFile->diskInstance);
+    ASSERT_EQ(file.drData.drPath, retrievedFile->drData.drPath);
+    ASSERT_EQ(file.drData.drOwner, retrievedFile->drData.drOwner);
+    ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
+    ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
+
+    ASSERT_TRUE(file.tapeCopies.empty());
+
+    ASSERT_TRUE(catalogue.getTapeFiles().empty());
+  }
+
+  catalogue::TapeFileWritten file1Written;
+  file1Written.archiveFileId        = file.archiveFileID;
+  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileUser         = "public_disk_user";
+  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file1Written.size                 = file.fileSize;
+  file1Written.checksum             = Checksum(std::string("adler32:0X") + file.checksumValue);
+  file1Written.storageClassName     = file.storageClass;
+  file1Written.vid                  = "VID123";
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.compressedSize       = 1;
+  file1Written.copyNb               = 1;
+  catalogue.fileWrittenToTape(file1Written);
+
+  catalogue::TapeFileWritten file2Written;
+  file2Written.archiveFileId        = file.archiveFileID;
+  file2Written.diskInstance         = "PUBLIC";
+  file2Written.diskFileId           = "5678";
+  file2Written.diskFilePath         = "/public_dir/public_file";
+  file2Written.diskFileUser         = "public_disk_user";
+  file2Written.diskFileGroup        = "public_disk_group";
+  file2Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file2Written.size                 = file.fileSize;
+  file2Written.checksum             = Checksum(std::string("adler32:0X") + file.checksumValue);
+  file2Written.storageClassName     = file.storageClass;
+  file2Written.vid                  = "VID123";
+  file2Written.fSeq                 = 1;
+  file2Written.blockId              = 4321;
+  file2Written.compressedSize       = 1;
+  file2Written.copyNb               =2 ;
+  catalogue.fileWrittenToTape(file2Written);
 }
 
 } // namespace unitTests

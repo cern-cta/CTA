@@ -103,6 +103,8 @@ public:
    * Returns the checksum as a byte array that can be used for storing in a
    * database.
    *
+   * The bytes of the bytes array are in little-endian order.
+   *
    * @return The checksum as a byte array that can be used for storing in a
    * database.
    */
