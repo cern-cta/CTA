@@ -40,37 +40,31 @@ struct TapeFile {
   bool operator!=(const TapeFile &rhs) const;
 
   /**
-   * The volume identifier of the tape on which the file has been written.
+   * The volume identifier of the tape on which the file has been written. 
    */
   std::string vid;
-
   /**
-   * The position of the file on tape in the form of its file sequence number.
+   * The position of the file on tape in the form of its file sequence 
+   * number. 
    */
   uint64_t fSeq;
-
   /**
-   * The position of the file on tape in the form of its logical block identifier.
+   * The position of the file on tape in the form of its logical block 
+   * identifier. 
    */
   uint64_t blockId;
-
   /**
-   * The compressed size of the tape file in bytes.  In other words the actual
-   * number of bytes it occupies on tape.
+   * The compressed size of the tape file in bytes. In other words the 
+   * actual number of bytes it occupies on tape. 
    */
   uint64_t compressedSize;
-
   /**
-   * The copy number of the file.
-   *
-   * Copy numbers start from 1.
-   *
-   * Copy number 0 is an invalid copy number.
+   * The copy number of the file. Copy numbers start from 1. Copy number 0 
+   * is an invalid copy number. 
    */
   uint64_t copyNb;
-
   /**
-   * The time the file recorded in the catalogue.
+   * The time the file recorded in the catalogue. 
    */
   time_t creationTime;
 

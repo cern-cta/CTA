@@ -56,8 +56,9 @@ struct ArchiveFile {
   std::string storageClass;
   cta::common::dataStructures::DRData drData;
   /**
-   * This map represents the non-necessarily-exhaustive set of tape copies to be listed by the operator. For example, if
-   * the listing requested is for a single tape, the map will contain only one element.
+   * This map represents the non-necessarily-exhaustive set of tape copies 
+   * to be listed by the operator. For example, if the listing requested is 
+   * for a single tape, the map will contain only one element. 
    */
   std::map<uint64_t,cta::common::dataStructures::TapeFile> tapeCopies;
   time_t creationTime;

@@ -37,6 +37,8 @@ bool cta::common::dataStructures::TapeFile::operator==(const TapeFile &rhs) cons
   return vid==rhs.vid
       && fSeq==rhs.fSeq
       && blockId==rhs.blockId
+      && compressedSize==rhs.compressedSize
+      && copyNb==rhs.copyNb
       && creationTime==rhs.creationTime;
 }
 
@@ -54,6 +56,8 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ta
   os << "(vid=" << obj.vid
      << " fSeq=" << obj.fSeq
      << " blockId=" << obj.blockId
+     << " compressedSize=" << obj.compressedSize
+     << " copyNb=" << obj.copyNb
      << " creationTime=" << obj.creationTime << ")";
   return os;
 }
