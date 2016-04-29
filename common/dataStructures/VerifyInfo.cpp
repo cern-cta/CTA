@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::VerifyInfo::VerifyInfo():
+VerifyInfo::VerifyInfo():
   totalFiles(0),
   totalSize(0),
   filesToVerify(0),
@@ -33,7 +37,7 @@ cta::common::dataStructures::VerifyInfo::VerifyInfo():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::VerifyInfo::operator==(const VerifyInfo &rhs) const {
+bool VerifyInfo::operator==(const VerifyInfo &rhs) const {
   return vid==rhs.vid
       && tag==rhs.tag
       && totalFiles==rhs.totalFiles
@@ -49,14 +53,14 @@ bool cta::common::dataStructures::VerifyInfo::operator==(const VerifyInfo &rhs) 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::VerifyInfo::operator!=(const VerifyInfo &rhs) const {
+bool VerifyInfo::operator!=(const VerifyInfo &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::VerifyInfo &obj) {
+std::ostream &operator<<(std::ostream &os, const VerifyInfo &obj) {
   os << "(vid=" << obj.vid
      << " tag=" << obj.tag
      << " totalFiles=" << obj.totalFiles
@@ -70,3 +74,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ve
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

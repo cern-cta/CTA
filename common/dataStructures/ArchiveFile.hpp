@@ -54,20 +54,20 @@ struct ArchiveFile {
    */
   std::string checksumValue;
   std::string storageClass;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
   /**
    * This map represents the non-necessarily-exhaustive set of tape copies 
    * to be listed by the operator. For example, if the listing requested is 
    * for a single tape, the map will contain only one element. 
    */
-  std::map<uint64_t,cta::common::dataStructures::TapeFile> tapeCopies;
+  std::map<uint64_t,TapeFile> tapeCopies;
   time_t creationTime;
   time_t reconciliationTime;
 
 }; // struct ArchiveFile
 
+std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj);

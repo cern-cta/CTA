@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::TapePool::TapePool():
+TapePool::TapePool():
   nbPartialTapes(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapePool::operator==(const TapePool &rhs) const {
+bool TapePool::operator==(const TapePool &rhs) const {
   return name==rhs.name
       && nbPartialTapes==rhs.nbPartialTapes
       && encryption==rhs.encryption
@@ -41,14 +45,14 @@ bool cta::common::dataStructures::TapePool::operator==(const TapePool &rhs) cons
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapePool::operator!=(const TapePool &rhs) const {
+bool TapePool::operator!=(const TapePool &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj) {
+std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   os << "(name=" << obj.name
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
@@ -58,3 +62,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ta
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

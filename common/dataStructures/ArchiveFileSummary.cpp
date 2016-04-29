@@ -20,17 +20,21 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary::ArchiveFileSummary():
+ArchiveFileSummary::ArchiveFileSummary():
   totalBytes(0),
   totalFiles(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFileSummary::operator==(const ArchiveFileSummary &rhs) const {
+bool ArchiveFileSummary::operator==(const ArchiveFileSummary &rhs) const {
   return totalBytes==rhs.totalBytes
       && totalFiles==rhs.totalFiles;
 }
@@ -38,16 +42,19 @@ bool cta::common::dataStructures::ArchiveFileSummary::operator==(const ArchiveFi
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFileSummary::operator!=(const ArchiveFileSummary &rhs) const {
+bool ArchiveFileSummary::operator!=(const ArchiveFileSummary &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFileSummary &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveFileSummary &obj) {
   os << "(totalBytes=" << obj.totalBytes
      << " totalFiles=" << obj.totalFiles << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

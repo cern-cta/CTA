@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::SecurityIdentity::SecurityIdentity() {}
+SecurityIdentity::SecurityIdentity() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
+bool SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
   return user==rhs.user
       && host==rhs.host;
 }
@@ -36,16 +40,19 @@ bool cta::common::dataStructures::SecurityIdentity::operator==(const SecurityIde
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
+bool SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::SecurityIdentity &obj) {
+std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
   os << "(user=" << obj.user
      << " host=" << obj.host << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

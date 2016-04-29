@@ -52,17 +52,17 @@ struct Tape {
   bool busy;
   bool full;
   bool disabled;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
-  cta::common::dataStructures::TapeLog labelLog;
-  cta::common::dataStructures::TapeLog lastWriteLog;
-  cta::common::dataStructures::TapeLog lastReadLog;
+  TapeLog labelLog;
+  TapeLog lastWriteLog;
+  TapeLog lastReadLog;
 
 }; // struct Tape
+
+std::ostream &operator<<(std::ostream &os, const Tape &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Tape &obj);

@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveRoute::ArchiveRoute():
+ArchiveRoute::ArchiveRoute():
   copyNb(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
+bool ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
   return storageClassName==rhs.storageClassName
       && copyNb==rhs.copyNb
       && tapePoolName==rhs.tapePoolName
@@ -41,14 +45,14 @@ bool cta::common::dataStructures::ArchiveRoute::operator==(const ArchiveRoute &r
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
+bool ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRoute &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj) {
   os << "(storageClassName=" << obj.storageClassName
      << " copyNb=" << obj.copyNb
      << " tapePoolName=" << obj.tapePoolName
@@ -58,3 +62,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

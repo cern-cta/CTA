@@ -42,7 +42,7 @@ struct ArchiveRequest {
 
   bool operator!=(const ArchiveRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
   std::string diskFileID;
   std::string instance;
   std::string srcURL;
@@ -56,15 +56,15 @@ struct ArchiveRequest {
    */
   std::string checksumValue;
   std::string storageClass;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
-  cta::common::dataStructures::EntryLog creationLog;
+  EntryLog creationLog;
 
 }; // struct ArchiveRequest
+
+std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRequest &obj);

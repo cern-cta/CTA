@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include <ostream>
+#include <list>
+#include <map>
+#include <stdint.h>
 #include <string>
 
 
@@ -42,7 +44,7 @@ struct UserIdentity {
 
 }; // struct UserIdentity
 
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UserIdentity &obj);
+std::ostream &operator<<(std::ostream &os, const UserIdentity &obj);
 
 } // namespace dataStructures
 } // namespace common

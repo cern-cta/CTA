@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::StorageClass::StorageClass():
+StorageClass::StorageClass():
   nbCopies(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::StorageClass::operator==(const StorageClass &rhs) const {
+bool StorageClass::operator==(const StorageClass &rhs) const {
   return name==rhs.name
       && nbCopies==rhs.nbCopies
       && creationLog==rhs.creationLog
@@ -40,14 +44,14 @@ bool cta::common::dataStructures::StorageClass::operator==(const StorageClass &r
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::StorageClass::operator!=(const StorageClass &rhs) const {
+bool StorageClass::operator!=(const StorageClass &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::StorageClass &obj) {
+std::ostream &operator<<(std::ostream &os, const StorageClass &obj) {
   os << "(name=" << obj.name
      << " nbCopies=" << obj.nbCopies
      << " creationLog=" << obj.creationLog
@@ -56,3 +60,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::St
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

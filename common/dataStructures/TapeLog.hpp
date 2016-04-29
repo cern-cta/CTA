@@ -45,8 +45,8 @@ struct TapeLog {
 
 }; // struct TapeLog
 
+std::ostream &operator<<(std::ostream &os, const TapeLog &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeLog &obj);

@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UpdateFileInfoRequest::UpdateFileInfoRequest():
+UpdateFileInfoRequest::UpdateFileInfoRequest():
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileInfoRequest::operator==(const UpdateFileInfoRequest &rhs) const {
+bool UpdateFileInfoRequest::operator==(const UpdateFileInfoRequest &rhs) const {
   return archiveFileID==rhs.archiveFileID
       && drData==rhs.drData;
 }
@@ -37,16 +41,19 @@ bool cta::common::dataStructures::UpdateFileInfoRequest::operator==(const Update
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileInfoRequest::operator!=(const UpdateFileInfoRequest &rhs) const {
+bool UpdateFileInfoRequest::operator!=(const UpdateFileInfoRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileInfoRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const UpdateFileInfoRequest &obj) {
   os << "(archiveFileID=" << obj.archiveFileID
      << " drData=" << obj.drData << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

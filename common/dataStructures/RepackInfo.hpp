@@ -49,15 +49,15 @@ struct RepackInfo {
   uint64_t filesToArchive;
   uint64_t filesFailed;
   uint64_t filesArchived;
-  cta::common::dataStructures::RepackType repackType;
+  RepackType repackType;
   std::string repackStatus;
   std::map<uint64_t,std::string> errors;
-  cta::common::dataStructures::EntryLog creationLog;
+  EntryLog creationLog;
 
 }; // struct RepackInfo
+
+std::ostream &operator<<(std::ostream &os, const RepackInfo &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RepackInfo &obj);

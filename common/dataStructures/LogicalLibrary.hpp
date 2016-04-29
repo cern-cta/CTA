@@ -42,14 +42,14 @@ struct LogicalLibrary {
   bool operator!=(const LogicalLibrary &rhs) const;
 
   std::string name;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct LogicalLibrary
 
+std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::LogicalLibrary &obj);

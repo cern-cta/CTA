@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog::EntryLog():
+EntryLog::EntryLog():
   time(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::EntryLog::operator==(const EntryLog &rhs) const {
+bool EntryLog::operator==(const EntryLog &rhs) const {
   return user==rhs.user
       && host==rhs.host
       && time==rhs.time;
@@ -38,17 +42,20 @@ bool cta::common::dataStructures::EntryLog::operator==(const EntryLog &rhs) cons
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::EntryLog::operator!=(const EntryLog &rhs) const {
+bool EntryLog::operator!=(const EntryLog &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::EntryLog &obj) {
+std::ostream &operator<<(std::ostream &os, const EntryLog &obj) {
   os << "(user=" << obj.user
      << " host=" << obj.host
      << " time=" << obj.time << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

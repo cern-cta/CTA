@@ -44,14 +44,14 @@ struct StorageClass {
 
   std::string name;
   uint64_t nbCopies;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct StorageClass
 
+std::ostream &operator<<(std::ostream &os, const StorageClass &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::StorageClass &obj);

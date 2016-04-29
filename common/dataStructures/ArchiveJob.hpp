@@ -41,15 +41,15 @@ struct ArchiveJob {
 
   bool operator!=(const ArchiveJob &rhs) const;
 
-  cta::common::dataStructures::ArchiveRequest request;
+  ArchiveRequest request;
   std::string tapePool;
   uint64_t copyNumber;
   uint64_t archiveFileID;
 
 }; // struct ArchiveJob
 
+std::ostream &operator<<(std::ostream &os, const ArchiveJob &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveJob &obj);

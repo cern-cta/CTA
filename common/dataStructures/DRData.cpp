@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DRData::DRData() {}
+DRData::DRData() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DRData::operator==(const DRData &rhs) const {
+bool DRData::operator==(const DRData &rhs) const {
   return drPath==rhs.drPath
       && drOwner==rhs.drOwner
       && drGroup==rhs.drGroup
@@ -38,14 +42,14 @@ bool cta::common::dataStructures::DRData::operator==(const DRData &rhs) const {
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DRData::operator!=(const DRData &rhs) const {
+bool DRData::operator!=(const DRData &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DRData &obj) {
+std::ostream &operator<<(std::ostream &os, const DRData &obj) {
   os << "(drPath=" << obj.drPath
      << " drOwner=" << obj.drOwner
      << " drGroup=" << obj.drGroup
@@ -53,3 +57,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DR
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

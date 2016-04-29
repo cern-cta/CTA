@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ReadTestResult::ReadTestResult():
+ReadTestResult::ReadTestResult():
   noOfFilesRead(0),
   totalBytesRead(0),
   totalFilesRead(0),
@@ -32,7 +36,7 @@ cta::common::dataStructures::ReadTestResult::ReadTestResult():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ReadTestResult::operator==(const ReadTestResult &rhs) const {
+bool ReadTestResult::operator==(const ReadTestResult &rhs) const {
   return driveName==rhs.driveName
       && vid==rhs.vid
       && noOfFilesRead==rhs.noOfFilesRead
@@ -46,14 +50,14 @@ bool cta::common::dataStructures::ReadTestResult::operator==(const ReadTestResul
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ReadTestResult::operator!=(const ReadTestResult &rhs) const {
+bool ReadTestResult::operator!=(const ReadTestResult &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ReadTestResult &obj) {
+std::ostream &operator<<(std::ostream &os, const ReadTestResult &obj) {
   os << "(driveName=" << obj.driveName
      << " vid=" << obj.vid
      << " noOfFilesRead=" << obj.noOfFilesRead
@@ -65,3 +69,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Re
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

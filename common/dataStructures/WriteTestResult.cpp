@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::WriteTestResult::WriteTestResult():
+WriteTestResult::WriteTestResult():
   noOfFilesWritten(0),
   totalBytesWritten(0),
   totalFilesWritten(0),
@@ -32,7 +36,7 @@ cta::common::dataStructures::WriteTestResult::WriteTestResult():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::WriteTestResult::operator==(const WriteTestResult &rhs) const {
+bool WriteTestResult::operator==(const WriteTestResult &rhs) const {
   return driveName==rhs.driveName
       && vid==rhs.vid
       && noOfFilesWritten==rhs.noOfFilesWritten
@@ -46,14 +50,14 @@ bool cta::common::dataStructures::WriteTestResult::operator==(const WriteTestRes
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::WriteTestResult::operator!=(const WriteTestResult &rhs) const {
+bool WriteTestResult::operator!=(const WriteTestResult &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::WriteTestResult &obj) {
+std::ostream &operator<<(std::ostream &os, const WriteTestResult &obj) {
   os << "(driveName=" << obj.driveName
      << " vid=" << obj.vid
      << " noOfFilesWritten=" << obj.noOfFilesWritten
@@ -65,3 +69,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Wr
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

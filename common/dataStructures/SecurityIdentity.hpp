@@ -41,13 +41,13 @@ struct SecurityIdentity {
 
   bool operator!=(const SecurityIdentity &rhs) const;
 
-  cta::common::dataStructures::UserIdentity user;
+  UserIdentity user;
   std::string host;
 
 }; // struct SecurityIdentity
 
+std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::SecurityIdentity &obj);

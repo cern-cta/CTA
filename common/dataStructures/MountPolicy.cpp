@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy::MountPolicy():
+MountPolicy::MountPolicy():
   archive_priority(0),
   archive_minRequestAge(0),
   retrieve_priority(0),
@@ -33,7 +37,7 @@ cta::common::dataStructures::MountPolicy::MountPolicy():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs) const {
+bool MountPolicy::operator==(const MountPolicy &rhs) const {
   return name==rhs.name
       && archive_priority==rhs.archive_priority
       && archive_minRequestAge==rhs.archive_minRequestAge
@@ -48,14 +52,14 @@ bool cta::common::dataStructures::MountPolicy::operator==(const MountPolicy &rhs
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::MountPolicy::operator!=(const MountPolicy &rhs) const {
+bool MountPolicy::operator!=(const MountPolicy &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj) {
+std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
   os << "(name=" << obj.name
      << " archive_priority=" << obj.archive_priority
      << " archive_minRequestAge=" << obj.archive_minRequestAge
@@ -68,3 +72,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Mo
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

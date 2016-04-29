@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Requester::Requester() {}
+Requester::Requester() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Requester::operator==(const Requester &rhs) const {
+bool Requester::operator==(const Requester &rhs) const {
   return name==rhs.name
       && group==rhs.group
       && mountPolicy==rhs.mountPolicy
@@ -40,14 +44,14 @@ bool cta::common::dataStructures::Requester::operator==(const Requester &rhs) co
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Requester::operator!=(const Requester &rhs) const {
+bool Requester::operator!=(const Requester &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Requester &obj) {
+std::ostream &operator<<(std::ostream &os, const Requester &obj) {
   os << "(name=" << obj.name
      << " group=" << obj.group
      << " mountPolicy=" << obj.mountPolicy
@@ -57,3 +61,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Re
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

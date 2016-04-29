@@ -51,15 +51,15 @@ struct DriveState {
   uint64_t latestBandwidth;
   time_t sessionStartTime;
   time_t currentStateStartTime;
-  cta::common::dataStructures::MountType mountType;
-  cta::common::dataStructures::DriveStatus status;
+  MountType mountType;
+  DriveStatus status;
   std::string currentVid;
   std::string currentTapePool;
 
 }; // struct DriveState
 
+std::ostream &operator<<(std::ostream &os, const DriveState &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DriveState &obj);

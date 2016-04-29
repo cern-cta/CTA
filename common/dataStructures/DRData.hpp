@@ -47,8 +47,8 @@ struct DRData {
 
 }; // struct DRData
 
+std::ostream &operator<<(std::ostream &os, const DRData &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DRData &obj);

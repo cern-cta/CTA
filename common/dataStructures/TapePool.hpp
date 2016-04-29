@@ -44,14 +44,14 @@ struct TapePool {
   std::string name;
   uint64_t nbPartialTapes;
   bool encryption;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct TapePool
 
+std::ostream &operator<<(std::ostream &os, const TapePool &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapePool &obj);

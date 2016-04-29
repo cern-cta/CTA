@@ -46,14 +46,14 @@ struct MountPolicy {
   uint64_t retrieve_priority;
   uint64_t retrieve_minRequestAge;
   uint64_t maxDrivesAllowed;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct MountPolicy
 
+std::ostream &operator<<(std::ostream &os, const MountPolicy &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::MountPolicy &obj);

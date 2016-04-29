@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DeleteArchiveRequest::DeleteArchiveRequest():
+DeleteArchiveRequest::DeleteArchiveRequest():
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
+bool DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID;
 }
@@ -37,16 +41,19 @@ bool cta::common::dataStructures::DeleteArchiveRequest::operator==(const DeleteA
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
+bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DeleteArchiveRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

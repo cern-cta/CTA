@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::CancelRetrieveRequest::CancelRetrieveRequest():
+CancelRetrieveRequest::CancelRetrieveRequest():
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
+bool CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
@@ -39,14 +43,14 @@ bool cta::common::dataStructures::CancelRetrieveRequest::operator==(const Cancel
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::CancelRetrieveRequest::operator!=(const CancelRetrieveRequest &rhs) const {
+bool CancelRetrieveRequest::operator!=(const CancelRetrieveRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::CancelRetrieveRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
@@ -54,3 +58,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ca
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

@@ -48,13 +48,13 @@ struct VerifyInfo {
   uint64_t filesFailed;
   uint64_t filesVerified;
   std::string verifyStatus;
-  cta::common::dataStructures::EntryLog creationLog;
+  EntryLog creationLog;
   std::map<uint64_t,std::string> errors;
 
 }; // struct VerifyInfo
 
+std::ostream &operator<<(std::ostream &os, const VerifyInfo &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::VerifyInfo &obj);

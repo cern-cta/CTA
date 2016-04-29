@@ -40,12 +40,12 @@ struct ListStorageClassRequest {
 
   bool operator!=(const ListStorageClassRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
 
 }; // struct ListStorageClassRequest
+
+std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ListStorageClassRequest &obj);

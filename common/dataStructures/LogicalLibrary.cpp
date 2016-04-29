@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::LogicalLibrary::LogicalLibrary() {}
+LogicalLibrary::LogicalLibrary() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::LogicalLibrary::operator==(const LogicalLibrary &rhs) const {
+bool LogicalLibrary::operator==(const LogicalLibrary &rhs) const {
   return name==rhs.name
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -38,14 +42,14 @@ bool cta::common::dataStructures::LogicalLibrary::operator==(const LogicalLibrar
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::LogicalLibrary::operator!=(const LogicalLibrary &rhs) const {
+bool LogicalLibrary::operator!=(const LogicalLibrary &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::LogicalLibrary &obj) {
+std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj) {
   os << "(name=" << obj.name
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
@@ -53,3 +57,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Lo
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

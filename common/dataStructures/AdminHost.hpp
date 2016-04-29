@@ -41,14 +41,14 @@ struct AdminHost {
   bool operator!=(const AdminHost &rhs) const;
 
   std::string name;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct AdminHost
 
+std::ostream &operator<<(std::ostream &os, const AdminHost &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::AdminHost &obj);

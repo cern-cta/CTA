@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::TapeFile::TapeFile():
+TapeFile::TapeFile():
   fSeq(0),
   blockId(0),
   compressedSize(0),
@@ -33,7 +37,7 @@ cta::common::dataStructures::TapeFile::TapeFile():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeFile::operator==(const TapeFile &rhs) const {
+bool TapeFile::operator==(const TapeFile &rhs) const {
   return vid==rhs.vid
       && fSeq==rhs.fSeq
       && blockId==rhs.blockId
@@ -45,14 +49,14 @@ bool cta::common::dataStructures::TapeFile::operator==(const TapeFile &rhs) cons
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeFile::operator!=(const TapeFile &rhs) const {
+bool TapeFile::operator!=(const TapeFile &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFile &obj) {
+std::ostream &operator<<(std::ostream &os, const TapeFile &obj) {
   os << "(vid=" << obj.vid
      << " fSeq=" << obj.fSeq
      << " blockId=" << obj.blockId
@@ -62,3 +66,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ta
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

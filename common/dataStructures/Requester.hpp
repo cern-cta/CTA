@@ -46,14 +46,14 @@ struct Requester {
   std::string name;
   std::string group;
   std::string mountPolicy;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct Requester
 
+std::ostream &operator<<(std::ostream &os, const Requester &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Requester &obj);

@@ -20,30 +20,37 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ListStorageClassRequest::ListStorageClassRequest() {}
+ListStorageClassRequest::ListStorageClassRequest() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {
+bool ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {
   return requester==rhs.requester;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ListStorageClassRequest::operator!=(const ListStorageClassRequest &rhs) const {
+bool ListStorageClassRequest::operator!=(const ListStorageClassRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ListStorageClassRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj) {
   os << "(requester=" << obj.requester << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

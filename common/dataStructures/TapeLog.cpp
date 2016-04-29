@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::TapeLog::TapeLog():
+TapeLog::TapeLog():
   time(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeLog::operator==(const TapeLog &rhs) const {
+bool TapeLog::operator==(const TapeLog &rhs) const {
   return drive==rhs.drive
       && time==rhs.time;
 }
@@ -37,16 +41,19 @@ bool cta::common::dataStructures::TapeLog::operator==(const TapeLog &rhs) const 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::TapeLog::operator!=(const TapeLog &rhs) const {
+bool TapeLog::operator!=(const TapeLog &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeLog &obj) {
+std::ostream &operator<<(std::ostream &os, const TapeLog &obj) {
   os << "(drive=" << obj.drive
      << " time=" << obj.time << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

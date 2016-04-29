@@ -20,17 +20,21 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveRequest::ArchiveRequest():
+ArchiveRequest::ArchiveRequest():
   fileSize(0),
   diskpoolThroughput(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
+bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
   return requester==rhs.requester
       && diskFileID==rhs.diskFileID
       && instance==rhs.instance
@@ -48,14 +52,14 @@ bool cta::common::dataStructures::ArchiveRequest::operator==(const ArchiveReques
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveRequest::operator!=(const ArchiveRequest &rhs) const {
+bool ArchiveRequest::operator!=(const ArchiveRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
   os << "(requester=" << obj.requester
      << " diskFileID=" << obj.diskFileID
      << " instance=" << obj.instance
@@ -71,3 +75,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

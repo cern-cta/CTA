@@ -41,13 +41,13 @@ struct DeleteArchiveRequest {
 
   bool operator!=(const DeleteArchiveRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
   uint64_t archiveFileID;
 
 }; // struct DeleteArchiveRequest
 
+std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DeleteArchiveRequest &obj);

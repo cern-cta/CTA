@@ -41,14 +41,14 @@ struct EntryLog {
 
   bool operator!=(const EntryLog &rhs) const;
 
-  cta::common::dataStructures::UserIdentity user;
+  UserIdentity user;
   std::string host;
   time_t time;
 
 }; // struct EntryLog
 
+std::ostream &operator<<(std::ostream &os, const EntryLog &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::EntryLog &obj);

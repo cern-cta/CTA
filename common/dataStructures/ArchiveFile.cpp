@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile::ArchiveFile():
+ArchiveFile::ArchiveFile():
   archiveFileID(0),
   fileSize(0),
   creationTime(0),
@@ -32,7 +36,7 @@ cta::common::dataStructures::ArchiveFile::ArchiveFile():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs) const {
+bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
   return archiveFileID==rhs.archiveFileID
       && diskFileID==rhs.diskFileID
       && diskInstance==rhs.diskInstance
@@ -49,14 +53,14 @@ bool cta::common::dataStructures::ArchiveFile::operator==(const ArchiveFile &rhs
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveFile::operator!=(const ArchiveFile &rhs) const {
+bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFile &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
   os << "(archiveFileID=" << obj.archiveFileID
      << " diskFileID=" << obj.diskFileID
      << " diskInstance=" << obj.diskInstance
@@ -71,3 +75,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

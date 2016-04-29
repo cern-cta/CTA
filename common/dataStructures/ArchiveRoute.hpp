@@ -44,14 +44,14 @@ struct ArchiveRoute {
   std::string storageClassName;
   uint64_t copyNb;
   std::string tapePoolName;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct ArchiveRoute
 
+std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveRoute &obj);

@@ -50,8 +50,8 @@ struct WriteTestResult {
 
 }; // struct WriteTestResult
 
+std::ostream &operator<<(std::ostream &os, const WriteTestResult &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::WriteTestResult &obj);

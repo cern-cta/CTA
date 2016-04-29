@@ -44,8 +44,8 @@ struct ArchiveFileSummary {
 
 }; // struct ArchiveFileSummary
 
+std::ostream &operator<<(std::ostream &os, const ArchiveFileSummary &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveFileSummary &obj);

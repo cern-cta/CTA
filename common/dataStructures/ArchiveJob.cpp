@@ -20,17 +20,21 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveJob::ArchiveJob():
+ArchiveJob::ArchiveJob():
   copyNumber(0),
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveJob::operator==(const ArchiveJob &rhs) const {
+bool ArchiveJob::operator==(const ArchiveJob &rhs) const {
   return request==rhs.request
       && tapePool==rhs.tapePool
       && copyNumber==rhs.copyNumber
@@ -40,14 +44,14 @@ bool cta::common::dataStructures::ArchiveJob::operator==(const ArchiveJob &rhs) 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::ArchiveJob::operator!=(const ArchiveJob &rhs) const {
+bool ArchiveJob::operator!=(const ArchiveJob &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ArchiveJob &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveJob &obj) {
   os << "(request=" << obj.request
      << " tapePool=" << obj.tapePool
      << " copyNumber=" << obj.copyNumber
@@ -55,3 +59,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ar
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

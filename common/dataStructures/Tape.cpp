@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Tape::Tape():
+Tape::Tape():
   lastFSeq(0),
   capacityInBytes(0),
   dataOnTapeInBytes(0) {}
@@ -31,7 +35,7 @@ cta::common::dataStructures::Tape::Tape():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Tape::operator==(const Tape &rhs) const {
+bool Tape::operator==(const Tape &rhs) const {
   return vid==rhs.vid
       && lastFSeq==rhs.lastFSeq
       && logicalLibraryName==rhs.logicalLibraryName
@@ -54,14 +58,14 @@ bool cta::common::dataStructures::Tape::operator==(const Tape &rhs) const {
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Tape::operator!=(const Tape &rhs) const {
+bool Tape::operator!=(const Tape &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Tape &obj) {
+std::ostream &operator<<(std::ostream &os, const Tape &obj) {
   os << "(vid=" << obj.vid
      << " lastFSeq=" << obj.lastFSeq
      << " logicalLibraryName=" << obj.logicalLibraryName
@@ -82,3 +86,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ta
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

@@ -70,8 +70,8 @@ struct TapeFile {
 
 }; // struct TapeFile
 
+std::ostream &operator<<(std::ostream &os, const TapeFile &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::TapeFile &obj);

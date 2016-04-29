@@ -42,12 +42,12 @@ struct UpdateFileInfoRequest {
   bool operator!=(const UpdateFileInfoRequest &rhs) const;
 
   uint64_t archiveFileID;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
 
 }; // struct UpdateFileInfoRequest
+
+std::ostream &operator<<(std::ostream &os, const UpdateFileInfoRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileInfoRequest &obj);

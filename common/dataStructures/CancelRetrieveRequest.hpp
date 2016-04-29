@@ -41,15 +41,15 @@ struct CancelRetrieveRequest {
 
   bool operator!=(const CancelRetrieveRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
 
 }; // struct CancelRetrieveRequest
+
+std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::CancelRetrieveRequest &obj);

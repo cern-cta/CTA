@@ -42,15 +42,15 @@ struct UpdateFileStorageClassRequest {
 
   bool operator!=(const UpdateFileStorageClassRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
   uint64_t archiveFileID;
   std::string storageClass;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
 
 }; // struct UpdateFileStorageClassRequest
+
+std::ostream &operator<<(std::ostream &os, const UpdateFileStorageClassRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileStorageClassRequest &obj);

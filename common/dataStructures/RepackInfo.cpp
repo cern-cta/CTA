@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RepackInfo::RepackInfo():
+RepackInfo::RepackInfo():
   totalFiles(0),
   totalSize(0),
   filesToRetrieve(0),
@@ -34,7 +38,7 @@ cta::common::dataStructures::RepackInfo::RepackInfo():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RepackInfo::operator==(const RepackInfo &rhs) const {
+bool RepackInfo::operator==(const RepackInfo &rhs) const {
   return vid==rhs.vid
       && tag==rhs.tag
       && totalFiles==rhs.totalFiles
@@ -52,14 +56,14 @@ bool cta::common::dataStructures::RepackInfo::operator==(const RepackInfo &rhs) 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RepackInfo::operator!=(const RepackInfo &rhs) const {
+bool RepackInfo::operator!=(const RepackInfo &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RepackInfo &obj) {
+std::ostream &operator<<(std::ostream &os, const RepackInfo &obj) {
   os << "(vid=" << obj.vid
      << " tag=" << obj.tag
      << " totalFiles=" << obj.totalFiles
@@ -75,3 +79,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Re
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

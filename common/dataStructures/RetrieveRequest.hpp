@@ -42,18 +42,18 @@ struct RetrieveRequest {
 
   bool operator!=(const RetrieveRequest &rhs) const;
 
-  cta::common::dataStructures::UserIdentity requester;
+  UserIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
-  cta::common::dataStructures::DRData drData;
+  DRData drData;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
-  cta::common::dataStructures::EntryLog creationLog;
+  EntryLog creationLog;
 
 }; // struct RetrieveRequest
+
+std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveRequest &obj);

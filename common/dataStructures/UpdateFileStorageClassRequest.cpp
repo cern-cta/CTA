@@ -20,16 +20,20 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UpdateFileStorageClassRequest::UpdateFileStorageClassRequest():
+UpdateFileStorageClassRequest::UpdateFileStorageClassRequest():
   archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileStorageClassRequest::operator==(const UpdateFileStorageClassRequest &rhs) const {
+bool UpdateFileStorageClassRequest::operator==(const UpdateFileStorageClassRequest &rhs) const {
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID
       && storageClass==rhs.storageClass
@@ -39,14 +43,14 @@ bool cta::common::dataStructures::UpdateFileStorageClassRequest::operator==(cons
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::UpdateFileStorageClassRequest::operator!=(const UpdateFileStorageClassRequest &rhs) const {
+bool UpdateFileStorageClassRequest::operator!=(const UpdateFileStorageClassRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::UpdateFileStorageClassRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const UpdateFileStorageClassRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID
      << " storageClass=" << obj.storageClass
@@ -54,3 +58,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Up
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

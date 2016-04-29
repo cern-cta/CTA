@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveJob::RetrieveJob() {}
+RetrieveJob::RetrieveJob() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RetrieveJob::operator==(const RetrieveJob &rhs) const {
+bool RetrieveJob::operator==(const RetrieveJob &rhs) const {
   return request==rhs.request
       && tapeCopies==rhs.tapeCopies;
 }
@@ -36,16 +40,19 @@ bool cta::common::dataStructures::RetrieveJob::operator==(const RetrieveJob &rhs
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RetrieveJob::operator!=(const RetrieveJob &rhs) const {
+bool RetrieveJob::operator!=(const RetrieveJob &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveJob &obj) {
+std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj) {
   os << "(request=" << obj.request
      << " tapeCopies=" << obj.tapeCopies << ")";
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

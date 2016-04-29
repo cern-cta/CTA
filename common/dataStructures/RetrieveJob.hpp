@@ -42,13 +42,13 @@ struct RetrieveJob {
 
   bool operator!=(const RetrieveJob &rhs) const;
 
-  cta::common::dataStructures::RetrieveRequest request;
-  std::map<std::string,std::pair<uint64_t,cta::common::dataStructures::TapeFile>> tapeCopies;
+  RetrieveRequest request;
+  std::map<std::string,std::pair<uint64_t,TapeFile>> tapeCopies;
 
 }; // struct RetrieveJob
+
+std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj);
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveJob &obj);

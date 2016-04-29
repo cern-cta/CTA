@@ -50,8 +50,8 @@ struct ReadTestResult {
 
 }; // struct ReadTestResult
 
+std::ostream &operator<<(std::ostream &os, const ReadTestResult &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::ReadTestResult &obj);

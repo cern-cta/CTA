@@ -20,17 +20,21 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::Dedication::Dedication():
+Dedication::Dedication():
   fromTimestamp(0),
   untilTimestamp(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Dedication::operator==(const Dedication &rhs) const {
+bool Dedication::operator==(const Dedication &rhs) const {
   return driveName==rhs.driveName
       && dedicationType==rhs.dedicationType
       && tag==rhs.tag
@@ -45,14 +49,14 @@ bool cta::common::dataStructures::Dedication::operator==(const Dedication &rhs) 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::Dedication::operator!=(const Dedication &rhs) const {
+bool Dedication::operator!=(const Dedication &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dedication &obj) {
+std::ostream &operator<<(std::ostream &os, const Dedication &obj) {
   os << "(driveName=" << obj.driveName
      << " dedicationType=" << obj.dedicationType
      << " tag=" << obj.tag
@@ -65,3 +69,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::De
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

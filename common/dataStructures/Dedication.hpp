@@ -42,19 +42,19 @@ struct Dedication {
   bool operator!=(const Dedication &rhs) const;
 
   std::string driveName;
-  cta::common::dataStructures::DedicationType dedicationType;
+  DedicationType dedicationType;
   std::string tag;
   std::string vid;
   uint64_t fromTimestamp;
   uint64_t untilTimestamp;
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
   std::string comment;
 
 }; // struct Dedication
 
+std::ostream &operator<<(std::ostream &os, const Dedication &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dedication &obj);

@@ -20,15 +20,19 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::AdminUser::AdminUser() {}
+AdminUser::AdminUser() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::AdminUser::operator==(const AdminUser &rhs) const {
+bool AdminUser::operator==(const AdminUser &rhs) const {
   return name==rhs.name
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -38,14 +42,14 @@ bool cta::common::dataStructures::AdminUser::operator==(const AdminUser &rhs) co
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::AdminUser::operator!=(const AdminUser &rhs) const {
+bool AdminUser::operator!=(const AdminUser &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::AdminUser &obj) {
+std::ostream &operator<<(std::ostream &os, const AdminUser &obj) {
   os << "(name=" << obj.name
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
@@ -53,3 +57,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Ad
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

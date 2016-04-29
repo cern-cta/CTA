@@ -20,17 +20,21 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveRequest::RetrieveRequest():
+RetrieveRequest::RetrieveRequest():
   archiveFileID(0),
   diskpoolThroughput(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
+bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
@@ -43,14 +47,14 @@ bool cta::common::dataStructures::RetrieveRequest::operator==(const RetrieveRequ
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::RetrieveRequest::operator!=(const RetrieveRequest &rhs) const {
+bool RetrieveRequest::operator!=(const RetrieveRequest &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::RetrieveRequest &obj) {
+std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
@@ -61,3 +65,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Re
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

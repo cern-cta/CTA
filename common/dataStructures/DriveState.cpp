@@ -20,10 +20,14 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DriveState::DriveState():
+DriveState::DriveState():
   sessionId(0),
   bytesTransferedInSession(0),
   filesTransferedInSession(0),
@@ -34,7 +38,7 @@ cta::common::dataStructures::DriveState::DriveState():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DriveState::operator==(const DriveState &rhs) const {
+bool DriveState::operator==(const DriveState &rhs) const {
   return name==rhs.name
       && host==rhs.host
       && logicalLibrary==rhs.logicalLibrary
@@ -53,14 +57,14 @@ bool cta::common::dataStructures::DriveState::operator==(const DriveState &rhs) 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::common::dataStructures::DriveState::operator!=(const DriveState &rhs) const {
+bool DriveState::operator!=(const DriveState &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::DriveState &obj) {
+std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
   os << "(name=" << obj.name
      << " host=" << obj.host
      << " logicalLibrary=" << obj.logicalLibrary
@@ -77,3 +81,6 @@ std::ostream &operator<<(std::ostream &os, const cta::common::dataStructures::Dr
   return os;
 }
 
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

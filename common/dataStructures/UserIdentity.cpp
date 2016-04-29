@@ -33,7 +33,8 @@ UserIdentity::UserIdentity() {}
 // operator==
 //------------------------------------------------------------------------------
 bool UserIdentity::operator==(const UserIdentity &rhs) const {
-  return name==rhs.name && group==rhs.group;
+  return name==rhs.name
+      && group==rhs.group;
 }
 
 //------------------------------------------------------------------------------
@@ -48,11 +49,10 @@ bool UserIdentity::operator!=(const UserIdentity &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const UserIdentity &obj) {
   os << "(name=" << obj.name
-  << " group=" << obj.group << ")";
+     << " group=" << obj.group << ")";
   return os;
 }
 
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-
