@@ -22,7 +22,6 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
-  ColumnNameToIdx.cpp
   DbLogin.cpp
   TapeFileWritten.cpp
   OcciConn.cpp
@@ -68,6 +67,7 @@ install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 set (CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES
   OcciConnTest.cpp
   OcciEnvTest.cpp
+  OcciRsetTest.cpp
   OcciStmtTest.cpp)
 
 add_library (ctacatalogueoraunittests SHARED

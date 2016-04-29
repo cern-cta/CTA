@@ -19,6 +19,7 @@
 #pragma once
 
 #include <map>
+#include <stdexcept>
 #include <string>
 
 namespace cta {
@@ -26,6 +27,10 @@ namespace catalogue {
 
 /**
  * A map from column name to column index.
+ *
+ * Please note that the implementation of this class is intentionally in-lined
+ * so it can be used by code compiled against the CXX11 ABI and by code compiled
+ * against a newer ABI.
  */
 class ColumnNameToIdx {
 public:
@@ -39,7 +44,12 @@ public:
    * @param name The name of the column.
    * @param idx The index of the column.
    */
-  void add(const std::string &name, const int idx);
+  void add(const std::string &name, const int idx) {
+    if(m_nameToIdx.end() != m_nameToIdx.find(name)) {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + name + " is a duplicate");
+    }
+    m_nameToIdx[name] = idx;
+  }
 
   /**
    * Returns the index of the column with the specified name.
@@ -49,21 +59,31 @@ public:
    *
    * @return the index of the column with the specified name.
    */
-  int getIdx(const std::string &name) const;
+  int getIdx(const std::string &name) const {
+    auto it = m_nameToIdx.find(name);
+    if(m_nameToIdx.end() == it) {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed: Unknown volumn name " + name);
+    }
+    return it->second;
+  }
 
   /**
    * Alias for the getIdx() method.
    *
    * @return the index of the column with the specified name.
    */
-  int operator[](const std::string &name) const;
+  int operator[](const std::string &name) const {
+    return getIdx(name);
+  }
 
   /**
    * Returns true if this map is empty.
    *
    * @return True if this map is empty.
    */
-  bool empty() const;
+  bool empty() const {
+    return m_nameToIdx.empty();
+  }
 
 private:
 

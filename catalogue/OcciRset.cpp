@@ -22,6 +22,7 @@
 #include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 
+#include <cstring>
 #include <stdexcept>
 
 namespace cta {
@@ -33,7 +34,18 @@ namespace catalogue {
 OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
   m_stmt(stmt),
   m_rset(rset) {
-  if(NULL == rset) throw std::runtime_error(std::string(__FUNCTION__) + " failed: rset is NULL");
+  using namespace oracle;
+
+  if(NULL == rset) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: rset is NULL");
+  }
+
+  const std::vector<occi::MetaData> columns = rset->getColumnListMetaData();
+  for(unsigned int i = 0; i < columns.size(); i++) {
+    // Column indices start at 1
+    const unsigned int colIdx = i + 1;
+    m_colNameToIdx.add(columns[i].getString(occi::MetaData::ATTR_NAME), colIdx);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -71,6 +83,35 @@ oracle::occi::ResultSet *OcciRset::get() const {
 //------------------------------------------------------------------------------
 oracle::occi::ResultSet *OcciRset::operator->() const {
   return get();
+}
+
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+bool OcciRset::next() {
+  using namespace oracle;
+
+  try {
+    const occi::ResultSet::Status status = m_rset->next();
+    return occi::ResultSet::DATA_AVAILABLE == status;
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnText
+//------------------------------------------------------------------------------
+std::unique_ptr<char[]> OcciRset::columnText(const char *const colName) const {
+  try {
+    const int colIdx = m_colNameToIdx[colName];
+    const std::string text = m_rset->getString(colIdx).c_str();
+    std::unique_ptr<char[]> str(new char[text.length() + 1]);
+    std::memcpy(str.get(), text.c_str(), text.length());
+    return str;
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
 }
 
 } // namespace catalogue

@@ -20,6 +20,7 @@
 #define _GLIBCXX_USE_CXX11_ABI 0
 
 #include "catalogue/OcciConn.hpp"
+#include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 
 #include <cstring>
@@ -34,7 +35,9 @@ namespace catalogue {
 OcciStmt::OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
   m_conn(conn),
   m_stmt(stmt) {
-  if(NULL == stmt) throw std::runtime_error(std::string(__FUNCTION__) + " failed: stmt is NULL");
+  if(NULL == stmt) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: stmt is NULL");
+  }
 
   // Work with C strings because they haven't changed with respect to _GLIBCXX_USE_CXX11_ABI
   const std::size_t sqlLen = std::strlen(sql);
@@ -106,10 +109,16 @@ void OcciStmt::bind(const char *paramName, const char *paramValue) {
 }
 
 //------------------------------------------------------------------------------
-// execute
+// executeQuery
 //------------------------------------------------------------------------------
-OcciRset *OcciStmt::execute() {
-  return NULL;
+OcciRset *OcciStmt::executeQuery() {
+  using namespace oracle;
+
+  try {
+    return new OcciRset(*this, m_stmt->executeQuery());
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
 }
 
 } // namespace catalogue

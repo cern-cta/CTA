@@ -23,6 +23,7 @@
 #include "catalogue/OcciStmt.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
+#include <cstring>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -38,7 +39,7 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_OcciRsetTest, execute) {
+TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
   using namespace cta;
   using namespace cta::catalogue;
 
@@ -48,9 +49,12 @@ TEST_F(cta_catalogue_OcciRsetTest, execute) {
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
-  const char *const sql = "SELECT * FROM DUAL";
+  const char *const sql = "SELECT DUMMY FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->execute());
+  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  ASSERT_TRUE(rset->next());
+  std::unique_ptr<char[]> text = rset->columnText("DUMMY");
+  ASSERT_TRUE(std::strcmp("X", text.get()) == 0);
 }
 
 } // namespace unitTests

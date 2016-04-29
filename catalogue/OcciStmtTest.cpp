@@ -38,7 +38,7 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_OcciStmtTest, execute) {
+TEST_F(cta_catalogue_OcciStmtTest, executeQuery) {
   using namespace cta;
   using namespace cta::catalogue;
 
@@ -50,7 +50,7 @@ TEST_F(cta_catalogue_OcciStmtTest, execute) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT * FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->execute());
+  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
 }
 
 } // namespace unitTests

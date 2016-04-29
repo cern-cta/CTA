@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include "catalogue/ColumnNameToIdx.hpp"
+
+#include <memory>
 #include <mutex>
 #include <occi.h>
 
@@ -73,6 +76,26 @@ public:
    */
   oracle::occi::ResultSet *operator->() const;
 
+  /**
+   * Attempts to get the next row of the result set.
+   *
+   * @return True if a row has been retrieved else false if there are no more
+   * rows in the result set.
+   */
+  bool next();
+
+  /**
+   * Returns the value of the specified column as a string.
+   *
+   * Please note that a unique_ptr to a C string is returned instead of an
+   * std::string so that this method can be used by code compiled against
+   * the CXX11 ABI and by code compiled against a newer ABI.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   */
+  std::unique_ptr<char[]> columnText(const char *const colName) const;
+
 private:
 
   /**
@@ -89,6 +112,11 @@ private:
    * The OCCI result set.
    */
   oracle::occi::ResultSet *m_rset;
+
+  /**
+   * Map from column name to column index.
+   */
+  ColumnNameToIdx m_colNameToIdx;
 
 }; // class OcciRset
 

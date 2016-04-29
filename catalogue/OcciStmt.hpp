@@ -112,7 +112,7 @@ public:
   /**
    *  Executes the statement and returns the result set.
    */
-  OcciRset *execute();
+  OcciRset *executeQuery();
 
 private:
 
