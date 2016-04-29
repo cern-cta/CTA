@@ -37,7 +37,6 @@ ArchiveFile::ArchiveFile():
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-<<<<<<< c5e02f43e7141aff1c6a7348737f04709151f383
 bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
   return archiveFileID == rhs.archiveFileID
       && diskFileID    == rhs.diskFileID
