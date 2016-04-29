@@ -31,23 +31,23 @@ ArchiveFile::ArchiveFile():
   archiveFileID(0),
   fileSize(0),
   creationTime(0),
-  reconciliationTime(0) {}
+  reconciliationTime(0) {
+}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
+<<<<<<< c5e02f43e7141aff1c6a7348737f04709151f383
 bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
-  return archiveFileID==rhs.archiveFileID
-      && diskFileID==rhs.diskFileID
-      && diskInstance==rhs.diskInstance
-      && fileSize==rhs.fileSize
-      && checksumType==rhs.checksumType
-      && checksumValue==rhs.checksumValue
-      && storageClass==rhs.storageClass
-      && drData==rhs.drData
-      && tapeCopies==rhs.tapeCopies
-      && creationTime==rhs.creationTime
-      && reconciliationTime==rhs.reconciliationTime;
+  return archiveFileID == rhs.archiveFileID
+      && diskFileID    == rhs.diskFileID
+      && diskInstance  == rhs.diskInstance
+      && fileSize      == rhs.fileSize
+      && checksumType  == rhs.checksumType
+      && checksumValue == rhs.checksumValue
+      && storageClass  == rhs.storageClass
+      && drData        == rhs.drData
+      && tapeCopies    == rhs.tapeCopies;
 }
 
 //------------------------------------------------------------------------------
@@ -60,18 +60,21 @@ bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
-  os << "(archiveFileID=" << obj.archiveFileID
-     << " diskFileID=" << obj.diskFileID
-     << " diskInstance=" << obj.diskInstance
-     << " fileSize=" << obj.fileSize
-     << " checksumType=" << obj.checksumType
-     << " checksumValue=" << obj.checksumValue
-     << " storageClass=" << obj.storageClass
-     << " drData=" << obj.drData
-     << " tapeCopies=" << obj.tapeCopies
-     << " creationTime=" << obj.creationTime
-     << " reconciliationTime=" << obj.reconciliationTime << ")";
+std::ostream &operator<<(std::ostream &os, ArchiveFile &obj) {
+  os <<
+    "{"
+    "archiveFileID="      << obj.archiveFileID      << ","
+    "diskFileID="         << obj.diskFileID         << ","
+    "diskInstance="       << obj.diskInstance       << ","
+    "fileSize="           << obj.fileSize           << ","
+    "checksumType="       << obj.checksumType       << ","
+    "checksumValue="      << obj.checksumValue      << ","
+    "storageClass="       << obj.storageClass       << ","
+    "drData="             << obj.drData             << ","
+    "tapeCopies="         << obj.tapeCopies         << ","
+    "creationTime="       << obj.creationTime       << ","
+    "reconciliationTime=" << obj.reconciliationTime <<
+    "}";
   return os;
 }
 

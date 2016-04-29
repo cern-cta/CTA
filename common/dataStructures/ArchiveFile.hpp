@@ -37,6 +37,14 @@ struct ArchiveFile {
 
   ArchiveFile();
 
+  /**
+   * Equality operator that does NOT compare the creationTime and
+   * reconciliationTime member-variables.
+   *
+   * @param rhs The operand on the right-hand side of the operator.
+   * @return True if the compared objects are equal (ignoring the creationTime
+   * and reconciliationTime member-variables).
+   */
   bool operator==(const ArchiveFile &rhs) const;
 
   bool operator!=(const ArchiveFile &rhs) const;
