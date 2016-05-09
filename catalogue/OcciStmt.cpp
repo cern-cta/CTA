@@ -35,14 +35,18 @@ namespace catalogue {
 OcciStmt::OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
   m_conn(conn),
   m_stmt(stmt) {
+  if(NULL == sql) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: sql is NULL");
+  }
   if(NULL == stmt) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: stmt is NULL");
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
+      ": stmt is NULL");
   }
 
   // Work with C strings because they haven't changed with respect to _GLIBCXX_USE_CXX11_ABI
   const std::size_t sqlLen = std::strlen(sql);
-  m_sql = new char[sqlLen + 1];
-  std::memcpy(m_sql, sql, sqlLen);
+  m_sql.reset(new char[sqlLen + 1]);
+  std::memcpy(m_sql.get(), sql, sqlLen);
   m_sql[sqlLen] = '\0';
 }
 
@@ -50,8 +54,6 @@ OcciStmt::OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statemen
 // destructor
 //------------------------------------------------------------------------------
 OcciStmt::~OcciStmt() throw() {
-  delete m_sql;
-
   try {
     close(); // Idempotent close() method
   } catch (...) {
@@ -75,7 +77,7 @@ void OcciStmt::close() {
 // getSql
 //------------------------------------------------------------------------------
 const char *OcciStmt::getSql() const {
-  return m_sql;
+  return m_sql.get();
 }
 
 //------------------------------------------------------------------------------
@@ -117,7 +119,8 @@ OcciRset *OcciStmt::executeQuery() {
   try {
     return new OcciRset(*this, m_stmt->executeQuery());
   } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
+      ": " + ne.what());
   }
 }
 

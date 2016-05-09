@@ -20,7 +20,6 @@
 
 #include <mutex>
 #include <sqlite3.h>
-#include <string>
 
 namespace cta {
 namespace catalogue {
@@ -42,7 +41,7 @@ public:
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
    */
-  SqliteConn(const std::string &filename);
+  SqliteConn(const char *const filename);
 
   /**
    * Destructor.
@@ -71,7 +70,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  void execNonQuery(const std::string &sql);
+  void execNonQuery(const char *const sql);
 
   /**
    * Creates a prepared statement.
@@ -79,7 +78,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  SqliteStmt *createStmt(const std::string &sql);
+  SqliteStmt *createStmt(const char *const sql);
 
 private:
 

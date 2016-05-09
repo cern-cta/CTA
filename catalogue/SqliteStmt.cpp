@@ -18,9 +18,12 @@
 
 #include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteConn.hpp"
+#include "catalogue/SqliteRset.hpp"
 #include "catalogue/SqliteStmt.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/utils/utils.hpp"
+
+#include <cstring>
+#include <stdexcept>
+#include <string>
 
 namespace cta {
 namespace catalogue {
@@ -28,15 +31,21 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteStmt::SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt):
-  m_sql(sql),
+SqliteStmt::SqliteStmt(const char *const sql, sqlite3_stmt *const stmt):
   m_stmt(stmt) {
-  if(NULL == stmt) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": The prepared statement is a NULL pointer";
-    throw ex;
+  if (NULL == sql) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: sql is NULL");
   }
+
+  if (NULL == stmt) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": stmt is NULL");
+  }
+
+  // Work with C strings because they haven't changed with respect to CXX11 ABI
+  const std::size_t sqlLen = std::strlen(sql);
+  m_sql.reset(new char[sqlLen + 1]);
+  std::memcpy(m_sql.get(), sql, sqlLen);
+  m_sql[sqlLen] = '\0';
 }
 
 //------------------------------------------------------------------------------
@@ -63,135 +72,80 @@ void SqliteStmt::close() {
 }
 
 //------------------------------------------------------------------------------
-// getSql
-//------------------------------------------------------------------------------
-const std::string &SqliteStmt::getSql() const {
-  return m_sql;
-}
-
-//------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
 sqlite3_stmt *SqliteStmt::get() const {
   if(NULL == m_stmt) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: NULL pointer";
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
+      ": NULL pointer");
   }
   return m_stmt;
 }
 
 //------------------------------------------------------------------------------
+// getSql
+//------------------------------------------------------------------------------
+const char *SqliteStmt::getSql() const {
+  return m_sql.get();
+}
+
+//------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void SqliteStmt::bind(const std::string &paramName, const uint64_t paramValue) {
+void SqliteStmt::bind(const char *const paramName, const uint64_t paramValue) {
   const int paramIdx = getParamIndex(paramName);
-  const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx,
-    (sqlite3_int64)paramValue);
+  const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64)paramValue);
   if(SQLITE_OK != bindRc) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed";
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
   }
 }
 
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void SqliteStmt::bind(const std::string &paramName, const std::string &paramValue) {
+void SqliteStmt::bind(const char *const paramName, const std::string &paramValue) {
   const int paramIdx = getParamIndex(paramName);
   const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1,
     SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed";
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
   }
 }
 
 //------------------------------------------------------------------------------
-// step
+// executeQuery
 //------------------------------------------------------------------------------
-int SqliteStmt::step() {
+SqliteRset *SqliteStmt::executeQuery() {
+  return new SqliteRset(*this);
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void SqliteStmt::executeNonQuery() {
   const int stepRc = sqlite3_step(m_stmt);
 
-  // Return the result if sqlite_3_step was sucessful
-  if(stepRc == SQLITE_DONE || stepRc == SQLITE_ROW) {
-    return stepRc;
+  // Throw an exception if the call to sqlite3_step() failed
+  if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      Sqlite::rcToStr(stepRc));
   }
 
-  // Throw an appropriate exception
-  exception::Exception ex;
-  ex.getMessage() << __FUNCTION__ << " failed: " << Sqlite::rcToStr(stepRc) <<
-    ": For SQL statement " << utils::singleSpaceString(m_sql);
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// getColumnNameToIdx
-//------------------------------------------------------------------------------
-ColumnNameToIdx cta::catalogue::SqliteStmt::getColumnNameToIdx() const {
-  ColumnNameToIdx nameToIdx;
-
-  try {
-    const int nbCols = sqlite3_column_count(m_stmt);
-    for(int i = 0; i < nbCols; i++) {
-      const char *name = sqlite3_column_name(m_stmt, i);
-      if(NULL == name) {
-        exception::Exception ex;
-        ex.getMessage() << "Failed to get column name for column index " << i;
-        throw ex;
-      }
-      nameToIdx.add(name, i);
-    }
-  } catch(exception::Exception &ne) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: For SQL statement " << utils::singleSpaceString(m_sql)
-      << ": " << ne.getMessage().str();
-    throw ex;
-  }
-
-  return nameToIdx;
-}
-
-//------------------------------------------------------------------------------
-// columnText
-//------------------------------------------------------------------------------
-std::string SqliteStmt::columnText(const int colIdx) {
-  const char *const colValue = (const char *)sqlite3_column_text(m_stmt, colIdx);
-  if(NULL == colValue) {
-    return "";
-  } else  {
-    return colValue;
+  // Throw an exception if the SQL statement returned a result set
+  if(SQLITE_ROW == stepRc) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
+      ": The SQL statment returned a result set");
   }
 }
-
-//------------------------------------------------------------------------------
-// columnTextIsNull
-//------------------------------------------------------------------------------
-bool SqliteStmt::columnTextIsNull(const int colIdx) {
-  const char *const colValue = (const char *)sqlite3_column_text(m_stmt, colIdx);
-  return NULL == colValue;
-}
-
-//------------------------------------------------------------------------------
-// columnUint64
-//------------------------------------------------------------------------------
-uint64_t SqliteStmt::columnUint64(const int colIdx) {
-  return (uint64_t)sqlite3_column_int64(m_stmt, colIdx);
-} 
 
 //------------------------------------------------------------------------------
 // getParamIndex
 //------------------------------------------------------------------------------
-int SqliteStmt::getParamIndex(const std::string &paramName) {
-  const int index = sqlite3_bind_parameter_index(m_stmt, paramName.c_str());
+int SqliteStmt::getParamIndex(const char *const paramName) const {
+  const int index = sqlite3_bind_parameter_index(m_stmt, paramName);
   if(0 == index) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Bind parameter " << paramName << " not found in SQL statement " <<
-      utils::singleSpaceString(m_sql);
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ": Bind parameter " + paramName + " not found");
   }
   return index;
 }

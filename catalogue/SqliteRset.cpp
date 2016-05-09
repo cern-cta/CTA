@@ -16,15 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
-#define _GLIBCXX_USE_CXX11_ABI 0
-
-#include "catalogue/OcciRset.hpp"
-#include "catalogue/OcciStmt.hpp"
+#include "catalogue/Sqlite.hpp"
+#include "catalogue/SqliteRset.hpp"
+#include "catalogue/SqliteStmt.hpp"
 
 #include <cstring>
-#include <map>
+#include <sstream>
 #include <stdexcept>
+
 
 namespace cta {
 namespace catalogue {
@@ -33,10 +32,10 @@ namespace catalogue {
  * A map from column name to column index.
  *
  * Please note that this class is intentionally hidden within this cpp file to
- * enable the OcciRset class to be used by code compiled against the CXX11 ABI
+ * enable the SqliteRset class to be used by code compiled against the CXX11 ABI
  * and by code compiled against a pre-CXX11 ABI.
  */
-class OcciRset::ColumnNameToIdx {
+class SqliteRset::ColumnNameToIdx {
 public:
 
   /**
@@ -96,20 +95,52 @@ private:
    */
   std::map<std::string, int> m_nameToIdx;
 
-}; // class OcciRset::ColumnNameToIdx
+}; // class SqliteRset::ColumnNameToIdx
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
+SqliteRset::SqliteRset(SqliteStmt &stmt):
   m_stmt(stmt),
-  m_rset(rset) {
+  m_nextHasNotBeenCalled(true) {
+  m_colNameToIdx.reset(new ColumnNameToIdx());
+}
+
+//------------------------------------------------------------------------------
+// destructor.
+//------------------------------------------------------------------------------
+SqliteRset::~SqliteRset() throw() {
+  //m_colNameToIdx.release();
+}
+
+//------------------------------------------------------------------------------
+// getSql
+//------------------------------------------------------------------------------
+const char *SqliteRset::getSql() const {
+  return m_stmt.getSql();
+}
+
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+bool SqliteRset::next() {
   try {
-    if (NULL == rset) {
-      throw std::runtime_error("rset is NULL");
+    const int stepRc = sqlite3_step(m_stmt.get());
+
+    // Throw an exception if the call to sqlite3_step() failed
+    if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
+      throw std::runtime_error(Sqlite::rcToStr(stepRc));
     }
-    m_colNameToIdx.reset(new ColumnNameToIdx());
-    populateColNameToIdxMap();
+
+    if(m_nextHasNotBeenCalled) {
+      m_nextHasNotBeenCalled = false;
+
+      if(SQLITE_ROW == stepRc) {
+        populateColNameToIdxMap();
+      }
+    }
+
+    return SQLITE_ROW == stepRc;
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
       ": " + ne.what());
@@ -117,17 +148,19 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
 }
 
 //------------------------------------------------------------------------------
-// populateColNameToIdx
+// populateColNameToIdxMap
 //------------------------------------------------------------------------------
-void OcciRset::populateColNameToIdxMap() {
-  using namespace oracle;
-
+void SqliteRset::populateColNameToIdxMap() {
   try {
-    const std::vector<occi::MetaData> columns = m_rset->getColumnListMetaData();
-    for (unsigned int i = 0; i < columns.size(); i++) {
-      // Column indices start at 1
-      const unsigned int colIdx = i + 1;
-      m_colNameToIdx->add(columns[i].getString(occi::MetaData::ATTR_NAME), colIdx);
+    const int nbCols = sqlite3_column_count(m_stmt.get());
+    for (int i = 0; i < nbCols; i++) {
+      const char *name = sqlite3_column_name(m_stmt.get(), i);
+      if (NULL == name) {
+        std::ostringstream msg;
+        msg << "Failed to get column name for column index " << i;
+        throw std::runtime_error(msg.str());
+      }
+      m_colNameToIdx->add(name, i);
     }
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
@@ -135,76 +168,28 @@ void OcciRset::populateColNameToIdxMap() {
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-OcciRset::~OcciRset() throw() {
-  try {
-    close(); // Idempotent close()
-  } catch(...) {
-    // Destructor does not throw
-  }
-}
-
-//------------------------------------------------------------------------------
-// close
-//------------------------------------------------------------------------------
-void OcciRset::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
-
-  if(NULL != m_rset) {
-    m_stmt->closeResultSet(m_rset);
-    m_rset = NULL;
-  }
-}
-
-//------------------------------------------------------------------------------
-// get
-//------------------------------------------------------------------------------
-oracle::occi::ResultSet *OcciRset::get() const {
-  return m_rset;
-}
-
-//------------------------------------------------------------------------------
-// operator->
-//------------------------------------------------------------------------------
-oracle::occi::ResultSet *OcciRset::operator->() const {
-  return get();
-}
-
-//------------------------------------------------------------------------------
-// next
-//------------------------------------------------------------------------------
-bool OcciRset::next() {
-  using namespace oracle;
-
-  try {
-    const occi::ResultSet::Status status = m_rset->next();
-    return occi::ResultSet::DATA_AVAILABLE == status;
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
-  }
-}
-
-//------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-char * OcciRset::columnText(const char *const colName) const {
-  try {
-    const int colIdx = (*m_colNameToIdx)[colName];
-    if(m_rset->isNull(colIdx)) {
-      return NULL;
-    } else {
-      const std::string text = m_rset->getString(colIdx).c_str();
-      char *const str = new char[text.length() + 1];
-      std::memcpy(str, text.c_str(), text.length());
-      str[text.length()] = '\0';
-      return str;
-    }
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
+char *SqliteRset::columnText(const char *const colName) const {
+  const int colIdx = (*m_colNameToIdx)[colName];
+  const char *const text = (const char *)sqlite3_column_text(m_stmt.get(), colIdx);
+  if(NULL == text) {
+    return NULL;
+  } else {
+    const size_t strLen = std::strlen(text);
+    char *const str = new char[strLen + 1];
+    std::memcpy(str, text, strLen);
+    str[strLen] = '\0';
+    return str;
   }
+}
+
+//------------------------------------------------------------------------------
+// columnUint64
+//------------------------------------------------------------------------------
+uint64_t SqliteRset::columnUint64(const char *const colName) const {
+  const int colIdx = (*m_colNameToIdx)[colName];
+  return (uint64_t)sqlite3_column_int64(m_stmt.get(), colIdx);
 }
 
 } // namespace catalogue

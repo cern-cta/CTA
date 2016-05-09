@@ -18,21 +18,17 @@
 
 #pragma once
 
-#include "catalogue/ColumnNameToIdx.hpp"
-
 #include <map>
+#include <memory>
+#include <mutex>
 #include <stdint.h>
 #include <sqlite3.h>
-#include <string>
 
 namespace cta {
 namespace catalogue {
 
-/**
- * Forward decalaration to avoid a circular depedency between SqliteConn and
- * SqliteStmt.
- */
 class SqliteConn;
+class SqliteRset;
 
 /**
  * A convenience wrapper around an SQLite prepared statement.
@@ -46,7 +42,7 @@ public:
    * @param sql The SQL statement.
    * @param stmt The prepared statement.
    */
-  SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt);
+  SqliteStmt(const char *const sql, sqlite3_stmt *const stmt);
 
   /**
    * Destructor.
@@ -59,18 +55,21 @@ public:
   void close();
 
   /**
+   * Returns a pointer to the underlying prepared statement.
+   *
+   * This method throws an exception if the pointer to the underlying prepared
+   * statement is NULL.
+   *
+   * @return the underlying prepared statement.
+   */
+  sqlite3_stmt *get() const;
+
+  /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
-
-  /**
-   * Returns the underlying prepared statement.
-   *
-   * @return the underlying prepared statemen.
-   */
-  sqlite3_stmt *get() const;
+  const char *getSql() const;
 
   /**
    * Binds an SQL parameter.
@@ -78,7 +77,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bind(const std::string &paramName, const uint64_t paramValue);
+  void bind(const char *const paramName, const uint64_t paramValue);
 
   /** 
    * Binds an SQL parameter.
@@ -86,50 +85,20 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  void bind(const std::string &paramName, const std::string &paramValue);
+  void bind(const char *const paramName, const std::string &paramValue);
 
   /**
-   * Convenience wrapper around sqlite3_step().
+   * Executes the statement and returns the result set.
    *
-   * This method throws a exception if sqlite3_step() returns an error.
-   *
-   * @return See sqlite3_step() documentation.
+   * @return The result set.  Please note that it is the responsibility of the
+   * caller to free the memory associated with the result set.
    */
-  int step();
+  SqliteRset *executeQuery();
 
   /**
-   * Returns a map from column name to column index.
-   *
-   * @return a map from column name to column index.
+   * Executes the statement.
    */
-  ColumnNameToIdx getColumnNameToIdx() const;
-
-  /**
-   * Convenience wrapper around sqlite3_column_text().
-   *
-   * If sqlite3_column_text() returns NULL then this method returns an empty
-   * string.
-   *
-   * @param colIdx The index of the column.
-   * @return The value of the specified column.
-   */
-  std::string columnText(const int colIdx);
-
-  /**
-   * Returns true if the specified text column contains a null value.
-   *
-   * @param colIdx The index of the column.
-   * @return True if the column value is null.
-   */
-  bool columnTextIsNull(const int colIdx);
-
-  /**
-   * Convenience wrapper around sqlite3_column_int64().
-   *
-   * @param colIdx The index of the column.
-   * @return The value of the specified column.
-   */
-  uint64_t columnUint64(const int colIdx);
+  void executeNonQuery();
 
 private:
 
@@ -140,8 +109,12 @@ private:
 
   /**
    * The SQL statement.
+   *
+   * A C string is used instead of an std::string so that this class can be used
+   * by code compiled against the CXX11 ABI and code compiled against a
+   * pre-CXX11 ABI.
    */
-  const std::string m_sql;
+  std::unique_ptr<char[]> m_sql;
 
   /**
    * The prepared statement.
@@ -152,8 +125,11 @@ private:
    * Returns the index of the SQL parameter with the specified name.
    *
    * This method throws an exception if the parameter is not found.
+   *
+   * @param paramName The name of the SQL parameter.
+   * @return The index of the SQL parameter.
    */
-  int getParamIndex(const std::string &paramName);
+  int getParamIndex(const char *const paramName) const;
 
 }; // class SqlLiteStmt
 

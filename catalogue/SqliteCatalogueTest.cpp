@@ -332,7 +332,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createAdminHost_same_twice) {
   catalogue.createAdminHost(m_bootstrapAdminSI, anotherAdminHost, "comment 1");
 
   ASSERT_THROW(catalogue.createAdminHost(m_bootstrapAdminSI,
-    anotherAdminHost, "coment 2"), exception::Exception);
+    anotherAdminHost, "comment 2"), exception::Exception);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, isAdmin_false) {

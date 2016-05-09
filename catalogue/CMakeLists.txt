@@ -32,6 +32,7 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteCatalogue.cpp
   SqliteCatalogueSchema.cpp
   SqliteConn.cpp
+  SqliteRset.cpp
   SqliteStmt.cpp)
 
 add_library (ctacatalogue SHARED

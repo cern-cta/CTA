@@ -19,8 +19,9 @@
 #include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteConn.hpp"
 #include "catalogue/SqliteStmt.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/utils/utils.hpp"
+
+#include <stdexcept>
+#include <string>
 
 namespace cta {
 namespace catalogue {
@@ -28,14 +29,11 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename) {
+SqliteConn::SqliteConn(const char *const filename) {
   m_conn = NULL;
-  if(sqlite3_open(filename.c_str(), &m_conn)) {
+  if(sqlite3_open(filename, &m_conn)) {
     sqlite3_close(m_conn);
-    exception::Exception ex;
-    ex.getMessage() << "Failed to construct SqliteConn: sqlite3_open failed"
-      ": " << sqlite3_errmsg(m_conn);
-    throw(ex);
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: sqlite3_open() failed: " + sqlite3_errmsg(m_conn));
   }
 }
 
@@ -63,8 +61,7 @@ void SqliteConn::close() {
 //------------------------------------------------------------------------------
 sqlite3 *SqliteConn::get() const {
   if(NULL == m_conn) {
-    throw exception::Exception("Failed to get SQLite database connection"
-      ": NULL pointer");
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: NULL pointer");
   }
   return m_conn;
 }
@@ -75,48 +72,38 @@ sqlite3 *SqliteConn::get() const {
 void SqliteConn::enableForeignKeys() {
   try {
     execNonQuery("PRAGMA foreign_keys = ON;");
-  } catch(exception::Exception &ne) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to enable foreign key constraints: " <<
-       ne.getMessage().str();
-    throw ex;
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void SqliteConn::execNonQuery(const std::string &sql) {
+void SqliteConn::execNonQuery(const char *const sql) {
   int (*callback)(void*,int,char**,char**) = NULL;
   void *callbackArg = NULL;
-  char *errMsg = NULL;
-  if(SQLITE_OK != sqlite3_exec(m_conn, sql.c_str(), callback, callbackArg,
-    &errMsg)) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to execute non-query: " << utils::singleSpaceString(sql) << ": " << errMsg;
-    sqlite3_free(errMsg);
-    throw ex;
+  char *sqliteErrMsg = NULL;
+  if(SQLITE_OK != sqlite3_exec(m_conn, sql, callback, callbackArg, &sqliteErrMsg)) {
+    std::string msg = std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + sqliteErrMsg;
+    sqlite3_free(sqliteErrMsg);
+    throw std::runtime_error(msg);
   }
 }
 
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-SqliteStmt *SqliteConn::createStmt(
-  const std::string &sql) {
+SqliteStmt *SqliteConn::createStmt(const char *const sql) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   sqlite3_stmt *stmt = NULL;
   const int nByte = -1; // Read SQL up to first null terminator
-  const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt,
-    NULL);
+  const int prepareRc = sqlite3_prepare_v2(m_conn, sql, nByte, &stmt, NULL);
   if(SQLITE_OK != prepareRc) {
     sqlite3_finalize(stmt);
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Failed to prepare SQL statement " << utils::singleSpaceString(sql) << ": " <<
-      sqlite3_errmsg(m_conn);
-    throw ex;
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
+      ": " + sqlite3_errmsg(m_conn));
   }
 
   return new SqliteStmt(sql, stmt);

@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "catalogue/ColumnNameToIdx.hpp"
-
 #include <memory>
 #include <mutex>
 #include <occi.h>
@@ -89,12 +87,16 @@ public:
    *
    * Please note that a C string is returned instead of an std::string so that
    * this method can be used by code compiled against the CXX11 ABI and by code
-   * compiled against a newer ABI.
+   * compiled against the pre-CXX11 ABI.
+   *
+   * Please note that if the value of the column is NULL within the database
+   * then a NULL pointer is returned.
    *
    * @param colName The name of the column.
-   * @return The string value of the specified column.  Please note that it is
-   * the responsibility of the caller to free the memory associated with the
-   * string using delete[] operator.
+   * @return The string value of the specified column or NULL if the value of
+   * the column within the database is NULL.  Please note that it is the
+   * responsibility of the caller to free the memory associated with the string
+   * using delete[] operator.
    */
   char *columnText(const char *const colName) const;
 
@@ -116,9 +118,26 @@ private:
   oracle::occi::ResultSet *m_rset;
 
   /**
-   * Map from column name to column index.
+   * Forward declaration of the nested class ColumnNameIdx that is intentionally
+   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
+   * order to enable the SqliteRset class to be used by code compiled against
+   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
    */
-  ColumnNameToIdx m_colNameToIdx;
+  class ColumnNameToIdx;
+
+  /**
+   * Map from column name to column index.
+   *
+   * Please note that the type of the map is intentionally forward declared in
+   * order to avoid std::string being used.  This is to aid with working with
+   * pre and post CXX11 ABIs.
+   */
+  std::unique_ptr<ColumnNameToIdx> m_colNameToIdx;
+
+  /**
+   * Populates the map from column name to column index.
+   */
+  void populateColNameToIdxMap();
 
 }; // class OcciRset
 

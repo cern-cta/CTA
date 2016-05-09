@@ -18,8 +18,7 @@
 
 #pragma once
 
-#include "catalogue/ColumnNameToIdx.hpp"
-
+#include <memory>
 #include <mutex>
 #include <occi.h>
 #include <stdint.h>
@@ -68,6 +67,11 @@ public:
   ~OcciStmt() throw();
 
   /**
+   * Prevent copying the object.
+   */
+  OcciStmt(const OcciStmt &) = delete;
+
+  /**
    * Idempotent close() method.  The destructor calls this method.
    */
   void close();
@@ -111,6 +115,9 @@ public:
 
   /**
    *  Executes the statement and returns the result set.
+   *
+   *  @return The result set.  Please note that it is the responsibility of the
+   *  caller to free the memory associated with the result set.
    */
   OcciRset *executeQuery();
 
@@ -123,8 +130,12 @@ private:
 
   /**
    * The SQL statement.
+   *
+   * Please note that a C string is used instead of std::string so that this
+   * class can be used by code compiled against the CXX11 ABI and by code
+   * compiled against the pre-CXX11 ABI.
    */
-  char *m_sql;
+  std::unique_ptr<char[]> m_sql;
 
   /**
    * The database connection.

@@ -18,32 +18,27 @@
 
 #pragma once
 
-#include "catalogue/ColumnNameToIdx.hpp"
-
-#include <map>
+#include <memory>
 #include <stdint.h>
 #include <sqlite3.h>
-#include <string>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaration to avoid a circular dependency between SqliteRset and
- * SqliteStmt.
+ * Forward declaration.
  */
 class SqliteStmt;
 
 /**
- * A convenience wrapper around an SQLite prepared statement that is either in
- * the SQLITE_ROW or SQLITE_DONE states.
+ * The result set of an sql query.
  */
-class SqliteStmt {
+class SqliteRset {
 public:
 
   /**
    * Constructor.
-   *  
+   *
    * @param stmt The prepared statement.
    */
   SqliteRset(SqliteStmt &stmt);
@@ -58,97 +53,75 @@ public:
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
+  const char *getSql() const;
 
   /**
-   * Returns the underlying prepared statement.
+   * Attempts to get the next row of the result set.
    *
-   * @return the underlying prepared statemen.
+   * @return True if a row has been retrieved else false if there are no more
+   * rows in the result set.
    */
-  sqlite3_stmt *get() const;
+  bool next();
 
   /**
-   * Binds an SQL parameter.
+   * Returns the value of the specified column as a string.
    *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
+   * Please note that a C string is returned instead of an std::string so that
+   * this method can be used by code compiled against the CXX11 ABI and by code
+   * compiled against a pre-CXX11 ABI.
+   *
+   * Please note that if the value of the column is NULL within the database
+   * then a NULL pointer is returned.
+   *
+   * @param colName The name of the column.
+   * @return The string value of the specified column or NULL if the value of
+   * the column within the database is NULL.  Please note that it is the
+   * responsibility of the caller to free the memory associated with the string
+   * using delete[] operator.
    */
-  void bind(const std::string &paramName, const uint64_t paramValue);
-
-  /** 
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */ 
-  void bind(const std::string &paramName, const std::string &paramValue);
+  char *columnText(const char *const colName) const;
 
   /**
-   * Convenience wrapper around sqlite3_step().
+   * Returns the value of the specified column as an integer.
    *
-   * This method throws a exception if sqlite3_step() returns an error.
-   *
-   * @return See sqlite3_step() documentation.
-   */
-  int step();
-
-  /**
-   * Returns a map from column name to column index.
-   *
-   * @return a map from column name to column index.
-   */
-  ColumnNameToIdx getColumnNameToIdx() const;
-
-  /**
-   * Convenience wrapper around sqlite3_column_text().
-   *
-   * If sqlite3_column_text() returns NULL then this method returns an empty
-   * string.
-   *
-   * @param colIdx The index of the column.
+   * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::string columnText(const int colIdx);
-
-  /**
-   * Returns true if the specified text column contains a null value.
-   *
-   * @param colIdx The index of the column.
-   * @return True if the column value is null.
-   */
-  bool columnTextIsNull(const int colIdx);
-
-  /**
-   * Convenience wrapper around sqlite3_column_int64().
-   *
-   * @param colIdx The index of the column.
-   * @return The value of the specified column.
-   */
-  uint64_t columnUint64(const int colIdx);
+  uint64_t columnUint64(const char *const colName) const;
 
 private:
 
   /**
-   * Mutex used to serialize access to the prepared statement.
-   */
-  std::mutex m_mutex;
-
-  /**
-   * The SQL statement.
-   */
-  const std::string m_sql;
-
-  /**
    * The prepared statement.
    */
-  sqlite3_stmt *m_stmt;
+  SqliteStmt &m_stmt;
 
   /**
-   * Returns the index of the SQL parameter with the specified name.
-   *
-   * This method throws an exception if the parameter is not found.
+   * True if the next() method has not yet been called.
    */
-  int getParamIndex(const std::string &paramName);
+  bool m_nextHasNotBeenCalled;
+
+  /**
+   * Forward declaration of the nested class ColumnNameIdx that is intentionally
+   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
+   * order to enable the SqliteRset class to be used by code compiled against
+   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
+   */
+  class ColumnNameToIdx;
+
+  /**
+   * Map from column name to column index.
+   *
+   * Please note that the type of the map is intentionally forward declared in
+   * order to avoid std::string being used.  This is to aid with working with
+   * pre and post CXX11 ABIs.
+   */
+  std::unique_ptr<ColumnNameToIdx> m_colNameToIdx;
+
+  /**
+   * Populates the map from column name to column index.
+   */
+  void populateColNameToIdxMap();
 
 }; // class SqlLiteStmt
 
