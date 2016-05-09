@@ -53,7 +53,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<OcciRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
-  std::unique_ptr<char[]> text = rset->columnText("DUMMY");
+  std::unique_ptr<char[]> text(rset->columnText("DUMMY"));
   ASSERT_TRUE(std::strcmp("X", text.get()) == 0);
 }
 

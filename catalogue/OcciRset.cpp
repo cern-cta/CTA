@@ -102,12 +102,13 @@ bool OcciRset::next() {
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-std::unique_ptr<char[]> OcciRset::columnText(const char *const colName) const {
+char * OcciRset::columnText(const char *const colName) const {
   try {
     const int colIdx = m_colNameToIdx[colName];
     const std::string text = m_rset->getString(colIdx).c_str();
-    std::unique_ptr<char[]> str(new char[text.length() + 1]);
-    std::memcpy(str.get(), text.c_str(), text.length());
+    char *const str = new char[text.length() + 1];
+    std::memcpy(str, text.c_str(), text.length());
+    str[text.length()] = '\0';
     return str;
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());

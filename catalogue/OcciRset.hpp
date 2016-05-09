@@ -87,14 +87,16 @@ public:
   /**
    * Returns the value of the specified column as a string.
    *
-   * Please note that a unique_ptr to a C string is returned instead of an
-   * std::string so that this method can be used by code compiled against
-   * the CXX11 ABI and by code compiled against a newer ABI.
+   * Please note that a C string is returned instead of an std::string so that
+   * this method can be used by code compiled against the CXX11 ABI and by code
+   * compiled against a newer ABI.
    *
    * @param colName The name of the column.
-   * @return The value of the specified column.
+   * @return The string value of the specified column.  Please note that it is
+   * the responsibility of the caller to free the memory associated with the
+   * string using delete[] operator.
    */
-  std::unique_ptr<char[]> columnText(const char *const colName) const;
+  char *columnText(const char *const colName) const;
 
 private:
 
