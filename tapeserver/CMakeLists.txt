@@ -6,6 +6,8 @@ add_subdirectory (test)
 
 # CTA's cta-taped code
 add_subdirectory (daemon)
+# The tape session's threads are in a separate directory
+add_subdirectory (session)
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped

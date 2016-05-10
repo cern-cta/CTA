@@ -20,6 +20,9 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
+#include "ProcessManager.hpp"
+#include "SignalHandler.hpp"
+#include "DriveHandler.hpp"
 #include <google/protobuf/service.h>
 #include <limits.h>
 
@@ -48,7 +51,6 @@ int TapeDaemon::main() {
     m_log(log::ERR, "Aborting", {{"Message", ex.getMessage().str()}});
     return 1;
   }
-
   return 0;
 }
 
@@ -81,8 +83,7 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // however the process should still be permitted to perform raw IO in the
   // future
   setProcessCapabilities("cap_sys_rawio+p");
-
-  blockSignals();
+  
   mainEventLoop();
 }
 
@@ -90,6 +91,20 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 // mainEventLoop
 //------------------------------------------------------------------------------
 void cta::tape::daemon::TapeDaemon::mainEventLoop() {
+  // Create the log context
+  log::LogContext lc(m_log);
+  // Create the process manager and signal handler
+  ProcessManager pm(lc);
+  std::unique_ptr<SignalHandler> sh;
+  pm.addHandler(std::move(sh));
+  // Create the drive handlers
+  for (auto & d: m_globalConfiguration.driveConfigs) {
+    std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
+    pm.addHandler(std::move(dh));
+  }
+  // TODO: add the garbage collector once implemented
+  // And run the process manager
+  ::exit(pm.run());
   throw cta::exception::Exception("cta::tape::daemon::TapeDaemon::mainEventLoop: not implemented");
 //  while (handleIOEvents() && handleTick() && handlePendingSignals()) {
 //  }
@@ -127,33 +142,5 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
     throw ex;
   }
 }
-
-//------------------------------------------------------------------------------
-// blockSignals
-//------------------------------------------------------------------------------
-void cta::tape::daemon::TapeDaemon::blockSignals() const {
-  sigset_t sigs;
-  sigemptyset(&sigs);
-  // The signals that should not asynchronously disturb the daemon
-  sigaddset(&sigs, SIGHUP);
-  sigaddset(&sigs, SIGINT);
-  sigaddset(&sigs, SIGQUIT);
-  sigaddset(&sigs, SIGPIPE);
-  sigaddset(&sigs, SIGTERM);
-  sigaddset(&sigs, SIGUSR1);
-  sigaddset(&sigs, SIGUSR2);
-  sigaddset(&sigs, SIGCHLD);
-  sigaddset(&sigs, SIGTSTP);
-  sigaddset(&sigs, SIGTTIN);
-  sigaddset(&sigs, SIGTTOU);
-  sigaddset(&sigs, SIGPOLL);
-  sigaddset(&sigs, SIGURG);
-  sigaddset(&sigs, SIGVTALRM);
-  cta::exception::Errnum::throwOnNonZero(
-    sigprocmask(SIG_BLOCK, &sigs, NULL),
-    "Failed to block signals: sigprocmask() failed");
-}
-
-
 
 }}} // namespace cta::tape::daemon

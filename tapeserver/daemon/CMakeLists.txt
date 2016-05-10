@@ -1,8 +1,17 @@
 cmake_minimum_required (VERSION 2.6)
 
+find_package(Protobuf REQUIRED)
+
+PROTOBUF_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
+
+SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
+SET_SOURCE_FILES_PROPERTIES(DriveHandler.cpp PROPERTIES OBJECT_DEPENDS ${WDMsgHeaders})
+
 add_library(ctatapedaemon
+  ${WDMsgSources}
   CommandLineParams.cpp
   ConfigurationFile.cpp
+  DriveHandler.cpp
   SignalHandler.cpp
   SourcedParameter.cpp
   SubprocessHandler.cpp

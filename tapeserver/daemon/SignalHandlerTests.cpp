@@ -34,14 +34,10 @@ TEST(cta_Daemon, SignalHandlerShutdown) {
   {
     // Add the signal handler to the manager
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shSph = std::move(sh);
-    pm.addHandler(std::move(shSph));
+    pm.addHandler(std::move(sh));
     // Add the probe handler to the manager
     std::unique_ptr<ProbeSubprocess> ps(new ProbeSubprocess());
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shPs = std::move(ps);
-    pm.addHandler(std::move(shPs));
+    pm.addHandler(std::move(ps));
     // This signal will be queued for the signal handler.
     ::kill(::getpid(), SIGTERM);
   }
@@ -60,15 +56,11 @@ TEST(cta_Daemon, SignalHandlerKill) {
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
     // Set the timeout
     sh->setTimeout(std::chrono::milliseconds(10));
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shSph = std::move(sh);
-    pm.addHandler(std::move(shSph));
+    pm.addHandler(std::move(sh));
     // Add the probe handler to the manager
     std::unique_ptr<ProbeSubprocess> ps(new ProbeSubprocess());
     ps->setHonorShutdown(false);
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shPs = std::move(ps);
-    pm.addHandler(std::move(shPs));
+    pm.addHandler(std::move(ps));
     // This signal will be queued for the signal handler.
     ::kill(::getpid(), SIGTERM);
   }
@@ -87,22 +79,16 @@ TEST(cta_Daemon, SignalHandlerSigChild) {
     std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
     // Set the timeout
     sh->setTimeout(std::chrono::milliseconds(10));
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shSph = std::move(sh);
-    pm.addHandler(std::move(shSph));
+    pm.addHandler(std::move(sh));
     // Add the probe handler to the manager
     std::unique_ptr<ProbeSubprocess> ps(new ProbeSubprocess());
     ps->shutdown();
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shPs = std::move(ps);
-    pm.addHandler(std::move(shPs));
+    pm.addHandler(std::move(ps));
     // This signal will be queued for the signal handler.
     // Add the EchoSubprocess whose child will exit.
     std::unique_ptr<EchoSubprocess> es(new EchoSubprocess("Echo", pm));
     es->setCrashingShild(true);
-    // downcast pointer
-    std::unique_ptr<SubprocessHandler> shEs = std::move(es);
-    pm.addHandler(std::move(shEs));
+    pm.addHandler(std::move(es));
   }
   pm.run();
   ProbeSubprocess &ps = dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));

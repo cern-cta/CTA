@@ -16,28 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gtest/gtest.h>
+#include "HandlerInterface.hpp"
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "tapeserver/daemon/DriveHandler.hpp"
 
-#include "ProcessManager.hpp"
-#include "TestSubprocessHandlers.hpp"
-#include "common/log/StringLogger.hpp"
-#include "common/log/LogContext.hpp"
+namespace cta { namespace tape { namespace  session {
 
-namespace unitTests {
+BaseHandlerInterface::BaseHandlerInterface(server::SocketPair& socketPair): 
+  m_socketPair(socketPair) {}
 
-TEST(cta_Daemon, ProcessManager) {
-  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
-  cta::log::LogContext lc(dlog);
-  cta::tape::daemon::ProcessManager pm(lc);
-  {
-    std::unique_ptr<EchoSubprocess> es(new EchoSubprocess("Echo subprocess", pm));
-    pm.addHandler(std::move(es));
-    pm.run();
-  }
-  EchoSubprocess & es = dynamic_cast<EchoSubprocess&>(pm.at("Echo subprocess"));
-  ASSERT_TRUE(es.echoReceived());
+void BaseHandlerInterface::announceSchedulingRound() {
+  daemon::serializers::WatchdogMessage message;
+  message.set_sessionstate((uint32_t)daemon::DriveHandler::SessionState::Scheduling);
+  message.set_sessiontype((uint32_t)daemon::DriveHandler::SessionType::Undetermined);
+  m_socketPair.send(message.SerializeAsString());
 }
 
-// Bigger layouts are tested in specific handler's unit tests (like SignalHandler)
 
-} //namespace unitTests
+}}}  // namespace cta::tape::session

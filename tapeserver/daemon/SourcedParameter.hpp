@@ -80,7 +80,7 @@ public:
     }
   }
   
-  const C & value() { return m_value; }
+  const C & value() const { return m_value; }
   const std::string & category() { return m_category; }
   const std::string & key() { return m_key; }
   const std::string & source() { return m_source; }

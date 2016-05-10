@@ -53,7 +53,7 @@ private:
   bool m_sigChildPending=false;
   std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
           decltype(m_shutdownStartTime)::max();
-  std::chrono::nanoseconds m_timeoutDuration=
+  std::chrono::milliseconds m_timeoutDuration=
           std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
 };
 }}} // namespace cta::tape::daemon
