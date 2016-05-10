@@ -871,12 +871,12 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   ar.setStorageClass(request.storageClass);
   // We will need to identity tapepools is order to construct the request
   RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
+  ScopedExclusiveLock rel(re);
   re.fetch();
   auto & cl = copyNbToPoolMap;
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto copy=cl.begin(); copy != cl.end(); copy++) {
-    std::string tpaddr = re.getTapePoolQueueAddress(copy->second);
+    std::string tpaddr = re.addOrGetTapePoolQueueAndCommit(copy->second, *m_agent);
     ar.addJob(copy->first, copy->second, tpaddr);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy->first;
@@ -894,6 +894,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
     m_agent->commit();
   }
   ar.setOwner(m_agent->getAddressIfSet());
+  ar.setInstance(request.instance);
   ar.insert();
   internalRet->m_lock.lock(ar);  
   // We successfully prepared the object. It will remain attached to the agent 

@@ -602,22 +602,23 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolQueueAndCommit(const st
   agent.fetch();
   agent.addToOwnership(tapePoolQueueAddress);
   agent.commit();
-  // Then create the tape pool object
-  TapePool tp(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  tp.initialize(tapePool);
-  tp.setOwner(agent.getAddressIfSet());
-  tp.setBackupOwner("root");
-  tp.insert();
-  ScopedExclusiveLock tpl(tp);
+  // Then create the tape pool queue object
+  TapePoolQueue tpq(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  tpq.initialize(tapePool);
+  tpq.setOwner(agent.getAddressIfSet());
+  tpq.setBackupOwner("root");
+  tpq.insert();
+  ScopedExclusiveLock tpl(tpq);
   // Now move the tape pool's ownership to the root entry
   auto * tpp = m_payload.mutable_tapepoolqueuepointers()->Add();
   tpp->set_address(tapePoolQueueAddress);
+  tpp->set_name(tapePool);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Now update the tape pool's ownership.
-  tp.setOwner(getAddressIfSet());
-  tp.setBackupOwner(getAddressIfSet());
-  tp.commit();
+  tpq.setOwner(getAddressIfSet());
+  tpq.setBackupOwner(getAddressIfSet());
+  tpq.commit();
   // ... and clean up the agent
   agent.removeFromOwnership(tapePoolQueueAddress);
   agent.commit();
