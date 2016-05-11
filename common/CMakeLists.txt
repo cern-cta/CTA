@@ -119,6 +119,7 @@ target_link_libraries (ctacommon
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
+  dataStructures/ArchiveFileTest.cpp
   log/LogContextTest.cpp
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp

@@ -141,15 +141,15 @@ std::list<common::dataStructures::AdminUser>
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_USER;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -272,15 +272,15 @@ std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() co
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_HOST;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -404,19 +404,19 @@ std::list<common::dataStructures::StorageClass>
     const char *const sql =
       "SELECT "
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "NB_COPIES          AS NB_COPIES,"
+        "NB_COPIES AS NB_COPIES,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM STORAGE_CLASS;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -551,21 +551,21 @@ std::list<common::dataStructures::TapePool>
     std::list<common::dataStructures::TapePool> pools;
     const char *const sql =
       "SELECT "
-        "TAPE_POOL_NAME   AS TAPE_POOL_NAME,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
-        "IS_ENCRYPTED     AS IS_ENCRYPTED,"
+        "IS_ENCRYPTED AS IS_ENCRYPTED,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE_POOL;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -710,20 +710,20 @@ std::list<common::dataStructures::ArchiveRoute>
     const char *const sql =
       "SELECT "
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "COPY_NB            AS COPY_NB,"
-        "TAPE_POOL_NAME     AS TAPE_POOL_NAME,"
+        "COPY_NB AS COPY_NB,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ARCHIVE_ROUTE;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -852,19 +852,19 @@ std::list<common::dataStructures::LogicalLibrary>
     std::list<common::dataStructures::LogicalLibrary> libs;
     const char *const sql =
       "SELECT "
-        "LOGICAL_LIBRARY_NAME      AS LOGICAL_LIBRARY_NAME,"
+        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM LOGICAL_LIBRARY;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -1052,37 +1052,37 @@ std::list<common::dataStructures::Tape>
     std::list<common::dataStructures::Tape> tapes;
     const char *const sql =
       "SELECT "
-        "VID                  AS VID,"
+        "VID AS VID,"
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME       AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY       AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES    AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES        AS DATA_IN_BYTES,"
-        "LAST_FSEQ            AS LAST_FSEQ,"
-        "IS_DISABLED          AS IS_DISABLED,"
-        "IS_FULL              AS IS_FULL,"
-        "LBP_IS_ON            AS LBP_IS_ON,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "LAST_FSEQ AS LAST_FSEQ,"
+        "IS_DISABLED AS IS_DISABLED,"
+        "IS_FULL AS IS_FULL,"
+        "LBP_IS_ON AS LBP_IS_ON,"
 
         "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME  AS LABEL_TIME,"
+        "LABEL_TIME AS LABEL_TIME,"
 
         "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME  AS LAST_READ_TIME,"
+        "LAST_READ_TIME AS LAST_READ_TIME,"
 
         "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME  AS LAST_WRITE_TIME,"
+        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -1309,20 +1309,20 @@ std::list<common::dataStructures::Requester>
     std::list<common::dataStructures::Requester> users;
     const char *const sql =
       "SELECT "
-        "REQUESTER_NAME    AS REQUESTER_NAME,"
+        "REQUESTER_NAME AS REQUESTER_NAME,"
         "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM REQUESTER;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -1482,25 +1482,25 @@ std::list<common::dataStructures::MountPolicy>
       "SELECT "
         "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
 
-        "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
+        "ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
         "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
 
-        "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
+        "RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
         "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-        "CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-        "LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM MOUNT_POLICY;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -1787,47 +1787,80 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
   const std::string &storageclass,
   const std::string &path) {
   try {
-    std::list<common::dataStructures::ArchiveFile> files;
     const char *const sql =
       "SELECT "
-        "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE           AS DISK_INSTANCE,"
-        "DISK_FILE_ID            AS DISK_FILE_ID,"
-        "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-        "DISK_FILE_USER          AS DISK_FILE_USER,"
-        "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
-        "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "FILE_SIZE               AS FILE_SIZE,"
-        "CHECKSUM_TYPE           AS CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE          AS CHECKSUM_VALUE,"
-        "STORAGE_CLASS_NAME      AS STORAGE_CLASS_NAME,"
-        "CREATION_TIME           AS CREATION_TIME,"
-        "RECONCILIATION_TIME     AS RECONCILIATION_TIME "
-        "FROM ARCHIVE_FILE;";
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.FILE_SIZE AS FILE_SIZE,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "LEFT OUTER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "ORDER BY "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID,"
+        "TAPE_FILE.COPY_NB;"
+    ;
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    std::list<common::dataStructures::ArchiveFile> archiveFiles;
     while (rset->next()) {
-      common::dataStructures::ArchiveFile file;
+      const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
 
-      file.archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
-      file.diskInstance = rset->columnText("DISK_INSTANCE");
-      file.diskFileID = rset->columnText("DISK_FILE_ID");
-      file.drData.drPath = rset->columnText("DISK_FILE_PATH");
-      file.drData.drOwner = rset->columnText("DISK_FILE_USER");
-      file.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
-      file.drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
-      file.fileSize = rset->columnUint64("FILE_SIZE");
-      file.checksumType = rset->columnText("CHECKSUM_TYPE");
-      file.checksumValue = rset->columnText("CHECKSUM_VALUE");
-      file.storageClass = rset->columnText("STORAGE_CLASS_NAME");
-      file.creationTime = rset->columnUint64("CREATION_TIME");
-      file.reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+      if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
+        common::dataStructures::ArchiveFile archiveFile;
 
-      files.push_back(file);
+        archiveFile.archiveFileID = archiveFileId;
+        archiveFile.diskInstance = rset->columnText("DISK_INSTANCE");
+        archiveFile.diskFileID = rset->columnText("DISK_FILE_ID");
+        archiveFile.drData.drPath = rset->columnText("DISK_FILE_PATH");
+        archiveFile.drData.drOwner = rset->columnText("DISK_FILE_USER");
+        archiveFile.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
+        archiveFile.drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile.fileSize = rset->columnUint64("FILE_SIZE");
+        archiveFile.checksumType = rset->columnText("CHECKSUM_TYPE");
+        archiveFile.checksumValue = rset->columnText("CHECKSUM_VALUE");
+        archiveFile.storageClass = rset->columnText("STORAGE_CLASS_NAME");
+        archiveFile.creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile.reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+
+        archiveFiles.push_back(archiveFile);
+      }
+
+      common::dataStructures::ArchiveFile &archiveFile = archiveFiles.back();
+
+      // If there is a tape file
+      if(!rset->columnIsNull("VID")) {
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = rset->columnText("VID");
+        tapeFile.fSeq = rset->columnUint64("FSEQ");
+        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.copyNb = rset->columnUint64("COPY_NB");
+        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+
+        archiveFile.tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
+      }
     }
-    return files;
+
+    return archiveFiles;
   } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
   }
 }
 
@@ -1943,7 +1976,7 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
     const char *const sql =
       "SELECT "
-        "COPY_NB        AS COPY_NB,"
+        "COPY_NB AS COPY_NB,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME "
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
@@ -1994,24 +2027,24 @@ common::dataStructures::MountPolicy SqliteCatalogue::
     "SELECT "
       "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
 
-      "ARCHIVE_PRIORITY        AS ARCHIVE_PRIORITY,"
+      "ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
       "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
-      "RETRIEVE_PRIORITY        AS RETRIEVE_PRIORITY,"
+      "RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
       "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
       "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
 
       "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
-      "MOUNT_POLICY.CREATION_LOG_USER_NAME  AS CREATION_LOG_USER_NAME,"
+      "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
       "MOUNT_POLICY.CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
-      "MOUNT_POLICY.CREATION_LOG_HOST_NAME  AS CREATION_LOG_HOST_NAME,"
-      "MOUNT_POLICY.CREATION_LOG_TIME       AS CREATION_LOG_TIME,"
+      "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+      "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-      "MOUNT_POLICY.LAST_UPDATE_USER_NAME  AS LAST_UPDATE_USER_NAME,"
+      "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
       "MOUNT_POLICY.LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
-      "MOUNT_POLICY.LAST_UPDATE_HOST_NAME  AS LAST_UPDATE_HOST_NAME,"
-      "MOUNT_POLICY.LAST_UPDATE_TIME       AS LAST_UPDATE_TIME "
+      "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+      "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
     "FROM MOUNT_POLICY INNER JOIN REQUESTER ON "
       "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
     "WHERE "
@@ -2144,12 +2177,12 @@ std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() cons
   std::list<common::dataStructures::TapeFile> files;
   const char *const sql =
     "SELECT "
-      "VID             AS VID,"
-      "FSEQ            AS FSEQ,"
-      "BLOCK_ID        AS BLOCK_ID,"
+      "VID AS VID,"
+      "FSEQ AS FSEQ,"
+      "BLOCK_ID AS BLOCK_ID,"
       "COMPRESSED_SIZE AS COMPRESSED_SIZE,"
-      "COPY_NB         AS COPY_NB,"
-      "CREATION_TIME   AS CREATION_TIME "
+      "COPY_NB AS COPY_NB,"
+      "CREATION_TIME AS CREATION_TIME "
     "FROM TAPE_FILE;";
   std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
   std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
@@ -2220,61 +2253,58 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
 //------------------------------------------------------------------------------
 std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
   try {
-    // The list of files should either end up empty or only contain one element
-    std::unique_ptr<common::dataStructures::ArchiveFile> file;
     const char *const sql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE                AS DISK_INSTANCE,"
-        "DISK_FILE_ID                 AS DISK_FILE_ID,"
-        "DISK_FILE_PATH               AS DISK_FILE_PATH,"
-        "DISK_FILE_USER               AS DISK_FILE_USER,"
-        "DISK_FILE_GROUP              AS DISK_FILE_GROUP,"
-        "DISK_FILE_RECOVERY_BLOB      AS DISK_FILE_RECOVERY_BLOB,"
-        "FILE_SIZE                    AS FILE_SIZE,"
-        "CHECKSUM_TYPE                AS CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE               AS CHECKSUM_VALUE,"
-        "STORAGE_CLASS_NAME           AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME   AS ARCHIVE_FILE_CREATION_TIME,"
-        "RECONCILIATION_TIME          AS RECONCILIATION_TIME,"
-        "VID                          AS VID,"
-        "FSEQ                         AS FSEQ,"
-        "BLOCK_ID                     AS BLOCK_ID,"
-        "COMPRESSED_SIZE              AS COMPRESSED_SIZE,"
-        "COPY_NB                      AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME      AS TAPE_FILE_CREATION_TIME "
-        "FROM ARCHIVE_FILE LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-        "WHERE "
+        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.FILE_SIZE AS FILE_SIZE,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "LEFT OUTER JOIN TAPE_FILE ON "
+          "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
     stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
-    bool firstRow = true;
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset->next()) {
-      if (firstRow) {
-        firstRow = false;
+      if(NULL == archiveFile.get()) {
+        archiveFile.reset(new common::dataStructures::ArchiveFile);
 
-        file.reset(new common::dataStructures::ArchiveFile);
-
-        file->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
-        file->diskInstance = rset->columnText("DISK_INSTANCE");
-        file->diskFileID = rset->columnText("DISK_FILE_ID");
-        file->drData.drPath = rset->columnText("DISK_FILE_PATH");
-        file->drData.drOwner = rset->columnText("DISK_FILE_USER");
-        file->drData.drGroup = rset->columnText("DISK_FILE_GROUP");
-        file->drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
-        file->fileSize = rset->columnUint64("FILE_SIZE");
-        file->checksumType = rset->columnText("CHECKSUM_TYPE");
-        file->checksumValue = rset->columnText("CHECKSUM_VALUE");
-        file->storageClass = rset->columnText("STORAGE_CLASS_NAME");
-        file->creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        file->reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+        archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = rset->columnText("DISK_INSTANCE");
+        archiveFile->diskFileID = rset->columnText("DISK_FILE_ID");
+        archiveFile->drData.drPath = rset->columnText("DISK_FILE_PATH");
+        archiveFile->drData.drOwner = rset->columnText("DISK_FILE_USER");
+        archiveFile->drData.drGroup = rset->columnText("DISK_FILE_GROUP");
+        archiveFile->drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->fileSize = rset->columnUint64("FILE_SIZE");
+        archiveFile->checksumType = rset->columnText("CHECKSUM_TYPE");
+        archiveFile->checksumValue = rset->columnText("CHECKSUM_VALUE");
+        archiveFile->storageClass = rset->columnText("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
       }
 
-      // If there is a tape file (SQL statement contains an outer join so this
-      // check is necessary)
-      if (NULL != rset->columnText("VID")) {
+      // If there is a tape file
+      if(!rset->columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
         tapeFile.vid = rset->columnText("VID");
@@ -2282,11 +2312,11 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
         tapeFile.blockId = rset->columnUint64("BLOCK_ID");
         tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-        file->tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
       }
     }
 
-    return file;
+    return archiveFile;
   } catch(std::exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
   }

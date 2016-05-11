@@ -64,6 +64,14 @@ public:
   bool next();
 
   /**
+   * Returns true if the specified column contains a null value.
+   *
+   * @param colName The name of the column.
+   * @return True if the specified column contains a null value.
+   */
+  bool columnIsNull(const char *const colName) const;
+
+  /**
    * Returns the value of the specified column as a string.
    *
    * Please note that a C string is returned instead of an std::string so that
@@ -71,13 +79,14 @@ public:
    * compiled against a pre-CXX11 ABI.
    *
    * Please note that if the value of the column is NULL within the database
-   * then a NULL pointer is returned.
+   * then an empty string shall be returned.  Use the columnIsNull() method to
+   * determine whether not a column contains a NULL value.
    *
    * @param colName The name of the column.
-   * @return The string value of the specified column or NULL if the value of
-   * the column within the database is NULL.  Please note that it is the
-   * responsibility of the caller to free the memory associated with the string
-   * using delete[] operator.
+   * @return The string value of the specified column.  Please note that the
+   * returned string should not be deleted.  The string should be copied before
+   * the next call to the next() method.  The SqliteRset class is responsible
+   * for freeing the memory.
    */
   const char *columnText(const char *const colName) const;
 
@@ -107,21 +116,21 @@ private:
    * order to enable the SqliteRset class to be used by code compiled against
    * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
    */
-  class ColumnNameToIdx;
+  class ColNameToIdxAndType;
 
   /**
-   * Map from column name to column index.
+   * Map from column name to column index and type.
    *
    * Please note that the type of the map is intentionally forward declared in
    * order to avoid std::string being used.  This is to aid with working with
    * pre and post CXX11 ABIs.
    */
-  std::unique_ptr<ColumnNameToIdx> m_colNameToIdx;
+  std::unique_ptr<ColNameToIdxAndType> m_columnNameToIdxAndType;
 
   /**
-   * Populates the map from column name to column index.
+   * Populates the map from column name to column index and type.
    */
-  void populateColNameToIdxMap();
+  void populateColNameToIdxAndTypeMap();
 
 }; // class SqlLiteStmt
 

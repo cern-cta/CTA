@@ -268,7 +268,8 @@ protected:
   uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
 
   /**
-   * Creates the specified archive file without any tape copies.
+   * Creates the specified archive file without any tape copies.  Any tape
+   * copies in the specified archive file will simply be ignored.
    *
    * @param archiveFile The archive file to be created.
    */
