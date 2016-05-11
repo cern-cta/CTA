@@ -131,7 +131,7 @@ void SqliteCatalogue::deleteAdminUser(const common::dataStructures::UserIdentity
 //------------------------------------------------------------------------------
 // getAdminUsers
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminUser>
+std::list<common::dataStructures::AdminUser>
   SqliteCatalogue::getAdminUsers() const {
   try {
     std::list<common::dataStructures::AdminUser> admins;
@@ -263,7 +263,7 @@ void SqliteCatalogue::deleteAdminHost(const std::string &hostName) {
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() const {
+std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() const {
   try {
     std::list<common::dataStructures::AdminHost> hosts;
     const char *const sql =
@@ -397,7 +397,7 @@ void SqliteCatalogue::deleteStorageClass(const std::string &name) {
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass>
+std::list<common::dataStructures::StorageClass>
   SqliteCatalogue::getStorageClasses() const {
   try {
     std::list<common::dataStructures::StorageClass> storageClasses;
@@ -476,7 +476,7 @@ void SqliteCatalogue::modifyStorageClassComment(const common::dataStructures::Se
 // createTapePool
 //------------------------------------------------------------------------------
 void SqliteCatalogue::createTapePool(
-  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
@@ -545,10 +545,10 @@ void SqliteCatalogue::deleteTapePool(const std::string &name) {
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::TapePool>
+std::list<common::dataStructures::TapePool>
   SqliteCatalogue::getTapePools() const {
   try {
-    std::list<cta::common::dataStructures::TapePool> pools;
+    std::list<common::dataStructures::TapePool> pools;
     const char *const sql =
       "SELECT "
         "TAPE_POOL_NAME   AS TAPE_POOL_NAME,"
@@ -626,7 +626,7 @@ void SqliteCatalogue::modifyTapePoolComment(const common::dataStructures::Securi
 //------------------------------------------------------------------------------
 // setTapePoolEncryption
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapePoolEncryption(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {
+void SqliteCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -703,7 +703,7 @@ void SqliteCatalogue::deleteArchiveRoute(const std::string &storageClassName, co
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveRoute>
+std::list<common::dataStructures::ArchiveRoute>
   SqliteCatalogue::getArchiveRoutes() const {
   try {
     std::list<common::dataStructures::ArchiveRoute> routes;
@@ -846,10 +846,10 @@ void SqliteCatalogue::deleteLogicalLibrary(const std::string &name) {
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::LogicalLibrary>
+std::list<common::dataStructures::LogicalLibrary>
   SqliteCatalogue::getLogicalLibraries() const {
   try {
-    std::list<cta::common::dataStructures::LogicalLibrary> libs;
+    std::list<common::dataStructures::LogicalLibrary> libs;
     const char *const sql =
       "SELECT "
         "LOGICAL_LIBRARY_NAME      AS LOGICAL_LIBRARY_NAME,"
@@ -917,7 +917,7 @@ void SqliteCatalogue::modifyLogicalLibraryComment(const common::dataStructures::
 // createTape
 //------------------------------------------------------------------------------
 void SqliteCatalogue::createTape(
-  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -1038,7 +1038,7 @@ void SqliteCatalogue::deleteTape(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Tape>
+std::list<common::dataStructures::Tape>
   SqliteCatalogue::getTapes(
   const std::string &vid,
   const std::string &logicalLibraryName,
@@ -1049,7 +1049,7 @@ std::list<cta::common::dataStructures::Tape>
   const std::string &busyValue,
   const std::string &lbpValue) {
   try {
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::list<common::dataStructures::Tape> tapes;
     const char *const sql =
       "SELECT "
         "VID                  AS VID,"
@@ -1174,28 +1174,28 @@ void SqliteCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Se
 //------------------------------------------------------------------------------
 // modifyTapeEncryptionKey
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeEncryptionKey(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
+void SqliteCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLabelLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLabelLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void SqliteCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastWrittenLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLastWrittenLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void SqliteCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastReadLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLastReadLog(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void SqliteCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1223,7 +1223,7 @@ void SqliteCatalogue::setTapeDisabled(const common::dataStructures::SecurityIden
 //------------------------------------------------------------------------------
 // setTapeLbp
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
+void SqliteCatalogue::setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1239,7 +1239,7 @@ void SqliteCatalogue::modifyTapeComment(const common::dataStructures::SecurityId
 //------------------------------------------------------------------------------
 void SqliteCatalogue::createRequester(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const cta::common::dataStructures::UserIdentity &user,
+  const common::dataStructures::UserIdentity &user,
   const std::string &mountPolicy,
   const std::string &comment) {
   try {
@@ -1296,14 +1296,14 @@ void SqliteCatalogue::createRequester(
 //------------------------------------------------------------------------------
 // deleteRequester
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteRequester(const cta::common::dataStructures::UserIdentity &user) {
+void SqliteCatalogue::deleteRequester(const common::dataStructures::UserIdentity &user) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // getRequesters
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Requester>
+std::list<common::dataStructures::Requester>
   SqliteCatalogue::getRequesters() const {
   try {
     std::list<common::dataStructures::Requester> users;
@@ -1369,14 +1369,14 @@ std::list<cta::common::dataStructures::Requester>
 //------------------------------------------------------------------------------
 // modifyRequesterMountPolicy
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &mountPolicy) {
+void SqliteCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyRequesterComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UserIdentity &user, const std::string &comment) {
+void SqliteCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1474,10 +1474,10 @@ void SqliteCatalogue::deleteMountPolicy(const std::string &name) {
 //------------------------------------------------------------------------------
 // getMountPolicies
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::MountPolicy>
+std::list<common::dataStructures::MountPolicy>
   SqliteCatalogue::getMountPolicies() const {
   try {
-    std::list<cta::common::dataStructures::MountPolicy> policies;
+    std::list<common::dataStructures::MountPolicy> policies;
     const char *const sql =
       "SELECT "
         "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
@@ -1627,7 +1627,7 @@ void SqliteCatalogue::modifyMountPolicyComment(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType,
+void SqliteCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -1642,14 +1642,14 @@ void SqliteCatalogue::deleteDedication(const std::string &drivename) {
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::Dedication> SqliteCatalogue::getDedications() const {
+std::list<common::dataStructures::Dedication> SqliteCatalogue::getDedications() const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationType
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const cta::common::dataStructures::DedicationType dedicationType) {
+void SqliteCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1750,33 +1750,33 @@ void SqliteCatalogue::createArchiveFile(
 // getArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const {
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-    "FROM ARCHIVE_FILE WHERE "
-      "DISK_INSTANCE = :DISK_INSTANCE AND "
-      "DISK_FILE_ID = :DISK_FILE_ID;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":DISK_INSTANCE", diskInstance);
-  stmt->bind(":DISK_FILE_ID", diskFileId);
-  std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+  try {
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+        "FROM ARCHIVE_FILE WHERE "
+        "DISK_INSTANCE = :DISK_INSTANCE AND "
+        "DISK_FILE_ID = :DISK_FILE_ID;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    stmt->bind(":DISK_INSTANCE", diskInstance);
+    stmt->bind(":DISK_FILE_ID", diskFileId);
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
 
-  if(rset->next()) {
-    return rset->columnUint64("ARCHIVE_FILE_ID");
-  } else {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Could not find archive file from disk instance " << diskInstance <<
-      " with disk file ID " << diskFileId;
-    throw ex;
+    if (rset->next()) {
+      return rset->columnUint64("ARCHIVE_FILE_ID");
+    } else {
+      throw std::runtime_error(std::string("Could not find archive file with disk instance ") + diskInstance +
+        "and disk file ID " + diskFileId);
+    }
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + "failed: " + ne.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile>
-  SqliteCatalogue::getArchiveFiles(
+std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
   const std::string &id,
   const std::string &eosid,
   const std::string &copynb,
@@ -1786,59 +1786,63 @@ std::list<cta::common::dataStructures::ArchiveFile>
   const std::string &group,
   const std::string &storageclass,
   const std::string &path) {
-  std::list<cta::common::dataStructures::ArchiveFile> files;
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE           AS DISK_INSTANCE,"
-      "DISK_FILE_ID            AS DISK_FILE_ID,"
-      "DISK_FILE_PATH          AS DISK_FILE_PATH,"
-      "DISK_FILE_USER          AS DISK_FILE_USER,"
-      "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
-      "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-      "FILE_SIZE               AS FILE_SIZE,"
-      "CHECKSUM_TYPE           AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE          AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME      AS STORAGE_CLASS_NAME,"
-      "CREATION_TIME           AS CREATION_TIME,"
-      "RECONCILIATION_TIME     AS RECONCILIATION_TIME "
-    "FROM ARCHIVE_FILE;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
-  while(rset->next()) {
-    common::dataStructures::ArchiveFile file;
+  try {
+    std::list<common::dataStructures::ArchiveFile> files;
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE_ID         AS ARCHIVE_FILE_ID,"
+        "DISK_INSTANCE           AS DISK_INSTANCE,"
+        "DISK_FILE_ID            AS DISK_FILE_ID,"
+        "DISK_FILE_PATH          AS DISK_FILE_PATH,"
+        "DISK_FILE_USER          AS DISK_FILE_USER,"
+        "DISK_FILE_GROUP         AS DISK_FILE_GROUP,"
+        "DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "FILE_SIZE               AS FILE_SIZE,"
+        "CHECKSUM_TYPE           AS CHECKSUM_TYPE,"
+        "CHECKSUM_VALUE          AS CHECKSUM_VALUE,"
+        "STORAGE_CLASS_NAME      AS STORAGE_CLASS_NAME,"
+        "CREATION_TIME           AS CREATION_TIME,"
+        "RECONCILIATION_TIME     AS RECONCILIATION_TIME "
+        "FROM ARCHIVE_FILE;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    while (rset->next()) {
+      common::dataStructures::ArchiveFile file;
 
-    file.archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
-    file.diskInstance = rset->columnText("DISK_INSTANCE");
-    file.diskFileID = rset->columnText("DISK_FILE_ID");
-    file.drData.drPath = rset->columnText("DISK_FILE_PATH");
-    file.drData.drOwner = rset->columnText("DISK_FILE_USER");
-    file.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
-    file.drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
-    file.fileSize = rset->columnUint64("FILE_SIZE");
-    file.checksumType = rset->columnText("CHECKSUM_TYPE");
-    file.checksumValue = rset->columnText("CHECKSUM_VALUE");
-    file.storageClass = rset->columnText("STORAGE_CLASS_NAME");
-    file.creationTime = rset->columnUint64("CREATION_TIME");
-    file.reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+      file.archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
+      file.diskInstance = rset->columnText("DISK_INSTANCE");
+      file.diskFileID = rset->columnText("DISK_FILE_ID");
+      file.drData.drPath = rset->columnText("DISK_FILE_PATH");
+      file.drData.drOwner = rset->columnText("DISK_FILE_USER");
+      file.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
+      file.drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+      file.fileSize = rset->columnUint64("FILE_SIZE");
+      file.checksumType = rset->columnText("CHECKSUM_TYPE");
+      file.checksumValue = rset->columnText("CHECKSUM_VALUE");
+      file.storageClass = rset->columnText("STORAGE_CLASS_NAME");
+      file.creationTime = rset->columnUint64("CREATION_TIME");
+      file.reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
 
-    files.push_back(file);
+      files.push_back(file);
+    }
+    return files;
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
   }
-  return files;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileSummary SqliteCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
+common::dataStructures::ArchiveFileSummary SqliteCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
-  return cta::common::dataStructures::ArchiveFileSummary();
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile SqliteCatalogue::getArchiveFileById(const uint64_t id) {
+common::dataStructures::ArchiveFile SqliteCatalogue::getArchiveFileById(const uint64_t id) {
   std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(id));
 
   // Throw an exception if the archive file does not exist
@@ -1898,9 +1902,9 @@ void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 //------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteria
+common::dataStructures::ArchiveFileQueueCriteria
   SqliteCatalogue::prepareForNewFile(
-  const std::string &storageClass, const cta::common::dataStructures::UserIdentity &user) {
+  const std::string &storageClass, const common::dataStructures::UserIdentity &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     getTapeCopyToPoolMap(storageClass);
   const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClass);
@@ -1933,50 +1937,58 @@ cta::common::dataStructures::ArchiveFileQueueCriteria
 //------------------------------------------------------------------------------
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-cta::common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
+common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
   getTapeCopyToPoolMap(const std::string &storageClass) const {
-  cta::common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
-  const char *const sql =
-    "SELECT "
-      "COPY_NB        AS COPY_NB,"
-      "TAPE_POOL_NAME AS TAPE_POOL_NAME "
-    "FROM ARCHIVE_ROUTE WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":STORAGE_CLASS_NAME", storageClass);
-  std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
-  while(rset->next()) {
-    const uint64_t copyNb = rset->columnUint64("COPY_NB");
-    const std::string tapePoolName = rset->columnText("TAPE_POOL_NAME");
-    copyToPoolMap[copyNb] = tapePoolName;
-  }
+  try {
+    common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
+    const char *const sql =
+      "SELECT "
+        "COPY_NB        AS COPY_NB,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME "
+        "FROM ARCHIVE_ROUTE WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    while (rset->next()) {
+      const uint64_t copyNb = rset->columnUint64("COPY_NB");
+      const std::string tapePoolName = rset->columnText("TAPE_POOL_NAME");
+      copyToPoolMap[copyNb] = tapePoolName;
+    }
 
-  return copyToPoolMap;
+    return copyToPoolMap;
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
 }
 
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageClass) const {
-  uint64_t nbRoutes = 0;
-  const char *const sql =
-    "SELECT "
-      "COUNT(*) AS NB_ROUTES "
-    "FROM ARCHIVE_ROUTE WHERE "
-      "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":STORAGE_CLASS_NAME", storageClass);
-  std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
-  while(rset->next()) {
-    nbRoutes = rset->columnUint64("NB_ROUTES");
+  try {
+    uint64_t nbRoutes = 0;
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) AS NB_ROUTES "
+        "FROM ARCHIVE_ROUTE WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    while (rset->next()) {
+      nbRoutes = rset->columnUint64("NB_ROUTES");
+    }
+    return nbRoutes;
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
   }
-  return nbRoutes;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy SqliteCatalogue::
+common::dataStructures::MountPolicy SqliteCatalogue::
   getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const {
   const char *const sql =
     "SELECT "
@@ -2129,7 +2141,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
 // getTapeFiles
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() const {
-  std::list<cta::common::dataStructures::TapeFile> files;
+  std::list<common::dataStructures::TapeFile> files;
   const char *const sql =
     "SELECT "
       "VID             AS VID,"
@@ -2207,73 +2219,77 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
 // getArchiveFile
 //------------------------------------------------------------------------------
 std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
-  // The list of files should either end up empty or only contain one element
-  std::unique_ptr<cta::common::dataStructures::ArchiveFile> file;
-  const char *const sql =
-    "SELECT "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE                AS DISK_INSTANCE,"
-      "DISK_FILE_ID                 AS DISK_FILE_ID,"
-      "DISK_FILE_PATH               AS DISK_FILE_PATH,"
-      "DISK_FILE_USER               AS DISK_FILE_USER,"
-      "DISK_FILE_GROUP              AS DISK_FILE_GROUP,"
-      "DISK_FILE_RECOVERY_BLOB      AS DISK_FILE_RECOVERY_BLOB,"
-      "FILE_SIZE                    AS FILE_SIZE,"
-      "CHECKSUM_TYPE                AS CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE               AS CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME           AS STORAGE_CLASS_NAME,"
-      "ARCHIVE_FILE.CREATION_TIME   AS ARCHIVE_FILE_CREATION_TIME,"
-      "RECONCILIATION_TIME          AS RECONCILIATION_TIME,"
-      "VID                          AS VID,"
-      "FSEQ                         AS FSEQ,"
-      "BLOCK_ID                     AS BLOCK_ID,"
-      "COMPRESSED_SIZE              AS COMPRESSED_SIZE,"
-      "COPY_NB                      AS COPY_NB,"
-      "TAPE_FILE.CREATION_TIME      AS TAPE_FILE_CREATION_TIME "
-    "FROM ARCHIVE_FILE LEFT OUTER JOIN TAPE_FILE ON "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-    "WHERE "
-      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
-  std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
-  bool firstRow = true;
-  while(rset->next()) {
-    if(firstRow) {
-      firstRow = false;
+  try {
+    // The list of files should either end up empty or only contain one element
+    std::unique_ptr<common::dataStructures::ArchiveFile> file;
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "DISK_INSTANCE                AS DISK_INSTANCE,"
+        "DISK_FILE_ID                 AS DISK_FILE_ID,"
+        "DISK_FILE_PATH               AS DISK_FILE_PATH,"
+        "DISK_FILE_USER               AS DISK_FILE_USER,"
+        "DISK_FILE_GROUP              AS DISK_FILE_GROUP,"
+        "DISK_FILE_RECOVERY_BLOB      AS DISK_FILE_RECOVERY_BLOB,"
+        "FILE_SIZE                    AS FILE_SIZE,"
+        "CHECKSUM_TYPE                AS CHECKSUM_TYPE,"
+        "CHECKSUM_VALUE               AS CHECKSUM_VALUE,"
+        "STORAGE_CLASS_NAME           AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME   AS ARCHIVE_FILE_CREATION_TIME,"
+        "RECONCILIATION_TIME          AS RECONCILIATION_TIME,"
+        "VID                          AS VID,"
+        "FSEQ                         AS FSEQ,"
+        "BLOCK_ID                     AS BLOCK_ID,"
+        "COMPRESSED_SIZE              AS COMPRESSED_SIZE,"
+        "COPY_NB                      AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME      AS TAPE_FILE_CREATION_TIME "
+        "FROM ARCHIVE_FILE LEFT OUTER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+        "WHERE "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    stmt->bind(":ARCHIVE_FILE_ID", archiveFileId);
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    bool firstRow = true;
+    while (rset->next()) {
+      if (firstRow) {
+        firstRow = false;
 
-      file.reset(new common::dataStructures::ArchiveFile);
+        file.reset(new common::dataStructures::ArchiveFile);
 
-      file->archiveFileID      = rset->columnUint64("ARCHIVE_FILE_ID");
-      file->diskInstance       = rset->columnText("DISK_INSTANCE");
-      file->diskFileID         = rset->columnText("DISK_FILE_ID");
-      file->drData.drPath      = rset->columnText("DISK_FILE_PATH");
-      file->drData.drOwner     = rset->columnText("DISK_FILE_USER");
-      file->drData.drGroup     = rset->columnText("DISK_FILE_GROUP");
-      file->drData.drBlob      = rset->columnText("DISK_FILE_RECOVERY_BLOB");
-      file->fileSize           = rset->columnUint64("FILE_SIZE");
-      file->checksumType       = rset->columnText("CHECKSUM_TYPE");
-      file->checksumValue      = rset->columnText("CHECKSUM_VALUE");
-      file->storageClass       = rset->columnText("STORAGE_CLASS_NAME");
-      file->creationTime       = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-      file->reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+        file->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
+        file->diskInstance = rset->columnText("DISK_INSTANCE");
+        file->diskFileID = rset->columnText("DISK_FILE_ID");
+        file->drData.drPath = rset->columnText("DISK_FILE_PATH");
+        file->drData.drOwner = rset->columnText("DISK_FILE_USER");
+        file->drData.drGroup = rset->columnText("DISK_FILE_GROUP");
+        file->drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+        file->fileSize = rset->columnUint64("FILE_SIZE");
+        file->checksumType = rset->columnText("CHECKSUM_TYPE");
+        file->checksumValue = rset->columnText("CHECKSUM_VALUE");
+        file->storageClass = rset->columnText("STORAGE_CLASS_NAME");
+        file->creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        file->reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+      }
+
+      // If there is a tape file (SQL statement contains an outer join so this
+      // check is necessary)
+      if (NULL != rset->columnText("VID")) {
+        // Add the tape file to the archive file's in-memory structure
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = rset->columnText("VID");
+        tapeFile.fSeq = rset->columnUint64("FSEQ");
+        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+        file->tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
+      }
     }
 
-    // If there is a tape file (SQL statement contains an outer join so this
-    // check is necessary)
-    if(NULL != rset->columnText("VID")) {
-      // Add the tape file to the archive file's in-memory structure
-      common::dataStructures::TapeFile tapeFile;
-      tapeFile.vid = rset->columnText("VID");
-      tapeFile.fSeq = rset->columnUint64("FSEQ");
-      tapeFile.blockId = rset->columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
-      tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-      file->tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
-    }
+    return file;
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
   }
-
-  return file;
 }
 
 } // namespace catalogue
