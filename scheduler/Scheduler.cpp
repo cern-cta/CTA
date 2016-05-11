@@ -56,7 +56,6 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
   const cta::common::dataStructures::ArchiveFileQueueCriteria criteria = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
   std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> requestCreation(m_db.queue(request, criteria.fileId, criteria.copyToPoolMap, criteria.mountPolicy));
   requestCreation->complete();
-  
   return 0;
 }
 
@@ -64,48 +63,49 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
 // queueRetrieve
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
 void cta::Scheduler::cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileInfo
 //------------------------------------------------------------------------------
 void cta::Scheduler::updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileStorageClass
 //------------------------------------------------------------------------------
 void cta::Scheduler::updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // listStorageClass
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request) {
-  return std::list<cta::common::dataStructures::StorageClass>();
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
 void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -140,45 +140,49 @@ void cta::Scheduler::setTapeLbp(const cta::common::dataStructures::SecurityIdent
 // repack
 //------------------------------------------------------------------------------
 void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
 void cta::Scheduler::cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RepackInfo> cta::Scheduler::getRepacks(const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
-  return std::list<cta::common::dataStructures::RepackInfo>(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getRepack
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RepackInfo cta::Scheduler::getRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  return cta::common::dataStructures::RepackInfo(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
 }
 
 //------------------------------------------------------------------------------
 // shrink
 //------------------------------------------------------------------------------
 void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
 void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // cancelVerify
 //------------------------------------------------------------------------------
 void cta::Scheduler::cancelVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -192,7 +196,7 @@ std::list<cta::common::dataStructures::VerifyInfo> cta::Scheduler::getVerifys(co
 // getVerify
 //------------------------------------------------------------------------------
 cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
-  return cta::common::dataStructures::VerifyInfo(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -200,7 +204,7 @@ cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::com
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
         const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output, const std::string &tag) const {
-  return cta::common::dataStructures::ReadTestResult(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -208,7 +212,7 @@ cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::
 //------------------------------------------------------------------------------
 cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
         const std::string &inputFile, const std::string &tag) const {
-  return cta::common::dataStructures::WriteTestResult(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -216,56 +220,56 @@ cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta
 //------------------------------------------------------------------------------
 cta::common::dataStructures::WriteTestResult cta::Scheduler::write_autoTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
         const uint64_t numberOfFiles, const uint64_t fileSize, const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const {
-  return cta::common::dataStructures::WriteTestResult(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
 void cta::Scheduler::setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
-
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // reconcile
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::reconcile(const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
-  return std::list<cta::common::dataStructures::ArchiveFile>(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> >(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapePoolName) const {
-  return std::list<cta::common::dataStructures::ArchiveJob>(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> >(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob> cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
-  return std::list<cta::common::dataStructures::RetrieveJob>(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveStates(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return std::list<cta::common::dataStructures::DriveState>(); 
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -411,5 +415,5 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
     }
   }
   */
-  return std::unique_ptr<TapeMount>();
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
