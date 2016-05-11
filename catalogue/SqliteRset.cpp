@@ -170,18 +170,9 @@ void SqliteRset::populateColNameToIdxMap() {
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-char *SqliteRset::columnText(const char *const colName) const {
+const char *SqliteRset::columnText(const char *const colName) const {
   const int colIdx = (*m_colNameToIdx)[colName];
-  const char *const text = (const char *)sqlite3_column_text(m_stmt.get(), colIdx);
-  if(NULL == text) {
-    return NULL;
-  } else {
-    const size_t strLen = std::strlen(text);
-    char *const str = new char[strLen + 1];
-    std::memcpy(str, text, strLen);
-    str[strLen] = '\0';
-    return str;
-  }
+  return (const char *)sqlite3_column_text(m_stmt.get(), colIdx);
 }
 
 //------------------------------------------------------------------------------

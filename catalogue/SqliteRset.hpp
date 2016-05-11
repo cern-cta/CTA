@@ -79,7 +79,7 @@ public:
    * responsibility of the caller to free the memory associated with the string
    * using delete[] operator.
    */
-  char *columnText(const char *const colName) const;
+  const char *columnText(const char *const colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
