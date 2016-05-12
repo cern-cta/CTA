@@ -35,7 +35,7 @@ TEST(SuprocessHelper, basicTests) {
   Subprocess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
   sp3.wait();
   ASSERT_EQ("", sp3.stdout());
-  ASSERT_NE(std::string::npos, sp3.stderr().find("In Subprocess::Subprocess execv failed"));
-  ASSERT_EQ(1, sp3.exitValue());
+  ASSERT_EQ(127, sp3.exitValue());
+  ASSERT_EQ("", sp3.stderr());
 }
 }

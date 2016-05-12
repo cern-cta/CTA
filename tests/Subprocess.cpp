@@ -24,6 +24,23 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <spawn.h>
+#include <memory>
+
+namespace {
+class ScopedPosixFileActions{
+public:
+  ScopedPosixFileActions() {
+    ::posix_spawn_file_actions_init(&m_action);
+  }
+  ~ScopedPosixFileActions() {
+    ::posix_spawn_file_actions_destroy(&m_action);
+  }
+  operator ::posix_spawn_file_actions_t * () { return &m_action; }
+private:
+  ::posix_spawn_file_actions_t m_action;
+};
+}
 
 namespace systemTests {
 Subprocess::Subprocess(const std::string & executable, const std::list<std::string>& argv) {
@@ -40,48 +57,37 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
       "In Subprocess::Subprocess failed to create the stdout pipe");
   cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK), 
       "In Subprocess::Subprocess failed to create the stderr pipe");
-  cta::exception::Errnum::throwOnMinusOne(m_child = ::fork(),
-      "In Subprocess::Subprocess failed to fork");
-  if (m_child) {
-    // We are the parent process. Close the write sides of pipes.
-    ::close(stdoutPipe[writeSide]);
-    ::close(stderrPipe[writeSide]);
-    m_stdoutFd = stdoutPipe[readSide];
-    m_stderrFd = stderrPipe[readSide];
-  } else {
-    try {
-      // We are in the child process. Close the read sides of the pipes.
-      ::close(stdoutPipe[readSide]);
-      ::close(stderrPipe[readSide]);
-      // Close stdin and rewire the stdout and stderr to the pipes.
-      ::close(STDIN_FILENO);
-      cta::exception::Errnum::throwOnMinusOne(
-        ::dup2(stdoutPipe[writeSide], STDOUT_FILENO),
-          "In Subprocess::Subprocess failed to dup2 stdout pipe");
-      cta::exception::Errnum::throwOnMinusOne(
-        ::dup2(stderrPipe[writeSide], STDERR_FILENO),
-          "In Subprocess::Subprocess failed to dup2 stderr pipe");
-      // Close the now duplicated pipe file descriptors
-      ::close(stdoutPipe[writeSide]);
-      ::close(stderrPipe[writeSide]);
-      // Finally execv the command
-      char ** cargv = new char*[argv.size()+1];
-      int index = 0;
-      for (auto a=argv.cbegin(); a!=argv.cend(); a++) {
-        cargv[index++] = ::strdup(a->c_str());
-      }
-      cargv[argv.size()] = NULL;
-      cta::exception::Errnum::throwOnMinusOne(
-          execvp(executable.c_str(), cargv),
-          "In Subprocess::Subprocess execv failed: ");
-      // We should never get here.
-      throw cta::exception::Exception(
-          "In Subprocess::Subprocess execv failed without returning -1!");
-    } catch (cta::exception::Exception & ex) {
-      std::cerr << ex.getMessageValue();
-      exit(EXIT_FAILURE);
-    }
+  // Prepare the actions to be taken on file descriptors
+  ScopedPosixFileActions fileActions;
+  // We will be the child process. Close the read sides of the pipes.
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[readSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (1)");
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[readSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (2)");
+  // Close stdin and rewire the stdout and stderr to the pipes.
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stdoutPipe[writeSide], STDOUT_FILENO),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (1)");
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stderrPipe[writeSide], STDERR_FILENO),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (2)");
+  // Close the now duplicated pipe file descriptors
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[writeSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (3)");
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[writeSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (4)");
+  // And finally spawn the subprocess
+  char ** cargv = new char*[argv.size()+1];
+  int index = 0;
+  for (auto a=argv.cbegin(); a!=argv.cend(); a++) {
+    cargv[index++] = ::strdup(a->c_str());
   }
+  cargv[argv.size()] = NULL;
+  int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, NULL, cargv, ::environ);
+  cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
+  // We are the parent process. Close the write sides of pipes.
+  ::close(stdoutPipe[writeSide]);
+  ::close(stderrPipe[writeSide]);
+  m_stdoutFd = stdoutPipe[readSide];
+  m_stderrFd = stderrPipe[readSide];
 }
 
 void Subprocess::kill(int signal) {
