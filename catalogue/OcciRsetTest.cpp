@@ -53,8 +53,27 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<OcciRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
-  std::unique_ptr<char[]> text(rset->columnText("DUMMY"));
-  ASSERT_TRUE(std::strcmp("X", text.get()) == 0);
+  std::string text(rset->columnText("DUMMY"));
+  ASSERT_EQ(std::string("X"), text);
+  ASSERT_FALSE(rset->next());
+}
+
+TEST_F(cta_catalogue_OcciRsetTest, executeQueryRelyOnRsetDestructorForCacheDelete) {
+  using namespace cta;
+  using namespace cta::catalogue;
+
+  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  OcciEnv env;
+  std::unique_ptr<OcciConn> conn(env.createConn(
+    dbLogin.username.c_str(),
+    dbLogin.password.c_str(),
+    dbLogin.database.c_str()));
+  const char *const sql = "SELECT DUMMY FROM DUAL";
+  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  ASSERT_TRUE(rset->next());
+  std::string text(rset->columnText("DUMMY"));
+  ASSERT_EQ(std::string("X"), text);
 }
 
 } // namespace unitTests

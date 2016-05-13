@@ -94,11 +94,11 @@ public:
    *
    * @param colName The name of the column.
    * @return The string value of the specified column or NULL if the value of
-   * the column within the database is NULL.  Please note that it is the
-   * responsibility of the caller to free the memory associated with the string
-   * using delete[] operator.
+   * the column within the database is NULL.  Please note that the caller should
+   * NOT delete the returned string.  The string will be automatically deleted
+   * when OcciRset::next() is called or when the OcciRset destructor is called.
    */
-  char *columnText(const char *const colName) const;
+  const char *columnText(const char *const colName);
 
 private:
 
@@ -133,6 +133,9 @@ private:
    * pre and post CXX11 ABIs.
    */
   std::unique_ptr<ColumnNameToIdx> m_colNameToIdx;
+
+  class TextColumnCache;
+  std::unique_ptr<TextColumnCache> m_textColumnCache;
 
   /**
    * Populates the map from column name to column index.

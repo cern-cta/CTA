@@ -72,15 +72,6 @@ public:
   }
 
   /**
-   * Alias for the getIdx() method.
-   *
-   * @return the index of the column with the specified name.
-   */
-  int operator[](const std::string &name) const {
-    return getIdx(name);
-  }
-
-  /**
    * Returns true if this map is empty.
    *
    * @return True if this map is empty.
@@ -98,6 +89,94 @@ private:
 
 }; // class OcciRset::ColumnNameToIdx
 
+/**
+ * Helper class that enables OcciRset to provide a C-string memory management
+ * behaviour similar to that of the SQLite API.  A C-string returned by the
+ * OcciRset::columnText() method will be automatically deleted either when
+ * OcciRset::next() is called or when the OcciRset destructor is called.
+ */
+class OcciRset::TextColumnCache {
+public:
+
+  /**
+   * Destructor.
+   */
+  ~TextColumnCache() {
+    clear();
+  }
+
+  /**
+   * Clears the cache, calling delete[] on any cached column values.
+   */
+  void clear() {
+    for(auto nameAndValue : m_colNameToValue) {
+      delete[] nameAndValue.second;
+    }
+    m_colNameToValue.clear();
+  }
+
+  /**
+   * Sets the cached value of the specified column by copying the contents of
+   * the specified string into the cache.
+   *
+   * This method will throw an exception if the specified column already has a
+   * cached value.
+   *
+   * @param name The name of the column.
+   * @param value The string value to be copied into the cache.
+   * @return The duplicate value now in the cache.
+   */
+  const char *set(const char *name, const char *const value) {
+    if(NULL == name) {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed: name is NULL");
+    }
+    if(NULL == value) {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed: value is NULL");
+    }
+    auto itor = m_colNameToValue.find(name);
+
+    // If the value has not already been cached
+    if(itor == m_colNameToValue.end()) {
+      // Copy the value into the cache
+      const std::size_t len = std::strlen(value);
+      char *const cachedValue = new char[len + 1];
+      std::memcpy(cachedValue, value, len);
+      cachedValue[len] = '\0';
+      m_colNameToValue[name] = cachedValue;
+      return cachedValue;
+    } else {
+      throw std::runtime_error(std::string(__FUNCTION__) + " failed: Cannot set the cached value of the " +
+        name + " column to " + value + " because the column already has the cached value of " + itor->second);
+    }
+  }
+
+  /**
+   * Returns the cached value for the specified column or NULL if there is no
+   * cached value.
+   *
+   * @param columnName The name of teh column.
+   * @return The cached value for the specified column or NULL if there is no
+   * cached value.
+   */
+  const char *get(const char *const columnName) {
+    auto itor = m_colNameToValue.find(columnName);
+
+    // If the value has been found
+    if(itor != m_colNameToValue.end()) {
+      return itor->second;
+    } else {
+      return NULL;
+    }
+  }
+
+private:
+
+  /**
+   * Map from column name to column value.
+   */
+  std::map<std::string, const char *> m_colNameToValue;
+};
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -110,9 +189,10 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
     }
     m_colNameToIdx.reset(new ColumnNameToIdx());
     populateColNameToIdxMap();
+    m_textColumnCache.reset(new TextColumnCache());
   } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.what());
   }
 }
 
@@ -178,32 +258,38 @@ bool OcciRset::next() {
   using namespace oracle;
 
   try {
+    m_textColumnCache->clear();
     const occi::ResultSet::Status status = m_rset->next();
     return occi::ResultSet::DATA_AVAILABLE == status;
   } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-char * OcciRset::columnText(const char *const colName) const {
+const char * OcciRset::columnText(const char *const colName) {
   try {
-    const int colIdx = (*m_colNameToIdx)[colName];
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    const int colIdx = m_colNameToIdx->getIdx(colName);
+
     if(m_rset->isNull(colIdx)) {
       return NULL;
     } else {
-      const std::string text = m_rset->getString(colIdx).c_str();
-      char *const str = new char[text.length() + 1];
-      std::memcpy(str, text.c_str(), text.length());
-      str[text.length()] = '\0';
-      return str;
+      const char *cachedText = m_textColumnCache->get(colName);
+
+      if(NULL != cachedText) {
+        return cachedText;
+      } else {
+        return m_textColumnCache->set(colName, m_rset->getString(colIdx).c_str());
+      }
     }
   } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.what());
   }
 }
 
