@@ -28,17 +28,32 @@
 #include <memory>
 
 namespace {
-class ScopedPosixFileActions{
+class ScopedPosixSpawnFileActions{
 public:
-  ScopedPosixFileActions() {
+  ScopedPosixSpawnFileActions() {
     ::posix_spawn_file_actions_init(&m_action);
   }
-  ~ScopedPosixFileActions() {
+  ~ScopedPosixSpawnFileActions() {
     ::posix_spawn_file_actions_destroy(&m_action);
   }
   operator ::posix_spawn_file_actions_t * () { return &m_action; }
 private:
   ::posix_spawn_file_actions_t m_action;
+};
+}
+
+namespace {
+class ScopedPosixSpawnAttr{
+public:
+  ScopedPosixSpawnAttr() {
+    ::posix_spawnattr_init(&m_attr);
+  }
+  ~ScopedPosixSpawnAttr() {
+    ::posix_spawnattr_destroy(&m_attr);
+  }
+  operator ::posix_spawnattr_t * () { return &m_attr; }
+private:
+  ::posix_spawnattr_t m_attr;
 };
 }
 
@@ -58,7 +73,7 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
   cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK), 
       "In Subprocess::Subprocess failed to create the stderr pipe");
   // Prepare the actions to be taken on file descriptors
-  ScopedPosixFileActions fileActions;
+  ScopedPosixSpawnFileActions fileActions;
   // We will be the child process. Close the read sides of the pipes.
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (1)");
@@ -75,13 +90,17 @@ Subprocess::Subprocess(const std::string & executable, const std::list<std::stri
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[writeSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (4)");
   // And finally spawn the subprocess
+  // Prepare the spawn attributes (we need vfork)
+  ScopedPosixSpawnAttr attr;
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawnattr_setflags(attr, POSIX_SPAWN_USEVFORK),
+      "In Subprocess::Subprocess(): failed to posix_spawnattr_setflags()");
   char ** cargv = new char*[argv.size()+1];
   int index = 0;
   for (auto a=argv.cbegin(); a!=argv.cend(); a++) {
     cargv[index++] = ::strdup(a->c_str());
   }
   cargv[argv.size()] = NULL;
-  int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, NULL, cargv, ::environ);
+  int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv, ::environ);
   cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   // We are the parent process. Close the write sides of pipes.
   ::close(stdoutPipe[writeSide]);
