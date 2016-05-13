@@ -1543,7 +1543,7 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
         if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
         for(auto it = list.cbegin(); it != list.cend(); it++) {
-          for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
+          for(auto jt = it->tapeFiles.cbegin(); jt != it->tapeFiles.cend(); jt++) {
             std::vector<std::string> currentRow;
             currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
             currentRow.push_back(std::to_string((unsigned long long)jt->first));
@@ -1722,7 +1722,7 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
     std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","instance","size","checksum type","checksum value","storage class","owner","group","path"};
     responseTable.push_back(header);    
     for(auto it = list.cbegin(); it != list.cend(); it++) {
-      for(auto jt = it->tapeCopies.cbegin(); jt != it->tapeCopies.cend(); jt++) {
+      for(auto jt = it->tapeFiles.cbegin(); jt != it->tapeFiles.cend(); jt++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
         currentRow.push_back(std::to_string((unsigned long long)jt->first));

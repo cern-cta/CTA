@@ -49,7 +49,7 @@ bool RetrieveJob::operator!=(const RetrieveJob &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj) {
   os << "(request=" << obj.request
-     << " tapeCopies=" << obj.tapeCopies << ")";
+     << " tapeFiles=" << obj.tapeCopies << ")";
   return os;
 }
 

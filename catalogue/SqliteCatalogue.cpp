@@ -1854,7 +1854,7 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
         tapeFile.copyNb = rset->columnUint64("COPY_NB");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
 
-        archiveFile.tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
+        archiveFile.tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
       }
     }
 
@@ -2312,7 +2312,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
         tapeFile.blockId = rset->columnUint64("BLOCK_ID");
         tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-        archiveFile->tapeCopies[rset->columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
       }
     }
 

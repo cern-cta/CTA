@@ -1046,7 +1046,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile_2_files) {
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
     archiveFiles = catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "");
     ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_TRUE(archiveFiles.front().tapeCopies.empty());
+    ASSERT_TRUE(archiveFiles.front().tapeFiles.empty());
 
     const common::dataStructures::ArchiveFile archiveFile = archiveFiles.front();
 
@@ -1063,7 +1063,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile_2_files) {
     ASSERT_EQ(bareArchiveFile.drData.drGroup, archiveFile.drData.drGroup);
     ASSERT_EQ(bareArchiveFile.drData.drBlob, archiveFile.drData.drBlob);
 
-    ASSERT_TRUE(bareArchiveFile.tapeCopies.empty());
+    ASSERT_TRUE(bareArchiveFile.tapeFiles.empty());
   }
 
   ASSERT_TRUE(catalogue.getTapeFiles().empty());
@@ -1097,10 +1097,10 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile_2_files) {
     ASSERT_EQ(bareArchiveFile.drData.drGroup, archiveFile.drData.drGroup);
     ASSERT_EQ(bareArchiveFile.drData.drBlob, archiveFile.drData.drBlob);
 
-    ASSERT_EQ(1, archiveFile.tapeCopies.size());
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
 
     {
-      auto copyNbToTapeFileItor = archiveFile.tapeCopies.find(1);
+      auto copyNbToTapeFileItor = archiveFile.tapeFiles.find(1);
       ASSERT_EQ(1, copyNbToTapeFileItor->first);
       ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
       ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
@@ -1150,10 +1150,10 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile_2_files) {
     ASSERT_EQ(bareArchiveFile.drData.drGroup, archiveFile.drData.drGroup);
     ASSERT_EQ(bareArchiveFile.drData.drBlob, archiveFile.drData.drBlob);
 
-    ASSERT_EQ(2, archiveFile.tapeCopies.size());
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     {
-      auto copyNbToTapeFileItor = archiveFile.tapeCopies.find(1);
+      auto copyNbToTapeFileItor = archiveFile.tapeFiles.find(1);
       ASSERT_EQ(1, copyNbToTapeFileItor->first);
       ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
       ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
@@ -1163,7 +1163,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTapeFile_2_files) {
     }
 
     {
-      auto copyNbToTapeFileItor = archiveFile.tapeCopies.find(2);
+      auto copyNbToTapeFileItor = archiveFile.tapeFiles.find(2);
       ASSERT_EQ(2, copyNbToTapeFileItor->first);
       ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->second.vid);
       ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->second.fSeq);
@@ -1318,7 +1318,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
     ASSERT_EQ(file.drData.drGroup, archiveFile.drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, archiveFile.drData.drBlob);
 
-    ASSERT_TRUE(file.tapeCopies.empty());
+    ASSERT_TRUE(file.tapeFiles.empty());
 
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
@@ -1340,7 +1340,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
     ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
-    ASSERT_TRUE(file.tapeCopies.empty());
+    ASSERT_TRUE(file.tapeFiles.empty());
 
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
@@ -1396,7 +1396,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
     ASSERT_EQ(file.drData.drGroup, archiveFile.drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, archiveFile.drData.drBlob);
 
-    ASSERT_TRUE(file.tapeCopies.empty());
+    ASSERT_TRUE(file.tapeFiles.empty());
 
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
@@ -1418,7 +1418,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
     ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
-    ASSERT_TRUE(file.tapeCopies.empty());
+    ASSERT_TRUE(file.tapeFiles.empty());
 
     ASSERT_TRUE(catalogue.getTapeFiles().empty());
   }
@@ -1458,7 +1458,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
     ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
-    ASSERT_EQ(1, retrievedFile->tapeCopies.size());
+    ASSERT_EQ(1, retrievedFile->tapeFiles.size());
 
     ASSERT_EQ(1, catalogue.getTapeFiles().size());
   }
@@ -1498,7 +1498,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
     ASSERT_EQ(file.drData.drGroup, retrievedFile->drData.drGroup);
     ASSERT_EQ(file.drData.drBlob, retrievedFile->drData.drBlob);
 
-    ASSERT_EQ(2, retrievedFile->tapeCopies.size());
+    ASSERT_EQ(2, retrievedFile->tapeFiles.size());
 
     ASSERT_EQ(2, catalogue.getTapeFiles().size());
   }

@@ -46,7 +46,7 @@ bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
       && checksumValue == rhs.checksumValue
       && storageClass  == rhs.storageClass
       && drData        == rhs.drData
-      && tapeCopies    == rhs.tapeCopies;
+      && tapeFiles    == rhs.tapeFiles;
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ std::ostream &operator<<(std::ostream &os, ArchiveFile &obj) {
     "checksumValue="      << obj.checksumValue      << ","
     "storageClass="       << obj.storageClass       << ","
     "drData="             << obj.drData             << ","
-    "tapeCopies="         << obj.tapeCopies         << ","
+    "tapeFiles="         << obj.tapeFiles         << ","
     "creationTime="       << obj.creationTime       << ","
     "reconciliationTime=" << obj.reconciliationTime <<
     "}";

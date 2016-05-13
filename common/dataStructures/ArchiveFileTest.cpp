@@ -57,8 +57,8 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile1.compressedSize = 5;
   tapeFile1.copyNb = 1;
 
-  archiveFile1.tapeCopies[1] = tapeFile1;
-  ASSERT_EQ(1, archiveFile1.tapeCopies.size());
+  archiveFile1.tapeFiles[1] = tapeFile1;
+  ASSERT_EQ(1, archiveFile1.tapeFiles.size());
 
   TapeFile tapeFile2;
   tapeFile2.vid = "VID2";
@@ -67,8 +67,8 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile2.compressedSize = 6;
   tapeFile2.copyNb = 2;
 
-  archiveFile1.tapeCopies[2] = tapeFile1;
-  ASSERT_EQ(2, archiveFile1.tapeCopies.size());
+  archiveFile1.tapeFiles[2] = tapeFile1;
+  ASSERT_EQ(2, archiveFile1.tapeFiles.size());
 
   ArchiveFile archiveFile2;
 
@@ -87,11 +87,11 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.drData.drGroup, archiveFile2.drData.drGroup);
   ASSERT_EQ(archiveFile1.drData.drBlob, archiveFile2.drData.drBlob);
 
-  ASSERT_EQ(2, archiveFile2.tapeCopies.size());
+  ASSERT_EQ(2, archiveFile2.tapeFiles.size());
 
   {
-    auto copyNbToTapeFileItor = archiveFile2.tapeCopies.find(1);
-    ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeCopies.end());
+    auto copyNbToTapeFileItor = archiveFile2.tapeFiles.find(1);
+    ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
     ASSERT_EQ(1, copyNbToTapeFileItor->first);
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
@@ -101,8 +101,8 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   }
 
   {
-    auto copyNbToTapeFileItor = archiveFile2.tapeCopies.find(2);
-    ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeCopies.end());
+    auto copyNbToTapeFileItor = archiveFile2.tapeFiles.find(2);
+    ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
     ASSERT_EQ(2, copyNbToTapeFileItor->first);
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
