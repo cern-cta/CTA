@@ -226,6 +226,41 @@ OcciRset::~OcciRset() throw() {
 }
 
 //------------------------------------------------------------------------------
+// getSql
+//------------------------------------------------------------------------------
+const char *OcciRset::getSql() const {
+  return m_stmt.getSql();
+}
+
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+bool OcciRset::next() {
+  using namespace oracle;
+
+  try {
+    m_textColumnCache->clear();
+    const occi::ResultSet::Status status = m_rset->next();
+    return occi::ResultSet::DATA_AVAILABLE == status;
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnIsNull
+//------------------------------------------------------------------------------
+bool OcciRset::columnIsNull(const char *const colName) const {
+  try {
+    const int colIdx = m_colNameToIdx->getIdx(colName);
+    return m_rset->isNull(colIdx);
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
+}
+
+//------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
 void OcciRset::close() {
@@ -252,25 +287,9 @@ oracle::occi::ResultSet *OcciRset::operator->() const {
 }
 
 //------------------------------------------------------------------------------
-// next
-//------------------------------------------------------------------------------
-bool OcciRset::next() {
-  using namespace oracle;
-
-  try {
-    m_textColumnCache->clear();
-    const occi::ResultSet::Status status = m_rset->next();
-    return occi::ResultSet::DATA_AVAILABLE == status;
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.what());
-  }
-}
-
-//------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-const char * OcciRset::columnText(const char *const colName) {
+const char * OcciRset::columnText(const char *const colName) const {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -290,6 +309,21 @@ const char * OcciRset::columnText(const char *const colName) {
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       ne.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnUint64
+//------------------------------------------------------------------------------
+uint64_t OcciRset::columnUint64(const char *const colName) const {
+  try {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    const int colIdx = m_colNameToIdx->getIdx(colName);
+    return m_rset->getUInt(colIdx);
+  } catch(std::exception &ne) {
+    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+                             ne.what());
   }
 }
 

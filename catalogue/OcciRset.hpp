@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/DbRset.hpp"
+
 #include <memory>
 #include <mutex>
 #include <occi.h>
@@ -26,7 +28,7 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaraion to avoid a circular dependency beween OcciRset and
+ * Forward declaration to avoid a circular dependency between OcciRset and
  * OcciStmt.
  */
 class OcciStmt;
@@ -34,7 +36,7 @@ class OcciStmt;
 /**
  * A convenience wrapper around an OCCI result set.
  */
-class OcciRset {
+class OcciRset: public DbRset {
 public:
 
   /**
@@ -50,8 +52,64 @@ public:
 
   /**
    * Destructor.
+   *
+   * Please note that this method will delete the memory asscoiated with any
+   * C-strings returned by the columnText() method.
    */
-  ~OcciRset() throw();
+  virtual ~OcciRset() throw();
+
+  /**
+   * Returns the SQL statement.
+   *
+   * @return The SQL statement.
+   */
+  virtual const char *getSql() const;
+
+  /**
+   * Attempts to get the next row of the result set.
+   *
+   * Please note that this method will delete the memory associated with any
+   * C-strings returned by the columnText() method.
+   *
+   * @return True if a row has been retrieved else false if there are no more
+   * rows in the result set.
+   */
+  virtual bool next();
+
+  /**
+   * Returns true if the specified column contains a null value.
+   *
+   * @param colName The name of the column.
+   * @return True if the specified column contains a null value.
+   */
+  virtual bool columnIsNull(const char *const colName) const;
+
+  /**
+   * Returns the value of the specified column as a string.
+   *
+   * Please note that a C-string is returned instead of an std::string so that
+   * this method can be used by code compiled against the CXX11 ABI and by code
+   * compiled against a pre-CXX11 ABI.
+   *
+   * Please note that if the value of the column is NULL within the database
+   * then an empty string shall be returned.  Use the columnIsNull() method to
+   * determine whether not a column contains a NULL value.
+   *
+   * @param colName The name of the column.
+   * @return The string value of the specified column.  Please note that the
+   * returned string should not be deleted.  The string should be copied before
+   * the next call to the next() method.  The DbRset class is responsible
+   * for freeing the memory.
+   */
+  virtual const char *columnText(const char *const colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   */
+  virtual uint64_t columnUint64(const char *const colName) const;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -74,38 +132,12 @@ public:
    */
   oracle::occi::ResultSet *operator->() const;
 
-  /**
-   * Attempts to get the next row of the result set.
-   *
-   * @return True if a row has been retrieved else false if there are no more
-   * rows in the result set.
-   */
-  bool next();
-
-  /**
-   * Returns the value of the specified column as a string.
-   *
-   * Please note that a C string is returned instead of an std::string so that
-   * this method can be used by code compiled against the CXX11 ABI and by code
-   * compiled against the pre-CXX11 ABI.
-   *
-   * Please note that if the value of the column is NULL within the database
-   * then a NULL pointer is returned.
-   *
-   * @param colName The name of the column.
-   * @return The string value of the specified column or NULL if the value of
-   * the column within the database is NULL.  Please note that the caller should
-   * NOT delete the returned string.  The string will be automatically deleted
-   * when OcciRset::next() is called or when the OcciRset destructor is called.
-   */
-  const char *columnText(const char *const colName);
-
 private:
 
   /**
    * Mutex used to serialize access to this object.
    */
-  std::mutex m_mutex;
+  mutable std::mutex m_mutex;
 
   /**
    * The OCCI statement.
@@ -134,7 +166,20 @@ private:
    */
   std::unique_ptr<ColumnNameToIdx> m_colNameToIdx;
 
+  /**
+   * Forward declaration of the nest class TextColumnCache that is intentionally
+   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
+   * order to enable the SqliteRset class to be used by code compiled against
+   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
+   */
   class TextColumnCache;
+
+  /**
+   * Map from column name to column text value.  This map is used to cache the
+   * results of calling OcciRset::columnText() in the form of C-strings so that
+   * the OcciRset class can provide a similar memory management policy for
+   * C-strings as the SQLite API.
+   */
   std::unique_ptr<TextColumnCache> m_textColumnCache;
 
   /**

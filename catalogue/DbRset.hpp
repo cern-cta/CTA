@@ -18,30 +18,20 @@
 
 #pragma once
 
-#include <memory>
 #include <stdint.h>
-#include <sqlite3.h>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaration.
+ * Abstract class specificing the interface to the result set of an sql query.
+ *
+ * Please note that this interface intentionally uses C-strings instead of
+ * std::string so that it can be used by code compiled against the CXX11 ABI and
+ * by code compiled against a pre-CXX11 ABI.
  */
-class SqliteStmt;
-
-/**
- * The result set of an sql query.
- */
-class SqliteRset {
+class DbRset {
 public:
-
-  /**
-   * Constructor.
-   *
-   * @param stmt The prepared statement.
-   */
-  SqliteRset(SqliteStmt &stmt);
 
   /**
    * Destructor.
@@ -49,25 +39,25 @@ public:
    * Please note that this method will delete the memory asscoiated with any
    * C-strings returned by the columnText() method.
    */
-  ~SqliteRset() throw();
+  virtual ~DbRset() throw() = 0;
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const char *getSql() const;
+  virtual const char *getSql() const = 0;
 
   /**
    * Attempts to get the next row of the result set.
    *
-   * Please note that this method will delete the memory asscoiated with any
+   * Please note that this method will delete the memory associated with any
    * C-strings returned by the columnText() method.
    *
    * @return True if a row has been retrieved else false if there are no more
    * rows in the result set.
    */
-  bool next();
+  virtual bool next() = 0;
 
   /**
    * Returns true if the specified column contains a null value.
@@ -75,7 +65,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  bool columnIsNull(const char *const colName) const;
+  virtual bool columnIsNull(const char *const colName) const = 0;
 
   /**
    * Returns the value of the specified column as a string.
@@ -91,10 +81,10 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.  Please note that the
    * returned string should not be deleted.  The string should be copied before
-   * the next call to the next() method.  The SqliteRset class is responsible
+   * the next call to the next() method.  The DbRset class is responsible
    * for freeing the memory.
    */
-  const char *columnText(const char *const colName) const;
+  virtual const char *columnText(const char *const colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -102,43 +92,9 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  uint64_t columnUint64(const char *const colName) const;
+  virtual uint64_t columnUint64(const char *const colName) const = 0;
 
-private:
-
-  /**
-   * The prepared statement.
-   */
-  SqliteStmt &m_stmt;
-
-  /**
-   * True if the next() method has not yet been called.
-   */
-  bool m_nextHasNotBeenCalled;
-
-  /**
-   * Forward declaration of the nested class ColumnNameIdx that is intentionally
-   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
-   * order to enable the SqliteRset class to be used by code compiled against
-   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
-   */
-  class ColNameToIdxAndType;
-
-  /**
-   * Map from column name to column index and type.
-   *
-   * Please note that the type of the map is intentionally forward declared in
-   * order to avoid std::string being used.  This is to aid with working with
-   * pre and post CXX11 ABIs.
-   */
-  std::unique_ptr<ColNameToIdxAndType> m_columnNameToIdxAndType;
-
-  /**
-   * Populates the map from column name to column index and type.
-   */
-  void populateColNameToIdxAndTypeMap();
-
-}; // class SqlLiteRset
+}; // class DbRset
 
 } // namespace catalogue
 } // namespace cta
