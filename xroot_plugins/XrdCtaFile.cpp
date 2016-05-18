@@ -1912,8 +1912,8 @@ void XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
 void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
-                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --dr_path <DR_path> --dr_owner <DR_owner>" << std::endl
-                    << "\t--dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
+                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
+                    << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
@@ -1929,14 +1929,14 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   std::string checksumtype = getOptionValue(tokens, "", "--checksumtype", encoded);
   std::string checksumvalue = getOptionValue(tokens, "", "--checksumvalue", encoded);
   std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  std::string diskfilepath = getOptionValue(tokens, "", "--diskfilepath", encoded);
+  std::string diskfileowner = getOptionValue(tokens, "", "--diskfileowner", encoded);
+  std::string diskfilegroup = getOptionValue(tokens, "", "--diskfilegroup", encoded);
+  std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
   std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
   if(user.empty() || group.empty() || diskid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
-          || storageclass.empty() || instance.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+          || storageclass.empty() || instance.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
     return;
   }
@@ -1946,10 +1946,10 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   originator.name=user;
   originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.drBlob=dr_blob;
-  drData.drGroup=dr_ownergroup;
-  drData.drOwner=dr_owner;
-  drData.drPath=dr_path;
+  drData.drBlob=recoveryblob;
+  drData.drGroup=diskfilegroup;
+  drData.drOwner=diskfileowner;
+  drData.drPath=diskfilepath;
   cta::common::dataStructures::ArchiveRequest request;
   request.checksumType=checksumtype;
   request.checksumValue=checksumvalue;
@@ -1973,8 +1973,8 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --dr_path <DR_path>" << std::endl
-                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
+  help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
@@ -1985,13 +1985,13 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
+  std::string diskfilepath = getOptionValue(tokens, "", "--diskfilepath", encoded);
+  std::string diskfileowner = getOptionValue(tokens, "", "--diskfileowner", encoded);
+  std::string diskfilegroup = getOptionValue(tokens, "", "--diskfilegroup", encoded);
+  std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   std::string diskpool = getOptionValue(tokens, "", "--diskpool", encoded);
   std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty() || diskpool.empty() || throughput_s.empty()) {
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
     return;
   }
@@ -2001,10 +2001,10 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   originator.name=user;
   originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.drBlob=dr_blob;
-  drData.drGroup=dr_ownergroup;
-  drData.drOwner=dr_owner;
-  drData.drPath=dr_path;
+  drData.drBlob=recoveryblob;
+  drData.drGroup=diskfilegroup;
+  drData.drOwner=diskfileowner;
+  drData.drPath=diskfilepath;
   cta::common::dataStructures::RetrieveRequest request;
   request.diskpoolName=diskpool;
   request.diskpoolThroughput=throughput;
@@ -2049,8 +2049,8 @@ void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --dr_path <DR_path>" << std::endl
-                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
@@ -2061,11 +2061,11 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string dsturl = getOptionValue(tokens, "", "--dsturl", encoded);
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+  std::string diskfilepath = getOptionValue(tokens, "", "--diskfilepath", encoded);
+  std::string diskfileowner = getOptionValue(tokens, "", "--diskfileowner", encoded);
+  std::string diskfilegroup = getOptionValue(tokens, "", "--diskfilegroup", encoded);
+  std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
+  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
     return;
   }
@@ -2074,10 +2074,10 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   originator.name=user;
   originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.drBlob=dr_blob;
-  drData.drGroup=dr_ownergroup;
-  drData.drOwner=dr_owner;
-  drData.drPath=dr_path;
+  drData.drBlob=recoveryblob;
+  drData.drGroup=diskfilegroup;
+  drData.drOwner=diskfileowner;
+  drData.drPath=diskfilepath;
   cta::common::dataStructures::CancelRetrieveRequest request;
   request.drData=drData;
   request.archiveFileID=id;
@@ -2091,8 +2091,8 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --dr_path <DR_path>" << std::endl
-                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  help << tokens[0] << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
+                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
@@ -2103,11 +2103,11 @@ void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tok
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   std::string storageclass = getOptionValue(tokens, "", "--storageclass", encoded);
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+  std::string diskfilepath = getOptionValue(tokens, "", "--diskfilepath", encoded);
+  std::string diskfileowner = getOptionValue(tokens, "", "--diskfileowner", encoded);
+  std::string diskfilegroup = getOptionValue(tokens, "", "--diskfilegroup", encoded);
+  std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
+  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
     return;
   }
@@ -2116,10 +2116,10 @@ void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tok
   originator.name=user;
   originator.group=group;
   cta::common::dataStructures::DRData drData;
-  drData.drBlob=dr_blob;
-  drData.drGroup=dr_ownergroup;
-  drData.drOwner=dr_owner;
-  drData.drPath=dr_path;
+  drData.drBlob=recoveryblob;
+  drData.drGroup=diskfilegroup;
+  drData.drOwner=diskfileowner;
+  drData.drPath=diskfilepath;
   cta::common::dataStructures::UpdateFileStorageClassRequest request;
   request.drData=drData;
   request.archiveFileID=id;
@@ -2133,8 +2133,8 @@ void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tok
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --dr_path <DR_path>" << std::endl
-                    << "\t--dr_owner <DR_owner> --dr_ownergroup <DR_group> --dr_blob <DR_blob>" << std::endl;
+  help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
+                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
@@ -2142,20 +2142,20 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
-  std::string dr_path = getOptionValue(tokens, "", "--dr_path", encoded);
-  std::string dr_owner = getOptionValue(tokens, "", "--dr_owner", encoded);
-  std::string dr_ownergroup = getOptionValue(tokens, "", "--dr_ownergroup", encoded);
-  std::string dr_blob = getOptionValue(tokens, "", "--dr_blob", encoded);
-  if(id_s.empty() || dr_path.empty() || dr_owner.empty() || dr_ownergroup.empty() || dr_blob.empty()) {
+  std::string diskfilepath = getOptionValue(tokens, "", "--diskfilepath", encoded);
+  std::string diskfileowner = getOptionValue(tokens, "", "--diskfileowner", encoded);
+  std::string diskfilegroup = getOptionValue(tokens, "", "--diskfilegroup", encoded);
+  std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
+  if(id_s.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
     return;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::DRData drData;
-  drData.drBlob=dr_blob;
-  drData.drGroup=dr_ownergroup;
-  drData.drOwner=dr_owner;
-  drData.drPath=dr_path;
+  drData.drBlob=recoveryblob;
+  drData.drGroup=diskfilegroup;
+  drData.drOwner=diskfileowner;
+  drData.drPath=diskfilepath;
   cta::common::dataStructures::UpdateFileInfoRequest request;
   request.drData=drData;
   request.archiveFileID=id;
