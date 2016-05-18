@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteRset.hpp"
@@ -1689,10 +1690,9 @@ void SqliteCatalogue::modifyDedicationComment(const common::dataStructures::Secu
 }
 
 //------------------------------------------------------------------------------
-// createArchiveFile
+// insertArchiveFile
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createArchiveFile(
-  const common::dataStructures::ArchiveFile &archiveFile) {
+void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
   try {
     const time_t now = time(NULL);
     const char *const sql =
@@ -1726,17 +1726,17 @@ void SqliteCatalogue::createArchiveFile(
         ":RECONCILIATION_TIME)";
     std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
-    stmt->bind(":DISK_INSTANCE", archiveFile.diskInstance);
-    stmt->bind(":DISK_FILE_ID", archiveFile.diskFileID);
-    stmt->bind(":DISK_FILE_PATH", archiveFile.drData.drPath);
-    stmt->bind(":DISK_FILE_USER", archiveFile.drData.drOwner);
-    stmt->bind(":DISK_FILE_GROUP",  archiveFile.drData.drGroup);
-    stmt->bind(":DISK_FILE_RECOVERY_BLOB", archiveFile.drData.drBlob);
-    stmt->bind(":FILE_SIZE", archiveFile.fileSize);
-    stmt->bind(":CHECKSUM_TYPE", archiveFile.checksumType);
-    stmt->bind(":CHECKSUM_VALUE", archiveFile.checksumValue);
-    stmt->bind(":STORAGE_CLASS_NAME", archiveFile.storageClass);
+    stmt->bind(":ARCHIVE_FILE_ID", row.archiveFileId);
+    stmt->bind(":DISK_INSTANCE", row.diskInstance);
+    stmt->bind(":DISK_FILE_ID", row.diskFileId);
+    stmt->bind(":DISK_FILE_PATH", row.diskFilePath);
+    stmt->bind(":DISK_FILE_USER", row.diskFileUser);
+    stmt->bind(":DISK_FILE_GROUP",  row.diskFileGroup);
+    stmt->bind(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
+    stmt->bind(":FILE_SIZE", row.size);
+    stmt->bind(":CHECKSUM_TYPE", "HELP");
+    stmt->bind(":CHECKSUM_VALUE", "HELP");
+    stmt->bind(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt->bind(":CREATION_TIME", now);
     stmt->bind(":RECONCILIATION_TIME", now);
 
@@ -1906,19 +1906,17 @@ void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 
   // If the archive file does not already exist then create one
   if(NULL == archiveFile.get()) {
-    archiveFile.reset(new common::dataStructures::ArchiveFile);
-    archiveFile->archiveFileID = event.archiveFileId;
-    archiveFile->diskFileID = event.diskFileId;
-    archiveFile->diskInstance = event.diskInstance;
-    archiveFile->fileSize = event.size;
-    archiveFile->checksumType = "HELP";
-    archiveFile->checksumValue = "HELP";
-    archiveFile->storageClass = event.storageClassName;
-    archiveFile->drData.drBlob = event.diskFileRecoveryBlob;
-    archiveFile->drData.drGroup = event.diskFileGroup;
-    archiveFile->drData.drOwner = event.diskFileUser;
-    archiveFile->drData.drPath = event.diskFilePath;
-    createArchiveFile(*archiveFile);
+    ArchiveFileRow row;
+    row.archiveFileId = event.archiveFileId;
+    row.diskFileId = event.diskFileId;
+    row.diskInstance = event.diskInstance;
+    row.size = event.size;
+    row.storageClassName = event.storageClassName;
+    row.diskFilePath = event.diskFilePath;
+    row.diskFileUser = event.diskFileUser;
+    row.diskFileGroup = event.diskFileGroup;
+    row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
+    insertArchiveFile(row);
   }
 
   // Create the tape file

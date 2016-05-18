@@ -27,23 +27,23 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Structure describing the event of having written a file to tape.
+ * A row in the ArchiveFile table.
  */
-struct TapeFileWritten {
+struct ArchiveFileRow {
 
   /**
    * Constructor.
    *
    * Sets the value of all integer member-variables to zero.
    */
-  TapeFileWritten();
+  ArchiveFileRow();
 
   /**
    * Equality operator.
    *
    * @param ths The right hand side of the operator.
    */
-  bool operator==(const TapeFileWritten &rhs) const;
+  bool operator==(const ArchiveFileRow &rhs) const;
 
   /**
    * The unique identifier of the file being archived.
@@ -100,37 +100,10 @@ struct TapeFileWritten {
    */
   std::string storageClassName;
 
-  /**
-   * The volume identifier of the tape on which the file has been written.
-   */
-  std::string vid;
-
-  /**
-   * The position of the file on tape in the form of its file sequence number.
-   */
-  uint64_t fSeq;
-
-  /**
-   * The position of the file on tape in the form of its logical block
-   * identifier.
-   */
-  uint64_t blockId;
-
-  /**
-   * The compressed size of the tape file in bytes.  In other words the actual
-   * number of bytes it occupies on tape.
-   */
-  uint64_t compressedSize;
-
-  /**
-   * The copy number of the tape file.
-   */
-  uint64_t copyNb;
-
-}; // struct TapeFileWritten
+}; // struct ArchiveFileRow
 
 /**
- * Output stream operator for an TapeFileWritten object.
+ * Output stream operator for an ArchiveFileRow object.
  *
  * This function writes a human readable form of the specified object to the
  * specified output stream.
@@ -138,7 +111,7 @@ struct TapeFileWritten {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj);
+std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj);
 
 } // namespace catalogue
 } // namespace cta

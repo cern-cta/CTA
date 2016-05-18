@@ -37,7 +37,7 @@ public:
   virtual ~TestingSqliteCatalogue()  {
   }
 
-  using SqliteCatalogue::createArchiveFile;
+  using SqliteCatalogue::insertArchiveFile;
   using SqliteCatalogue::createTapeFile;
   using SqliteCatalogue::getArchiveFile;
   using SqliteCatalogue::getTapeFiles;

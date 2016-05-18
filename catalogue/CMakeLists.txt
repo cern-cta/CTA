@@ -21,6 +21,7 @@ find_package (sqlite REQUIRED)
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CATALOGUE_LIB_SRC_FILES
+  ArchiveFileRow.cpp
   Catalogue.cpp
   DbLogin.cpp
   TapeFileWritten.cpp

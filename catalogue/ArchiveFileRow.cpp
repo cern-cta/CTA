@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/TapeFileWritten.hpp"
+#include "catalogue/ArchiveFileRow.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -24,19 +24,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeFileWritten::TapeFileWritten() :
+ArchiveFileRow::ArchiveFileRow() :
   archiveFileId(0),
-  size(0),
-  fSeq(0),
-  blockId(0),
-  compressedSize(0),
-  copyNb(0) {
+  size(0) {
 }
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
+bool ArchiveFileRow::operator==(const ArchiveFileRow &rhs) const {
   return
     archiveFileId == rhs.archiveFileId &&
     diskInstance == rhs.diskInstance &&
@@ -47,18 +43,13 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     diskFileRecoveryBlob == rhs.diskFileRecoveryBlob &&
     size == rhs.size &&
     checksum == rhs.checksum &&
-    storageClassName == rhs.storageClassName &&
-    vid == rhs.vid &&
-    fSeq == rhs.fSeq &&
-    blockId == rhs.blockId &&
-    compressedSize == rhs.compressedSize &&
-    copyNb == rhs.copyNb;
+    storageClassName == rhs.storageClassName;
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj) {
   os <<
   "{"
   "archiveFileId=" << obj.archiveFileId <<
@@ -71,11 +62,6 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "size=" << obj.size <<
   "checksum=" << obj.checksum <<
   "storageClassName=" << obj.storageClassName <<
-  "vid=" << obj.vid <<
-  "fSeq=" << obj.fSeq <<
-  "blockId=" << obj.blockId <<
-  "compressedSize=" << obj.compressedSize <<
-  "copyNb=" << obj.copyNb <<
   "}";
   return os;
 }

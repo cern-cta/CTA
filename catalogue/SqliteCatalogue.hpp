@@ -42,6 +42,11 @@ namespace cta {
 namespace catalogue {
 
 /**
+ * Forward declaration.
+ */
+class ArchiveFileRow;
+
+/**
  * CTA catalogue to facilitate unit testing.
  */
 class SqliteCatalogue: public Catalogue {
@@ -268,12 +273,11 @@ protected:
   uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
 
   /**
-   * Creates the specified archive file without any tape copies.  Any tape
-   * copies in the specified archive file will simply be ignored.
+   * Inserts the specified row into the ArchiveFile table.
    *
-   * @param archiveFile The archive file to be created.
+   * @param row The row to be inserrted.
    */
-  void createArchiveFile(const common::dataStructures::ArchiveFile &archiveFile);
+  void insertArchiveFile(const ArchiveFileRow &row);
 
   /**
    * Creates the specified tape file.
