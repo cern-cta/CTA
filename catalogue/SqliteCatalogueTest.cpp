@@ -1326,7 +1326,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getArchiveFile) {
   ASSERT_TRUE(catalogue.getTapeFiles().empty());
 }
 
-TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
+TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape_2_tape_files) {
   using namespace cta;
 
   catalogue::TestingSqliteCatalogue catalogue;
@@ -1415,6 +1415,78 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape) {
   }
 
   ASSERT_EQ(2, catalogue.getTapeFiles().size());
+}
+
+TEST_F(cta_catalogue_SqliteCatalogueTest, fileWrittenToTape_2_tape_files_corrupted_diskFilePath) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_TRUE(catalogue.getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(NULL == catalogue.getArchiveFile(archiveFileId).get());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  catalogue.createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+
+  const uint64_t archiveFileSize = 1;
+
+  catalogue::TapeFileWritten file1Written;
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileUser         = "public_disk_user";
+  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file1Written.size                 = archiveFileSize;
+  file1Written.storageClassName     = storageClassName;
+  file1Written.vid                  = "VID123";
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.compressedSize       = 1;
+  file1Written.copyNb               = 1;
+  catalogue.fileWrittenToTape(file1Written);
+
+  {
+    std::unique_ptr<common::dataStructures::ArchiveFile> retrievedFile = catalogue.getArchiveFile(archiveFileId);
+    ASSERT_TRUE(NULL != retrievedFile.get());
+
+    ASSERT_EQ(file1Written.archiveFileId, retrievedFile->archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, retrievedFile->diskFileID);
+    ASSERT_EQ(file1Written.size, retrievedFile->fileSize);
+    ASSERT_EQ(file1Written.storageClassName, retrievedFile->storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, retrievedFile->diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, retrievedFile->drData.drPath);
+    ASSERT_EQ(file1Written.diskFileUser, retrievedFile->drData.drOwner);
+    ASSERT_EQ(file1Written.diskFileGroup, retrievedFile->drData.drGroup);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, retrievedFile->drData.drBlob);
+
+    ASSERT_EQ(1, retrievedFile->tapeFiles.size());
+  }
+
+  ASSERT_EQ(1, catalogue.getTapeFiles().size());
+
+  catalogue::TapeFileWritten file2Written;
+  file2Written.archiveFileId        = file1Written.archiveFileId;
+  file2Written.diskInstance         = file1Written.diskInstance;
+  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.diskFilePath         = "CORRUPTED disk file path";
+  file2Written.diskFileUser         = file1Written.diskFileUser;
+  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
+  file2Written.size                 = archiveFileSize;
+  file2Written.storageClassName     = storageClassName;
+  file2Written.vid                  = "VID123";
+  file2Written.fSeq                 = 2;
+  file2Written.blockId              = 4331;
+  file2Written.compressedSize       = 1;
+  file2Written.copyNb               = 2;
+
+  ASSERT_THROW(catalogue.fileWrittenToTape(file2Written), exception::Exception);
 }
 
 } // namespace unitTests

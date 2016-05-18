@@ -1899,35 +1899,100 @@ void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdent
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
-  const time_t now = time(NULL);
-  std::lock_guard<std::mutex> m_lock(m_mutex);
+  try {
+    const time_t now = time(NULL);
+    std::lock_guard<std::mutex> m_lock(m_mutex);
 
-  std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(event.archiveFileId);
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(event.archiveFileId);
 
-  // If the archive file does not already exist then create one
-  if(NULL == archiveFile.get()) {
-    ArchiveFileRow row;
-    row.archiveFileId = event.archiveFileId;
-    row.diskFileId = event.diskFileId;
-    row.diskInstance = event.diskInstance;
-    row.size = event.size;
-    row.storageClassName = event.storageClassName;
-    row.diskFilePath = event.diskFilePath;
-    row.diskFileUser = event.diskFileUser;
-    row.diskFileGroup = event.diskFileGroup;
-    row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-    insertArchiveFile(row);
+    // If the archive file does not already exist
+    if(NULL == archiveFile.get()) {
+      // Create one
+      ArchiveFileRow row;
+      row.archiveFileId = event.archiveFileId;
+      row.diskFileId = event.diskFileId;
+      row.diskInstance = event.diskInstance;
+      row.size = event.size;
+      row.storageClassName = event.storageClassName;
+      row.diskFilePath = event.diskFilePath;
+      row.diskFileUser = event.diskFileUser;
+      row.diskFileGroup = event.diskFileGroup;
+      row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
+      insertArchiveFile(row);
+    } else {
+      throwIfCommonEventDataMismatch(*archiveFile, event);
+    }
+
+    // Create the tape file
+    common::dataStructures::TapeFile tapeFile;
+    tapeFile.vid            = event.vid;
+    tapeFile.fSeq           = event.fSeq;
+    tapeFile.blockId        = event.blockId;
+    tapeFile.compressedSize = event.compressedSize;
+    tapeFile.copyNb         = event.copyNb;
+    tapeFile.creationTime   = now;
+    createTapeFile(tapeFile, event.archiveFileId);
+  } catch(exception::Exception &ne) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed: " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// throwIfCommonEventDataMismatch
+//------------------------------------------------------------------------------
+void SqliteCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
+  const TapeFileWritten &actual) const {
+  // Throw an exception if the common disk information of this tape file
+  // written event does not match the previous
+  if(expected.diskFileID != actual.diskFileId) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk file ID mismatch: expected=" << expected.diskFileID << " actual=" <<
+    actual.diskFileId;
+    throw ex;
+  }
+  if(expected.fileSize != actual.size) {
+    exception::Exception ex;
+    ex.getMessage() << "File size mismatch: expected=" << expected.fileSize << " actual=" << actual.size;
+    throw ex;
+  }
+  if(expected.storageClass != actual.storageClassName) {
+    exception::Exception ex;
+    ex.getMessage() << "Storage class mismatch: expected=" << expected.storageClass << " actual=" <<
+    actual.storageClassName;
+    throw ex;
+  }
+  if(expected.diskInstance != actual.diskInstance) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk instance mismatch: expected=" << expected.diskInstance << " actual=" <<
+    actual.diskInstance;
+    throw ex;
+  }
+  if(expected.drData.drPath != actual.diskFilePath) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk file path mismatch: expected=" << expected.drData.drPath << " actual=" <<
+    actual.diskFilePath;
+    throw ex;
+  }
+  if(expected.drData.drOwner != actual.diskFileUser) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk file user mismatch: expected=" << expected.drData.drOwner << " actual=" <<
+    actual.diskFileUser;
+    throw ex;
+  }
+  if(expected.drData.drGroup != actual.diskFileGroup) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk file group mismatch: expected=" << expected.drData.drGroup << " actual=" <<
+    actual.diskFileGroup;
+    throw ex;
+  }
+  if(expected.drData.drGroup != actual.diskFileGroup) {
+    exception::Exception ex;
+    ex.getMessage() << "Disk recovery blob mismatch";
+    throw ex;
   }
 
-  // Create the tape file
-  common::dataStructures::TapeFile tapeFile;
-  tapeFile.vid            = event.vid;
-  tapeFile.fSeq           = event.fSeq;
-  tapeFile.blockId        = event.blockId;
-  tapeFile.compressedSize = event.compressedSize;
-  tapeFile.copyNb         = event.copyNb;
-  tapeFile.creationTime   = now;
-  createTapeFile(tapeFile, event.archiveFileId);
 }
 
 //------------------------------------------------------------------------------

@@ -320,6 +320,16 @@ protected:
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFile(const uint64_t archiveFileId) const;
 
+  /**
+   * Throws an exception if the there is a mismatch between the expected and
+   * actual common event data.
+   *
+   * @param expected The expected event data.
+   * @param actual The actual event data.
+   */
+  void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
+    const TapeFileWritten &actual) const;
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue
