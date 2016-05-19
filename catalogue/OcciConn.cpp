@@ -81,7 +81,7 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-OcciStmt *OcciConn::createStmt(const char *const sql) {
+DbStmt *OcciConn::createStmt(const char *const sql) {
   try {
     if(NULL == sql) throw std::runtime_error("sql is NULL");
 

@@ -20,7 +20,7 @@
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciRset.hpp"
-#include "catalogue/OcciStmt.hpp"
+#include "catalogue/DbStmt.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
 #include <gtest/gtest.h>
@@ -28,7 +28,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_OcciStmtTest : public ::testing::Test {
+class cta_catalogue_DbStmtTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -38,7 +38,7 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_OcciStmtTest, executeQuery) {
+TEST_F(cta_catalogue_DbStmtTest, executeQuery) {
   using namespace cta;
   using namespace cta::catalogue;
 
@@ -49,7 +49,7 @@ TEST_F(cta_catalogue_OcciStmtTest, executeQuery) {
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
   const char *const sql = "SELECT * FROM DUAL";
-  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
 }
 

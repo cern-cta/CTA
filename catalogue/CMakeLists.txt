@@ -23,6 +23,7 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   Catalogue.cpp
+  DbConn.cpp
   DbLogin.cpp
   DbRset.cpp
   DbStmt.cpp

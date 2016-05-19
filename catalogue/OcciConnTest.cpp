@@ -19,7 +19,7 @@
 #include "catalogue/DbLogin.hpp"
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciConn.hpp"
-#include "catalogue/OcciStmt.hpp"
+#include "catalogue/DbStmt.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
 #include <gtest/gtest.h>
@@ -85,7 +85,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt) {
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
   const char *const sql = "SELECT * FROM DUAL";
-  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
 }
 
 } // namespace unitTests

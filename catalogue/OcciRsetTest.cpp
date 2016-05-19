@@ -20,7 +20,7 @@
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciRset.hpp"
-#include "catalogue/OcciStmt.hpp"
+#include "catalogue/DbStmt.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
 #include <cstring>
@@ -50,7 +50,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL";
-  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   std::string text(rset->columnText("DUMMY"));
@@ -69,7 +69,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQueryRelyOnRsetDestructorForCacheDelet
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL";
-  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   std::string text(rset->columnText("DUMMY"));
@@ -87,7 +87,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
   const char *const sql = "SELECT 1234 AS I FROM DUAL";
-  std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   const uint32_t i = rset->columnUint64("I");
@@ -96,5 +96,26 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
 }
 
 // TODO - Implement 64-bit int test because the current code will fail
+
+/*
+TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
+  using namespace cta;
+  using namespace cta::catalogue;
+
+  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  OcciEnv env;
+  std::unique_ptr<OcciConn> conn(env.createConn(
+    dbLogin.username.c_str(),
+    dbLogin.password.c_str(),
+    dbLogin.database.c_str()));
+  const char *const sql = "SELECT DUMMY FROM DUAL WHERE DUMMY = :DUMMY";
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
+  ASSERT_TRUE(rset->next());
+  const uint32_t i = rset->columnUint64("I");
+  ASSERT_EQ(1234, i);
+  ASSERT_FALSE(rset->next());
+}
+*/
 
 } // namespace unitTests

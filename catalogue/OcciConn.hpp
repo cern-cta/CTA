@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/DbConn.hpp"
+
 #include <occi.h>
 #include <mutex>
 
@@ -43,7 +45,7 @@ class OcciStmt;
  * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
  * does not expose the std::string data type.
  */
-class OcciConn {
+class OcciConn: public DbConn {
 public:
 
   /**
@@ -86,12 +88,12 @@ public:
   /**
    * Creates a prepared statement.
    *
-   * This method will throw an exception if th esql parameter is a NULL pointer.
+   * This method will throw an exception if the sql parameter is a NULL pointer.
    *
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  OcciStmt *createStmt(const char *const sql);
+  DbStmt *createStmt(const char *const sql);
 
 private:
 
