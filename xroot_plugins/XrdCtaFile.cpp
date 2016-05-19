@@ -76,7 +76,7 @@ cta::common::dataStructures::SecurityIdentity XrdCtaFile::checkClient(const XrdS
 //------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
-void XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::string command(tokens[1]);
   
   std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
@@ -87,36 +87,40 @@ void XrdCtaFile::dispatchCommand(const std::vector<std::string> &tokens, const c
     m_scheduler->authorizeCliIdentity(cliIdentity);
   }
   
-  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap(tokens, cliIdentity);}
-  else if("ad"   == command || "admin"                  == command) {xCom_admin(tokens, cliIdentity);}
-  else if("ah"   == command || "adminhost"              == command) {xCom_adminhost(tokens, cliIdentity);}
-  else if("tp"   == command || "tapepool"               == command) {xCom_tapepool(tokens, cliIdentity);}
-  else if("ar"   == command || "archiveroute"           == command) {xCom_archiveroute(tokens, cliIdentity);}
-  else if("ll"   == command || "logicallibrary"         == command) {xCom_logicallibrary(tokens, cliIdentity);}
-  else if("ta"   == command || "tape"                   == command) {xCom_tape(tokens, cliIdentity);}
-  else if("sc"   == command || "storageclass"           == command) {xCom_storageclass(tokens, cliIdentity);}
-  else if("us"   == command || "user"                   == command) {xCom_user(tokens, cliIdentity);}
-  else if("mg"   == command || "mountpolicy"            == command) {xCom_mountpolicy(tokens, cliIdentity);}
-  else if("de"   == command || "dedication"             == command) {xCom_dedication(tokens, cliIdentity);}
-  else if("re"   == command || "repack"                 == command) {xCom_repack(tokens, cliIdentity);}
-  else if("sh"   == command || "shrink"                 == command) {xCom_shrink(tokens, cliIdentity);}
-  else if("ve"   == command || "verify"                 == command) {xCom_verify(tokens, cliIdentity);}
-  else if("af"   == command || "archivefile"            == command) {xCom_archivefile(tokens, cliIdentity);}
-  else if("te"   == command || "test"                   == command) {xCom_test(tokens, cliIdentity);}
-  else if("dr"   == command || "drive"                  == command) {xCom_drive(tokens, cliIdentity);}
-  else if("rc"   == command || "reconcile"              == command) {xCom_reconcile(tokens, cliIdentity);}
-  else if("lpa"  == command || "listpendingarchives"    == command) {xCom_listpendingarchives(tokens, cliIdentity);}
-  else if("lpr"  == command || "listpendingretrieves"   == command) {xCom_listpendingretrieves(tokens, cliIdentity);}
-  else if("lds"  == command || "listdrivestates"        == command) {xCom_listdrivestates(tokens, cliIdentity);}
-  else if("a"    == command || "archive"                == command) {xCom_archive(tokens, cliIdentity);}
-  else if("r"    == command || "retrieve"               == command) {xCom_retrieve(tokens, cliIdentity);}
-  else if("da"   == command || "deletearchive"          == command) {xCom_deletearchive(tokens, cliIdentity);}
-  else if("cr"   == command || "cancelretrieve"         == command) {xCom_cancelretrieve(tokens, cliIdentity);}
-  else if("ufi"  == command || "updatefileinfo"         == command) {xCom_updatefileinfo(tokens, cliIdentity);}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {xCom_updatefilestorageclass(tokens, cliIdentity);}
-  else if("lsc"  == command || "liststorageclass"       == command) {xCom_liststorageclass(tokens, cliIdentity);}
+  if     ("bs"   == command || "bootstrap"              == command) {return xCom_bootstrap(tokens, cliIdentity);}
+  else if("ad"   == command || "admin"                  == command) {return xCom_admin(tokens, cliIdentity);}
+  else if("ah"   == command || "adminhost"              == command) {return xCom_adminhost(tokens, cliIdentity);}
+  else if("tp"   == command || "tapepool"               == command) {return xCom_tapepool(tokens, cliIdentity);}
+  else if("ar"   == command || "archiveroute"           == command) {return xCom_archiveroute(tokens, cliIdentity);}
+  else if("ll"   == command || "logicallibrary"         == command) {return xCom_logicallibrary(tokens, cliIdentity);}
+  else if("ta"   == command || "tape"                   == command) {return xCom_tape(tokens, cliIdentity);}
+  else if("sc"   == command || "storageclass"           == command) {return xCom_storageclass(tokens, cliIdentity);}
+  else if("us"   == command || "user"                   == command) {return xCom_user(tokens, cliIdentity);}
+  else if("mg"   == command || "mountpolicy"            == command) {return xCom_mountpolicy(tokens, cliIdentity);}
+  else if("de"   == command || "dedication"             == command) {return xCom_dedication(tokens, cliIdentity);}
+  else if("re"   == command || "repack"                 == command) {return xCom_repack(tokens, cliIdentity);}
+  else if("sh"   == command || "shrink"                 == command) {return xCom_shrink(tokens, cliIdentity);}
+  else if("ve"   == command || "verify"                 == command) {return xCom_verify(tokens, cliIdentity);}
+  else if("af"   == command || "archivefile"            == command) {return xCom_archivefile(tokens, cliIdentity);}
+  else if("te"   == command || "test"                   == command) {return xCom_test(tokens, cliIdentity);}
+  else if("dr"   == command || "drive"                  == command) {return xCom_drive(tokens, cliIdentity);}
+  else if("rc"   == command || "reconcile"              == command) {return xCom_reconcile(tokens, cliIdentity);}
+  else if("lpa"  == command || "listpendingarchives"    == command) {return xCom_listpendingarchives(tokens, cliIdentity);}
+  else if("lpr"  == command || "listpendingretrieves"   == command) {return xCom_listpendingretrieves(tokens, cliIdentity);}
+  else if("lds"  == command || "listdrivestates"        == command) {return xCom_listdrivestates(tokens, cliIdentity);}
+  else if("a"    == command || "archive"                == command) {return xCom_archive(tokens, cliIdentity);}
+  else if("r"    == command || "retrieve"               == command) {return xCom_retrieve(tokens, cliIdentity);}
+  else if("da"   == command || "deletearchive"          == command) {return xCom_deletearchive(tokens, cliIdentity);}
+  else if("cr"   == command || "cancelretrieve"         == command) {return xCom_cancelretrieve(tokens, cliIdentity);}
+  else if("ufi"  == command || "updatefileinfo"         == command) {return xCom_updatefileinfo(tokens, cliIdentity);}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {return xCom_updatefilestorageclass(tokens, cliIdentity);}
+  else if("lsc"  == command || "liststorageclass"       == command) {return xCom_liststorageclass(tokens, cliIdentity);}
   
-  else {m_data = getGenericHelp(tokens[0]);}
+  else {
+    m_data = getGenericHelp(tokens[0]);
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -137,7 +141,8 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
 
     if(!strlen(fileName)) { //this should never happen
       m_data = getGenericHelp("");
-      return SFS_OK;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
 
     std::vector<std::string> tokens;
@@ -155,28 +160,32 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
 
     if(tokens.size() == 0) { //this should never happen
       m_data = getGenericHelp("");
-      return SFS_OK;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if(tokens.size() < 2) {
       m_data = getGenericHelp(tokens[0]);
-      return SFS_OK;
-    }  
-    dispatchCommand(tokens, cliIdentity);
-    return SFS_OK;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
+    }    
+    return dispatchCommand(tokens, cliIdentity);
   } catch (cta::exception::Exception &ex) {
     m_data = "[ERROR] CTA exception caught: ";
     m_data += ex.getMessageValue();
-    m_data += "\n";
-    return SFS_OK;
+    m_data += "\n"; 
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   } catch (std::exception &ex) {
     m_data = "[ERROR] Exception caught: ";
     m_data += ex.what();
-    m_data += "\n";
-    return SFS_OK;
+    m_data += "\n"; 
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   } catch (...) {
     m_data = "[ERROR] Unknown exception caught!";
-    m_data += "\n";
-    return SFS_OK;
+    m_data += "\n"; 
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
 }
 
@@ -434,7 +443,7 @@ uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, c
 //------------------------------------------------------------------------------
 // xCom_bootstrap
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " bs/bootstrap --user/-u <user> --group/-g <group> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
   std::string user = getOptionValue(tokens, "-u", "--user", false);
@@ -443,18 +452,20 @@ void XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const ct
   std::string comment = getOptionValue(tokens, "-m", "--comment", false);
   if(user.empty()||group.empty()||hostname.empty()||comment.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   cta::common::dataStructures::UserIdentity adminUser;
   adminUser.name=user;
   adminUser.group=group;
   m_catalogue->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_admin
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl
        << "\tadd --user/-u <user> --group/-g <group> --comment/-m <\"comment\">" << std::endl
@@ -466,7 +477,8 @@ void XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
     std::string group = getOptionValue(tokens, "-g", "--group", false);
     if(user.empty()||group.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     cta::common::dataStructures::UserIdentity adminUser;
     adminUser.name=user;
@@ -475,7 +487,8 @@ void XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if("add" == tokens[2]) { //add
         m_catalogue->createAdminUser(cliIdentity, adminUser, comment);
@@ -507,13 +520,16 @@ void XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::c
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_adminhost
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ah/adminhost add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
@@ -524,13 +540,15 @@ void XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
     std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if("add" == tokens[2]) { //add
         m_catalogue->createAdminHost(cliIdentity, hostname, comment);
@@ -561,13 +579,16 @@ void XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const ct
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_tapepool
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " tp/tapepool add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> [--encryption/-e or --clear/-c] --comment/-m <\"comment\">" << std::endl
@@ -578,20 +599,23 @@ void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
     std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if("add" == tokens[2]) { //add
       std::string ptn_s = getOptionValue(tokens, "-p", "--partialtapesnumber", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||ptn_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       uint64_t ptn = stringParameterToUint64("--partialtapesnumber", ptn_s);
       bool encryption=false;
       if((hasOption(tokens, "-e", "--encryption") && hasOption(tokens, "-c", "--clear"))) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       encryption=hasOption(tokens, "-e", "--encryption");
       m_catalogue->createTapePool(cliIdentity, name, ptn, encryption, comment);
@@ -601,7 +625,8 @@ void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&ptn_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if(!comment.empty()) {
         m_catalogue->modifyTapePoolComment(cliIdentity, name, comment);
@@ -641,13 +666,16 @@ void XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_archiveroute
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ar/archiveroute add/ch/rm/ls:" << std::endl
        << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
@@ -659,7 +687,8 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
     std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
     if(scn.empty()||cn_s.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }    
     uint64_t cn = stringParameterToUint64("--copynb", cn_s);
     if("add" == tokens[2]) { //add
@@ -667,7 +696,8 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||tapepool.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       m_catalogue->createArchiveRoute(cliIdentity, scn, cn, tapepool, comment);
     }
@@ -676,7 +706,8 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&tapepool.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if(!comment.empty()) {
         m_catalogue->modifyArchiveRouteComment(cliIdentity, scn, cn, comment);
@@ -709,13 +740,16 @@ void XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_logicallibrary
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ll/logicallibrary add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
@@ -726,21 +760,24 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
     std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if("add" == tokens[2]) { //add
         if(comment.empty()) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         m_catalogue->createLogicalLibrary(cliIdentity, name, comment);
       }
       else { //ch
         if(comment.empty()) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         m_catalogue->modifyLogicalLibraryComment(cliIdentity, name, comment);
       }
@@ -767,13 +804,16 @@ void XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, con
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_tape
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
        << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--encryptionkey/-k <encryption_key>]" << std::endl
@@ -789,7 +829,8 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if("add" == tokens[2]) { //add
       std::string logicallibrary = getOptionValue(tokens, "-l", "--logicallibrary", false);
@@ -797,7 +838,8 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       std::string capacity_s = getOptionValue(tokens, "-c", "--capacity", false);
       if(logicallibrary.empty()||tapepool.empty()||capacity_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       uint64_t capacity = stringParameterToUint64("--capacity", capacity_s);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
@@ -805,7 +847,8 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       bool full=false;
       if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full"))) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       disabled=hasOption(tokens, "-d", "--disabled");
       full=hasOption(tokens, "-F", "--full");
@@ -821,11 +864,13 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
       if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && encryptionkey.empty() && !hasOption(tokens, "-e", "--enabled")
               && !hasOption(tokens, "-d", "--disabled") && !hasOption(tokens, "-f", "--free") && !hasOption(tokens, "-F", "--full")) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if((hasOption(tokens, "-e", "--enabled") && hasOption(tokens, "-d", "--disabled")) || (hasOption(tokens, "-f", "--free") && hasOption(tokens, "-F", "--full"))) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if(!logicallibrary.empty()) {
         m_catalogue->modifyTapeLogicalLibraryName(cliIdentity, vid, logicallibrary);
@@ -876,7 +921,8 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
             || (hasOption(tokens, "-b", "--busy") && hasOption(tokens, "-n", "--notbusy"))
             || (hasOption(tokens, "-p", "--lbp") && hasOption(tokens, "-P", "--nolbp"))) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     std::string disabled="";
     std::string full="";
@@ -940,13 +986,16 @@ void XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::co
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_storageclass
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " sc/storageclass add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
@@ -957,14 +1006,16 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
     std::string scn = getOptionValue(tokens, "-n", "--name", false);
     if(scn.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }  
     if("add" == tokens[2]) { //add
       std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||cn_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }  
       uint64_t cn = stringParameterToUint64("--copynb", cn_s);
       m_catalogue->createStorageClass(cliIdentity, scn, cn, comment);
@@ -974,7 +1025,8 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&cn_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if(!comment.empty()) {
         m_catalogue->modifyStorageClassComment(cliIdentity, scn, comment);
@@ -1007,13 +1059,16 @@ void XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_user
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " us/user add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <user_name> --group/-g <group_name> --mountpolicy/-u <mount_group_name> --comment/-m <\"comment\">" << std::endl
@@ -1025,7 +1080,8 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
     std::string group = getOptionValue(tokens, "-g", "--group", false);
     if(user.empty()||group.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     cta::common::dataStructures::UserIdentity userIdentity;
     userIdentity.name=user;
@@ -1035,7 +1091,8 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()||mountpolicy.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       m_catalogue->createRequester(cliIdentity, userIdentity, mountpolicy, comment);
     }
@@ -1044,7 +1101,8 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()&&mountpolicy.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       if(!comment.empty()) {
         m_catalogue->modifyRequesterComment(cliIdentity, userIdentity, comment);
@@ -1077,13 +1135,16 @@ void XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::co
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_mountpolicy
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " mg/mountpolicy add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <mountpolicy_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
@@ -1096,7 +1157,8 @@ void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const 
     std::string group = getOptionValue(tokens, "-n", "--name", false);
     if(group.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if("add" == tokens[2] || "ch" == tokens[2]) {      
       std::string archivepriority_s = getOptionValue(tokens, "--ap", "--archivepriority", false);
@@ -1109,7 +1171,8 @@ void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const 
         if(archivepriority_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
                 ||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
         uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
@@ -1122,7 +1185,8 @@ void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const 
         if(archivepriority_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
                 &&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         if(!archivepriority_s.empty()) {
           uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
@@ -1176,13 +1240,16 @@ void XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const 
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_dedication
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " de/dedication add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
@@ -1193,7 +1260,8 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
     std::string drive = getOptionValue(tokens, "-n", "--name", false);
     if(drive.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     } 
     if("add" == tokens[2] || "ch" == tokens[2]) {
       bool readonly = hasOption(tokens, "-r", "--readonly");
@@ -1206,17 +1274,20 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
       if("add" == tokens[2]) { //add
         if(comment.empty()||from_s.empty()||until_s.empty()||(vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         struct tm time;
         if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         time_t from = mktime(&time);  // timestamp in current timezone
         if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         time_t until = mktime(&time);  // timestamp in current timezone
         cta::common::dataStructures::DedicationType type=cta::common::dataStructures::DedicationType::readwrite;
@@ -1231,7 +1302,8 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
       else if("ch" == tokens[2]) { //ch
         if((comment.empty()&&from_s.empty()&&until_s.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           m_data = help.str();
-          return;
+          error.setErrInfo(EPERM, m_data.c_str());
+          return SFS_ERROR;
         }
         if(!comment.empty()) {
           m_catalogue->modifyDedicationComment(cliIdentity, drive, comment);
@@ -1240,7 +1312,8 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           struct tm time;
           if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
             m_data = help.str();
-            return;
+            error.setErrInfo(EPERM, m_data.c_str());
+            return SFS_ERROR;
           }
           time_t from = mktime(&time);  // timestamp in current timezone
           m_catalogue->modifyDedicationFrom(cliIdentity, drive, from);
@@ -1249,7 +1322,8 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
           struct tm time;
           if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
             m_data = help.str();
-            return;
+            error.setErrInfo(EPERM, m_data.c_str());
+            return SFS_ERROR;
           }
           time_t until = mktime(&time);  // timestamp in current timezone
           m_catalogue->modifyDedicationUntil(cliIdentity, drive, until);
@@ -1307,13 +1381,16 @@ void XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const c
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_repack
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " re/repack add/rm/ls/err:" << std::endl
        << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
@@ -1324,7 +1401,8 @@ void XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }  
     if("add" == tokens[2]) { //add
       std::string tag = getOptionValue(tokens, "-t", "--tag", false);
@@ -1332,7 +1410,8 @@ void XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
       bool justrepack = hasOption(tokens, "-r", "--justrepack");
       if(justexpand&&justrepack) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
       if(justexpand) {
@@ -1410,27 +1489,32 @@ void XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_shrink
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
   std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
   if(tapepool.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   m_scheduler->shrink(cliIdentity, tapepool);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_verify
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ve/verify add/rm/ls/err:" << std::endl
        << "\tadd [--vid/-v <vid>] [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
@@ -1441,7 +1525,8 @@ void XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }  
     if("add" == tokens[2]) { //add
       std::string tag = getOptionValue(tokens, "-t", "--tag", false);
@@ -1449,7 +1534,8 @@ void XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
       bool complete = hasOption(tokens, "-c", "--complete");
       if(complete&&!numberOfFiles_s.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       uint64_t numberOfFiles=0; //0 means do a complete verification
       if(!numberOfFiles_s.empty()) {
@@ -1510,13 +1596,16 @@ void XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_archivefile
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
@@ -1534,7 +1623,8 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
     bool all = hasOption(tokens, "-a", "--all");
     if(!all && (id_s.empty() && eosid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }
     if(!summary) {
       std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id_s, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
@@ -1577,13 +1667,16 @@ void XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const 
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_test
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
@@ -1593,7 +1686,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
   std::string vid = getOptionValue(tokens, "-v", "--vid", false);
   if(vid.empty() || drive.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   std::string tag = getOptionValue(tokens, "-t", "--tag", false);
   if("read" == tokens[2]) {
@@ -1602,7 +1696,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
     std::string output = getOptionValue(tokens, "-o", "--output", false);
     if(firstfseq_s.empty() || lastfseq_s.empty() || output.empty()) {
       m_data = help.str();
-      return;
+      error.setErrInfo(EPERM, m_data.c_str());
+      return SFS_ERROR;
     }    
     bool checkchecksum = hasOption(tokens, "-c", "--checkchecksum");
     uint64_t firstfseq = stringParameterToUint64("--firstfseq", firstfseq_s);
@@ -1636,7 +1731,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
       std::string file = getOptionValue(tokens, "-f", "--file", false);
       if(file.empty()) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }  
       res = m_scheduler->writeTest(cliIdentity, drive, vid, file, tag);
     }
@@ -1646,7 +1742,8 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
       std::string input = getOptionValue(tokens, "-i", "--input", false);
       if(number_s.empty()||size_s.empty()||(input!="zero"&&input!="urandom")) {
         m_data = help.str();
-        return;
+        error.setErrInfo(EPERM, m_data.c_str());
+        return SFS_ERROR;
       }
       uint64_t number = stringParameterToUint64("--number", number_s);
       uint64_t size = stringParameterToUint64("--size", size_s);
@@ -1683,13 +1780,16 @@ void XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::co
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_drive
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_drive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_drive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " dr/drive up/down (it is a synchronous command):" << std::endl
        << "\tup   --drive/-d <drive_name>" << std::endl
@@ -1697,7 +1797,8 @@ void XrdCtaFile::xCom_drive(const std::vector<std::string> &tokens, const cta::c
   std::string drive = getOptionValue(tokens, "-d", "--drive", false);
   if(drive.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   if("up" == tokens[2]) {
     m_scheduler->setDriveStatus(cliIdentity, drive, true, false);
@@ -1707,13 +1808,16 @@ void XrdCtaFile::xCom_drive(const std::vector<std::string> &tokens, const cta::c
   }
   else {
     m_data = help.str();
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_reconcile
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
   std::list<cta::common::dataStructures::ArchiveFile> list = m_scheduler->reconcile(cliIdentity);  
@@ -1743,12 +1847,13 @@ void XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const ct
     }
     m_data = formatResponse(responseTable);
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_listpendingarchives
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
   std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
@@ -1808,12 +1913,13 @@ void XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens
       m_data = formatResponse(responseTable);
     }
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_listpendingretrieves
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
   std::string vid = getOptionValue(tokens, "-v", "--vid", false);
@@ -1872,12 +1978,13 @@ void XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &token
       m_data = formatResponse(responseTable);
     }
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_listdrivestates
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " lds/listdrivestates [--header/-h]" << std::endl;
   std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(cliIdentity);  
@@ -1904,12 +2011,13 @@ void XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, co
     }
     m_data = formatResponse(responseTable);
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_archive
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
@@ -1917,7 +2025,8 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
@@ -1938,7 +2047,8 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   if(user.empty() || group.empty() || diskid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
           || storageclass.empty() || instance.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t size = stringParameterToUint64("--size", size_s);
   uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
@@ -1966,19 +2076,21 @@ void XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta:
   std::stringstream res_ss;
   res_ss << archiveFileId << std::endl;
   m_data = res_ss.str();
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_retrieve
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
@@ -1993,7 +2105,8 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   std::string throughput_s = getOptionValue(tokens, "", "--throughput", encoded);
   if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
@@ -2013,18 +2126,20 @@ void XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta
   request.requester=originator;
   request.dstURL=dsturl;
   m_scheduler->queueRetrieve(cliIdentity, request);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_deletearchive
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
@@ -2032,7 +2147,8 @@ void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
   if(user.empty() || group.empty() || id_s.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
@@ -2042,19 +2158,21 @@ void XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, cons
   request.archiveFileID=id;
   request.requester=originator;
   m_scheduler->deleteArchive(cliIdentity, request);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_cancelretrieve
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
@@ -2067,7 +2185,8 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
@@ -2084,19 +2203,21 @@ void XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, con
   request.requester=originator;
   request.dstURL=dsturl;
   m_scheduler->cancelRetrieve(cliIdentity, request);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_updatefilestorageclass
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
@@ -2109,7 +2230,8 @@ void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tok
   std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
@@ -2126,19 +2248,21 @@ void XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &tok
   request.requester=originator;
   request.storageClass=storageclass;
   m_scheduler->updateFileStorageClass(cliIdentity, request);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_updatefileinfo
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string id_s = getOptionValue(tokens, "", "--id", encoded);
@@ -2148,7 +2272,8 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   if(id_s.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::DRData drData;
@@ -2160,25 +2285,28 @@ void XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, con
   request.drData=drData;
   request.archiveFileID=id;
   m_scheduler->updateFileInfo(cliIdentity, request);
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
 // xCom_liststorageclass
 //------------------------------------------------------------------------------
-void XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
+int XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
   std::string encoded_s = getOptionValue(tokens, "", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   bool encoded = encoded_s=="true"?true:false;
   std::string user = getOptionValue(tokens, "", "--user", encoded);
   std::string group = getOptionValue(tokens, "", "--group", encoded);
   if(user.empty() || group.empty()) {
     m_data = help.str();
-    return;
+    error.setErrInfo(EPERM, m_data.c_str());
+    return SFS_ERROR;
   }
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user;
@@ -2186,6 +2314,7 @@ void XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, c
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
   m_scheduler->listStorageClass(cliIdentity, request);
+  return SFS_OK;
 }
   
 //------------------------------------------------------------------------------
