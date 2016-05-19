@@ -51,7 +51,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   std::string text(rset->columnText("DUMMY"));
   ASSERT_EQ(std::string("X"), text);
@@ -70,13 +70,13 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQueryRelyOnRsetDestructorForCacheDelet
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   std::string text(rset->columnText("DUMMY"));
   ASSERT_EQ(std::string("X"), text);
 }
 
-TEST_F(cta_catalogue_OcciRsetTest, eexcuteQuery_uint32_t) {
+TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
   using namespace cta;
   using namespace cta::catalogue;
 
@@ -88,7 +88,7 @@ TEST_F(cta_catalogue_OcciRsetTest, eexcuteQuery_uint32_t) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT 1234 AS I FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   const uint32_t i = rset->columnUint64("I");
   ASSERT_EQ(1234, i);

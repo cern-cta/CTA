@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/DbStmt.hpp"
+
 #include <memory>
 #include <mutex>
 #include <occi.h>
@@ -45,7 +47,7 @@ class OcciRset;
  * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
  * does not expose the std::string data type.
  */
-class OcciStmt {
+class OcciStmt: public DbStmt {
 public:
 
   /**
@@ -74,14 +76,38 @@ public:
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  void close();
+  virtual void close();
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const char *getSql() const;
+  virtual const char *getSql() const;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bind(const char *const paramName, const uint64_t paramValue);
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bind(const char*paramName, const char *paramValue);
+
+  /**
+   *  Executes the statement and returns the result set.
+   *
+   *  @return The result set.  Please note that it is the responsibility of the
+   *  caller to free the memory associated with the result set.
+   */
+  DbRset *executeQuery();
 
   /**
    * Returns the underlying OCCI result set.
@@ -96,30 +122,6 @@ public:
    * @return The underlying OCCI result set.
    */
   oracle::occi::Statement *operator->() const;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  void bind(const char *const paramName, const uint64_t paramValue);
-
-  /** 
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */ 
-  void bind(const char*paramName, const char *paramValue);
-
-  /**
-   *  Executes the statement and returns the result set.
-   *
-   *  @return The result set.  Please note that it is the responsibility of the
-   *  caller to free the memory associated with the result set.
-   */
-  OcciRset *executeQuery();
 
 private:
 

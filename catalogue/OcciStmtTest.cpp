@@ -50,7 +50,7 @@ TEST_F(cta_catalogue_OcciStmtTest, executeQuery) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT * FROM DUAL";
   std::unique_ptr<OcciStmt> stmt(conn->createStmt(sql));
-  std::unique_ptr<OcciRset> rset(stmt->executeQuery());
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
 }
 
 } // namespace unitTests

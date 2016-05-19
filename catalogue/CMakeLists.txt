@@ -25,6 +25,7 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   DbLogin.cpp
   DbRset.cpp
+  DbStmt.cpp
   TapeFileWritten.cpp
   OcciConn.cpp
   OcciEnv.cpp

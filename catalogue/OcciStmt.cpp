@@ -81,20 +81,6 @@ const char *OcciStmt::getSql() const {
 }
 
 //------------------------------------------------------------------------------
-// get
-//------------------------------------------------------------------------------
-oracle::occi::Statement *OcciStmt::get() const {
-  return m_stmt;
-}
-
-//------------------------------------------------------------------------------
-// operator->
-//------------------------------------------------------------------------------
-oracle::occi::Statement *OcciStmt::operator->() const {
-  return get();
-}
-
-//------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
 void OcciStmt::bind(const char *paramName, const uint64_t paramValue) {
@@ -113,15 +99,29 @@ void OcciStmt::bind(const char *paramName, const char *paramValue) {
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-OcciRset *OcciStmt::executeQuery() {
+DbRset *OcciStmt::executeQuery() {
   using namespace oracle;
 
   try {
     return new OcciRset(*this, m_stmt->executeQuery());
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
-      ": " + ne.what());
+                             ": " + ne.what());
   }
+}
+
+//------------------------------------------------------------------------------
+// get
+//------------------------------------------------------------------------------
+oracle::occi::Statement *OcciStmt::get() const {
+  return m_stmt;
+}
+
+//------------------------------------------------------------------------------
+// operator->
+//------------------------------------------------------------------------------
+oracle::occi::Statement *OcciStmt::operator->() const {
+  return get();
 }
 
 } // namespace catalogue
