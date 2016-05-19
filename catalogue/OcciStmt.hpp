@@ -140,6 +140,23 @@ private:
   std::unique_ptr<char[]> m_sql;
 
   /**
+   * Forward declaration of the nested class ParamNameToIdx that is intentionally
+   * hidden in the cpp file of the OcciStmt class.  The class is hidden in
+   * order to enable the OcciStmt class to be used by code compiled against
+   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
+   */
+  class ParamNameToIdx;
+
+  /**
+   * Map from SQL parameter name to parameter index.
+   *
+   * Please note that the type of the map is intentionally forward declared in
+   * order to avoid std::string being used.  This is to aid with working with
+   * pre and post CXX11 ABIs.
+   */
+  std::unique_ptr<ParamNameToIdx> m_paramNameToIdx;
+
+  /**
    * The database connection.
    */
   OcciConn &m_conn;

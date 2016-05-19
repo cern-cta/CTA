@@ -151,8 +151,8 @@ private:
 
   /**
    * Forward declaration of the nested class ColumnNameIdx that is intentionally
-   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
-   * order to enable the SqliteRset class to be used by code compiled against
+   * hidden in the cpp file of the OcciRset class.  The class is hidden in
+   * order to enable the OcciRset class to be used by code compiled against
    * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
    */
   class ColumnNameToIdx;
@@ -168,8 +168,8 @@ private:
 
   /**
    * Forward declaration of the nest class TextColumnCache that is intentionally
-   * hidden in the cpp file of the SqliteRset class.  The class is hidden in
-   * order to enable the SqliteRset class to be used by code compiled against
+   * hidden in the cpp file of the OcciRset class.  The class is hidden in
+   * order to enable the OcciRset class to be used by code compiled against
    * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
    */
   class TextColumnCache;

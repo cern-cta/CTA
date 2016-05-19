@@ -95,9 +95,8 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
   ASSERT_FALSE(rset->next());
 }
 
-// TODO - Implement 64-bit int test because the current code will fail
+// TODO - Implement 64-bit int executeQuery test because the current code will fail
 
-/*
 TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
   using namespace cta;
   using namespace cta::catalogue;
@@ -110,12 +109,34 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL WHERE DUMMY = :DUMMY";
   std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
+  stmt->bind(":DUMMY", "X");
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
-  const uint32_t i = rset->columnUint64("I");
-  ASSERT_EQ(1234, i);
+  std::string text(rset->columnText("DUMMY"));
+  ASSERT_EQ(std::string("X"), text);
   ASSERT_FALSE(rset->next());
 }
-*/
+
+TEST_F(cta_catalogue_OcciRsetTest, bind_uint32_t) {
+  using namespace cta;
+  using namespace cta::catalogue;
+
+  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  OcciEnv env;
+  std::unique_ptr<OcciConn> conn(env.createConn(
+    dbLogin.username.c_str(),
+    dbLogin.password.c_str(),
+    dbLogin.database.c_str()));
+  const char *const sql = "SELECT :N AS AN_UNSIGNED_INT FROM DUAL";
+  std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
+  stmt->bind(":N", 1234);
+  std::unique_ptr<DbRset> rset(stmt->executeQuery());
+  ASSERT_TRUE(rset->next());
+  const uint32_t n = rset->columnUint64("AN_UNSIGNED_INT");
+  ASSERT_EQ(1234, n);
+  ASSERT_FALSE(rset->next());
+}
+
+// TODO - Implement 64-bit int bind test because the current code will fail
 
 } // namespace unitTests
