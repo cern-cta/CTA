@@ -105,7 +105,7 @@ void SqliteCatalogue::createAdminUser(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":ADMIN_USER_NAME", user.name.c_str());
 
@@ -152,7 +152,7 @@ std::list<common::dataStructures::AdminUser>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_USER;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::AdminUser admin;
@@ -237,7 +237,7 @@ void SqliteCatalogue::createAdminHost(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":ADMIN_HOST_NAME", hostName.c_str());
 
@@ -283,7 +283,7 @@ std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() co
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_HOST;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::AdminHost host;
@@ -370,7 +370,7 @@ void SqliteCatalogue::createStorageClass(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":STORAGE_CLASS_NAME", name.c_str());
     stmt->bindUint64(":NB_COPIES", nbCopies);
@@ -419,7 +419,7 @@ std::list<common::dataStructures::StorageClass>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM STORAGE_CLASS;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::StorageClass storageClass;
@@ -517,7 +517,7 @@ void SqliteCatalogue::createTapePool(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":TAPE_POOL_NAME", name.c_str());
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
@@ -568,7 +568,7 @@ std::list<common::dataStructures::TapePool>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE_POOL;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::TapePool pool;
@@ -675,7 +675,7 @@ void SqliteCatalogue::createArchiveRoute(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":STORAGE_CLASS_NAME", storageClassName.c_str());
     stmt->bindUint64(":COPY_NB", copyNb);
@@ -726,7 +726,7 @@ std::list<common::dataStructures::ArchiveRoute>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ARCHIVE_ROUTE;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::ArchiveRoute route;
@@ -820,7 +820,7 @@ void SqliteCatalogue::createLogicalLibrary(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":LOGICAL_LIBRARY_NAME", name.c_str());
 
@@ -867,7 +867,7 @@ std::list<common::dataStructures::LogicalLibrary>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM LOGICAL_LIBRARY;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::LogicalLibrary lib;
@@ -994,7 +994,7 @@ void SqliteCatalogue::createTape(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":VID", vid.c_str());
     stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName.c_str());
@@ -1085,7 +1085,7 @@ std::list<common::dataStructures::Tape>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::Tape tape;
@@ -1276,7 +1276,7 @@ void SqliteCatalogue::createRequester(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":REQUESTER_NAME", user.name.c_str());
     stmt->bind(":MOUNT_POLICY_NAME", mountPolicy.c_str());
@@ -1325,7 +1325,7 @@ std::list<common::dataStructures::Requester>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM REQUESTER;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while(rset->next()) {
       common::dataStructures::Requester user;
@@ -1440,7 +1440,7 @@ void SqliteCatalogue::createMountPolicy(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bind(":MOUNT_POLICY_NAME", name.c_str());
 
@@ -1503,7 +1503,7 @@ std::list<common::dataStructures::MountPolicy>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM MOUNT_POLICY;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::MountPolicy policy;
@@ -1724,7 +1724,7 @@ void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
         ":STORAGE_CLASS_NAME,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME)";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
     stmt->bind(":DISK_INSTANCE", row.diskInstance.c_str());
@@ -1757,7 +1757,7 @@ uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, cons
         "FROM ARCHIVE_FILE WHERE "
         "DISK_INSTANCE = :DISK_INSTANCE AND "
         "DISK_FILE_ID = :DISK_FILE_ID;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     stmt->bind(":DISK_INSTANCE", diskInstance.c_str());
     stmt->bind(":DISK_FILE_ID", diskFileId.c_str());
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -1816,7 +1816,7 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
         "ARCHIVE_FILE.ARCHIVE_FILE_ID,"
         "TAPE_FILE.COPY_NB;"
     ;
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
     while (rset->next()) {
@@ -2043,7 +2043,7 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
         "TAPE_POOL_NAME AS TAPE_POOL_NAME "
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     stmt->bind(":STORAGE_CLASS_NAME", storageClass.c_str());
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2069,7 +2069,7 @@ uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageC
         "COUNT(*) AS NB_ROUTES "
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     stmt->bind(":STORAGE_CLASS_NAME", storageClass.c_str());
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2112,7 +2112,7 @@ common::dataStructures::MountPolicy SqliteCatalogue::
       "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
     "WHERE "
       "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":REQUESTER_NAME", user.name.c_str());
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
@@ -2177,7 +2177,7 @@ bool SqliteCatalogue::userIsAdmin(const std::string &userName) const {
       "ADMIN_USER_NAME AS ADMIN_USER_NAME "
     "FROM ADMIN_USER WHERE "
       "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":ADMIN_USER_NAME", userName.c_str());
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
@@ -2192,7 +2192,7 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
     "FROM ADMIN_HOST WHERE "
       "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":ADMIN_HOST_NAME", hostName.c_str());
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
@@ -2215,7 +2215,7 @@ std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string 
         "IS_DISABLED = 0 AND "
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName.c_str());
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2258,7 +2258,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
       ":COPY_NB,"
       ":CREATION_TIME,"
       ":ARCHIVE_FILE_ID);";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
   stmt->bind(":VID", tapeFile.vid.c_str());
   stmt->bindUint64(":FSEQ", tapeFile.fSeq);
@@ -2285,7 +2285,7 @@ std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() cons
       "COPY_NB AS COPY_NB,"
       "CREATION_TIME AS CREATION_TIME "
     "FROM TAPE_FILE;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   while(rset->next()) {
     common::dataStructures::TapeFile file;
@@ -2321,7 +2321,7 @@ void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t las
       "LAST_FSEQ = :LAST_FSEQ "
     "WHERE "
       "VID=:VID;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":VID", vid.c_str());
   stmt->bindUint64(":LAST_FSEQ", lastFSeq);
   stmt->executeNonQuery();
@@ -2336,7 +2336,7 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
       "LAST_FSEQ AS LAST_FSEQ "
     "FROM TAPE WHERE "
       "VID = :VID;";
-  std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
   stmt->bind(":VID", vid.c_str());
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
@@ -2381,7 +2381,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
           "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;

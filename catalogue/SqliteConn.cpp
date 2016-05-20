@@ -94,7 +94,7 @@ void SqliteConn::execNonQuery(const char *const sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-SqliteStmt *SqliteConn::createStmt(const char *const sql) {
+DbStmt *SqliteConn::createStmt(const char *const sql) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   sqlite3_stmt *stmt = NULL;

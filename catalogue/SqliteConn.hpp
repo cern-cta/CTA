@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/DbConn.hpp"
+
 #include <mutex>
 #include <sqlite3.h>
 
@@ -33,7 +35,7 @@ class SqliteStmt;
 /**
  * A convenience wrapper around a connection to an SQLite database.
  */
-class SqliteConn {
+class SqliteConn: public DbConn {
 public:
 
   /**
@@ -78,7 +80,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  SqliteStmt *createStmt(const char *const sql);
+  DbStmt *createStmt(const char *const sql);
 
 private:
 
