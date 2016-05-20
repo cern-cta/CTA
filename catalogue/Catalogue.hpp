@@ -113,6 +113,9 @@ public:
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
 
+  /**
+   * The createTape function does not take the lbp bool value as it defaults to false. The lbp can only be changed through the labelTape command.
+   */
   virtual void createTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
                           const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
   virtual void deleteTape(const std::string &vid) = 0;
