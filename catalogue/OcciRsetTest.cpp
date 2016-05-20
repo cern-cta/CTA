@@ -45,7 +45,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -64,7 +64,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQueryRelyOnRsetDestructorForCacheDelet
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -82,7 +82,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -103,7 +103,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -123,7 +123,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_uint32_t) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));

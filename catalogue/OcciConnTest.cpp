@@ -43,7 +43,7 @@ TEST_F(cta_catalogue_OcciConnTest, constructor_null_connection) {
 
   OcciEnv env;
   oracle::occi::Connection *const underlyingOcciConn = NULL;
-  std::unique_ptr<OcciConn> conn;
+  std::unique_ptr<DbConn> conn;
   ASSERT_THROW(conn.reset(new OcciConn(env, underlyingOcciConn)),
     std::exception);
 }
@@ -54,7 +54,7 @@ TEST_F(cta_catalogue_OcciConnTest, constructor_real_connection) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -66,7 +66,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt_null_sql) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
@@ -80,7 +80,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt) {
 
   const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
-  std::unique_ptr<OcciConn> conn(env.createConn(
+  std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
     dbLogin.password.c_str(),
     dbLogin.database.c_str()));
