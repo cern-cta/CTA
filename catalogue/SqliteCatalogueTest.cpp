@@ -675,7 +675,7 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
-  ASSERT_TRUE(tape.lbp);
+  ASSERT_FALSE(tape.lbp);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {

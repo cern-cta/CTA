@@ -1005,7 +1005,7 @@ void SqliteCatalogue::createTape(
     stmt->bind(":LAST_FSEQ", 0);
     stmt->bind(":IS_DISABLED", disabledValue);
     stmt->bind(":IS_FULL", fullValue);
-    stmt->bind(":LBP_IS_ON", 1);
+    stmt->bind(":LBP_IS_ON", 0);
 
     stmt->bind(":LABEL_DRIVE", "");
     stmt->bind(":LABEL_TIME", 0);
