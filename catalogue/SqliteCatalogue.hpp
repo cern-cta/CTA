@@ -207,7 +207,21 @@ public:
    */
   virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const;
 
+  /**
+   * Returns true if the specified user has admin privileges.
+   *
+   * @param cliIdentity The user.
+   * @return True if the specified user has admin privileges.:w
+   */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const;
+
+  /**
+   * Returns the list of tapes that can be written to be a tape drive in the
+   * specified logical library.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   */
+  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const;
 
 protected:
 
@@ -329,14 +343,6 @@ protected:
    */
   void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
     const TapeFileWritten &actual) const;
-
-  /**
-   * Returns the list of tapes that can be written to be a tape drive in the
-   * specified logical library.
-   *
-   * @param logicalLibraryName The name of the logical library.
-   */
-  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const;
 }; // class SqliteCatalogue
 
 } // namespace catalogue

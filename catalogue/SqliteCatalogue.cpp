@@ -2199,6 +2199,44 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
 }
 
 //------------------------------------------------------------------------------
+// getTapeForWriting
+//------------------------------------------------------------------------------
+std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
+  try {
+    std::list<TapeForWriting> tapes;
+    const char *const sql =
+      "SELECT "
+        "VID AS VID,"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "LAST_FSEQ AS LAST_FSEQ,"
+        "LBP_IS_ON AS LBP_IS_ON "
+        "FROM TAPE WHERE "
+        "IS_DISABLED = 0 AND "
+        "IS_FULL = 0 AND "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
+    std::unique_ptr<SqliteStmt> stmt(m_conn.createStmt(sql));
+    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    while (rset->next()) {
+      TapeForWriting tape;
+
+      tape.vid = rset->columnText("VID");
+      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
+      tape.lbp = rset->columnUint64("LBP_IS_ON");
+
+      tapes.push_back(tape);
+    }
+
+    return tapes;
+  } catch(std::exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  }
+}
+
+//------------------------------------------------------------------------------
 // createTapeFile
 //------------------------------------------------------------------------------
 void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId) {
@@ -2383,13 +2421,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
   } catch(std::exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
   }
-}
-
-//------------------------------------------------------------------------------
-// getTapeForWriting
-//------------------------------------------------------------------------------
-std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 } // namespace catalogue

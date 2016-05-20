@@ -643,6 +643,41 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createTape_same_twice) {
     comment), exception::Exception);
 }
 
+TEST_F(cta_catalogue_SqliteCatalogueTest, getTapesForWriting) {
+  using namespace cta;
+
+  catalogue::TestingSqliteCatalogue catalogue;
+
+  ASSERT_TRUE(catalogue.getTapes("", "", "", "", "", "", "", "").empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  catalogue.createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  catalogue.createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  catalogue.createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+
+  const std::list<catalogue::TapeForWriting> tapes = catalogue.getTapesForWriting(logicalLibraryName);
+
+  ASSERT_EQ(1, tapes.size());
+
+  const catalogue::TapeForWriting tape = tapes.front();
+  ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(0, tape.lastFSeq);
+  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(0, tape.dataOnTapeInBytes);
+  ASSERT_TRUE(tape.lbp);
+}
+
 TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {
   using namespace cta;
 
