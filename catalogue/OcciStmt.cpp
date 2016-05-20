@@ -168,7 +168,7 @@ const char *OcciStmt::getSql() const {
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void OcciStmt::bind(const char *paramName, const uint64_t paramValue) {
+void OcciStmt::bindUint64(const char *const paramName, const uint64_t paramValue) {
   try {
     const unsigned paramIdx = m_paramNameToIdx->getIdx(paramName);
     m_stmt->setUInt(paramIdx, paramValue);
@@ -200,6 +200,13 @@ DbRset *OcciStmt::executeQuery() {
   } catch(std::exception &ne) {
     throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ne.what());
   }
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void OcciStmt::executeNonQuery() {
+  throw std::runtime_error(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------

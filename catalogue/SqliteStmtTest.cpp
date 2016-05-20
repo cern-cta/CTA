@@ -47,7 +47,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, create_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     stmt->executeNonQuery();
   }
 }
@@ -64,7 +64,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, select_from_empty_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     stmt->executeNonQuery();
   }
 
@@ -76,8 +76,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, select_from_empty_table) {
         "COL2,"
         "COL3 "
       "FROM TEST;";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_FALSE(rset->next());
   }
 }
@@ -94,7 +94,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
      stmt->executeNonQuery();
   }
 
@@ -109,7 +109,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "'one',"
         "'two',"
         "3);";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     stmt->executeNonQuery();
   }
 
@@ -121,8 +121,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "COL2 AS COL2,"
         "COL3 AS COL3 "
       "FROM TEST;";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_TRUE(rset->next());
 
     std::string col1;
@@ -153,7 +153,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
      stmt->executeNonQuery();
   }
 
@@ -168,10 +168,10 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         ":COL1,"
         ":COL2,"
         ":COL3);";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     ASSERT_NO_THROW(stmt->bind(":COL1", "one"));
     ASSERT_NO_THROW(stmt->bind(":COL2", "two"));
-    ASSERT_NO_THROW(stmt->bind(":COL3", 3));
+    ASSERT_NO_THROW(stmt->bindUint64(":COL3", 3));
     stmt->executeNonQuery();
   }
 
@@ -183,8 +183,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         "COL2 AS COL2,"
         "COL3 AS COL3 "
       "FROM TEST;";
-    std::unique_ptr<SqliteStmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<SqliteRset> rset(stmt->executeQuery());
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_TRUE(rset->next());
 
     std::string col1;

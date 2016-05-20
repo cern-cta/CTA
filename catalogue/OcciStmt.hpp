@@ -60,13 +60,12 @@ public:
    * @param conn The database connection.
    * @param stmt The prepared statement.
    */
-  OcciStmt(const char *const sql, OcciConn &conn,
-    oracle::occi::Statement *const stmt);
+  OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt);
 
   /**
    * Destructor.
    */
-  ~OcciStmt() throw();
+  virtual ~OcciStmt() throw();
 
   /**
    * Prevent copying the object.
@@ -91,7 +90,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bind(const char *const paramName, const uint64_t paramValue);
+  virtual void bindUint64(const char *const paramName, const uint64_t paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -99,7 +98,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bind(const char*paramName, const char *paramValue);
+  virtual void bind(const char*paramName, const char *paramValue);
 
   /**
    *  Executes the statement and returns the result set.
@@ -107,7 +106,12 @@ public:
    *  @return The result set.  Please note that it is the responsibility of the
    *  caller to free the memory associated with the result set.
    */
-  DbRset *executeQuery();
+  virtual DbRset *executeQuery();
+
+  /**
+   * Executes the statement.
+   */
+  virtual void executeNonQuery();
 
   /**
    * Returns the underlying OCCI result set.

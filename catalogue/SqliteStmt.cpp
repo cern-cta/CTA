@@ -92,7 +92,7 @@ const char *SqliteStmt::getSql() const {
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void SqliteStmt::bind(const char *const paramName, const uint64_t paramValue) {
+void SqliteStmt::bindUint64(const char *const paramName, const uint64_t paramValue) {
   const int paramIdx = getParamIndex(paramName);
   const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64)paramValue);
   if(SQLITE_OK != bindRc) {
@@ -103,10 +103,9 @@ void SqliteStmt::bind(const char *const paramName, const uint64_t paramValue) {
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void SqliteStmt::bind(const char *const paramName, const std::string &paramValue) {
+void SqliteStmt::bind(const char *const paramName, const char *const paramValue) {
   const int paramIdx = getParamIndex(paramName);
-  const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1,
-    SQLITE_TRANSIENT);
+  const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue, -1, SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {
     throw std::runtime_error(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
   }
@@ -115,7 +114,7 @@ void SqliteStmt::bind(const char *const paramName, const std::string &paramValue
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-SqliteRset *SqliteStmt::executeQuery() {
+DbRset *SqliteStmt::executeQuery() {
   return new SqliteRset(*this);
 }
 

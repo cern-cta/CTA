@@ -129,7 +129,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_uint32_t) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT :N AS AN_UNSIGNED_INT FROM DUAL";
   std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
-  stmt->bind(":N", 1234);
+  stmt->bindUint64(":N", 1234);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   const uint32_t n = rset->columnUint64("AN_UNSIGNED_INT");

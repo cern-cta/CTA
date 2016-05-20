@@ -58,7 +58,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bind(const char *const paramName, const uint64_t paramValue) = 0;
+  virtual void bindUint64(const char *const paramName, const uint64_t paramValue) = 0;
 
   /** 
    * Binds an SQL parameter.
@@ -75,6 +75,11 @@ public:
    *  caller to free the memory associated with the result set.
    */
   virtual DbRset *executeQuery() = 0;
+
+  /**
+   * Executes the statement.
+   */
+  virtual void executeNonQuery() = 0;
 
 }; // class DbStmt
 

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/DbStmt.hpp"
+
 #include <map>
 #include <memory>
 #include <mutex>
@@ -33,7 +35,7 @@ class SqliteRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class SqliteStmt {
+class SqliteStmt: public DbStmt {
 public:
 
   /**
@@ -47,12 +49,12 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteStmt() throw();
+  virtual ~SqliteStmt() throw();
 
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  void close();
+  virtual void close();
 
   /**
    * Returns a pointer to the underlying prepared statement.
@@ -69,7 +71,7 @@ public:
    *
    * @return The SQL statement.
    */
-  const char *getSql() const;
+  virtual const char *getSql() const;
 
   /**
    * Binds an SQL parameter.
@@ -77,7 +79,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bind(const char *const paramName, const uint64_t paramValue);
+  virtual void bindUint64(const char *const paramName, const uint64_t paramValue);
 
   /** 
    * Binds an SQL parameter.
@@ -85,7 +87,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  void bind(const char *const paramName, const std::string &paramValue);
+  virtual void bind(const char *const paramName, const char *const paramValue);
 
   /**
    * Executes the statement and returns the result set.
@@ -93,7 +95,7 @@ public:
    * @return The result set.  Please note that it is the responsibility of the
    * caller to free the memory associated with the result set.
    */
-  SqliteRset *executeQuery();
+  virtual DbRset *executeQuery();
 
   /**
    * Executes the statement.
