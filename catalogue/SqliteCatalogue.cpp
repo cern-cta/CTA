@@ -2385,5 +2385,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
   }
 }
 
+//------------------------------------------------------------------------------
+// getTapeForWriting
+//------------------------------------------------------------------------------
+std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 } // namespace catalogue
 } // namespace cta

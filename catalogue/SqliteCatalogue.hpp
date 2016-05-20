@@ -330,6 +330,13 @@ protected:
   void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
     const TapeFileWritten &actual) const;
 
+  /**
+   * Returns the list of tapes that can be written to be a tape drive in the
+   * specified logical library.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   */
+  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const;
 }; // class SqliteCatalogue
 
 } // namespace catalogue

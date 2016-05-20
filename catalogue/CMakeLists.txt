@@ -37,7 +37,8 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteCatalogueSchema.cpp
   SqliteConn.cpp
   SqliteRset.cpp
-  SqliteStmt.cpp)
+  SqliteStmt.cpp
+  TapeForWriting.cpp)
 
 add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})

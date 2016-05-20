@@ -59,6 +59,7 @@
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "TapeFileWritten.hpp"
+#include "TapeForWriting.hpp"
 
 namespace cta {
 
@@ -228,6 +229,14 @@ public:
   virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const = 0;
 
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+
+  /**
+   * Returns the list of tapes that can be written to be a tape drive in the
+   * specified logical library.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   */
+  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
 }; // class Catalogue
 
