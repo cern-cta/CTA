@@ -47,12 +47,8 @@ struct SqliteCatalogueSchema {
 
   /**
    * The schema.
-   *
-   * Please note that this member variable is a C string as opposed to an
-   * std::sting so that this class can be used by code compiled against the
-   * CXX11 ABI and by code compiled against a pre-CXX11 ABI.
    */
-  const char *sql;
+  const std::string sql;
 };
 
 } // namespace catalogue

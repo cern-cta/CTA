@@ -107,18 +107,18 @@ void SqliteCatalogue::createAdminUser(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":ADMIN_USER_NAME", user.name.c_str());
+    stmt->bind(":ADMIN_USER_NAME", user.name);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -187,8 +187,8 @@ std::list<common::dataStructures::AdminUser>
     }
 
     return admins;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -239,18 +239,18 @@ void SqliteCatalogue::createAdminHost(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":ADMIN_HOST_NAME", hostName.c_str());
+    stmt->bind(":ADMIN_HOST_NAME", hostName);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -317,8 +317,8 @@ std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() co
     }
 
     return hosts;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -372,19 +372,19 @@ void SqliteCatalogue::createStorageClass(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":STORAGE_CLASS_NAME", name.c_str());
+    stmt->bind(":STORAGE_CLASS_NAME", name);
     stmt->bindUint64(":NB_COPIES", nbCopies);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -454,8 +454,8 @@ std::list<common::dataStructures::StorageClass>
     }
 
     return storageClasses;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -519,20 +519,20 @@ void SqliteCatalogue::createTapePool(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":TAPE_POOL_NAME", name.c_str());
+    stmt->bind(":TAPE_POOL_NAME", name);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt->bindUint64(":IS_ENCRYPTED", encryptionValue);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -605,8 +605,8 @@ std::list<common::dataStructures::TapePool>
     }
 
     return pools;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -677,20 +677,20 @@ void SqliteCatalogue::createArchiveRoute(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":STORAGE_CLASS_NAME", storageClassName.c_str());
+    stmt->bind(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
-    stmt->bind(":TAPE_POOL_NAME", tapePoolName.c_str());
+    stmt->bind(":TAPE_POOL_NAME", tapePoolName);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -763,8 +763,8 @@ std::list<common::dataStructures::ArchiveRoute>
     }
 
     return routes;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -822,13 +822,13 @@ void SqliteCatalogue::createLogicalLibrary(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":LOGICAL_LIBRARY_NAME", name.c_str());
+    stmt->bind(":LOGICAL_LIBRARY_NAME", name);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -902,8 +902,8 @@ std::list<common::dataStructures::LogicalLibrary>
     }
 
     return libs;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -996,10 +996,10 @@ void SqliteCatalogue::createTape(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":VID", vid.c_str());
-    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName.c_str());
-    stmt->bind(":TAPE_POOL_NAME", tapePoolName.c_str());
-    stmt->bind(":ENCRYPTION_KEY", encryptionKey.c_str());
+    stmt->bind(":VID", vid);
+    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    stmt->bind(":TAPE_POOL_NAME", tapePoolName);
+    stmt->bind(":ENCRYPTION_KEY", encryptionKey);
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
@@ -1016,16 +1016,16 @@ void SqliteCatalogue::createTape(
     stmt->bind(":LAST_WRITE_DRIVE", "");
     stmt->bindUint64(":LAST_WRITE_TIME", 0);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1139,8 +1139,8 @@ std::list<common::dataStructures::Tape>
     }
 
     return tapes;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1278,19 +1278,19 @@ void SqliteCatalogue::createRequester(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":REQUESTER_NAME", user.name.c_str());
-    stmt->bind(":MOUNT_POLICY_NAME", mountPolicy.c_str());
+    stmt->bind(":REQUESTER_NAME", user.name);
+    stmt->bind(":MOUNT_POLICY_NAME", mountPolicy);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1362,8 +1362,8 @@ std::list<common::dataStructures::Requester>
     }
 
     return users;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1442,7 +1442,7 @@ void SqliteCatalogue::createMountPolicy(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":MOUNT_POLICY_NAME", name.c_str());
+    stmt->bind(":MOUNT_POLICY_NAME", name);
 
     stmt->bindUint64(":ARCHIVE_PRIORITY", archivePriority);
     stmt->bindUint64(":ARCHIVE_MIN_REQUEST_AGE", minArchiveRequestAge);
@@ -1452,16 +1452,16 @@ void SqliteCatalogue::createMountPolicy(
 
     stmt->bindUint64(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
 
-    stmt->bind(":USER_COMMENT", comment.c_str());
+    stmt->bind(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name.c_str());
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group.c_str());
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host.c_str());
+    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1550,8 +1550,8 @@ std::list<common::dataStructures::MountPolicy>
     }
 
     return policies;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1727,22 +1727,22 @@ void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
-    stmt->bind(":DISK_INSTANCE", row.diskInstance.c_str());
-    stmt->bind(":DISK_FILE_ID", row.diskFileId.c_str());
-    stmt->bind(":DISK_FILE_PATH", row.diskFilePath.c_str());
-    stmt->bind(":DISK_FILE_USER", row.diskFileUser.c_str());
-    stmt->bind(":DISK_FILE_GROUP", row.diskFileGroup.c_str());
-    stmt->bind(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob.c_str());
+    stmt->bind(":DISK_INSTANCE", row.diskInstance);
+    stmt->bind(":DISK_FILE_ID", row.diskFileId);
+    stmt->bind(":DISK_FILE_PATH", row.diskFilePath);
+    stmt->bind(":DISK_FILE_USER", row.diskFileUser);
+    stmt->bind(":DISK_FILE_GROUP", row.diskFileGroup);
+    stmt->bind(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
     stmt->bindUint64(":FILE_SIZE", row.size);
     stmt->bind(":CHECKSUM_TYPE", "HELP");
     stmt->bind(":CHECKSUM_VALUE", "HELP");
-    stmt->bind(":STORAGE_CLASS_NAME", row.storageClassName.c_str());
+    stmt->bind(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt->bindUint64(":CREATION_TIME", now);
     stmt->bindUint64(":RECONCILIATION_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1758,18 +1758,18 @@ uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, cons
         "DISK_INSTANCE = :DISK_INSTANCE AND "
         "DISK_FILE_ID = :DISK_FILE_ID;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":DISK_INSTANCE", diskInstance.c_str());
-    stmt->bind(":DISK_FILE_ID", diskFileId.c_str());
+    stmt->bind(":DISK_INSTANCE", diskInstance);
+    stmt->bind(":DISK_FILE_ID", diskFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
 
     if (rset->next()) {
       return rset->columnUint64("ARCHIVE_FILE_ID");
     } else {
-      throw std::runtime_error(std::string("Could not find archive file with disk instance ") + diskInstance +
+      throw exception::Exception(std::string("Could not find archive file with disk instance ") + diskInstance +
         "and disk file ID " + diskFileId);
     }
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + "failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + "failed: " + ex.getMessage().str());
   }
 }
 
@@ -1859,8 +1859,8 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
     }
 
     return archiveFiles;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1932,9 +1932,9 @@ void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     createTapeFile(tapeFile, event.archiveFileId);
-  } catch(exception::Exception &ne) {
+  } catch(exception::Exception &ex) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: " << ne.getMessage().str();
+    ex.getMessage() << __FUNCTION__ << " failed: " << ex.getMessage().str();
     throw ex;
   }
 }
@@ -2044,7 +2044,7 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":STORAGE_CLASS_NAME", storageClass.c_str());
+    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       const uint64_t copyNb = rset->columnUint64("COPY_NB");
@@ -2053,8 +2053,8 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
     }
 
     return copyToPoolMap;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -2070,14 +2070,14 @@ uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageC
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":STORAGE_CLASS_NAME", storageClass.c_str());
+    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       nbRoutes = rset->columnUint64("NB_ROUTES");
     }
     return nbRoutes;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -2113,7 +2113,7 @@ common::dataStructures::MountPolicy SqliteCatalogue::
     "WHERE "
       "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":REQUESTER_NAME", user.name.c_str());
+  stmt->bind(":REQUESTER_NAME", user.name);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
     common::dataStructures::MountPolicy policy;
@@ -2178,7 +2178,7 @@ bool SqliteCatalogue::userIsAdmin(const std::string &userName) const {
     "FROM ADMIN_USER WHERE "
       "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ADMIN_USER_NAME", userName.c_str());
+  stmt->bind(":ADMIN_USER_NAME", userName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
 }
@@ -2193,7 +2193,7 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
     "FROM ADMIN_HOST WHERE "
       "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ADMIN_HOST_NAME", hostName.c_str());
+  stmt->bind(":ADMIN_HOST_NAME", hostName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
 }
@@ -2216,7 +2216,7 @@ std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string 
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName.c_str());
+    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       TapeForWriting tape;
@@ -2231,8 +2231,8 @@ std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string 
     }
 
     return tapes;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -2260,7 +2260,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
       ":ARCHIVE_FILE_ID);";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":VID", tapeFile.vid.c_str());
+  stmt->bind(":VID", tapeFile.vid);
   stmt->bindUint64(":FSEQ", tapeFile.fSeq);
   stmt->bindUint64(":BLOCK_ID", tapeFile.blockId);
   stmt->bindUint64(":COMPRESSED_SIZE", tapeFile.compressedSize);
@@ -2322,7 +2322,7 @@ void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t las
     "WHERE "
       "VID=:VID;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":VID", vid.c_str());
+  stmt->bind(":VID", vid);
   stmt->bindUint64(":LAST_FSEQ", lastFSeq);
   stmt->executeNonQuery();
 }
@@ -2337,7 +2337,7 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
     "FROM TAPE WHERE "
       "VID = :VID;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":VID", vid.c_str());
+  stmt->bind(":VID", vid);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
     return rset->columnUint64("LAST_FSEQ");
@@ -2418,8 +2418,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchive
     }
 
     return archiveFile;
-  } catch(std::exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

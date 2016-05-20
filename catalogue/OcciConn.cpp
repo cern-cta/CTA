@@ -16,12 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
-#define _GLIBCXX_USE_CXX11_ABI 0
-
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnv.hpp"
 #include "catalogue/OcciStmt.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -36,7 +34,7 @@ OcciConn::OcciConn(OcciEnv &env, oracle::occi::Connection *const conn):
   m_env(env),
   m_conn(conn) {
   if(NULL == conn) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed"
+    throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a NULL pointer");
   }
 }
@@ -81,19 +79,19 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-DbStmt *OcciConn::createStmt(const char *const sql) {
+DbStmt *OcciConn::createStmt(const std::string &sql) {
   try {
-    if(NULL == sql) throw std::runtime_error("sql is NULL");
-
     oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
     if (NULL == stmt) {
-      throw std::runtime_error(std::string(__FUNCTION__) + " failed"
-        ": oracle::occi::createStatement() returned a NULL pointer");
+      throw exception::Exception("oracle::occi::createStatement() returned a NULL pointer");
     }
 
     return new OcciStmt(sql, *this, stmt);
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + "failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + se.what());
   }
 }
 

@@ -19,6 +19,7 @@
 #include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteRset.hpp"
 #include "catalogue/SqliteStmt.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <cstring>
 #include <sstream>
@@ -30,12 +31,8 @@ namespace catalogue {
 
 /**
  * A map from column name to column index and type.
- *
- * Please note that this class is intentionally hidden within this cpp file to
- * enable the SqliteRset class to be used by code compiled against the CXX11 ABI
- * and by code compiled against a pre-CXX11 ABI.
  */
-class SqliteRset::ColNameToIdxAndType {
+class ColNameToIdxAndType {
 public:
 
   /**
@@ -74,7 +71,7 @@ public:
    */
   void add(const std::string &name, const IdxAndType &idxAndType) {
     if(m_nameToIdxAndType.end() != m_nameToIdxAndType.find(name)) {
-      throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + name + " is a duplicate");
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + name + " is a duplicate");
     }
     m_nameToIdxAndType[name] = idxAndType;
   }
@@ -91,7 +88,7 @@ public:
   IdxAndType getIdxAndType(const std::string &name) const {
     auto it = m_nameToIdxAndType.find(name);
     if(m_nameToIdxAndType.end() == it) {
-      throw std::runtime_error(std::string(__FUNCTION__) + " failed: Unknown column name " + name);
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: Unknown column name " + name);
     }
     return it->second;
   }
@@ -129,20 +126,18 @@ private:
 SqliteRset::SqliteRset(SqliteStmt &stmt):
   m_stmt(stmt),
   m_nextHasNotBeenCalled(true) {
-  m_columnNameToIdxAndType.reset(new ColNameToIdxAndType());
 }
 
 //------------------------------------------------------------------------------
 // destructor.
 //------------------------------------------------------------------------------
 SqliteRset::~SqliteRset() throw() {
-  //m_columnNameToIdxAndType.release();
 }
 
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const char *SqliteRset::getSql() const {
+const std::string &SqliteRset::getSql() const {
   return m_stmt.getSql();
 }
 
@@ -155,7 +150,7 @@ bool SqliteRset::next() {
 
     // Throw an exception if the call to sqlite3_step() failed
     if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
-      throw std::runtime_error(Sqlite::rcToStr(stepRc));
+      throw exception::Exception(Sqlite::rcToStr(stepRc));
     }
 
     if(m_nextHasNotBeenCalled) {
@@ -167,9 +162,9 @@ bool SqliteRset::next() {
     }
 
     return SQLITE_ROW == stepRc;
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
-      ": " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() +
+      ": " + ex.getMessage().str());
   }
 }
 
@@ -185,35 +180,35 @@ void SqliteRset::populateColNameToIdxAndTypeMap() {
       if (NULL == colName) {
         std::ostringstream msg;
         msg << "Failed to get column name for column index " << i;
-        throw std::runtime_error(msg.str());
+        throw exception::Exception(msg.str());
       }
 
       // Get the type of the column
-      ColNameToIdxAndType::IdxAndType idxAndType;
+      ColumnNameToIdxAndType::IdxAndType idxAndType;
       idxAndType.colIdx = i;
       idxAndType.colType = sqlite3_column_type(m_stmt.get(), i);
 
       // Add the mapping from column name to index and type
-      m_columnNameToIdxAndType->add(colName, idxAndType);
+      m_colNameToIdxAndType.add(colName, idxAndType);
     }
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool SqliteRset::columnIsNull(const char *const colName) const {
-  const ColNameToIdxAndType::IdxAndType idxAndType = (*m_columnNameToIdxAndType)[colName];
+bool SqliteRset::columnIsNull(const std::string &colName) const {
+  const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
   return SQLITE_NULL == idxAndType.colType;
 }
 
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-const char *SqliteRset::columnText(const char *const colName) const {
-  const ColNameToIdxAndType::IdxAndType idxAndType = (*m_columnNameToIdxAndType)[colName];
+std::string SqliteRset::columnText(const std::string &colName) const {
+  const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
   if(SQLITE_NULL == idxAndType.colType) {
     return "";
   } else {
@@ -224,8 +219,8 @@ const char *SqliteRset::columnText(const char *const colName) const {
 //------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
-uint64_t SqliteRset::columnUint64(const char *const colName) const {
-  const ColNameToIdxAndType::IdxAndType idxAndType = (*m_columnNameToIdxAndType)[colName];
+uint64_t SqliteRset::columnUint64(const std::string &colName) const {
+  const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
   return (uint64_t)sqlite3_column_int64(m_stmt.get(), idxAndType.colIdx);
 }
 

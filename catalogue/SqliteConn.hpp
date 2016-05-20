@@ -43,7 +43,7 @@ public:
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
    */
-  SqliteConn(const char *const filename);
+  SqliteConn(const std::string &filename);
 
   /**
    * Destructor.
@@ -72,7 +72,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  void execNonQuery(const char *const sql);
+  void execNonQuery(const std::string &sql);
 
   /**
    * Creates a prepared statement.
@@ -80,7 +80,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  DbStmt *createStmt(const char *const sql);
+  DbStmt *createStmt(const std::string &sql);
 
 private:
 

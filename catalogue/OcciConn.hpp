@@ -40,10 +40,6 @@ class OcciStmt;
 
 /**
  * A convenience wrapper around a connection to an OCCI database.
- *
- * Please note that this wrapper does not expose any data types that are
- * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
- * does not expose the std::string data type.
  */
 class OcciConn: public DbConn {
 public:
@@ -88,12 +84,10 @@ public:
   /**
    * Creates a prepared statement.
    *
-   * This method will throw an exception if the sql parameter is a NULL pointer.
-   *
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  DbStmt *createStmt(const char *const sql);
+  DbStmt *createStmt(const std::string &sql);
 
 private:
 

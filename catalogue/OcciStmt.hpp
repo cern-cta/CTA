@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/DbStmt.hpp"
+#include "catalogue/ParamNameToIdx.hpp"
 
 #include <memory>
 #include <mutex>
@@ -42,10 +43,6 @@ class OcciRset;
 
 /**
  * A convenience wrapper around an OCCI prepared statement.
- *
- * Please note that this wrapper does not expose any data types that are
- * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
- * does not expose the std::string data type.
  */
 class OcciStmt: public DbStmt {
 public:
@@ -53,14 +50,11 @@ public:
   /**
    * Constructor.
    *
-   * This constructor will throw an exception if either the sql or stmt
-   * parameters are NULL.
-   *
    * @param sql The SQL statement.
    * @param conn The database connection.
    * @param stmt The prepared statement.
    */
-  OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt);
+  OcciStmt(const std::string &sql, OcciConn &conn, oracle::occi::Statement *const stmt);
 
   /**
    * Destructor.
@@ -82,7 +76,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const char *getSql() const;
+  virtual const std::string &getSql() const;
 
   /**
    * Binds an SQL parameter.
@@ -90,7 +84,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const char *const paramName, const uint64_t paramValue);
+  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -98,7 +92,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bind(const char*paramName, const char *paramValue);
+  virtual void bind(const std::string &paramName, const std::string &paramValue);
 
   /**
    *  Executes the statement and returns the result set.
@@ -136,29 +130,13 @@ private:
 
   /**
    * The SQL statement.
-   *
-   * Please note that a C string is used instead of std::string so that this
-   * class can be used by code compiled against the CXX11 ABI and by code
-   * compiled against the pre-CXX11 ABI.
    */
-  std::unique_ptr<char[]> m_sql;
-
-  /**
-   * Forward declaration of the nested class ParamNameToIdx that is intentionally
-   * hidden in the cpp file of the OcciStmt class.  The class is hidden in
-   * order to enable the OcciStmt class to be used by code compiled against
-   * the CXX11 ABI and used by code compiled against the pre-CXX11 ABI.
-   */
-  class ParamNameToIdx;
+  std::string m_sql;
 
   /**
    * Map from SQL parameter name to parameter index.
-   *
-   * Please note that the type of the map is intentionally forward declared in
-   * order to avoid std::string being used.  This is to aid with working with
-   * pre and post CXX11 ABIs.
    */
-  std::unique_ptr<ParamNameToIdx> m_paramNameToIdx;
+  ParamNameToIdx m_paramNameToIdx;
 
   /**
    * The database connection.

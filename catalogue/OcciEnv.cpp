@@ -16,12 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
-#define _GLIBCXX_USE_CXX11_ABI 0
-
 #include "catalogue/DbLogin.hpp"
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnv.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <stdexcept>
 
@@ -35,7 +33,7 @@ OcciEnv::OcciEnv() {
   using namespace oracle::occi;
   m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
   if(NULL == m_env) {
-    throw std::runtime_error(std::string(__FUNCTION__) + "failed"
+    throw exception::Exception(std::string(__FUNCTION__) + "failed"
       ": oracle::occi::createEnvironment() returned a NULL pointer");
   }
 }
@@ -67,22 +65,20 @@ oracle::occi::Environment *OcciEnv::operator->() const {
 // createConn
 //------------------------------------------------------------------------------
 OcciConn *OcciEnv::createConn(
-  const char *const username,
-  const char *const password,
-  const char *const database) {
+  const std::string &username,
+  const std::string &password,
+  const std::string &database) {
   try {
-    if(NULL == username) throw std::runtime_error("username is NULL");
-    if(NULL == password) throw std::runtime_error("password is NULL");
-    if(NULL == database) throw std::runtime_error("database is NULL");
-
     oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
     if (NULL == conn) {
-      throw std::runtime_error("oracle::occi::createConnection() returned a NULL pointer");
+      throw exception::Exception("oracle::occi::createConnection() returned a NULL pointer");
     }
 
     return new OcciConn(*this, conn);
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed:" + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
 

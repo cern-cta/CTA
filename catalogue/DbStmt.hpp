@@ -21,16 +21,13 @@
 #include "catalogue/DbRset.hpp"
 
 #include <stdint.h>
+#include <string>
 
 namespace cta {
 namespace catalogue {
 
 /**
  * Abstract class specifying the interface to a database statement.
- *
- * Please note that this interface intentionally uses C-strings instead of
- * std::string so that it can be used by code compiled against the CXX11 ABI and
- * by code compiled against a pre-CXX11 ABI.
  */
 class DbStmt {
 public:
@@ -50,7 +47,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const char *getSql() const = 0;
+  virtual const std::string &getSql() const = 0;
 
   /**
    * Binds an SQL parameter.
@@ -58,7 +55,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const char *const paramName, const uint64_t paramValue) = 0;
+  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) = 0;
 
   /** 
    * Binds an SQL parameter.
@@ -66,7 +63,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bind(const char*paramName, const char *paramValue) = 0;
+  virtual void bind(const std::string &paramName, const std::string &paramValue) = 0;
 
   /**
    *  Executes the statement and returns the result set.

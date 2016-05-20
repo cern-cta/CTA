@@ -16,12 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Version 12.1 of oracle instant client uses the pre _GLIBCXX_USE_CXX11_ABI
-#define _GLIBCXX_USE_CXX11_ABI 0
-
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <cstring>
 #include <iostream>
@@ -32,107 +30,18 @@
 namespace cta {
 namespace catalogue {
 
-class OcciStmt::ParamNameToIdx {
-public:
-  /**
-   * Constructor.
-   *
-   * Parses the specified SQL statement to populate an internal map from SQL
-   * parameter name to parameter index.
-   *
-   * @param sql The SQL statement to be parsed for SQL parameter names.
-   */
-  ParamNameToIdx(const char *const sql) {
-    bool waitingForAParam = true;
-    std::ostringstream paramName;
-    unsigned int paramIdx = 1;
-
-    for(const char *ptr = sql; ; ptr++) {
-      if(waitingForAParam) {
-        if('\0' == *ptr) {
-          break;
-        } else if(':' == *ptr) {
-          waitingForAParam = false;
-          paramName << ":";
-        }
-      } else {
-        if(!isValidParamNameChar(*ptr)) {
-          if(paramName.str().empty()) {
-            throw std::runtime_error("Parse error: Empty SQL parameter name");
-          }
-          if(m_nameToIdx.find(paramName.str()) != m_nameToIdx.end()) {
-            throw std::runtime_error("Parse error: SQL parameter " + paramName.str() + " is a duplicate");
-          }
-          m_nameToIdx[paramName.str()] = paramIdx;
-          paramName.clear();
-          paramIdx++;
-          waitingForAParam = true;
-        }
-
-        if('\0' == *ptr) {
-          break;
-        }
-
-        if(':' == *ptr) {
-          throw std::runtime_error("Parse error: Consecutive SQL parameter names are not permitted");
-        } else {
-          paramName << *ptr;
-        }
-      }
-    }
-  }
-
-  /**
-   * Returns the index of teh specified SQL parameter.
-   *
-   * @param paramNAme The name of the SQL parameter.
-   * @return The index of the SQL parameter.
-   */
-  unsigned int getIdx(const char *const paramName) const {
-    auto itor = m_nameToIdx.find(paramName);
-    if(itor == m_nameToIdx.end()) {
-      throw std::runtime_error(std::string(__FUNCTION__) + " failed: The SQL parameter " + paramName +
-        " does not exist");
-    }
-    return itor->second;
-  }
-
-private:
-
-  /**
-   * Map from SQL parameter name to parameter index.
-   */
-  std::map<std::string, unsigned int> m_nameToIdx;
-
-  bool isValidParamNameChar(const char c) {
-    return ('0' <= c && c <= '9') ||
-           ('A' <= c && c <= 'Z') ||
-           ('a' <= c && c <= 'z') ||
-           c == '_';
-  }
-};
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciStmt::OcciStmt(const char *const sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
+OcciStmt::OcciStmt(const std::string &sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
+  m_sql(sql),
+  m_paramNameToIdx(sql),
   m_conn(conn),
   m_stmt(stmt) {
-  if(NULL == sql) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: sql is NULL");
-  }
   if(NULL == stmt) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
       ": stmt is NULL");
   }
-
-  // Work with C strings because they haven't changed with respect to _GLIBCXX_USE_CXX11_ABI
-  const std::size_t sqlLen = std::strlen(sql);
-  m_sql.reset(new char[sqlLen + 1]);
-  std::memcpy(m_sql.get(), sql, sqlLen);
-  m_sql[sqlLen] = '\0';
-
-  m_paramNameToIdx.reset(new ParamNameToIdx(sql));
 }
 
 //------------------------------------------------------------------------------
@@ -161,31 +70,37 @@ void OcciStmt::close() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const char *OcciStmt::getSql() const {
-  return m_sql.get();
+const std::string &OcciStmt::getSql() const {
+  return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint64(const char *const paramName, const uint64_t paramValue) {
+void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
-    const unsigned paramIdx = m_paramNameToIdx->getIdx(paramName);
+    const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
     m_stmt->setUInt(paramIdx, paramValue);
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void OcciStmt::bind(const char *paramName, const char *paramValue) {
+void OcciStmt::bind(const std::string &paramName, const std::string &paramValue) {
   try {
-    const unsigned paramIdx = m_paramNameToIdx->getIdx(paramName);
+    const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
     m_stmt->setString(paramIdx, paramValue);
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed: " + ne.what());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
   }
 }
 
@@ -197,8 +112,9 @@ DbRset *OcciStmt::executeQuery() {
 
   try {
     return new OcciRset(*this, m_stmt->executeQuery());
-  } catch(std::exception &ne) {
-    throw std::runtime_error(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ne.what());
+  } catch(exception::Exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ne.getMessage().str());
   }
 }
 
@@ -206,7 +122,7 @@ DbRset *OcciStmt::executeQuery() {
 // executeNonQuery
 //------------------------------------------------------------------------------
 void OcciStmt::executeNonQuery() {
-  throw std::runtime_error(std::string(__FUNCTION__) + " not implemented");
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------

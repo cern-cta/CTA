@@ -25,10 +25,6 @@ namespace catalogue {
 
 /**
  * Abstract class that specifies the interface to a database connection.
- *
- * Please note that this interface intentionally uses C-strings instead of
- * std::string so that it can be used by code compiled against the CXX11 ABI and
- * by code compiled against a pre-CXX11 ABI.
  */
 class DbConn {
 public:
@@ -46,12 +42,10 @@ public:
   /**
    * Creates a prepared statement.
    *
-   * This method will throw an exception if the sql parameter is a NULL pointer.
-   *
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual DbStmt *createStmt(const char *const sql) = 0;
+  virtual DbStmt *createStmt(const std::string &sql) = 0;
 
 }; // class DbConn
 

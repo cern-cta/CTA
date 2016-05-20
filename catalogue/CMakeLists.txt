@@ -23,6 +23,8 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   Catalogue.cpp
+  ColumnNameToIdx.cpp
+  ColumnNameToIdxAndType.cpp
   DbConn.cpp
   DbLogin.cpp
   DbRset.cpp
@@ -32,6 +34,7 @@ set (CATALOGUE_LIB_SRC_FILES
   OcciEnv.cpp
   OcciRset.cpp
   OcciStmt.cpp
+  ParamNameToIdx.cpp
   Sqlite.cpp
   SqliteCatalogue.cpp
   SqliteCatalogueSchema.cpp

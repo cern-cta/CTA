@@ -27,10 +27,6 @@ class OcciConn;
 
 /**
  * A convenience wrapper around an OCCI environment.
- *
- * Please note that this wrapper does not expose any data types that are
- * different with respect to _GLIBCXX_USE_CXX11_ABI.  For example this wrapper
- * does not expose the std::string data type.
  */
 class OcciEnv {
 public:
@@ -75,9 +71,9 @@ public:
    * @return The newly created OCCI connection.
    */
   OcciConn *createConn(
-    const char *const username,
-    const char *const password,
-    const char *const database);
+    const std::string &username,
+    const std::string &password,
+    const std::string &database);
 
 private:
 

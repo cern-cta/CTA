@@ -113,7 +113,7 @@ DbLogin DbLogin::readFromFile(const std::string &filename) {
   if(1 != lines.size()) {
     std::ostringstream msg;
     msg << filename << " should contain one and only one connection string";
-    throw std::runtime_error(msg.str());
+    throw exception::Exception(msg.str());
   }
 
   const std::string connectionString = lines.front();
@@ -121,14 +121,14 @@ DbLogin DbLogin::readFromFile(const std::string &filename) {
   std::vector<std::string> userPassAndDb;
   utils::splitString(connectionString, '@', userPassAndDb);
   if(2 != userPassAndDb.size()) {
-    throw std::runtime_error(std::string("Invalid connection string"
+    throw exception::Exception(std::string("Invalid connection string"
       ": Correct format is ") + fileFormat);
   }
 
   std::vector<std::string> userAndPass;
   utils::splitString(userPassAndDb[0], '/', userAndPass);
   if(2 != userAndPass.size()) {
-    throw std::runtime_error(std::string("Invalid connection string"
+    throw exception::Exception(std::string("Invalid connection string"
       ": Correct format is ") + fileFormat);
   }
 

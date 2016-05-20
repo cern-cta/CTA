@@ -44,7 +44,7 @@ public:
    * @param sql The SQL statement.
    * @param stmt The prepared statement.
    */
-  SqliteStmt(const char *const sql, sqlite3_stmt *const stmt);
+  SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt);
 
   /**
    * Destructor.
@@ -71,7 +71,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const char *getSql() const;
+  virtual const std::string &getSql() const;
 
   /**
    * Binds an SQL parameter.
@@ -79,7 +79,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const char *const paramName, const uint64_t paramValue);
+  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue);
 
   /** 
    * Binds an SQL parameter.
@@ -87,7 +87,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bind(const char *const paramName, const char *const paramValue);
+  virtual void bind(const std::string &paramName, const std::string &paramValue);
 
   /**
    * Executes the statement and returns the result set.
@@ -111,12 +111,8 @@ private:
 
   /**
    * The SQL statement.
-   *
-   * A C string is used instead of an std::string so that this class can be used
-   * by code compiled against the CXX11 ABI and code compiled against a
-   * pre-CXX11 ABI.
    */
-  std::unique_ptr<char[]> m_sql;
+  std::string m_sql;
 
   /**
    * The prepared statement.
@@ -131,7 +127,7 @@ private:
    * @param paramName The name of the SQL parameter.
    * @return The index of the SQL parameter.
    */
-  int getParamIndex(const char *const paramName) const;
+  int getParamIndex(const std::string &paramName) const;
 
 }; // class SqlLiteStmt
 
