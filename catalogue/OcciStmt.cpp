@@ -92,7 +92,7 @@ void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValu
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void OcciStmt::bind(const std::string &paramName, const std::string &paramValue) {
+void OcciStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   try {
     const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
     m_stmt->setString(paramIdx, paramValue);

@@ -96,7 +96,7 @@ void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramVa
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void SqliteStmt::bind(const std::string &paramName, const std::string &paramValue) {
+void SqliteStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   const int paramIdx = getParamIndex(paramName);
   const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1, SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {

@@ -169,8 +169,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
-    ASSERT_NO_THROW(stmt->bind(":COL1", "one"));
-    ASSERT_NO_THROW(stmt->bind(":COL2", "two"));
+    ASSERT_NO_THROW(stmt->bindString(":COL1", "one"));
+    ASSERT_NO_THROW(stmt->bindString(":COL2", "two"));
     ASSERT_NO_THROW(stmt->bindUint64(":COL3", 3));
     stmt->executeNonQuery();
   }

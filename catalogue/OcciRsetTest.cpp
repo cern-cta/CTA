@@ -109,7 +109,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
     dbLogin.database.c_str()));
   const char *const sql = "SELECT DUMMY FROM DUAL WHERE DUMMY = :DUMMY";
   std::unique_ptr<DbStmt> stmt(conn->createStmt(sql));
-  stmt->bind(":DUMMY", "X");
+  stmt->bindString(":DUMMY", "X");
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   ASSERT_TRUE(rset->next());
   std::string text(rset->columnText("DUMMY"));

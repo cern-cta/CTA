@@ -87,7 +87,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bind(const std::string &paramName, const std::string &paramValue);
+  virtual void bindString(const std::string &paramName, const std::string &paramValue);
 
   /**
    * Executes the statement and returns the result set.

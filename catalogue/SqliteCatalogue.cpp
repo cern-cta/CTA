@@ -107,13 +107,13 @@ void SqliteCatalogue::createAdminUser(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":ADMIN_USER_NAME", user.name);
+    stmt->bindString(":ADMIN_USER_NAME", user.name);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -239,13 +239,13 @@ void SqliteCatalogue::createAdminHost(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":ADMIN_HOST_NAME", hostName);
+    stmt->bindString(":ADMIN_HOST_NAME", hostName);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -372,14 +372,14 @@ void SqliteCatalogue::createStorageClass(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":STORAGE_CLASS_NAME", name);
+    stmt->bindString(":STORAGE_CLASS_NAME", name);
     stmt->bindUint64(":NB_COPIES", nbCopies);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -519,15 +519,15 @@ void SqliteCatalogue::createTapePool(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":TAPE_POOL_NAME", name);
+    stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt->bindUint64(":IS_ENCRYPTED", encryptionValue);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -677,15 +677,15 @@ void SqliteCatalogue::createArchiveRoute(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":STORAGE_CLASS_NAME", storageClassName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
-    stmt->bind(":TAPE_POOL_NAME", tapePoolName);
+    stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -822,13 +822,13 @@ void SqliteCatalogue::createLogicalLibrary(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":LOGICAL_LIBRARY_NAME", name);
+    stmt->bindString(":LOGICAL_LIBRARY_NAME", name);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -996,10 +996,10 @@ void SqliteCatalogue::createTape(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":VID", vid);
-    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    stmt->bind(":TAPE_POOL_NAME", tapePoolName);
-    stmt->bind(":ENCRYPTION_KEY", encryptionKey);
+    stmt->bindString(":VID", vid);
+    stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
+    stmt->bindString(":ENCRYPTION_KEY", encryptionKey);
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
@@ -1007,20 +1007,20 @@ void SqliteCatalogue::createTape(
     stmt->bindUint64(":IS_FULL", fullValue);
     stmt->bindUint64(":LBP_IS_ON", 0);
 
-    stmt->bind(":LABEL_DRIVE", "");
+    stmt->bindString(":LABEL_DRIVE", "");
     stmt->bindUint64(":LABEL_TIME", 0);
 
-    stmt->bind(":LAST_READ_DRIVE", "");
+    stmt->bindString(":LAST_READ_DRIVE", "");
     stmt->bindUint64(":LAST_READ_TIME", 0);
 
-    stmt->bind(":LAST_WRITE_DRIVE", "");
+    stmt->bindString(":LAST_WRITE_DRIVE", "");
     stmt->bindUint64(":LAST_WRITE_TIME", 0);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -1278,14 +1278,14 @@ void SqliteCatalogue::createRequester(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":REQUESTER_NAME", user.name);
-    stmt->bind(":MOUNT_POLICY_NAME", mountPolicy);
+    stmt->bindString(":REQUESTER_NAME", user.name);
+    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -1442,7 +1442,7 @@ void SqliteCatalogue::createMountPolicy(
         ":CREATION_LOG_TIME);";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-    stmt->bind(":MOUNT_POLICY_NAME", name);
+    stmt->bindString(":MOUNT_POLICY_NAME", name);
 
     stmt->bindUint64(":ARCHIVE_PRIORITY", archivePriority);
     stmt->bindUint64(":ARCHIVE_MIN_REQUEST_AGE", minArchiveRequestAge);
@@ -1452,11 +1452,11 @@ void SqliteCatalogue::createMountPolicy(
 
     stmt->bindUint64(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
 
-    stmt->bind(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bind(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bind(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
-    stmt->bind(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->executeNonQuery();
@@ -1727,16 +1727,16 @@ void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
-    stmt->bind(":DISK_INSTANCE", row.diskInstance);
-    stmt->bind(":DISK_FILE_ID", row.diskFileId);
-    stmt->bind(":DISK_FILE_PATH", row.diskFilePath);
-    stmt->bind(":DISK_FILE_USER", row.diskFileUser);
-    stmt->bind(":DISK_FILE_GROUP", row.diskFileGroup);
-    stmt->bind(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
+    stmt->bindString(":DISK_INSTANCE", row.diskInstance);
+    stmt->bindString(":DISK_FILE_ID", row.diskFileId);
+    stmt->bindString(":DISK_FILE_PATH", row.diskFilePath);
+    stmt->bindString(":DISK_FILE_USER", row.diskFileUser);
+    stmt->bindString(":DISK_FILE_GROUP", row.diskFileGroup);
+    stmt->bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
     stmt->bindUint64(":FILE_SIZE", row.size);
-    stmt->bind(":CHECKSUM_TYPE", "HELP");
-    stmt->bind(":CHECKSUM_VALUE", "HELP");
-    stmt->bind(":STORAGE_CLASS_NAME", row.storageClassName);
+    stmt->bindString(":CHECKSUM_TYPE", "HELP");
+    stmt->bindString(":CHECKSUM_VALUE", "HELP");
+    stmt->bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt->bindUint64(":CREATION_TIME", now);
     stmt->bindUint64(":RECONCILIATION_TIME", now);
 
@@ -1758,8 +1758,8 @@ uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, cons
         "DISK_INSTANCE = :DISK_INSTANCE AND "
         "DISK_FILE_ID = :DISK_FILE_ID;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":DISK_INSTANCE", diskInstance);
-    stmt->bind(":DISK_FILE_ID", diskFileId);
+    stmt->bindString(":DISK_INSTANCE", diskInstance);
+    stmt->bindString(":DISK_FILE_ID", diskFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
 
     if (rset->next()) {
@@ -2044,7 +2044,7 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       const uint64_t copyNb = rset->columnUint64("COPY_NB");
@@ -2070,7 +2070,7 @@ uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageC
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":STORAGE_CLASS_NAME", storageClass);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       nbRoutes = rset->columnUint64("NB_ROUTES");
@@ -2113,7 +2113,7 @@ common::dataStructures::MountPolicy SqliteCatalogue::
     "WHERE "
       "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":REQUESTER_NAME", user.name);
+  stmt->bindString(":REQUESTER_NAME", user.name);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
     common::dataStructures::MountPolicy policy;
@@ -2178,7 +2178,7 @@ bool SqliteCatalogue::userIsAdmin(const std::string &userName) const {
     "FROM ADMIN_USER WHERE "
       "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ADMIN_USER_NAME", userName);
+  stmt->bindString(":ADMIN_USER_NAME", userName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
 }
@@ -2193,7 +2193,7 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
     "FROM ADMIN_HOST WHERE "
       "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":ADMIN_HOST_NAME", hostName);
+  stmt->bindString(":ADMIN_HOST_NAME", hostName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
 }
@@ -2216,7 +2216,7 @@ std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string 
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-    stmt->bind(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       TapeForWriting tape;
@@ -2260,7 +2260,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
       ":ARCHIVE_FILE_ID);";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
 
-  stmt->bind(":VID", tapeFile.vid);
+  stmt->bindString(":VID", tapeFile.vid);
   stmt->bindUint64(":FSEQ", tapeFile.fSeq);
   stmt->bindUint64(":BLOCK_ID", tapeFile.blockId);
   stmt->bindUint64(":COMPRESSED_SIZE", tapeFile.compressedSize);
@@ -2322,7 +2322,7 @@ void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t las
     "WHERE "
       "VID=:VID;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":VID", vid);
+  stmt->bindString(":VID", vid);
   stmt->bindUint64(":LAST_FSEQ", lastFSeq);
   stmt->executeNonQuery();
 }
@@ -2337,7 +2337,7 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
     "FROM TAPE WHERE "
       "VID = :VID;";
   std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  stmt->bind(":VID", vid);
+  stmt->bindString(":VID", vid);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
     return rset->columnUint64("LAST_FSEQ");
