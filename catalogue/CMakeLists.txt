@@ -35,9 +35,9 @@ set (CATALOGUE_LIB_SRC_FILES
   OcciRset.cpp
   OcciStmt.cpp
   ParamNameToIdx.cpp
+  RdbmsCatalogue.cpp
+  RdbmsCatalogueSchema.cpp
   Sqlite.cpp
-  SqliteCatalogue.cpp
-  SqliteCatalogueSchema.cpp
   SqliteConn.cpp
   SqliteRset.cpp
   SqliteStmt.cpp
@@ -61,8 +61,12 @@ add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
   COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   DEPENDS catalogue_schema.cpp)
 
+add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp > RdbmsCatalogueSchema.cpp
+  DEPENDS catalogue_schema.cpp)
+
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  SqliteCatalogueTest.cpp
+  RdbmsCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
 add_library (ctacatalogueunittests SHARED

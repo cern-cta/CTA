@@ -40,6 +40,22 @@ TEST_F(cta_catalogue_SqliteStmtTest, create_table) {
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
 
+  // Assert that there are currently noi tables in the database
+  {
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) NB_TABLES "
+        "FROM SQLITE_MASTER "
+        "WHERE "
+        "TYPE = 'table';";
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    ASSERT_TRUE(rset->next());
+    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_EQ(0, nbTables);
+    ASSERT_FALSE(rset->next());
+  }
+
   // Create a test table
   {
     const char *const sql =
@@ -49,6 +65,23 @@ TEST_F(cta_catalogue_SqliteStmtTest, create_table) {
         "COL3 INTEGER);";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     stmt->executeNonQuery();
+  }
+
+  // Test for the existence of the test table
+  {
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) NB_TABLES "
+      "FROM SQLITE_MASTER "
+      "WHERE "
+        "NAME = 'TEST' AND "
+        "TYPE = 'table';";
+    std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    ASSERT_TRUE(rset->next());
+    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_EQ(1, nbTables);
+    ASSERT_FALSE(rset->next());
   }
 }
 

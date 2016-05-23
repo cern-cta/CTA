@@ -16,6 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/DbConn.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/Sqlite.hpp"
+#include "catalogue/SqliteConn.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
@@ -23,17 +27,13 @@
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "common/SecurityIdentity.hpp"
-#include "common/archiveNS/StorageClass.hpp"
-#include "common/archiveNS/Tape.hpp"
-#include "common/TapePool.hpp"
-#include "OStoreDB/OStoreDBFactory.hpp"
-#include "catalogue/SqliteCatalogue.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -83,13 +83,17 @@ public:
 
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    m_catalogue.reset(new cta::catalogue::SqliteCatalogue());
+    m_catalogueConn.reset(new cta::catalogue::SqliteConn(":memory:"));
+    m_catalogueConn->createCatalogueDatabaseSchema();
+    m_catalogue.reset(new cta::catalogue::RdbmsCatalogue(*m_catalogueConn));
     
-    m_scheduler.reset(new cta::Scheduler(*(m_catalogue.get()), *(m_db.get()), 5, 2*1000*1000));
+    m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
   }
 
   virtual void TearDown() {
     m_scheduler.reset();
+    m_catalogue.reset();
+    m_catalogueConn.reset();
     m_db.reset();
   }
 
@@ -118,6 +122,7 @@ private:
   SchedulerTest & operator= (const SchedulerTest &);
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
+  std::unique_ptr<cta::catalogue::SqliteConn> m_catalogueConn;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 

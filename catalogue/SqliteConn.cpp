@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/Sqlite.hpp"
+#include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/SqliteConn.hpp"
 #include "catalogue/SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
@@ -31,10 +31,15 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 SqliteConn::SqliteConn(const std::string &filename) {
-  m_conn = NULL;
-  if(sqlite3_open(filename.c_str(), &m_conn)) {
-    sqlite3_close(m_conn);
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_open() failed: " + sqlite3_errmsg(m_conn));
+  try {
+    m_conn = NULL;
+    if (sqlite3_open(filename.c_str(), &m_conn)) {
+      sqlite3_close(m_conn);
+      throw exception::Exception(
+        std::string(__FUNCTION__) + "sqlite3_open() failed: " + sqlite3_errmsg(m_conn));
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -58,41 +63,6 @@ void SqliteConn::close() {
 }
 
 //------------------------------------------------------------------------------
-// get
-//------------------------------------------------------------------------------
-sqlite3 *SqliteConn::get() const {
-  if(NULL == m_conn) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: NULL pointer");
-  }
-  return m_conn;
-}
-
-//------------------------------------------------------------------------------
-// enableForeignKeys
-//------------------------------------------------------------------------------
-void SqliteConn::enableForeignKeys() {
-  try {
-    execNonQuery("PRAGMA foreign_keys = ON;");
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// executeNonQuery
-//------------------------------------------------------------------------------
-void SqliteConn::execNonQuery(const std::string &sql) {
-  int (*callback)(void*,int,char**,char**) = NULL;
-  void *callbackArg = NULL;
-  char *sqliteErrMsg = NULL;
-  if(SQLITE_OK != sqlite3_exec(m_conn, sql.c_str(), callback, callbackArg, &sqliteErrMsg)) {
-    std::string msg = std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + sqliteErrMsg;
-    sqlite3_free(sqliteErrMsg);
-    throw exception::Exception(msg);
-  }
-}
-
-//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
 DbStmt *SqliteConn::createStmt(const std::string &sql) {
@@ -108,6 +78,72 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
   }
 
   return new SqliteStmt(sql, stmt);
+}
+
+//------------------------------------------------------------------------------
+// createCatalogueDatabaseSchema
+//------------------------------------------------------------------------------
+void SqliteConn::createCatalogueDatabaseSchema() {
+  try {
+    enableForeignKeys();
+    const RdbmsCatalogueSchema schema;
+    execMultiLineNonQuery(schema.sql);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// enableForeignKeys
+//------------------------------------------------------------------------------
+void SqliteConn::enableForeignKeys() {
+  try {
+    execMultiLineNonQuery("PRAGMA foreign_keys = ON;");
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeMultiLineNonQuery
+//------------------------------------------------------------------------------
+void SqliteConn::execMultiLineNonQuery(const std::string &sql) {
+  int (*callback)(void*,int,char**,char**) = NULL;
+  void *callbackArg = NULL;
+  char *sqliteErrMsg = NULL;
+  if(SQLITE_OK != sqlite3_exec(m_conn, sql.c_str(), callback, callbackArg, &sqliteErrMsg)) {
+    std::string msg = std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + sqliteErrMsg;
+    sqlite3_free(sqliteErrMsg);
+    throw exception::Exception(msg);
+  }
+}
+
+//------------------------------------------------------------------------------
+// printSchema
+//------------------------------------------------------------------------------
+void SqliteConn::printSchema(std::ostream &os) {
+  try {
+    const char *const sql =
+      "SELECT "
+        "NAME AS NAME, "
+        "TYPE AS TYPE "
+        "FROM "
+        "SQLITE_MASTER "
+        "ORDER BY "
+        "TYPE, "
+        "NAME;";
+    std::unique_ptr<DbStmt> stmt(createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    os << "NAME, TYPE" << std::endl;
+    os << "==========" << std::endl;
+    while (rset->next()) {
+      const std::string name = rset->columnText("NAME");
+      const std::string type = rset->columnText("TYPE");
+      os << name << ", " << type << std::endl;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 } // namespace catalogue

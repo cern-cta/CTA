@@ -16,8 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/DbStmt.hpp"
+#include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/Sqlite.hpp"
+#include "catalogue/SqliteConn.hpp"
+#include "common/exception/Exception.hpp"
 
+#include <memory>
 #include <sstream>
 
 namespace cta {

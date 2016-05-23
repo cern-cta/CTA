@@ -17,15 +17,12 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/SqliteCatalogue.hpp"
-#include "catalogue/SqliteCatalogueSchema.hpp"
-#include "catalogue/SqliteRset.hpp"
-#include "catalogue/SqliteStmt.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <memory>
-#include <sqlite3.h>
 #include <time.h>
 
 namespace cta {
@@ -34,31 +31,21 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue():
-  m_conn(":memory:"),
-  m_nextArchiveFileId(1) {
-  createDbSchema();
-}
-
-//------------------------------------------------------------------------------
-// createSchema
-//------------------------------------------------------------------------------
-void SqliteCatalogue::createDbSchema() {
-  const SqliteCatalogueSchema schema;
-  m_conn.enableForeignKeys();
-  m_conn.execNonQuery(schema.sql);
+RdbmsCatalogue::RdbmsCatalogue(DbConn &conn):
+  m_conn(conn),
+  m_nextArchiveFileId(1) {  // This MUST be changed for OCCI - Make SQLite wrapper emulate sequences
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::~SqliteCatalogue() {
+RdbmsCatalogue::~RdbmsCatalogue() {
 }
 
 //------------------------------------------------------------------------------
 // createBootstrapAdminAndHostNoAuth
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
+void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const common::dataStructures::UserIdentity &user,
   const std::string &hostName,
@@ -70,7 +57,7 @@ void SqliteCatalogue::createBootstrapAdminAndHostNoAuth(
 //------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createAdminUser(
+void RdbmsCatalogue::createAdminUser(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const common::dataStructures::UserIdentity &user,
   const std::string &comment) {
@@ -125,7 +112,7 @@ void SqliteCatalogue::createAdminUser(
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteAdminUser(const common::dataStructures::UserIdentity &user) {
+void RdbmsCatalogue::deleteAdminUser(const common::dataStructures::UserIdentity &user) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -133,7 +120,7 @@ void SqliteCatalogue::deleteAdminUser(const common::dataStructures::UserIdentity
 // getAdminUsers
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::AdminUser>
-  SqliteCatalogue::getAdminUsers() const {
+  RdbmsCatalogue::getAdminUsers() const {
   try {
     std::list<common::dataStructures::AdminUser> admins;
     const char *const sql =
@@ -195,14 +182,14 @@ std::list<common::dataStructures::AdminUser>
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
+void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createAdminHost
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createAdminHost(
+void RdbmsCatalogue::createAdminHost(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &hostName,
   const std::string &comment) {
@@ -257,14 +244,14 @@ void SqliteCatalogue::createAdminHost(
 //------------------------------------------------------------------------------
 // deleteAdminHost
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteAdminHost(const std::string &hostName) {
+void RdbmsCatalogue::deleteAdminHost(const std::string &hostName) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // getAdminHosts
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() const {
+std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() const {
   try {
     std::list<common::dataStructures::AdminHost> hosts;
     const char *const sql =
@@ -325,14 +312,14 @@ std::list<common::dataStructures::AdminHost> SqliteCatalogue::getAdminHosts() co
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {
+void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createStorageClass(
+void RdbmsCatalogue::createStorageClass(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint64_t nbCopies,
@@ -391,15 +378,28 @@ void SqliteCatalogue::createStorageClass(
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteStorageClass(const std::string &name) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::deleteStorageClass(const std::string &name) {
+  try {
+    const char *const sql =
+      "DELETE FROM "
+        "STORAGE_CLASS "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+
+    stmt->bindString(":STORAGE_CLASS_NAME", name);
+
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::StorageClass>
-  SqliteCatalogue::getStorageClasses() const {
+  RdbmsCatalogue::getStorageClasses() const {
   try {
     std::list<common::dataStructures::StorageClass> storageClasses;
     const char *const sql =
@@ -462,21 +462,21 @@ std::list<common::dataStructures::StorageClass>
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) {
+void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createTapePool(
+void RdbmsCatalogue::createTapePool(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint64_t nbPartialTapes,
@@ -539,7 +539,7 @@ void SqliteCatalogue::createTapePool(
 //------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteTapePool(const std::string &name) {
+void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -547,7 +547,7 @@ void SqliteCatalogue::deleteTapePool(const std::string &name) {
 // getTapePools
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::TapePool>
-  SqliteCatalogue::getTapePools() const {
+  RdbmsCatalogue::getTapePools() const {
   try {
     std::list<common::dataStructures::TapePool> pools;
     const char *const sql =
@@ -613,28 +613,28 @@ std::list<common::dataStructures::TapePool>
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) {
+void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // setTapePoolEncryption
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {
+void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createArchiveRoute
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createArchiveRoute(
+void RdbmsCatalogue::createArchiveRoute(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &storageClassName,
   const uint64_t copyNb,
@@ -697,7 +697,7 @@ void SqliteCatalogue::createArchiveRoute(
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) {
+void RdbmsCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -705,7 +705,7 @@ void SqliteCatalogue::deleteArchiveRoute(const std::string &storageClassName, co
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::ArchiveRoute>
-  SqliteCatalogue::getArchiveRoutes() const {
+  RdbmsCatalogue::getArchiveRoutes() const {
   try {
     std::list<common::dataStructures::ArchiveRoute> routes;
     const char *const sql =
@@ -771,21 +771,21 @@ std::list<common::dataStructures::ArchiveRoute>
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
+void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
+void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createLogicalLibrary
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createLogicalLibrary(
+void RdbmsCatalogue::createLogicalLibrary(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const std::string &comment) {
@@ -840,7 +840,7 @@ void SqliteCatalogue::createLogicalLibrary(
 //------------------------------------------------------------------------------
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteLogicalLibrary(const std::string &name) {
+void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -848,7 +848,7 @@ void SqliteCatalogue::deleteLogicalLibrary(const std::string &name) {
 // getLogicalLibraries
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::LogicalLibrary>
-  SqliteCatalogue::getLogicalLibraries() const {
+  RdbmsCatalogue::getLogicalLibraries() const {
   try {
     std::list<common::dataStructures::LogicalLibrary> libs;
     const char *const sql =
@@ -910,14 +910,14 @@ std::list<common::dataStructures::LogicalLibrary>
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createTape(
+void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &vid,
   const std::string &logicalLibraryName,
@@ -1032,7 +1032,7 @@ void SqliteCatalogue::createTape(
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteTape(const std::string &vid) {
+void RdbmsCatalogue::deleteTape(const std::string &vid) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1040,7 +1040,7 @@ void SqliteCatalogue::deleteTape(const std::string &vid) {
 // getTapes
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::Tape>
-  SqliteCatalogue::getTapes(
+  RdbmsCatalogue::getTapes(
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -1147,98 +1147,98 @@ std::list<common::dataStructures::Tape>
 //------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) {
+void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeTapePoolName
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) {
+void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeCapacityInBytes
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {
+void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeEncryptionKey
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
+void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLabelLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void RdbmsCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastWrittenLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void RdbmsCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastReadLog
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void RdbmsCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeBusy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
+void RdbmsCatalogue::setTapeBusy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {
+void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {
+void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // setTapeLbp
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
+void RdbmsCatalogue::setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {
+void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createRequester
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createRequester(
+void RdbmsCatalogue::createRequester(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const common::dataStructures::UserIdentity &user,
   const std::string &mountPolicy,
@@ -1297,7 +1297,7 @@ void SqliteCatalogue::createRequester(
 //------------------------------------------------------------------------------
 // deleteRequester
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteRequester(const common::dataStructures::UserIdentity &user) {
+void RdbmsCatalogue::deleteRequester(const common::dataStructures::UserIdentity &user) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1305,7 +1305,7 @@ void SqliteCatalogue::deleteRequester(const common::dataStructures::UserIdentity
 // getRequesters
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::Requester>
-  SqliteCatalogue::getRequesters() const {
+  RdbmsCatalogue::getRequesters() const {
   try {
     std::list<common::dataStructures::Requester> users;
     const char *const sql =
@@ -1370,21 +1370,21 @@ std::list<common::dataStructures::Requester>
 //------------------------------------------------------------------------------
 // modifyRequesterMountPolicy
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy) {
+void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyRequesterComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
+void RdbmsCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createMountPolicy
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createMountPolicy(
+void RdbmsCatalogue::createMountPolicy(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &name,
   const uint64_t archivePriority,
@@ -1468,7 +1468,7 @@ void SqliteCatalogue::createMountPolicy(
 //------------------------------------------------------------------------------
 // deleteMountPolicy
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteMountPolicy(const std::string &name) {
+void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1476,7 +1476,7 @@ void SqliteCatalogue::deleteMountPolicy(const std::string &name) {
 // getMountPolicies
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy>
-  SqliteCatalogue::getMountPolicies() const {
+  RdbmsCatalogue::getMountPolicies() const {
   try {
     std::list<common::dataStructures::MountPolicy> policies;
     const char *const sql =
@@ -1558,77 +1558,77 @@ std::list<common::dataStructures::MountPolicy>
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchivePriority
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {
+void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchiveMinFilesQueued
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {
+void RdbmsCatalogue::modifyMountPolicyArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchiveMinBytesQueued
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) {
+void RdbmsCatalogue::modifyMountPolicyArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {
+void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrievePriority
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {
+void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrieveMinFilesQueued
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyRetrieveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {
+void RdbmsCatalogue::modifyMountPolicyRetrieveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) {
+void RdbmsCatalogue::modifyMountPolicyRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {
+void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {
+void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
+void RdbmsCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
  const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -1636,63 +1636,63 @@ void SqliteCatalogue::createDedication(const common::dataStructures::SecurityIde
 //------------------------------------------------------------------------------
 // deleteDedication
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteDedication(const std::string &drivename) {
+void RdbmsCatalogue::deleteDedication(const std::string &drivename) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // getDedications
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::Dedication> SqliteCatalogue::getDedications() const {
+std::list<common::dataStructures::Dedication> RdbmsCatalogue::getDedications() const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationType
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) {
+void RdbmsCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) {
+void RdbmsCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) {
+void RdbmsCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationFrom
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) {
+void RdbmsCatalogue::modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationUntil
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) {
+void RdbmsCatalogue::modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationComment
 //------------------------------------------------------------------------------
-void SqliteCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {
+void RdbmsCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
-void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
+void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
   try {
     const time_t now = time(NULL);
     const char *const sql =
@@ -1749,7 +1749,7 @@ void SqliteCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
 //------------------------------------------------------------------------------
 // getArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const {
+uint64_t RdbmsCatalogue::getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1776,7 +1776,7 @@ uint64_t SqliteCatalogue::getArchiveFileId(const std::string &diskInstance, cons
 //------------------------------------------------------------------------------
 // getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
+std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
   const std::string &id,
   const std::string &eosid,
   const std::string &copynb,
@@ -1867,7 +1867,7 @@ std::list<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFiles(
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileSummary SqliteCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
+common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
         const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -1875,7 +1875,7 @@ common::dataStructures::ArchiveFileSummary SqliteCatalogue::getArchiveFileSummar
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile SqliteCatalogue::getArchiveFileById(const uint64_t id) {
+common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uint64_t id) {
   std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(id));
 
   // Throw an exception if the archive file does not exist
@@ -1891,14 +1891,14 @@ common::dataStructures::ArchiveFile SqliteCatalogue::getArchiveFileById(const ui
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
+void RdbmsCatalogue::setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
+void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
   try {
     const time_t now = time(NULL);
     std::lock_guard<std::mutex> m_lock(m_mutex);
@@ -1942,7 +1942,7 @@ void SqliteCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 //------------------------------------------------------------------------------
 // throwIfCommonEventDataMismatch
 //------------------------------------------------------------------------------
-void SqliteCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
+void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
   const TapeFileWritten &actual) const {
   // Throw an exception if the common disk information of this tape file
   // written event does not match the previous
@@ -1999,7 +1999,7 @@ void SqliteCatalogue::throwIfCommonEventDataMismatch(const common::dataStructure
 // prepareForNewFile
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria
-  SqliteCatalogue::prepareForNewFile(
+  RdbmsCatalogue::prepareForNewFile(
   const std::string &storageClass, const common::dataStructures::UserIdentity &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     getTapeCopyToPoolMap(storageClass);
@@ -2033,7 +2033,7 @@ common::dataStructures::ArchiveFileQueueCriteria
 //------------------------------------------------------------------------------
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
+common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::
   getTapeCopyToPoolMap(const std::string &storageClass) const {
   try {
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
@@ -2061,7 +2061,7 @@ common::dataStructures::TapeCopyToPoolMap SqliteCatalogue::
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageClass) const {
+uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageClass) const {
   try {
     uint64_t nbRoutes = 0;
     const char *const sql =
@@ -2084,7 +2084,7 @@ uint64_t SqliteCatalogue::getExpectedNbArchiveRoutes(const std::string &storageC
 //------------------------------------------------------------------------------
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy SqliteCatalogue::
+common::dataStructures::MountPolicy RdbmsCatalogue::
   getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const {
   const char *const sql =
     "SELECT "
@@ -2164,14 +2164,14 @@ common::dataStructures::MountPolicy SqliteCatalogue::
 //------------------------------------------------------------------------------
 // isAdmin
 //------------------------------------------------------------------------------
-bool SqliteCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const {
+bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const {
   return userIsAdmin(cliIdentity.user.name) && hostIsAdmin(cliIdentity.host);
 }
 
 //------------------------------------------------------------------------------
 // userIsAdmin
 //------------------------------------------------------------------------------
-bool SqliteCatalogue::userIsAdmin(const std::string &userName) const {
+bool RdbmsCatalogue::userIsAdmin(const std::string &userName) const {
   const char *const sql =
     "SELECT "
       "ADMIN_USER_NAME AS ADMIN_USER_NAME "
@@ -2186,7 +2186,7 @@ bool SqliteCatalogue::userIsAdmin(const std::string &userName) const {
 //------------------------------------------------------------------------------
 // hostIsAdmin
 //------------------------------------------------------------------------------
-bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
+bool RdbmsCatalogue::hostIsAdmin(const std::string &hostName) const {
   const char *const sql =
     "SELECT "
       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
@@ -2201,7 +2201,7 @@ bool SqliteCatalogue::hostIsAdmin(const std::string &hostName) const {
 //------------------------------------------------------------------------------
 // getTapeForWriting
 //------------------------------------------------------------------------------
-std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
+std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
   try {
     std::list<TapeForWriting> tapes;
     const char *const sql =
@@ -2239,7 +2239,7 @@ std::list<TapeForWriting> SqliteCatalogue::getTapesForWriting(const std::string 
 //------------------------------------------------------------------------------
 // createTapeFile
 //------------------------------------------------------------------------------
-void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId) {
+void RdbmsCatalogue::createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId) {
   const time_t now = time(NULL);
   const char *const sql =
     "INSERT INTO TAPE_FILE("
@@ -2274,7 +2274,7 @@ void SqliteCatalogue::createTapeFile(const common::dataStructures::TapeFile &tap
 //------------------------------------------------------------------------------
 // getTapeFiles
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() const {
+std::list<common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFiles() const {
   std::list<common::dataStructures::TapeFile> files;
   const char *const sql =
     "SELECT "
@@ -2306,7 +2306,7 @@ std::list<common::dataStructures::TapeFile> SqliteCatalogue::getTapeFiles() cons
 //------------------------------------------------------------------------------
 // setTapeLastFseq
 //------------------------------------------------------------------------------
-void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq) {
+void RdbmsCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq) {
   std::lock_guard<std::mutex> lock(m_mutex);
 
   const uint64_t currentValue = getTapeLastFSeq(vid);
@@ -2330,7 +2330,7 @@ void SqliteCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t las
 //------------------------------------------------------------------------------
 // getTapeLastFSeq
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
+uint64_t RdbmsCatalogue::getTapeLastFSeq(const std::string &vid) const {
   const char *const sql =
     "SELECT "
       "LAST_FSEQ AS LAST_FSEQ "
@@ -2352,7 +2352,7 @@ uint64_t SqliteCatalogue::getTapeLastFSeq(const std::string &vid) const {
 //------------------------------------------------------------------------------
 // getArchiveFile
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> SqliteCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
   try {
     const char *const sql =
       "SELECT "

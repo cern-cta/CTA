@@ -27,7 +27,7 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Forward declaraion to avoid a circular dependency beween SqliteConn and
+ * Forward declaration to avoid a circular dependency between SqliteConn and
  * SqliteStmt.
  */
 class SqliteStmt;
@@ -53,26 +53,7 @@ public:
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  void close();
-
-  /**
-   * Returns the underlying database connection.
-   *
-   * @return the underlying database connection.
-   */
-  sqlite3 *get() const;
-
-  /**
-   * Enables foreign key constraints.
-   */
-  void enableForeignKeys();
-
-  /**
-   * Executes the specified non-query SQL statement.
-   *
-   * @param sql The SQL statement.
-   */
-  void execNonQuery(const std::string &sql);
+  virtual void close();
 
   /**
    * Creates a prepared statement.
@@ -80,7 +61,37 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  DbStmt *createStmt(const std::string &sql);
+  virtual DbStmt *createStmt(const std::string &sql);
+
+  /**
+   * This is an SqliteConn specific method that creates the catalogue database
+   * schema.
+   */
+  void createCatalogueDatabaseSchema();
+
+  /**
+   * This is an SqliteConn specific method that enables foreign key constraints.
+   */
+  void enableForeignKeys();
+
+  /**
+   * This is an SqliteConn specific method that executes the specified
+   * multi-line non-query SQL statement.
+   *
+   * @param sql The SQL statement.
+   */
+  void execMultiLineNonQuery(const std::string &sql);
+
+  /**
+   * This ia an SqliteConn specific method that prints the database schema to
+   * the specified output stream.
+   *
+   * Please note that this method is intended to be used for debugging.  The
+   * output is subjectively not pretty.
+   *
+   * @param os The output stream.
+   */
+  void printSchema(std::ostream &os);
 
 private:
 

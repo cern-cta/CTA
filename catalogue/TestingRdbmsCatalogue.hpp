@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
 
 namespace cta {
 
@@ -28,23 +28,30 @@ namespace catalogue {
  * Class used to facilitate unit testing by making public one or more of the
  * protected members of its super class.
  */
-class TestingSqliteCatalogue: public SqliteCatalogue {
+class TestingRdbmsCatalogue: public RdbmsCatalogue {
 public:
+  /**
+   * Constructor.
+   *
+   * @param conn The connection to the underlying relational database.
+   */
+  TestingRdbmsCatalogue(DbConn &conn): RdbmsCatalogue(conn) {
+  }
 
   /**
    * Destructor.
    */
-  virtual ~TestingSqliteCatalogue()  {
+  virtual ~TestingRdbmsCatalogue()  {
   }
 
-  using SqliteCatalogue::insertArchiveFile;
-  using SqliteCatalogue::createTapeFile;
-  using SqliteCatalogue::getArchiveFile;
-  using SqliteCatalogue::getTapeFiles;
-  using SqliteCatalogue::getTapeLastFSeq;
-  using SqliteCatalogue::setTapeLastFSeq;
+  using RdbmsCatalogue::insertArchiveFile;
+  using RdbmsCatalogue::createTapeFile;
+  using RdbmsCatalogue::getArchiveFile;
+  using RdbmsCatalogue::getTapeFiles;
+  using RdbmsCatalogue::getTapeLastFSeq;
+  using RdbmsCatalogue::setTapeLastFSeq;
 
-}; // class TestingSqliteCatalogue
+}; // class TestingRdbmsCatalogue
 
 } // namespace catalogue
 } // namespace cta

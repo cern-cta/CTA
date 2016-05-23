@@ -18,14 +18,15 @@
 
 #pragma once
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/SqliteConn.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
+#include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "remotens/EosNS.hpp"
 #include "remotens/RemoteNS.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "objectstore/BackendPopulator.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
@@ -81,16 +82,21 @@ protected:
    * The object used to populate the backend
    */
   cta::objectstore::BackendPopulator m_backendPopulator;
-
-  /**
-   * The CTA catalogue of tapes and tape files.
-   */
-  cta::catalogue::SqliteCatalogue m_catalogue;
   
   /**
    * The database or object store holding all CTA persistent objects
    */
   cta::OStoreDBWithAgent m_scheddb;
+
+  /**
+   * The connection to the catalogue's underlying relational database.
+   */
+  cta::catalogue::SqliteConn m_catalogueConn;
+
+  /**
+   * The CTA catalogue of tapes and tape files.
+   */
+  cta::catalogue::RdbmsCatalogue m_catalogue;
 
   /**
    * The scheduler.

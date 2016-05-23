@@ -19,7 +19,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/SqliteConn.hpp"
+#include "catalogue/DbConn.hpp"
 
 #include <atomic>
 #include <memory>
@@ -49,18 +49,20 @@ class ArchiveFileRow;
 /**
  * CTA catalogue to facilitate unit testing.
  */
-class SqliteCatalogue: public Catalogue {
+class RdbmsCatalogue: public Catalogue {
 public:
 
   /**
    * Constructor.
+   *
+   * @param conn The connection to the underlying relational database.
    */
-  SqliteCatalogue();
+  RdbmsCatalogue(DbConn &conn);
 
   /**
    * Destructor.
    */
-  virtual ~SqliteCatalogue();
+  virtual ~RdbmsCatalogue();
   
   virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment);
 
@@ -233,7 +235,7 @@ protected:
   /**
    * The connection to the underlying relational database.
    */
-  mutable SqliteConn m_conn;
+  DbConn &m_conn;
 
   /**
    * The next unique identifier to be used for an archive file.
@@ -265,7 +267,7 @@ protected:
 
   /**
    * Returns the unique identifier of the specified archive file.  Note that
-   * this method is required by SqliteCatalogue because SQLite does not support
+   * this method is required by RdbmsCatalogue because SQLite does not support
    * the SQL syntax: "INSERT INTO ... VALUES ... RETURNING ... INTO ...".
    *
    * @param diskInstance The name of teh disk storage instance within which the
@@ -343,7 +345,7 @@ protected:
    */
   void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
     const TapeFileWritten &actual) const;
-}; // class SqliteCatalogue
+}; // class RdbmsCatalogue
 
 } // namespace catalogue
 } // namespace cta

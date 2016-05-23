@@ -47,15 +47,17 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/Sqlite.hpp"
+#include "catalogue/SqliteConn.hpp"
+#include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendPopulator.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "remotens/EosNS.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "nameserver/mockNS/MockNameServer.hpp"
-#include "objectstore/BackendPopulator.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 
 #include <errno.h>
@@ -569,7 +571,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
-  cta::catalogue::SqliteCatalogue catalogue;
+  cta::catalogue::SqliteConn catalogueConn(":memory:");
+  catalogueConn.createCatalogueDatabaseSchema();
+  cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
   cta::Scheduler scheduler(catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
 
   castor::tape::System::realWrapper sysWrapper;

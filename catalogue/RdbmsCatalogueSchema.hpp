@@ -26,24 +26,24 @@ namespace catalogue {
  * catalogue.
  *
  * The CMakeLists.txt file of this directory instructs cmake to generate the
- * implementation file of this class, SqliteCatalogueSchema.cpp, by combining
- * the contents of the SqliteCatalogueSchema.before_SQL.cpp with the
+ * implementation file of this class, RdbmsCatalogueSchema.cpp, by combining
+ * the contents of the RdbmsCatalogueSchema.before_SQL.cpp with the
  * contents of the master schema file, catalogue_schema.sql.  This means the
- * SqliteCatalogueSchema.before_SQL.cpp file is not compilable.
+ * RdbmsCatalogueSchema.before_SQL.cpp file is not compilable.
  *
  * The purpose of this class is to isolate the "non-compilable" issues into a
- * a small and encapsulated compilation unit, namely SqliteCatalogueSchema.o, so
+ * a small and encapsulated compilation unit, namely RdbmsCatalogueSchema.o, so
  * that the remaining business logic can be implemented in the non-generated
- * and compilable SqliteCatalogue.cpp file.  This means that IDEs can work as
- * normal with the bulk of the code in SqliteCatalogue.cpp, whereas they will
- * struggle with SqliteCatalogueSchema.before_SQL.cpp which is therefore
+ * and compilable RdbmsCatalogue.cpp file.  This means that IDEs can work as
+ * normal with the bulk of the code in RdbmsCatalogue.cpp, whereas they will
+ * struggle with RdbmsCatalogueSchema.before_SQL.cpp which is therefore
  * intentionally small.
  */
-struct SqliteCatalogueSchema {
+struct RdbmsCatalogueSchema {
   /**
    * Constructor.
    */
-  SqliteCatalogueSchema();
+  RdbmsCatalogueSchema();
 
   /**
    * The schema.
