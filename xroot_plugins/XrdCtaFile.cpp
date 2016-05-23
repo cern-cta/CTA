@@ -429,13 +429,13 @@ void XrdCtaFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, 
 //------------------------------------------------------------------------------
 uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const {
   try {
-    return stoull(parameterName);
+    return stoull(parameterValue);
   } catch(std::invalid_argument &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" has an invalid argument");
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+") has an invalid argument");
   } catch(std::out_of_range &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - The value of parameter: "+parameterName+" is out of range");
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - The value of parameter: "+parameterName+" ("+parameterValue+") is out of range");
   } catch(...) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Unknown error while converting parameter: "+parameterName+" to a uint64_t");
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Unknown error while converting parameter: "+parameterName+" ("+parameterValue+") to a uint64_t");
   }
   return 0;
 }
