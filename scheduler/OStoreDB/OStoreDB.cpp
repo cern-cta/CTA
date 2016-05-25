@@ -84,7 +84,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
-  auto tpl = re.dumpTapePools();
+  auto tpl = re.dumpArchiveQueues();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     // Get the tape pool object
     objectstore::ArchiveQueue aqueue(tpp->address, m_objectStore);
@@ -442,7 +442,7 @@ void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester,
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
-  auto tpl = re.dumpTapePools();
+  auto tpl = re.dumpArchiveQueues();
   rel.release();
   for (auto tpp=tpl.begin(); tpp!= tpl.end(); tpp++) {
     objectstore::ArchiveQueue aq(tpp->address, m_objectStore);
@@ -497,7 +497,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
   objectstore::RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
-  auto tpl=re.dumpTapePools();
+  auto tpl=re.dumpArchiveQueues();
   rel.release();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     try {
@@ -576,7 +576,7 @@ std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
   std::map<std::string, std::list<ArchiveToTapeCopyRequest> > ret;
-  auto aql = re.dumpTapePools();
+  auto aql = re.dumpArchiveQueues();
   rel.release();
   for (auto & aqp:aql) {
     objectstore::ArchiveQueue osaq(aqp.address, m_objectStore);
@@ -618,7 +618,7 @@ std::list<ArchiveToTapeCopyRequest>
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
-  auto tpl = re.dumpTapePools();
+  auto tpl = re.dumpArchiveQueues();
   rel.release();
   for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
     if (tpp->tapePool != tapePoolName) continue;
@@ -1059,7 +1059,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
-  auto tpl = re.dumpTapePools();
+  auto tpl = re.dumpArchiveQueues();
   rel.release();
   std::string tpAddress;
   for (auto tpp = tpl.begin(); tpp != tpl.end(); tpp++) {

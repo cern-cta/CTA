@@ -23,10 +23,12 @@
 #include "RootEntry.hpp"
 #include <json-c/json.h>
 
-cta::objectstore::ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
+namespace cta { namespace objectstore { 
+
+ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os, address) { }
 
-cta::objectstore::ArchiveQueue::ArchiveQueue(GenericObject& go):
+ArchiveQueue::ArchiveQueue(GenericObject& go):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -34,7 +36,7 @@ cta::objectstore::ArchiveQueue::ArchiveQueue(GenericObject& go):
   getPayloadFromHeader();
 }
 
-std::string cta::objectstore::ArchiveQueue::dump() {  
+std::string ArchiveQueue::dump() {  
   checkPayloadReadable();
   std::stringstream ret;
   ret << "ArchiveQueue" << std::endl;
@@ -84,7 +86,7 @@ std::string cta::objectstore::ArchiveQueue::dump() {
   return ret.str();
 }
 
-void cta::objectstore::ArchiveQueue::initialize(const std::string& name) {
+void ArchiveQueue::initialize(const std::string& name) {
   // Setup underlying object
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::initialize();
   // Setup the object so it's valid
@@ -96,7 +98,7 @@ void cta::objectstore::ArchiveQueue::initialize(const std::string& name) {
   m_payloadInterpreted = true;
 }
 
-bool cta::objectstore::ArchiveQueue::isEmpty() {
+bool ArchiveQueue::isEmpty() {
   checkPayloadReadable();
   // Check we have no archive jobs pending
   if (m_payload.pendingarchivejobs_size() 
@@ -107,7 +109,7 @@ bool cta::objectstore::ArchiveQueue::isEmpty() {
   return true;
 }
 
-void cta::objectstore::ArchiveQueue::garbageCollect(const std::string &presumedOwner) {
+void ArchiveQueue::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the tape pool creation failed. We have nothing to do.
@@ -139,17 +141,17 @@ void cta::objectstore::ArchiveQueue::garbageCollect(const std::string &presumedO
   remove();
 }
 
-void cta::objectstore::ArchiveQueue::setName(const std::string& name) {
+void ArchiveQueue::setName(const std::string& name) {
   checkPayloadWritable();
   m_payload.set_tapepoolname(name);
 }
 
-std::string cta::objectstore::ArchiveQueue::getName() {
+std::string ArchiveQueue::getName() {
   checkPayloadReadable();
   return m_payload.tapepoolname();
 }
 
-void cta::objectstore::ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
+void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
   const std::string & archiveToFileAddress, uint64_t fileid,
   uint64_t size, uint64_t priority, time_t startTime) {
   checkPayloadWritable();
@@ -169,7 +171,7 @@ void cta::objectstore::ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
   j->set_copynb(job.copyNb);
 }
 
-auto cta::objectstore::ArchiveQueue::getJobsSummary() -> JobsSummary {
+auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   checkPayloadReadable();
   JobsSummary ret;
   ret.files = m_payload.pendingarchivejobs_size();
@@ -178,7 +180,7 @@ auto cta::objectstore::ArchiveQueue::getJobsSummary() -> JobsSummary {
   return ret;
 }
 
-bool cta::objectstore::ArchiveQueue::addJobIfNecessary(
+bool ArchiveQueue::addJobIfNecessary(
   const ArchiveRequest::JobDump& job, 
   const std::string& archiveToFileAddress,
   uint64_t fileid, uint64_t size) {
@@ -196,7 +198,7 @@ bool cta::objectstore::ArchiveQueue::addJobIfNecessary(
   return true;
 }
 
-void cta::objectstore::ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
+void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_pendingarchivejobs();
   bool found = false;
@@ -219,7 +221,7 @@ void cta::objectstore::ArchiveQueue::removeJob(const std::string& archiveToFileA
   } while (found);
 }
 
-auto cta::objectstore::ArchiveQueue::dumpJobs() -> std::list<JobDump> {
+auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl=m_payload.pendingarchivejobs();
@@ -232,7 +234,7 @@ auto cta::objectstore::ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-bool cta::objectstore::ArchiveQueue::addOrphanedJobPendingNsCreation(
+bool ArchiveQueue::addOrphanedJobPendingNsCreation(
   const ArchiveRequest::JobDump& job, 
   const std::string& archiveToFileAddress, 
   uint64_t fileid,
@@ -251,7 +253,7 @@ bool cta::objectstore::ArchiveQueue::addOrphanedJobPendingNsCreation(
   return true;
 }
 
-bool cta::objectstore::ArchiveQueue::addOrphanedJobPendingNsDeletion(
+bool ArchiveQueue::addOrphanedJobPendingNsDeletion(
   const ArchiveRequest::JobDump& job, 
   const std::string& archiveToFileAddress, 
   uint64_t fileid, uint64_t size) {
@@ -267,3 +269,9 @@ bool cta::objectstore::ArchiveQueue::addOrphanedJobPendingNsDeletion(
   j->set_fileid(fileid);
   return true;
 }
+
+cta::common::dataStructures::MountPolicy ArchiveQueue::getMountPolicy() {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+}} // namespace cta::objectstore

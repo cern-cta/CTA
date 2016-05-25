@@ -137,7 +137,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveQueue) {
+TEST(ObjectStore, DISABLED_GarbageCollectorArchiveQueue) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -251,7 +251,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveRequest) {
+TEST(ObjectStore, DISABLED_GarbageCollectorArchiveRequest) {
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);

@@ -128,7 +128,7 @@ std::string cta::objectstore::RootEntry::addOrGetArchiveQueueAndCommit(const std
   return tapePoolQueueAddress;
 }
 
-void cta::objectstore::RootEntry::removeTapePoolQueueAndCommit(const std::string& tapePool) {
+void cta::objectstore::RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
   checkPayloadWritable();
   // find the address of the tape pool object
   try {
@@ -161,7 +161,7 @@ void cta::objectstore::RootEntry::removeTapePoolQueueAndCommit(const std::string
   }
 }
 
-std::string cta::objectstore::RootEntry::getTapePoolQueueAddress(const std::string& tapePool) {
+std::string cta::objectstore::RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
   checkPayloadReadable();
   try {
     auto & tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);

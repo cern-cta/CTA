@@ -50,30 +50,6 @@ public:
   // Safe remover
   void removeIfEmpty();
   
-  // TapePool Manipulations =====================================================
-  CTA_GENERATE_EXCEPTION_CLASS(TapePoolNotEmpty);
-  CTA_GENERATE_EXCEPTION_CLASS(WrongTapePool);
-  /** This function implicitly creates the tape pool structure and updates 
-   * the pointer to it. It needs to implicitly commit the object to the store. */
-  std::string addOrGetTapePoolAndCommit(const std::string & tapePool,
-    uint32_t nbPartialTapes, uint16_t maxRetriesPerMount, uint16_t maxTotalRetries,
-    Agent & agent, const EntryLog & log);
-  /** This function implicitly deletes the tape pool structure. 
-   * Fails if it not empty*/
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePool);
-  CTA_GENERATE_EXCEPTION_CLASS(TapePoolUsedInRoute);
-  void removeTapePoolAndCommit(const std::string & tapePool);
-  std::string getTapePoolAddress(const std::string & tapePool);
-  class TapePoolDump {
-  public:
-    std::string tapePool;
-    std::string address;
-    uint32_t nbPartialTapes;
-    MountCriteriaByDirection mountCriteriaByDirection;
-    EntryLog log;
-  };
-  std::list<TapePoolDump> dumpTapePools();
-  
   // ArchiveQueue Manipulations =====================================================
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePoolQueue);
@@ -83,8 +59,8 @@ public:
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePoolQueue);
-  void removeTapePoolQueueAndCommit(const std::string & tapePool);
-  std::string getTapePoolQueueAddress(const std::string & tapePool);
+  void removeArchiveQueueAndCommit(const std::string & tapePool);
+  std::string getArchiveQueueAddress(const std::string & tapePool);
   class ArchiveQueueDump {
   public:
     std::string tapePool;

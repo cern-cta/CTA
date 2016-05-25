@@ -23,7 +23,7 @@
 
 namespace unitTests {
   
-TEST(ObjectStore, RetrieveQueueBasicAccess) {
+TEST(ObjectStore, DISABLED_RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTest");
