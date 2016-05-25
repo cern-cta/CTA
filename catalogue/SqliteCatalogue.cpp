@@ -1510,13 +1510,13 @@ std::list<common::dataStructures::MountPolicy>
 
       policy.name = rset->columnText("MOUNT_POLICY_NAME");
 
-      policy.archive_priority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy.archive_minRequestAge =
+      policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge =
         rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy.retrieve_priority =
+      policy.retrievePriority =
         rset->columnUint64("RETRIEVE_PRIORITY");
-      policy.retrieve_minRequestAge =
+      policy.retrieveMinRequestAge =
         rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
       policy.maxDrivesAllowed =
@@ -2120,11 +2120,11 @@ common::dataStructures::MountPolicy SqliteCatalogue::
 
     policy.name = rset->columnText("MOUNT_POLICY_NAME");
 
-    policy.archive_priority = rset->columnUint64("ARCHIVE_PRIORITY");
-    policy.archive_minRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+    policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
+    policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-    policy.retrieve_priority = rset->columnUint64("RETRIEVE_PRIORITY");
-    policy.retrieve_minRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+    policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
+    policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
     policy.maxDrivesAllowed =
       rset->columnUint64("MAX_DRIVES_ALLOWED");

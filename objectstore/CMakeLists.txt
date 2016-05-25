@@ -40,10 +40,8 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/RetrieveToFileRequest.hpp
   objectstore/RootEntry.hpp
   objectstore/SchedulerGlobalLock.hpp
-  objectstore/Tape.hpp
-  objectstore/TapePool.hpp
   objectstore/TapeQueue.hpp
-  objectstore/TapePoolQueue.hpp
+  objectstore/ArchiveQueue.hpp
   objectstore/UserIdentity.hpp)
 
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -57,10 +55,8 @@ add_library (ctaobjectstore SHARED
   Agent.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
-  TapePool.cpp
-  Tape.cpp
-  TapePoolQueue.cpp
-  TapeQueue.cpp
+  ArchiveQueue.cpp
+  RetrieveQueue.cpp
   ArchiveToFileRequest.cpp
   ArchiveRequest.cpp
   RetrieveToFileRequest.cpp
@@ -81,7 +77,7 @@ install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
-  TapeTest.cpp
+  RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
   ArchiveToFileRequestTest.cpp
 )

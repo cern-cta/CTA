@@ -1226,10 +1226,10 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->archive_priority));
-        currentRow.push_back(std::to_string((unsigned long long)it->archive_minRequestAge));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_priority));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieve_minRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->archivePriority));
+        currentRow.push_back(std::to_string((unsigned long long)it->archiveMinRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrievePriority));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieveMinRequestAge));
         currentRow.push_back(std::to_string((unsigned long long)it->maxDrivesAllowed));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);

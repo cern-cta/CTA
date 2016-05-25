@@ -21,6 +21,7 @@
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/CreationLog.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 #include <list>
 #include <string>
@@ -33,7 +34,7 @@ namespace cta {
  */
 struct RetrieveRequestDump {
   uint64_t priority; /**< The priority of the request. */
-  CreationLog creationLog; /**< The time at which the request was created. */
+  common::dataStructures::EntryLog entryLog; /**< The time at which the request was created. */
   cta::common::archiveNS::ArchiveFile archiveFile; /**< he full path of the source archive file. */
   uint64_t activeCopyNb; /**< The tape copy number currenty considered for retrieve. */
   std::list<TapeFileLocation> tapeCopies; /**<The location of the copies on tape. */

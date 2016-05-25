@@ -53,8 +53,7 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 // queueArchive
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {  
-  const cta::common::dataStructures::ArchiveFileQueueCriteria criteria = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
-  std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> requestCreation(m_db.queue(request, criteria.fileId, criteria.copyToPoolMap, criteria.mountPolicy));
+  std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> requestCreation(m_db.queue(request, m_catalogue.prepareForNewFile(request.storageClass, request.requester)));
   requestCreation->complete();
   return 0;
 }
@@ -241,6 +240,15 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::reconcile(co
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
+  auto archiveRequests=m_db.getArchiveRequests();
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > ret;
+//  for (auto & dbtp: archiveRequests) {
+//    for (auto & dbaj: dbtp.second) {
+//      cta::common::dataStructures::ArchiveJob aj;
+//      aj.archiveFileID = dbaj.;
+//      ret[dbtp.first.name].push_back()
+//    }
+//  }
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

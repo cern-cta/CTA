@@ -28,7 +28,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class CreationLog;
+class EntryLog;
 
 class DriveRegister: public ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t> {
   CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
@@ -42,7 +42,7 @@ public:
   
   // Drives management =========================================================
   void addDrive (const std::string & driveName, const std::string & logicalLibrary,
-    const CreationLog & creationLog);
+    const EntryLog & creationLog);
   void removeDrive (const std::string  & name);
 private:
   cta::MountType::Enum deserializeMountType(serializers::MountType);

@@ -22,12 +22,11 @@
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "catalogue/Catalogue.hpp"
 
 #include <memory>
 
 namespace cta {
-  class NameServer;
-  
   /**
    * The class driving a retrieve mount.
    * The class only has private constructors as it is instanciated by
@@ -40,14 +39,14 @@ namespace cta {
     /**
      * Constructor.
      */
-    ArchiveMount(NameServer & ns);
+    ArchiveMount(catalogue::Catalogue & catalogue);
 
     /**
      * Constructor.
      *
      * @param dbMount The database representation of this mount.
      */
-    ArchiveMount(NameServer & ns, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
+    ArchiveMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
 
   public:
 
@@ -126,9 +125,9 @@ namespace cta {
     std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> m_dbMount;
     
     /**
-     * A reference to the name server.
+     * A reference to the file catalogue.
      */
-    NameServer & m_ns;
+    catalogue::Catalogue & m_catalogue;
 
     /**
      * Internal tracking of the session completion

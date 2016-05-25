@@ -103,8 +103,12 @@ namespace cta {
     struct ::stat statBuff;
     exception::Errnum::throwOnNonZero(::stat(realPath.c_str(), &statBuff));
     ret->mode = statBuff.st_mode;
-    ret->owner.uid = statBuff.st_uid;
-    ret->owner.gid = statBuff.st_gid;
+    std::stringstream itoa;
+    itoa << statBuff.st_uid;
+    ret->owner.name = itoa.str();
+    itoa.clear();
+    itoa << statBuff.st_gid;
+    ret->owner.group = itoa.str();
     ret->size = statBuff.st_size;
     return ret;
   }

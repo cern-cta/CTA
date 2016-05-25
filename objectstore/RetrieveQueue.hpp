@@ -30,12 +30,12 @@ class Backend;
 class Agent;
 class GenericObject;
 
-class TapeQueue: public ObjectOps<serializers::TapeQueue, serializers::TapeQueue_t> {
+class RetrieveQueue: public ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t> {
 public:
-  TapeQueue(const std::string & address, Backend & os);
-  TapeQueue(GenericObject & go);
+  RetrieveQueue(const std::string & address, Backend & os);
+  RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid, const std::string &logicalLibrary, 
-    const cta::CreationLog & creationLog);
+    const cta::common::dataStructures::EntryLog & entryLog);
   void garbageCollect();
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);

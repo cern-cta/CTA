@@ -24,17 +24,21 @@
 
 namespace cta { namespace objectstore {
 
-class UserIdentity: public cta::UserIdentity {
+class UserIdentity: public cta::common::dataStructures::UserIdentity {
 public:
-  UserIdentity (): cta::UserIdentity() {}
-  UserIdentity (uint32_t ui, uint32_t gi): cta::UserIdentity(ui, gi) {}
+  UserIdentity (): cta::common::dataStructures::UserIdentity() {}
+  UserIdentity (const std::string &n, const std::string &g) {
+    name = n;
+    group = g;
+  }
+  UserIdentity(const cta::common::dataStructures::UserIdentity & user): cta::common::dataStructures::UserIdentity(user) {}
   void serialize (cta::objectstore::serializers::UserIdentity & user) const {
-    user.set_uid(uid);
-    user.set_gid(gid);
+    user.set_name(name);
+    user.set_group(group);
   }
   void deserialize (const cta::objectstore::serializers::UserIdentity & user) {
-    uid = user.uid();
-    gid = user.gid();
+    name = user.name();
+    group = user.group();
   }
 };
 

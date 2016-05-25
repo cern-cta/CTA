@@ -22,7 +22,7 @@
 
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
-#include "CreationLog.hpp"
+#include "EntryLog.hpp"
 #include "UserIdentity.hpp"
 #include "common/MountControl.hpp"
 #include <list>
@@ -50,87 +50,6 @@ public:
   // Safe remover
   void removeIfEmpty();
   
-  // Manipulations of AdminHosts ===============================================
-  void addAdminHost(const std::string & hostname, const CreationLog & log);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchAdminHost);
-  void removeAdminHost(const std::string & hostname);
-  bool isAdminHost(const std::string & hostname);
-  class AdminHostDump {
-  public:
-    std::string hostname;
-    CreationLog log;
-  };
-  std::list<AdminHostDump> dumpAdminHosts();
-  
-  CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
-  
-  // Manipulations of Admin Users ==============================================
-  void addAdminUser(const UserIdentity & user, const CreationLog & log);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchAdminUser);
-  void removeAdminUser(const UserIdentity & user);
-  bool isAdminUser(const UserIdentity & user);
-  class AdminUserDump {
-  public:
-    UserIdentity user;
-    CreationLog log;
-  };
-  std::list<AdminUserDump> dumpAdminUsers();
-  
-  // Manipulations of Storage Classes and archive routes =======================
-  CTA_GENERATE_EXCEPTION_CLASS(MissingEntry);
-  CTA_GENERATE_EXCEPTION_CLASS(IncompleteEntry);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchStorageClass);
-  CTA_GENERATE_EXCEPTION_CLASS(StorageClassHasActiveRoutes);
-  CTA_GENERATE_EXCEPTION_CLASS(InvalidCopyNumber);
-  CTA_GENERATE_EXCEPTION_CLASS(CopyNumberOutOfRange);
-private:
-  // Totally arbitrary (but ridiculously high) copy number
-  static const uint16_t maxCopyCount=100;
-  void checkStorageClassCopyCount(uint16_t copyCount);
-public:
-  void addStorageClass(const std::string storageClass, uint16_t copyCount, 
-    const CreationLog & log);
-  void removeStorageClass(const std::string storageClass);
-  void setStorageClassCopyCount(const std::string & storageClass,
-    uint16_t copyCount, const CreationLog & cl);
-  uint16_t getStorageClassCopyCount(const std::string & storageClass);
-  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRouteAlreadyExists);
-  CTA_GENERATE_EXCEPTION_CLASS(TapePoolUsedInOtherRoute);
-  void addArchiveRoute(const std::string & storageClass, uint16_t copyNb, 
-    const std::string & tapePool, const CreationLog & cl);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRoute);
-  void removeArchiveRoute(const std::string & storageClass, uint16_t copyNb);
-
-  /** Ordered vector of archive routes */
-  std::vector<std::string> getArchiveRoutes (const std::string storageClass);
-  class StorageClassDump {
-  public:
-    class ArchiveRouteDump {
-    public:
-      uint16_t copyNumber;
-      std::string tapePool;
-      CreationLog log;
-    };
-    std::string storageClass;
-    uint16_t copyCount;
-    std::list<ArchiveRouteDump> routes;
-    CreationLog log;
-  };
-  std::list<StorageClassDump> dumpStorageClasses();
-  StorageClassDump dumpStorageClass(const std::string & name);
-  
-  // Manipulations of libraries ================================================
-  void addLibrary(const std::string & library, const CreationLog & log);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchLibrary);
-  void removeLibrary(const std::string & library);
-  bool libraryExists(const std::string & library);
-  class LibraryDump {
-  public:
-    std::string library;
-    CreationLog log;
-  };
-  std::list<LibraryDump> dumpLibraries();
-  
   // TapePool Manipulations =====================================================
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePool);
@@ -138,7 +57,7 @@ public:
    * the pointer to it. It needs to implicitly commit the object to the store. */
   std::string addOrGetTapePoolAndCommit(const std::string & tapePool,
     uint32_t nbPartialTapes, uint16_t maxRetriesPerMount, uint16_t maxTotalRetries,
-    Agent & agent, const CreationLog & log);
+    Agent & agent, const EntryLog & log);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePool);
@@ -151,32 +70,32 @@ public:
     std::string address;
     uint32_t nbPartialTapes;
     MountCriteriaByDirection mountCriteriaByDirection;
-    CreationLog log;
+    EntryLog log;
   };
   std::list<TapePoolDump> dumpTapePools();
   
-  // TapePoolQueue Manipulations =====================================================
+  // ArchiveQueue Manipulations =====================================================
   CTA_GENERATE_EXCEPTION_CLASS(TapePoolQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongTapePoolQueue);
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it. It needs to implicitly commit the object to the store. */
-  std::string addOrGetTapePoolQueueAndCommit(const std::string & tapePool, Agent & agent);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, Agent & agent);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePoolQueue);
   void removeTapePoolQueueAndCommit(const std::string & tapePool);
   std::string getTapePoolQueueAddress(const std::string & tapePool);
-  class TapePoolQueueDump {
+  class ArchiveQueueDump {
   public:
     std::string tapePool;
     std::string address;
   };
-  std::list<TapePoolQueueDump> dumpTapePoolQueues();
+  std::list<ArchiveQueueDump> dumpArchiveQueues();
   
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);
   std::string getDriveRegisterAddress();  
-  std::string addOrGetDriveRegisterPointerAndCommit(Agent & agent, const CreationLog & log);
+  std::string addOrGetDriveRegisterPointerAndCommit(Agent & agent, const EntryLog & log);
   void removeDriveRegisterAndCommit();
   
   // Agent register manipulations ==============================================
@@ -187,12 +106,12 @@ public:
    * log for tracking objects being created. We already use an agent here for
    * object name generation, but not yet tracking. */
   std::string addOrGetAgentRegisterPointerAndCommit(Agent & agent,
-    const CreationLog & log);
+    const EntryLog & log);
   void removeAgentRegisterAndCommit();
 
   // Agent register manipulations ==============================================
   std::string getSchedulerGlobalLock();
-  std::string addOrGetSchedulerGlobalLockAndCommit(Agent & agent, const CreationLog & log);
+  std::string addOrGetSchedulerGlobalLockAndCommit(Agent & agent, const EntryLog & log);
   void removeSchedulerGlobalLockAndCommit();
   
 private:

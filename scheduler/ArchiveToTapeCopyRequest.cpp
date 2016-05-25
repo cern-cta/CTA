@@ -34,15 +34,15 @@ cta::ArchiveToTapeCopyRequest::~ArchiveToTapeCopyRequest() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveToTapeCopyRequest::ArchiveToTapeCopyRequest(
-  const RemotePathAndStatus &remoteFile,
-  const std::string &archiveFile,
+  const std::string & diskFileID,
+  const uint64_t archiveFileID,
   const uint16_t copyNb,
   const std::string tapePoolName,
   const uint64_t priority,
-  const CreationLog &creationLog):
-  UserArchiveRequest(priority, creationLog),
-  remoteFile(remoteFile),
-  archiveFile(archiveFile),
+  const common::dataStructures::EntryLog &entryLog):
+  UserArchiveRequest(priority, entryLog),
+  diskFileID(diskFileID),
+  archiveFileID(archiveFileID),
   copyNb(copyNb),
   tapePoolName(tapePoolName) {
 }

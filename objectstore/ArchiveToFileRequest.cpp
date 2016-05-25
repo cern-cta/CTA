@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ArchiveToFileRequest.hpp"
 #include "GenericObject.hpp"
-#include "CreationLog.hpp"
-#include "TapePool.hpp"
+#include "EntryLog.hpp"
 #include "UserIdentity.hpp"
+#include "ArchiveQueue.hpp"
+#include "ArchiveToFileRequest.hpp"
 #include <json-c/json.h>
 
 cta::objectstore::ArchiveToFileRequest::ArchiveToFileRequest(
@@ -47,14 +47,14 @@ void cta::objectstore::ArchiveToFileRequest::initialize() {
 }
 
 void cta::objectstore::ArchiveToFileRequest::addJob(uint16_t copyNumber,
-  const std::string& tapepool, const std::string& tapepooladdress) {
+  const std::string& tapepool, const std::string& archivequeueaddress) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
   j->set_status(serializers::ArchiveJobStatus::AJS_PendingNsCreation);
   j->set_tapepool(tapepool);
   j->set_owner("");
-  j->set_tapepooladdress(tapepooladdress);
+  j->set_archivequeueaddress(archivequeueaddress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
@@ -124,11 +124,11 @@ bool cta::objectstore::ArchiveToFileRequest::addJobFailure(uint16_t copyNumber,
 }
 
 
-void cta::objectstore::ArchiveToFileRequest::setAllJobsLinkingToTapePool() {
+void cta::objectstore::ArchiveToFileRequest::setAllJobsLinkingToArchiveQueue() {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
-    j->set_status(serializers::AJS_LinkingToTapePool);
+    j->set_status(serializers::AJS_LinkingToArchiveQueue);
   }
 }
 
@@ -156,7 +156,6 @@ void cta::objectstore::ArchiveToFileRequest::setArchiveFile(
   af->set_fileid(archiveFile.fileId);
   af->set_lastmodificationtime(archiveFile.lastModificationTime);
   af->set_nshostname(archiveFile.nsHostName);
-  af->set_path(archiveFile.path);
   af->set_size(archiveFile.size);
 }
 
@@ -166,9 +165,8 @@ cta::common::archiveNS::ArchiveFile cta::objectstore::ArchiveToFileRequest::getA
   auto fileId = m_payload.archivefile().fileid();
   const time_t lastModificationTime = m_payload.archivefile().lastmodificationtime();
   auto nsHostName = m_payload.archivefile().nshostname();
-  auto path = m_payload.archivefile().path();
   auto size = m_payload.archivefile().size();
-  return common::archiveNS::ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
+  return common::archiveNS::ArchiveFile{nsHostName, fileId, size, checksum, lastModificationTime};
 }
 
 
@@ -178,7 +176,7 @@ void cta::objectstore::ArchiveToFileRequest::setRemoteFile(
   m_payload.mutable_remotefile()->set_mode(remoteFile.status.mode);
   m_payload.mutable_remotefile()->set_size(remoteFile.status.size);
   m_payload.mutable_remotefile()->set_path(remoteFile.path.getRaw());
-  cta::objectstore::UserIdentity ui(remoteFile.status.owner.uid, remoteFile.status.owner.gid);
+  cta::objectstore::UserIdentity ui(remoteFile.status.owner);
   ui.serialize(*m_payload.mutable_remotefile()->mutable_owner());
 }
 
@@ -205,15 +203,15 @@ uint64_t cta::objectstore::ArchiveToFileRequest::getPriority() {
 }
 
 
-void cta::objectstore::ArchiveToFileRequest::setCreationLog(
-  const objectstore::CreationLog& creationLog) {
+void cta::objectstore::ArchiveToFileRequest::setEntryLog(
+  const objectstore::EntryLog& creationLog) {
   checkPayloadWritable();
   creationLog.serialize(*m_payload.mutable_log());
 }
 
-auto cta::objectstore::ArchiveToFileRequest::getCreationLog() -> CreationLog {
+auto cta::objectstore::ArchiveToFileRequest::getCreationLog() -> EntryLog {
   checkPayloadReadable();
-  CreationLog ret;
+  EntryLog ret;
   ret.deserialize(m_payload.log());
   return ret;
 }
@@ -224,7 +222,7 @@ void cta::objectstore::ArchiveToFileRequest::setArchiveToDirRequestAddress(
   m_payload.set_archivetodiraddress(dirRequestAddress);
 }
 
-auto cta::objectstore::ArchiveToFileRequest::dumpJobs() -> std::list<JobDump> {
+std::list<cta::objectstore::ArchiveToFileRequest::JobDump> cta::objectstore::ArchiveToFileRequest::dumpJobs() {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl = m_payload.jobs();
@@ -232,101 +230,9 @@ auto cta::objectstore::ArchiveToFileRequest::dumpJobs() -> std::list<JobDump> {
     ret.push_back(JobDump());
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
-    ret.back().tapePoolAddress = j->tapepooladdress();
+    ret.back().ArchiveQueueAddress = j->archivequeueaddress();
   }
   return ret;
-}
-
-void cta::objectstore::ArchiveToFileRequest::garbageCollect(const std::string &presumedOwner) {
-  checkPayloadWritable();
-  // The behavior here depends on which job the agent is supposed to own.
-  // We should first find this job (if any). This is for covering the case
-  // of a selected job. The Request could also still being connected to tape
-  // pools. In this case we will finish the connection to tape pools unconditionally.
-  auto * jl = m_payload.mutable_jobs();
-  auto s= m_payload.remotefile().size();
-  s=s;
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    auto owner=j->owner();
-    auto status=j->status();
-    if (status==serializers::AJS_LinkingToTapePool ||
-        (status==serializers::AJS_Selected && owner==presumedOwner)) {
-        // If the job was being connected to the tape pool or was selected
-        // by the dead agent, then we have to ensure it is indeed connected to
-        // the tape pool and set its status to pending.
-        // (Re)connect the job to the tape pool and make it pending.
-        // If we fail to reconnect, we have to fail the job and potentially
-        // finish the request.
-      try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        JobDump jd;
-        jd.copyNb = j->copynb();
-        jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addJobIfNecessary(jd, getAddressIfSet(), 
-          m_payload.archivefile().path(), m_payload.remotefile().size()))
-          tp.commit();
-        j->set_status(serializers::AJS_PendingMount);
-        commit();
-      } catch (...) {
-        j->set_status(serializers::AJS_Failed);
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary())
-          return;
-      }
-    } else if (status==serializers::AJS_PendingNsCreation) {
-      // If the job is pending NsCreation, we have to queue it in the tape pool's
-      // queue for files orphaned pending ns creation. Some user process will have
-      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
-      try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        JobDump jd;
-        jd.copyNb = j->copynb();
-        jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile().path(), m_payload.remotefile().size()))
-          tp.commit();
-      } catch (...) {
-        j->set_status(serializers::AJS_Failed);
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary())
-          return;
-      }
-    } else if (status==serializers::AJS_PendingNsDeletion) {
-      // If the job is pending NsDeletion, we have to queue it in the tape pool's
-      // queue for files orphaned pending ns deletion. Some user process will have
-      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
-      try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        JobDump jd;
-        jd.copyNb = j->copynb();
-        jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefile().path(), m_payload.remotefile().size()))
-          tp.commit();
-        j->set_status(serializers::AJS_PendingMount);
-        commit();
-      } catch (...) {
-        j->set_status(serializers::AJS_Failed);
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary())
-          return;
-      }
-    } else {
-      return;
-    }
-  }
 }
 
 void cta::objectstore::ArchiveToFileRequest::setJobOwner(
@@ -374,7 +280,6 @@ std::string cta::objectstore::ArchiveToFileRequest::dump() {
   json_object_object_add(jaf, "fileid", json_object_new_int(m_payload.archivefile().fileid()));
   json_object_object_add(jaf, "lastmodificationtime", json_object_new_int64(m_payload.archivefile().lastmodificationtime()));
   json_object_object_add(jaf, "nshostname", json_object_new_string(m_payload.archivefile().nshostname().c_str()));
-  json_object_object_add(jaf, "path", json_object_new_string(m_payload.archivefile().path().c_str()));
   json_object_object_add(jaf, "size", json_object_new_int64(m_payload.archivefile().size()));
   json_object_object_add(jo, "archiveFile", jaf);
   // Array for jobs
@@ -391,7 +296,7 @@ std::string cta::objectstore::ArchiveToFileRequest::dump() {
     json_object_object_add(jj, "retrieswithinmount", json_object_new_int64(j->retrieswithinmount()));
     json_object_object_add(jj, "status", json_object_new_int64(j->status()));
     json_object_object_add(jj, "tapepool", json_object_new_string(j->tapepool().c_str()));
-    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->tapepooladdress().c_str()));
+    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->archivequeueaddress().c_str()));
     json_object_object_add(jj, "totalRetries", json_object_new_int64(j->totalretries()));
     json_object_array_add(jja, jj);
   }

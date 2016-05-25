@@ -131,7 +131,7 @@ namespace {
 }
 
 void cta::objectstore::DriveRegister::addDrive(const std::string & driveName,
-    const std::string & logicalLibrary, const CreationLog & creationLog) { 
+    const std::string & logicalLibrary, const EntryLog & creationLog) { 
   //add logical library to the parameters
   checkPayloadWritable();
   // Check that we are not trying to duplicate a drive
@@ -279,9 +279,8 @@ void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& drive
     if (!alreadyInSessionStatuses.count((int)status)) {
       // TODO: the creation should be moved to another place to better logging
       // Explicitely by scheduler? To be decided.
-      CreationLog cl(UserIdentity(0,0), "", reportTime, "Automatic creation of "
-          "drive on status report");
-      addDrive(driveName, logicalLibary, cl);
+      EntryLog el(UserIdentity("name0","group0"), "", reportTime);
+      addDrive(driveName, logicalLibary, el);
     } else {
       throw NoSuchDrive("In DriveRegister::reportDriveStatus(): No such drive");
     }

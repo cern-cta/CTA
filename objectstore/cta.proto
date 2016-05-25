@@ -22,16 +22,14 @@ enum ObjectType {
   RootEntry_t = 0;
   AgentRegister_t = 1;
   Agent_t = 2;
-  TapePool_t = 3;
-  DriveRegister_t = 4;
-  Tape_t = 5;
+  DriveRegister_t = 3;
   ArchiveToFileRequest_t = 6;
   RetrieveToFileRequest_t = 7;
   SchedulerGlobalLock_t = 8;
   ArchiveRequest_t = 9;
   RetrieveRequest_t = 10;
-  TapePoolQueue_t = 11;
-  TapeQueue_t = 12;
+  ArchiveQueue_t = 11;
+  RetrieveQueue_t = 12;
   GenericObject_t = 1000;
 }
 
@@ -84,8 +82,8 @@ message GenericObject {
 
 // A user information record
 message UserIdentity {
-  required uint32 uid = 10;
-  required uint32 gid = 11;
+  required string name = 10;
+  required string group = 11;
 }
 
 // The creation log attached to each element
@@ -94,46 +92,6 @@ message CreationLog {
   required string host = 21;
   required uint64 time = 22;
   optional string comment = 23;
-}
-
-// The admin host
-message AdminHost {
-  required string hostname = 30;
-  required CreationLog log = 31;
-}
-
-message AdminUser {
-  required UserIdentity user = 40;
-  required CreationLog log = 41;
-}
-
-// The Archive route
-message ArchiveRoute {
-  required uint32 copynb = 50;
-  required string tapepool = 51;
-  required CreationLog log = 52;
-}
-
-// The Storage Class
-message StorageClass {
-  required string name = 60;
-  required uint32 copycount = 61;
-  repeated ArchiveRoute routes = 62;
-  required CreationLog log = 63;
-}
-
-// Pointer to a tape pool (tape pool defined further)
-message TapePoolPointer {
-  required string name = 70;
-  required string address  = 71;
-  required uint32 nbpartialtapes = 72;
-  required CreationLog log = 73;
-}
-
-// Description of a library
-message Library {
-  required string name = 80;
-  required CreationLog log = 81;
 }
 
 // Pointer to the drive register (register defined further)
@@ -154,8 +112,8 @@ message SchedulerGlobalLockPointer {
   required CreationLog log = 111;
 }
 
-// Pointer to the tapepool queue
-message TapePoolQueuePointer {
+// Pointer to the archive queue
+message ArchiveQueuePointer {
   required string address = 120;
   required string name = 121;
 }
@@ -169,12 +127,7 @@ message TapeQueuePointer {
 // The root entry. This entry contains all the most static information, i.e.
 // the admin handled configuration information
 message RootEntry {
-  repeated AdminHost adminhosts = 1000;
-  repeated AdminUser adminusers = 1010;
-  repeated StorageClass storageclasses = 1020;
-  repeated TapePoolPointer tapepoolpointers = 1030;
-  repeated Library libraries = 1040;
-  repeated TapePoolQueuePointer tapepoolqueuepointers = 1050; //new queues by tapepool name that will replace the old archive queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
+  repeated ArchiveQueuePointer archivequeuepointers = 1050;
   repeated TapeQueuePointer tapequeuepointers = 1060; //new queues by tape vid that will replace the old retrieve queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
@@ -214,7 +167,7 @@ message AgentRegister {
 // ------------- Jobs handling -------------------------------------------------
 
 message ArchiveJobPointer {
-  required string path = 3000;
+  required uint64 fileid = 3000;
   required uint64 size = 3001;
   required string address = 3002;
   required uint32 copynb = 3003;
@@ -235,76 +188,12 @@ message MountCriteria {
   required uint32 quota = 3203;
 }
 
-// ------------- Tape pools  ---------------------------------------------------
-
-message TapePointer {
-  required string vid = 4000;
-  required string address  = 4001;
-  required string library = 4002;
-  required uint64 capacity = 4003;
-  required CreationLog log = 4004;
-}
-
-message TapePool {
-  required string name = 4100;
-  repeated TapePointer tapes = 4101;
-  repeated ArchiveJobPointer pendingarchivejobs = 4102;
-  repeated ArchiveJobPointer orphanedarchivejobsnscreation = 4103;
-  repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 4104;
-  required uint64 ArchiveJobsTotalSize = 4105;
-  required uint64 oldestJobCreationTime = 4106;
-  required MountCriteria archivemountcriteria = 4107;
-  required MountCriteria retievemountcriteria = 4108;
-  required uint64 priority = 4109;
-  required uint32 maxretriespermount = 4110;
-  required uint32 maxtotalretries = 4111;
-}
-
-// ------------- Tape ----------------------------------------------------------
-
-message MountInfo {
-  required string host = 4200;
-  required string drivevendor = 4201;
-  required string drivemodel = 4202;
-  required string driveserial = 4203;
-  required string drivename = 4204;
-  required uint64 time = 4205;
-}
-
-message Tape {
-  required string vid = 4300;
-  required string logicallibrary = 4301;
-  // Statistics about what is stored in the tape
-  required uint64 lastfseq = 4302;
-  required uint64 bytesstored = 4303;
-  // Tape lifetime statistics
-  repeated MountInfo readmounts = 4304;
-  repeated MountInfo writemounts = 4305;
-  // Information about retrive jobs queued on this tape
-  repeated RetrieveJobPointer retrievejobs = 4306;
-  required uint64 retrievejobstotalsize = 4307;
-  required uint64 oldestjobtime = 4308;
-  required uint64 priority = 4309;
-  // There are no per tape mount criteria/quotas (they are per tape pool).
-  // Tape status
-  required bool busy = 4310;
-  required MountType currentmounttype = 4311;
-  required MountInfo currentmount = 4312;
-  required bool archived = 4313;
-  required bool disabled = 4314;
-  required bool readonly = 4315;
-  required bool full = 4316;
-  // Creation log
-  required CreationLog log = 4317;
-}
-
 message ArchiveFile {
-  required string path = 4350;
-  required string nsHostName = 4351;
-  required uint64 fileId = 4352;
-  required uint64 size = 4353;
-  required uint32 checksum = 4354;
-  required uint64 lastModificationTime = 4355;
+  required string nsHostName = 4350;
+  required uint64 fileId = 4351;
+  required uint64 size = 4352;
+  required uint32 checksum = 4353;
+  required uint64 lastModificationTime = 4354;
 }
 
 // ------------- Archive Jobs --------------------------------------------------
@@ -315,7 +204,7 @@ message ArchiveFile {
 
 enum ArchiveJobStatus {
   AJS_PendingNsCreation = 0;
-  AJS_LinkingToTapePool = 1;
+  AJS_LinkingToArchiveQueue = 1;
   AJS_PendingMount = 2;
   AJS_PendingNsDeletion = 99;
   AJS_Selected = 3;
@@ -333,7 +222,7 @@ message FilePathAndStatus {
 message ArchiveJobEntry {
   required uint32 copynb = 4400;
   required string tapepool = 4401;
-  required string tapepooladdress = 4402;
+  required string archivequeueaddress = 4402;
   required string owner = 4403;
   required ArchiveJobStatus status = 4404;
   required uint32 totalretries = 4405;
@@ -495,7 +384,7 @@ message RetrieveRequest {
   repeated RetrieveJobEntry jobs = 9152;
 }
 
-message TapePoolQueue {
+message ArchiveQueue {
   required string tapepoolname = 10000;
   repeated ArchiveJobPointer pendingarchivejobs = 10010;
   repeated ArchiveJobPointer orphanedarchivejobsnscreation = 10020;
@@ -504,7 +393,7 @@ message TapePoolQueue {
   required uint64 oldestJobCreationTime = 10050;
 }
 
-message TapeQueue {
+message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveJobPointer retrievejobs = 10110;
   required uint64 retrievejobstotalsize = 10120;

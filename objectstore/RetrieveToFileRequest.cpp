@@ -18,7 +18,7 @@
 
 #include "RetrieveToFileRequest.hpp"
 #include "GenericObject.hpp"
-#include "CreationLog.hpp"
+#include "EntryLog.hpp"
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
 
@@ -81,7 +81,6 @@ void cta::objectstore::RetrieveToFileRequest::setArchiveFile(
   af->set_fileid(archiveFile.fileId);
   af->set_lastmodificationtime(archiveFile.lastModificationTime);
   af->set_nshostname(archiveFile.nsHostName);
-  af->set_path(archiveFile.path);
   af->set_size(archiveFile.size);
 }
 
@@ -91,9 +90,8 @@ cta::common::archiveNS::ArchiveFile cta::objectstore::RetrieveToFileRequest::get
   auto fileId = m_payload.archivefile().fileid();
   const time_t lastModificationTime = m_payload.archivefile().lastmodificationtime();
   auto nsHostName = m_payload.archivefile().nshostname();
-  auto path = m_payload.archivefile().path();
   auto size = m_payload.archivefile().size();
-  return common::archiveNS::ArchiveFile{path, nsHostName, fileId, size, checksum, lastModificationTime};
+  return common::archiveNS::ArchiveFile{nsHostName, fileId, size, checksum, lastModificationTime};
 }
 
 void cta::objectstore::RetrieveToFileRequest::setRemoteFile(
@@ -117,15 +115,15 @@ uint64_t cta::objectstore::RetrieveToFileRequest::getPriority() {
   return m_payload.priority();
 }
 
-void cta::objectstore::RetrieveToFileRequest::setCreationLog(
-  const objectstore::CreationLog& creationLog) {
+void cta::objectstore::RetrieveToFileRequest::setEntryLog(
+  const objectstore::EntryLog& creationLog) {
   checkPayloadWritable();
   creationLog.serialize(*m_payload.mutable_log());
 }
 
-auto cta::objectstore::RetrieveToFileRequest::getCreationLog() -> CreationLog {
+auto cta::objectstore::RetrieveToFileRequest::getEntryLog() -> EntryLog {
   checkPayloadReadable();
-  CreationLog ret;
+  EntryLog ret;
   ret.deserialize(m_payload.log());
   return ret;
 }
@@ -191,7 +189,6 @@ std::string cta::objectstore::RetrieveToFileRequest::dump() {
   json_object_object_add(jaf, "fileid", json_object_new_int(m_payload.archivefile().fileid()));
   json_object_object_add(jaf, "lastmodificationtime", json_object_new_int64(m_payload.archivefile().lastmodificationtime()));
   json_object_object_add(jaf, "nshostname", json_object_new_string(m_payload.archivefile().nshostname().c_str()));
-  json_object_object_add(jaf, "path", json_object_new_string(m_payload.archivefile().path().c_str()));
   json_object_object_add(jaf, "size", json_object_new_int64(m_payload.archivefile().size()));
   json_object_object_add(jo, "archiveFile", jaf);
   // Array for jobs

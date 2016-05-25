@@ -43,13 +43,8 @@ public:
    * @param checksum The file checksum
    * @param lastModificationTime The last modification time of the file
    */
-  ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
+  ArchiveFile(const std::string & nsHostName, uint64_t fileId, 
     uint64_t size, const uint32_t checksum, const time_t lastModificationTime);
-  
-  /**
-   * The location of the file at NS lookup time
-   */
-  std::string path;
   
   /**
    * The NS host name
@@ -57,7 +52,7 @@ public:
   std::string nsHostName;
   
   /**
-   * The file ID (to be used in the tape copy header)
+   * The file ID
    */
   uint64_t fileId;
   

@@ -31,7 +31,7 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", time(NULL), "Initial creation of the  object store structures");
+  cta::objectstore::EntryLog cl(cta::common::dataStructures::UserIdentity("user0", "group0"), "systemhost", time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
   rel.release();
   m_agent.insertAndRegisterSelf();

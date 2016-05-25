@@ -30,7 +30,7 @@
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/DummyScheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"

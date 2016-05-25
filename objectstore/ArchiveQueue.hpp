@@ -24,9 +24,9 @@
 #include "objectstore/cta.pb.h"
 #include "common/CreationLog.hpp"
 #include "common/MountControl.hpp"
-#include "ArchiveToFileRequest.hpp"
 #include "ArchiveRequest.hpp"
-#include "CreationLog.hpp"
+#include "ArchiveRequest.hpp"
+#include "EntryLog.hpp"
 #include "Agent.hpp"
 #include "common/archiveNS/Tape.hpp"
 
@@ -34,13 +34,13 @@ namespace cta { namespace objectstore {
   
 class GenericObject;
 
-class TapePoolQueue: public ObjectOps<serializers::TapePoolQueue, serializers::TapePoolQueue_t> {
+class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
 public:
   // Constructor
-  TapePoolQueue(const std::string & address, Backend & os);
+  ArchiveQueue(const std::string & address, Backend & os);
   
   // Upgrader form generic object
-  TapePoolQueue(GenericObject & go);
+  ArchiveQueue(GenericObject & go);
 
   // In memory initialiser
   void initialize(const std::string & name);
@@ -51,23 +51,23 @@ public:
   
   // Archive jobs management ===================================================  
   void addJob(const ArchiveRequest::JobDump & job,
-    const std::string & archiveToFileAddress, const std::string & path,
+    const std::string & archiveToFileAddress, uint64_t fileid,
     uint64_t size, uint64_t priority, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
     const std::string & archiveToFileAddress, 
-    const std::string & path, uint64_t size);
+    uint64_t fileid, uint64_t size);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,
-    const std::string& archiveToFileAddress, const std::string & path,
+    const std::string& archiveToFileAddress, uint64_t fileid,
     uint64_t size);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsDeletion(const ArchiveRequest::JobDump& job,
     const std::string& archiveToFileAddress,
-    const std::string & path, uint64_t size);
+    uint64_t fileid, uint64_t size);
   
   struct JobsSummary {
     uint64_t files;
@@ -85,6 +85,10 @@ public:
     uint16_t copyNb;
   };
   std::list<JobDump> dumpJobs();
+  
+  // Mount criteria jobs management ============================================
+  void setMountPolicy(const common::dataStructures::MountPolicy& mountPolicy);
+  common::dataStructures::MountPolicy getMountPolicy();
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

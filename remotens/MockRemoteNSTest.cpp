@@ -39,7 +39,7 @@ TEST_F(cta_MockRemoteNSTest, createNonExistingFile) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFREG|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   const RemoteFileStatus status(owner, mode, size);
@@ -65,7 +65,7 @@ TEST_F(cta_MockRemoteNSTest, createExistingFile) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFREG|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   const RemoteFileStatus status(owner, mode, size);
@@ -78,7 +78,7 @@ TEST_F(cta_MockRemoteNSTest, createNonExistingDir) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFDIR|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   const RemoteFileStatus status(owner, mode, size);
@@ -104,7 +104,7 @@ TEST_F(cta_MockRemoteNSTest, createExistingDir) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFDIR|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   RemoteFileStatus status(owner, mode, size);
@@ -117,7 +117,7 @@ TEST_F(cta_MockRemoteNSTest, statFile) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFREG|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   RemoteFileStatus status(owner, mode, size);
@@ -135,7 +135,7 @@ TEST_F(cta_MockRemoteNSTest, rename) {
   using namespace cta;
 
   MockRemoteNS rns;
-  const UserIdentity owner(1,2);
+  const cta::common::dataStructures::UserIdentity owner("user0", "group0");
   const mode_t mode(S_IFREG|S_IRWXU|S_IRWXG|S_IRWXO);
   const uint64_t size = 50;
   RemoteFileStatus status(owner, mode, size);

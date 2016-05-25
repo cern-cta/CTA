@@ -29,7 +29,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class CreationLog;
+class EntryLog;
 
 class RetrieveToFileRequest: public ObjectOps<serializers::RetrieveToFileRequest, serializers::RetrieveToFileRequest_t> {
 public:
@@ -79,8 +79,8 @@ public:
   std::string getRemoteFile();
   void setPriority (uint64_t priority);
   uint64_t getPriority();
-  void setCreationLog (const objectstore::CreationLog& creationLog);
-  CreationLog getCreationLog();
+  void setEntryLog (const objectstore::EntryLog& entryLog);
+  objectstore::EntryLog getEntryLog();
   void setRetrieveToDirRequestAddress(const std::string & dirRequestAddress);
   void setSize(uint64_t size);
   uint64_t getSize();

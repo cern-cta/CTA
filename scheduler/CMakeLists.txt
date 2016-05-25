@@ -7,7 +7,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   UserArchiveRequest.cpp
-  ArchiveToFileRequest.cpp
   ArchiveToTapeCopyRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp

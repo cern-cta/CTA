@@ -70,7 +70,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
     dummyInitialProcess,"testTapeDrive",  lc, pollPeriod);
   
   watchdog.startThread();
-  watchdog.notifyBeginNewJob("/hey/ho/lets/go", 64, 64);
+  watchdog.notifyBeginNewJob(64, 64);
   usleep(100000);
   watchdog.stopAndWaitThread();
   // This time the internal watchdog should have triggered

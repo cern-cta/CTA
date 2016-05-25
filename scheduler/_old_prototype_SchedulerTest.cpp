@@ -22,7 +22,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"

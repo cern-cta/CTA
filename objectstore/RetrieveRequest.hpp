@@ -31,7 +31,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class CreationLog;
+class EntryLog;
 
 class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t> {
 public:

@@ -17,37 +17,40 @@
  */
 
 #include <gtest/gtest.h>
-#include "Tape.hpp"
+#include "RetrieveQueue.hpp"
 #include "BackendVFS.hpp"
 #include "Agent.hpp"
 
 namespace unitTests {
   
-TEST(ObjectStore, TapeBasicAccess) {
+TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTest");
-  std::string tapeAddress = agent.nextId("Tape");
+  std::string retrieveQueueAddress = agent.nextId("RetrieveQueue");
   { 
     // Try to create the tape entry
-    cta::objectstore::Tape t(tapeAddress, be);
-    cta::CreationLog cl(cta::UserIdentity(123,456), "testHost", time(NULL), "Unit test");
-    t.initialize("V12345", "LIB0", cl);
-    t.insert();
+    cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
+    cta::common::dataStructures::EntryLog el;
+    el.user=cta::common::dataStructures::UserIdentity("user0", "group0");
+    el.host="unittesthost";
+    el.time=time(NULL);
+    rq.initialize("V12345", "LIB0", el);
+    rq.insert();
   }
   {
     // Try to read back and dump the tape
-    cta::objectstore::Tape t(tapeAddress, be);
-    ASSERT_THROW(t.fetch(), cta::exception::Exception);
-    cta::objectstore::ScopedSharedLock lock(t);
-    ASSERT_NO_THROW(t.fetch());
-    t.dump();
+    cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
+    ASSERT_THROW(rq.fetch(), cta::exception::Exception);
+    cta::objectstore::ScopedSharedLock lock(rq);
+    ASSERT_NO_THROW(rq.fetch());
+    rq.dump();
   }
   // Delete the root entry
-  cta::objectstore::Tape t(tapeAddress, be);
-  cta::objectstore::ScopedExclusiveLock lock(t);
-  t.fetch();
-  t.removeIfEmpty();
-  ASSERT_FALSE(t.exists());
+  cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
+  cta::objectstore::ScopedExclusiveLock lock(rq);
+  rq.fetch();
+  rq.removeIfEmpty();
+  ASSERT_FALSE(rq.exists());
 }
 }

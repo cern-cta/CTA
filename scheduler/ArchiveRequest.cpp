@@ -16,24 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToFileRequest::ArchiveToFileRequest() {
+cta::ArchiveRequest::ArchiveRequest() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveToFileRequest::~ArchiveToFileRequest() throw() {
+cta::ArchiveRequest::~ArchiveRequest() throw() {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveToFileRequest::ArchiveToFileRequest(
+cta::ArchiveRequest::ArchiveRequest(
   const RemotePathAndStatus &remoteFile,
   const cta::common::archiveNS::ArchiveFile &archiveFile,
   const std::map<uint16_t, std::string> &copyNbToPoolMap,

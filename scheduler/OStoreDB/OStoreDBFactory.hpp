@@ -53,128 +53,48 @@ public:
   
   ~OStoreDBWrapper() throw () {}
 
-  virtual void createArchiveRoute(const std::string& storageClassName, const uint16_t copyNb, const std::string& tapePoolName, const CreationLog& creationLog) {
-    m_OStoreDB.createArchiveRoute(storageClassName, copyNb, tapePoolName, creationLog);
+  std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
+    return m_OStoreDB.queue(request, criteria);
   }
 
-  virtual void createLogicalLibrary(const std::string& name, const cta::CreationLog& creationLog) {
-    m_OStoreDB.createLogicalLibrary(name, creationLog);
-  }
-
-  virtual void createStorageClass(const std::string& name, const uint16_t nbCopies, const CreationLog& creationLog) {
-    m_OStoreDB.createStorageClass(name, nbCopies, creationLog);
-  }
-
-  virtual void createTape(const std::string& vid, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const cta::CreationLog & creationLog) {
-    m_OStoreDB.createTape(vid, logicalLibraryName, tapePoolName, capacityInBytes, creationLog);
-  }
-
-  virtual void createTapePool(const std::string& name, const uint32_t nbPartialTapes, const CreationLog& creationLog) {
-    m_OStoreDB.createTapePool(name, nbPartialTapes, creationLog);
-  }
   
-  virtual void setTapePoolMountCriteria(const std::string& tapePool, const MountCriteriaByDirection& mountCriteriaByDirection) {
-    m_OStoreDB.setTapePoolMountCriteria(tapePool, mountCriteriaByDirection);
+  void deleteArchiveRequest(const SecurityIdentity& cliIdentity, uint64_t archiveFileId) override {
+    m_OStoreDB.deleteArchiveRequest(cliIdentity, archiveFileId);
   }
 
-  virtual void deleteArchiveRoute(const SecurityIdentity& cliIdentity, const std::string& storageClassName, const uint16_t copyNb) {
-    m_OStoreDB.deleteArchiveRoute(cliIdentity, storageClassName, copyNb);
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, uint64_t fileId) override {
+    return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, fileId);
   }
 
-  virtual void deleteArchiveRequest(const SecurityIdentity& cliIdentity, const std::string& archiveFile) {
-    m_OStoreDB.deleteArchiveRequest(cliIdentity, archiveFile);
-  }
-
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, const std::string &archiveFile) {
-    return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, archiveFile);
-  }
-
-  virtual void deleteLogicalLibrary(const SecurityIdentity& cliIdentity, const std::string& name) {
-    m_OStoreDB.deleteLogicalLibrary(cliIdentity, name);
-  }
-
-  virtual void deleteRetrieveRequest(const SecurityIdentity& cliIdentity, const std::string& remoteFile) {
+  virtual void deleteRetrieveRequest(const SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 
-  virtual void deleteStorageClass(const SecurityIdentity& cliIdentity, const std::string& name) {
-    m_OStoreDB.deleteStorageClass(cliIdentity, name);
-  }
-
-  virtual void deleteTape(const SecurityIdentity& cliIdentity, const std::string& vid) {
-    m_OStoreDB.deleteTape(cliIdentity, vid);
-  }
-
-  virtual void deleteTapePool(const SecurityIdentity& cliIdentity, const std::string& name) {
-    m_OStoreDB.deleteTapePool(cliIdentity, name);
-  }
-
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const {
-    return m_OStoreDB.getArchiveRoutes(storageClassName);
-  }
-
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const{ 
-    return m_OStoreDB.getArchiveRoutes();
-  }
-
-  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const {
+  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const override {
     return m_OStoreDB.getArchiveRequests(tapePoolName);
   }
 
-  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const {
+  virtual std::map<std::string, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const override {
     return m_OStoreDB.getArchiveRequests();
   }
 
-  virtual std::list<LogicalLibrary> getLogicalLibraries() const {
-    return m_OStoreDB.getLogicalLibraries();
-  }
-
-  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const {
+  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
     return m_OStoreDB.getRetrieveRequests();
   }
 
-  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const {
+  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const override {
     return m_OStoreDB.getRetrieveRequests(vid);
   }
   
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() {
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
   }
 
-  virtual StorageClass getStorageClass(const std::string& name) const {
-    return m_OStoreDB.getStorageClass(name);
-  }
-
-  virtual std::list<StorageClass> getStorageClasses() const {
-    return m_OStoreDB.getStorageClasses();
-  }
-
-  virtual std::list<TapePool> getTapePools() const {
-    return m_OStoreDB.getTapePools();
-  }
-
-  virtual Tape getTape(const std::string &vid) const {
-    return m_OStoreDB.getTape(vid);
-  }
-
-  virtual std::list<Tape> getTapes() const {
-    return m_OStoreDB.getTapes();
-  }
-
-  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest& rqst) {
-    return m_OStoreDB.queue(rqst);
-  }
-
-  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId, 
-          const std::map<uint64_t, std::string> &copyNbToPoolMap, const cta::common::dataStructures::MountPolicy &mountPolicy) {
-    return m_OStoreDB.queue(request, archiveFileId, copyNbToPoolMap, mountPolicy);
-  }
-
-  virtual void queue(const RetrieveToFileRequest& rqst) {
+  virtual void queue(const RetrieveToFileRequest& rqst) override {
     m_OStoreDB.queue(rqst);
   }
   
-  virtual std::list<cta::common::DriveState> getDriveStates() const {
+  virtual std::list<cta::common::DriveState> getDriveStates() const override {
     return m_OStoreDB.getDriveStates();
   }
 private:
@@ -196,8 +116,8 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost",
-          time(NULL), "Initial creation of the  object store structures");
+  objectstore::EntryLog cl(cta::common::dataStructures::UserIdentity("user0", "group0"), "systemhost",
+          time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();
@@ -228,8 +148,8 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost",
-          time(NULL), "Initial creation of the  object store structures");
+  objectstore::EntryLog cl(cta::common::dataStructures::UserIdentity("user0", "group0"), "systemhost",
+          time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();

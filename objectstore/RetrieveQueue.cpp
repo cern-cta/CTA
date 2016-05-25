@@ -16,25 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "TapeQueue.hpp"
+#include "RetrieveQueue.hpp"
 #include "GenericObject.hpp"
-#include "CreationLog.hpp"
+#include "EntryLog.hpp"
 #include <json-c/json.h>
 
-cta::objectstore::TapeQueue::TapeQueue(const std::string& address, Backend& os):
-  ObjectOps<serializers::TapeQueue, serializers::TapeQueue_t>(os, address) { }
+cta::objectstore::RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) { }
 
-cta::objectstore::TapeQueue::TapeQueue(GenericObject& go):
-  ObjectOps<serializers::TapeQueue, serializers::TapeQueue_t>(go.objectStore()){
+cta::objectstore::RetrieveQueue::RetrieveQueue(GenericObject& go):
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(go.objectStore()){
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
   getPayloadFromHeader();
 }
 
-void cta::objectstore::TapeQueue::initialize(const std::string &name, 
-    const std::string &logicallibrary, const cta::CreationLog & creationLog) {
-  ObjectOps<serializers::TapeQueue, serializers::TapeQueue_t>::initialize();
+void cta::objectstore::RetrieveQueue::initialize(const std::string &name, 
+    const std::string &logicallibrary, const cta::common::dataStructures::EntryLog & entryLog) {
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields
   m_payload.set_oldestjobtime(0);
   m_payload.set_retrievejobstotalsize(0);
@@ -42,12 +42,12 @@ void cta::objectstore::TapeQueue::initialize(const std::string &name,
 }
 
 
-bool cta::objectstore::TapeQueue::isEmpty() {
+bool cta::objectstore::RetrieveQueue::isEmpty() {
   checkPayloadReadable();
   return !m_payload.retrievejobs_size();
 }
 
-void cta::objectstore::TapeQueue::removeIfEmpty() {
+void cta::objectstore::RetrieveQueue::removeIfEmpty() {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw NotEmpty("In TapeQueue::removeIfEmpty: trying to remove an tape with retrieves queued");
@@ -55,12 +55,12 @@ void cta::objectstore::TapeQueue::removeIfEmpty() {
   remove();
 }
 
-std::string cta::objectstore::TapeQueue::getVid() {
+std::string cta::objectstore::RetrieveQueue::getVid() {
   checkPayloadReadable();
   return m_payload.vid();
 }
 
-std::string cta::objectstore::TapeQueue::dump() {  
+std::string cta::objectstore::RetrieveQueue::dump() {  
   checkPayloadReadable();
   std::stringstream ret;
   ret << "TapePool" << std::endl;
@@ -87,7 +87,7 @@ std::string cta::objectstore::TapeQueue::dump() {
   return ret.str();
 }
 
-void cta::objectstore::TapeQueue::addJob(const RetrieveToFileRequest::JobDump& job,
+void cta::objectstore::RetrieveQueue::addJob(const RetrieveToFileRequest::JobDump& job,
   const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
   time_t startTime) {
   checkPayloadWritable();
@@ -107,7 +107,7 @@ void cta::objectstore::TapeQueue::addJob(const RetrieveToFileRequest::JobDump& j
   j->set_copynb(job.copyNb);
 }
 
-cta::objectstore::TapeQueue::JobsSummary cta::objectstore::TapeQueue::getJobsSummary() {
+cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
   checkPayloadReadable();
   JobsSummary ret;
   ret.bytes = m_payload.retrievejobstotalsize();
@@ -116,7 +116,7 @@ cta::objectstore::TapeQueue::JobsSummary cta::objectstore::TapeQueue::getJobsSum
   return ret;
 }
 
-auto cta::objectstore::TapeQueue::dumpAndFetchRetrieveRequests() 
+auto cta::objectstore::RetrieveQueue::dumpAndFetchRetrieveRequests() 
   -> std::list<RetrieveRequestDump> {
   checkPayloadReadable();
   std::list<RetrieveRequestDump> ret;
@@ -130,7 +130,7 @@ auto cta::objectstore::TapeQueue::dumpAndFetchRetrieveRequests()
       auto & retReq = ret.back();
       retReq.archiveFile = rtfr.getArchiveFile();
       retReq.remoteFile = rtfr.getRemoteFile();
-      retReq.creationLog = rtfr.getCreationLog();
+      retReq.entryLog = rtfr.getEntryLog();
       // Find the copy number from the list of jobs
       retReq.activeCopyNb = rj->copynb();
       auto jl = rtfr.dumpJobs();
@@ -147,7 +147,7 @@ auto cta::objectstore::TapeQueue::dumpAndFetchRetrieveRequests()
   return ret;
 }
 
-auto cta::objectstore::TapeQueue::dumpJobs() -> std::list<JobDump> {
+auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & rjl = m_payload.retrievejobs();
@@ -161,7 +161,7 @@ auto cta::objectstore::TapeQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-void cta::objectstore::TapeQueue::removeJob(const std::string& retriveToFileAddress) {
+void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFileAddress) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_retrievejobs();
   bool found=false;

@@ -81,7 +81,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     
     m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
      
-    LogContext::ScopedParam sp(lc, Param("filePath",m_archiveJob->archiveFile.path));
+    LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.fileId));
     lc.log(LOG_INFO,"Opened disk file for read");
     
     while(migratingFileSize>0){

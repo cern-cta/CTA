@@ -19,7 +19,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
@@ -161,10 +161,10 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   ASSERT_EQ(1, groups.size());
   const common::dataStructures::MountPolicy group = groups.front();
   ASSERT_EQ(mountPolicyName, group.name);
-  ASSERT_EQ(archivePriority, group.archive_priority);
-  ASSERT_EQ(minArchiveRequestAge, group.archive_minRequestAge);
-  ASSERT_EQ(retrievePriority, group.retrieve_priority);
-  ASSERT_EQ(minRetrieveRequestAge, group.retrieve_minRequestAge);
+  ASSERT_EQ(archivePriority, group.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
+  ASSERT_EQ(retrievePriority, group.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
   ASSERT_EQ(mountPolicyComment, group.comment);
 
@@ -236,8 +236,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   scheduler.queueArchive(s_adminOnAdminHost, request);
 
   {
-    decltype(scheduler.getPendingArchiveJobs(s_adminOnAdminHost)) rqsts;
-    rqsts = scheduler.getPendingArchiveJobs(s_adminOnAdminHost);
+    auto rqsts = scheduler.getPendingArchiveJobs(s_adminOnAdminHost);
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());

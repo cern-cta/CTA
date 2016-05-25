@@ -18,7 +18,7 @@
 
 #include "RetrieveRequest.hpp"
 #include "GenericObject.hpp"
-#include "CreationLog.hpp"
+#include "EntryLog.hpp"
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
 

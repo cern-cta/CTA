@@ -32,8 +32,8 @@ namespace cta {
     public:
       int getJobs;
       int completes;
-      MockArchiveMount(cta::NameServer &ns): 
-        cta::ArchiveMount(ns), getJobs(0), completes(0) {}
+      MockArchiveMount(cta::catalogue::Catalogue &catalogue): 
+        cta::ArchiveMount(catalogue), getJobs(0), completes(0) {}
 
       ~MockArchiveMount() throw() {
       }
@@ -60,7 +60,7 @@ namespace cta {
       void createArchiveJobs(const unsigned int nbJobs) {
         for(unsigned int i = 0; i < nbJobs; i++) {
           m_jobs.push_back(std::unique_ptr<cta::ArchiveJob>(
-            new cta::MockArchiveJob(*this, ::cta::ArchiveMount::m_ns)));
+            new cta::MockArchiveJob(*this, ::cta::ArchiveMount::m_catalogue)));
         }
       }
     }; // class MockArchiveMount   

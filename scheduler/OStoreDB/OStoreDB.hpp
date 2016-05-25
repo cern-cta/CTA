@@ -20,7 +20,7 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
-#include "objectstore/ArchiveToFileRequest.hpp"
+#include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveToFileRequest.hpp"
@@ -53,15 +53,15 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
-    virtual std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName, const std::string& logicalLibrary, 
-      const std::string & hostName, time_t startTime);
-    virtual std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
+      const std::string & hostName, time_t startTime) override;
+    std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
-      time_t startTime);
+      time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
     TapeMountDecisionInfo (objectstore::Backend &, objectstore::Agent &);
@@ -72,7 +72,7 @@ public:
     objectstore::Agent & m_agent;
   };
 
-  virtual std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo();
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   
   /* === Archive Mount handling ============================================= */
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
@@ -83,11 +83,10 @@ public:
     objectstore::Agent & m_agent;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
-    virtual const MountInfo & getMountInfo();
-    virtual std::unique_ptr<ArchiveJob> getNextJob();
-    virtual void complete(time_t completionTime);
-    virtual void setDriveStatus(cta::common::DriveStatus status, time_t completionTime);
-    virtual void setTapeMaxFileCount(uint64_t maxFileId);
+    const MountInfo & getMountInfo() override;
+    std::unique_ptr<ArchiveJob> getNextJob() override;
+    void complete(time_t completionTime) override;
+    void setDriveStatus(cta::common::DriveStatus status, time_t completionTime) override;
   };
   
   /* === Archive Job Handling =============================================== */
@@ -96,10 +95,10 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void succeed();
-    virtual void fail();
-    virtual void bumpUpTapeFileCount(uint64_t newFileCount);
-    virtual ~ArchiveJob();
+    void succeed() override;
+    void fail() override;
+    void bumpUpTapeFileCount(uint64_t newFileCount) override;
+    ~ArchiveJob() override;
   private:
     ArchiveJob(const std::string &, objectstore::Backend &,
       objectstore::Agent &, ArchiveMount &);
@@ -109,7 +108,7 @@ public:
     std::string m_tapePool;
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
-    objectstore::ArchiveToFileRequest m_atfr;
+    objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
   };
   
@@ -121,10 +120,10 @@ public:
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
   public:
-    virtual const MountInfo & getMountInfo();
-    virtual std::unique_ptr<RetrieveJob> getNextJob();
-    virtual void complete(time_t completionTime);
-    virtual void setDriveStatus(cta::common::DriveStatus status, time_t completionTime);
+    const MountInfo & getMountInfo() override;
+    std::unique_ptr<RetrieveJob> getNextJob() override;
+    void complete(time_t completionTime) override;
+    void setDriveStatus(cta::common::DriveStatus status, time_t completionTime) override;
   };
   
   /* === Retrieve Job handling ============================================== */
@@ -133,9 +132,9 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void succeed();
-    virtual void fail();
-    virtual ~RetrieveJob();
+    virtual void succeed() override;
+    virtual void fail() override;
+    virtual ~RetrieveJob() override;
   private:
     RetrieveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
     bool m_jobOwned;
@@ -147,100 +146,19 @@ public:
                                                         *  addresses filled up at queuing time */
   };
   
-  /* === Storage class handling  ============================================ */
-  virtual void createStorageClass(const std::string& name,
-    const uint16_t nbCopies, const CreationLog& creationLog);
-    
-
-  virtual StorageClass getStorageClass(const std::string& name) const;
-
-
-  virtual std::list<StorageClass> getStorageClasses() const;
-
-
-  virtual void deleteStorageClass(const SecurityIdentity& requester, 
-    const std::string& name);
-
-  /* === Archive routes handling  =========================================== */
-  virtual void createArchiveRoute(const std::string& storageClassName,
-    const uint16_t copyNb, const std::string& tapePoolName,
-    const CreationLog& creationLog);
-
-  CTA_GENERATE_EXCEPTION_CLASS(IncompleteRouting);
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName) const;
-
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const;
-
-  virtual void deleteArchiveRoute(const SecurityIdentity& requester, 
-    const std::string& storageClassName, const uint16_t copyNb);
-
-  /* === Tape pools handling  =============================================== */
-  virtual void createTapePool(const std::string& name, 
-    const uint32_t nbPartialTapes, const cta::CreationLog &creationLog);
-  
-
-  virtual void setTapePoolMountCriteria(const std::string& tapePool,
-    const MountCriteriaByDirection& mountCriteriaByDirection);
-
-
-  virtual std::list<TapePool> getTapePools() const;
-
-  virtual void deleteTapePool(const SecurityIdentity& requester, const std::string& name);
-
-  /* === Tapes handling  ==================================================== */
-  CTA_GENERATE_EXCEPTION_CLASS(TapeAlreadyExists);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchLibrary);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePool);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchTape);
-  virtual void createTape(const std::string& vid, const std::string& logicalLibraryName, 
-    const std::string& tapePoolName, const uint64_t capacityInBytes, 
-    const cta::CreationLog& creationLog);
-
-  virtual Tape getTape(const std::string &vid) const;
-
-  virtual std::list<Tape> getTapes() const;
-
-  virtual void deleteTape(const SecurityIdentity& requester, const std::string& vid);
-
-  /* === Libraries handling  ================================================ */
-  virtual void createLogicalLibrary(const std::string& name,
-    const cta::CreationLog& creationLog);
-
-  virtual std::list<LogicalLibrary> getLogicalLibraries() const;
-
-  CTA_GENERATE_EXCEPTION_CLASS(LibraryInUse);
-  virtual void deleteLogicalLibrary(const SecurityIdentity& requester, const std::string& name);
-
   /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
-  class ArchiveToFileRequestCreation: 
-   public cta::SchedulerDatabase::ArchiveToFileRequestCreation {
-  public:
-    ArchiveToFileRequestCreation(objectstore::Agent * agent, 
-      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
-      m_agent(agent), m_closed(false) {}
-    virtual void complete();
-    virtual void cancel();
-    virtual ~ArchiveToFileRequestCreation();
-  private:
-    objectstore::ArchiveToFileRequest m_request;
-    objectstore::ScopedExclusiveLock m_lock;
-    objectstore::Backend & m_objectStore;
-    objectstore::Agent * m_agent;
-    bool m_closed;
-    friend class cta::OStoreDB;
-  };
-  
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   class ArchiveRequestCreation: 
    public cta::SchedulerDatabase::ArchiveRequestCreation {
   public:
     ArchiveRequestCreation(objectstore::Agent * agent, 
       objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
       m_agent(agent), m_closed(false) {}
-    virtual void complete();
-    virtual void cancel();
-    virtual ~ArchiveRequestCreation();
+    virtual void complete() override;
+    virtual void cancel() override;
+    virtual ~ArchiveRequestCreation() override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;
@@ -249,15 +167,14 @@ public:
     bool m_closed;
     friend class cta::OStoreDB;
   };
-    
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest& rqst);
+
   
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
-  const uint64_t archiveFileId, const std::map<uint64_t, std::string> &copyNbToPoolMap, const cta::common::dataStructures::MountPolicy &mountPolicy);
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
+    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
-  virtual void deleteArchiveRequest(const SecurityIdentity& requester, const std::string& archiveFile);
+  virtual void deleteArchiveRequest(const SecurityIdentity& requester, uint64_t fileId) override;
   class ArchiveToFileRequestCancelation:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
@@ -265,35 +182,35 @@ public:
       objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
       m_agent(agent), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
-    virtual void complete();
+    void complete() override;
   private:
-    objectstore::ArchiveToFileRequest m_request;
+    objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;
     objectstore::Backend & m_objectStore;
     objectstore::Agent * m_agent;
     bool m_closed;
     friend class OStoreDB;
   };
-  virtual std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, const std::string &archiveFile);
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, uint64_t fileId) override;
 
-  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const;
+  std::map<std::string, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const override;
 
-  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const;
+  std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const override;
 
   /* === Retrieve requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  virtual void queue(const RetrieveToFileRequest& rqst_);
+  void queue(const RetrieveToFileRequest& rqst_) override;
 
-  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const;
+  std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const override;
 
-  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const;
+  std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override;
 
-  virtual void deleteRetrieveRequest(const SecurityIdentity& requester, 
-    const std::string& remoteFile);
+  void deleteRetrieveRequest(const SecurityIdentity& requester, 
+    const std::string& remoteFile) override;
   
   /* === Drive state handling  ============================================== */
-  virtual std::list<cta::common::DriveState> getDriveStates() const;
+  std::list<cta::common::DriveState> getDriveStates() const override;
 private:
   objectstore::Backend & m_objectStore;
   objectstore::Agent * m_agent;

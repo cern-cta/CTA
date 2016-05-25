@@ -32,7 +32,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class CreationLog;
+class EntryLog;
 
 class ArchiveRequest: public ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t> {
 public:
@@ -42,7 +42,7 @@ public:
   void initialize();
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & tapepooladdress);
+    const std::string & archivequeueaddress);
   void setJobFailureLimits(uint16_t copyNumber,
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
@@ -54,7 +54,7 @@ public:
   // This function returns true if the request got finished.
   bool finishIfNecessary();
   // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setAllJobsLinkingToTapePool();
+  void setAllJobsLinkingToArchiveQueue();
   // Mark all the jobs as being deleted, in case of a cancellation
   void setAllJobsFailed();
   // Mark all the jobs as pending deletion from NS.
@@ -112,9 +112,7 @@ public:
   public:
     uint16_t copyNb;
     std::string tapePool;
-    std::string tapePoolAddress;
-    std::string tapePoolQueue;
-    std::string tapePoolQueueAddress;
+    std::string ArchiveQueueAddress;
   };
   
   std::list<JobDump> dumpJobs();

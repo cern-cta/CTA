@@ -19,9 +19,8 @@
 #include "RootEntry.hpp"
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
-#include "TapePool.hpp"
-#include "TapePoolQueue.hpp"
-#include "TapeQueue.hpp"
+#include "ArchiveQueue.hpp"
+#include "RetrieveQueue.hpp"
 #include "DriveRegister.hpp"
 #include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
@@ -52,10 +51,6 @@ void cta::objectstore::RootEntry::initialize() {
 
 bool cta::objectstore::RootEntry::isEmpty() {
   checkPayloadReadable();
-  if (m_payload.storageclasses_size())
-    return false;
-  if (m_payload.tapepoolpointers_size())
-    return false;
   if (m_payload.has_driveregisterpointer() &&
       m_payload.driveregisterpointer().address().size())
     return false;
@@ -66,6 +61,10 @@ bool cta::objectstore::RootEntry::isEmpty() {
     return false;
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
+    return false;
+  if (m_payload.archivequeuepointers().size())
+    return false;
+  if (m_payload.tapequeuepointers().size())
     return false;
   return true;
 }
@@ -78,380 +77,8 @@ void cta::objectstore::RootEntry::removeIfEmpty() {
   remove();
 }
 
-
-
 // =============================================================================
-// ================ Admin Hosts manipulations ==================================
-// =============================================================================
-
-// This operator will be used in the following usage of the templated
-// findElement and removeOccurences
-namespace {
-  bool operator==(const std::string & hostName, 
-    const cta::objectstore::serializers::AdminHost & ah) {
-    return ah.hostname() == hostName;
-  }
-}
-
-void cta::objectstore::RootEntry::addAdminHost(const std::string& hostname,
-  const CreationLog& log) {
-  checkPayloadWritable();
-  // Check that the host is not listed already
-  try {
-    serializers::findElement(m_payload.adminhosts(), hostname);
-    throw DuplicateEntry("In RootEntry::addAdminHost: entry already exists");
-  } catch (serializers::NotFound &) {}
-  // Add the host
-  auto * ah = m_payload.add_adminhosts();
-  ah->set_hostname(hostname);
-  log.serialize(*ah->mutable_log());
-}
-
-void cta::objectstore::RootEntry::removeAdminHost(const std::string & hostname) {
-  checkPayloadWritable();
-  if (!serializers::isElementPresent(m_payload.adminhosts(), hostname))
-    throw NoSuchAdminHost(
-      "In RootEntry::removeAdminHost: trying to delete non-existing admin host.");
-  serializers::removeOccurences(m_payload.mutable_adminhosts(), hostname);
-}
-
-bool cta::objectstore::RootEntry::isAdminHost(const std::string& hostname) {
-  checkPayloadReadable();
-  return serializers::isElementPresent(m_payload.adminhosts(), hostname);
-}
-
-auto cta::objectstore::RootEntry::dumpAdminHosts() -> std::list<AdminHostDump> {
-  checkPayloadReadable();
-  std::list<AdminHostDump> ret;
-  auto &list=m_payload.adminhosts();
-  for (auto i=list.begin();i!=list.end(); i++) {
-    ret.push_back(AdminHostDump());
-    ret.back().hostname = i->hostname();
-    ret.back().log.deserialize(i->log());
-  }
-  return ret;
-}
-
-// =============================================================================
-// ================ Admin Users manipulations ==================================
-// =============================================================================
-
-// This operator will be used in the following usage of the templated
-// findElement and removeOccurences
-namespace {
-  bool operator==(const cta::objectstore::UserIdentity & user, 
-    const cta::objectstore::serializers::AdminUser & au) {
-    return au.user().uid() == user.uid;
-  }
-}
-
-void cta::objectstore::RootEntry::addAdminUser(const UserIdentity& user,
-  const CreationLog& log) {
-  checkPayloadWritable();
-  // Check that the user does not exists already
-  try {
-    serializers::findElement(m_payload.adminusers(), user);
-    throw DuplicateEntry("In RootEntry::addAdminUser: entry already exists");
-  } catch (serializers::NotFound &) {}
-  serializers::AdminUser * au = m_payload.add_adminusers();
-  user.serialize(*au->mutable_user());
-  log.serialize(*au->mutable_log());
-}
-
-void cta::objectstore::RootEntry::removeAdminUser(const UserIdentity& user) {
-  checkPayloadWritable();
-  if (!serializers::isElementPresent(m_payload.adminusers(), user))
-    throw NoSuchAdminUser(
-      "In RootEntry::removeAdminUser: trying to delete non-existing admin user.");
-  serializers::removeOccurences(m_payload.mutable_adminusers(), user);
-}
-
-bool cta::objectstore::RootEntry::isAdminUser(const UserIdentity& user) {
-  checkPayloadReadable();
-  return serializers::isElementPresent(m_payload.adminusers(), user);
-}
-
-std::list<cta::objectstore::RootEntry::AdminUserDump> 
-cta::objectstore::RootEntry::dumpAdminUsers() {
-  checkPayloadReadable();
-  std::list<cta::objectstore::RootEntry::AdminUserDump> ret;
-  auto &list=m_payload.adminusers();
-  for (auto i=list.begin(); i != list.end(); i++) {
-    ret.push_back(AdminUserDump());
-    ret.back().log.deserialize(i->log());
-    ret.back().user.deserialize(i->user());
-  }
-  return ret;
-}
-
-// =============================================================================
-// ========== Storage Class and archive routes manipulations ===================
-// =============================================================================
-
-// This operator will be used in the following usage of the templated
-// findElement and removeOccurences
-namespace {
-  bool operator==(const std::string & scName, 
-    const cta::objectstore::serializers::StorageClass & ssc) {
-    return ssc.name() == scName;
-  }
-}
-
-void cta::objectstore::RootEntry::checkStorageClassCopyCount(uint16_t copyCount) {
-  // We cannot have a copy count of 0
-  if (copyCount < 1) {
-    throw InvalidCopyNumber(
-      "In RootEntry::checkStorageClassCopyCount: copyCount cannot be less than 1");
-  }
-  if (copyCount > maxCopyCount) {
-    std::stringstream err;
-    err << "In RootEntry::checkStorageClassCopyCount: copyCount cannot be bigger than "
-        << maxCopyCount;
-    throw InvalidCopyNumber(err.str());
-  }
-}
-
-void cta::objectstore::RootEntry::addStorageClass(const std::string storageClass, 
-    uint16_t copyCount, const CreationLog & log) {
-  checkPayloadWritable();
-  // Check the storage class does not exist already
-  try {
-    serializers::findElement(m_payload.storageclasses(), storageClass);
-    throw DuplicateEntry("In RootEntry::addStorageClass: trying to create duplicate entry");
-  } catch (serializers::NotFound &) {}
-  // Check the copy count is valid
-  checkStorageClassCopyCount(copyCount);
-  // Insert the storage class
-  auto * sc = m_payload.mutable_storageclasses()->Add();
-  sc->set_name(storageClass);
-  sc->set_copycount(copyCount);
-  log.serialize(*sc->mutable_log());
-}
-
-void cta::objectstore::RootEntry::removeStorageClass(const std::string storageClass) {
-  checkPayloadWritable();
-  if (!serializers::isElementPresent(m_payload.storageclasses(), storageClass))
-    throw NoSuchStorageClass(
-      "In RootEntry::removeStorageClass: trying to delete non-existing storage class.");
-  if (serializers::findElement(m_payload.storageclasses(), storageClass).routes_size()) {
-    throw StorageClassHasActiveRoutes(
-      "In RootEntry::removeStorageClass: trying to delete storage class with active routes.");
-  }
-  serializers::removeOccurences(m_payload.mutable_storageclasses(), storageClass);
-}
-
-void cta::objectstore::RootEntry::setStorageClassCopyCount(
-  const std::string& storageClass, uint16_t copyCount, const CreationLog & log ) {
-  checkPayloadWritable();
-  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
-  // If we reduce the number of routes, we have to remove the extra ones.
-  if (copyCount < sc.copycount()) {
-    for (size_t i = copyCount+1; i<sc.copycount()+1; i++) {
-      serializers::removeOccurences(sc.mutable_routes(), i);
-    }
-  }
-  // update the creation log and set the count
-  sc.set_copycount(copyCount);
-}
-
-uint16_t cta::objectstore::RootEntry::getStorageClassCopyCount (
-  const std::string & storageClass) {
-  checkPayloadReadable();
-  auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
-  return sc.copycount();
-}
-
-// This operator will be used in the following usage of the findElement
-// removeOccurences
-namespace {
-  bool operator==(uint16_t copyNb, 
-    const cta::objectstore::serializers::ArchiveRoute & ar) {
-    return ar.copynb() == copyNb;
-  }
-}
-
-void cta::objectstore::RootEntry::addArchiveRoute(const std::string& storageClass,
-  uint16_t copyNb, const std::string& tapePool, const CreationLog& cl) {
-  checkPayloadWritable();
-  // Find the storageClass entry
-  if (copyNb > maxCopyCount || copyNb <= 0) {
-    std::stringstream ss;
-    ss << "In RootEntry::addArchiveRoute: invalid copy number: "  << 
-        copyNb <<  " > " << maxCopyCount;
-    throw InvalidCopyNumber(ss.str());
-  }
-  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
-  if (copyNb > sc.copycount() || copyNb <= 0) {
-    std::stringstream ss;
-    ss << "In RootEntry::addArchiveRoute: copy number out of range: " <<
-        copyNb << " >= " << sc.copycount();
-    throw InvalidCopyNumber(ss.str());
-  }
-  // Find the archive route (if it exists)
-  try {
-    // It does: update is not allowed.
-    auto &ar = serializers::findElement(sc.mutable_routes(), copyNb);
-    throw ArchiveRouteAlreadyExists("In RootEntry::addArchiveRoute: route already exists");
-    // Sanity check: is it the right route?
-    if (ar.copynb() != copyNb) {
-      throw exception::Exception(
-        "In RootEntry::addArchiveRoute: internal error: extracted wrong route");
-    }
-    throw ArchiveRouteAlreadyExists("In RootEntry::addArchiveRoute: trying to add an existing route");
-    cl.serialize(*ar.mutable_log());
-    ar.set_tapepool(tapePool);
-  } catch (serializers::NotFound &) {
-    // The route is not present yet. Add it if we do not have the same tape pool
-    // for 2 routes
-    auto & routes = sc.routes();
-    for (auto r=routes.begin(); r != routes.end(); r++) {
-      if (r->tapepool() == tapePool) {
-        throw TapePoolUsedInOtherRoute ("In RootEntry::addArchiveRoute: cannot add a second route to the same tape pool");
-      }
-    }
-    auto *ar = sc.mutable_routes()->Add();
-    cl.serialize(*ar->mutable_log());
-    ar->set_copynb(copyNb);
-    ar->set_tapepool(tapePool);
-  }
-}
-
-void cta::objectstore::RootEntry::removeArchiveRoute(
-  const std::string& storageClass, uint16_t copyNb) {
-  checkPayloadWritable();
-  // Find the storageClass entry
-  auto & sc = serializers::findElement(m_payload.mutable_storageclasses(), storageClass);
-  if (!serializers::isElementPresent(sc.routes(), copyNb))
-    throw NoSuchArchiveRoute(
-      "In RootEntry::removeArchiveRoute: trying to delete non-existing archive route.");
-  serializers::removeOccurences(sc.mutable_routes(), copyNb);
-}
-
-
-std::vector<std::string> cta::objectstore::RootEntry::getArchiveRoutes(const std::string storageClass) {
-  checkPayloadReadable();
-  auto & sc = serializers::findElement(m_payload.storageclasses(), storageClass);
-  std::vector<std::string> ret;
-  int copycount = sc.copycount();
-  copycount = copycount;
-  ret.resize(sc.copycount());
-  // If the number of routes is not right, fail.
-  if (sc.copycount() != (uint32_t) sc.routes_size()) {
-    std::stringstream err;
-    err << "In RootEntry::getArchiveRoutes: not enough routes defined: "
-        << sc.routes_size() << " found out of " << sc.copycount();
-    throw IncompleteEntry(err.str());
-  }
-  auto & list = sc.routes();
-  for (auto i = list.begin(); i!= list.end(); i++) {
-    int copyNb = i->copynb();
-    copyNb = copyNb;
-    ret[i->copynb()-1] = i->tapepool();
-  }
-  return ret;
-}
-
-auto cta::objectstore::RootEntry::dumpStorageClasses() -> std::list<StorageClassDump> {
-  checkPayloadReadable();
-  std::list<StorageClassDump> ret;
-  auto & scl = m_payload.storageclasses();
-  for (auto i=scl.begin(); i != scl.end(); i++) {
-    ret.push_back(StorageClassDump());
-    ret.back().copyCount = i->copycount();
-    ret.back().storageClass = i->name();
-    ret.back().log.deserialize(i->log());
-    auto & arl = i->routes();
-    for (auto j=arl.begin(); j!= arl.end(); j++) {
-      ret.back().routes.push_back(StorageClassDump::ArchiveRouteDump());
-      auto &r = ret.back().routes.back();
-      r.copyNumber = j->copynb();
-      r.tapePool = j->tapepool();
-      r.log.deserialize(j->log());
-    }
-  }
-  return ret;
-}
-
-auto cta::objectstore::RootEntry::dumpStorageClass(const std::string& name)
-  -> StorageClassDump {
-  checkPayloadReadable();
-  auto & scl = m_payload.storageclasses();
-  for (auto i=scl.begin(); i != scl.end(); i++) {
-    if (i->name() == name) {
-      StorageClassDump ret;
-      ret.copyCount = i->copycount();
-      ret.storageClass = i->name();
-      auto & arl = i->routes();
-      for (auto j=arl.begin(); j!= arl.end(); j++) {
-        ret.routes.push_back(StorageClassDump::ArchiveRouteDump());
-        auto &r = ret.routes.back();
-        r.copyNumber = j->copynb();
-        r.tapePool = j->tapepool();
-        r.log.deserialize(j->log());
-      }
-      return ret;
-    }
-  }
-  std::stringstream err;
-  err << "In RootEntry::dumpStorageClass: no such storage class: "
-      << name;
-  throw NoSuchStorageClass(err.str());
-}
-
-// =============================================================================
-// ========== Libraries manipulations ==========================================
-// =============================================================================
-
-// This operator will be used in the following usage of the findElement
-// removeOccurences
-namespace {
-  bool operator==(const std::string &l,
-    const cta::objectstore::serializers::Library & sl) {
-    return sl.name() == l;
-  }
-}
-
-void cta::objectstore::RootEntry::addLibrary(const std::string& library,
-    const CreationLog & log) {
-  checkPayloadWritable();
-  // Check the library does not exist aclready
-  try {
-    serializers::findElement(m_payload.libraries(), library);
-    throw DuplicateEntry("In RootEntry::addLibrary: trying to create duplicate entry");
-  } catch (serializers::NotFound &) {}
-  // Insert the library
-  auto * l = m_payload.mutable_libraries()->Add();
-  l->set_name(library);
-  log.serialize(*l->mutable_log());
-}
-
-void cta::objectstore::RootEntry::removeLibrary(const std::string& library) {
-  checkPayloadWritable();
-  if (!serializers::isElementPresent(m_payload.libraries(), library))
-    throw NoSuchLibrary(
-      "In RootEntry::removeLibrary: trying to delete non-existing library.");
-  serializers::removeOccurences(m_payload.mutable_libraries(), library);
-}
-
-bool cta::objectstore::RootEntry::libraryExists(const std::string& library) {
-  checkPayloadReadable();
-  return serializers::isElementPresent(m_payload.libraries(), library);
-}
-
-auto cta::objectstore::RootEntry::dumpLibraries() -> std::list<LibraryDump> {
-  checkPayloadReadable();
-  std::list<LibraryDump> ret;
-  auto & list=m_payload.libraries();
-  for (auto i=list.begin(); i!=list.end(); i++) {
-    ret.push_back(LibraryDump());
-    ret.back().library = i->name();
-    ret.back().log.deserialize(i->log());
-  }
-  return ret;
-}
-
-// =============================================================================
-// ========== Tape pools manipulations =========================================
+// ========== Archive queues manipulations =====================================
 // =============================================================================
 
 
@@ -459,140 +86,16 @@ auto cta::objectstore::RootEntry::dumpLibraries() -> std::list<LibraryDump> {
 // removeOccurences
 namespace {
   bool operator==(const std::string &tp,
-    const cta::objectstore::serializers::TapePoolPointer & tpp) {
+    const cta::objectstore::serializers::ArchiveQueuePointer & tpp) {
     return tpp.name() == tp;
   }
 }
 
-std::string cta::objectstore::RootEntry::addOrGetTapePoolAndCommit(const std::string& tapePool,
-  uint32_t nbPartialTapes, uint16_t maxRetriesPerMount, uint16_t maxTotalRetries,
-  Agent& agent, const CreationLog& log) {
+std::string cta::objectstore::RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, Agent& agent) {
   checkPayloadWritable();
   // Check the tape pool does not already exist
   try {
-    return serializers::findElement(m_payload.tapepoolpointers(), tapePool).address();
-  } catch (serializers::NotFound &) {}
-  // Insert the tape pool, then its pointer, with agent intent log update
-  // First generate the intent. We expect the agent to be passed locked.
-  std::string tapePoolAddress = agent.nextId("tapePool");
-  // TODO Do we expect the agent to be passed locked or not: to be clarified.
-  ScopedExclusiveLock agl(agent);
-  agent.fetch();
-  agent.addToOwnership(tapePoolAddress);
-  agent.commit();
-  // Then create the tape pool object
-  TapePool tp(tapePoolAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  tp.initialize(tapePool);
-  tp.setOwner(agent.getAddressIfSet());
-  tp.setMaxRetriesWithinMount(maxRetriesPerMount);
-  tp.setMaxTotalRetries(maxTotalRetries);
-  tp.setBackupOwner("root");
-  tp.insert();
-  ScopedExclusiveLock tpl(tp);
-  // Now move the tape pool's ownership to the root entry
-  auto * tpp = m_payload.mutable_tapepoolpointers()->Add();
-  tpp->set_address(tapePoolAddress);
-  tpp->set_name(tapePool);
-  tpp->set_nbpartialtapes(nbPartialTapes);
-  log.serialize(*tpp->mutable_log());
-  // We must commit here to ensure the tape pool object is referenced.
-  commit();
-  // Now update the tape pool's ownership.
-  tp.setOwner(getAddressIfSet());
-  tp.setBackupOwner(getAddressIfSet());
-  tp.commit();
-  // ... and clean up the agent
-  agent.removeFromOwnership(tapePoolAddress);
-  agent.commit();
-  return tapePoolAddress;
-}
-
-void cta::objectstore::RootEntry::removeTapePoolAndCommit(const std::string& tapePool) {
-  checkPayloadWritable();
-  // find the address of the tape pool object
-  try {
-    auto tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
-    // Check that the tape pool is not referenced by any route
-    auto & scl = m_payload.storageclasses();
-    for (auto sc=scl.begin(); sc!=scl.end(); sc++) {
-      auto & rl=sc->routes();
-      for (auto r=rl.begin(); r!=rl.end(); r++) {
-        if (r->tapepool() == tapePool)
-          throw TapePoolUsedInRoute(
-            "In RootEntry::removeTapePoolAndCommit: trying to remove a tape pool used in archive route");
-      }
-    }
-    // Open the tape pool object
-    TapePool tp (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-    ScopedExclusiveLock tpl(tp);
-    tp.fetch();
-    // Verify this is the tapepool we're looking for.
-    if (tp.getName() != tapePool) {
-      std::stringstream err;
-      err << "Unexpected tape pool name found in object pointed to for tape pool: "
-          << tapePool << " found: " << tp.getName();
-      throw WrongTapePool(err.str());
-    }
-    // Check the tape pool is empty
-    if (!tp.isEmpty()) {
-      throw TapePoolNotEmpty ("In RootEntry::removeTapePoolAndCommit: trying to "
-          "remove a non-empty tape pool");
-    }
-    // We can delete the pool
-    tp.remove();
-    // ... and remove it from our entry
-    serializers::removeOccurences(m_payload.mutable_tapepoolpointers(), tapePool);
-    // We commit for safety and symmetry with the add operation
-    commit();
-  } catch (serializers::NotFound &) {
-    // No such tape pool. Nothing to to.
-    throw NoSuchTapePool("In RootEntry::removeTapePoolAndCommit: trying to remove non-existing tape pool");
-  }
-}
-
-std::string cta::objectstore::RootEntry::getTapePoolAddress(const std::string& tapePool) {
-  checkPayloadReadable();
-  try {
-    auto & tpp = serializers::findElement(m_payload.tapepoolpointers(), tapePool);
-    return tpp.address();
-  } catch (serializers::NotFound &) {
-    throw NotAllocated("In RootEntry::getTapePoolAddress: tape pool not allocated");
-  }
-}
-
-auto cta::objectstore::RootEntry::dumpTapePools() -> std::list<TapePoolDump> {
-  checkPayloadReadable();
-  std::list<TapePoolDump> ret;
-  auto & tpl = m_payload.tapepoolpointers();
-  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
-    ret.push_back(TapePoolDump());
-    ret.back().address = i->address();
-    ret.back().tapePool = i->name();
-    ret.back().nbPartialTapes = i->nbpartialtapes();
-    ret.back().log.deserialize(i->log());
-  }
-  return ret;
-}
-
-// =============================================================================
-// ========== Tape pool queues manipulations =========================================
-// =============================================================================
-
-
-// This operator will be used in the following usage of the findElement
-// removeOccurences
-namespace {
-  bool operator==(const std::string &tp,
-    const cta::objectstore::serializers::TapePoolQueuePointer & tpp) {
-    return tpp.name() == tp;
-  }
-}
-
-std::string cta::objectstore::RootEntry::addOrGetTapePoolQueueAndCommit(const std::string& tapePool, Agent& agent) {
-  checkPayloadWritable();
-  // Check the tape pool does not already exist
-  try {
-    return serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool).address();
+    return serializers::findElement(m_payload.archivequeuepointers(), tapePool).address();
   } catch (serializers::NotFound &) {}
   // Insert the tape pool, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
@@ -603,14 +106,14 @@ std::string cta::objectstore::RootEntry::addOrGetTapePoolQueueAndCommit(const st
   agent.addToOwnership(tapePoolQueueAddress);
   agent.commit();
   // Then create the tape pool queue object
-  TapePoolQueue tpq(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  ArchiveQueue tpq(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   tpq.initialize(tapePool);
   tpq.setOwner(agent.getAddressIfSet());
   tpq.setBackupOwner("root");
   tpq.insert();
   ScopedExclusiveLock tpl(tpq);
   // Now move the tape pool's ownership to the root entry
-  auto * tpp = m_payload.mutable_tapepoolqueuepointers()->Add();
+  auto * tpp = m_payload.mutable_archivequeuepointers()->Add();
   tpp->set_address(tapePoolQueueAddress);
   tpp->set_name(tapePool);
   // We must commit here to ensure the tape pool object is referenced.
@@ -629,27 +132,27 @@ void cta::objectstore::RootEntry::removeTapePoolQueueAndCommit(const std::string
   checkPayloadWritable();
   // find the address of the tape pool object
   try {
-    auto tpp = serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool);
+    auto tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
     // Open the tape pool object
-    TapePoolQueue tp (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-    ScopedExclusiveLock tpl(tp);
-    tp.fetch();
+    ArchiveQueue aq (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+    ScopedExclusiveLock tpl(aq);
+    aq.fetch();
     // Verify this is the tapepool we're looking for.
-    if (tp.getName() != tapePool) {
+    if (aq.getName() != tapePool) {
       std::stringstream err;
       err << "Unexpected tape pool name found in object pointed to for tape pool: "
-          << tapePool << " found: " << tp.getName();
+          << tapePool << " found: " << aq.getName();
       throw WrongTapePoolQueue(err.str());
     }
     // Check the tape pool is empty
-    if (!tp.isEmpty()) {
+    if (!aq.isEmpty()) {
       throw TapePoolQueueNotEmpty ("In RootEntry::removeTapePoolQueueAndCommit: trying to "
           "remove a non-empty tape pool");
     }
     // We can delete the pool
-    tp.remove();
+    aq.remove();
     // ... and remove it from our entry
-    serializers::removeOccurences(m_payload.mutable_tapepoolqueuepointers(), tapePool);
+    serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
     // We commit for safety and symmetry with the add operation
     commit();
   } catch (serializers::NotFound &) {
@@ -661,19 +164,19 @@ void cta::objectstore::RootEntry::removeTapePoolQueueAndCommit(const std::string
 std::string cta::objectstore::RootEntry::getTapePoolQueueAddress(const std::string& tapePool) {
   checkPayloadReadable();
   try {
-    auto & tpp = serializers::findElement(m_payload.tapepoolqueuepointers(), tapePool);
+    auto & tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
     return tpp.address();
   } catch (serializers::NotFound &) {
     throw NotAllocated("In RootEntry::getTapePoolQueueAddress: tape pool not allocated");
   }
 }
 
-auto cta::objectstore::RootEntry::dumpTapePoolQueues() -> std::list<TapePoolQueueDump> {
+auto cta::objectstore::RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
   checkPayloadReadable();
-  std::list<TapePoolQueueDump> ret;
-  auto & tpl = m_payload.tapepoolqueuepointers();
+  std::list<ArchiveQueueDump> ret;
+  auto & tpl = m_payload.archivequeuepointers();
   for (auto i = tpl.begin(); i!=tpl.end(); i++) {
-    ret.push_back(TapePoolQueueDump());
+    ret.push_back(ArchiveQueueDump());
     ret.back().address = i->address();
     ret.back().tapePool = i->name();
   }
@@ -685,7 +188,7 @@ auto cta::objectstore::RootEntry::dumpTapePoolQueues() -> std::list<TapePoolQueu
 // =============================================================================
 
 std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
-  Agent & agent, const CreationLog & log) {
+  Agent & agent, const EntryLog & log) {
   checkPayloadWritable();
   // Check if the drive register exists
   try {
@@ -770,7 +273,7 @@ std::string cta::objectstore::RootEntry::getAgentRegisterAddress() {
 
 // Get the name of a (possibly freshly created) agent register
 std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
-  const CreationLog & log) {
+  const EntryLog & log) {
   // Check if the agent register exists
   try {
     return getAgentRegisterAddress();
@@ -897,7 +400,7 @@ std::string cta::objectstore::RootEntry::getSchedulerGlobalLock() {
 
 // Get the name of a (possibly freshly created) scheduler global lock
 std::string cta::objectstore::RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
-  const CreationLog & log) {
+  const EntryLog & log) {
   checkPayloadWritable();
   // Check if the drive register exists
   try {
@@ -975,8 +478,8 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "uid", json_object_new_int(m_payload.driveregisterpointer().log().user().uid()));
-    json_object_object_add(id, "gid", json_object_new_int(m_payload.driveregisterpointer().log().user().gid()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
+    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "driveregisterpointer", pointer);
@@ -989,8 +492,8 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "uid", json_object_new_int(m_payload.agentregisterpointer().log().user().uid()));
-    json_object_object_add(id, "gid", json_object_new_int(m_payload.agentregisterpointer().log().user().gid()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
+    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "agentregisterpointer", pointer);
@@ -1003,143 +506,23 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "uid", json_object_new_int(m_payload.schedulerlockpointer().log().user().uid()));
-    json_object_object_add(id, "gid", json_object_new_int(m_payload.schedulerlockpointer().log().user().gid()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
+    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "schedulerlockpointer", pointer);
   }
   {
     json_object * array = json_object_new_array();
-    for (auto i = m_payload.adminhosts().begin(); i!=m_payload.adminhosts().end(); i++) {
+    for (auto & i :m_payload.archivequeuepointers()) {
       json_object * jot = json_object_new_object();
 
-      json_object_object_add(jot, "hostname", json_object_new_string(i->hostname().c_str())); 
-
-      json_object * jlog = json_object_new_object();
-      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
-      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
-      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
-      json_object * id = json_object_new_object();
-      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
-      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
-      json_object_object_add(jlog, "user", id);
-      json_object_object_add(jot, "log", jlog);
+      json_object_object_add(jot, "name", json_object_new_string(i.name().c_str())); 
+      json_object_object_add(jot, "address", json_object_new_string(i.address().c_str()));  
 
       json_object_array_add(array, jot);
     }
-    json_object_object_add(jo, "adminhosts", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.adminusers().begin(); i!=m_payload.adminusers().end(); i++) {
-      json_object * jot = json_object_new_object();
-
-      json_object * fid = json_object_new_object();
-      json_object_object_add(fid, "uid", json_object_new_int(i->user().uid()));
-      json_object_object_add(fid, "gid", json_object_new_int(i->user().gid()));
-      json_object_object_add(jot, "user", fid); 
-
-      json_object * jlog = json_object_new_object();
-      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
-      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
-      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
-      json_object * id = json_object_new_object();
-      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
-      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
-      json_object_object_add(jlog, "user", id);
-      json_object_object_add(jot, "log", jlog);
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "adminusers", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.storageclasses().begin(); i!=m_payload.storageclasses().end(); i++) {
-      json_object * jot = json_object_new_object();
-
-      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
-      json_object_object_add(jot, "copycount", json_object_new_int(i->copycount()));
-      
-      json_object * array = json_object_new_array();
-      for (auto j = i->routes().begin(); j!=i->routes().end(); j++) {
-        json_object * jott = json_object_new_object();
-
-        json_object_object_add(jott, "tapepool", json_object_new_string(j->tapepool().c_str())); 
-        json_object_object_add(jott, "copynb", json_object_new_int(j->copynb()));
-
-        json_object * jlogt = json_object_new_object();
-        json_object_object_add(jlogt, "comment", json_object_new_string(j->log().comment().c_str()));
-        json_object_object_add(jlogt, "host", json_object_new_string(j->log().host().c_str()));
-        json_object_object_add(jlogt, "time", json_object_new_int64(j->log().time()));
-        json_object * idt = json_object_new_object();
-        json_object_object_add(idt, "uid", json_object_new_int(j->log().user().uid()));
-        json_object_object_add(idt, "gid", json_object_new_int(j->log().user().gid()));
-        json_object_object_add(jlogt, "user", idt);
-        json_object_object_add(jott, "log", jlogt);
-
-        json_object_array_add(array, jott);
-      }
-      json_object_object_add(jot, "routes", array);
-
-      json_object * jlog = json_object_new_object();
-      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
-      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
-      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
-      json_object * id = json_object_new_object();
-      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
-      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
-      json_object_object_add(jlog, "user", id);
-      json_object_object_add(jot, "log", jlog);
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "storageclasses", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.tapepoolpointers().begin(); i!=m_payload.tapepoolpointers().end(); i++) {
-      json_object * jot = json_object_new_object();
-
-      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));  
-      json_object_object_add(jot, "nbpartialtapes", json_object_new_int(i->nbpartialtapes()));
-
-      json_object * jlog = json_object_new_object();
-      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
-      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
-      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
-      json_object * id = json_object_new_object();
-      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
-      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
-      json_object_object_add(jlog, "user", id);
-      json_object_object_add(jot, "log", jlog);
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "tapepoolpointers", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.libraries().begin(); i!=m_payload.libraries().end(); i++) {
-      json_object * jot = json_object_new_object();
-
-      json_object_object_add(jot, "name", json_object_new_string(i->name().c_str())); 
-
-      json_object * jlog = json_object_new_object();
-      json_object_object_add(jlog, "comment", json_object_new_string(i->log().comment().c_str()));
-      json_object_object_add(jlog, "host", json_object_new_string(i->log().host().c_str()));
-      json_object_object_add(jlog, "time", json_object_new_int64(i->log().time()));
-      json_object * id = json_object_new_object();
-      json_object_object_add(id, "uid", json_object_new_int(i->log().user().uid()));
-      json_object_object_add(id, "gid", json_object_new_int(i->log().user().gid()));
-      json_object_object_add(jlog, "user", id);
-      json_object_object_add(jot, "log", jlog);
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "libraries", array);
+    json_object_object_add(jo, "archivequeuepointers", array);
   }
   
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;

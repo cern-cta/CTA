@@ -28,10 +28,10 @@ namespace dataStructures {
 // constructor
 //------------------------------------------------------------------------------
 MountPolicy::MountPolicy():
-  archive_priority(0),
-  archive_minRequestAge(0),
-  retrieve_priority(0),
-  retrieve_minRequestAge(0),
+  archivePriority(0),
+  archiveMinRequestAge(0),
+  retrievePriority(0),
+  retrieveMinRequestAge(0),
   maxDrivesAllowed(0) {}
 
 //------------------------------------------------------------------------------
@@ -39,10 +39,10 @@ MountPolicy::MountPolicy():
 //------------------------------------------------------------------------------
 bool MountPolicy::operator==(const MountPolicy &rhs) const {
   return name==rhs.name
-      && archive_priority==rhs.archive_priority
-      && archive_minRequestAge==rhs.archive_minRequestAge
-      && retrieve_priority==rhs.retrieve_priority
-      && retrieve_minRequestAge==rhs.retrieve_minRequestAge
+      && archivePriority==rhs.archivePriority
+      && archiveMinRequestAge==rhs.archiveMinRequestAge
+      && retrievePriority==rhs.retrievePriority
+      && retrieveMinRequestAge==rhs.retrieveMinRequestAge
       && maxDrivesAllowed==rhs.maxDrivesAllowed
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -61,10 +61,10 @@ bool MountPolicy::operator!=(const MountPolicy &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
   os << "(name=" << obj.name
-     << " archive_priority=" << obj.archive_priority
-     << " archive_minRequestAge=" << obj.archive_minRequestAge
-     << " retrieve_priority=" << obj.retrieve_priority
-     << " retrieve_minRequestAge=" << obj.retrieve_minRequestAge
+     << " archive_priority=" << obj.archivePriority
+     << " archive_minRequestAge=" << obj.archiveMinRequestAge
+     << " retrieve_priority=" << obj.retrievePriority
+     << " retrieve_minRequestAge=" << obj.retrieveMinRequestAge
      << " maxDrivesAllowed=" << obj.maxDrivesAllowed
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog

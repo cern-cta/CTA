@@ -37,11 +37,9 @@ cta::TapePool::~TapePool() throw() {
 cta::TapePool::TapePool(
     const std::string &name,
     const uint32_t nbPartialTapes,
-    const MountCriteriaByDirection & mountCriteriaByDirection,
     const CreationLog &creationLog):
   name(name),
   nbPartialTapes(nbPartialTapes),
-  mountCriteriaByDirection(mountCriteriaByDirection),
   creationLog(creationLog) {}
 
 //------------------------------------------------------------------------------

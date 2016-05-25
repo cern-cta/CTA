@@ -20,7 +20,7 @@
 
 #include "common/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
-#include "common/CreationLog.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 #include <string>
 #include <stdint.h>
@@ -30,29 +30,29 @@ namespace cta { namespace objectstore {
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-class CreationLog: public cta::CreationLog {
+class EntryLog: public cta::common::dataStructures::EntryLog {
 public:
-  CreationLog (): cta::CreationLog() {}
-  CreationLog (const cta::CreationLog & cl): cta::CreationLog(cl) {}
-  CreationLog (const cta::UserIdentity& user, const std::string & hn, uint64_t t,
-    const std::string & c): cta::CreationLog(
-      cta::UserIdentity(user),hn ,t, c) {}
-  operator cta::CreationLog() {
-    return cta::CreationLog(user, host, time, comment);
+  EntryLog (): cta::common::dataStructures::EntryLog() {}
+  EntryLog (const cta::common::dataStructures::EntryLog & el): cta::common::dataStructures::EntryLog(el) {}
+  EntryLog (const cta::common::dataStructures::UserIdentity& u, const std::string & hn, uint64_t t): cta::common::dataStructures::EntryLog() {
+    user=u;
+    host=hn;
+    time=t;
+  }
+  operator cta::common::dataStructures::EntryLog() {
+    return cta::common::dataStructures::EntryLog(*this);
   } 
   void serialize (cta::objectstore::serializers::CreationLog & log) const {
-    log.mutable_user()->set_uid(user.uid);
-    log.mutable_user()->set_gid(user.gid);
+    log.mutable_user()->set_name(user.name);
+    log.mutable_user()->set_group(user.group);
     log.set_host(host);
     log.set_time(time);
-    log.set_comment(comment);
   }
   void deserialize (const cta::objectstore::serializers::CreationLog & log) {
-    user.uid=log.user().uid();
-    user.gid=log.user().gid();
+    user.name=log.user().name();
+    user.group=log.user().group();
     host = log.host();
     time  = log.time();
-    comment = log.comment();
   }
 };
   

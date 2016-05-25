@@ -21,14 +21,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(NameServer & ns): m_ns(ns), m_sessionRunning(false){
+cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue): m_catalogue(catalogue), m_sessionRunning(false){
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(NameServer & ns,
-  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_ns(ns), 
+cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue,
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_catalogue(catalogue), 
     m_sessionRunning(false) {
   m_dbMount.reset(
     dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
@@ -89,7 +89,7 @@ std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
   if (!dbJob.get())
     return std::unique_ptr<cta::ArchiveJob>();
   // We have something to archive: prepare the response
-  std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_ns,
+  std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_catalogue,
       dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile));
   ret->m_dbJob.reset(dbJob.release());
   return ret;

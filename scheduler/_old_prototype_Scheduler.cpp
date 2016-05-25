@@ -31,7 +31,7 @@
 #include "nameserver/NameServer.hpp"
 #include "remotens/RemoteNS.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
@@ -606,7 +606,7 @@ void cta::Scheduler_old::assertStorageClassHasAtLeastOneCopy(
 //------------------------------------------------------------------------------
 // createArchiveToFileRequests
 //------------------------------------------------------------------------------
-std::list<cta::ArchiveToFileRequest> cta::Scheduler_old::
+std::list<cta::ArchiveRequest> cta::Scheduler_old::
   createArchiveToFileRequests(
   const SecurityIdentity &cliIdentity,
   const std::list<RemotePathAndStatus> &remoteFiles,
@@ -645,7 +645,7 @@ void cta::Scheduler_old::queueArchiveToFileRequest(
 //------------------------------------------------------------------------------
 // createArchiveToFileRequest
 //------------------------------------------------------------------------------
-cta::ArchiveToFileRequest cta::Scheduler_old::createArchiveToFileRequest(
+cta::ArchiveRequest cta::Scheduler_old::createArchiveToFileRequest(
   const SecurityIdentity &cliIdentity,
   const RemotePathAndStatus &remoteFile,
   const std::string &archiveFilePath,

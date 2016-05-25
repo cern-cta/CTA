@@ -30,7 +30,7 @@ cta::RemoteFileStatus::RemoteFileStatus():
 // constructor
 //------------------------------------------------------------------------------
 cta::RemoteFileStatus::RemoteFileStatus(
-  const UserIdentity &owner,
+  const common::dataStructures::UserIdentity &owner,
   const mode_t mode,
   const uint64_t size):
   owner(owner),

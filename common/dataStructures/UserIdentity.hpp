@@ -34,6 +34,8 @@ namespace dataStructures {
 struct UserIdentity {
 
   UserIdentity();
+  
+  UserIdentity(const std::string &name, const std::string &group);
 
   bool operator==(const UserIdentity &rhs) const;
 

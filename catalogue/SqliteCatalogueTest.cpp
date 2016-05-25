@@ -712,11 +712,11 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createMountPolicy) {
 
   ASSERT_EQ(name, group.name);
 
-  ASSERT_EQ(archivePriority, group.archive_priority);
-  ASSERT_EQ(minArchiveRequestAge, group.archive_minRequestAge);
+  ASSERT_EQ(archivePriority, group.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
 
-  ASSERT_EQ(retrievePriority, group.retrieve_priority);
-  ASSERT_EQ(minRetrieveRequestAge, group.retrieve_minRequestAge);
+  ASSERT_EQ(retrievePriority, group.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
 
   ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
 
@@ -816,11 +816,11 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, createUser) {
   const common::dataStructures::MountPolicy policy =
     catalogue.getMountPolicyForAUser(userIdentity);
 
-  ASSERT_EQ(archivePriority, policy.archive_priority);
-  ASSERT_EQ(minArchiveRequestAge, policy.archive_minRequestAge);
+  ASSERT_EQ(archivePriority, policy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
-  ASSERT_EQ(retrievePriority, policy.retrieve_priority);
-  ASSERT_EQ(minRetrieveRequestAge, policy.retrieve_minRequestAge);
+  ASSERT_EQ(retrievePriority, policy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
 }
 
 TEST_F(cta_catalogue_SqliteCatalogueTest, createUser_same_twice) {
@@ -978,11 +978,11 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   const common::dataStructures::MountPolicy policy =
     catalogue.getMountPolicyForAUser(userIdentity);
 
-  ASSERT_EQ(archivePriority, policy.archive_priority);
-  ASSERT_EQ(minArchiveRequestAge, policy.archive_minRequestAge);
+  ASSERT_EQ(archivePriority, policy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
-  ASSERT_EQ(retrievePriority, policy.retrieve_priority);
-  ASSERT_EQ(minRetrieveRequestAge, policy.retrieve_minRequestAge);
+  ASSERT_EQ(retrievePriority, policy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
 
   ASSERT_TRUE(catalogue.getArchiveRoutes().empty());
 
@@ -1036,8 +1036,8 @@ TEST_F(cta_catalogue_SqliteCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
   ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
   ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
-  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archive_priority);
-  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archive_minRequestAge);
+  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 }
 

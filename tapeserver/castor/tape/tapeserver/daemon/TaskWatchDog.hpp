@@ -377,14 +377,13 @@ class RecallWatchDog: public TaskWatchDog {
 private:
   
   /** The file we are working on */
-  std::string m_path;
   uint64_t m_fileId;
   uint64_t m_fSeq;
   
   virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("path",m_path)
+          .add("fileId", m_fileId)
           .add("NSFILEID",m_fileId)
           .add("fSeq",m_fSeq);
     m_lc.log(LOG_WARNING, "No tape block movement for too long");
@@ -404,9 +403,8 @@ public:
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(const std::string path, const uint64_t fileId, uint64_t fSeq) {
+  void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq) {
     castor::server::MutexLocker locker(&m_mutex);
-    m_path=path;
     m_fileId=fileId;
     m_fSeq=fSeq;
     m_fileBeingMoved=true;
@@ -418,7 +416,6 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-    m_path="";
     m_fileId=0;
     m_fSeq=0;
   }
@@ -432,14 +429,12 @@ class MigrationWatchDog: public TaskWatchDog {
 private:
   
   /** The file we are working on */
-  std::string m_path;
   uint64_t m_fileId;
   uint64_t m_fSeq;
  
   virtual void logStuckFile() {
     castor::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("path",m_path)
           .add("NSFILEID",m_fileId)
           .add("fSeq",m_fSeq);
     m_lc.log(LOG_WARNING, "No tape block movement for too long");
@@ -459,9 +454,8 @@ public:
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(const std::string path, const uint64_t fileId, uint64_t fSeq){
+  void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq){
     castor::server::MutexLocker locker(&m_mutex);
-    m_path=path;
     m_fileId=fileId;
     m_fSeq=fSeq;
     m_fileBeingMoved=true;
@@ -473,7 +467,6 @@ public:
   void fileFinished(){
     castor::server::MutexLocker locker(&m_mutex);
     m_fileBeingMoved=false;
-    m_path="";
     m_fileId=0;
     m_fSeq=0;
   }

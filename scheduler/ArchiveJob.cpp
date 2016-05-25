@@ -29,11 +29,11 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
-  NameServer & ns,
+  catalogue::Catalogue & catalogue,
   const common::archiveNS::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
   const NameServerTapeFile &nsTapeFile):
-  m_mount(mount), m_ns(ns),
+  m_mount(mount), m_catalogue(catalogue),
   archiveFile(archiveFile),
   remotePathAndStatus(remotePathAndStatus),
   nameServerTapeFile(nsTapeFile) {}
@@ -54,8 +54,24 @@ void cta::ArchiveJob::complete() {
   m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.fSeq);
   // Now record the data in the archiveNS. The checksum will be validated if already
   // present, of inserted if not.
-  m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
-    std::numeric_limits<uint32_t>::max()), ""), archiveFile.path, nameServerTapeFile);
+  catalogue::TapeFileWritten fileReport;
+  fileReport.archiveFileId = archiveFile.fileId;
+  fileReport.blockId = nameServerTapeFile.tapeFileLocation.blockId;
+  fileReport.checksum = nameServerTapeFile.checksum;
+  fileReport.compressedSize = nameServerTapeFile.compressedSize;
+  fileReport.copyNb = nameServerTapeFile.tapeFileLocation.copyNb;
+  //TODO fileReport.diskFileGroup
+  //TODO fileReport.diskFilePath
+  //TODO fileReport.diskFileRecoveryBlob
+  //TODO fileReport.diskFileUser
+  //TODO fileReport.diskInstance
+  fileReport.fSeq = nameServerTapeFile.tapeFileLocation.fSeq;
+  fileReport.size = nameServerTapeFile.size;
+  //TODO fileReport.storageClassName
+  fileReport.vid = nameServerTapeFile.tapeFileLocation.vid;
+  m_catalogue.fileWrittenToTape(fileReport);
+  //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
+  //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
   // We can now record the success for the job in the database
   m_dbJob->succeed();
 }

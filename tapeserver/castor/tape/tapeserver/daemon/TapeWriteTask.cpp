@@ -71,8 +71,7 @@ namespace daemon {
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
     params.add("NSHOSTNAME", m_archiveJob->archiveFile.nsHostName)
-          .add("NSFILEID",m_archiveJob->archiveFile.fileId)
-          .add("lastKnownFilename",m_archiveJob->archiveFile.path)
+          .add("fileId",m_archiveJob->archiveFile.fileId)
           .add("fileSize",m_archiveJob->archiveFile.size)
           .add("fSeq",m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq)
           .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
@@ -92,7 +91,7 @@ namespace daemon {
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
-      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.path, m_archiveJob->archiveFile.fileId, m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.fileId, m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_LBPMode = output->getLBPMode();
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -320,7 +319,6 @@ namespace daemon {
            .add("NSHOST",m_archiveFile.nsHostName)
            .add("NSFILEID",m_archiveFile.fileId)
            .add("fSeq",m_nameServerTapeFile.tapeFileLocation.fSeq)
-           .add("lastKnownFilename",m_archiveFile.path)
            .add("lastModificationTime",m_archiveFile.lastModificationTime)
            .add("LBPMode", m_LBPMode);
      

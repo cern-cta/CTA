@@ -33,9 +33,8 @@ ArchiveFile::ArchiveFile():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveFile::ArchiveFile(const std::string & path, const std::string & nsHostName, uint64_t fileId, 
+ArchiveFile::ArchiveFile(const std::string & nsHostName, uint64_t fileId, 
   uint64_t size, const uint32_t checksum, const time_t lastModificationTime):
-  path(path),
   nsHostName(nsHostName),          
   fileId(fileId),
   size(size),

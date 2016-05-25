@@ -58,7 +58,7 @@ public:
    * (plus the destructor in case the caller fails half way through).
    */ 
   class ArchiveToFileRequestCreation:
-    public SchedulerDatabase::ArchiveToFileRequestCreation {
+    public SchedulerDatabase::ArchiveRequestCreation {
   public:
     ArchiveToFileRequestCreation(sqlite3 * dbHandle, 
       const std::string & archiveFile,
@@ -86,7 +86,7 @@ public:
    *
    * @param rqst The request.
    */
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst);
+  std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> queue(const ArchiveRequest &rqst);
   
   /**
    * Queues the specified request.

@@ -57,7 +57,7 @@ std::unique_ptr<cta::RemoteFileStatus> cta::EosNS::statFile(const RemotePath &pa
     delete stat_res;
     return std::unique_ptr<RemoteFileStatus>();
   }
-  UserIdentity owner(0,0);
+  cta::common::dataStructures::UserIdentity owner("user0", "group0");
   //here we cannot get the mode bits from EOS with stat_res->GetFlags() (xroot does not allow this to work properly)
   //therefore we hardcode a fully permissive mode for the prototype
   cta::RemoteFileStatus *rfs = new cta::RemoteFileStatus(owner, 0666, stat_res->GetSize());

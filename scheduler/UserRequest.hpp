@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/CreationLog.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -45,13 +45,11 @@ struct UserRequest {
    * Constructor.
    *
    * @param priority The priority of the request.
-   * @param requester The identity of the user who made the request.
-   * @param creationTime Optionally the absolute time at which the user request
-   * was created.  If no value is given then the current time is used.
+   * @param entryLog log for the creation of the request.
    */
   UserRequest(
     const uint64_t priority,
-    const CreationLog &creationLog);
+    const common::dataStructures::EntryLog &entryLog);
 
   /**
    * The priority of the request.
@@ -61,7 +59,7 @@ struct UserRequest {
   /**
    * The time at which the user request was created.
    */
-  CreationLog creationLog;
+  common::dataStructures::EntryLog entryLog;
 
 }; // class UserRequest
 

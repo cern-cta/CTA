@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/UserRequest.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -30,9 +31,9 @@ cta::UserRequest::UserRequest():
 //------------------------------------------------------------------------------
 cta::UserRequest::UserRequest(
   const uint64_t priority,
-  const CreationLog & creationLog):
+  const common::dataStructures::EntryLog & entryLog):
   priority(priority),
-  creationLog(creationLog) {
+  entryLog(entryLog) {
 }
 
 //------------------------------------------------------------------------------

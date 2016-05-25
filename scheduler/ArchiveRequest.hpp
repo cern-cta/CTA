@@ -34,23 +34,23 @@ namespace cta {
  * Class representing a user request to archive to a single remote file to a
  * single destination archive file.
  */
-struct ArchiveToFileRequest: public UserArchiveRequest {
+struct ArchiveRequest: public UserArchiveRequest {
 
   /**
    * Constructor.
    */
-  ArchiveToFileRequest();
+  ArchiveRequest();
 
   /**
    * Destructor.
    */
-  ~ArchiveToFileRequest() throw();
+  ~ArchiveRequest() throw();
   
   /**
    * Explicit copy constructor
    * @param other
    */
-  ArchiveToFileRequest(const ArchiveToFileRequest & other):
+  ArchiveRequest(const ArchiveRequest & other):
   UserArchiveRequest(other)
   {
     archiveFile = other.archiveFile;
@@ -69,7 +69,7 @@ struct ArchiveToFileRequest: public UserArchiveRequest {
    * @param priority The priority of the request.
    * @param creationLog The creation information
    */
-  ArchiveToFileRequest(
+  ArchiveRequest(
     const RemotePathAndStatus &remoteFilePath,
     const cta::common::archiveNS::ArchiveFile &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,

@@ -44,32 +44,31 @@ struct ArchiveToTapeCopyRequest: public UserArchiveRequest {
   /**
    * Constructor.
    *
-   * @param remoteFile The path and status of the remote file to be archived.
-   * @param archiveFile The full path of the destination archive file.
+   * @param diskFileID The ID of the remote file to be archived.
+   * @param archiveFileID The ID of the archive file
    * @param copyNb The tape copy number.
    * @param tapePoolName The name of the destination tape pool.
    * @param priority The priority of the request.
    * @param requester The identity of the user who made the request.
-   * @param creationTime Optionally the absolute time at which the user request
-   * was created.  If no value is given then the current time is used.
+   * @param entryLog log for the creation of the request.
    */
   ArchiveToTapeCopyRequest(
-    const RemotePathAndStatus &remoteFile,
-    const std::string &archiveFile,
+    const std::string & diskFileID,
+    const uint64_t archiveFileID,
     const uint16_t copyNb,
     const std::string tapePoolName,
     const uint64_t priority, 
-    const CreationLog & creationLog);
+    const common::dataStructures::EntryLog & entryLog);
 
   /**
-   * The path and status of the remote file to be archived.
+   * The ID of the remote file to be archived.
    */
-  RemotePathAndStatus remoteFile;
+  std::string diskFileID;
 
   /**
    * The full path of the source archive file.
    */
-  std::string archiveFile;
+  uint64_t archiveFileID;
 
   /**
    * The tape copy number.

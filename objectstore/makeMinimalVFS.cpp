@@ -53,14 +53,14 @@ int main(int argc, char ** argv) {
     cta::objectstore::Agent ag(*be);
     ag.generateName("makeMinimalVFS");
     ag.initialize();
-    cta::objectstore::CreationLog cl(cta::UserIdentity(1111, 1111), "systemhost", 
-      time(NULL), "Initial creation of the  object store structures");
-    re.addOrGetAgentRegisterPointerAndCommit(ag,cl);
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+        "systemhost", time(NULL));
+    re.addOrGetAgentRegisterPointerAndCommit(ag,el);
     rel.release();
     ag.insertAndRegisterSelf();
     rel.lock(re);
-    re.addOrGetDriveRegisterPointerAndCommit(ag, cl);
-    re.addOrGetSchedulerGlobalLockAndCommit(ag,cl);
+    re.addOrGetDriveRegisterPointerAndCommit(ag, el);
+    re.addOrGetSchedulerGlobalLockAndCommit(ag,el);
     rel.release();
     std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
   } catch (std::exception & e) {

@@ -105,7 +105,6 @@ namespace unitTests{
     DiskFileFactory fileFactory("RFIO","");
     
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
-    fileToRecall->archiveFile.path = "/dev/null";
     fileToRecall->archiveFile.fileId = 0;
     DiskWriteTask t(fileToRecall.release(),mm);
     for(int i=0;i<6;++i){

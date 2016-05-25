@@ -23,7 +23,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "nameserver/NameServer.hpp"
+#include "catalogue/Catalogue.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -55,7 +55,7 @@ protected:
    */
   ArchiveJob(
   ArchiveMount &mount,
-  NameServer & ns,
+  catalogue::Catalogue & catalogue,
   const common::archiveNS::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
   const NameServerTapeFile &nameServerTapeFile);
@@ -104,7 +104,7 @@ private:
   /**
    * Reference to the name server
    */
-  NameServer &m_ns;
+  catalogue::Catalogue &m_catalogue;
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);

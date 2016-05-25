@@ -35,6 +35,6 @@ cta::UserArchiveRequest::~UserArchiveRequest() throw() {
 //------------------------------------------------------------------------------
 cta::UserArchiveRequest::UserArchiveRequest(
   const uint64_t priority,
-  const CreationLog &creationLog):
-  UserRequest(priority, creationLog) {
+  const common::dataStructures::EntryLog &entryLog):
+  UserRequest(priority, entryLog) {
 }

@@ -29,7 +29,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class CreationLog;
+class EntryLog;
 
 class ArchiveToFileRequest: public ObjectOps<serializers::ArchiveToFileRequest, serializers::ArchiveToFileRequest_t> {
 public:
@@ -39,7 +39,7 @@ public:
   void initialize();
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & tapepooladdress);
+    const std::string & archivequeueaddress);
   void setJobFailureLimits(uint16_t copyNumber,
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
@@ -50,8 +50,8 @@ public:
   // Handling of the consequences of a job status change for the entire request.
   // This function returns true if the request got finished.
   bool finishIfNecessary();
-  // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setAllJobsLinkingToTapePool();
+  // Mark all jobs as pending mount (following their linking to a archive queue)
+  void setAllJobsLinkingToArchiveQueue();
   // Mark all the jobs as being deleted, in case of a cancellation
   void setAllJobsFailed();
   // Mark all the jobs as pending deletion from NS.
@@ -69,17 +69,17 @@ public:
   cta::RemotePathAndStatus getRemoteFile();
   void setPriority (uint64_t priority);
   uint64_t getPriority();
-  void setCreationLog (const objectstore::CreationLog& creationLog);
-  CreationLog getCreationLog();
+  void setEntryLog (const objectstore::EntryLog& creationLog);
+  EntryLog getCreationLog();
   void setArchiveToDirRequestAddress(const std::string & dirRequestAddress);
   class JobDump {
   public:
     uint16_t copyNb;
     std::string tapePool;
-    std::string tapePoolAddress;
+    std::string ArchiveQueueAddress;
   };
   std::list<JobDump> dumpJobs();
-  void garbageCollect(const std::string &presumedOwner);
+  void garbageCollect(const std::string &presumedOwner) {}
   std::string  dump();
 };
 

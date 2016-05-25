@@ -35,6 +35,6 @@ cta::UserRetrieveRequest::~UserRetrieveRequest() throw() {
 //------------------------------------------------------------------------------
 cta::UserRetrieveRequest::UserRetrieveRequest(
   const uint64_t priority,
-  const CreationLog & creationLog):
+  const common::dataStructures::EntryLog & creationLog):
   UserRequest(priority, creationLog) {
 }

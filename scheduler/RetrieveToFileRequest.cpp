@@ -39,8 +39,8 @@ cta::RetrieveToFileRequest::RetrieveToFileRequest(
   const std::list<cta::TapeFileLocation> &tapeCopies,
   const std::string &remoteFile,
   const uint64_t priority,
-  const CreationLog & creationLog):
-  UserRetrieveRequest(priority, creationLog),
+  const common::dataStructures::EntryLog & entryLog):
+  UserRetrieveRequest(priority, entryLog),
   m_archiveFile(archiveFile),
   m_tapeCopies(tapeCopies),
   m_remoteFile(remoteFile){

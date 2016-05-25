@@ -41,11 +41,13 @@ struct MountPolicy {
   bool operator!=(const MountPolicy &rhs) const;
 
   std::string name;
-  uint64_t archive_priority;
-  uint64_t archive_minRequestAge;
-  uint64_t retrieve_priority;
-  uint64_t retrieve_minRequestAge;
+  uint64_t archivePriority;
+  uint64_t archiveMinRequestAge;
+  uint64_t retrievePriority;
+  uint64_t retrieveMinRequestAge;
   uint64_t maxDrivesAllowed;
+  uint64_t maxRetriesWithinMount;
+  uint64_t maxTotalRetries;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;

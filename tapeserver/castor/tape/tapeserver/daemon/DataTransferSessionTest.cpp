@@ -44,7 +44,7 @@
 #include "common/utils/Utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "smc_struct.h"
-#include "nameserver/mockNS/MockNameServer.hpp"
+#include "catalogue/SqliteCatalogue.hpp"
 #include "remotens/MockRemoteNS.hpp"
 #include "remotens/MockRemoteFullFS.hpp"
 #include "scheduler/DummyScheduler.hpp"
@@ -165,7 +165,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -228,7 +228,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
       
       // Write the file to tape
       cta::MockRetrieveMount mrm;
-      cta::MockNameServer mns;
+      cta::catalogue::SqliteCatalogue sqliteCatalogue;
       cta::MockArchiveMount mam(mns);
       std::unique_ptr<cta::RetrieveJob> ftr(new cta::MockRetrieveJob(mrm));
       std::unique_ptr<cta::ArchiveJob> ftm(new cta::MockArchiveJob(mam, mns));
@@ -327,7 +327,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -389,7 +389,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         archiveFileSize));
 
       // Write the file to tape
-      cta::MockNameServer mns;
+      cta::catalogue::SqliteCatalogue sqliteCatalogue;
       cta::MockArchiveMount mam(mns);
       cta::MockRetrieveMount mrm;
       std::unique_ptr<cta::RetrieveJob> ftr(new cta::MockRetrieveJob(mrm));
@@ -481,7 +481,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -543,7 +543,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
         archiveFileSize));
 
       // Write the file to tape
-      cta::MockNameServer mns;
+      cta::catalogue::SqliteCatalogue sqliteCatalogue;
       cta::MockArchiveMount mam(mns);
       cta::MockRetrieveMount mrm;
       std::unique_ptr<cta::RetrieveJob> ftr(new cta::MockRetrieveJob(mrm));
@@ -620,7 +620,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -769,7 +769,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.m_pathToDrive["/dev/nst0"] = NULL;
   
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -815,7 +815,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteFullFS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -931,7 +931,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteFullFS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -1045,7 +1045,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);
@@ -1163,7 +1163,7 @@ TEST_F(castor_tape_tapeserver_daemon_DataTransferSessionTest, DataTransferSessio
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  cta::MockNameServer ns;
+  cta::catalogue::SqliteCatalogue sqliteCatalogue;
   cta::MockRemoteNS rns;
   cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
   cta::Scheduler scheduler(ns, db, rns);

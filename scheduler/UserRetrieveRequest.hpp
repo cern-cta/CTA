@@ -50,7 +50,7 @@ public:
    */
   UserRetrieveRequest(
     const uint64_t priority,
-    const CreationLog &creationLog);
+    const common::dataStructures::EntryLog &creationLog);
 
 }; // class RetrieveRequest
 

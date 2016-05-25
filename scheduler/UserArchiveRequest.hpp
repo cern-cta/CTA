@@ -19,6 +19,7 @@
 #pragma once
 
 #include "scheduler/UserRequest.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -45,13 +46,11 @@ public:
    * Constructor.
    *
    * @param priority The priority of the request.
-   * @param user The identity of the user who made the request.
-   * @param creationTime Optionally the absolute time at which the user request
-   * was created.  If no value is given then the current time is used.
+   * @param entryLog The log for the creation of the user request.
    */
   UserArchiveRequest(
     const uint64_t priority,
-    const CreationLog & creationLog);
+    const common::dataStructures::EntryLog &entryLog);
 
 }; // class ArchiveRequest
 

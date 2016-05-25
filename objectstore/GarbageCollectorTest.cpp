@@ -19,12 +19,15 @@
 #include <gtest/gtest.h>
 #include "BackendVFS.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
-#include "TapePool.hpp"
 #include "DriveRegister.hpp"
+#include "ArchiveRequest.hpp"
+#include "ArchiveQueue.hpp"
+#include "EntryLog.hpp"
 
 namespace unitTests {
 
@@ -39,10 +42,10 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
-      "unittesthost", time(NULL), "Creation of unit test agent register");
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+      "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
   rel.release();
   // Create 2 agents, A and B and register them
   // The agents are set with a timeout of 0, so they will be delclared
@@ -87,10 +90,10 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
-      "unittesthost", time(NULL), "Creation of unit test agent register");
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+      "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
   cta::objectstore::Agent agA(be);
@@ -134,7 +137,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, GarbageCollectorTapePool) {
+TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -144,10 +147,10 @@ TEST(ObjectStore, GarbageCollectorTapePool) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
-      "unittesthost", time(NULL), "Creation of unit test agent register");
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+      "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
   cta::objectstore::Agent agA(be);
@@ -159,15 +162,15 @@ TEST(ObjectStore, GarbageCollectorTapePool) {
   // situation)
   std::string tpName;
   {
-    tpName = agA.nextId("TapePool");
-    cta::objectstore::TapePool tp(tpName, be);
-    tp.initialize("SomeTP");
-    tp.setOwner(agA.getAddressIfSet());
+    tpName = agA.nextId("ArchiveQueue");
+    cta::objectstore::ArchiveQueue aq(tpName, be);
+    aq.initialize("SomeTP");
+    aq.setOwner(agA.getAddressIfSet());
     cta::objectstore::ScopedExclusiveLock agl(agA);
     agA.fetch();
     agA.addToOwnership(tpName);
     agA.commit();
-    tp.insert();
+    aq.insert();
   }
   // Create the garbage colletor and run it twice.
   cta::objectstore::Agent gcAgent(be);
@@ -201,10 +204,10 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
-      "unittesthost", time(NULL), "Creation of unit test agent register");
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+      "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
   rel.release();
   // Create an agent and add the drive register to it as an owned object
   cta::objectstore::Agent agA(be);
@@ -216,7 +219,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // situation)
   std::string tpName;
   {
-    tpName = agA.nextId("TapePool");
+    tpName = agA.nextId("ArchiveQueue");
     cta::objectstore::DriveRegister dr(tpName, be);
     dr.initialize();
     dr.setOwner(agA.getAddressIfSet());
@@ -248,8 +251,8 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
-  // Here we check that can successfully call ArchiveToFileRequests's garbage collector
+TEST(ObjectStore, GarbageCollectorArchiveRequest) {
+  // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
   agent.generateName("unitTestGarbageCollector");
@@ -258,10 +261,10 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::CreationLog cl(cta::UserIdentity(99, 99),
-      "unittesthost", time(NULL), "Creation of unit test agent register");
+    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+      "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
   rel.release();
   // Create an agent
   cta::objectstore::Agent agA(be);
@@ -269,7 +272,7 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
   agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
-  // Several use cases are present for the ArchiveToFileRequests:
+  // Several use cases are present for the ArchiveRequests:
   // - just referenced in agent ownership list, but not yet created.
   // - just created but not linked to any tape pool
   // - partially linked to tape pools
@@ -281,20 +284,20 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
   std::string tpAddr[2];
   for (int i=0; i<2; i++)
   {
-    std::stringstream tpid;
-    tpid << "TapePool" << i;
-    tpAddr[i] = agent.nextId(tpid.str());
-    cta::objectstore::TapePool tp(tpAddr[i], be);
-    tp.initialize(tpid.str());
-    tp.setOwner("");
-    tp.insert();
+    std::stringstream aqid;
+    aqid << "ArchiveQueue" << i;
+    tpAddr[i] = agent.nextId(aqid.str());
+    cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
+    aq.initialize(aqid.str());
+    aq.setOwner("");
+    aq.insert();
   }
   // Create the various ATFR's, stopping one step further each time.
   int pass=0;
   while (true)
   {
     // -just referenced
-    std::string atfrAddr = agA.nextId("ArchiveToFileRequest");
+    std::string atfrAddr = agA.nextId("ArchiveRequest");
     cta::objectstore::ScopedExclusiveLock agl(agA);
     agA.fetch();
     agA.addToOwnership(atfrAddr);
@@ -304,62 +307,55 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
     // state. The request will be garbage collected to the orphaned queue.
     // The scheduler will then determine whether the request should be pushed
     // further or cancelled, depending on the NS status.
-    cta::objectstore::ArchiveToFileRequest atfr(atfrAddr, be);
-    atfr.initialize();
-    cta::common::archiveNS::ArchiveFile af;
-    af.path = "cta:/file";
-    atfr.setArchiveFile(af);
-    atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos:/file"), 
-      cta::RemoteFileStatus(cta::UserIdentity(123,456), 0744, 1000+pass)));
-    atfr.setPriority(0);
-    cta::objectstore::CreationLog log(cta::objectstore::UserIdentity(123,456),
-        "unitTestHost", time(NULL), "ArchiveJobForGarbageCollection");
-    atfr.setCreationLog(log);
-    atfr.addJob(1, "TapePool0", tpAddr[0]);
-    atfr.addJob(2, "TapePool1", tpAddr[1]);    
-    atfr.setOwner(agA.getAddressIfSet());
-    atfr.insert();
-    cta::objectstore::ScopedExclusiveLock atfrl(atfr);
+    cta::objectstore::ArchiveRequest ar(atfrAddr, be);
+    ar.initialize();
+    ar.setArchiveFileID(123456789L);
+    ar.setDiskFileID("eos://diskFile");
+    ar.addJob(1, "ArchiveQueue0", tpAddr[0]);
+    ar.addJob(2, "ArchiveQueue1", tpAddr[1]);    
+    ar.setOwner(agA.getAddressIfSet());
+    ar.insert();
+    cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }
-    // - Change the jobs statuses from PendingNSCreation to LinkingToTapePool.
+    // - Change the jobs statuses from PendingNSCreation to LinkingToArchiveQueue.
     // They will be automatically connected to the tape pool by the garbage 
     // collector from that moment on.
     {
-      atfr.setAllJobsLinkingToTapePool();
-      atfr.commit();
+      ar.setAllJobsLinkingToArchiveQueue();
+      ar.commit();
     }
     if (pass < 3) { pass++; continue; }
     // - Referenced in the first tape pool
     {
-      cta::objectstore::TapePool tp(tpAddr[0], be);
-      cta::objectstore::ScopedExclusiveLock tpl(tp);
-      tp.fetch();
-      cta::objectstore::ArchiveToFileRequest::JobDump jd;
+      cta::objectstore::ArchiveQueue aq(tpAddr[0], be);
+      cta::objectstore::ScopedExclusiveLock tpl(aq);
+      aq.fetch();
+      cta::objectstore::ArchiveRequest::JobDump jd;
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
-      jd.tapePoolAddress = tpAddr[0];
-      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile().path, 1000+pass, 0, time(NULL));
-      tp.commit();
+      jd.ArchiveQueueAddress = tpAddr[0];
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, 0, time(NULL));
+      aq.commit();
     }
     if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
     // - Referenced in the second tape pool
     {
-      cta::objectstore::TapePool tp(tpAddr[1], be);
-      cta::objectstore::ScopedExclusiveLock tpl(tp);
-      tp.fetch();
-      cta::objectstore::ArchiveToFileRequest::JobDump jd;
+      cta::objectstore::ArchiveQueue aq(tpAddr[1], be);
+      cta::objectstore::ScopedExclusiveLock tpl(aq);
+      aq.fetch();
+      cta::objectstore::ArchiveRequest::JobDump jd;
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
-      jd.tapePoolAddress = tpAddr[1];
-      tp.addJob(jd, atfr.getAddressIfSet(), atfr.getArchiveFile().path, 1000+pass, 0, time(NULL));
-      tp.commit();
+      jd.ArchiveQueueAddress = tpAddr[1];
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, 0, time(NULL));
+      aq.commit();
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent
     {
-      atfr.setOwner("");
-      atfr.commit();
+      ar.setOwner("");
+      ar.commit();
     }
     break;
   }
@@ -376,18 +372,18 @@ TEST(ObjectStore, GarbageCollectorArchiveToFileRequest) {
   }
   // All 4 requests should be linked in both tape pools
   {
-    cta::objectstore::TapePool tp0(tpAddr[0], be);
-    cta::objectstore::ScopedExclusiveLock tp0lock(tp0);
-    tp0.fetch();
-    auto d0=tp0.dumpJobs();
-    cta::objectstore::TapePool tp1(tpAddr[1], be);
-    cta::objectstore::ScopedExclusiveLock tp1lock(tp1);
-    tp1.fetch();
-    auto d1=tp1.dumpJobs();
+    cta::objectstore::ArchiveQueue aq0(tpAddr[0], be);
+    cta::objectstore::ScopedExclusiveLock tp0lock(aq0);
+    aq0.fetch();
+    auto d0=aq0.dumpJobs();
+    cta::objectstore::ArchiveQueue aq1(tpAddr[1], be);
+    cta::objectstore::ScopedExclusiveLock tp1lock(aq1);
+    aq1.fetch();
+    auto d1=aq1.dumpJobs();
     // We expect all jobs with sizes 1002-1005 inclusive to be connected to
     // their respective tape pools.
-    ASSERT_EQ(4, tp0.getJobsSummary().files);
-    ASSERT_EQ(4, tp1.getJobsSummary().files);
+    ASSERT_EQ(4, aq0.getJobsSummary().files);
+    ASSERT_EQ(4, aq1.getJobsSummary().files);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);

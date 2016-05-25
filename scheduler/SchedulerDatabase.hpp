@@ -35,7 +35,9 @@
 #include "common/DriveState.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 
 namespace cta {
@@ -54,8 +56,7 @@ namespace archiveRoute {
   class ArchiveRoute;
 } // cta::common::archiveRoute
 } // cta::common
-class ArchiveToFileRequest;
-class ArchiveToTapeCopyRequest;
+class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
 class RetrieveToFileRequest;
@@ -65,13 +66,12 @@ class StorageClass;
 class Tape;
 class TapeMount;
 class TapeSession;
-class TapePool;
 class UserIdentity;
 } /// cta
 
 namespace cta {
 
-class ArchiveToFileRequest;
+class ArchiveRequest;
 
 /**
  * Abstract class defining the interface to the database of a tape resource
@@ -93,41 +93,20 @@ public:
    * etc... handy to simplify the implementation of the completion and cancelling
    * (plus the destructor in case the caller fails half way through).
    */ 
-  class ArchiveToFileRequestCreation {
-  public:
-    virtual void complete() = 0;
-    virtual void cancel() = 0;
-    virtual ~ArchiveToFileRequestCreation() {};
-  };
-  
-  /*
-   * Subclass allowing the tracking and automated cleanup of a 
-   * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close
-   * or cancel) surround an NS operation. This class can keep references, locks,
-   * etc... handy to simplify the implementation of the completion and cancelling
-   * (plus the destructor in case the caller fails half way through).
-   */ 
   class ArchiveRequestCreation {
   public:
     virtual void complete() = 0;
     virtual void cancel() = 0;
     virtual ~ArchiveRequestCreation() {};
   };
-
-  /**
-   * Queues the specified request. DEPRECATED
-   *
-   * @param rqst The request.
-   */
-  virtual std::unique_ptr<ArchiveToFileRequestCreation> queue(const ArchiveToFileRequest &rqst) = 0;
   
   /**
    * Queues the specified request.
    *
    * @param rqst The request.
    */
-  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId, 
-  const std::map<uint64_t, std::string> &copyNbToPoolMap, const cta::common::dataStructures::MountPolicy &mountPolicy) = 0;
+  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
+    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
 
   /**
    * Returns all of the queued archive requests.  The returned requests are
@@ -135,7 +114,7 @@ public:
    *
    * @return The queued requests.
    */
-  virtual std::map<TapePool, std::list<ArchiveToTapeCopyRequest> >
+  virtual std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
     getArchiveRequests() const = 0;
 
   /**
@@ -152,12 +131,12 @@ public:
    * Deletes the specified archive request.
    *
    * @param requester The identity of the requester.
-   * @param archiveFile The absolute path of the destination file within the
-   * archive namespace.
+   * @param archiveFile The ID of the destination file within the
+   * archive catalogue.
    */
   virtual void deleteArchiveRequest(
     const SecurityIdentity &cliIdentity,
-    const std::string &archiveFile) = 0;
+    uint64_t archiveFileId) = 0;
   
   /*
    * Subclass allowing the tracking and automated cleanup of a 
@@ -179,12 +158,11 @@ public:
    * archive namespace.
    *
    * @param requester The identity of the requester.
-   * @param archiveFile The absolute path of the destination file within the
-   * archive namespace.
+   * @param fileId Id of the destination file within the archive catalogue.
    */
   virtual std::unique_ptr<ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
     const SecurityIdentity &cliIdentity,
-    const std::string &archiveFile) = 0;
+    uint64_t fileId) = 0;
 
   /*============ Archive management: tape server side =======================*/
   /**
@@ -306,7 +284,7 @@ public:
     uint64_t filesQueued; /**< The number of files queued for this queue */
     uint64_t bytesQueued; /**< The amount of data currently queued */
     time_t oldestJobStartTime; /**< Creation time of oldest request */
-    MountCriteria mountCriteria; /**< The mount criteria collection */ 
+    common::dataStructures::MountPolicy mountPolicy; /**< The mount policy */ 
     std::string logicalLibrary; /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 [ ratio of existing mounts/quota (for faire share of mounts)*/
     
@@ -379,214 +357,6 @@ public:
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
-
-  /*============ StorageClass management ====================================*/
-  
-  /**
-   * Creates the specified storage class.
-   *
-   * @param name The name of the storage class.
-   * @param nbCopies The number of copies a file associated with this storage
-   * class should have on tape.
-   * @param creationLog The who, where, when an why of this modification.
-   */
-  virtual void createStorageClass(
-    const std::string &name,
-    const uint16_t nbCopies,
-    const CreationLog &creationLog) = 0;
-
-  /**
-   * Deletes the specified storage class.
-   *
-   * @param requester The identity of the requester.
-   * @param name The name of the storage class.
-   */
-  virtual void deleteStorageClass(
-    const SecurityIdentity &cliIdentity,
-    const std::string &name) = 0;
-
-  /**
-   * Gets the current list of storage classes in lexicographical order.
-   *
-   * @return The current list of storage classes in lexicographical order.
-   */
-  virtual std::list<StorageClass> getStorageClasses() const = 0;
-
-  /**
-   * Returns the storage class with the specified name.
-   *
-   * @param name The name of the storage class.
-   * @return The storage class with the specified name.
-   */
-  virtual StorageClass getStorageClass(const std::string &name) const = 0;
-
-  /*============ Tape pools management ======================================*/
-  /**
-   * Creates a tape pool with the specified name.
-   *
-   * @param name The name of the tape pool.
-   * @param nbPartialTapes The maximum number of tapes that can be partially
-   * full at any moment in time.
-   * @param creationLog The who, where, when an why of this modification.
-   */
-  virtual void createTapePool(
-    const std::string &name,
-    const uint32_t nbPartialTapes,
-    const CreationLog& creationLog) = 0;
-  
-  /**
-   * Sets the mount criteria for a tape pool.
-   * @param tapePool tape pool name
-   * @param mountCriteriaByDirection the set of all the mount criteria.
-   */
-
-  virtual void setTapePoolMountCriteria(const std::string & tapePool,
-    const MountCriteriaByDirection & mountCriteriaByDirection) = 0;
-  
-  /**
-   * Delete the tape pool with the specified name.
-   *
-   * @param requester The identity of the requester.
-   * @param name The name of the tape pool.
-   */
-  virtual void deleteTapePool(
-    const SecurityIdentity &cliIdentity,
-    const std::string &name) = 0;
-
-  /**
-   * Gets the current list of tape pools in lexicographical order.
-   *
-   * @return The current list of tape pools in lexicographical order.
-   */
-  virtual std::list<TapePool> getTapePools() const = 0;
-  
-  /*============ Archive Routes management ==================================*/
-  
-  /**
-   * Creates the specified archive route.
-   *
-   * @param storageClassName The name of the storage class that identifies the
-   * source disk files.
-   * @param copyNb The tape copy number.
-   * @param tapePoolName The name of the destination tape pool.
-   * @param creationLog The who, where, when an why of this modification.
-   */
-  virtual void createArchiveRoute(
-    const std::string &storageClassName,
-    const uint16_t copyNb,
-    const std::string &tapePoolName,
-    const CreationLog &creationLog) = 0;
-
-  /**
-   * Deletes the specified archive route.
-   *
-   * @param requester The identity of the requester.
-   * @param storageClassName The name of the storage class that identifies the
-   * source disk files.
-   * @param copyNb The tape copy number.
-   */
-  virtual void deleteArchiveRoute(
-    const SecurityIdentity &cliIdentity,
-    const std::string &storageClassName,
-    const uint16_t copyNb) = 0;
-
-  /**
-   * Returns the current list of archive routes.
-   *
-   * @return The current list of archive routes.
-   */
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes() const = 0;
-
-  /**
-   * Returns the list of archive routes for the specified storage class.
-   *
-   * This method throws an exception if the list of archive routes is
-   * incomplete.  For example this method will throw an exception if the number
-   * of tape copies in the specified storage class is 2 but only one archive
-   * route has been created in the scheduler database for the storage class.
-   *
-   * @param storageClassName The name of the storage class.
-   * @return The list of archive routes for the specified storage class.
-   */
-  virtual std::list<common::archiveRoute::ArchiveRoute> getArchiveRoutes(
-    const std::string &storageClassName) const = 0;
-  
-  /*============ Logical libraries management ==============================*/
-  
-  /**
-   * Creates a logical library with the specified name.
-   *
-   * @param requester The identity of the requester.
-   * logical library.
-   * @param name The name of the logical library.
-   * @param comment The comment describing the logical library.
-   */
-  virtual void createLogicalLibrary(
-    const std::string &name,
-    const cta::CreationLog& creationLog) = 0;
-
-  /**
-   * Deletes the logical library with the specified name.
-   *
-   * @param requester The identity of the requester.
-   * @param name The name of the logical library.
-   */
-  virtual void deleteLogicalLibrary(
-    const SecurityIdentity &cliIdentity,
-    const std::string &name) = 0;
-
-  /**
-   * Returns the current list of libraries in lexicographical order.
-   *
-   * @return The current list of libraries in lexicographical order.
-   */
-  virtual std::list<LogicalLibrary> getLogicalLibraries() const = 0;
-
-   /*============ Tape management ===========================================*/
-  
-  /**
-   * Creates a tape.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param logicalLibraryName The name of the logical library to which the tape
-   * belongs.
-   * @param tapePoolName The name of the tape pool to which the tape belongs.
-   * @param capacityInBytes The capacity of the tape.
-   * @param creationLog The who, where, when an why of this modification.
-   */
-  virtual void createTape(
-    const std::string &vid,
-    const std::string &logicalLibraryName,
-    const std::string &tapePoolName,
-    const uint64_t capacityInBytes,
-    const CreationLog &creationLog) = 0;
-
-  /**
-   * Deletes the tape with the specified volume identifier.
-   *
-   * @param requester The identity of the requester.
-   * @param vid The volume identifier of the tape.
-   */
-  virtual void deleteTape(
-    const SecurityIdentity &cliIdentity,
-    const std::string &vid) = 0;
-
-  /**
-   * Returns the tape with the specified volume identifier.
-   *
-   * @param vid The volume identifier of the tape.
-   * @return The tape with the specified volume identifier.
-   */
-  virtual Tape getTape(const std::string &vid) const = 0;
-
-  /**
-   * Returns the current list of tapes in the lexicographical order of their
-   * volume identifiers.
-   *
-   * @return The current list of tapes in the lexicographical order of their
-   * volume identifiers.
-   */
-  virtual std::list<Tape> getTapes() const = 0;
   
   /* === Drive state handling  ============================================== */
   /**

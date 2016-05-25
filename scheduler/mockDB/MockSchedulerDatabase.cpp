@@ -22,8 +22,7 @@
 #include "nameserver/NameServer.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
-#include "scheduler/ArchiveToDirRequest.hpp"
-#include "scheduler/ArchiveToFileRequest.hpp"
+#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -269,16 +268,16 @@ void cta::MockSchedulerDatabase::ArchiveToFileRequestCreation::cancel() {
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
+std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>
   cta::MockSchedulerDatabase::queue(const cta::common::dataStructures::ArchiveRequest &request, const uint64_t archiveFileId) {
-  return std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> ();
+  return std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> ();
 }
 
 //------------------------------------------------------------------------------
 // queue
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
-  cta::MockSchedulerDatabase::queue(const ArchiveToFileRequest &rqst) {
+std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation>
+  cta::MockSchedulerDatabase::queue(const ArchiveRequest &rqst) {
   const std::map<uint16_t, std::string> &copyNbToPoolMap =
     rqst.copyNbToPoolMap;
   for(auto itor = copyNbToPoolMap.begin(); itor != copyNbToPoolMap.end();
@@ -294,7 +293,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation>
       rqst.creationLog));
   }
   return
-    std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCreation> (
+    std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> (
       new ArchiveToFileRequestCreation(m_dbHandle, rqst.archiveFile,
       SecurityIdentity(rqst.creationLog.user, rqst.creationLog.host),
         *this));

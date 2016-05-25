@@ -18,9 +18,11 @@
 
 #include "ArchiveRequest.hpp"
 #include "GenericObject.hpp"
-#include "TapePool.hpp"
+#include "ArchiveQueue.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include <json-c/json.h>
+
+namespace cta { namespace objectstore {
 
 cta::objectstore::ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os, address){ }
@@ -44,14 +46,14 @@ void cta::objectstore::ArchiveRequest::initialize() {
 }
 
 void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
-  const std::string& tapepool, const std::string& tapepooladdress) {
+  const std::string& tapepool, const std::string& archivequeueaddress) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
   j->set_status(serializers::ArchiveJobStatus::AJS_PendingNsCreation);
   j->set_tapepool(tapepool);
   j->set_owner("");
-  j->set_tapepooladdress(tapepooladdress);
+  j->set_archivequeueaddress(archivequeueaddress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
@@ -121,11 +123,11 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
 }
 
 
-void cta::objectstore::ArchiveRequest::setAllJobsLinkingToTapePool() {
+void cta::objectstore::ArchiveRequest::setAllJobsLinkingToArchiveQueue() {
   checkPayloadWritable();
   auto * jl=m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
-    j->set_status(serializers::AJS_LinkingToTapePool);
+    j->set_status(serializers::AJS_LinkingToArchiveQueue);
   }
 }
 
@@ -232,8 +234,8 @@ void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStr
   checkPayloadWritable();
   auto payloadMountPolicy = m_payload.mutable_mountpolicy();
   payloadMountPolicy->set_maxdrives(mountPolicy.maxDrivesAllowed);
-  payloadMountPolicy->set_minrequestage(mountPolicy.archive_minRequestAge);
-  payloadMountPolicy->set_priority(mountPolicy.archive_priority);
+  payloadMountPolicy->set_minrequestage(mountPolicy.archiveMinRequestAge);
+  payloadMountPolicy->set_priority(mountPolicy.archivePriority);
 }
 
 //------------------------------------------------------------------------------
@@ -244,8 +246,8 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
   cta::common::dataStructures::MountPolicy mountPolicy;
   auto payloadMountPolicy = m_payload.mountpolicy();
   mountPolicy.maxDrivesAllowed=payloadMountPolicy.maxdrives();
-  mountPolicy.archive_minRequestAge=payloadMountPolicy.minrequestage();
-  mountPolicy.archive_priority=payloadMountPolicy.priority();
+  mountPolicy.archiveMinRequestAge=payloadMountPolicy.minrequestage();
+  mountPolicy.archivePriority=payloadMountPolicy.priority();
   return mountPolicy;
 }
 
@@ -326,7 +328,7 @@ uint64_t cta::objectstore::ArchiveRequest::getFileSize() {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
+void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
   payloadRequester->set_name(requester.name);
@@ -336,7 +338,7 @@ void cta::objectstore::ArchiveRequest::setRequester(const cta::common::dataStruc
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::objectstore::ArchiveRequest::getRequester() {
+cta::common::dataStructures::UserIdentity ArchiveRequest::getRequester() {
   checkPayloadReadable();
   cta::common::dataStructures::UserIdentity requester;
   auto payloadRequester = m_payload.requester();
@@ -348,7 +350,7 @@ cta::common::dataStructures::UserIdentity cta::objectstore::ArchiveRequest::getR
 //------------------------------------------------------------------------------
 // setSrcURL
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setSrcURL(const std::string &srcURL) {
+void ArchiveRequest::setSrcURL(const std::string &srcURL) {
   checkPayloadWritable();
   m_payload.set_srcurl(srcURL);
 }
@@ -356,7 +358,7 @@ void cta::objectstore::ArchiveRequest::setSrcURL(const std::string &srcURL) {
 //------------------------------------------------------------------------------
 // getSrcURL
 //------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getSrcURL() {
+std::string ArchiveRequest::getSrcURL() {
   checkPayloadReadable();
   return m_payload.srcurl();
 }
@@ -364,7 +366,7 @@ std::string cta::objectstore::ArchiveRequest::getSrcURL() {
 //------------------------------------------------------------------------------
 // setStorageClass
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setStorageClass(const std::string &storageClass) {
+void ArchiveRequest::setStorageClass(const std::string &storageClass) {
   checkPayloadWritable();
   m_payload.set_storageclass(storageClass);
 }
@@ -372,7 +374,7 @@ void cta::objectstore::ArchiveRequest::setStorageClass(const std::string &storag
 //------------------------------------------------------------------------------
 // getStorageClass
 //------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getStorageClass() {
+std::string ArchiveRequest::getStorageClass() {
   checkPayloadReadable();
   return m_payload.storageclass();
 }
@@ -380,7 +382,7 @@ std::string cta::objectstore::ArchiveRequest::getStorageClass() {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+void ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
   checkPayloadWritable();
   auto payloadCreationLog = m_payload.mutable_creationlog();
   payloadCreationLog->set_time(creationLog.time);
@@ -392,7 +394,7 @@ void cta::objectstore::ArchiveRequest::setCreationLog(const cta::common::dataStr
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::objectstore::ArchiveRequest::getCreationLog() {
+cta::common::dataStructures::EntryLog ArchiveRequest::getCreationLog() {
   checkPayloadReadable();
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::UserIdentity user;
@@ -405,7 +407,7 @@ cta::common::dataStructures::EntryLog cta::objectstore::ArchiveRequest::getCreat
   return creationLog;  
 }
 
-auto cta::objectstore::ArchiveRequest::dumpJobs() -> std::list<JobDump> {
+auto ArchiveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl = m_payload.jobs();
@@ -413,12 +415,12 @@ auto cta::objectstore::ArchiveRequest::dumpJobs() -> std::list<JobDump> {
     ret.push_back(JobDump());
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
-    ret.back().tapePoolAddress = j->tapepooladdress();
+    ret.back().ArchiveQueueAddress = j->archivequeueaddress();
   }
   return ret;
 }
 
-void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
+void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
   // The behavior here depends on which job the agent is supposed to own.
   // We should first find this job (if any). This is for covering the case
@@ -428,7 +430,7 @@ void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presume
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
-    if (status==serializers::AJS_LinkingToTapePool ||
+    if (status==serializers::AJS_LinkingToArchiveQueue ||
         (status==serializers::AJS_Selected && owner==presumedOwner)) {
         // If the job was being connected to the tape pool or was selected
         // by the dead agent, then we have to ensure it is indeed connected to
@@ -437,16 +439,16 @@ void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presume
         // If we fail to reconnect, we have to fail the job and potentially
         // finish the request.
       try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        ArchiveToFileRequest::JobDump jd;
+        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ScopedExclusiveLock tpl(aq);
+        aq.fetch();
+        ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addJobIfNecessary(jd, getAddressIfSet(), 
-          m_payload.drdata().drpath(), m_payload.filesize()))
-          tp.commit();
+        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        if (aq.addJobIfNecessary(jd, getAddressIfSet(), m_payload.archivefileid(),
+          m_payload.filesize()))
+          aq.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();
       } catch (...) {
@@ -461,16 +463,16 @@ void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presume
       // queue for files orphaned pending ns creation. Some user process will have
       // to pick them up actively (recovery involves schedulerDB + NameServerDB)
       try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        ArchiveToFileRequest::JobDump jd;
+        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ScopedExclusiveLock tpl(aq);
+        aq.fetch();
+        ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.drdata().drpath(), m_payload.filesize()))
-          tp.commit();
+        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(),
+          m_payload.archivefileid(), m_payload.filesize()))
+          aq.commit();
       } catch (...) {
         j->set_status(serializers::AJS_Failed);
         // This could be the end of the request, with various consequences.
@@ -483,16 +485,16 @@ void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presume
       // queue for files orphaned pending ns deletion. Some user process will have
       // to pick them up actively (recovery involves schedulerDB + NameServerDB)
       try {
-        TapePool tp(j->tapepooladdress(), m_objectStore);
-        ScopedExclusiveLock tpl(tp);
-        tp.fetch();
-        ArchiveToFileRequest::JobDump jd;
+        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ScopedExclusiveLock tpl(aq);
+        aq.fetch();
+        ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.tapePoolAddress = j->tapepooladdress();
-        if (tp.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.drdata().drpath(), m_payload.filesize()))
-          tp.commit();
+        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
+          m_payload.archivefileid(), m_payload.filesize()))
+          aq.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();
       } catch (...) {
@@ -508,7 +510,7 @@ void cta::objectstore::ArchiveRequest::garbageCollect(const std::string &presume
   }
 }
 
-void cta::objectstore::ArchiveRequest::setJobOwner(
+void ArchiveRequest::setJobOwner(
   uint16_t copyNumber, const std::string& owner) {
   checkPayloadWritable();
   // Find the right job
@@ -522,7 +524,7 @@ void cta::objectstore::ArchiveRequest::setJobOwner(
   throw NoSuchJob("In ArchiveRequest::setJobOwner: no such job");
 }
 
-bool cta::objectstore::ArchiveRequest::finishIfNecessary() {
+bool ArchiveRequest::finishIfNecessary() {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
   // in memory. If the job is complete, we will just remove it.
@@ -540,7 +542,7 @@ bool cta::objectstore::ArchiveRequest::finishIfNecessary() {
   return true;
 }
 
-std::string cta::objectstore::ArchiveRequest::dump() {
+std::string ArchiveRequest::dump() {
   checkPayloadReadable();
   std::stringstream ret;
   ret << "ArchiveRequest" << std::endl;
@@ -575,7 +577,7 @@ std::string cta::objectstore::ArchiveRequest::dump() {
     json_object_object_add(jj, "retrieswithinmount", json_object_new_int64(j->retrieswithinmount()));
     json_object_object_add(jj, "status", json_object_new_int64(j->status()));
     json_object_object_add(jj, "tapepool", json_object_new_string(j->tapepool().c_str()));
-    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->tapepooladdress().c_str()));
+    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->archivequeueaddress().c_str()));
     json_object_object_add(jj, "totalRetries", json_object_new_int64(j->totalretries()));
     json_object_array_add(jja, jj);
   }
@@ -597,7 +599,7 @@ std::string cta::objectstore::ArchiveRequest::dump() {
   return ret.str();
 }
 
-
+}} // namespace cta::objectstore
 
 
 

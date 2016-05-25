@@ -19,13 +19,13 @@
 #include "GenericObject.hpp"
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
-#include "ArchiveToFileRequest.hpp"
+#include "ArchiveRequest.hpp"
 #include "DriveRegister.hpp"
 #include "RetrieveToFileRequest.hpp"
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
-#include "TapePool.hpp"
-#include "Tape.hpp"
+#include "ArchiveQueue.hpp"
+#include "RetrieveQueue.hpp"
 #include "DriveRegister.hpp"
 #include <stdexcept>
 
@@ -94,14 +94,11 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock,
     case serializers::AgentRegister_t:
       garbageCollectWithType<AgentRegister>(this, lock, presumedOwner);
       break;
-    case serializers::TapePool_t:
-      garbageCollectWithType<TapePool>(this, lock, presumedOwner);
-      break;
     case serializers::DriveRegister_t:
       garbageCollectWithType<DriveRegister>(this, lock, presumedOwner);
       break;
-    case serializers::ArchiveToFileRequest_t:
-      garbageCollectWithType<ArchiveToFileRequest>(this, lock, presumedOwner);
+    case serializers::ArchiveRequest_t:
+      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner);
       break;
     default: {
       std::stringstream err;
@@ -136,14 +133,12 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
       return dumpWithType<AgentRegister>(this, lock);
     case serializers::Agent_t:
       return dumpWithType<Agent>(this, lock);
-    case serializers::TapePool_t:
-      return dumpWithType<TapePool>(this, lock);
     case serializers::DriveRegister_t:
       return dumpWithType<DriveRegister>(this, lock);
-    case serializers::Tape_t:
-      return dumpWithType<cta::objectstore::Tape>(this, lock);
-    case serializers::ArchiveToFileRequest_t:
-      return dumpWithType<ArchiveToFileRequest>(this, lock);
+    case serializers::RetrieveQueue_t:
+      return dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
+    case serializers::ArchiveRequest_t:
+      return dumpWithType<ArchiveRequest>(this, lock);
     case serializers::RetrieveToFileRequest_t:
       return dumpWithType<RetrieveToFileRequest>(this, lock);
     case serializers::SchedulerGlobalLock_t:

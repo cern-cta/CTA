@@ -60,7 +60,7 @@ public:
     const std::list<TapeFileLocation> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
-    const CreationLog & creationLog);
+    const common::dataStructures::EntryLog & creationLog);
 
   /**
    * Returns the source archive file.
