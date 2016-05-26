@@ -38,6 +38,7 @@ void cta::objectstore::RetrieveQueue::initialize(const std::string &name,
   // Set the reguired fields
   m_payload.set_oldestjobtime(0);
   m_payload.set_retrievejobstotalsize(0);
+  m_payload.set_vid(name);
   m_payloadInterpreted = true;
 }
 

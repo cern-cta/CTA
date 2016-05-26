@@ -36,6 +36,8 @@ namespace dataStructures {
 struct EntryLog {
 
   EntryLog();
+  
+  EntryLog(const UserIdentity & user, const std::string & host, const time_t time);
 
   bool operator==(const EntryLog &rhs) const;
 

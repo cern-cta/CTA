@@ -137,7 +137,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, DISABLED_GarbageCollectorArchiveQueue) {
+TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -251,7 +251,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty());
 }
 
-TEST(ObjectStore, DISABLED_GarbageCollectorArchiveRequest) {
+TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::Agent agent(be);
@@ -314,6 +314,19 @@ TEST(ObjectStore, DISABLED_GarbageCollectorArchiveRequest) {
     ar.addJob(1, "ArchiveQueue0", tpAddr[0]);
     ar.addJob(2, "ArchiveQueue1", tpAddr[1]);    
     ar.setOwner(agA.getAddressIfSet());
+    cta::common::dataStructures::MountPolicy mp;
+    ar.setMountPolicy(mp);
+    ar.setChecksumType("");
+    ar.setChecksumValue("");
+    ar.setDiskpoolName("");
+    ar.setDiskpoolThroughput(666);
+    ar.setDrData(cta::common::dataStructures::DRData());
+    ar.setInstance("eoseos");
+    ar.setFileSize(667);
+    ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+    ar.setSrcURL("root://eoseos/myFile");
+    ar.setStorageClass("sc");
+    ar.setCreationLog(cta::common::dataStructures::EntryLog(cta::common::dataStructures::UserIdentity("user0", "group0"), "host0", time(nullptr)));
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }

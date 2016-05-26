@@ -100,6 +100,9 @@ void GenericObject::garbageCollect(ScopedExclusiveLock& lock,
     case serializers::ArchiveRequest_t:
       garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner);
       break;
+    case serializers::ArchiveQueue_t:
+      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner);
+      break;
     default: {
       std::stringstream err;
       err << "In GenericObject::garbageCollect, unsupported type: "

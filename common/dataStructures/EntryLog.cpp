@@ -28,7 +28,14 @@ namespace dataStructures {
 // constructor
 //------------------------------------------------------------------------------
 EntryLog::EntryLog():
-  time(0) {}
+  time(0) { }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+EntryLog::EntryLog(const UserIdentity& user, const std::string& host, const time_t time):
+  user(user), host(host), time(time) {}
+
 
 //------------------------------------------------------------------------------
 // operator==
