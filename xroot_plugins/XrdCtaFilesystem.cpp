@@ -267,9 +267,8 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_catalogue(m_catalogueConn),
   m_scheduler(m_catalogue, m_scheddb, 5, 2*1000*1000)
 {
-  // Currently using the in-memory CTA catalogue and therefore it needs to be initialised
-  cta::catalogue::Sqlite::enableForeignKeys(m_catalogueConn);
-  cta::catalogue::Sqlite::createCatalogueDatabaseSchema(m_catalogueConn);
+  // Currently using the in-memory CTA catalogue and therefore the schema needs to be created
+  m_catalogueConn.createCatalogueDatabaseSchema();
 
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
