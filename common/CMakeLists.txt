@@ -46,6 +46,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RepackInfo.cpp
   dataStructures/RepackType.cpp
   dataStructures/Requester.cpp
+  dataStructures/RetrieveFileQueueCriteria.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp

@@ -176,14 +176,6 @@ public:
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id);
   
   virtual void setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force);
-
-  /**
-   * Notifies the catalogue that a file has been written to tape.
-   *
-   * @param event The tape file written event.
-   */
-  virtual void fileWrittenToTape(const TapeFileWritten &event);
-
   /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
@@ -196,8 +188,32 @@ public:
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
-  virtual common::dataStructures::ArchiveFileQueueCriteria
-    prepareForNewFile(const std::string &storageClass, const common::dataStructures::UserIdentity &user);
+  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+    const std::string &storageClass,
+    const common::dataStructures::UserIdentity &user);
+
+  /**
+   * Notifies the catalogue that a file has been written to tape.
+   *
+   * @param event The tape file written event.
+   */
+  virtual void fileWrittenToTape(const TapeFileWritten &event);
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const uint64_t archiveFileId,
+    common::dataStructures::UserIdentity &user);
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
 

@@ -46,6 +46,7 @@
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -210,9 +211,9 @@ public:
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
-  virtual common::dataStructures::ArchiveFileQueueCriteria
-    prepareForNewFile(const std::string &storageClass, const common::dataStructures::UserIdentity &user)
-    = 0;
+  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+    const std::string &storageClass,
+    const common::dataStructures::UserIdentity &user) = 0;
 
   /**
    * Notifies the catalogue that a file has been written to tape.
@@ -220,6 +221,22 @@ public:
    * @param event The tape file written event.
    */
   virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const uint64_t archiveFileId,
+    common::dataStructures::UserIdentity &user) = 0;
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 
