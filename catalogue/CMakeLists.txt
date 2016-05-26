@@ -66,6 +66,7 @@ add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
   DEPENDS catalogue_schema.cpp)
 
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  DbLoginTest.cpp
   RdbmsCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
@@ -90,3 +91,7 @@ target_link_libraries (ctacatalogueoraunittests
   ctacatalogue)
 
 install(TARGETS ctacatalogueoraunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+install (FILES cta_catalogue_db.conf.example
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

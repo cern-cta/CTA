@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <istream>
 #include <string>
 
 namespace cta {
@@ -29,16 +30,32 @@ namespace catalogue {
 struct DbLogin {
 
   /**
+   * Enumeration of the supported database types.
+   */
+  enum DbType {
+    DBTYPE_IN_MEMORY,
+    DBTYPE_ORACLE,
+    DBTYPE_NONE
+  };
+
+  /**
    * Constructor.
    *
+   * @param dbType The type of the database.
    * @param username The username.
    * @param password The password.
    * @param database The database name.
    */
   DbLogin(
+    const DbType dbType,
     const std::string &username, 
     const std::string &password,
     const std::string &database);
+
+  /**
+   * The type of the database.
+   */
+  DbType dbType;
 
   /**
    * The user name.
@@ -56,15 +73,44 @@ struct DbLogin {
   std::string database;
 
   /**
-   * Reads the database login information from the specified file.  The format
-   * of the file is:
+   * Reads and parses the database login information from the specified file.
    *
-   * username/password@database
+   * The input stream must contain one and only one connection string.
    *
-   * @param The name of the file containing the database login information.
+   * The format of the connection string is:
+   *
+   *   in_memory or oracle:username/password@database
+   *
+   * The file can contain multiple empty lines.
+   *
+   * The file can contain multiple comment lines where a comment
+   * line starts with optional whitespace and a hash character '#'.
+   *
+   * @param filename The name of the file containing the database login
+   * information.
    * @return The database login information.
    */
-  static DbLogin readFromFile(const std::string &filename);
+  static DbLogin parseFile(const std::string &filename);
+
+  /**
+   * Reads and parses the database login information from the specified input
+   * stream.
+   *
+   * The input stream must contain one and only one connection string.
+   *
+   * The format of the connection string is:
+   *
+   *   in_memory or oracle:username/password@database
+   *
+   * The input stream can contain multiple empty lines.
+   *
+   * The input stream can contain multiple comment lines where a comment
+   * line starts with optional whitespace and a hash character '#'.
+   *
+   * @param inputStream The input stream to be read from.
+   * @return The database login information.
+   */
+  static DbLogin parseStream(std::istream &inputStream);
 
 }; // class DbLogin
 

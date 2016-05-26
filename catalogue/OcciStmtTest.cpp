@@ -42,7 +42,7 @@ TEST_F(cta_catalogue_DbStmtTest, executeQuery) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),

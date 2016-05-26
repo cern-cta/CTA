@@ -20,44 +20,30 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-#include <errno.h>
 #include <fstream>
-#include <iostream>
 #include <list>
-#include <memory>
-#include <stdint.h>
-#include <sstream>
-#include <stdio.h>
-#include <stdexcept>
-#include <string.h>
+
+namespace cta {
+namespace catalogue {
 
 namespace {
 
-using namespace cta;
-
 /**
- * Reads the entire contents of the specified files and returns a list of the
+ * Reads the entire contents of the specified stream and returns a list of the
  * non-empty lines.
  *
  * A line is considered not empty if it contains characters that are not white
  * space and are not part of a comment.
  *
+ * @param is The input stream.
  * @return A list of the non-empty lines.
  */
-std::list<std::string> readNonEmptyLines(
-  const std::string &filename) {
-
-  std::ifstream file(filename);
-  if(!file) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to open " << filename;
-    throw ex;
-  }
+std::list<std::string> readNonEmptyLines(std::istream &inputStream) {
 
   std::list<std::string> lines;
   std::string line;
 
-  while(std::getline(file, line)) {
+  while(std::getline(inputStream, line)) {
     // Remove the newline character if there is one
     {
       const std::string::size_type newlinePos = line.find("\n");
@@ -88,51 +74,80 @@ std::list<std::string> readNonEmptyLines(
 
 } // anonymous namespace
 
-namespace cta {
-namespace catalogue {
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 DbLogin::DbLogin(
+  const DbType dbType,
   const std::string &username,
   const std::string &password,
   const std::string &database):
+  dbType(dbType),
   username(username),
   password(password),
   database(database) {
 }
 
 //------------------------------------------------------------------------------
-// readFromFile
+// parseFile
 //------------------------------------------------------------------------------
-DbLogin DbLogin::readFromFile(const std::string &filename) {
-  const std::string fileFormat = "username/password@database";
-  const std::list<std::string> lines = readNonEmptyLines(filename);
+DbLogin DbLogin::parseFile(const std::string &filename) {
+  try {
+    std::ifstream file(filename);
+    if (!file) {
+      throw exception::Exception("Failed to open file");
+    }
+
+    return parseStream(file);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string("Failed to parse database login file " + filename + ": " +
+      ex.getMessage().str()));
+  }
+}
+
+//------------------------------------------------------------------------------
+// parseStream
+//------------------------------------------------------------------------------
+DbLogin DbLogin::parseStream(std::istream &inputStream) {
+  const std::string fileFormat = "either in_memory or oracle:username/password@database";
+  const std::list<std::string> lines = readNonEmptyLines(inputStream);
 
   if(1 != lines.size()) {
-    std::ostringstream msg;
-    msg << filename << " should contain one and only one connection string";
-    throw exception::Exception(msg.str());
+    throw exception::Exception("There should only be one and only one line containing a connection string");
   }
 
   const std::string connectionString = lines.front();
 
+  if(connectionString == "in_memory") {
+    const std::string username = "";
+    const std::string password = "";
+    const std::string database = "";
+    return DbLogin(DBTYPE_IN_MEMORY, username, password, database);
+  }
+
+  std::vector<std::string> typeAndDetails; // Where details are username, password and database
+  utils::splitString(connectionString, ':', typeAndDetails);
+  if(2 != typeAndDetails.size()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
+  }
+
+  if(typeAndDetails[0] != "oracle") {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
+  }
+
   std::vector<std::string> userPassAndDb;
-  utils::splitString(connectionString, '@', userPassAndDb);
+  utils::splitString(typeAndDetails[1], '@', userPassAndDb);
   if(2 != userPassAndDb.size()) {
-    throw exception::Exception(std::string("Invalid connection string"
-      ": Correct format is ") + fileFormat);
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
   }
 
   std::vector<std::string> userAndPass;
   utils::splitString(userPassAndDb[0], '/', userAndPass);
   if(2 != userAndPass.size()) {
-    throw exception::Exception(std::string("Invalid connection string"
-      ": Correct format is ") + fileFormat);
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
   }
 
-  return DbLogin(userAndPass[0], userAndPass[1], userPassAndDb[1]);
+  return DbLogin(DBTYPE_ORACLE, userAndPass[0], userAndPass[1], userPassAndDb[1]);
 }
 
 } // namesapce catalogue

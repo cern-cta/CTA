@@ -24,6 +24,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <sstream>
 
 namespace unitTests {
 
@@ -52,7 +53,7 @@ TEST_F(cta_catalogue_OcciConnTest, constructor_real_connection) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -64,7 +65,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt_null_sql) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -78,7 +79,7 @@ TEST_F(cta_catalogue_OcciConnTest, createStmt) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),

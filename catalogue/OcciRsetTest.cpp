@@ -43,7 +43,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -62,7 +62,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQueryRelyOnRsetDestructorForCacheDelet
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -80,7 +80,7 @@ TEST_F(cta_catalogue_OcciRsetTest, executeQuery_uint32_t) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -101,7 +101,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_c_string) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),
@@ -121,7 +121,7 @@ TEST_F(cta_catalogue_OcciRsetTest, bind_uint32_t) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const DbLogin dbLogin = DbLogin::readFromFile(g_cmdLineArgs.oraDbConnFile);
+  const DbLogin dbLogin = DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
   OcciEnv env;
   std::unique_ptr<DbConn> conn(env.createConn(
     dbLogin.username.c_str(),

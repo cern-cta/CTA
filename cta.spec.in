@@ -133,6 +133,7 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctamessagesutils.so
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverdaemonutils.so
+%attr(0644,root,root) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
 
 %package -n cta-systemtests
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
