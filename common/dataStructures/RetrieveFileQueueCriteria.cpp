@@ -32,7 +32,7 @@ RetrieveFileQueueCriteria::RetrieveFileQueueCriteria() {
 // constructor
 //------------------------------------------------------------------------------
 RetrieveFileQueueCriteria::RetrieveFileQueueCriteria(
-  const std::list<TapeFile> &tapeFiles,
+  const std::map<uint64_t, TapeFile> &tapeFiles,
   const MountPolicy &mountPolicy):
   tapeFiles(tapeFiles),
   mountPolicy(mountPolicy) {

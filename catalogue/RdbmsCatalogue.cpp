@@ -2162,12 +2162,55 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 }
 
 //------------------------------------------------------------------------------
-// prepareToRetreiveFile
+// prepareToRetrieveFile
 //------------------------------------------------------------------------------
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
   const uint64_t archiveFileId,
-  common::dataStructures::UserIdentity &user) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  const common::dataStructures::UserIdentity &user) {
+  const std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles = getTapeFiles(archiveFileId);
+  const common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user);
+
+  return common::dataStructures::RetrieveFileQueueCriteria(tapeFiles, mountPolicy);
+}
+
+//------------------------------------------------------------------------------
+// getTapeFiles
+//------------------------------------------------------------------------------
+std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFiles(const uint64_t archiveFileId) const {
+  try {
+    std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles;
+
+    const char *const sql =
+      "SELECT "
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+      "FROM "
+        "TAPE_FILE "
+      "WHERE "
+        "TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
+    while (rset->next()) {
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = rset->columnText("VID");
+        tapeFile.fSeq = rset->columnUint64("FSEQ");
+        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.copyNb = rset->columnUint64("COPY_NB");
+        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
+    }
+
+    return tapeFiles;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -2281,38 +2324,6 @@ void RdbmsCatalogue::createTapeFile(const common::dataStructures::TapeFile &tape
 }
 
 //------------------------------------------------------------------------------
-// getTapeFiles
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFiles() const {
-  std::list<common::dataStructures::TapeFile> files;
-  const char *const sql =
-    "SELECT "
-      "VID AS VID,"
-      "FSEQ AS FSEQ,"
-      "BLOCK_ID AS BLOCK_ID,"
-      "COMPRESSED_SIZE AS COMPRESSED_SIZE,"
-      "COPY_NB AS COPY_NB,"
-      "CREATION_TIME AS CREATION_TIME "
-    "FROM TAPE_FILE;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
-  std::unique_ptr<DbRset> rset(stmt->executeQuery());
-  while(rset->next()) {
-    common::dataStructures::TapeFile file;
-
-    file.vid = rset->columnText("VID");
-    file.fSeq = rset->columnUint64("FSEQ");
-    file.blockId = rset->columnUint64("BLOCK_ID");
-    file.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
-    file.copyNb = rset->columnUint64("COPY_NB");
-    file.creationTime = rset->columnUint64("CREATION_TIME");
-
-    files.push_back(file);
-  }
-
-  return files;
-}
-
-//------------------------------------------------------------------------------
 // setTapeLastFseq
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq) {
@@ -2421,6 +2432,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.fSeq = rset->columnUint64("FSEQ");
         tapeFile.blockId = rset->columnUint64("BLOCK_ID");
         tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.copyNb = rset->columnUint64("COPY_NB");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
         archiveFile->tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
       }

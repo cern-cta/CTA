@@ -18,6 +18,23 @@
 
 #pragma once
 
+#include "common/archiveNS/ArchiveFile.hpp"
+#include "common/archiveNS/TapeFileLocation.hpp"
+#include "common/admin/AdminUser.hpp"
+#include "common/admin/AdminHost.hpp"
+#include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/DriveState.hpp"
+#include "common/MountControl.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "nameserver/NameServerTapeFile.hpp"
+#include "scheduler/ArchiveToTapeCopyRequest.hpp"
+#include "scheduler/MountType.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
@@ -25,20 +42,6 @@
 #include <memory>
 #include <vector>
 #include <stdexcept>
-#include "common/archiveNS/ArchiveFile.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
-#include "common/admin/AdminUser.hpp"
-#include "common/admin/AdminHost.hpp"
-#include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "common/MountControl.hpp"
-#include "common/DriveState.hpp"
-#include "nameserver/NameServerTapeFile.hpp"
-#include "scheduler/MountType.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
-#include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
 
 namespace cta {
 // Forward declarations for opaque references.
@@ -104,6 +107,8 @@ public:
    * Queues the specified request.
    *
    * @param rqst The request.
+   * @param criteria The criteria retrieved from the CTA catalogue to be used to
+   * decide how to quue the request.
    */
   virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
@@ -206,8 +211,11 @@ public:
    * Queues the specified request.
    *
    * @param rqst The request.
+   * @param criteria The criteria retrieved from the CTA catalogue to be used to
+   * decide how to quue the request.
    */
-  virtual void queue(const RetrieveToFileRequest &rqst_) = 0;
+  virtual void queue(const cta::common::dataStructures::RetrieveRequest &rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then

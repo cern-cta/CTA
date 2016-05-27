@@ -213,7 +213,7 @@ public:
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const uint64_t archiveFileId,
-    common::dataStructures::UserIdentity &user);
+    const common::dataStructures::UserIdentity &user);
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
 
@@ -321,13 +321,6 @@ protected:
   void createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 
   /**
-   * Returns the list of all the tape files in the catalogue.
-   *
-   * @return The list of all the tape files in the catalogue.
-   */
-  std::list<common::dataStructures::TapeFile> getTapeFiles() const;
-
-  /**
    * Sets the last FSeq of the specified tape to the specified value.
    *
    * @param vid The volume identifier of the tape.
@@ -361,6 +354,15 @@ protected:
    */
   void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
     const TapeFileWritten &actual) const;
+
+  /**
+   * Returns the tape files for the specified archive file.
+   *
+   * @param archiveFileId The unique identifier of the archive file.
+   * @return The tape files as a map from tape copy number to tape file.
+   */
+  std::map<uint64_t, common::dataStructures::TapeFile>getTapeFiles(const uint64_t archiveFileId) const;
+
 }; // class RdbmsCatalogue
 
 } // namespace catalogue

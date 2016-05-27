@@ -29,7 +29,7 @@
 #include <algorithm>
 
 //------------------------------------------------------------------------------
-// deprecated constructor
+// constructor
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
@@ -61,8 +61,12 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
 //------------------------------------------------------------------------------
 // queueRetrieve
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void cta::Scheduler::queueRetrieve(
+  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const cta::common::dataStructures::RetrieveRequest &request) {
+  const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
+    m_catalogue.prepareToRetrieveFile(request.archiveFileID, cliIdentity.user);
+  m_db.queue(request, queueCriteria);
 }
 
 //------------------------------------------------------------------------------

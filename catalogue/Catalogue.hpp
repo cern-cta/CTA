@@ -236,7 +236,7 @@ public:
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const uint64_t archiveFileId,
-    common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::UserIdentity &user) = 0;
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 

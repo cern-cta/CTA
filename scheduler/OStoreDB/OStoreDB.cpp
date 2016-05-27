@@ -658,7 +658,8 @@ std::list<ArchiveToTapeCopyRequest>
   throw NoSuchArchiveQueue("In OStoreDB::getArchiveRequests: tape pool not found");
 }
 
-void OStoreDB::queue(const cta::RetrieveToFileRequest& rqst) {
+void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 //  assertAgentSet();
 //  // Check at least one potential tape copy is provided.

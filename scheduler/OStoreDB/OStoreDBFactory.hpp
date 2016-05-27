@@ -90,8 +90,9 @@ public:
     return m_OStoreDB.getMountInfo();
   }
 
-  virtual void queue(const RetrieveToFileRequest& rqst) override {
-    m_OStoreDB.queue(rqst);
+  virtual void queue(const common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria) override {
+    m_OStoreDB.queue(rqst, criteria);
   }
   
   virtual std::list<cta::common::DriveState> getDriveStates() const override {

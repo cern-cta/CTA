@@ -21,7 +21,8 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
-#include <list>
+#include <map>
+#include <stdint.h>
 
 namespace cta {
 namespace common {
@@ -40,17 +41,19 @@ struct RetrieveFileQueueCriteria {
   /**
    * Constructor.
    *
-   * @param tapeFiles The location(s) of the file on tape.
+   * @param tapeFiles The location(s) of the file on tape as a map from tape
+   * copy number to location.
    * @param mountPolicy The mount policy.
    */
   RetrieveFileQueueCriteria(
-    const std::list<TapeFile> &tapeFiles,
+    const std::map<uint64_t, TapeFile> &tapeFiles,
     const MountPolicy &mountPolicy);
 
   /**
-   * The location(s) of the file on tape.
+   * The location(s) of the file on tape as a map from tape copy number to
+   * location.
    */
-  std::list<TapeFile> tapeFiles;
+  std::map<uint64_t, TapeFile> tapeFiles;
 
   /**
    * The mount policy.

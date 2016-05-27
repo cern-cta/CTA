@@ -47,7 +47,6 @@ public:
   using RdbmsCatalogue::insertArchiveFile;
   using RdbmsCatalogue::createTapeFile;
   using RdbmsCatalogue::getArchiveFile;
-  using RdbmsCatalogue::getTapeFiles;
   using RdbmsCatalogue::getTapeLastFSeq;
   using RdbmsCatalogue::setTapeLastFSeq;
 

@@ -200,7 +200,8 @@ public:
   /* === Retrieve requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  void queue(const RetrieveToFileRequest& rqst_) override;
+  void queue(const cta::common::dataStructures::RetrieveRequest& rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const override;
 
