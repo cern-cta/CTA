@@ -52,7 +52,7 @@ public:
   // Archive jobs management ===================================================  
   void addJob(const ArchiveRequest::JobDump & job,
     const std::string & archiveToFileAddress, uint64_t fileid,
-    uint64_t size, uint64_t priority, time_t startTime);
+    uint64_t size, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
@@ -74,6 +74,8 @@ public:
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
+    uint64_t minArchiveRequestAge;
+    uint64_t maxDrivesAllowed;
   };
   JobsSummary getJobsSummary();
   
@@ -85,10 +87,6 @@ public:
     uint16_t copyNb;
   };
   std::list<JobDump> dumpJobs();
-  
-  // Mount criteria jobs management ============================================
-  void setMountPolicy(const common::dataStructures::MountPolicy& mountPolicy);
-  common::dataStructures::MountPolicy getMountPolicy();
   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();

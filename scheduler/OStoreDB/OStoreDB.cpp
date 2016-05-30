@@ -37,7 +37,6 @@
 #include "common/archiveNS/Tape.hpp"
 #include "RetrieveToFileRequest.hpp"
 #include "common/archiveNS/TapeFileLocation.hpp"
-#include "ArchiveToTapeCopyRequest.hpp"
 #include "common/archiveNS/ArchiveFile.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
@@ -103,8 +102,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       m.filesQueued = aqueue.getJobsSummary().files;      
       m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
       m.priority = aqueue.getJobsSummary().priority;
-      
-      m.mountPolicy = aqueue.getMountPolicy();
+      m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
+      m.minArchiveRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
       m.logicalLibrary = "";
 
     }
@@ -271,116 +270,11 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 }
 */
 
-void OStoreDB::ArchiveRequestCreation::complete() {
-  // We inherited all the objects from the creation.
-  // Lock is still here at that point.
-  // First, record that we are fine for next step.
-  m_request.setAllJobsLinkingToArchiveQueue();
-  m_request.commit();
-  objectstore::RootEntry re(m_objectStore);
-  // We can now plug the request onto its tape pools.
-  // We can discover at that point that a tape pool is actually not
-  // really owned by the root entry, and hence a dangling pointer
-  // We should then unlink the jobs from that already connected
-  // tape pools and abort the job creation.
-  // The list of done tape pools is held here for this purpose
-  // Reconstruct the job list
-  auto jl = m_request.dumpJobs();
-  std::list<std::string> linkedTapePools;
-  try {
-    for (auto j=jl.begin(); j!=jl.end(); j++) {
-      objectstore::ArchiveQueue aq(j->ArchiveQueueAddress, m_objectStore);
-      ScopedExclusiveLock aql(aq);
-      aq.fetch();
-      if (aq.getOwner() != re.getAddressIfSet())
-        throw NoSuchArchiveQueue("In OStoreDB::queue: non-existing archive queue found "
-            "(dangling pointer): canceling request creation.");
-      aq.addJob(*j, m_request.getAddressIfSet(), m_request.getArchiveFileID(), 
-        m_request.getFileSize(), m_request.getMountPolicy().archivePriority,
-        m_request.getCreationLog().time);
-      // Now that we have the tape pool handy, get the retry limits from it and 
-      // assign them to the job
-      m_request.setJobFailureLimits(j->copyNb, aq.getMountPolicy().maxRetriesWithinMount, 
-        aq.getMountPolicy().maxTotalRetries);
-      aq.commit();
-      linkedTapePools.push_back(j->ArchiveQueueAddress);
-    }
-  } catch (NoSuchArchiveQueue &) {
-    // Unlink the request from already connected tape pools
-    for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
-      objectstore::ArchiveQueue aq(*tpa, m_objectStore);
-      ScopedExclusiveLock aql(aq);
-      aq.fetch();
-      aq.removeJob(m_request.getAddressIfSet());
-      aq.commit();
-      m_request.remove();
-    }
-    throw;
-  }
-  // The request is now fully set. As it's multi-owned, we do not set the owner,
-  // just to disown it from the agent.
-  m_request.setOwner("");
-  m_request.commit();
-  m_lock.release();
-  // And remove reference from the agent
-  {
-    objectstore::ScopedExclusiveLock al(*m_agent);
-    m_agent->fetch();
-    m_agent->removeFromOwnership(m_request.getAddressIfSet());
-    m_agent->commit();
-  }
-  m_closed=true;
-  return;
-}
-
-void OStoreDB::ArchiveRequestCreation::cancel() {
-  // We inherited everything from the creation, and all we have to
-  // do here is to delete the request from storage and dereference it from
-  // the agent's entry
-  if (m_closed) {
-    throw ArchiveRequestAlreadyCompleteOrCanceled(
-      "In OStoreDB::ArchiveRequestCreation::cancel: trying the close "
-      "the request creation twice");
-  }
-  m_request.remove();
-  {
-    objectstore::ScopedExclusiveLock al(*m_agent);
-    m_agent->fetch();
-    m_agent->removeFromOwnership(m_request.getAddressIfSet());
-    m_agent->commit();
-  }
-  m_closed=true;
-  return;
-}
-
-OStoreDB::ArchiveRequestCreation::~ArchiveRequestCreation() {
-  // We have to determine whether complete() or cancel() were called, in which
-  // case there is nothing to do, or not, in which case we have to garbage
-  // collect the archive to file request. This will queue it to the appropriate
-  // tape pool(s) orphanesArchiveToFileCreations. The schedule will then 
-  // determine its fate depending on the status of the NS entry creation
-  // (no entry, just cancel, already created in NS, carry on).
-  if (m_closed)
-    return;
-  try {
-    m_request.garbageCollect(m_agent->getAddressIfSet());
-    {
-      objectstore::ScopedExclusiveLock al(*m_agent);
-      m_agent->fetch();
-      m_agent->removeFromOwnership(m_request.getAddressIfSet());
-      m_agent->commit();
-    }
-    m_closed=true;
-  } catch (...) {}
-}
-
-std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, 
+void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
   assertAgentSet();
   // Construct the return value immediately
-  std::unique_ptr<cta::OStoreDB::ArchiveRequestCreation> internalRet(new cta::OStoreDB::ArchiveRequestCreation(m_agent, m_objectStore));
-  cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
-  ar.setAddress(m_agent->nextId("ArchiveRequest"));
+  cta::objectstore::ArchiveRequest ar(m_agent->nextId("ArchiveRequest"), m_objectStore);
   ar.initialize();
   ar.setArchiveFileID(criteria.fileId);
   ar.setChecksumType(request.checksumType);
@@ -391,6 +285,7 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
   ar.setDrData(request.drData);
   ar.setDiskFileID(request.diskFileID);
   ar.setFileSize(request.fileSize);
+  ar.setInstance(request.instance);
   ar.setMountPolicy(criteria.mountPolicy);
   ar.setRequester(request.requester);
   ar.setSrcURL(request.srcURL);
@@ -420,20 +315,52 @@ std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> OStoreDB::queue(
     m_agent->commit();
   }
   ar.setOwner(m_agent->getAddressIfSet());
-  ar.setInstance(request.instance);
   ar.insert();
-  internalRet->m_lock.lock(ar);  
-  // We successfully prepared the object. It will remain attached to the agent 
-  // entry for the time being and get plugged to the tape pools on a second
-  // pass. 
-  // TODO: this can be improved by passing an opaque set of data to the called
-  // (including the lock) in order to optimise the acesses to the object store.
-  // In the mean time, the step 2 of this insertion will be done by finding the
-  // archiveRequest from the agent's owned object. Crude, but should not be too
-  // bad as the agent is not supposed to own many objects in this place.
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> ret;
-  ret.reset(internalRet.release());
-  return ret;
+  ScopedExclusiveLock arl(ar);
+  // We can now enqueue the requests
+  std::list<std::string> linkedTapePools;
+  try {
+    for (auto &j: ar.dumpJobs()) {
+      objectstore::ArchiveQueue aq(j.ArchiveQueueAddress, m_objectStore);
+      ScopedExclusiveLock aql(aq);
+      aq.fetch();
+      if (aq.getOwner() != re.getAddressIfSet())
+          throw NoSuchArchiveQueue("In OStoreDB::queue: non-existing archive queue found "
+              "(dangling pointer): canceling request creation.");
+      aq.addJob(j, ar.getAddressIfSet(), ar.getArchiveFileID(), 
+        ar.getFileSize(), ar.getMountPolicy(),
+        ar.getCreationLog().time);
+      // Now that we have the tape pool handy, get the retry limits from it and 
+      // assign them to the job
+      ar.setJobFailureLimits(j.copyNb, criteria.mountPolicy.maxRetriesWithinMount, 
+        criteria.mountPolicy.maxTotalRetries);
+      aq.commit();
+      linkedTapePools.push_back(j.ArchiveQueueAddress);
+    }
+  } catch (NoSuchArchiveQueue &) {
+    // Unlink the request from already connected tape pools
+    for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
+      objectstore::ArchiveQueue aq(*tpa, m_objectStore);
+      ScopedExclusiveLock aql(aq);
+      aq.fetch();
+      aq.removeJob(ar.getAddressIfSet());
+      aq.commit();
+      ar.remove();
+    }
+    throw;
+  }
+  // The request is now fully set. As it's multi-owned, we do not set the owner,
+  // just to disown it from the agent.
+  ar.setOwner("");
+  ar.commit();
+  arl.release();
+  // And remove reference from the agent
+  {
+    objectstore::ScopedExclusiveLock al(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(ar.getAddressIfSet());
+    m_agent->commit();
+  }
 }
 
 void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
@@ -570,60 +497,60 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 
 
 
-std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
-  OStoreDB::getArchiveRequests() const {
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  std::map<std::string, std::list<ArchiveToTapeCopyRequest> > ret;
-  auto aql = re.dumpArchiveQueues();
-  rel.release();
-  for (auto & aqp:aql) {
-    objectstore::ArchiveQueue osaq(aqp.address, m_objectStore);
-    ScopedSharedLock osaql(osaq);
-    osaq.fetch();  
-    auto arl = osaq.dumpJobs();
-    osaql.release();
-    for (auto & ar: arl) {
-      objectstore::ArchiveRequest osar(ar.address, m_objectStore);
-      ScopedSharedLock osarl(osar);
-      osar.fetch();
-      // Find which copy number is for this tape pool.
-      // skip the request if not found
-      auto jl = osar.dumpJobs();
-      uint16_t copynb;
-      bool copyndFound=false;
-      for (auto & j:jl) {
-        if (j.tapePool == aqp.tapePool) {
-          copynb = j.copyNb;
-          copyndFound = true;
-          break;
-        }
-      }
-      if (!copyndFound) continue;
-      ret[aqp.tapePool].push_back(cta::ArchiveToTapeCopyRequest(
-        osar.getDiskFileID(),
-        osar.getArchiveFileID(),
-        copynb,
-        aqp.tapePool,
-        osar.getMountPolicy().archivePriority,
-        osar.getCreationLog()));
-    }
-  }
-  return ret;
-}
+//std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
+//  OStoreDB::getArchiveRequests() const {
+//  objectstore::RootEntry re(m_objectStore);
+//  objectstore::ScopedSharedLock rel(re);
+//  re.fetch();
+//  std::map<std::string, std::list<ArchiveToTapeCopyRequest> > ret;
+//  auto aql = re.dumpArchiveQueues();
+//  rel.release();
+//  for (auto & aqp:aql) {
+//    objectstore::ArchiveQueue osaq(aqp.address, m_objectStore);
+//    ScopedSharedLock osaql(osaq);
+//    osaq.fetch();  
+//    auto arl = osaq.dumpJobs();
+//    osaql.release();
+//    for (auto & ar: arl) {
+//      objectstore::ArchiveRequest osar(ar.address, m_objectStore);
+//      ScopedSharedLock osarl(osar);
+//      osar.fetch();
+//      // Find which copy number is for this tape pool.
+//      // skip the request if not found
+//      auto jl = osar.dumpJobs();
+//      uint16_t copynb;
+//      bool copyndFound=false;
+//      for (auto & j:jl) {
+//        if (j.tapePool == aqp.tapePool) {
+//          copynb = j.copyNb;
+//          copyndFound = true;
+//          break;
+//        }
+//      }
+//      if (!copyndFound) continue;
+//      ret[aqp.tapePool].push_back(cta::ArchiveToTapeCopyRequest(
+//        osar.getDiskFileID(),
+//        osar.getArchiveFileID(),
+//        copynb,
+//        aqp.tapePool,
+//        osar.getMountPolicy().archivePriority,
+//        osar.getCreationLog()));
+//    }
+//  }
+//  return ret;
+//}
 
-std::list<ArchiveToTapeCopyRequest>
-  OStoreDB::getArchiveRequests(const std::string& tapePoolName) const {
+std::list<cta::common::dataStructures::ArchiveJob>
+  OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
   auto tpl = re.dumpArchiveQueues();
   rel.release();
-  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
-    if (tpp->tapePool != tapePoolName) continue;
-    std::list<ArchiveToTapeCopyRequest> ret;
-    objectstore::ArchiveQueue osaq(tpp->address, m_objectStore);
+  for (auto & tpp:tpl) {
+    if (tpp.tapePool != tapePoolName) continue;
+    std::list<cta::common::dataStructures::ArchiveJob> ret;
+    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
     ScopedSharedLock ostpl(osaq);
     osaq.fetch();
     auto arl = osaq.dumpJobs();
@@ -634,29 +561,89 @@ std::list<ArchiveToTapeCopyRequest>
       osar.fetch();
       // Find which copy number is for this tape pool.
       // skip the request if not found
-      auto jl = osar.dumpJobs();
       uint16_t copynb;
       bool copyndFound=false;
-      for (auto j=jl.begin(); j!=jl.end(); j++) {
-        if (j->tapePool == tpp->tapePool) {
-          copynb = j->copyNb;
+      for (auto & j:osar.dumpJobs()) {
+        if (j.tapePool == tpp.tapePool) {
+          copynb = j.copyNb;
           copyndFound = true;
           break;
         }
       }
       if (!copyndFound) continue;
-      ret.push_back(cta::ArchiveToTapeCopyRequest(
-        osar.getDiskFileID(),
-        osar.getArchiveFileID(),
-        copynb,
-        tpp->tapePool,
-        osar.getMountPolicy().archivePriority,
-        osar.getCreationLog()));
+      ret.push_back(cta::common::dataStructures::ArchiveJob());
+      ret.back().archiveFileID = osar.getArchiveFileID();
+      ret.back().copyNumber = copynb;
+      ret.back().tapePool = tpp.tapePool;
+      ret.back().request.checksumType = osar.getChecksumType();
+      ret.back().request.checksumValue = osar.getChecksumValue();
+      ret.back().request.creationLog = osar.getCreationLog();
+      ret.back().request.diskFileID = osar.getDiskFileID();
+      ret.back().request.diskpoolName = osar.getDiskpoolName();
+      ret.back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
+      ret.back().request.drData = osar.getDrData();
+      ret.back().request.fileSize = osar.getFileSize();
+      ret.back().request.instance = osar.getInstance();
+      ret.back().request.requester = osar.getRequester();
+      ret.back().request.srcURL = osar.getSrcURL();
+      ret.back().request.storageClass = osar.getStorageClass();
     }
     return ret;
   }
   throw NoSuchArchiveQueue("In OStoreDB::getArchiveRequests: tape pool not found");
 }
+
+std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
+  OStoreDB::getArchiveJobs() const {
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpArchiveQueues();
+  rel.release();
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > ret;
+  for (auto & tpp:tpl) {
+    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
+    ScopedSharedLock ostpl(osaq);
+    osaq.fetch();
+    auto arl = osaq.dumpJobs();
+    ostpl.release();
+    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+      objectstore::ArchiveRequest osar(ar->address, m_objectStore);
+      ScopedSharedLock osarl(osar);
+      osar.fetch();
+      // Find which copy number is for this tape pool.
+      // skip the request if not found
+      uint16_t copynb;
+      bool copyndFound=false;
+      for (auto & j:osar.dumpJobs()) {
+        if (j.tapePool == tpp.tapePool) {
+          copynb = j.copyNb;
+          copyndFound = true;
+          break;
+        }
+      }
+      if (!copyndFound) continue;
+      ret[tpp.tapePool].push_back(cta::common::dataStructures::ArchiveJob());
+      ret[tpp.tapePool].back().archiveFileID = osar.getArchiveFileID();
+      ret[tpp.tapePool].back().copyNumber = copynb;
+      ret[tpp.tapePool].back().tapePool = tpp.tapePool;
+      ret[tpp.tapePool].back().request.checksumType = osar.getChecksumType();
+      ret[tpp.tapePool].back().request.checksumValue = osar.getChecksumValue();
+      ret[tpp.tapePool].back().request.creationLog = osar.getCreationLog();
+      ret[tpp.tapePool].back().request.diskFileID = osar.getDiskFileID();
+      ret[tpp.tapePool].back().request.diskpoolName = osar.getDiskpoolName();
+      ret[tpp.tapePool].back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
+      ret[tpp.tapePool].back().request.drData = osar.getDrData();
+      ret[tpp.tapePool].back().request.fileSize = osar.getFileSize();
+      ret[tpp.tapePool].back().request.instance = osar.getInstance();
+      ret[tpp.tapePool].back().request.requester = osar.getRequester();
+      ret[tpp.tapePool].back().request.srcURL = osar.getSrcURL();
+      ret[tpp.tapePool].back().request.storageClass = osar.getStorageClass();
+    }
+  }
+  return ret;
+}
+
 
 void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
@@ -764,9 +751,16 @@ void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
 //  }
 }
 
-std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequests(const std::string& vid) const {
-  throw exception::Exception("Not Implemented");
+std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByVid(const std::string& vid) const {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
+
+std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByRequester(const std::string& vid) const {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+
+
 
 std::map<cta::Tape, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequests() const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);

@@ -16,19 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "MockSchedulerDatabase.hpp"
-#include "MockSchedulerDatabaseFactory.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::MockSchedulerDatabaseFactory::~MockSchedulerDatabaseFactory() throw() {
-}
+#include "objectstore/cta.pb.h"
 
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-std::unique_ptr<cta::SchedulerDatabase> cta::MockSchedulerDatabaseFactory::
-  create() const {
-  return std::unique_ptr<SchedulerDatabase>(new MockSchedulerDatabase());
-}
+namespace cta { namespace objectstore {
+
+/** A helper class allowing manipulation of arrays of ValueCountPairs, used as containers for running
+ * counters for properties with multiple possible values. */
+class ValueCountMap {
+public:
+  ValueCountMap (google::protobuf::RepeatedPtrField<serializers::ValueCountPair>* valueCountMap);
+  void incCount(uint64_t value);
+  void decCount(uint64_t value);
+  uint64_t total();
+  uint64_t minValue();
+  uint64_t maxValue();
+private:
+  google::protobuf::RepeatedPtrField<serializers::ValueCountPair>& m_valueCountMap;
+};
+
+}} // namespace cta::objectstore

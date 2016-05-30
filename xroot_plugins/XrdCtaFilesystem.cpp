@@ -30,7 +30,6 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "remotens/MockRemoteNS.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"

@@ -26,13 +26,14 @@
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/DriveState.hpp"
 #include "common/MountControl.hpp"
+#include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/MountType.hpp"
 
 #include <list>
@@ -89,20 +90,6 @@ public:
   virtual ~SchedulerDatabase() throw() = 0;
   
   /*============ Archive management: user side ==============================*/
-  /*
-   * Subclass allowing the tracking and automated cleanup of a 
-   * ArchiveToFile requests on the SchdulerDB. Those 2 operations (creation+close
-   * or cancel) surround an NS operation. This class can keep references, locks,
-   * etc... handy to simplify the implementation of the completion and cancelling
-   * (plus the destructor in case the caller fails half way through).
-   */ 
-  class ArchiveRequestCreation {
-  public:
-    virtual void complete() = 0;
-    virtual void cancel() = 0;
-    virtual ~ArchiveRequestCreation() {};
-  };
-  
   /**
    * Queues the specified request.
    *
@@ -110,28 +97,28 @@ public:
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
    */
-  virtual std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
+  virtual void queue(const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
 
   /**
-   * Returns all of the queued archive requests.  The returned requests are
+   * Returns all of the queued archive jobs.  The returned jobs are
    * grouped by tape pool and then sorted by creation time, oldest first.
    *
-   * @return The queued requests.
+   * @return The queued jobs.
    */
-  virtual std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
-    getArchiveRequests() const = 0;
+  virtual std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
+    getArchiveJobs() const = 0;
 
   /**
-   * Returns the list of queued archive requests for the specified tape pool.
+   * Returns the list of queued jobs queued on the specified tape pool.
    * The returned requests are sorted by creation time, oldest first.
    *
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(
+  virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(
     const std::string &tapePoolName) const = 0;
-
+  
   /**
    * Deletes the specified archive request.
    *
@@ -235,8 +222,19 @@ public:
    * @return The list of retrieve jobs associated with the specified tape
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::list<RetrieveRequestDump> getRetrieveRequests(
+  virtual std::list<RetrieveRequestDump> getRetrieveRequestsByVid(
     const std::string &vid) const = 0;
+  
+  /**
+   * Returns the list of retrieve jobs associated with the specified requester
+   * sorted by creation time in ascending order (oldest first).
+   *
+   * @param requester The requester who created the retrieve request.
+   * @return The list of retrieve jobs associated with the specified tape
+   * sorted by creation time in ascending order (oldest first).
+   */
+  virtual std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(
+    const std::string &requester) const = 0;
   
   /**
    * Deletes the specified retrieve job.
@@ -288,11 +286,12 @@ public:
     cta::MountType::Enum type; /**< Is this an archive or retireve? */
     std::string vid; /**< The tape VID (for a retieve) */
     std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
-    uint64_t priority; /**< The priority for the mount */
+    uint64_t priority;    /**< The priority for the mount, defined as the highest priority of all queued jobs */
+    uint64_t maxDrivesAllowed; /**< The maximum number of drives allowed for this tape pool, defined as the highest value amongst jobs */
+    uint64_t minArchiveRequestAge; /**< The maximum amount of time to wait before forcing a mount in the absence of enough data. Defined as the smallest value amongst jobs.*/
     uint64_t filesQueued; /**< The number of files queued for this queue */
     uint64_t bytesQueued; /**< The amount of data currently queued */
     time_t oldestJobStartTime; /**< Creation time of oldest request */
-    common::dataStructures::MountPolicy mountPolicy; /**< The mount policy */ 
     std::string logicalLibrary; /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 [ ratio of existing mounts/quota (for faire share of mounts)*/
     

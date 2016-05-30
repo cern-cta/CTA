@@ -233,6 +233,7 @@ uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
   auto payloadMountPolicy = m_payload.mutable_mountpolicy();
+  payloadMountPolicy->set_name(mountPolicy.name);
   payloadMountPolicy->set_maxdrives(mountPolicy.maxDrivesAllowed);
   payloadMountPolicy->set_minrequestage(mountPolicy.archiveMinRequestAge);
   payloadMountPolicy->set_priority(mountPolicy.archivePriority);
@@ -404,7 +405,7 @@ cta::common::dataStructures::EntryLog ArchiveRequest::getCreationLog() {
   return creationLog;  
 }
 
-auto ArchiveRequest::dumpJobs() -> std::list<JobDump> {
+auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl = m_payload.jobs();

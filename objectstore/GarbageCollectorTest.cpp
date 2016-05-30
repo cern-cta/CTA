@@ -347,7 +347,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
       jd.ArchiveQueueAddress = tpAddr[0];
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, 0, time(NULL));
+      cta::common::dataStructures::MountPolicy policy;
+      policy.archiveMinRequestAge = 0;
+      policy.archivePriority = 1;
+      policy.maxDrivesAllowed = 1;
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, policy, time(NULL));
       aq.commit();
     }
     if (pass < 4) { pass++; continue; }
@@ -361,7 +365,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
       jd.ArchiveQueueAddress = tpAddr[1];
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, 0, time(NULL));
+      cta::common::dataStructures::MountPolicy policy;
+      policy.archiveMinRequestAge = 0;
+      policy.archivePriority = 1;
+      policy.maxDrivesAllowed = 1;
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, policy, time(NULL));
       aq.commit();
     }
     if (pass < 5) { pass++; continue; }

@@ -71,6 +71,7 @@ public:
    */
   virtual ~Scheduler() throw();
 
+  /** Queue an archive request and return the CTA file ID */
   virtual uint64_t queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request);
   virtual void queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request);
   virtual void deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request);
@@ -107,10 +108,10 @@ public:
 
   virtual std::list<cta::common::dataStructures::ArchiveFile> reconcile(const cta::common::dataStructures::SecurityIdentity &cliIdentity); // returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks
 
-  virtual std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
-  virtual std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapePoolName) const;
-  virtual std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
-  virtual std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const;
+  virtual std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs() const;
+  virtual std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName) const;
+  virtual std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs() const;
+  virtual std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid) const;
 
   virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
 

@@ -23,7 +23,6 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveRequest.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
@@ -124,7 +123,7 @@ private:
 
 }; // class SchedulerTest
 
-TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
+TEST_P(SchedulerTest, archive_to_new_file) {
   using namespace cta;
 
   catalogue::Catalogue &catalogue = getCatalogue();
@@ -234,7 +233,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   scheduler.queueArchive(s_adminOnAdminHost, request);
 
   {
-    auto rqsts = scheduler.getPendingArchiveJobs(s_adminOnAdminHost);
+    auto rqsts = scheduler.getPendingArchiveJobs();
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());

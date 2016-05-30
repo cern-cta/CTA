@@ -21,6 +21,7 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "EntryLog.hpp"
 #include "RootEntry.hpp"
+#include "ValueCountMap.hpp"
 #include <json-c/json.h>
 
 namespace cta { namespace objectstore { 
@@ -153,9 +154,15 @@ std::string ArchiveQueue::getName() {
 
 void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
   const std::string & archiveToFileAddress, uint64_t fileid,
-  uint64_t size, uint64_t priority, time_t startTime) {
+  uint64_t size, const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
-  // The tape pool gets the highest priority of its jobs
+  // Keep track of the mounting criteria
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.incCount(policy.archivePriority);
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  minArchiveRequestAgeMap.incCount(policy.archiveMinRequestAge);
   if (m_payload.pendingarchivejobs_size()) {
     if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
       m_payload.set_oldestjobcreationtime(startTime);
@@ -177,6 +184,18 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   ret.files = m_payload.pendingarchivejobs_size();
   ret.bytes = m_payload.archivejobstotalsize();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
+  if (ret.files) {
+    ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+    ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
+    ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+    ret.priority = priorityMap.maxValue();
+    ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+    ret.minArchiveRequestAge = minArchiveRequestAgeMap.minValue();
+  } else {
+    ret.maxDrivesAllowed = 0;
+    ret.priority = 0;
+    ret.minArchiveRequestAge = 0;
+  }
   return ret;
 }
 
@@ -221,7 +240,7 @@ void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
   } while (found);
 }
 
-auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
+auto ArchiveQueue::dumpJobs() -> std::list<ArchiveQueue::JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl=m_payload.pendingarchivejobs();
@@ -268,10 +287,6 @@ bool ArchiveQueue::addOrphanedJobPendingNsDeletion(
   j->set_size(size);
   j->set_fileid(fileid);
   return true;
-}
-
-cta::common::dataStructures::MountPolicy ArchiveQueue::getMountPolicy() {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 }} // namespace cta::objectstore

@@ -1848,10 +1848,10 @@ int XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens,
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
   if(tapepool.empty()) {
-    result = m_scheduler->getPendingArchiveJobs(cliIdentity);
+    result = m_scheduler->getPendingArchiveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(cliIdentity, tapepool);
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool);
     if(list.size()>0) {
       result[tapepool] = list;
     }
@@ -1914,10 +1914,10 @@ int XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens
   bool extended = hasOption(tokens, "-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
   if(vid.empty()) {
-    result = m_scheduler->getPendingRetrieveJobs(cliIdentity);
+    result = m_scheduler->getPendingRetrieveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(cliIdentity, vid);
+    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(vid);
     if(list.size()>0) {
       result[vid] = list;
     }

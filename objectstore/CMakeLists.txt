@@ -42,7 +42,8 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/SchedulerGlobalLock.hpp
   objectstore/TapeQueue.hpp
   objectstore/ArchiveQueue.hpp
-  objectstore/UserIdentity.hpp)
+  objectstore/UserIdentity.hpp
+  objectstore/ValueCountMap.hpp)
 
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants} 
@@ -69,7 +70,8 @@ add_library (ctaobjectstore SHARED
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
   GarbageCollector.cpp
-  SchedulerGlobalLock.cpp)
+  SchedulerGlobalLock.cpp
+  ValueCountMap.cpp)
 target_link_libraries(ctaobjectstore Utils rados json-c ctautils)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

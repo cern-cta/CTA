@@ -150,26 +150,8 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
-  class ArchiveRequestCreation: 
-   public cta::SchedulerDatabase::ArchiveRequestCreation {
-  public:
-    ArchiveRequestCreation(objectstore::Agent * agent, 
-      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
-      m_agent(agent), m_closed(false) {}
-    virtual void complete() override;
-    virtual void cancel() override;
-    virtual ~ArchiveRequestCreation() override;
-  private:
-    objectstore::ArchiveRequest m_request;
-    objectstore::ScopedExclusiveLock m_lock;
-    objectstore::Backend & m_objectStore;
-    objectstore::Agent * m_agent;
-    bool m_closed;
-    friend class cta::OStoreDB;
-  };
-
   
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest &request, 
+  void queue(const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
@@ -193,9 +175,9 @@ public:
   };
   std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, uint64_t fileId) override;
 
-  std::map<std::string, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const override;
-
-  std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const override;
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override;
+  
+  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
   /* === Retrieve requests handling  ======================================== */
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
@@ -203,7 +185,9 @@ public:
   void queue(const cta::common::dataStructures::RetrieveRequest& rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) override;
 
-  std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const override;
+  std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
+  
+  std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(const std::string& vid) const override;
 
   std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override;
 

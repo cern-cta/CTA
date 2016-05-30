@@ -23,13 +23,13 @@ enum ObjectType {
   AgentRegister_t = 1;
   Agent_t = 2;
   DriveRegister_t = 3;
-  ArchiveToFileRequest_t = 6;
-  RetrieveToFileRequest_t = 7;
-  SchedulerGlobalLock_t = 8;
-  ArchiveRequest_t = 9;
-  RetrieveRequest_t = 10;
-  ArchiveQueue_t = 11;
-  RetrieveQueue_t = 12;
+  ArchiveToFileRequest_t = 4;
+  RetrieveToFileRequest_t = 5;
+  SchedulerGlobalLock_t = 6;
+  ArchiveRequest_t = 7;
+  RetrieveRequest_t = 8;
+  ArchiveQueue_t = 9;
+  RetrieveQueue_t = 10;
   GenericObject_t = 1000;
 }
 
@@ -348,9 +348,10 @@ message EntryLog {
 }
 
 message MountPolicy {
-  required uint64 minRequestAge = 8985;
-  required uint64 priority = 8987;
-  required uint64 maxDrives = 8989;
+  required string name = 8980;
+  required uint64 minRequestAge = 8981;
+  required uint64 priority = 8982;
+  required uint64 maxDrives = 8983;
 }
 
 message ArchiveRequest {
@@ -383,13 +384,21 @@ message RetrieveRequest {
   repeated RetrieveJobEntry jobs = 9152;
 }
 
+message ValueCountPair {
+  required uint64 value = 9201;
+  required uint64 count = 9202;
+}
+
 message ArchiveQueue {
   required string tapepoolname = 10000;
   repeated ArchiveJobPointer pendingarchivejobs = 10010;
   repeated ArchiveJobPointer orphanedarchivejobsnscreation = 10020;
   repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 10030;
-  required uint64 ArchiveJobsTotalSize = 10040;
-  required uint64 oldestJobCreationTime = 10050;
+  repeated ValueCountPair prioritymap = 10031;
+  repeated ValueCountPair minarchiverequestagemap = 10032;
+  repeated ValueCountPair maxdrivesallowedmap = 10033;
+  required uint64 archivejobstotalsize = 10040;
+  required uint64 oldestjobcreationtime = 10050;
 }
 
 message RetrieveQueue {

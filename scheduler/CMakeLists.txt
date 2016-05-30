@@ -7,11 +7,8 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   UserArchiveRequest.cpp
-  ArchiveToTapeCopyRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
-#  mockDB/MockSchedulerDatabase.cpp
-#  mockDB/MockSchedulerDatabaseFactory.cpp
   MountType.cpp
   PositioningMethod.cpp
   RetrieveJob.cpp
@@ -36,8 +33,6 @@ target_link_libraries (ctascheduler ctacommon ctaobjectstore protobuf Utils ctau
 #  _old_prototype_DummyScheduler.cpp)
 
 add_library (ctaschedulerunittests SHARED
-#  mockDB/MockSchedulerDatabase.cpp
-#  mockDB/MockSchedulerDatabaseFactory.cpp
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
   SchedulerTest.cpp)

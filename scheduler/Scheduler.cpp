@@ -33,8 +33,9 @@
 //------------------------------------------------------------------------------
 cta::Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
-  SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount): m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount), m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
-}
+  SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount): 
+    m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount), 
+    m_minBytesToWarrantAMount(minBytesToWarrantAMount) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -52,10 +53,10 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
-uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {  
-  std::unique_ptr<SchedulerDatabase::ArchiveRequestCreation> requestCreation(m_db.queue(request, m_catalogue.prepareForNewFile(request.storageClass, request.requester)));
-  requestCreation->complete();
-  return 0;
+uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {
+  auto catalogueInfo = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
+  m_db.queue(request, catalogueInfo);
+  return catalogueInfo.fileId;
 }
 
 //------------------------------------------------------------------------------
@@ -243,37 +244,29 @@ std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::reconcile(co
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  auto archiveRequests=m_db.getArchiveRequests();
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > ret;
-//  for (auto & dbtp: archiveRequests) {
-//    for (auto & dbaj: dbtp.second) {
-//      cta::common::dataStructures::ArchiveJob aj;
-//      aj.archiveFileID = dbaj.;
-//      ret[dbtp.first.name].push_back()
-//    }
-//  }
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs() const {
+  return m_db.getArchiveJobs();
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArchiveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapePoolName) const {
+std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArchiveJobs(const std::string &tapePoolName) const {
+  return m_db.getArchiveJobs(tapePoolName);
+}
+
+//------------------------------------------------------------------------------
+// getPendingRetrieveJobs
+//------------------------------------------------------------------------------
+std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs() const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
 
-//------------------------------------------------------------------------------
-// getPendingRetrieveJobs
-//------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::RetrieveJob> cta::Scheduler::getPendingRetrieveJobs(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
+std::list<cta::common::dataStructures::RetrieveJob> cta::Scheduler::getPendingRetrieveJobs(const std::string& vid) const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

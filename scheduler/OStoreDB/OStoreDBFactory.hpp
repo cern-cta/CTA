@@ -24,7 +24,6 @@
 #include "common/TapePool.hpp"
 #include "common/archiveNS/Tape.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/ArchiveToTapeCopyRequest.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/Agent.hpp"
@@ -53,7 +52,7 @@ public:
   
   ~OStoreDBWrapper() throw () {}
 
-  std::unique_ptr<ArchiveRequestCreation> queue(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
+  void queue(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
     return m_OStoreDB.queue(request, criteria);
   }
 
@@ -70,21 +69,26 @@ public:
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 
-  virtual std::list<ArchiveToTapeCopyRequest> getArchiveRequests(const std::string& tapePoolName) const override {
-    return m_OStoreDB.getArchiveRequests(tapePoolName);
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
+    return m_OStoreDB.getArchiveJobs();
   }
-
-  virtual std::map<std::string, std::list<ArchiveToTapeCopyRequest> > getArchiveRequests() const override {
-    return m_OStoreDB.getArchiveRequests();
+  
+  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override {
+    return m_OStoreDB.getArchiveJobs(tapePoolName);
   }
 
   virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
     return m_OStoreDB.getRetrieveRequests();
   }
 
-  virtual std::list<RetrieveRequestDump> getRetrieveRequests(const std::string& vid) const override {
-    return m_OStoreDB.getRetrieveRequests(vid);
+  virtual std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
+    return m_OStoreDB.getRetrieveRequestsByVid(vid);
   }
+  
+  std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(const std::string& requester) const override {
+    return m_OStoreDB.getRetrieveRequestsByRequester(requester);
+  }
+
   
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
