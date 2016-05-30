@@ -31,7 +31,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue(DbConn &conn):
+RdbmsCatalogue::RdbmsCatalogue(DbConn *conn):
   m_conn(conn),
   m_nextArchiveFileId(1) {  // This MUST be changed for OCCI - Make SQLite wrapper emulate sequences
 }
@@ -92,7 +92,7 @@ void RdbmsCatalogue::createAdminUser(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":ADMIN_USER_NAME", user.name);
 
@@ -139,7 +139,7 @@ std::list<common::dataStructures::AdminUser>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_USER;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::AdminUser admin;
@@ -224,7 +224,7 @@ void RdbmsCatalogue::createAdminHost(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":ADMIN_HOST_NAME", hostName);
 
@@ -270,7 +270,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ADMIN_HOST;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::AdminHost host;
@@ -357,7 +357,7 @@ void RdbmsCatalogue::createStorageClass(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":STORAGE_CLASS_NAME", name);
     stmt->bindUint64(":NB_COPIES", nbCopies);
@@ -385,7 +385,7 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &name) {
         "STORAGE_CLASS "
       "WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":STORAGE_CLASS_NAME", name);
 
@@ -419,7 +419,7 @@ std::list<common::dataStructures::StorageClass>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM STORAGE_CLASS;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::StorageClass storageClass;
@@ -517,7 +517,7 @@ void RdbmsCatalogue::createTapePool(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
@@ -568,7 +568,7 @@ std::list<common::dataStructures::TapePool>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE_POOL;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::TapePool pool;
@@ -675,7 +675,7 @@ void RdbmsCatalogue::createArchiveRoute(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
@@ -726,7 +726,7 @@ std::list<common::dataStructures::ArchiveRoute>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM ARCHIVE_ROUTE;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::ArchiveRoute route;
@@ -820,7 +820,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":LOGICAL_LIBRARY_NAME", name);
 
@@ -867,7 +867,7 @@ std::list<common::dataStructures::LogicalLibrary>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM LOGICAL_LIBRARY;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::LogicalLibrary lib;
@@ -994,7 +994,7 @@ void RdbmsCatalogue::createTape(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":VID", vid);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
@@ -1085,7 +1085,7 @@ std::list<common::dataStructures::Tape>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM TAPE;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::Tape tape;
@@ -1276,7 +1276,7 @@ void RdbmsCatalogue::createRequester(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":REQUESTER_NAME", user.name);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
@@ -1325,7 +1325,7 @@ std::list<common::dataStructures::Requester>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM REQUESTER;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while(rset->next()) {
       common::dataStructures::Requester user;
@@ -1440,7 +1440,7 @@ void RdbmsCatalogue::createMountPolicy(
         ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME);";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":MOUNT_POLICY_NAME", name);
 
@@ -1503,7 +1503,7 @@ std::list<common::dataStructures::MountPolicy>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
         "FROM MOUNT_POLICY;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       common::dataStructures::MountPolicy policy;
@@ -1724,7 +1724,7 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
         ":STORAGE_CLASS_NAME,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME)";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
     stmt->bindString(":DISK_INSTANCE", row.diskInstance);
@@ -1757,7 +1757,7 @@ uint64_t RdbmsCatalogue::getArchiveFileId(const std::string &diskInstance, const
         "FROM ARCHIVE_FILE WHERE "
         "DISK_INSTANCE = :DISK_INSTANCE AND "
         "DISK_FILE_ID = :DISK_FILE_ID;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":DISK_INSTANCE", diskInstance);
     stmt->bindString(":DISK_FILE_ID", diskFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -1816,7 +1816,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
         "ARCHIVE_FILE.ARCHIVE_FILE_ID,"
         "TAPE_FILE.COPY_NB;"
     ;
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
     while (rset->next()) {
@@ -1943,7 +1943,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::
         "TAPE_POOL_NAME AS TAPE_POOL_NAME "
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -1969,7 +1969,7 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageCl
         "COUNT(*) AS NB_ROUTES "
         "FROM ARCHIVE_ROUTE WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2012,7 +2012,7 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
       "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
     "WHERE "
       "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":REQUESTER_NAME", user.name);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
@@ -2192,7 +2192,7 @@ std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFile
         "TAPE_FILE "
       "WHERE "
         "TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
@@ -2229,7 +2229,7 @@ bool RdbmsCatalogue::userIsAdmin(const std::string &userName) const {
       "ADMIN_USER_NAME AS ADMIN_USER_NAME "
     "FROM ADMIN_USER WHERE "
       "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":ADMIN_USER_NAME", userName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
@@ -2244,7 +2244,7 @@ bool RdbmsCatalogue::hostIsAdmin(const std::string &hostName) const {
       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
     "FROM ADMIN_HOST WHERE "
       "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":ADMIN_HOST_NAME", hostName);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   return rset->next();
@@ -2267,7 +2267,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "IS_DISABLED = 0 AND "
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2310,7 +2310,7 @@ void RdbmsCatalogue::createTapeFile(const common::dataStructures::TapeFile &tape
       ":COPY_NB,"
       ":CREATION_TIME,"
       ":ARCHIVE_FILE_ID);";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
   stmt->bindString(":VID", tapeFile.vid);
   stmt->bindUint64(":FSEQ", tapeFile.fSeq);
@@ -2341,7 +2341,7 @@ void RdbmsCatalogue::setTapeLastFSeq(const std::string &vid, const uint64_t last
       "LAST_FSEQ = :LAST_FSEQ "
     "WHERE "
       "VID=:VID;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":VID", vid);
   stmt->bindUint64(":LAST_FSEQ", lastFSeq);
   stmt->executeNonQuery();
@@ -2356,7 +2356,7 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(const std::string &vid) const {
       "LAST_FSEQ AS LAST_FSEQ "
     "FROM TAPE WHERE "
       "VID = :VID;";
-  std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":VID", vid);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
@@ -2401,7 +2401,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
           "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-    std::unique_ptr<DbStmt> stmt(m_conn.createStmt(sql));
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;

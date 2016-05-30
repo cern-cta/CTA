@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/Sqlite.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/SqliteConn.hpp"
 #include "catalogue/TestingRdbmsCatalogue.hpp"
 #include "common/exception/Exception.hpp"
@@ -52,16 +52,17 @@ public:
 protected:
 
   virtual void SetUp() {
-    m_catalogueConn.reset(new cta::catalogue::SqliteConn(":memory:"));
-    m_catalogueConn->enableForeignKeys();
-    m_catalogueConn->createCatalogueDatabaseSchema();
-    m_catalogue.reset(new cta::catalogue::TestingRdbmsCatalogue(*m_catalogueConn));
+    using namespace cta::catalogue;
+
+    std::unique_ptr<SqliteConn> catalogueConn(new SqliteConn(":memory:"));
+    catalogueConn->createCatalogueDatabaseSchema();
+    m_catalogue.reset(new TestingRdbmsCatalogue(catalogueConn.release()));
   }
 
   virtual void TearDown() {
+    m_catalogue.reset();
   }
 
-  std::unique_ptr<cta::catalogue::SqliteConn> m_catalogueConn;
   std::unique_ptr<cta::catalogue::TestingRdbmsCatalogue> m_catalogue;
   const std::string m_bootstrapComment;
   cta::common::dataStructures::UserIdentity     m_cliUI;
@@ -145,8 +146,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminUser) {
   }
 
   const std::string createAdminUserComment = "create admin user";
-  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
-    createAdminUserComment);
+  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI, createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;

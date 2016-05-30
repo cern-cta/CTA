@@ -18,8 +18,7 @@
 
 #pragma once
 
-#include "catalogue/RdbmsCatalogue.hpp"
-#include "catalogue/SqliteConn.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -29,6 +28,8 @@
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
+
+#include <memory>
 
 
 namespace cta { namespace xrootPlugins { 
@@ -89,19 +90,14 @@ protected:
   cta::OStoreDBWithAgent m_scheddb;
 
   /**
-   * The connection to the catalogue's underlying relational database.
-   */
-  cta::catalogue::SqliteConn m_catalogueConn;
-
-  /**
    * The CTA catalogue of tapes and tape files.
    */
-  cta::catalogue::RdbmsCatalogue m_catalogue;
+  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
   /**
    * The scheduler.
    */
-  cta::Scheduler m_scheduler; 
+  std::unique_ptr<cta::Scheduler> m_scheduler;
 }; // XrdCtaFilesystem
 
 }}

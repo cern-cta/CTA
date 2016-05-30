@@ -17,7 +17,7 @@
  */
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "catalogue/Sqlite.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
@@ -84,7 +84,7 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdCtaFilesystem::newFile(char *user, int MonID)
 {  
-  return new cta::xrootPlugins::XrdCtaFile(&m_catalogue, &m_scheduler, user, MonID);
+  return new cta::xrootPlugins::XrdCtaFile(m_catalogue.get(), m_scheduler.get(), user, MonID);
 }
 
 //------------------------------------------------------------------------------
@@ -262,18 +262,18 @@ XrdCtaFilesystem::XrdCtaFilesystem():
     castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))
       .release()),
   m_backendPopulator(*m_backend),
-  m_scheddb(*m_backend, m_backendPopulator.getAgent()),
-  m_catalogueConn(":memory:"),
-  m_catalogue(m_catalogueConn),
-  m_scheduler(m_catalogue, m_scheddb, 5, 2*1000*1000)
-{
-  // Currently using the in-memory CTA catalogue and therefore the schema needs to be created
-  m_catalogueConn.createCatalogueDatabaseSchema();
+  m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
+  using namespace cta;
+
+  const catalogue::DbLogin catalogueLogin = catalogue::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
+  m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
+
+  m_scheduler.reset(new cta::Scheduler(*m_catalogue, m_scheddb, 5, 2*1000*1000));
 
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
   try {
-    dynamic_cast<cta::objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
+    dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
   } catch (std::bad_cast &){}
 }
 

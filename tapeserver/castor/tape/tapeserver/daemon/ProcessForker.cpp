@@ -571,9 +571,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
-  cta::catalogue::SqliteConn catalogueConn(":memory:");
-  catalogueConn.createCatalogueDatabaseSchema();
-  cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
+  std::unique_ptr<cta::catalogue::SqliteConn> catalogueConn(new cta::catalogue::SqliteConn(":memory:"));
+  catalogueConn->createCatalogueDatabaseSchema();
+  cta::catalogue::RdbmsCatalogue catalogue(catalogueConn.release());
   cta::Scheduler scheduler(catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
 
   castor::tape::System::realWrapper sysWrapper;

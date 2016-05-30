@@ -23,6 +23,7 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   Catalogue.cpp
+  CatalogueFactory.cpp
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
   DbConn.cpp
@@ -32,6 +33,7 @@ set (CATALOGUE_LIB_SRC_FILES
   TapeFileWritten.cpp
   OcciConn.cpp
   OcciEnv.cpp
+  OcciEnvSingleton.cpp
   OcciRset.cpp
   OcciStmt.cpp
   ParamNameToIdx.cpp
@@ -66,6 +68,7 @@ add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
   DEPENDS catalogue_schema.cpp)
 
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  CatalogueFactoryTest.cpp
   DbLoginTest.cpp
   RdbmsCatalogueTest.cpp
   SqliteStmtTest.cpp)

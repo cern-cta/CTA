@@ -33,9 +33,11 @@ public:
   /**
    * Constructor.
    *
-   * @param conn The connection to the underlying relational database.
+   * @param conn The connection to the underlying relational database.  Please
+   * note that the TestingRdbmsCatalogue will own and therefore delete the
+   * specified database connection.
    */
-  TestingRdbmsCatalogue(DbConn &conn): RdbmsCatalogue(conn) {
+  TestingRdbmsCatalogue(DbConn *const conn): RdbmsCatalogue(conn) {
   }
 
   /**

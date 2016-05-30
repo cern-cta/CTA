@@ -47,7 +47,7 @@ namespace catalogue {
 class ArchiveFileRow;
 
 /**
- * CTA catalogue to facilitate unit testing.
+ * CTA catalogue implemented using a relational database backend.
  */
 class RdbmsCatalogue: public Catalogue {
 public:
@@ -55,9 +55,11 @@ public:
   /**
    * Constructor.
    *
-   * @param conn The connection to the underlying relational database.
+   * @param conn The connection to the underlying relational database.  Please
+   * note that the RdbmsCatalogue will own and therefore delete the specified
+   * database connection.
    */
-  RdbmsCatalogue(DbConn &conn);
+  RdbmsCatalogue(DbConn *const conn);
 
   /**
    * Destructor.
@@ -251,7 +253,7 @@ protected:
   /**
    * The connection to the underlying relational database.
    */
-  DbConn &m_conn;
+  std::unique_ptr<DbConn> m_conn;
 
   /**
    * The next unique identifier to be used for an archive file.

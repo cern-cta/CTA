@@ -16,10 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/DbConn.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
-#include "catalogue/Sqlite.hpp"
-#include "catalogue/SqliteConn.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
@@ -83,17 +82,15 @@ public:
 
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    m_catalogueConn.reset(new cta::catalogue::SqliteConn(":memory:"));
-    m_catalogueConn->createCatalogueDatabaseSchema();
-    m_catalogue.reset(new cta::catalogue::RdbmsCatalogue(*m_catalogueConn));
-    
+    catalogue::DbLogin catalogueLogin(catalogue::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+    m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
+
     m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
   }
 
   virtual void TearDown() {
     m_scheduler.reset();
     m_catalogue.reset();
-    m_catalogueConn.reset();
     m_db.reset();
   }
 
@@ -122,7 +119,6 @@ private:
   SchedulerTest & operator= (const SchedulerTest &);
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
-  std::unique_ptr<cta::catalogue::SqliteConn> m_catalogueConn;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 

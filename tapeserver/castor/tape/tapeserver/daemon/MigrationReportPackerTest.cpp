@@ -24,11 +24,9 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
-#include "catalogue/RdbmsCatalogue.hpp"
-#include "catalogue/Sqlite.hpp"
-#include "catalogue/SqliteConn.hpp"
 //#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include <gtest/gtest.h>
@@ -43,10 +41,17 @@ namespace unitTests {
   protected:
 
     void SetUp() {
+      using namespace cta::catalogue;
+
+      DbLogin catalogueLogin(DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+      m_catalogue.reset(CatalogueFactory::create(catalogueLogin));
     }
 
     void TearDown() {
+      m_catalogue.reset();
     }
+
+    std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
   }; // class castor_tape_tapeserver_daemon_MigrationReportPackerTest
   
@@ -71,24 +76,21 @@ namespace unitTests {
   };
   
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
-    cta::catalogue::SqliteConn catalogueConn(":memory:");
-    catalogueConn.createCatalogueDatabaseSchema();
-    cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
-    cta::MockArchiveMount tam(catalogue);
+    cta::MockArchiveMount tam(*m_catalogue);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     int job1completes(0), job1failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, job1completes, job1failures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, job1completes, job1failures));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     int job2completes(0), job2failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, job2completes, job2failures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, job2completes, job2failures));
       job2.reset(mockJob.release());
     }
 
@@ -114,27 +116,24 @@ namespace unitTests {
   }
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
-    cta::catalogue::SqliteConn catalogueConn(":memory:");
-    catalogueConn.createCatalogueDatabaseSchema();
-    cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
-    cta::MockArchiveMount tam(catalogue);
+    cta::MockArchiveMount tam(*m_catalogue);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam,catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
       job2.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job3;
     int job3completes(0), job3failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, job3completes, job3failures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, job3completes, job3failures));
       job3.reset(mockJob.release());
     }
     
@@ -163,31 +162,28 @@ namespace unitTests {
   }
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerOneByteFile) {
-    cta::catalogue::SqliteConn catalogueConn(":memory:");
-    catalogueConn.createCatalogueDatabaseSchema();
-    cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
-    cta::MockArchiveMount tam(catalogue);
+    cta::MockArchiveMount tam(*m_catalogue);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> migratedBigFile;
     int migratedBigFileCompletes(0), migratedBigFileFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, migratedBigFileCompletes, migratedBigFileFailures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedBigFileCompletes, migratedBigFileFailures));
       migratedBigFile.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedFileSmall;
     int migratedFileSmallCompletes(0), migratedFileSmallFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, migratedFileSmallCompletes, migratedFileSmallFailures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedFileSmallCompletes, migratedFileSmallFailures));
       migratedFileSmall.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedNullFile;
     int migratedNullFileCompletes(0), migratedNullFileFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, catalogue, migratedNullFileCompletes, migratedNullFileFailures));
+        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedNullFileCompletes, migratedNullFileFailures));
       migratedNullFile.reset(mockJob.release());
     }
 
