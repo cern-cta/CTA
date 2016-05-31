@@ -37,7 +37,7 @@ using ::testing::_;
 using ::testing::Invoke;
 namespace unitTests{
 
-class castor_tape_tapeserver_daemonTest: public ::testing::Test {
+class castor_tape_tapeserver_daemon_RecallReportPackerTest: public ::testing::Test {
 protected:
 
   void SetUp() {
@@ -46,7 +46,7 @@ protected:
   void TearDown() {
   }
 
-}; // class castor_tape_tapeserver_daemonTest
+}; // class castor_tape_tapeserver_daemon_RecallReportPackerTest
 
   class MockRetrieveJobExternalStats: public cta::MockRetrieveJob {
   public:
@@ -67,7 +67,7 @@ protected:
     int & failuresRef;
   };
 
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
+TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   cta::MockRetrieveMount retrieveMount;
 
 
@@ -110,7 +110,7 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerNominal) {
   ASSERT_EQ(1,retrieveMount.completes);
 }
 
-TEST_F(castor_tape_tapeserver_daemonTest, RecallReportPackerBadBadEnd) {
+TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   cta::MockRetrieveMount retrieveMount;
 
   ::testing::InSequence dummy;

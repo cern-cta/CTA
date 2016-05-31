@@ -39,7 +39,7 @@ using namespace castor::tape;
 
 namespace unitTests {
   
-  class castor_tape_tapeserver_daemonTest: public ::testing::Test {
+  class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
   protected:
 
     void SetUp() {
@@ -48,7 +48,7 @@ namespace unitTests {
     void TearDown() {
     }
 
-  }; // class castor_tape_tapeserver_daemonTest
+  }; // class castor_tape_tapeserver_daemon_MigrationReportPackerTest
   
   class MockArchiveJobExternalStats: public cta::MockArchiveJob {
   public:
@@ -70,7 +70,7 @@ namespace unitTests {
     int & failuresRef;
   };
   
-  TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerNominal) {
+  TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
     cta::catalogue::SqliteConn catalogueConn(":memory:");
     catalogueConn.createCatalogueDatabaseSchema();
     cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
@@ -113,7 +113,7 @@ namespace unitTests {
     ASSERT_EQ(1, job2completes);
   }
 
-  TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerFailure) {
+  TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
     cta::catalogue::SqliteConn catalogueConn(":memory:");
     catalogueConn.createCatalogueDatabaseSchema();
     cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
@@ -162,7 +162,7 @@ namespace unitTests {
     ASSERT_EQ(1, job3failures);
   }
 
-  TEST_F(castor_tape_tapeserver_daemonTest, MigrationReportPackerOneByteFile) {
+  TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerOneByteFile) {
     cta::catalogue::SqliteConn catalogueConn(":memory:");
     catalogueConn.createCatalogueDatabaseSchema();
     cta::catalogue::RdbmsCatalogue catalogue(catalogueConn);
