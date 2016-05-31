@@ -70,19 +70,6 @@ public:
   void createCatalogueDatabaseSchema();
 
   /**
-   * This is an SqliteConn specific method that enables foreign key constraints.
-   */
-  void enableForeignKeys();
-
-  /**
-   * This is an SqliteConn specific method that executes the specified
-   * multi-line non-query SQL statement.
-   *
-   * @param sql The SQL statement.
-   */
-  void execMultiLineNonQuery(const std::string &sql);
-
-  /**
    * This ia an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *
@@ -104,6 +91,14 @@ private:
    * The database connection.
    */
   sqlite3 *m_conn;
+
+  /**
+   * This is an SqliteConn specific method that executes the specified
+   * multi-line non-query SQL statement.
+   *
+   * @param sql The SQL statement.
+   */
+  void execMultiLineNonQuery(const std::string &sql);
 
 }; // class SqliteConn
 

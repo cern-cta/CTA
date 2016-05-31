@@ -85,20 +85,9 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
 //------------------------------------------------------------------------------
 void SqliteConn::createCatalogueDatabaseSchema() {
   try {
-    enableForeignKeys();
+    execMultiLineNonQuery("PRAGMA foreign_keys = ON;");
     const RdbmsCatalogueSchema schema;
     execMultiLineNonQuery(schema.sql);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// enableForeignKeys
-//------------------------------------------------------------------------------
-void SqliteConn::enableForeignKeys() {
-  try {
-    execMultiLineNonQuery("PRAGMA foreign_keys = ON;");
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
