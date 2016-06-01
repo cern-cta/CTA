@@ -218,7 +218,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
     using namespace castor::log;
-    if(m_archiveJob->archiveFile.fileId != static_cast<unsigned int>(mb->m_fileid)
+    if(m_archiveJob->archiveFile.fileId != mb->m_fileid
             || memBlockId != mb->m_fileBlock
             || mb->isFailed()
             || mb->isCanceled()) {
