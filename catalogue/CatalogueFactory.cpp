@@ -19,12 +19,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/OracleCatalogue.hpp"
-#include "catalogue/OcciConn.hpp"
-#include "catalogue/OcciEnvSingleton.hpp"
-#include "catalogue/SqliteConn.hpp"
 #include "common/exception/Exception.hpp"
-
-#include <memory>
 
 namespace cta {
 namespace catalogue {
