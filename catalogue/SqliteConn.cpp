@@ -81,33 +81,6 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
 }
 
 //------------------------------------------------------------------------------
-// createCatalogueDatabaseSchema
-//------------------------------------------------------------------------------
-void SqliteConn::createCatalogueDatabaseSchema() {
-  try {
-    execMultiLineNonQuery("PRAGMA foreign_keys = ON;");
-    const RdbmsCatalogueSchema schema;
-    execMultiLineNonQuery(schema.sql);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// executeMultiLineNonQuery
-//------------------------------------------------------------------------------
-void SqliteConn::execMultiLineNonQuery(const std::string &sql) {
-  int (*callback)(void*,int,char**,char**) = NULL;
-  void *callbackArg = NULL;
-  char *sqliteErrMsg = NULL;
-  if(SQLITE_OK != sqlite3_exec(m_conn, sql.c_str(), callback, callbackArg, &sqliteErrMsg)) {
-    std::string msg = std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + sqliteErrMsg;
-    sqlite3_free(sqliteErrMsg);
-    throw exception::Exception(msg);
-  }
-}
-
-//------------------------------------------------------------------------------
 // printSchema
 //------------------------------------------------------------------------------
 void SqliteConn::printSchema(std::ostream &os) {

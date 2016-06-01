@@ -17,9 +17,10 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnvSingleton.hpp"
-#include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/SqliteConn.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -35,17 +36,9 @@ Catalogue *CatalogueFactory::create(const DbLogin &dbLogin) {
   try {
     switch(dbLogin.dbType) {
     case DbLogin::DBTYPE_IN_MEMORY:
-      {
-        std::unique_ptr<SqliteConn> sqliteConn(new SqliteConn(":memory:"));
-        sqliteConn->createCatalogueDatabaseSchema();
-        return new RdbmsCatalogue(sqliteConn.release());
-      }
+      return new InMemoryCatalogue();
     case DbLogin::DBTYPE_ORACLE:
-      {
-        OcciConn *occiConn = OcciEnvSingleton::instance().createConn(dbLogin.username, dbLogin.password,
-          dbLogin.database);
-        return new RdbmsCatalogue(occiConn);
-      }
+      return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database);
     case DbLogin::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

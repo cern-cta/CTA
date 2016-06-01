@@ -18,7 +18,6 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/TestingRdbmsCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>

@@ -30,12 +30,14 @@ set (CATALOGUE_LIB_SRC_FILES
   DbLogin.cpp
   DbRset.cpp
   DbStmt.cpp
+  InMemoryCatalogue.cpp
   TapeFileWritten.cpp
   OcciConn.cpp
   OcciEnv.cpp
   OcciEnvSingleton.cpp
   OcciRset.cpp
   OcciStmt.cpp
+  OracleCatalogue.cpp
   ParamNameToIdx.cpp
   RdbmsCatalogue.cpp
   RdbmsCatalogueSchema.cpp

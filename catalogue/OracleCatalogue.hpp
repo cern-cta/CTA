@@ -21,38 +21,32 @@
 #include "catalogue/RdbmsCatalogue.hpp"
 
 namespace cta {
-
 namespace catalogue {
 
 /**
- * Class used to facilitate unit testing by making public one or more of the
- * protected members of its super class.
+ * CTA catalogue class to be used for unit testing.
  */
-class TestingRdbmsCatalogue: public RdbmsCatalogue {
+class OracleCatalogue: public RdbmsCatalogue {
 public:
+
   /**
    * Constructor.
    *
-   * @param conn The connection to the underlying relational database.  Please
-   * note that the TestingRdbmsCatalogue will own and therefore delete the
-   * specified database connection.
+   * @param username The database username.
+   * @param password The database password.
+   * @param database The database name.
    */
-  TestingRdbmsCatalogue(DbConn *const conn): RdbmsCatalogue(conn) {
-  }
+  OracleCatalogue(
+    const std::string &username,
+    const std::string &password,
+    const std::string &database);
 
   /**
    * Destructor.
    */
-  virtual ~TestingRdbmsCatalogue()  {
-  }
+  virtual ~OracleCatalogue();
 
-  using RdbmsCatalogue::insertArchiveFile;
-  using RdbmsCatalogue::createTapeFile;
-  using RdbmsCatalogue::getArchiveFile;
-  using RdbmsCatalogue::getTapeLastFSeq;
-  using RdbmsCatalogue::setTapeLastFSeq;
-
-}; // class TestingRdbmsCatalogue
+}; // class OracleCatalogue
 
 } // namespace catalogue
 } // namespace cta

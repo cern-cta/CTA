@@ -31,8 +31,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue(DbConn *conn):
-  m_conn(conn),
+RdbmsCatalogue::RdbmsCatalogue():
   m_nextArchiveFileId(1) {  // This MUST be changed for OCCI - Make SQLite wrapper emulate sequences
 }
 

@@ -17,9 +17,8 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SqliteConn.hpp"
-#include "catalogue/TestingRdbmsCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
@@ -28,9 +27,9 @@
 
 namespace unitTests {
 
-class cta_catalogue_RdbmsCatalogueTest : public ::testing::Test {
+class cta_catalogue_InMemoryCatalogueTest : public ::testing::Test {
 public:
-  cta_catalogue_RdbmsCatalogueTest():
+  cta_catalogue_InMemoryCatalogueTest():
     m_bootstrapComment("bootstrap") {
 
     m_cliUI.group = "cli_group_name";
@@ -54,16 +53,14 @@ protected:
   virtual void SetUp() {
     using namespace cta::catalogue;
 
-    std::unique_ptr<SqliteConn> catalogueConn(new SqliteConn(":memory:"));
-    catalogueConn->createCatalogueDatabaseSchema();
-    m_catalogue.reset(new TestingRdbmsCatalogue(catalogueConn.release()));
+    m_catalogue.reset(new InMemoryCatalogue());
   }
 
   virtual void TearDown() {
     m_catalogue.reset();
   }
 
-  std::unique_ptr<cta::catalogue::TestingRdbmsCatalogue> m_catalogue;
+  std::unique_ptr<cta::catalogue::InMemoryCatalogue> m_catalogue;
   const std::string m_bootstrapComment;
   cta::common::dataStructures::UserIdentity     m_cliUI;
   cta::common::dataStructures::SecurityIdentity m_cliSI;
@@ -73,7 +70,7 @@ protected:
   cta::common::dataStructures::SecurityIdentity m_adminSI;
 };
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createBootstrapAdminAndHostNoAuth) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
@@ -119,7 +116,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminUser) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
@@ -193,7 +190,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminUser) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminUser_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
@@ -223,7 +220,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminUser_same_twice) {
     "comment 2"), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminHost) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
@@ -302,7 +299,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminHost) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminHost_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost_same_twice) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
@@ -334,13 +331,13 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createAdminHost_same_twice) {
     anotherAdminHost, "comment 2"), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, isAdmin_false) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, isAdmin_false) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->isAdmin(m_cliSI));
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, isAdmin_true) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, isAdmin_true) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
@@ -349,7 +346,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, isAdmin_true) {
   ASSERT_TRUE(m_catalogue->isAdmin(m_bootstrapAdminSI));
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createStorageClass) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createStorageClass) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
@@ -380,7 +377,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createStorageClass) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createStorageClass_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
   const std::string storageClassName = "storage_class";
@@ -391,7 +388,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createStorageClass_same_twice) {
     storageClassName, nbCopies, comment), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapePool) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
@@ -424,7 +421,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapePool) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
   
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapePool_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool_same_twice) {
   using namespace cta;
   
   const std::string tapePoolName = "tape_pool";
@@ -438,7 +435,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapePool_same_twice) {
     exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRoute) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
@@ -485,7 +482,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRoute) {
   ASSERT_EQ(tapePoolName, maplet.second);
 }
   
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRouteTapePool_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRouteTapePool_same_twice) {
   using namespace cta;
   
   const std::string storageClassName = "storage_class";
@@ -507,7 +504,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRouteTapePool_same_twice) 
     exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRoute_deleteStorageClass) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute_deleteStorageClass) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
@@ -556,7 +553,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createArchiveRoute_deleteStorageClass) 
   ASSERT_THROW(m_catalogue->deleteStorageClass(storageClassName), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createLogicalLibrary) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createLogicalLibrary) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
@@ -584,7 +581,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createLogicalLibrary) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
   
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createLogicalLibrary_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createLogicalLibrary_same_twice) {
   using namespace cta;
   
   const std::string logicalLibraryName = "logical_library";
@@ -595,7 +592,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createLogicalLibrary_same_twice) {
     exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createTape) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
@@ -641,7 +638,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createTape) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createTape_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_same_twice) {
   using namespace cta;
 
   const std::string vid = "vid";
@@ -663,7 +660,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createTape_same_twice) {
     comment), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, getTapesForWriting) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapesForWriting) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
@@ -696,7 +693,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, getTapesForWriting) {
   ASSERT_FALSE(tape.lbp);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createMountPolicy) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
@@ -748,7 +745,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createMountPolicy) {
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createMountPolicy_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy_same_twice) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
@@ -782,7 +779,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createMountPolicy_same_twice) {
     comment), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createUser) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
@@ -835,7 +832,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createUser) {
   ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createUser_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser_same_twice) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
@@ -869,7 +866,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createUser_same_twice) {
     exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, insertArchiveFile) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, insertArchiveFile) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
@@ -910,7 +907,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, insertArchiveFile) {
   ASSERT_EQ(row.diskFileRecoveryBlob, archiveFile.drData.drBlob);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, insertArchiveFile_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, insertArchiveFile_same_twice) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
@@ -935,7 +932,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, insertArchiveFile_same_twice) {
   ASSERT_THROW(m_catalogue->insertArchiveFile(row), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, prepareForNewFile) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
@@ -1044,7 +1041,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, prepareToRetrieveFile) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   using namespace cta;
 
   const uint64_t archiveFileId = 1234;
@@ -1208,7 +1205,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapeFile_2_files) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapeFile_2_files) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
@@ -1347,14 +1344,14 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, createTapeFile_2_files) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, getTapeLastFseq_no_such_tape) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapeLastFseq_no_such_tape) {
   using namespace cta;
 
   const std::string vid = "V12345";
   ASSERT_THROW(m_catalogue->getTapeLastFSeq(vid), exception::Exception);
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, getTapeLastFseq) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapeLastFseq) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
@@ -1432,7 +1429,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, getTapeLastFseq) {
   ASSERT_EQ(9, m_catalogue->getTapeLastFSeq(vid));
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, getArchiveFile) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, getArchiveFile) {
   using namespace cta;
 
   const uint64_t archiveFileId = 1234;
@@ -1499,7 +1496,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, getArchiveFile) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, fileWrittenToTape_2_tape_files) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files) {
   using namespace cta;
 
   const uint64_t archiveFileId = 1234;
@@ -1611,7 +1608,7 @@ TEST_F(cta_catalogue_RdbmsCatalogueTest, fileWrittenToTape_2_tape_files) {
   }
 }
 
-TEST_F(cta_catalogue_RdbmsCatalogueTest, fileWrittenToTape_2_tape_files_corrupted_diskFilePath) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corrupted_diskFilePath) {
   using namespace cta;
 
   const uint64_t archiveFileId = 1234;

@@ -54,12 +54,8 @@ public:
 
   /**
    * Constructor.
-   *
-   * @param conn The connection to the underlying relational database.  Please
-   * note that the RdbmsCatalogue will own and therefore delete the specified
-   * database connection.
    */
-  RdbmsCatalogue(DbConn *const conn);
+  RdbmsCatalogue();
 
   /**
    * Destructor.

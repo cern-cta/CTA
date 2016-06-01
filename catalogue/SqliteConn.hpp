@@ -64,12 +64,6 @@ public:
   virtual DbStmt *createStmt(const std::string &sql);
 
   /**
-   * This is an SqliteConn specific method that creates the catalogue database
-   * schema.
-   */
-  void createCatalogueDatabaseSchema();
-
-  /**
    * This ia an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *
@@ -91,14 +85,6 @@ private:
    * The database connection.
    */
   sqlite3 *m_conn;
-
-  /**
-   * This is an SqliteConn specific method that executes the specified
-   * multi-line non-query SQL statement.
-   *
-   * @param sql The SQL statement.
-   */
-  void execMultiLineNonQuery(const std::string &sql);
 
 }; // class SqliteConn
 
