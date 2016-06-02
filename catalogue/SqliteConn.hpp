@@ -64,6 +64,16 @@ public:
   virtual DbStmt *createStmt(const std::string &sql);
 
   /**
+   * Commits the current transaction.
+   */
+  virtual void commit();
+
+  /**
+   * Rolls back the current transaction.
+   */
+  virtual void rollback();
+
+  /**
    * This ia an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *

@@ -47,6 +47,16 @@ public:
    */
   virtual DbStmt *createStmt(const std::string &sql) = 0;
 
+  /**
+   * Commits the current transaction.
+   */
+  virtual void commit() = 0;
+
+  /**
+   * Rolls back the current transaction.
+   */
+  virtual void rollback() = 0;
+
 }; // class DbConn
 
 } // namespace catalogue

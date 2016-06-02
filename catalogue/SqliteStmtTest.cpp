@@ -45,8 +45,9 @@ TEST_F(cta_catalogue_SqliteStmtTest, create_table) {
     const char *const sql =
       "SELECT "
         "COUNT(*) NB_TABLES "
-        "FROM SQLITE_MASTER "
-        "WHERE "
+      "FROM "
+        "SQLITE_MASTER "
+      "WHERE "
         "TYPE = 'table';";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -108,7 +109,8 @@ TEST_F(cta_catalogue_SqliteStmtTest, select_from_empty_table) {
         "COL1,"
         "COL2,"
         "COL3 "
-      "FROM TEST;";
+      "FROM "
+        "TEST;";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_FALSE(rset->next());
@@ -153,18 +155,15 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
         "COL1 AS COL1,"
         "COL2 AS COL2,"
         "COL3 AS COL3 "
-      "FROM TEST;";
+      "FROM "
+        "TEST;";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_TRUE(rset->next());
 
-    std::string col1;
-    std::string col2;
-    uint64_t col3 = 0;
-
-    ASSERT_NO_THROW(col1 = rset->columnText("COL1"));
-    ASSERT_NO_THROW(col2 = rset->columnText("COL2"));
-    ASSERT_NO_THROW(col3 = rset->columnUint64("COL3"));
+    const std::string col1 = rset->columnText("COL1");
+    const std::string col2 = rset->columnText("COL2");
+    const uint64_t col3 = rset->columnUint64("COL3");
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
@@ -176,6 +175,7 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_without_bind) {
 
 TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
   using namespace cta::catalogue;
+
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
 
@@ -202,9 +202,9 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
-    ASSERT_NO_THROW(stmt->bindString(":COL1", "one"));
-    ASSERT_NO_THROW(stmt->bindString(":COL2", "two"));
-    ASSERT_NO_THROW(stmt->bindUint64(":COL3", 3));
+    stmt->bindString(":COL1", "one");
+    stmt->bindString(":COL2", "two");
+    stmt->bindUint64(":COL3", 3);
     stmt->executeNonQuery();
   }
 
@@ -215,22 +215,72 @@ TEST_F(cta_catalogue_SqliteStmtTest, insert_with_bind) {
         "COL1 AS COL1,"
         "COL2 AS COL2,"
         "COL3 AS COL3 "
-      "FROM TEST;";
+      "FROM "
+        "TEST;";
     std::unique_ptr<DbStmt> stmt(conn.createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     ASSERT_TRUE(rset->next());
 
-    std::string col1;
-    std::string col2;
-    uint64_t col3 = 0;
-
-    ASSERT_NO_THROW(col1 = rset->columnText("COL1"));
-    ASSERT_NO_THROW(col2 = rset->columnText("COL2"));
-    ASSERT_NO_THROW(col3 = rset->columnUint64("COL3"));
+    const std::string col1 = rset->columnText("COL1");
+    const std::string col2 = rset->columnText("COL2");
+    const uint64_t col3 = rset->columnUint64("COL3");
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
     ASSERT_EQ((uint64_t)3, col3);
+
+    ASSERT_FALSE(rset->next());
+  }
+}
+
+TEST_F(cta_catalogue_SqliteStmtTest, isolated_transaction) {
+  using namespace cta::catalogue;
+
+  const std::string dbFilename = "file::memory:?cache=shared";
+
+  // Create a table in an in-memory resident database
+  SqliteConn connForCreate(dbFilename);
+  {
+    const char *const sql =
+      "CREATE TABLE TEST("
+        "COL1 TEXT,"
+        "COL2 TEXT,"
+        "COL3 INTEGER);";
+    std::unique_ptr<DbStmt> stmt(connForCreate.createStmt(sql));
+    stmt->executeNonQuery();
+  }
+
+  // Insert a row but do not commit using a separate connection
+  SqliteConn connForInsert(dbFilename);
+  {
+    const char *const sql =
+      "INSERT INTO TEST("
+        "COL1,"
+        "COL2,"
+        "COL3)"
+      "VALUES("
+        "'one',"
+        "'two',"
+        "3);";
+    std::unique_ptr<DbStmt> stmt(connForInsert.createStmt(sql));
+    stmt->executeNonQuery();
+  }
+
+  // Count the number of rows in the table from within another connection
+  SqliteConn connForSelect(dbFilename);
+  {
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) AS NB_ROWS "
+      "FROM "
+        "TEST;";
+    std::unique_ptr<DbStmt> stmt(connForSelect.createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    ASSERT_TRUE(rset->next());
+
+    const uint64_t nbRows = rset->columnUint64("NB_ROWS");
+
+    ASSERT_EQ((uint64_t)1, nbRows);
 
     ASSERT_FALSE(rset->next());
   }

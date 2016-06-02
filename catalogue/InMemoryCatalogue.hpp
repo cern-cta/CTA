@@ -43,12 +43,6 @@ public:
    */
   virtual ~InMemoryCatalogue();
 
-  using RdbmsCatalogue::insertArchiveFile;
-  using RdbmsCatalogue::createTapeFile;
-  using RdbmsCatalogue::getArchiveFile;
-  using RdbmsCatalogue::getTapeLastFSeq;
-  using RdbmsCatalogue::setTapeLastFSeq;
-
 protected:
 
   /**

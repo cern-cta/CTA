@@ -63,7 +63,7 @@ public:
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  void close();
+  virtual void close();
 
   /**
    * Returns the underlying OCCI connection.
@@ -87,7 +87,17 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  DbStmt *createStmt(const std::string &sql);
+  virtual DbStmt *createStmt(const std::string &sql);
+
+  /**
+   * Commits the current transaction.
+   */
+  virtual void commit();
+
+  /**
+   * Rolls back the current transaction.
+   */
+  virtual void rollback();
 
 private:
 

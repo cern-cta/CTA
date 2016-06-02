@@ -34,6 +34,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 SqliteStmt::SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt):
   m_sql(sql),
+  m_paramNameToIdx(sql),
   m_stmt(stmt) {
 
   if (NULL == stmt) {
@@ -86,7 +87,7 @@ const std::string &SqliteStmt::getSql() const {
 // bind
 //------------------------------------------------------------------------------
 void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
-  const int paramIdx = getParamIndex(paramName);
+  const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
   const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64)paramValue);
   if(SQLITE_OK != bindRc) {
     throw exception::Exception(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
@@ -97,7 +98,7 @@ void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramVa
 // bind
 //------------------------------------------------------------------------------
 void SqliteStmt::bindString(const std::string &paramName, const std::string &paramValue) {
-  const int paramIdx = getParamIndex(paramName);
+  const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
   const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1, SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {
     throw exception::Exception(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
@@ -128,18 +129,6 @@ void SqliteStmt::executeNonQuery() {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
       ": The SQL statment returned a result set");
   }
-}
-
-//------------------------------------------------------------------------------
-// getParamIndex
-//------------------------------------------------------------------------------
-int SqliteStmt::getParamIndex(const std::string &paramName) const {
-  const int index = sqlite3_bind_parameter_index(m_stmt, paramName.c_str());
-  if(0 == index) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ": Bind parameter " + paramName + " not found");
-  }
-  return index;
 }
 
 } // namespace catalogue

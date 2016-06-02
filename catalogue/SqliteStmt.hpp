@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/DbStmt.hpp"
+#include "catalogue/ParamNameToIdx.hpp"
 
 #include <map>
 #include <memory>
@@ -100,7 +101,7 @@ public:
   /**
    * Executes the statement.
    */
-  void executeNonQuery();
+  virtual void executeNonQuery();
 
 private:
 
@@ -115,19 +116,14 @@ private:
   std::string m_sql;
 
   /**
+   * Map from SQL parameter name to parameter index.
+   */
+  ParamNameToIdx m_paramNameToIdx;
+
+  /**
    * The prepared statement.
    */
   sqlite3_stmt *m_stmt;
-
-  /**
-   * Returns the index of the SQL parameter with the specified name.
-   *
-   * This method throws an exception if the parameter is not found.
-   *
-   * @param paramName The name of the SQL parameter.
-   * @return The index of the SQL parameter.
-   */
-  int getParamIndex(const std::string &paramName) const;
 
 }; // class SqlLiteStmt
 

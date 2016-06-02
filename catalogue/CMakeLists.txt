@@ -72,7 +72,8 @@ add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueFactoryTest.cpp
   DbLoginTest.cpp
-  RdbmsCatalogueTest.cpp
+  ParamNameToIdxTest.cpp
+  InMemoryCatalogueTest.cpp
   SqliteStmtTest.cpp)
 
 add_library (ctacatalogueunittests SHARED

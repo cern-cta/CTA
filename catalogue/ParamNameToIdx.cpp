@@ -34,14 +34,21 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
 
   for(const char *ptr = sql.c_str(); ; ptr++) {
     if(waitingForAParam) {
+
       if('\0' == *ptr) {
         break;
-      } else if(':' == *ptr) {
+      }
+
+      if(':' == *ptr) {
         waitingForAParam = false;
         paramName << ":";
       }
-    } else {
-      if(!isValidParamNameChar(*ptr)) {
+
+    } else { // Currently processing a parameter name
+
+      if(isValidParamNameChar(*ptr)) {
+        paramName << *ptr;
+      } else {
         if(paramName.str().empty()) {
           throw exception::Exception("Parse error: Empty SQL parameter name");
         }
@@ -49,19 +56,13 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
           throw exception::Exception("Parse error: SQL parameter " + paramName.str() + " is a duplicate");
         }
         m_nameToIdx[paramName.str()] = paramIdx;
-        paramName.clear();
+        paramName.str(std::string()); // Clear the stream
         paramIdx++;
         waitingForAParam = true;
       }
 
       if('\0' == *ptr) {
         break;
-      }
-
-      if(':' == *ptr) {
-        throw exception::Exception("Parse error: Consecutive SQL parameter names are not permitted");
-      } else {
-        paramName << *ptr;
       }
     }
   }

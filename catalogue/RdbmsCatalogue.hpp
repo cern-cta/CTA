@@ -242,6 +242,26 @@ public:
 protected:
 
   /**
+   * An RdbmsCatalogue specific method that inserts the specified row into the
+   * ArchiveFile table.
+   *
+   * @param row The row to be inserted.
+   */
+  void insertArchiveFile(const ArchiveFileRow &row);
+
+  /**
+   * Returns the unique identifier of the specified archive file.  Note that
+   * this method is required by RdbmsCatalogue because SQLite does not support
+   * the SQL syntax: "INSERT INTO ... VALUES ... RETURNING ... INTO ...".
+   *
+   * @param diskInstance The name of teh disk storage instance within which the
+   * specified disk file identifier is unique.
+   * @param diskFileId The disk identifier of the file.
+   * @return The unique identifier of the specified archive file.
+   */
+  uint64_t getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const;
+
+  /**
    * Mutex to be used to a take a global lock on the in-memory database.
    */
   std::mutex m_mutex;
@@ -280,19 +300,6 @@ protected:
   bool hostIsAdmin(const std::string &userName) const;
 
   /**
-   * Returns the unique identifier of the specified archive file.  Note that
-   * this method is required by RdbmsCatalogue because SQLite does not support
-   * the SQL syntax: "INSERT INTO ... VALUES ... RETURNING ... INTO ...".
-   *
-   * @param diskInstance The name of teh disk storage instance within which the
-   * specified disk file identifier is unique.
-   * @param diskFileId The disk identifier of the file.
-   * @return The unique identifier of the specified archive file.
-   */
-  uint64_t getArchiveFileId(const std::string &diskInstance,
-    const std::string &diskFileId) const;
-
-  /**
    * Returns the expected number of archive routes for the specified storage
    * class as specified by the call to the createStorageClass() method as
    * opposed to the actual number entered so far using the createArchiveRoute()
@@ -303,20 +310,13 @@ protected:
   uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
 
   /**
-   * Inserts the specified row into the ArchiveFile table.
-   *
-   * @param row The row to be inserrted.
-   */
-  void insertArchiveFile(const ArchiveFileRow &row);
-
-  /**
-   * Creates the specified tape file.
+   * Inserts the specified tape file into the Tape table.
    *
    * @param tapeFile The tape file.
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
-  void createTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
+  void insertTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 
   /**
    * Sets the last FSeq of the specified tape to the specified value.
@@ -333,6 +333,21 @@ protected:
    * @return The last FSeq.
    */
   uint64_t getTapeLastFSeq(const std::string &vid) const;
+
+  /**
+   * Selects the specified tape within th eTape table for update.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  common::dataStructures::Tape selectTapeForUpdate(const std::string &vid);
+
+  /**
+   * Updates the lastFSeq column of the specified tape within the Tape table.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param lastFseq The new value of the lastFseq column.
+   */
+  void updateTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq);
 
   /**
    * Returns the specified archive file or a NULL pointer if it does not exist.

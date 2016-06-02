@@ -59,11 +59,18 @@ OcciStmt::~OcciStmt() throw() {
 // close
 //------------------------------------------------------------------------------
 void OcciStmt::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  try {
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-  if (NULL != m_stmt) {
-    m_conn->terminateStatement(m_stmt);
-    m_stmt = NULL;
+    if (NULL != m_stmt) {
+      m_conn->terminateStatement(m_stmt);
+      m_stmt = NULL;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+                               ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
   }
 }
 
@@ -112,9 +119,11 @@ DbRset *OcciStmt::executeQuery() {
 
   try {
     return new OcciRset(*this, m_stmt->executeQuery());
-  } catch(exception::Exception &ne) {
+  } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ne.getMessage().str());
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
   }
 }
 
@@ -122,7 +131,16 @@ DbRset *OcciStmt::executeQuery() {
 // executeNonQuery
 //------------------------------------------------------------------------------
 void OcciStmt::executeNonQuery() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  using namespace oracle;
+
+  try {
+    m_stmt->executeUpdate();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+  }
 }
 
 //------------------------------------------------------------------------------

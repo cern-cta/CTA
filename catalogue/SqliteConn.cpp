@@ -33,10 +33,10 @@ namespace catalogue {
 SqliteConn::SqliteConn(const std::string &filename) {
   try {
     m_conn = NULL;
-    if (sqlite3_open(filename.c_str(), &m_conn)) {
+    if (sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI, NULL)) {
+      std::string msg = sqlite3_errmsg(m_conn);
       sqlite3_close(m_conn);
-      throw exception::Exception(
-        std::string(__FUNCTION__) + "sqlite3_open() failed: " + sqlite3_errmsg(m_conn));
+      throw exception::Exception(msg);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -81,6 +81,20 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
 }
 
 //------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void SqliteConn::commit() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void SqliteConn::rollback() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // printSchema
 //------------------------------------------------------------------------------
 void SqliteConn::printSchema(std::ostream &os) {
@@ -89,9 +103,9 @@ void SqliteConn::printSchema(std::ostream &os) {
       "SELECT "
         "NAME AS NAME, "
         "TYPE AS TYPE "
-        "FROM "
+      "FROM "
         "SQLITE_MASTER "
-        "ORDER BY "
+      "ORDER BY "
         "TYPE, "
         "NAME;";
     std::unique_ptr<DbStmt> stmt(createStmt(sql));

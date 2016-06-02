@@ -95,5 +95,19 @@ DbStmt *OcciConn::createStmt(const std::string &sql) {
   }
 }
 
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void OcciConn::commit() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void OcciConn::rollback() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 } // namespace catalogue
 } // namespace cta
