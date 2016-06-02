@@ -17,6 +17,7 @@
  */
 
 #include "common/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
 
@@ -450,6 +451,37 @@ TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
   using namespace cta;
 
   ASSERT_FALSE(utils::isValidUInt("one"));
+}
+
+TEST_F(cta_UtilsTest, toUint64_unsigned_int) {
+  using namespace cta;
+
+  ASSERT_EQ((uint64_t)12345, utils::toUint64("12345"));
+  ASSERT_EQ((uint64_t)18446744073709551615ULL, utils::toUint64("18446744073709551615"));
+}
+
+TEST_F(cta_UtilsTest, toUint64_too_big) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint64("18446744073709551616"), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toUint64_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint64(""), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toUint64_minus_one) {
+  using namespace cta;
+
+  ASSERT_EQ((uint64_t)18446744073709551615UL, utils::toUint64("18446744073709551615"));
+}
+
+TEST_F(cta_UtilsTest, toUint64_not_a_number) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint64("one"), exception::Exception);
 }
 
 TEST_F(cta_UtilsTest, adler32_empty_buf) {

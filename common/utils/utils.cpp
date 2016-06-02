@@ -525,8 +525,7 @@ gid_t toGid(const std::string &str) {
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool isValidUInt(const std::string &str)
-  throw() {
+bool isValidUInt(const std::string &str) throw() {
   // An empty string is not a valid unsigned integer
   if(str.empty()) {
     return false;
@@ -543,6 +542,26 @@ bool isValidUInt(const std::string &str)
   }
 
   return true;
+}
+
+//------------------------------------------------------------------------------
+// toUint64
+//------------------------------------------------------------------------------
+uint64_t toUint64(const std::string &str) {
+  try {
+    try {
+      return std::stoul(str);
+    } catch(std::invalid_argument &) {
+      throw exception::Exception("Invalid string");
+    } catch(std::out_of_range &) {
+      throw exception::Exception("Out of range");
+    } catch(std::exception &se) {
+      throw exception::Exception(se.what());
+    }
+  } catch(exception::Exception  &ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as an unsigned 64-bit integer: " +
+      ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

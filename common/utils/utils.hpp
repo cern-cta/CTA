@@ -203,6 +203,15 @@ namespace utils {
   bool isValidUInt(const std::string &str) throw();
 
   /**
+   * Parses the specified string representation of an unsigned 64-bit integer.
+   *
+   * Please note that "-1" is a valid string and will parse successfully.
+   *
+   * @return The parsed unsigned 64-bit integer.
+   */
+  uint64_t toUint64(const std::string &str);
+
+  /**
    * Converts the specified string to uppercase.
    *
    * @param In/out parameter: The string to be converted.
