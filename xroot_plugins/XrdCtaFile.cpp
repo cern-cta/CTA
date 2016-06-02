@@ -22,6 +22,7 @@
 
 #include "XrdSec/XrdSecEntity.hh"
 #include "common/Configuration.hpp"
+#include "common/utils/utils.hpp"
 
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
@@ -429,14 +430,11 @@ void XrdCtaFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, 
 //------------------------------------------------------------------------------
 uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const {
   try {
-    return stoull(parameterValue);
-  } catch(std::invalid_argument &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+") has an invalid argument");
-  } catch(std::out_of_range &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - The value of parameter: "+parameterName+" ("+parameterValue+") is out of range");
-  } catch(...) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Unknown error while converting parameter: "+parameterName+" ("+parameterValue+") to a uint64_t");
-  }
+    return cta::utils::toUint64(parameterValue);
+  } catch(cta::exception::Exception &ex) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+
+            ") could not be converted to uint64_t because: " + ex.getMessageValue());
+  } 
   return 0;
 }
 
@@ -610,7 +608,7 @@ int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta:
         error.setErrInfo(EPERM, m_data.c_str());
         return SFS_ERROR;
       }
-      uint64_t ptn = stringParameterToUint64("--partialtapesnumber", ptn_s);
+      uint64_t ptn = stringParameterToUint64("--partialtapesnumber/-p", ptn_s);
       bool encryption=false;
       if((hasOption(tokens, "-e", "--encryption") && hasOption(tokens, "-c", "--clear"))) {
         m_data = help.str();
@@ -632,7 +630,7 @@ int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta:
         m_catalogue->modifyTapePoolComment(cliIdentity, name, comment);
       }
       if(!ptn_s.empty()) {
-        uint64_t ptn = stringParameterToUint64("--partialtapesnumber", ptn_s);
+        uint64_t ptn = stringParameterToUint64("--partialtapesnumber/-p", ptn_s);
         m_catalogue->modifyTapePoolNbPartialTapes(cliIdentity, name, ptn);
       }
       if(hasOption(tokens, "-e", "--encryption")) {
@@ -690,7 +688,7 @@ int XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const 
       error.setErrInfo(EPERM, m_data.c_str());
       return SFS_ERROR;
     }    
-    uint64_t cn = stringParameterToUint64("--copynb", cn_s);
+    uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
     if("add" == tokens[2]) { //add
       std::string tapepool = getOptionValue(tokens, "-t", "--tapepool", false);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
@@ -841,7 +839,7 @@ int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::com
         error.setErrInfo(EPERM, m_data.c_str());
         return SFS_ERROR;
       }
-      uint64_t capacity = stringParameterToUint64("--capacity", capacity_s);
+      uint64_t capacity = stringParameterToUint64("--capacity/-c", capacity_s);
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       bool disabled=false;
       bool full=false;
@@ -879,7 +877,7 @@ int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::com
         m_catalogue->modifyTapeTapePoolName(cliIdentity, vid, tapepool);
       }
       if(!capacity_s.empty()) {
-        uint64_t capacity = stringParameterToUint64("--capacity", capacity_s);
+        uint64_t capacity = stringParameterToUint64("--capacity/-c", capacity_s);
         m_catalogue->modifyTapeCapacityInBytes(cliIdentity, vid, capacity);
       }
       if(!comment.empty()) {
@@ -1017,7 +1015,7 @@ int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const 
         error.setErrInfo(EPERM, m_data.c_str());
         return SFS_ERROR;
       }  
-      uint64_t cn = stringParameterToUint64("--copynb", cn_s);
+      uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
       m_catalogue->createStorageClass(cliIdentity, scn, cn, comment);
     }
     else if("ch" == tokens[2]) { //ch
@@ -1032,7 +1030,7 @@ int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const 
         m_catalogue->modifyStorageClassComment(cliIdentity, scn, comment);
       }
       if(!cn_s.empty()) {  
-        uint64_t cn = stringParameterToUint64("--copynb", cn_s);
+        uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
         m_catalogue->modifyStorageClassNbCopies(cliIdentity, scn, cn);
       }
     }
@@ -1174,11 +1172,11 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
           error.setErrInfo(EPERM, m_data.c_str());
           return SFS_ERROR;
         }
-        uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
-        uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
-        uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
-        uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
-        uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
+        uint64_t archivepriority = stringParameterToUint64("--archivepriority/--ap", archivepriority_s);
+        uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage/--aa", minarchiverequestage_s);
+        uint64_t retrievepriority = stringParameterToUint64("--retrievepriority/--rp", retrievepriority_s);
+        uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage/--ra", minretrieverequestage_s);
+        uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed/-d", maxdrivesallowed_s);
         m_catalogue->createMountPolicy(cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
       }
       else if("ch" == tokens[2]) { //ch
@@ -1189,23 +1187,23 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
           return SFS_ERROR;
         }
         if(!archivepriority_s.empty()) {
-          uint64_t archivepriority = stringParameterToUint64("--archivepriority", archivepriority_s);
+          uint64_t archivepriority = stringParameterToUint64("--archivepriority/--ap", archivepriority_s);
           m_catalogue->modifyMountPolicyArchivePriority(cliIdentity, group, archivepriority);
         }
         if(!minarchiverequestage_s.empty()) {
-          uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage", minarchiverequestage_s);
+          uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage/--aa", minarchiverequestage_s);
           m_catalogue->modifyMountPolicyArchiveMinRequestAge(cliIdentity, group, minarchiverequestage);
         }
         if(!retrievepriority_s.empty()) {
-          uint64_t retrievepriority = stringParameterToUint64("--retrievepriority", retrievepriority_s);
+          uint64_t retrievepriority = stringParameterToUint64("--retrievepriority/--rp", retrievepriority_s);
           m_catalogue->modifyMountPolicyRetrievePriority(cliIdentity, group, retrievepriority);
         }
         if(!minretrieverequestage_s.empty()) {
-          uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage", minretrieverequestage_s);
+          uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage/--ra", minretrieverequestage_s);
           m_catalogue->modifyMountPolicyRetrieveMinRequestAge(cliIdentity, group, minretrieverequestage);
         }
         if(!maxdrivesallowed_s.empty()) {
-          uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed", maxdrivesallowed_s);
+          uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed/-d", maxdrivesallowed_s);
           m_catalogue->modifyMountPolicyMaxDrivesAllowed(cliIdentity, group, maxdrivesallowed);
         }
         if(!comment.empty()) {
@@ -1539,7 +1537,7 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
       }
       uint64_t numberOfFiles=0; //0 means do a complete verification
       if(!numberOfFiles_s.empty()) {
-        numberOfFiles = stringParameterToUint64("--partial", numberOfFiles_s);
+        numberOfFiles = stringParameterToUint64("--partial/-p", numberOfFiles_s);
       }
       m_scheduler->verify(cliIdentity, vid, tag, numberOfFiles);
     }
@@ -1700,8 +1698,8 @@ int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::com
       return SFS_ERROR;
     }    
     bool checkchecksum = hasOption(tokens, "-c", "--checkchecksum");
-    uint64_t firstfseq = stringParameterToUint64("--firstfseq", firstfseq_s);
-    uint64_t lastfseq = stringParameterToUint64("--lastfseq", lastfseq_s);
+    uint64_t firstfseq = stringParameterToUint64("--firstfseq/-f", firstfseq_s);
+    uint64_t lastfseq = stringParameterToUint64("--lastfseq/-l", lastfseq_s);
     cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag);   
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
@@ -1745,8 +1743,8 @@ int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::com
         error.setErrInfo(EPERM, m_data.c_str());
         return SFS_ERROR;
       }
-      uint64_t number = stringParameterToUint64("--number", number_s);
-      uint64_t size = stringParameterToUint64("--size", size_s);
+      uint64_t number = stringParameterToUint64("--number/-n", number_s);
+      uint64_t size = stringParameterToUint64("--size/-s", size_s);
       cta::common::dataStructures::TestSourceType type;
       if(input=="zero") { //zero
         type = cta::common::dataStructures::TestSourceType::devzero;
