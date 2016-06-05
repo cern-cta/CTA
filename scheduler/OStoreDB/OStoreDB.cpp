@@ -294,14 +294,15 @@ void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request,
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  auto & cl = criteria.copyToPoolMap;
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
-  for (auto copy=cl.begin(); copy != cl.end(); copy++) {
-    std::string aqaddr = re.addOrGetArchiveQueueAndCommit(copy->second, *m_agent);
-    ar.addJob(copy->first, copy->second, aqaddr);
+  for (auto & copy:criteria.copyToPoolMap) {
+    std::string aqaddr = re.addOrGetArchiveQueueAndCommit(copy.second, *m_agent);
+    const uint32_t hardcodedRetriesWithinMount = 3;
+    const uint32_t hardcodedTotalRetries = 6;
+    ar.addJob(copy.first, copy.second, aqaddr, hardcodedRetriesWithinMount, hardcodedTotalRetries);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
-    jl.back().copyNb = copy->first;
-    jl.back().tapePool = copy->second;
+    jl.back().copyNb = copy.first;
+    jl.back().tapePool = copy.second;
     jl.back().ArchiveQueueAddress = aqaddr;
   }
   if (!jl.size()) {
@@ -332,8 +333,6 @@ void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request,
         ar.getCreationLog().time);
       // Now that we have the tape pool handy, get the retry limits from it and 
       // assign them to the job
-      ar.setJobFailureLimits(j.copyNb, criteria.mountPolicy.maxRetriesWithinMount, 
-        criteria.mountPolicy.maxTotalRetries);
       aq.commit();
       linkedTapePools.push_back(j.ArchiveQueueAddress);
     }

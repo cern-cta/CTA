@@ -30,7 +30,6 @@ set (CTAProtoFiles
 PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 set (CTAProtoDependants objectstore/Agent.hpp
-  objectstore/ArchiveToFileRequest.hpp
   objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
   objectstore/GenericObject.hpp
@@ -58,7 +57,6 @@ add_library (ctaobjectstore SHARED
   AgentWatchdog.cpp
   ArchiveQueue.cpp
   RetrieveQueue.cpp
-  ArchiveToFileRequest.cpp
   ArchiveRequest.cpp
   RetrieveToFileRequest.cpp
   RetrieveRequest.cpp
@@ -81,7 +79,6 @@ set(ObjectStoreUnitTests
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
-  ArchiveToFileRequestTest.cpp
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})

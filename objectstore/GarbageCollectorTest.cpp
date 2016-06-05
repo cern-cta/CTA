@@ -303,16 +303,14 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     agA.addToOwnership(atfrAddr);
     agA.commit();
     if (pass < 1) { pass++; continue; }
-    // - created, but not linked to tape pools. Those jobs will be in PendingNSCreation
-    // state. The request will be garbage collected to the orphaned queue.
-    // The scheduler will then determine whether the request should be pushed
-    // further or cancelled, depending on the NS status.
+    // - created, but not linked to tape pools. Those jobs will be queued by the garbage
+    // collector.
     cta::objectstore::ArchiveRequest ar(atfrAddr, be);
     ar.initialize();
     ar.setArchiveFileID(123456789L);
     ar.setDiskFileID("eos://diskFile");
-    ar.addJob(1, "ArchiveQueue0", tpAddr[0]);
-    ar.addJob(2, "ArchiveQueue1", tpAddr[1]);    
+    ar.addJob(1, "ArchiveQueue0", tpAddr[0], 1, 1);
+    ar.addJob(2, "ArchiveQueue1", tpAddr[1], 1, 1);    
     ar.setOwner(agA.getAddressIfSet());
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
@@ -403,8 +401,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     auto d1=aq1.dumpJobs();
     // We expect all jobs with sizes 1002-1005 inclusive to be connected to
     // their respective tape pools.
-    ASSERT_EQ(4, aq0.getJobsSummary().files);
-    ASSERT_EQ(4, aq1.getJobsSummary().files);
+    ASSERT_EQ(5, aq0.getJobsSummary().files);
+    ASSERT_EQ(5, aq1.getJobsSummary().files);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);

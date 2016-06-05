@@ -46,21 +46,20 @@ void cta::objectstore::ArchiveRequest::initialize() {
 }
 
 void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
-  const std::string& tapepool, const std::string& archivequeueaddress) {
+  const std::string& tapepool, const std::string& archivequeueaddress, 
+    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
-  j->set_status(serializers::ArchiveJobStatus::AJS_PendingNsCreation);
+  j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue);
   j->set_tapepool(tapepool);
   j->set_owner("");
   j->set_archivequeueaddress(archivequeueaddress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
-  // Those 2 values are set to 0 as at creation time, we do not read the 
-  // tape pools yet.
-  j->set_maxretrieswithinmount(0);
-  j->set_maxtotalretries(0);
+  j->set_maxretrieswithinmount(maxRetiesWithinMount);
+  j->set_maxtotalretries(maxTotalRetries);
 }
 
 bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
@@ -78,21 +77,6 @@ bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
     }
   }
   throw NoSuchJob("In ArchiveRequest::setJobSuccessful(): job not found");
-}
-
-
-void cta::objectstore::ArchiveRequest::setJobFailureLimits(uint16_t copyNumber,
-    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      j->set_maxretrieswithinmount(maxRetiesWithinMount);
-      j->set_maxtotalretries(maxTotalRetries);
-      return;
-    }
-  }
-  throw NoSuchJob("In ArchiveRequest::setJobFailureLimits(): job not found");
 }
 
 bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,

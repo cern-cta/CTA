@@ -228,24 +228,8 @@ message ArchiveJobEntry {
   required uint32 totalretries = 4405;
   required uint32 retrieswithinmount = 4406;
   required uint64 lastmountwithfailure = 4407;
-  required uint32 maxretrieswithinmount = 4408;
-  required uint32 maxtotalretries = 4409;
-}
-
-message ArchiveToFileRequest {
-  required FilePathAndStatus remotefile = 4500;
-  required ArchiveFile archivefile = 4501;
-  repeated ArchiveJobEntry jobs = 4502;
-  required uint64 priority = 4503;
-  required CreationLog log = 4504;
-  optional string archivetodiraddress = 4505;
-}
-
-message ArchiveToDirRequest {
-  required string archivedir = 4600;
-  repeated string filerequestsaddresses = 4601;
-  required uint64 priority = 4602;
-  required CreationLog log = 4603;
+  required uint32 maxtotalretries = 4408;
+  required uint32 maxretrieswithinmount = 4409;
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------

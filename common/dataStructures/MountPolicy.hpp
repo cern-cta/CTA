@@ -46,8 +46,6 @@ struct MountPolicy {
   uint64_t retrievePriority;
   uint64_t retrieveMinRequestAge;
   uint64_t maxDrivesAllowed;
-  uint64_t maxRetriesWithinMount;
-  uint64_t maxTotalRetries;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
