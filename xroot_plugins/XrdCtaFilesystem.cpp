@@ -39,6 +39,7 @@
 #include "XrdVersion.hh"
 #include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
+#include "common/Configuration.hpp"
 
 #include <memory>
 #include <iostream>
@@ -257,10 +258,8 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
-  m_remoteStorage(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort")), 
-  m_backend(cta::objectstore::BackendFactory::createBackend(
-    castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))
-      .release()),
+  m_ctaConf(),
+  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "ObjectStoreBackendPath", NULL)).release()),
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
   using namespace cta;

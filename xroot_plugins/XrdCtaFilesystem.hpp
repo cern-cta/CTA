@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "common/Configuration.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -65,14 +66,9 @@ public:
 protected:
   
   /**
-   * The CTA nameserver
+   * The CTA configuration
    */
-  cta::MockNameServer m_ns;
-
-  /**
-   * The remote file storage system (typically EOS)
-   */
-  cta::EosNS m_remoteStorage; 
+  cta::common::Configuration m_ctaConf;
   
   /**
    * The VFS backend for the objectstore DB
