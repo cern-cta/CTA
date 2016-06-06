@@ -22,6 +22,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/archiveNS/StorageClass.hpp"
+#include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/TapePool.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
@@ -39,7 +40,6 @@
 #include "XrdVersion.hh"
 #include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
-#include "common/Configuration.hpp"
 
 #include <memory>
 #include <iostream>
@@ -258,12 +258,11 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
-  m_ctaConf(),
-  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "ObjectStoreBackendPath", NULL)).release()),
+  m_ctaConf("/etc/cta/cta-frontend.conf"),
+  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", NULL)).release()),
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
   using namespace cta;
-
   const catalogue::DbLogin catalogueLogin = catalogue::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
   m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
 

@@ -18,6 +18,7 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "cmdline/CTACmd.hpp"
+#include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
 
 #include "XrdCl/XrdClCopyProcess.hh"
@@ -86,7 +87,8 @@ int cta::cmdline::CTACmd::sendCommand(const int argc, const char **argv) const {
 // formatCommandPath
 //------------------------------------------------------------------------------
 std::string cta::cmdline::CTACmd::formatCommandPath(const int argc, const char **argv) const {
-  std::string cmdPath = "root://"+castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "CTAFrontendHostAndPort")+"//";
+  cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf");  
+  std::string cmdPath = "root://"+ctaConf.getConfEntString("Frontend", "HostAndPort", NULL)+"//";
   for(int i=0; i<argc; i++) {
     if(i) cmdPath += "&";
     cmdPath += encode(std::string(argv[i]));

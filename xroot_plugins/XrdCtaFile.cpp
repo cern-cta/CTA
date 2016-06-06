@@ -68,7 +68,7 @@ cta::common::dataStructures::SecurityIdentity XrdCtaFile::checkClient(const XrdS
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
   cta::common::dataStructures::UserIdentity user;
   user.name=client->name;
-  user.group=client->grps;
+  //user.group=client->grps; //seg faults
   cliIdentity.user=user;
   cliIdentity.host=client->host;
   return cliIdentity;
