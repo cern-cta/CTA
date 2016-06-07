@@ -478,8 +478,7 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
-    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "driveregisterpointer", pointer);
@@ -492,8 +491,7 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
-    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "agentregisterpointer", pointer);
@@ -506,8 +504,7 @@ std::string cta::objectstore::RootEntry::dump () {
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
     json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().user().name().c_str()));
-    json_object_object_add(id, "group", json_object_new_string(m_payload.driveregisterpointer().log().user().group().c_str()));
+    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
     json_object_object_add(jlog, "user", id);
     json_object_object_add(pointer, "log", jlog);
     json_object_object_add(jo, "schedulerlockpointer", pointer);

@@ -42,7 +42,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+    cta::objectstore::EntryLog el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -90,7 +90,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+    cta::objectstore::EntryLog el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -147,7 +147,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+    cta::objectstore::EntryLog el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -204,7 +204,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+    cta::objectstore::EntryLog el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -261,7 +261,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el(cta::common::dataStructures::UserIdentity("user0", "group0"),
+    cta::objectstore::EntryLog el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -326,7 +326,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
     ar.setStorageClass("sc");
-    ar.setCreationLog(cta::common::dataStructures::EntryLog(cta::common::dataStructures::UserIdentity("user0", "group0"), "host0", time(nullptr)));
+    ar.setCreationLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }

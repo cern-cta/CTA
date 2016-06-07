@@ -66,10 +66,8 @@ cta::common::dataStructures::SecurityIdentity XrdCtaFile::checkClient(const XrdS
     }
   }
   std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
-  cta::common::dataStructures::UserIdentity user;
-  user.name=client->name;
-  //user.group=client->grps; //seg faults
-  cliIdentity.user=user;
+  //client->grps; //seg faults
+  cliIdentity.username=client->name;
   cliIdentity.host=client->host;
   return cliIdentity;
 }
@@ -415,12 +413,10 @@ std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string
 // addLogInfoToResponseRow
 //------------------------------------------------------------------------------
 void XrdCtaFile::addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog) {
-  responseRow.push_back(creationLog.user.name);
-  responseRow.push_back(creationLog.user.group);
+  responseRow.push_back(creationLog.username);
   responseRow.push_back(creationLog.host);
   responseRow.push_back(timeToString(creationLog.time));
-  responseRow.push_back(lastModificationLog.user.name);
-  responseRow.push_back(lastModificationLog.user.group);
+  responseRow.push_back(lastModificationLog.username);
   responseRow.push_back(lastModificationLog.host);
   responseRow.push_back(timeToString(lastModificationLog.time));
 }
@@ -443,20 +439,16 @@ uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, c
 //------------------------------------------------------------------------------
 int XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
-  help << tokens[0] << " bs/bootstrap --user/-u <user> --group/-g <group> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  std::string user = getOptionValue(tokens, "-u", "--user", false);
-  std::string group = getOptionValue(tokens, "-g", "--group", false);
+  help << tokens[0] << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
+  std::string username = getOptionValue(tokens, "-u", "--username", false);
   std::string hostname = getOptionValue(tokens, "-h", "--hostname", false);
   std::string comment = getOptionValue(tokens, "-m", "--comment", false);
-  if(user.empty()||group.empty()||hostname.empty()||comment.empty()) {
+  if(username.empty()||hostname.empty()||comment.empty()) {
     m_data = help.str();
     error.setErrInfo(EPERM, m_data.c_str());
     return SFS_ERROR;
   }
-  cta::common::dataStructures::UserIdentity adminUser;
-  adminUser.name=user;
-  adminUser.group=group;
-  m_catalogue->createBootstrapAdminAndHostNoAuth(cliIdentity, adminUser, hostname, comment);
+  m_catalogue->createBootstrapAdminAndHostNoAuth(cliIdentity, username, hostname, comment);
   return SFS_OK;
 }
 
@@ -466,21 +458,17 @@ int XrdCtaFile::xCom_bootstrap(const std::vector<std::string> &tokens, const cta
 int XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " ad/admin add/ch/rm/ls:" << std::endl
-       << "\tadd --user/-u <user> --group/-g <group> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --user/-u <user> --group/-g <group> --comment/-m <\"comment\">" << std::endl
-       << "\trm  --user/-u <user> --group/-g <group>" << std::endl
+       << "\tadd --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
+       << "\trm  --username/-u <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
-    std::string user = getOptionValue(tokens, "-u", "--user", false);
-    std::string group = getOptionValue(tokens, "-g", "--group", false);
-    if(user.empty()||group.empty()) {
+    std::string username = getOptionValue(tokens, "-u", "--username", false);
+    if(username.empty()) {
       m_data = help.str();
       error.setErrInfo(EPERM, m_data.c_str());
       return SFS_ERROR;
     }
-    cta::common::dataStructures::UserIdentity adminUser;
-    adminUser.name=user;
-    adminUser.group=group;
     if("add" == tokens[2] || "ch" == tokens[2]) {
       std::string comment = getOptionValue(tokens, "-m", "--comment", false);
       if(comment.empty()) {
@@ -489,21 +477,21 @@ int XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::co
         return SFS_ERROR;
       }
       if("add" == tokens[2]) { //add
-        m_catalogue->createAdminUser(cliIdentity, adminUser, comment);
+        m_catalogue->createAdminUser(cliIdentity, username, comment);
       }
       else { //ch
-        m_catalogue->modifyAdminUserComment(cliIdentity, adminUser, comment);
+        m_catalogue->modifyAdminUserComment(cliIdentity, username, comment);
       }
     }
     else { //rm
-      m_catalogue->deleteAdminUser(adminUser);
+      m_catalogue->deleteAdminUser(username);
     }
   }
   else if("ls" == tokens[2]) { //ls
     std::list<cta::common::dataStructures::AdminUser> list= m_catalogue->getAdminUsers();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"user","group","c.user","c.group","c.host","c.time","m.user","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -563,7 +551,7 @@ int XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta
     std::list<cta::common::dataStructures::AdminHost> list= m_catalogue->getAdminHosts();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"hostname","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -648,7 +636,7 @@ int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta:
     std::list<cta::common::dataStructures::TapePool> list= m_catalogue->getTapePools();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -722,7 +710,7 @@ int XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const 
     std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue->getArchiveRoutes();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","copy number","tapepool","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -788,7 +776,7 @@ int XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, cons
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue->getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"name","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -954,7 +942,7 @@ int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::com
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","busy","full","disabled","lpb","label drive","label time",
-                                         "last w drive","last w time","last r drive","last r time","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+                                         "last w drive","last w time","last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1042,7 +1030,7 @@ int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const 
     std::list<cta::common::dataStructures::StorageClass> list= m_catalogue->getStorageClasses();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","number of copies","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1117,7 +1105,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
     std::list<cta::common::dataStructures::Requester> list= m_catalogue->getRequesters();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"user","group","cta group","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"user","group","cta group","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1219,7 +1207,7 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
     std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue->getMountPolicies();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1348,7 +1336,7 @@ int XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const ct
     std::list<cta::common::dataStructures::Dedication> list= m_catalogue->getDedications();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"drive","type","vid","tag","from","until","c.name","c.group","c.host","c.time","m.name","m.group","m.host","m.time","comment"};
+      std::vector<std::string> header = {"drive","type","vid","tag","from","until","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1450,7 +1438,7 @@ int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::c
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","group","host","time"};
+      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
@@ -1476,8 +1464,7 @@ int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::c
         currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
         currentRow.push_back(std::to_string((unsigned long long)it->filesArchived));
         currentRow.push_back(it->repackStatus);
-        currentRow.push_back(it->creationLog.user.name);
-        currentRow.push_back(it->creationLog.user.group);
+        currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);        
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
@@ -1571,7 +1558,7 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","group","host","time"};
+      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","host","time"};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1583,8 +1570,7 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
         currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
         currentRow.push_back(std::to_string((unsigned long long)it->filesVerified));
         currentRow.push_back(it->verifyStatus);
-        currentRow.push_back(it->creationLog.user.name);
-        currentRow.push_back(it->creationLog.user.group);
+        currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);       
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);

@@ -78,12 +78,12 @@ public:
  */
   virtual ~Catalogue() = 0;
   
-  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment) = 0;
+  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
 
-  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
-  virtual void deleteAdminUser(const common::dataStructures::UserIdentity &user) = 0;
+  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) = 0;
+  virtual void deleteAdminUser(const std::string &username) = 0;
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
-  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
+  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) = 0;
 
   virtual void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) = 0;
   virtual void deleteAdminHost(const std::string &hostName) = 0;

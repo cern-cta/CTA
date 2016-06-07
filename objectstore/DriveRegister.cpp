@@ -279,7 +279,7 @@ void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& drive
     if (!alreadyInSessionStatuses.count((int)status)) {
       // TODO: the creation should be moved to another place to better logging
       // Explicitely by scheduler? To be decided.
-      EntryLog el(UserIdentity("name0","group0"), "", reportTime);
+      EntryLog el("name0", "", reportTime);
       addDrive(driveName, logicalLibary, el);
     } else {
       throw NoSuchDrive("In DriveRegister::reportDriveStatus(): No such drive");

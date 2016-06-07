@@ -33,7 +33,7 @@ SecurityIdentity::SecurityIdentity() {}
 // operator==
 //------------------------------------------------------------------------------
 bool SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
-  return user==rhs.user
+  return username==rhs.username
       && host==rhs.host;
 }
 
@@ -48,7 +48,7 @@ bool SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
-  os << "(user=" << obj.user
+  os << "(username=" << obj.username
      << " host=" << obj.host << ")";
   return os;
 }

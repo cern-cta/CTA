@@ -32,7 +32,7 @@ TEST(ObjectStore, RetrieveQueueBasicAccess) {
     // Try to create the tape entry
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     cta::common::dataStructures::EntryLog el;
-    el.user=cta::common::dataStructures::UserIdentity("user0", "group0");
+    el.username="user0";
     el.host="unittesthost";
     el.time=time(NULL);
     rq.initialize("V12345", "LIB0", el);

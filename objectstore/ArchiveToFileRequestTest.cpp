@@ -40,7 +40,7 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     atfr.setRemoteFile(cta::RemotePathAndStatus(cta::RemotePath("eos://dir2/file2"), 
       cta::RemoteFileStatus(cta::common::dataStructures::UserIdentity("user0", "group0"), 0744, 12345678)));
     cta::common::dataStructures::EntryLog el;
-    el.user = cta::common::dataStructures::UserIdentity("user0", "group0");
+    el.username = "user0";
     el.host = "testHost";
     el.time = now = time(NULL);
     atfr.setEntryLog(el);
@@ -56,8 +56,7 @@ TEST(ObjectStore, ArchiveToFileRequestBasicAccess) {
     ASSERT_EQ("eos://dir2/file2", atfr.getRemoteFile().path.getRaw());
     ASSERT_EQ(12345678, atfr.getRemoteFile().status.size);
     cta::objectstore::EntryLog log(atfr.getCreationLog());
-    ASSERT_EQ("user0", log.user.name);
-    ASSERT_EQ("group0", log.user.group);
+    ASSERT_EQ("user0", log.username);
     ASSERT_EQ("testHost", log.host);
     ASSERT_EQ(now, log.time);
   }

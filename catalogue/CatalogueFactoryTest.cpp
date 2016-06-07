@@ -30,19 +30,13 @@ public:
   cta_catalogue_CatalogueFactoryTest():
     m_bootstrapComment("bootstrap") {
 
-    m_cliUI.group = "cli_group_name";
-    m_cliUI.name = "cli_user_name";
-    m_cliSI.user = m_cliUI;
+    m_cliSI.username = "cli_user_name";
     m_cliSI.host = "cli_host";
 
-    m_bootstrapAdminUI.group = "bootstrap_admin_group_name";
-    m_bootstrapAdminUI.name = "bootstrap_admin_user_name";
-    m_bootstrapAdminSI.user = m_bootstrapAdminUI;
+    m_bootstrapAdminSI.username = "bootstrap_admin_user_name";
     m_bootstrapAdminSI.host = "bootstrap_host";
 
-    m_adminUI.group = "admin_group_name";
-    m_adminUI.name = "admin_user_name";
-    m_adminSI.user = m_adminUI;
+    m_adminSI.username = "admin_user_name";
     m_adminSI.host = "admin_host";
   }
 
@@ -55,11 +49,8 @@ protected:
   }
 
   const std::string m_bootstrapComment;
-  cta::common::dataStructures::UserIdentity     m_cliUI;
   cta::common::dataStructures::SecurityIdentity m_cliSI;
-  cta::common::dataStructures::UserIdentity     m_bootstrapAdminUI;
   cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
-  cta::common::dataStructures::UserIdentity     m_adminUI;
   cta::common::dataStructures::SecurityIdentity m_adminSI;
 };
 
@@ -75,7 +66,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   ASSERT_TRUE(catalogue->getAdminHosts().empty());
 
   catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -86,7 +77,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -103,7 +94,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(m_bootstrapComment, host.comment);
 
     const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =

@@ -387,8 +387,7 @@ void ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog 
   auto payloadCreationLog = m_payload.mutable_creationlog();
   payloadCreationLog->set_time(creationLog.time);
   payloadCreationLog->set_host(creationLog.host);
-  payloadCreationLog->set_name(creationLog.user.name);
-  payloadCreationLog->set_group(creationLog.user.group);
+  payloadCreationLog->set_username(creationLog.username);
 }
 
 //------------------------------------------------------------------------------
@@ -399,9 +398,7 @@ cta::common::dataStructures::EntryLog ArchiveRequest::getCreationLog() {
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::UserIdentity user;
   auto payloadCreationLog = m_payload.creationlog();
-  user.name=payloadCreationLog.name();
-  user.group=payloadCreationLog.group();
-  creationLog.user=user;
+  creationLog.username=payloadCreationLog.username();
   creationLog.host=payloadCreationLog.host();
   creationLog.time=payloadCreationLog.time();
   return creationLog;  
@@ -560,8 +557,7 @@ std::string ArchiveRequest::dump() {
   json_object * jaf = json_object_new_object();
   json_object_object_add(jaf, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
   json_object_object_add(jaf, "time", json_object_new_int64(m_payload.creationlog().time()));
-  json_object_object_add(jaf, "name", json_object_new_string(m_payload.creationlog().name().c_str()));
-  json_object_object_add(jaf, "group", json_object_new_string(m_payload.creationlog().group().c_str()));
+  json_object_object_add(jaf, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
   json_object_object_add(jo, "creationlog", jaf);
   // Array for jobs
   json_object * jja = json_object_new_array();

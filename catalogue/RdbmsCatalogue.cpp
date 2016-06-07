@@ -48,11 +48,11 @@ RdbmsCatalogue::~RdbmsCatalogue() {
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const common::dataStructures::UserIdentity &user,
+  const std::string &username,
   const std::string &hostName,
   const std::string &comment) {
   try {
-    createAdminUser(cliIdentity, user, comment);
+    createAdminUser(cliIdentity, username, comment);
     createAdminHost(cliIdentity, hostName, comment);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -64,7 +64,7 @@ void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createAdminUser(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const common::dataStructures::UserIdentity &user,
+  const std::string &username,
   const std::string &comment) {
   try {
     const uint64_t now = time(NULL);
@@ -95,15 +95,15 @@ void RdbmsCatalogue::createAdminUser(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
-    stmt->bindString(":ADMIN_USER_NAME", user.name);
+    stmt->bindString(":ADMIN_USER_NAME", username);
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -116,7 +116,7 @@ void RdbmsCatalogue::createAdminUser(
 //------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteAdminUser(const common::dataStructures::UserIdentity &user) {
+void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -151,21 +151,15 @@ std::list<common::dataStructures::AdminUser>
 
       admin.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       admin.creationLog = creationLog;
 
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -183,7 +177,7 @@ std::list<common::dataStructures::AdminUser>
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) {
+void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -227,11 +221,11 @@ void RdbmsCatalogue::createAdminHost(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -281,7 +275,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -291,7 +285,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -357,11 +351,11 @@ void RdbmsCatalogue::createStorageClass(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -427,7 +421,7 @@ std::list<common::dataStructures::StorageClass>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -437,7 +431,7 @@ std::list<common::dataStructures::StorageClass>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -514,11 +508,11 @@ void RdbmsCatalogue::createTapePool(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -574,7 +568,7 @@ std::list<common::dataStructures::TapePool>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -584,7 +578,7 @@ std::list<common::dataStructures::TapePool>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -668,11 +662,11 @@ void RdbmsCatalogue::createArchiveRoute(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -728,7 +722,7 @@ std::list<common::dataStructures::ArchiveRoute>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -738,7 +732,7 @@ std::list<common::dataStructures::ArchiveRoute>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -807,11 +801,11 @@ void RdbmsCatalogue::createLogicalLibrary(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -863,7 +857,7 @@ std::list<common::dataStructures::LogicalLibrary>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -873,7 +867,7 @@ std::list<common::dataStructures::LogicalLibrary>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -995,11 +989,11 @@ void RdbmsCatalogue::createTape(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1149,7 +1143,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -1159,7 +1153,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -1309,11 +1303,11 @@ void RdbmsCatalogue::createRequester(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1368,7 +1362,7 @@ std::list<common::dataStructures::Requester>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -1378,7 +1372,7 @@ std::list<common::dataStructures::Requester>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -1476,11 +1470,11 @@ void RdbmsCatalogue::createMountPolicy(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1552,7 +1546,7 @@ std::list<common::dataStructures::MountPolicy>
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
       common::dataStructures::EntryLog creationLog;
-      creationLog.user = creatorUI;
+      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -1562,7 +1556,7 @@ std::list<common::dataStructures::MountPolicy>
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
-      updateLog.user = updaterUI;
+      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
       updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
       updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -2063,21 +2057,15 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
 
     policy.comment = rset->columnText("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
     common::dataStructures::EntryLog creationLog;
-    creationLog.user = creatorUI;
+    creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
     creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
     creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
     policy.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-
     common::dataStructures::EntryLog updateLog;
-    updateLog.user = updaterUI;
+    updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
     updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
     updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -2220,7 +2208,7 @@ common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::stri
     creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
-    creationLog.user = creatorUI;
+    creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
     creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
     creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
@@ -2230,7 +2218,7 @@ common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::stri
     updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.user = updaterUI;
+    updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
     updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
     updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
@@ -2369,7 +2357,7 @@ std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFile
 // isAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return userIsAdmin(cliIdentity.user.name) && hostIsAdmin(cliIdentity.host);
+  return userIsAdmin(cliIdentity.username) && hostIsAdmin(cliIdentity.host);
 }
 
 //------------------------------------------------------------------------------

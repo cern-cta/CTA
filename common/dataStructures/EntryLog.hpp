@@ -37,13 +37,13 @@ struct EntryLog {
 
   EntryLog();
   
-  EntryLog(const UserIdentity & user, const std::string & host, const time_t time);
+  EntryLog(const std::string & username, const std::string & host, const time_t time);
 
   bool operator==(const EntryLog &rhs) const;
 
   bool operator!=(const EntryLog &rhs) const;
 
-  UserIdentity user;
+  std::string username;
   std::string host;
   time_t time;
 

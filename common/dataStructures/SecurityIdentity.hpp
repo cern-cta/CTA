@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/UserIdentity.hpp"
-
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -41,7 +39,7 @@ struct SecurityIdentity {
 
   bool operator!=(const SecurityIdentity &rhs) const;
 
-  UserIdentity user;
+  std::string username;
   std::string host;
 
 }; // struct SecurityIdentity

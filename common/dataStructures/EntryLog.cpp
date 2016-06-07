@@ -33,15 +33,15 @@ EntryLog::EntryLog():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-EntryLog::EntryLog(const UserIdentity& user, const std::string& host, const time_t time):
-  user(user), host(host), time(time) {}
+EntryLog::EntryLog(const std::string & username, const std::string& host, const time_t time):
+  username(username), host(host), time(time) {}
 
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool EntryLog::operator==(const EntryLog &rhs) const {
-  return user==rhs.user
+  return username==rhs.username
       && host==rhs.host
       && time==rhs.time;
 }
@@ -57,7 +57,7 @@ bool EntryLog::operator!=(const EntryLog &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const EntryLog &obj) {
-  os << "(user=" << obj.user
+  os << "(username=" << obj.username
      << " host=" << obj.host
      << " time=" << obj.time << ")";
   return os;

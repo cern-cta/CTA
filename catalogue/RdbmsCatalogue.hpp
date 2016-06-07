@@ -62,12 +62,12 @@ public:
    */
   virtual ~RdbmsCatalogue();
   
-  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &hostName, const std::string &comment);
+  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment);
 
-  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment);
-  virtual void deleteAdminUser(const common::dataStructures::UserIdentity &user);
+  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment);
+  virtual void deleteAdminUser(const std::string &username);
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const;
-  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment);
+  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment);
 
   virtual void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment);
   virtual void deleteAdminHost(const std::string &hostName);

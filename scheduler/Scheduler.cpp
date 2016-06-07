@@ -65,7 +65,7 @@ void cta::Scheduler::queueRetrieve(
   const cta::common::dataStructures::SecurityIdentity &cliIdentity,
   const cta::common::dataStructures::RetrieveRequest &request) {
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(request.archiveFileID, cliIdentity.user);
+    m_catalogue.prepareToRetrieveFile(request.archiveFileID, request.requester);
   m_db.queue(request, queueCriteria);
 }
 

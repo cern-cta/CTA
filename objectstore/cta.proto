@@ -88,7 +88,7 @@ message UserIdentity {
 
 // The creation log attached to each element
 message CreationLog {
-  required UserIdentity user = 20;
+  required string username = 20;
   required string host = 21;
   required uint64 time = 22;
   optional string comment = 23;
@@ -342,8 +342,7 @@ message DRData {
 }
 
 message EntryLog {
-  required string name = 8950;
-  required string group = 8955;
+  required string username = 8950;
   required string host = 8960;
   required uint64 time = 8970;
 }

@@ -55,19 +55,13 @@ public:
   cta_catalogue_InMemoryCatalogueTest():
     m_bootstrapComment("bootstrap") {
 
-    m_cliUI.group = "cli_group_name";
-    m_cliUI.name = "cli_user_name";
-    m_cliSI.user = m_cliUI;
+    m_cliSI.username = "cli_user_name";
     m_cliSI.host = "cli_host";
 
-    m_bootstrapAdminUI.group = "bootstrap_admin_group_name";
-    m_bootstrapAdminUI.name = "bootstrap_admin_user_name";
-    m_bootstrapAdminSI.user = m_bootstrapAdminUI;
+    m_bootstrapAdminSI.username = "bootstrap_admin_user_name";
     m_bootstrapAdminSI.host = "bootstrap_host";
 
-    m_adminUI.group = "admin_group_name";
-    m_adminUI.name = "admin_user_name";
-    m_adminSI.user = m_adminUI;
+    m_adminSI.username = "admin_user_name";
     m_adminSI.host = "admin_host";
   }
 
@@ -86,11 +80,8 @@ protected:
 
   std::unique_ptr<cta::catalogue::RdbmsCatalogue> m_catalogue;
   const std::string m_bootstrapComment;
-  cta::common::dataStructures::UserIdentity     m_cliUI;
   cta::common::dataStructures::SecurityIdentity m_cliSI;
-  cta::common::dataStructures::UserIdentity     m_bootstrapAdminUI;
   cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
-  cta::common::dataStructures::UserIdentity     m_adminUI;
   cta::common::dataStructures::SecurityIdentity m_adminSI;
 };
 
@@ -101,7 +92,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createBootstrapAdminAndHostNoAuth) {
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -112,7 +103,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createBootstrapAdminAndHostNoAuth) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -129,7 +120,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createBootstrapAdminAndHostNoAuth) {
     ASSERT_EQ(m_bootstrapComment, host.comment);
 
     const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -144,7 +135,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -155,7 +146,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -164,7 +155,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
   }
 
   const std::string createAdminUserComment = "create admin user";
-  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI, createAdminUserComment);
+  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -176,36 +167,36 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
     const common::dataStructures::AdminUser a2 = admins.front();
 
     ASSERT_NE(a1, a2);
-    ASSERT_TRUE((a1.name == m_bootstrapAdminUI.name && a2.name == m_adminUI.name) ||
-      (a2.name == m_bootstrapAdminUI.name && a1.name == m_adminUI.name));
+    ASSERT_TRUE((a1.name == m_bootstrapAdminSI.username && a2.name == m_adminSI.username) ||
+      (a2.name == m_bootstrapAdminSI.username && a1.name == m_adminSI.username));
 
-    if(a1.name == m_bootstrapAdminUI.name) {
-      ASSERT_EQ(m_bootstrapAdminUI.name, a1.name);
+    if(a1.name == m_bootstrapAdminSI.username) {
+      ASSERT_EQ(m_bootstrapAdminSI.username, a1.name);
       ASSERT_EQ(m_bootstrapComment, a1.comment);
-      ASSERT_EQ(m_cliSI.user.name, a1.creationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, a1.creationLog.username);
       ASSERT_EQ(m_cliSI.host, a1.creationLog.host);
-      ASSERT_EQ(m_cliSI.user.name, a1.lastModificationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, a1.lastModificationLog.username);
       ASSERT_EQ(m_cliSI.host, a1.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI.name, a2.name);
+      ASSERT_EQ(m_adminSI.username, a2.name);
       ASSERT_EQ(createAdminUserComment, a2.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, a2.creationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, a2.creationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, a2.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, a2.lastModificationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, a2.lastModificationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, a2.lastModificationLog.host);
     } else {
-      ASSERT_EQ(m_bootstrapAdminUI.name, a2.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, a2.name);
       ASSERT_EQ(m_bootstrapComment, a2.comment);
-      ASSERT_EQ(m_cliSI.user.name, a2.creationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, a2.creationLog.username);
       ASSERT_EQ(m_cliSI.host, a2.creationLog.host);
-      ASSERT_EQ(m_cliSI.user.name, a2.lastModificationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, a2.lastModificationLog.username);
       ASSERT_EQ(m_cliSI.host, a2.lastModificationLog.host);
 
-      ASSERT_EQ(m_adminUI.name, a1.name);
+      ASSERT_EQ(m_adminSI.username, a1.name);
       ASSERT_EQ(createAdminUserComment, a1.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user, a1.creationLog.user);
+      ASSERT_EQ(m_bootstrapAdminSI.username, a1.creationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, a1.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, a1.lastModificationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, a1.lastModificationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, a1.lastModificationLog.host);
     }
   }
@@ -215,7 +206,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -226,7 +217,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -234,9 +225,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI, "comment 1");
+  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, "comment 1");
 
-  ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminUI,
+  ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username,
     "comment 2"), exception::Exception);
 }
 
@@ -246,7 +237,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -257,7 +248,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -289,30 +280,30 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
     if(h1.name == m_bootstrapAdminSI.host) {
       ASSERT_EQ(m_bootstrapAdminSI.host, h1.name);
       ASSERT_EQ(m_bootstrapComment, h1.comment);
-      ASSERT_EQ(m_cliSI.user.name, h1.creationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, h1.creationLog.username);
       ASSERT_EQ(m_cliSI.host, h1.creationLog.host);
-      ASSERT_EQ(m_cliSI.user.name, h1.lastModificationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, h1.lastModificationLog.username);
       ASSERT_EQ(m_cliSI.host, h1.lastModificationLog.host);
 
       ASSERT_EQ(anotherAdminHost, h2.name);
       ASSERT_EQ(createAdminHostComment, h2.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, h2.creationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, h2.creationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, h2.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, h2.lastModificationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, h2.lastModificationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, h2.lastModificationLog.host);
     } else {
       ASSERT_EQ(m_bootstrapAdminSI.host, h2.name);
       ASSERT_EQ(m_bootstrapComment, h2.comment);
-      ASSERT_EQ(m_cliSI.user.name, h2.creationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, h2.creationLog.username);
       ASSERT_EQ(m_cliSI.host, h2.creationLog.host);
-      ASSERT_EQ(m_cliSI.user.name, h2.lastModificationLog.user.name);
+      ASSERT_EQ(m_cliSI.username, h2.lastModificationLog.username);
       ASSERT_EQ(m_cliSI.host, h2.lastModificationLog.host);
 
       ASSERT_EQ(anotherAdminHost, h1.name);
       ASSERT_EQ(createAdminHostComment, h1.comment);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, h1.creationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, h1.creationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, h1.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdminSI.user.name, h1.lastModificationLog.user.name);
+      ASSERT_EQ(m_bootstrapAdminSI.username, h1.lastModificationLog.username);
       ASSERT_EQ(m_bootstrapAdminSI.host, h1.lastModificationLog.host);
     }
   }
@@ -322,7 +313,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost_same_twice) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -333,7 +324,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost_same_twice) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -359,7 +350,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, isAdmin_true) {
   using namespace cta;
 
   m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminUI, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   ASSERT_TRUE(m_catalogue->isAdmin(m_bootstrapAdminSI));
 }
@@ -386,7 +377,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createStorageClass) {
   ASSERT_EQ(comment, storageClass.comment);
 
   const common::dataStructures::EntryLog creationLog = storageClass.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
@@ -429,7 +420,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool) {
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
   
   const common::dataStructures::EntryLog lastModificationLog =
@@ -482,7 +473,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute) {
   ASSERT_EQ(comment, route.comment);
 
   const common::dataStructures::EntryLog creationLog = route.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
   
   const common::dataStructures::EntryLog lastModificationLog =
@@ -550,7 +541,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute_deleteStorageClas
   ASSERT_EQ(comment, route.comment);
 
   const common::dataStructures::EntryLog creationLog = route.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
@@ -586,7 +577,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createLogicalLibrary) {
   ASSERT_EQ(comment, lib.comment);
 
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
   
   const common::dataStructures::EntryLog lastModificationLog =
@@ -642,7 +633,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
   ASSERT_EQ(comment, tape.comment);
 
   const common::dataStructures::EntryLog creationLog = tape.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
@@ -748,7 +739,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy) {
   ASSERT_EQ(comment, group.comment);
 
   const common::dataStructures::EntryLog creationLog = group.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
@@ -828,7 +819,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(comment, user.comment);
-  ASSERT_EQ(m_cliSI.user.name, user.creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
@@ -914,7 +905,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(m_cliSI.user.name, user.creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
@@ -957,7 +948,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(archiveRouteComment, route.comment);
 
   const common::dataStructures::EntryLog creationLog = route.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
@@ -1021,7 +1012,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(comment, tape.comment);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -1041,7 +1032,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(comment, tape.comment);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -1185,7 +1176,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(m_cliSI.user.name, user.creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
   ASSERT_EQ(m_cliSI.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);  
 
@@ -1248,7 +1239,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(comment, tape.comment);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -1268,7 +1259,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(comment, tape.comment);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -1435,7 +1426,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
     ASSERT_EQ(comment, tape.comment);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -1556,7 +1547,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
   ASSERT_EQ(comment, tape.comment);
 
   const common::dataStructures::EntryLog creationLog = tape.creationLog;
-  ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =

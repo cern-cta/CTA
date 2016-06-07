@@ -117,8 +117,7 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::EntryLog cl(cta::common::dataStructures::UserIdentity("user0", "group0"), "systemhost",
-          time(NULL));
+  objectstore::EntryLog cl("user0", "systemhost", time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();
@@ -149,8 +148,7 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::EntryLog cl(cta::common::dataStructures::UserIdentity("user0", "group0"), "systemhost",
-          time(NULL));
+  objectstore::EntryLog cl("user0", "systemhost", time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();

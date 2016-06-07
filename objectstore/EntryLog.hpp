@@ -34,8 +34,8 @@ class EntryLog: public cta::common::dataStructures::EntryLog {
 public:
   EntryLog (): cta::common::dataStructures::EntryLog() {}
   EntryLog (const cta::common::dataStructures::EntryLog & el): cta::common::dataStructures::EntryLog(el) {}
-  EntryLog (const cta::common::dataStructures::UserIdentity& u, const std::string & hn, uint64_t t): cta::common::dataStructures::EntryLog() {
-    user=u;
+  EntryLog (const std::string & un, const std::string & hn, uint64_t t): cta::common::dataStructures::EntryLog() {
+    username=un;
     host=hn;
     time=t;
   }
@@ -43,14 +43,12 @@ public:
     return cta::common::dataStructures::EntryLog(*this);
   } 
   void serialize (cta::objectstore::serializers::CreationLog & log) const {
-    log.mutable_user()->set_name(user.name);
-    log.mutable_user()->set_group(user.group);
+    log.set_username(username);
     log.set_host(host);
     log.set_time(time);
   }
   void deserialize (const cta::objectstore::serializers::CreationLog & log) {
-    user.name=log.user().name();
-    user.group=log.user().group();
+    username=log.username();
     host = log.host();
     time  = log.time();
   }

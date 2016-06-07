@@ -129,12 +129,9 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
 
   catalogue::Catalogue &catalogue = getCatalogue();
   Scheduler &scheduler = getScheduler();
-
-  cta::common::dataStructures::UserIdentity admin;
-  admin.name="admin1";
-  admin.group="group1";
+  
   cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost;
-  s_adminOnAdminHost.user=admin;
+  s_adminOnAdminHost.username="admin1";
   s_adminOnAdminHost.host="host1";
 
   const std::string mountPolicyName = "mount_group";
@@ -186,7 +183,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   ASSERT_EQ(userName, user.name);
   ASSERT_EQ(mountPolicyName, user.mountPolicy);
   ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(s_adminOnAdminHost.user, user.creationLog.user);
+  ASSERT_EQ(s_adminOnAdminHost.username, user.creationLog.username);
   ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);
   ASSERT_EQ(user.creationLog, user.lastModificationLog);
 
@@ -211,7 +208,7 @@ TEST_P(SchedulerTest, DISABLED_archive_to_new_file) {
   cta::common::dataStructures::EntryLog creationLog;
   creationLog.host="host2";
   creationLog.time=0;
-  creationLog.user=admin;
+  creationLog.username="admin1";
   cta::common::dataStructures::DRData drData;
   drData.drBlob="blob";
   drData.drGroup="group2";
