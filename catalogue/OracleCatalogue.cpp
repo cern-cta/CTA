@@ -39,5 +39,12 @@ OracleCatalogue::OracleCatalogue(
 OracleCatalogue::~OracleCatalogue() {
 }
 
+//------------------------------------------------------------------------------
+// getNextArchiveFileId
+//------------------------------------------------------------------------------
+uint64_t OracleCatalogue::getNextArchiveFileId() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 } // namespace catalogue
 } // namespace cta

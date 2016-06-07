@@ -66,25 +66,34 @@ void SqliteConn::close() {
 // createStmt
 //------------------------------------------------------------------------------
 DbStmt *SqliteConn::createStmt(const std::string &sql) {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  try {
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-  sqlite3_stmt *stmt = NULL;
-  const int nByte = -1; // Read SQL up to first null terminator
-  const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt, NULL);
-  if(SQLITE_OK != prepareRc) {
-    sqlite3_finalize(stmt);
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
-      ": " + sqlite3_errmsg(m_conn));
+    sqlite3_stmt *stmt = NULL;
+    const int nByte = -1; // Read SQL up to first null terminator
+    const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt, NULL);
+    if (SQLITE_OK != prepareRc) {
+      const std::string msg = sqlite3_errmsg(m_conn);
+      sqlite3_finalize(stmt);
+      throw exception::Exception(msg);
+    }
+
+    return new SqliteStmt(sql, stmt);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
+      ex.getMessage().str());
   }
-
-  return new SqliteStmt(sql, stmt);
 }
 
 //------------------------------------------------------------------------------
 // commit
 //------------------------------------------------------------------------------
 void SqliteConn::commit() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    executeNonQuery("COMMIT;");
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

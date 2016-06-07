@@ -17,6 +17,9 @@
  */
 
 #include "catalogue/DbConn.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <memory>
 
 namespace cta {
 namespace catalogue {
@@ -25,6 +28,18 @@ namespace catalogue {
 // destructor
 //------------------------------------------------------------------------------
 DbConn::~DbConn() throw() {
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void DbConn::executeNonQuery(const std::string &sql) {
+  try {
+    std::unique_ptr<DbStmt> stmt(createStmt(sql));
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  }
 }
 
 } // namespace catalogue

@@ -48,6 +48,14 @@ public:
   virtual DbStmt *createStmt(const std::string &sql) = 0;
 
   /**
+   * Convenience function implemented in DbConn around DbConn::createStmt(),
+   * DbStmt::executeNonQuery().
+   *
+   * @sql The SQL statement.
+   */
+  void executeNonQuery(const std::string &sql);
+
+  /**
    * Commits the current transaction.
    */
   virtual void commit() = 0;

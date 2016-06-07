@@ -33,8 +33,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue():
-  m_nextArchiveFileId(1) {  // This MUST be changed for OCCI - Make SQLite wrapper emulate sequences
+RdbmsCatalogue::RdbmsCatalogue() {
 }
 
 //------------------------------------------------------------------------------
@@ -1946,7 +1945,7 @@ common::dataStructures::ArchiveFileQueueCriteria
 
   // Now that we have both the archive routes and the mount policy it's safe to
   // consume an archive file identifier
-  const uint64_t archiveFileId = m_nextArchiveFileId++;
+  const uint64_t archiveFileId = getNextArchiveFileId();
 
   return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId,
     copyToPoolMap, mountPolicy);

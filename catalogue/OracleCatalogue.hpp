@@ -58,6 +58,16 @@ public:
    */
   virtual ~OracleCatalogue();
 
+  /**
+   * Returns a unique archive ID that can be used by a new archive file within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   */
+  virtual uint64_t getNextArchiveFileId();
+
 }; // class OracleCatalogue
 
 } // namespace catalogue

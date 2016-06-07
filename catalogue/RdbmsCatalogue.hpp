@@ -21,7 +21,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/DbConn.hpp"
 
-#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -274,11 +273,6 @@ protected:
   std::unique_ptr<DbConn> m_conn;
 
   /**
-   * The next unique identifier to be used for an archive file.
-   */
-  std::atomic<uint64_t> m_nextArchiveFileId;
-
-  /**
    * Creates the database schema.
    */
   void createDbSchema();
@@ -377,6 +371,16 @@ protected:
    * @return The tape files as a map from tape copy number to tape file.
    */
   std::map<uint64_t, common::dataStructures::TapeFile>getTapeFiles(const uint64_t archiveFileId) const;
+
+  /**
+   * Returns a unique archive ID that can be used by a new archive file within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   */
+  virtual uint64_t getNextArchiveFileId() = 0;
 
 }; // class RdbmsCatalogue
 

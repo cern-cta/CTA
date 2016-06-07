@@ -30,6 +30,23 @@ InMemoryCatalogue::InMemoryCatalogue() {
   std::unique_ptr<SqliteConn> sqliteConn(new SqliteConn(":memory:"));
   m_conn.reset(sqliteConn.release());
   createCatalogueSchema();
+  createArchiveFileIdTable();
+}
+
+//------------------------------------------------------------------------------
+// createArchiveFileIdTable
+//------------------------------------------------------------------------------
+void InMemoryCatalogue::createArchiveFileIdTable() {
+  try {
+    m_conn->executeNonQuery(
+      "CREATE TABLE ARCHIVE_FILE_ID("
+        "ID INTEGER,"
+        "CONSTRAINT ARCHIVE_FILE_ID_PK PRIMARY KEY(ID)"
+      ");");
+    m_conn->executeNonQuery("INSERT INTO ARCHIVE_FILE_ID(ID) VALUES(0);");
+  } catch(std::exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +77,38 @@ void InMemoryCatalogue::executeNonQueryMultiStmt(const std::string &multiStmt) {
     searchPos = findResult + 1;
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->executeNonQuery();
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextArchiveFileId
+//------------------------------------------------------------------------------
+uint64_t InMemoryCatalogue::getNextArchiveFileId() {
+  try {
+    m_conn->executeNonQuery("BEGIN EXCLUSIVE;");
+    m_conn->executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1;");
+    uint64_t archiveFileId = 0;
+    {
+      const char *const sql =
+        "SELECT "
+          "ID AS ID "
+        "FROM "
+          "ARCHIVE_FILE_ID";
+      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<DbRset> rset(stmt->executeQuery());
+      if(!rset->next()) {
+        throw exception::Exception("ARCHIVE_FILE_ID table is empty");
+      }
+      archiveFileId = rset->columnUint64("ID");
+      if(rset->next()) {
+        throw exception::Exception("Found more than one ID counter in the ARCHIVE_FILE_ID table");
+      }
+    }
+    m_conn->commit();
+
+    return archiveFileId;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

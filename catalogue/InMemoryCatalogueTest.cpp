@@ -966,16 +966,19 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(copyNb, maplet.first);
   ASSERT_EQ(tapePoolName, maplet.second);
 
-  const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+  for(uint64_t i = 1; i<=10; i++) {
+    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
 
-  ASSERT_EQ(1, queueCriteria.fileId);
-  ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
-  ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
-  ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
-  ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
-  ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+    ASSERT_EQ(i, queueCriteria.fileId);
+
+    ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
+    ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
+    ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
+    ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
+    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+  }
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
