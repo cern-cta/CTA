@@ -75,12 +75,10 @@ void RdbmsCatalogue::createAdminUser(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -89,12 +87,10 @@ void RdbmsCatalogue::createAdminUser(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -104,12 +100,10 @@ void RdbmsCatalogue::createAdminUser(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -140,12 +134,10 @@ std::list<common::dataStructures::AdminUser>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -161,7 +153,6 @@ std::list<common::dataStructures::AdminUser>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -172,7 +163,6 @@ std::list<common::dataStructures::AdminUser>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -213,12 +203,10 @@ void RdbmsCatalogue::createAdminHost(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -227,12 +215,10 @@ void RdbmsCatalogue::createAdminHost(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -242,12 +228,10 @@ void RdbmsCatalogue::createAdminHost(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -277,12 +261,10 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -297,7 +279,6 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -308,7 +289,6 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -351,12 +331,10 @@ void RdbmsCatalogue::createStorageClass(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -366,12 +344,10 @@ void RdbmsCatalogue::createStorageClass(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -382,12 +358,10 @@ void RdbmsCatalogue::createStorageClass(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -432,12 +406,10 @@ std::list<common::dataStructures::StorageClass>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -453,7 +425,6 @@ std::list<common::dataStructures::StorageClass>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -464,7 +435,6 @@ std::list<common::dataStructures::StorageClass>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -516,12 +486,10 @@ void RdbmsCatalogue::createTapePool(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -532,12 +500,10 @@ void RdbmsCatalogue::createTapePool(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -549,12 +515,10 @@ void RdbmsCatalogue::createTapePool(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -587,12 +551,10 @@ std::list<common::dataStructures::TapePool>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -610,7 +572,6 @@ std::list<common::dataStructures::TapePool>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -621,7 +582,6 @@ std::list<common::dataStructures::TapePool>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -680,12 +640,10 @@ void RdbmsCatalogue::createArchiveRoute(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -696,12 +654,10 @@ void RdbmsCatalogue::createArchiveRoute(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -713,12 +669,10 @@ void RdbmsCatalogue::createArchiveRoute(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -751,12 +705,10 @@ std::list<common::dataStructures::ArchiveRoute>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -774,7 +726,6 @@ std::list<common::dataStructures::ArchiveRoute>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -785,7 +736,6 @@ std::list<common::dataStructures::ArchiveRoute>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -833,12 +783,10 @@ void RdbmsCatalogue::createLogicalLibrary(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -847,12 +795,10 @@ void RdbmsCatalogue::createLogicalLibrary(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -862,12 +808,10 @@ void RdbmsCatalogue::createLogicalLibrary(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -898,12 +842,10 @@ std::list<common::dataStructures::LogicalLibrary>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -919,7 +861,6 @@ std::list<common::dataStructures::LogicalLibrary>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -930,7 +871,6 @@ std::list<common::dataStructures::LogicalLibrary>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -995,12 +935,10 @@ void RdbmsCatalogue::createTape(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -1027,12 +965,10 @@ void RdbmsCatalogue::createTape(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -1060,12 +996,10 @@ void RdbmsCatalogue::createTape(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1121,12 +1055,10 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -1215,7 +1147,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -1226,7 +1157,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -1353,12 +1283,10 @@ void RdbmsCatalogue::createRequester(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -1368,12 +1296,10 @@ void RdbmsCatalogue::createRequester(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -1384,12 +1310,10 @@ void RdbmsCatalogue::createRequester(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1421,12 +1345,10 @@ std::list<common::dataStructures::Requester>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -1444,7 +1366,6 @@ std::list<common::dataStructures::Requester>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -1455,7 +1376,6 @@ std::list<common::dataStructures::Requester>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -1516,12 +1436,10 @@ void RdbmsCatalogue::createMountPolicy(
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
@@ -1538,12 +1456,10 @@ void RdbmsCatalogue::createMountPolicy(
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_GROUP_NAME,"
         ":CREATION_LOG_HOST_NAME,"
         ":CREATION_LOG_TIME,"
 
         ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_GROUP_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -1561,12 +1477,10 @@ void RdbmsCatalogue::createMountPolicy(
     stmt->bindString(":USER_COMMENT", comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":CREATION_LOG_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.user.name);
-    stmt->bindString(":LAST_UPDATE_GROUP_NAME", cliIdentity.user.group);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
@@ -1605,12 +1519,10 @@ std::list<common::dataStructures::MountPolicy>
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -1638,7 +1550,6 @@ std::list<common::dataStructures::MountPolicy>
 
       common::dataStructures::UserIdentity creatorUI;
       creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-      creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
       common::dataStructures::EntryLog creationLog;
       creationLog.user = creatorUI;
@@ -1649,7 +1560,6 @@ std::list<common::dataStructures::MountPolicy>
 
       common::dataStructures::UserIdentity updaterUI;
       updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-      updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.user = updaterUI;
@@ -2122,12 +2032,10 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
       "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
       "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "MOUNT_POLICY.CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
       "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
       "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
       "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "MOUNT_POLICY.LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
       "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
       "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
     "FROM "
@@ -2157,7 +2065,6 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-    creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
@@ -2168,7 +2075,6 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
 
     common::dataStructures::UserIdentity updaterUI;
     updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-    updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;
@@ -2268,12 +2174,10 @@ common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::stri
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_GROUP_NAME AS CREATION_LOG_GROUP_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_GROUP_NAME AS LAST_UPDATE_GROUP_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
@@ -2314,7 +2218,6 @@ common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::stri
 
     common::dataStructures::UserIdentity creatorUI;
     creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-    creatorUI.group = rset->columnText("CREATION_LOG_GROUP_NAME");
 
     common::dataStructures::EntryLog creationLog;
     creationLog.user = creatorUI;
@@ -2325,7 +2228,6 @@ common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::stri
 
     common::dataStructures::UserIdentity updaterUI;
     updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-    updaterUI.group = rset->columnText("LAST_UPDATE_GROUP_NAME");
 
     common::dataStructures::EntryLog updateLog;
     updateLog.user = updaterUI;

@@ -87,7 +87,6 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
     ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
-    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
@@ -105,7 +104,6 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
 
     const common::dataStructures::EntryLog creationLog = host.creationLog;
     ASSERT_EQ(m_cliSI.user.name, creationLog.user.name);
-    ASSERT_EQ(m_cliSI.user.group, creationLog.user.group);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
