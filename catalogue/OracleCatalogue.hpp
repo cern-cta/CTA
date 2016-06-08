@@ -26,7 +26,7 @@ namespace catalogue {
 class CatalogueFactory;
 
 /**
- * CTA catalogue class to be used for unit testing.
+ * An Oracle based implementation of the CTA catalogue.
  */
 class OracleCatalogue: public RdbmsCatalogue {
 

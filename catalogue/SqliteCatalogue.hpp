@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -26,9 +26,9 @@ namespace catalogue {
 class CatalogueFactory;
 
 /**
- * CTA catalogue class to be used for unit testing.
+ * An SQLite implementation of the CTA catalogue.
  */
-class InMemoryCatalogue: public SqliteCatalogue {
+class SqliteCatalogue: public RdbmsCatalogue {
 
   /**
    * The CatalogueFactory is a friend so that it can call the private
@@ -41,36 +41,41 @@ private:
   /**
    * Private constructor only to be called by the CatalogueFactory class (a
    * friend).
+   *
+   * @param filename The filename to be passed to the sqlite3_open() function.
    */
-  InMemoryCatalogue();
+  SqliteCatalogue(const std::string &filename);
+
+protected:
+
+  /**
+   * Protected constructor only to be called by sub-classes.
+   *
+   * Please note that it is the responsibility of the sub-class to set
+   * RdbmsCatalogue::m_conn.
+   */
+  SqliteCatalogue();
 
 public:
 
   /**
    * Destructor.
    */
-  virtual ~InMemoryCatalogue();
+  virtual ~SqliteCatalogue();
 
-private:
-
-  /**
-   * This is an InMemoryCatalogue specific method that creates the catalogue
-   * database schema.
-   */
-  void createCatalogueSchema();
+protected:
 
   /**
-   * This is an InMemoryCatalogue specific method that executes the specified
-   * non-query multi-line SQL statement.
+   * Returns a unique archive ID that can be used by a new archive file within
+   * the catalogue.
    *
-   * Please note that each statement must end with a semicolon.  If the last
-   * statement is missing a semicolon then it will not be executed.
-   *
-   * @param multiStmt Non-query multi-line SQL statement.
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
    */
-  void executeNonQueryMultiStmt(const std::string &multiStmt);
+  virtual uint64_t getNextArchiveFileId();
 
-}; // class InMemoryCatalogue
+}; // class SqliteCatalogue
 
 } // namespace catalogue
 } // namespace cta

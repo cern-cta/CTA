@@ -19,6 +19,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
@@ -34,6 +35,8 @@ Catalogue *CatalogueFactory::create(const DbLogin &dbLogin) {
       return new InMemoryCatalogue();
     case DbLogin::DBTYPE_ORACLE:
       return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database);
+    case DbLogin::DBTYPE_SQLITE:
+      return new SqliteCatalogue(dbLogin.database);
     case DbLogin::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

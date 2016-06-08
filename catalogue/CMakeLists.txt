@@ -31,6 +31,7 @@ set (CATALOGUE_LIB_SRC_FILES
   DbRset.cpp
   DbStmt.cpp
   InMemoryCatalogue.cpp
+  InMemoryCatalogueSchema.cpp
   TapeFileWritten.cpp
   OcciConn.cpp
   OcciEnv.cpp
@@ -40,8 +41,8 @@ set (CATALOGUE_LIB_SRC_FILES
   OracleCatalogue.cpp
   ParamNameToIdx.cpp
   RdbmsCatalogue.cpp
-  RdbmsCatalogueSchema.cpp
   Sqlite.cpp
+  SqliteCatalogue.cpp
   SqliteConn.cpp
   SqliteRset.cpp
   SqliteStmt.cpp
@@ -57,17 +58,17 @@ target_link_libraries (ctacatalogue
   ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})
 
-add_custom_command(OUTPUT catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_schema.sql | sed 's/$$/\"/' > catalogue_schema.cpp
-  DEPENDS catalogue_schema.sql)
+add_custom_command(OUTPUT sqlite_catalogue_schema.sql
+  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql > sqlite_catalogue_schema.sql
+  DEPENDS catalogue_common_schema.sql)
 
-add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
-  DEPENDS catalogue_schema.cpp)
+add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
+  DEPENDS sqlite_catalogue_schema.sql)
 
-add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp > RdbmsCatalogueSchema.cpp
-  DEPENDS catalogue_schema.cpp)
+add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp > InMemoryCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
 
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueFactoryTest.cpp

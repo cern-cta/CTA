@@ -21,58 +21,14 @@
 #include "common/utils/utils.hpp"
 
 #include <fstream>
-#include <list>
 
 namespace cta {
 namespace catalogue {
 
-namespace {
-
-/**
- * Reads the entire contents of the specified stream and returns a list of the
- * non-empty lines.
- *
- * A line is considered not empty if it contains characters that are not white
- * space and are not part of a comment.
- *
- * @param is The input stream.
- * @return A list of the non-empty lines.
- */
-std::list<std::string> readNonEmptyLines(std::istream &inputStream) {
-
-  std::list<std::string> lines;
-  std::string line;
-
-  while(std::getline(inputStream, line)) {
-    // Remove the newline character if there is one
-    {
-      const std::string::size_type newlinePos = line.find("\n");
-      if(newlinePos != std::string::npos) {
-        line = line.substr(0, newlinePos);
-      }
-    }
-
-    // If there is a comment, then remove it from the line
-    {
-      const std::string::size_type startOfComment = line.find("#");
-      if(startOfComment != std::string::npos) {
-        line = line.substr(0, startOfComment);
-      }
-    }
-
-    // Left and right trim the line of whitespace
-    line = utils::trimString(std::string(line));
-
-    // If the line is not empty
-    if(!line.empty()) {
-      lines.push_back(line);
-    }
-  }
-
-  return lines;
-}
-
-} // anonymous namespace
+//------------------------------------------------------------------------------
+// s_fileFormat
+//------------------------------------------------------------------------------
+const char *DbLogin::s_fileFormat = "either in_memory or oracle:username/password@database or sqlite:filename";
 
 //------------------------------------------------------------------------------
 // constructor
@@ -109,7 +65,6 @@ DbLogin DbLogin::parseFile(const std::string &filename) {
 // parseStream
 //------------------------------------------------------------------------------
 DbLogin DbLogin::parseStream(std::istream &inputStream) {
-  const std::string fileFormat = "either in_memory or oracle:username/password@database";
   const std::list<std::string> lines = readNonEmptyLines(inputStream);
 
   if(1 != lines.size()) {
@@ -119,35 +74,86 @@ DbLogin DbLogin::parseStream(std::istream &inputStream) {
   const std::string connectionString = lines.front();
 
   if(connectionString == "in_memory") {
-    const std::string username = "";
-    const std::string password = "";
-    const std::string database = "";
-    return DbLogin(DBTYPE_IN_MEMORY, username, password, database);
+    return DbLogin(DBTYPE_IN_MEMORY, "", "", "");
   }
 
-  std::vector<std::string> typeAndDetails; // Where details are username, password and database
-  utils::splitString(connectionString, ':', typeAndDetails);
-  if(2 != typeAndDetails.size()) {
-    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
+  std::vector<std::string> dbTypeAndConnDetails;
+  utils::splitString(connectionString, ':', dbTypeAndConnDetails);
+  if(2 != dbTypeAndConnDetails.size()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+  const std::string &dbType = dbTypeAndConnDetails[0];
+  const std::string &connDetails = dbTypeAndConnDetails[1];
+
+  if(dbType == "oracle") {
+    return parseOracleUserPassAndDb(connDetails);
   }
 
-  if(typeAndDetails[0] != "oracle") {
-    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
+  if(dbType == "sqlite") {
+    return DbLogin(DBTYPE_SQLITE, "", "", connDetails);
   }
 
-  std::vector<std::string> userPassAndDb;
-  utils::splitString(typeAndDetails[1], '@', userPassAndDb);
-  if(2 != userPassAndDb.size()) {
-    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
+  throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+}
+
+//------------------------------------------------------------------------------
+// readNonEmptyLines
+//------------------------------------------------------------------------------
+std::list<std::string> DbLogin::readNonEmptyLines(std::istream &inputStream) {
+
+  std::list<std::string> lines;
+  std::string line;
+
+  while(std::getline(inputStream, line)) {
+    // Remove the newline character if there is one
+    {
+      const std::string::size_type newlinePos = line.find("\n");
+      if(newlinePos != std::string::npos) {
+        line = line.substr(0, newlinePos);
+      }
+    }
+
+    // If there is a comment, then remove it from the line
+    {
+      const std::string::size_type startOfComment = line.find("#");
+      if(startOfComment != std::string::npos) {
+        line = line.substr(0, startOfComment);
+      }
+    }
+
+    // Left and right trim the line of whitespace
+    line = utils::trimString(std::string(line));
+
+    // If the line is not empty
+    if(!line.empty()) {
+      lines.push_back(line);
+    }
   }
 
-  std::vector<std::string> userAndPass;
-  utils::splitString(userPassAndDb[0], '/', userAndPass);
-  if(2 != userAndPass.size()) {
-    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + fileFormat);
-  }
+  return lines;
+}
 
-  return DbLogin(DBTYPE_ORACLE, userAndPass[0], userAndPass[1], userPassAndDb[1]);
+//------------------------------------------------------------------------------
+// parseOracleUserPassAndDb
+//------------------------------------------------------------------------------
+DbLogin DbLogin::parseOracleUserPassAndDb(const std::string &userPassAndDb) {
+  std::vector<std::string> userPassAndDbTokens;
+  utils::splitString(userPassAndDb, '@', userPassAndDbTokens);
+  if(2 != userPassAndDbTokens.size()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+  const std::string &userAndPass = userPassAndDbTokens[0];
+  const std::string &db = userPassAndDbTokens[1];
+
+  std::vector<std::string> userAndPassTokens;
+  utils::splitString(userAndPass, '/', userAndPassTokens);
+  if(2 != userAndPassTokens.size()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+  const std::string &user = userAndPassTokens[0];
+  const std::string &pass = userAndPassTokens[1];
+
+  return DbLogin(DBTYPE_ORACLE, user, pass, db);
 }
 
 } // namesapce catalogue

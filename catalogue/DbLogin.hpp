@@ -19,6 +19,7 @@
 #pragma once
 
 #include <istream>
+#include <list>
 #include <string>
 
 namespace cta {
@@ -35,6 +36,7 @@ struct DbLogin {
   enum DbType {
     DBTYPE_IN_MEMORY,
     DBTYPE_ORACLE,
+    DBTYPE_SQLITE,
     DBTYPE_NONE
   };
 
@@ -48,7 +50,7 @@ struct DbLogin {
    */
   DbLogin(
     const DbType dbType,
-    const std::string &username, 
+    const std::string &username,
     const std::string &password,
     const std::string &database);
 
@@ -111,6 +113,32 @@ struct DbLogin {
    * @return The database login information.
    */
   static DbLogin parseStream(std::istream &inputStream);
+
+  /**
+   * Reads the entire contents of the specified stream and returns a list of the
+   * non-empty lines.
+   *
+   * A line is considered not empty if it contains characters that are not white
+   * space and are not part of a comment.
+   *
+   * @param is The input stream.
+   * @return A list of the non-empty lines.
+   */
+  static std::list<std::string> readNonEmptyLines(std::istream &inputStream);
+
+  /**
+   * Parses the specified Oracle database connection details.
+   *
+   * @param userPassAndDb The Oracle database connection details in the form
+   * username/password@database
+   */
+  static DbLogin parseOracleUserPassAndDb(const std::string &userPassAndDb);
+
+  /**
+   * Human readable description of the format of the database
+   * login/configuration file.
+   */
+  static const char *s_fileFormat;
 
 }; // class DbLogin
 

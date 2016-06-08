@@ -48,6 +48,12 @@ TEST_F(cta_catalogue_DbLoginTest, constructor) {
   ASSERT_EQ(std::string("username"), oracleLogin.username);
   ASSERT_EQ(std::string("password"), oracleLogin.password);
   ASSERT_EQ(std::string("database"), oracleLogin.database);
+
+  const DbLogin sqliteLogin(DbLogin::DBTYPE_SQLITE, "", "", "filename");
+  ASSERT_EQ(DbLogin::DBTYPE_SQLITE, sqliteLogin.dbType);
+  ASSERT_TRUE(sqliteLogin.username.empty());
+  ASSERT_TRUE(sqliteLogin.password.empty());
+  ASSERT_EQ(std::string("filename"), sqliteLogin.database);
 }
 
 TEST_F(cta_catalogue_DbLoginTest, parseStream_in_memory) {
@@ -90,6 +96,27 @@ TEST_F(cta_catalogue_DbLoginTest, parseStream_oracle) {
   ASSERT_EQ(std::string("username"), dbLogin.username);
   ASSERT_EQ(std::string("password"), dbLogin.password);
   ASSERT_EQ(std::string("database"), dbLogin.database);
+}
+
+TEST_F(cta_catalogue_DbLoginTest, parseStream_sqlite) {
+  using namespace cta::catalogue;
+
+  std::stringstream inputStream;
+  inputStream << "# A comment" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << "# Another comment" << std::endl;
+  inputStream << "sqlite:filename" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+
+  const DbLogin dbLogin = DbLogin::parseStream(inputStream);
+  ASSERT_EQ(DbLogin::DBTYPE_SQLITE, dbLogin.dbType);
+  ASSERT_TRUE(dbLogin.username.empty());
+  ASSERT_TRUE(dbLogin.password.empty());
+  ASSERT_EQ(std::string("filename"), dbLogin.database);
 }
 
 TEST_F(cta_catalogue_DbLoginTest, parseStream_invalid) {

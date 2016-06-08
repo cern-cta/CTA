@@ -22,4 +22,8 @@
 # or:
 #
 #    oracle:username/password@database
+#
+# or:
+#
+#    sqlite:filename
 
