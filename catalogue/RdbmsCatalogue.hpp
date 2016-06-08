@@ -50,12 +50,14 @@ class ArchiveFileRow;
  * CTA catalogue implemented using a relational database backend.
  */
 class RdbmsCatalogue: public Catalogue {
-public:
+protected:
 
   /**
-   * Constructor.
+   * Protected constructor only to be called by sub-classes.
    */
   RdbmsCatalogue();
+
+public:
 
   /**
    * Destructor.

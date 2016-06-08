@@ -23,20 +23,32 @@
 namespace cta {
 namespace catalogue {
 
+class CatalogueFactory;
+
 /**
  * CTA catalogue class to be used for unit testing.
  */
 class InMemoryCatalogue: public RdbmsCatalogue {
-public:
 
   /**
-   * Constructor.
+   * The CatalogueFactory is a friend so that it can call the private
+   * constructor of this class.
+   */
+  friend CatalogueFactory;
+
+private:
+
+  /**
+   * Private constructor only to be called by the CatalogueFactory class (a
+   * friend).
    *
    * @param conn The connection to the underlying relational database.  Please
    * note that the InMemoryCatalogue will own and therefore delete the
    * specified database connection.
    */
   InMemoryCatalogue();
+
+public:
 
   /**
    * Destructor.

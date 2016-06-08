@@ -28,28 +28,6 @@
 
 namespace unitTests {
 
-namespace {
-  std::map<std::string, cta::common::dataStructures::Tape> tapeListToMap(
-    const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
-    using namespace cta;
-
-    try {
-      std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
-
-      for (auto &&tape: listOfTapes) {
-        if(vidToTape.end() != vidToTape.find(tape.vid)) {
-          throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
-        }
-        vidToTape[tape.vid] = tape;
-      }
-
-      return vidToTape;
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    }
-  }
-}
-
 class cta_catalogue_InMemoryCatalogueTest : public ::testing::Test {
 public:
   cta_catalogue_InMemoryCatalogueTest():
@@ -83,6 +61,32 @@ protected:
   cta::common::dataStructures::SecurityIdentity m_cliSI;
   cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
   cta::common::dataStructures::SecurityIdentity m_adminSI;
+
+  /**
+   * Creates a map from VID to tape given the specified list of tapes.
+   *
+   * @param listOfTapes The list of tapes from which the map shall be created.
+   * @return The map from VID to tape.
+   */
+  std::map<std::string, cta::common::dataStructures::Tape> tapeListToMap(
+    const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
+    using namespace cta;
+
+    try {
+      std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
+
+      for (auto &&tape: listOfTapes) {
+        if(vidToTape.end() != vidToTape.find(tape.vid)) {
+          throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
+        }
+        vidToTape[tape.vid] = tape;
+      }
+
+      return vidToTape;
+    } catch(exception::Exception &ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    }
+  }
 };
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createBootstrapAdminAndHostNoAuth) {
