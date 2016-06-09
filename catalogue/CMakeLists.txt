@@ -64,11 +64,11 @@ add_custom_command(OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sq
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql catalogue_common_schema.sql)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sqlite_catalogue_schema.sql
-  DESTINATION /usr/share/cta/sql
+  DESTINATION usr/share/cta-${CTA_VERSION}/sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.sql
-  DESTINATION /usr/share/cta/sql
+  DESTINATION usr/share/cta-${CTA_VERSION}/sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
