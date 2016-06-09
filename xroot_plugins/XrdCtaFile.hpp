@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/FrontendReturnCode.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -73,6 +74,11 @@ protected:
    * This is the string holding the result of the command
    */
   std::string m_data;
+  
+  /**
+   * This is the return code to be passed to the client
+   */
+  cta::common::dataStructures::FrontendReturnCode m_rc;
   
   /**
    * Decodes a string in base 64
