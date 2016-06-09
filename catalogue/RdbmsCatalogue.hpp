@@ -243,24 +243,68 @@ public:
 protected:
 
   /**
+   * Returns true if the specified admin user exists.
+   *
+   * @param adminUsername The name of the admin user.
+   * @return True if the admin user exists.
+   */
+  bool adminUserExists(const std::string adminUsername) const;
+
+  /**
+   * Returns true if the specified admin host exists.
+   *
+   * @param adminHost The name of the admin host.
+   * @return True if the admin host exists.
+   */
+  bool adminHostExists(const std::string adminHost) const;
+
+  /**
+   * Returns true if the specified storage class exists.
+   *
+   * @param storageClassName The name of the storage class.
+   * @return True if the storage class exists.
+   */
+  bool storageClassExists(const std::string &storageClassName) const;
+
+  /**
+   * Returns true if the specified tape pool exists.
+   *
+   * @param tapePoolName The name of the tape pool.
+   * @return True if the tape pool exists.
+   */
+  bool tapePoolExists(const std::string &tapePoolName) const;
+
+  /**
+   * Returns true if the specified tape exists.
+   *
+   * @param vid The volume identifier of the tape.
+   * @return True if the tape exists.
+   */
+  bool tapeExists(const std::string &vid) const;
+
+  /**
+   * Returns true if the specified logical library exists.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   * @return True if the logical library exists.
+   */
+  bool logicalLibraryExists(const std::string &logicalLibraryName) const;
+
+  /**
+   * Returns true if the specified mount policy exists.
+   *
+   * @param mountPolicyName The name of the mount policy
+   * @return True if the mount policy exists.
+   */
+  bool mountPolicyExists(const std::string &mountPolicyName) const;
+
+  /**
    * An RdbmsCatalogue specific method that inserts the specified row into the
    * ArchiveFile table.
    *
    * @param row The row to be inserted.
    */
   void insertArchiveFile(const ArchiveFileRow &row);
-
-  /**
-   * Returns the unique identifier of the specified archive file.  Note that
-   * this method is required by RdbmsCatalogue because SQLite does not support
-   * the SQL syntax: "INSERT INTO ... VALUES ... RETURNING ... INTO ...".
-   *
-   * @param diskInstance The name of teh disk storage instance within which the
-   * specified disk file identifier is unique.
-   * @param diskFileId The disk identifier of the file.
-   * @return The unique identifier of the specified archive file.
-   */
-  uint64_t getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const;
 
   /**
    * Mutex to be used to a take a global lock on the in-memory database.
@@ -323,19 +367,12 @@ protected:
   void setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq);
 
   /**
-   * Returns the last FSeq of the speficied tape.
+   * Returns the last FSeq of the specified tape.
    *
    * @param vid The volume identifier of the tape.
    * @return The last FSeq.
    */
   uint64_t getTapeLastFSeq(const std::string &vid) const;
-
-  /**
-   * Selects the specified tape within th eTape table for update.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  common::dataStructures::Tape selectTapeForUpdate(const std::string &vid);
 
   /**
    * Updates the lastFSeq column of the specified tape within the Tape table.
@@ -381,6 +418,17 @@ protected:
    * problem of generating ever increasing numeric identifiers.
    */
   virtual uint64_t getNextArchiveFileId() = 0;
+
+  /**
+   * Selects the specified tape within th eTape table for update.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because some database technologies directly support SELECT FOR UPDATE
+   * whilst others do not.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) = 0;
 
 }; // class RdbmsCatalogue
 

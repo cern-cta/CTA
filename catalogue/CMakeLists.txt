@@ -22,6 +22,7 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
+  AutoRollback.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
   ColumnNameToIdx.cpp
@@ -46,7 +47,8 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteConn.cpp
   SqliteRset.cpp
   SqliteStmt.cpp
-  TapeForWriting.cpp)
+  TapeForWriting.cpp
+  UserError.cpp)
 
 add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})

@@ -19,6 +19,7 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
@@ -232,7 +233,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
   m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, "comment 1");
 
   ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username,
-    "comment 2"), exception::Exception);
+    "comment 2"), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
@@ -341,7 +342,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost_same_twice) {
   m_catalogue->createAdminHost(m_bootstrapAdminSI, anotherAdminHost, "comment 1");
 
   ASSERT_THROW(m_catalogue->createAdminHost(m_bootstrapAdminSI,
-    anotherAdminHost, "comment 2"), exception::Exception);
+    anotherAdminHost, "comment 2"), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, isAdmin_false) {
@@ -397,7 +398,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createStorageClass_same_twice) {
   const std::string comment = "create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
   ASSERT_THROW(m_catalogue->createStorageClass(m_cliSI,
-    storageClassName, nbCopies, comment), exception::Exception);
+    storageClassName, nbCopies, comment), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool) {
@@ -441,9 +442,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool_same_twice) {
   const std::string comment = "create tape pool";
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
     comment);
-  ASSERT_THROW(m_catalogue->createTapePool(m_cliSI,
-    tapePoolName, nbPartialTapes, is_encrypted, comment),
-    exception::Exception);
+  ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment),
+    catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute) {
@@ -595,9 +595,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createLogicalLibrary_same_twice) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
-  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI,
-    logicalLibraryName, comment),
-    exception::Exception);
+  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
@@ -664,7 +662,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_same_twice) {
     encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
   ASSERT_THROW(m_catalogue->createTape(m_cliSI, vid, logicalLibraryName,
     tapePoolName, encryptionKey, capacityInBytes, disabledValue, fullValue,
-    comment), exception::Exception);
+    comment), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapesForWriting) {
@@ -782,7 +780,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy_same_twice) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    comment), exception::Exception);
+    comment), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {

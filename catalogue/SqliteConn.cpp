@@ -100,7 +100,11 @@ void SqliteConn::commit() {
 // commit
 //------------------------------------------------------------------------------
 void SqliteConn::rollback() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    executeNonQuery("ROLLBACK;");
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

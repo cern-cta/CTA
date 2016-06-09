@@ -17,8 +17,10 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/AutoRollback.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
+#include "catalogue/UserError.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -53,7 +55,9 @@ void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
   try {
     createAdminUser(cliIdentity, username, comment);
     createAdminHost(cliIdentity, hostName, comment);
-  } catch(exception::Exception &ex) {
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -66,6 +70,10 @@ void RdbmsCatalogue::createAdminUser(
   const std::string &username,
   const std::string &comment) {
   try {
+    if(adminUserExists(username)) {
+      throw UserError(std::string("Cannot create admin user " + username +
+        " because an admin user with the same name already exists"));
+    }
     const uint64_t now = time(NULL);
     const char *const sql =
       "INSERT INTO ADMIN_USER("
@@ -107,7 +115,30 @@ void RdbmsCatalogue::createAdminUser(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(exception::Exception &ex) {
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// adminUserExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::adminUserExists(const std::string adminUsername) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "ADMIN_USER_NAME AS ADMIN_USER_NAME "
+      "FROM "
+        "ADMIN_USER "
+      "WHERE "
+        "ADMIN_USER_NAME = :ADMIN_USER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":ADMIN_USER_NAME", adminUsername);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -123,7 +154,7 @@ void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
 // getAdminUsers
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::AdminUser>
-  RdbmsCatalogue::getAdminUsers() const {
+RdbmsCatalogue::getAdminUsers() const {
   try {
     std::list<common::dataStructures::AdminUser> admins;
     const char *const sql =
@@ -168,7 +199,7 @@ std::list<common::dataStructures::AdminUser>
     }
 
     return admins;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -176,7 +207,8 @@ std::list<common::dataStructures::AdminUser>
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) {
+void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+                                            const std::string &username, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -188,6 +220,10 @@ void RdbmsCatalogue::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   try {
+    if (adminHostExists(hostName)) {
+      throw UserError(std::string("Cannot create admin host " + hostName +
+        " because an admin host with the same name already exists"));
+    }
     const uint64_t now = time(NULL);
     const char *const sql =
       "INSERT INTO ADMIN_HOST("
@@ -229,7 +265,30 @@ void RdbmsCatalogue::createAdminHost(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(exception::Exception &ex) {
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// adminHostExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::adminHostExists(const std::string adminHost) const {
+  try {
+    const char *const sql =
+      "SELECT "
+       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
+      "FROM "
+        "ADMIN_HOST "
+      "WHERE "
+        "ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":ADMIN_HOST_NAME", adminHost);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -260,7 +319,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
+        "FROM "
         "ADMIN_HOST";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -294,7 +353,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
     }
 
     return hosts;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -302,7 +361,8 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) {
+void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+                                            const std::string &hostName, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -315,6 +375,10 @@ void RdbmsCatalogue::createStorageClass(
   const uint64_t nbCopies,
   const std::string &comment) {
   try {
+    if (storageClassExists(name)) {
+      throw UserError(std::string("Cannot create storage class ") + name +
+        " because a storage class with the same name already exists");
+    }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO STORAGE_CLASS("
@@ -330,7 +394,7 @@ void RdbmsCatalogue::createStorageClass(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+        "VALUES("
         ":STORAGE_CLASS_NAME,"
         ":NB_COPIES,"
 
@@ -359,7 +423,30 @@ void RdbmsCatalogue::createStorageClass(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(exception::Exception &ex) {
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// storageClassExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::storageClassExists(const std::string &storageClassName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
+      "FROM "
+        "STORAGE_CLASS "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -469,6 +556,10 @@ void RdbmsCatalogue::createTapePool(
   const bool encryptionValue,
   const std::string &comment) {
   try {
+    if(tapePoolExists(name)) {
+      throw UserError(std::string("Cannot create tape pool ") + name +
+        " because a tape pool with the same name already exists");
+    }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO TAPE_POOL("
@@ -485,7 +576,7 @@ void RdbmsCatalogue::createTapePool(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+        "VALUES("
         ":TAPE_POOL_NAME,"
         ":NB_PARTIAL_TAPES,"
         ":IS_ENCRYPTED,"
@@ -516,7 +607,30 @@ void RdbmsCatalogue::createTapePool(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// tapePoolExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::tapePoolExists(const std::string &tapePoolName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME "
+      "FROM "
+        "TAPE_POOL "
+      "WHERE "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -768,6 +882,10 @@ void RdbmsCatalogue::createLogicalLibrary(
   const std::string &name,
   const std::string &comment) {
   try {
+    if (logicalLibraryExists(name)) {
+      throw UserError(std::string("Cannot create logical library ") + name +
+        " because a logical library with the same name already exists");
+    }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO LOGICAL_LIBRARY("
@@ -782,7 +900,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+        "VALUES("
         ":LOGICAL_LIBRARY_NAME,"
 
         ":USER_COMMENT,"
@@ -809,8 +927,31 @@ void RdbmsCatalogue::createLogicalLibrary(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
   } catch(std::exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// logicalLibraryExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::logicalLibraryExists(const std::string &logicalLibraryName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME "
+      "FROM "
+        "LOGICAL_LIBRARY "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -902,6 +1043,10 @@ void RdbmsCatalogue::createTape(
   const bool fullValue,
   const std::string &comment) {
   try {
+    if (tapeExists(vid)) {
+      throw UserError(std::string("Cannot create tape ") + vid +
+        " because a tape with the same volume identifier already exists");
+    }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO TAPE("
@@ -934,7 +1079,7 @@ void RdbmsCatalogue::createTape(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+        "VALUES("
         ":VID,"
         ":LOGICAL_LIBRARY_NAME,"
         ":TAPE_POOL_NAME,"
@@ -997,7 +1142,30 @@ void RdbmsCatalogue::createTape(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// tapeExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::tapeExists(const std::string &vid) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VID AS VID "
+      "FROM "
+        "TAPE "
+      "WHERE "
+        "VID = :VID;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":VID", vid);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1413,6 +1581,10 @@ void RdbmsCatalogue::createMountPolicy(
   const uint64_t maxDrivesAllowed,
   const std::string &comment) {
   try {
+    if (mountPolicyExists(name)) {
+      throw UserError(std::string("Cannot create mount policy ") + name +
+        " because a mount policy with the same name already exists");
+    }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO MOUNT_POLICY("
@@ -1435,7 +1607,7 @@ void RdbmsCatalogue::createMountPolicy(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+        "VALUES("
         ":MOUNT_POLICY_NAME,"
 
         ":ARCHIVE_PRIORITY,"
@@ -1478,7 +1650,30 @@ void RdbmsCatalogue::createMountPolicy(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// mountPolicyExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::mountPolicyExists(const std::string &mountPolicyName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME "
+      "FROM "
+        "MOUNT_POLICY "
+      "WHERE "
+        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1758,35 +1953,6 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
     stmt->executeNonQuery();
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// getArchiveFileId
-//------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getArchiveFileId(const std::string &diskInstance, const std::string &diskFileId) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
-      "FROM "
-        "ARCHIVE_FILE "
-      "WHERE "
-        "DISK_INSTANCE = :DISK_INSTANCE AND "
-        "DISK_FILE_ID = :DISK_FILE_ID";
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":DISK_INSTANCE", diskInstance);
-    stmt->bindString(":DISK_FILE_ID", diskFileId);
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
-
-    if (rset->next()) {
-      return rset->columnUint64("ARCHIVE_FILE_ID");
-    } else {
-      throw exception::Exception(std::string("Could not find archive file with disk instance ") + diskInstance +
-        "and disk file ID " + diskFileId);
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + "failed: " + ex.getMessage().str());
   }
 }
 
@@ -2087,6 +2253,8 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
     std::lock_guard<std::mutex> m_lock(m_mutex);
 
     const common::dataStructures::Tape tape = selectTapeForUpdate(event.vid);
+    AutoRollback autoRollback(m_conn.get());
+
     const uint64_t expectedFSeq = tape.lastFSeq + 1;
     if(expectedFSeq != event.fSeq) {
       exception::Exception ex;
@@ -2125,107 +2293,11 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(tapeFile, event.archiveFileId);
+
+    m_conn->commit();
+    autoRollback.cancel();
   } catch(exception::Exception &ex) {
-    ex.getMessage() << __FUNCTION__ << " failed: " << ex.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// selectTapeForUpdate
-//------------------------------------------------------------------------------
-common::dataStructures::Tape RdbmsCatalogue::selectTapeForUpdate(const std::string &vid) {
-  try {
-    const char *const sql =
-      "SELECT "
-        "VID AS VID,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
-
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
-
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
-
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-
-        "USER_COMMENT AS USER_COMMENT,"
-
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "TAPE "
-      "WHERE "
-        "VID = :VID;";
-
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":VID", vid);
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
-    if (!rset->next()) {
-      throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
-    }
-
-    common::dataStructures::Tape tape;
-
-    tape.vid = rset->columnText("VID");
-    tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
-    tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
-    tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-    tape.disabled = rset->columnUint64("IS_DISABLED");
-    tape.full = rset->columnUint64("IS_FULL");
-    tape.lbp = rset->columnUint64("LBP_IS_ON");
-
-    tape.labelLog.drive = rset->columnText("LABEL_DRIVE");
-    tape.labelLog.time = rset->columnUint64("LABEL_TIME");
-
-    tape.lastReadLog.drive = rset->columnText("LAST_READ_DRIVE");
-    tape.lastReadLog.time = rset->columnUint64("LAST_READ_TIME");
-
-    tape.lastWriteLog.drive = rset->columnText("LAST_WRITE_DRIVE");
-    tape.lastWriteLog.time = rset->columnUint64("LAST_WRITE_TIME");
-
-    tape.comment = rset->columnText("USER_COMMENT");
-
-    common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
-    common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-    tape.creationLog = creationLog;
-
-    common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-
-    common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-    tape.lastModificationLog = updateLog;
-
-    return tape;
-  } catch (exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
 }
 
@@ -2248,7 +2320,7 @@ void RdbmsCatalogue::updateTapeLastFSeq(const std::string &vid, const uint64_t l
 // throwIfCommonEventDataMismatch
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
-                                                    const TapeFileWritten &actual) const {
+  const TapeFileWritten &actual) const {
   // Throw an exception if the common disk information of this tape file
   // written event does not match the previous
   if(expected.diskFileID != actual.diskFileId) {

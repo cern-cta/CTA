@@ -75,6 +75,17 @@ protected:
    */
   virtual uint64_t getNextArchiveFileId();
 
+  /**
+   * Selects the specified tape within th eTape table for update.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because some database technologies directly support SELECT FOR UPDATE
+   * whilst others do not.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid);
+
 }; // class SqliteCatalogue
 
 } // namespace catalogue
