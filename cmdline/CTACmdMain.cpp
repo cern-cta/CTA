@@ -18,6 +18,7 @@
 
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/dataStructures/FrontendReturnCode.hpp"
 
 #include "XrdCl/XrdClCopyProcess.hh"
 
@@ -27,6 +28,12 @@
 #include <iostream>
 #include <future>
 #include <chrono>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 /**
  * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
@@ -98,6 +105,17 @@ std::string formatCommandPath(const int argc, const char **argv) {
  * @return the return code
  */
 int sendCommand(const int argc, const char **argv) {
+  
+  int p[2];
+  pipe(p); //Pipe to redirect std::out
+  int saved_stdout = dup(STDOUT_FILENO); //Saving std::out for later usage (re-redirection)
+  dup2(p[1], STDOUT_FILENO); //Do the actual redirection
+  close(p[1]); //Closing the read side of the pipe (not used in our case)
+  long flags = fcntl(p[0], F_GETFL);
+  flags |= O_NONBLOCK; //Setting fd as a NONBLOCKING one so that read returns zero when data is finished
+  fcntl(p[0], F_SETFL, flags);
+  //std::out is now redirected to p[0]
+  
   XrdCl::PropertyList properties;
   properties.Set("source", formatCommandPath(argc, argv));
   properties.Set("target", "-"); //destination is stdout
@@ -122,7 +140,21 @@ int sendCommand(const int argc, const char **argv) {
   {
     throw cta::exception::Exception(status.ToStr());
   }
-  return 0;
+  
+  char rc_char = '0';
+  read(p[0], &rc_char, 1); //The cta frontend return code is the first char of the answer
+  int rc = rc_char - '0';
+  char buf[1024];
+  bzero(buf, sizeof(buf));
+  while(read(p[0], buf, sizeof(buf)-1)>0) { //read the rest of the answer and pipe it to std::err
+    buf[sizeof(buf)-1]=0;
+    std::cerr<<buf;
+    bzero(buf, sizeof(buf));
+  }
+  close(p[0]);
+  
+  dup2(saved_stdout, STDOUT_FILENO);
+  return rc;
 }
 
 /**
@@ -132,25 +164,24 @@ int sendCommand(const int argc, const char **argv) {
  * @param argv The command-line arguments.
  */
 int main(const int argc, const char **argv) {
-  try {
+  try {    
     std::chrono::system_clock::time_point five_secs_passed = std::chrono::system_clock::now() + std::chrono::seconds(5);
-    // call function asynchronously:
+    // call function asynchronously so we can timeout if server is unreachable:
     std::future<int> fut = std::async(std::launch::async, sendCommand, argc, argv);
     if(std::future_status::ready == fut.wait_until(five_secs_passed)) {
       return fut.get();
     }
-    else {
-      std::cout<<"Timeout!\n";      
-      exit(1);
+    else {//timeout
+      exit(cta::common::dataStructures::FrontendReturnCode::ctaFrontendTimeout);
     }
   } catch(cta::exception::Exception &ex) {
     std::cerr << "Failed to execute the command. Reason: " << ex.getMessageValue() << std::endl;
-    return 1;
+    return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
   } catch (std::exception &ex) {
     std::cerr << "Failed to execute the command. Reason: " << ex.what() << std::endl;
-    return 1;
+    return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
   } catch (...) {
     std::cerr << "Failed to execute the command for an unknown reason" << std::endl;
-    return 1;
+    return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
   }
 }

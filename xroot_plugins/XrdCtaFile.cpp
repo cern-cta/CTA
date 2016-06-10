@@ -216,6 +216,7 @@ const char* XrdCtaFile::FName() {
 // getMmap
 //------------------------------------------------------------------------------
 int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
+  m_data = std::to_string(m_rc) + m_data;
   *Addr = const_cast<char *>(m_data.c_str());
   Size = m_data.length();
   return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
@@ -2013,7 +2014,6 @@ int XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();  
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;   
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2036,7 +2036,6 @@ int XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::
           || storageclass.empty() || instance.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();   
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   uint64_t size = stringParameterToUint64("--size", size_s);
@@ -2065,7 +2064,6 @@ int XrdCtaFile::xCom_archive(const std::vector<std::string> &tokens, const cta::
   std::stringstream res_ss;
   res_ss << archiveFileId << std::endl;
   m_data = res_ss.str();
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2080,7 +2078,6 @@ int XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta:
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2097,7 +2094,6 @@ int XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta:
   if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
@@ -2118,7 +2114,6 @@ int XrdCtaFile::xCom_retrieve(const std::vector<std::string> &tokens, const cta:
   request.requester=originator;
   request.dstURL=dsturl;
   m_scheduler->queueRetrieve(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2132,7 +2127,6 @@ int XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, const
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();     
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data; 
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2142,7 +2136,6 @@ int XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, const
   if(user.empty() || group.empty() || id_s.empty()) {
     m_data = help.str();     
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data; 
     return SFS_OK;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
@@ -2153,7 +2146,6 @@ int XrdCtaFile::xCom_deletearchive(const std::vector<std::string> &tokens, const
   request.archiveFileID=id;
   request.requester=originator;
   m_scheduler->deleteArchive(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2168,7 +2160,6 @@ int XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, cons
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2183,7 +2174,6 @@ int XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, cons
   if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
@@ -2201,7 +2191,6 @@ int XrdCtaFile::xCom_cancelretrieve(const std::vector<std::string> &tokens, cons
   request.requester=originator;
   request.dstURL=dsturl;
   m_scheduler->cancelRetrieve(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2216,7 +2205,6 @@ int XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &toke
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2231,7 +2219,6 @@ int XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &toke
   if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
@@ -2249,7 +2236,6 @@ int XrdCtaFile::xCom_updatefilestorageclass(const std::vector<std::string> &toke
   request.requester=originator;
   request.storageClass=storageclass;
   m_scheduler->updateFileStorageClass(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2264,7 +2250,6 @@ int XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, cons
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2275,8 +2260,7 @@ int XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, cons
   std::string recoveryblob = getOptionValue(tokens, "", "--recoveryblob", encoded);
   if(id_s.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
     m_data = help.str();     
-    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry; 
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
     return SFS_OK;
   }
   uint64_t id = stringParameterToUint64("--id", id_s);
@@ -2289,7 +2273,6 @@ int XrdCtaFile::xCom_updatefileinfo(const std::vector<std::string> &tokens, cons
   request.drData=drData;
   request.archiveFileID=id;
   m_scheduler->updateFileInfo(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
 
@@ -2303,7 +2286,6 @@ int XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, co
   if(encoded_s!="true" && encoded_s!="false") {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   bool encoded = encoded_s=="true"?true:false;
@@ -2312,7 +2294,6 @@ int XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, co
   if(user.empty() || group.empty()) {
     m_data = help.str();      
     m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
-    m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
     return SFS_OK;
   }
   cta::common::dataStructures::UserIdentity originator;
@@ -2321,7 +2302,6 @@ int XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, co
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
   m_scheduler->listStorageClass(cliIdentity, request);
-  m_data = std::string("[") + cta::common::dataStructures::toString(m_rc) + "]\n" + m_data;
   return SFS_OK;
 }
   
