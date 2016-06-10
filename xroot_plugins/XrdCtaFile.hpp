@@ -170,7 +170,7 @@ protected:
    * @param  responseTable The response 2-D matrix
    * @return the response string properly formatted in a table
    */
-  std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable);
+  std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable, const bool withHeader);
   
   /**
    * Returns a string representation of the time

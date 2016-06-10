@@ -386,28 +386,29 @@ std::string XrdCtaFile::timeToString(const time_t &time) {
 //------------------------------------------------------------------------------
 // formatResponse
 //------------------------------------------------------------------------------
-std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string>> &responseTable) {
+std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string>> &responseTable, const bool withHeader) {
   if(responseTable.empty()||responseTable.at(0).empty()) {
     return "";
   }
   std::vector<int> columnSizes;
-  for(uint i=0; i<responseTable.at(0).size(); i++) {
+  for(uint j=0; j<responseTable.at(0).size(); j++) { //for each column j
     uint columnSize=0;
-    for(uint j=0; j<responseTable.size(); j++) {
+    for(uint i=0; i<responseTable.size(); i++) { //for each row i
       if(responseTable.at(i).at(j).size()>columnSize) {
         columnSize=responseTable.at(i).at(j).size();
       }
     }
     columnSize++; //add one space
-    columnSizes.push_back(columnSize);
+    columnSizes.push_back(columnSize);//loops here
   }
   std::stringstream responseSS;
   for(auto row=responseTable.cbegin(); row!=responseTable.cend(); row++) {
-    if(row==responseTable.cbegin()) responseSS << "\x1b[31;1m";
-    for(uint i=0; i<row->size(); i++) {      
-      responseSS << " " << std::setw(columnSizes.at(i)) << row->at(i);      
+    if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[31;1m";
+    for(uint i=0; i<row->size(); i++) {
+      responseSS << " " << std::setw(columnSizes.at(i)) << row->at(i);
     }
-    if(row==responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
+    if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
+    else responseSS << std::endl;
   }
   return responseSS.str();
 }
@@ -464,7 +465,12 @@ int XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::co
        << "\tadd --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --username/-u <user_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string username = getOptionValue(tokens, "-u", "--username", false);
     if(username.empty()) {
@@ -499,12 +505,11 @@ int XrdCtaFile::xCom_admin(const std::vector<std::string> &tokens, const cta::co
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back("N/A");
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -524,7 +529,12 @@ int XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <host_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string hostname = getOptionValue(tokens, "-n", "--name", false);
     if(hostname.empty()) {
@@ -555,7 +565,7 @@ int XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);    
+      if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
@@ -563,7 +573,7 @@ int XrdCtaFile::xCom_adminhost(const std::vector<std::string> &tokens, const cta
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -583,7 +593,12 @@ int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta:
        << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> [--encryption/-e or --clear/-c] --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--encryption/-e or --clear/-c] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
@@ -650,7 +665,7 @@ int XrdCtaFile::xCom_tapepool(const std::vector<std::string> &tokens, const cta:
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -670,7 +685,12 @@ int XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const 
        << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string scn = getOptionValue(tokens, "-s", "--storageclass", false);
     std::string cn_s = getOptionValue(tokens, "-c", "--copynb", false);
@@ -724,7 +744,7 @@ int XrdCtaFile::xCom_archiveroute(const std::vector<std::string> &tokens, const 
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -744,7 +764,12 @@ int XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, cons
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string name = getOptionValue(tokens, "-n", "--name", false);
     if(name.empty()) {
@@ -788,7 +813,7 @@ int XrdCtaFile::xCom_logicallibrary(const std::vector<std::string> &tokens, cons
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -813,7 +838,12 @@ int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::com
        << "\treclaim --vid/-v <vid>" << std::endl
        << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
        << "\t        [--lbp/-p or --nolbp/-P] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
-       << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;
+       << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2] || "reclaim" == tokens[2] || "label" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
@@ -970,7 +1000,7 @@ int XrdCtaFile::xCom_tape(const std::vector<std::string> &tokens, const cta::com
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -990,7 +1020,12 @@ int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const 
        << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <storage_class_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string scn = getOptionValue(tokens, "-n", "--name", false);
     if(scn.empty()) {
@@ -1043,7 +1078,7 @@ int XrdCtaFile::xCom_storageclass(const std::vector<std::string> &tokens, const 
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1063,7 +1098,12 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
        << "\tadd --name/-n <user_name> --group/-g <group_name> --mountpolicy/-u <mount_group_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <user_name> --group/-g <group_name> [--mountpolicy/-u <mount_group_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name> --group/-g <group_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string user = getOptionValue(tokens, "-n", "--name", false);
     std::string group = getOptionValue(tokens, "-g", "--group", false);
@@ -1119,7 +1159,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1141,7 +1181,12 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
        << "\tch  --name/-n <mountpolicy_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
        << "\t   [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <mountpolicy_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string group = getOptionValue(tokens, "-n", "--name", false);
     if(group.empty()) {
@@ -1224,7 +1269,7 @@ int XrdCtaFile::xCom_mountpolicy(const std::vector<std::string> &tokens, const c
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1244,7 +1289,12 @@ int XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const ct
        << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
+       << "\tls  [--header/-h]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "ch" == tokens[2] || "rm" == tokens[2]) {
     std::string drive = getOptionValue(tokens, "-n", "--name", false);
     if(drive.empty()) {
@@ -1365,7 +1415,7 @@ int XrdCtaFile::xCom_dedication(const std::vector<std::string> &tokens, const ct
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1385,7 +1435,12 @@ int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::c
        << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
-       << "\terr --vid/-v <vid>" << std::endl;
+       << "\terr --vid/-v <vid>" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
@@ -1423,7 +1478,7 @@ int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::c
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        m_data = formatResponse(responseTable);
+        m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
       }
     }
     else { //rm
@@ -1472,7 +1527,7 @@ int XrdCtaFile::xCom_repack(const std::vector<std::string> &tokens, const cta::c
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1508,7 +1563,12 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
        << "\tadd [--vid/-v <vid>] [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  [--vid/-v <vid>]" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
-       << "\terr --vid/-v <vid>" << std::endl;
+       << "\terr --vid/-v <vid>" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("add" == tokens[2] || "err" == tokens[2] || "rm" == tokens[2]) {
     std::string vid = getOptionValue(tokens, "-v", "--vid", false);
     if(vid.empty()) {
@@ -1543,7 +1603,7 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        m_data = formatResponse(responseTable);
+        m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
       }
     }
     else { //rm
@@ -1578,7 +1638,7 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1595,7 +1655,12 @@ int XrdCtaFile::xCom_verify(const std::vector<std::string> &tokens, const cta::c
 int XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
   std::stringstream help;
   help << tokens[0] << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
-          "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;
+          "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   if("ls" == tokens[2]) { //ls
     std::string id_s = getOptionValue(tokens, "-I", "--id", false);
     std::string eosid = getOptionValue(tokens, "-e", "--eosid", false);
@@ -1640,7 +1705,7 @@ int XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const c
             responseTable.push_back(currentRow);
           }
         }
-        m_data = formatResponse(responseTable);
+        m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
       }
     }
     else { //summary
@@ -1650,7 +1715,7 @@ int XrdCtaFile::xCom_archivefile(const std::vector<std::string> &tokens, const c
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};
       if(hasOption(tokens, "-h", "--header")) responseTable.push_back(header);
       responseTable.push_back(row);
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   else {
@@ -1669,7 +1734,12 @@ int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::com
   help << tokens[0] << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
-       << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;
+       << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   std::string drive = getOptionValue(tokens, "-d", "--drive", false);
   std::string vid = getOptionValue(tokens, "-v", "--vid", false);
   if(vid.empty() || drive.empty()) {
@@ -1707,7 +1777,7 @@ int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::com
       }
       responseTable.push_back(currentRow);
     }
-    m_data = formatResponse(responseTable);
+    m_data = formatResponse(responseTable, true);
     std::stringstream ss;
     ss << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesRead << " #Bytes: " << res.totalBytesRead 
        << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesRead/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
@@ -1760,7 +1830,7 @@ int XrdCtaFile::xCom_test(const std::vector<std::string> &tokens, const cta::com
       }
       responseTable.push_back(currentRow);
     }
-    m_data = formatResponse(responseTable);
+    m_data = formatResponse(responseTable, true);
     std::stringstream ss;
     ss << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesWritten << " #Bytes: " << res.totalBytesWritten 
        << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesWritten/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
@@ -1781,7 +1851,12 @@ int XrdCtaFile::xCom_drive(const std::vector<std::string> &tokens, const cta::co
   std::stringstream help;
   help << tokens[0] << " dr/drive up/down (it is a synchronous command):" << std::endl
        << "\tup   --drive/-d <drive_name>" << std::endl
-       << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;
+       << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;  
+  if(tokens.size() < 3) {
+    m_data = help.str();
+    m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;
+    return SFS_OK;
+  }
   std::string drive = getOptionValue(tokens, "-d", "--drive", false);
   if(drive.empty()) {
     m_data = help.str();      
@@ -1833,7 +1908,7 @@ int XrdCtaFile::xCom_reconcile(const std::vector<std::string> &tokens, const cta
         responseTable.push_back(currentRow);
       }
     }
-    m_data = formatResponse(responseTable);
+    m_data = formatResponse(responseTable, true);
   }
   return SFS_OK;
 }
@@ -1881,7 +1956,7 @@ int XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens,
           responseTable.push_back(currentRow);
         }
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
     else {
       std::vector<std::vector<std::string>> responseTable;
@@ -1898,7 +1973,7 @@ int XrdCtaFile::xCom_listpendingarchives(const std::vector<std::string> &tokens,
         currentRow.push_back(std::to_string((unsigned long long)size));
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   return SFS_OK;
@@ -1945,7 +2020,7 @@ int XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens
           responseTable.push_back(currentRow);
         }
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
     else {
       std::vector<std::vector<std::string>> responseTable;
@@ -1963,7 +2038,7 @@ int XrdCtaFile::xCom_listpendingretrieves(const std::vector<std::string> &tokens
         currentRow.push_back(std::to_string((unsigned long long)size));
         responseTable.push_back(currentRow);
       }
-      m_data = formatResponse(responseTable);
+      m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
     }
   }
   return SFS_OK;
@@ -1997,7 +2072,7 @@ int XrdCtaFile::xCom_listdrivestates(const std::vector<std::string> &tokens, con
       currentRow.push_back(std::to_string((long double)it->latestBandwidth));
       responseTable.push_back(currentRow);
     }
-    m_data = formatResponse(responseTable);
+    m_data = formatResponse(responseTable, hasOption(tokens, "-h", "--header"));
   }
   return SFS_OK;
 }
