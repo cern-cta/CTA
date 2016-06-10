@@ -104,7 +104,7 @@ int sendCommand(const int argc, const char **argv) {
   pipe(p); //Pipe to redirect std::out
   int saved_stdout = dup(STDOUT_FILENO); //Saving std::out for later usage (re-redirection)
   dup2(p[1], STDOUT_FILENO); //Do the actual redirection
-  close(p[1]); //Closing the read side of the pipe (not used in our case)
+  close(p[1]); //Closing the write side of the pipe (replaced by std::out)
   long flags = fcntl(p[0], F_GETFL);
   flags |= O_NONBLOCK; //Setting fd as a NONBLOCKING one so that read returns zero when data is finished
   fcntl(p[0], F_SETFL, flags);
@@ -135,6 +135,8 @@ int sendCommand(const int argc, const char **argv) {
     throw cta::exception::Exception(status.ToStr());
   }
   
+  dup2(saved_stdout, STDOUT_FILENO); //re-redirecting std::out to the original (everything we want is in the pipe by now)
+  
   char rc_char = '0';
   read(p[0], &rc_char, 1); //The cta frontend return code is the first char of the answer
   int rc = rc_char - '0';
@@ -142,12 +144,11 @@ int sendCommand(const int argc, const char **argv) {
   bzero(buf, sizeof(buf));
   while(read(p[0], buf, sizeof(buf)-1)>0) { //read the rest of the answer and pipe it to std::err
     buf[sizeof(buf)-1]=0;
-    std::cerr<<buf;
+    std::cout<<buf;
     bzero(buf, sizeof(buf));
   }
   close(p[0]);
   
-  dup2(saved_stdout, STDOUT_FILENO);
   return rc;
 }
 
