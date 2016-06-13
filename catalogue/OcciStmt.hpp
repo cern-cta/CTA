@@ -108,6 +108,14 @@ public:
   virtual void executeNonQuery();
 
   /**
+   * Returns the number of rows affected by the last execution of this
+   * statement.
+   *
+   * @return The number of affected rows.
+   */
+  virtual uint64_t getNbAffectedRows() const;
+
+  /**
    * Returns the underlying OCCI result set.
    *
    * @return The underlying OCCI result set.

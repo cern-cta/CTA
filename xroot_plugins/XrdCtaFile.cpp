@@ -1125,7 +1125,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
         m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;        
         return SFS_OK;
       }
-      m_catalogue->createRequester(cliIdentity, userIdentity, mountpolicy, comment);
+      m_catalogue->createRequester(cliIdentity, userIdentity.name, mountpolicy, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string mountpolicy = getOptionValue(tokens, "-u", "--mountpolicy", false);
@@ -1143,7 +1143,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
       }
     }
     else { //rm
-      m_catalogue->deleteRequester(userIdentity);
+      m_catalogue->deleteRequester(userIdentity.name);
     }
   }
   else if("ls" == tokens[2]) { //ls

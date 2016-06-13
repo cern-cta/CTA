@@ -32,10 +32,12 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteStmt::SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt):
+SqliteStmt::SqliteStmt(SqliteConn &conn, const std::string &sql, sqlite3_stmt *const stmt):
+  m_conn(conn),
   m_sql(sql),
   m_paramNameToIdx(sql),
-  m_stmt(stmt) {
+  m_stmt(stmt),
+  m_nbAffectedRows(0) {
 
   if (NULL == stmt) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": stmt is NULL");
@@ -116,6 +118,8 @@ DbRset *SqliteStmt::executeQuery() {
 // executeNonQuery
 //------------------------------------------------------------------------------
 void SqliteStmt::executeNonQuery() {
+  std::lock_guard<std::mutex> connLock(m_conn.m_mutex);
+
   const int stepRc = sqlite3_step(m_stmt);
 
   // Throw an exception if the call to sqlite3_step() failed
@@ -124,11 +128,20 @@ void SqliteStmt::executeNonQuery() {
       Sqlite::rcToStr(stepRc));
   }
 
+  m_nbAffectedRows = sqlite3_changes(m_conn.m_conn);
+
   // Throw an exception if the SQL statement returned a result set
   if(SQLITE_ROW == stepRc) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
       ": The SQL statment returned a result set");
   }
+}
+
+//------------------------------------------------------------------------------
+// getNbAffectedRows
+//------------------------------------------------------------------------------
+uint64_t SqliteStmt::getNbAffectedRows() const {
+  return m_nbAffectedRows;
 }
 
 } // namespace catalogue

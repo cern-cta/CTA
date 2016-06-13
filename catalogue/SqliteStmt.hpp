@@ -41,11 +41,12 @@ public:
 
   /**
    * Constructor.
-   *  
+   *
+   * @param conn The database connection.
    * @param sql The SQL statement.
    * @param stmt The prepared statement.
    */
-  SqliteStmt(const std::string &sql, sqlite3_stmt *const stmt);
+  SqliteStmt(SqliteConn &conn, const std::string &sql, sqlite3_stmt *const stmt);
 
   /**
    * Destructor.
@@ -103,12 +104,25 @@ public:
    */
   virtual void executeNonQuery();
 
+  /**
+   * Returns the number of rows affected by the last execution of this
+   * statement.
+   *
+   * @return The number of affected rows.
+   */
+  virtual uint64_t getNbAffectedRows() const;
+
 private:
 
   /**
    * Mutex used to serialize access to the prepared statement.
    */
   std::mutex m_mutex;
+
+  /**
+   * The SQL connection.
+   */
+  SqliteConn &m_conn;
 
   /**
    * The SQL statement.
@@ -124,6 +138,11 @@ private:
    * The prepared statement.
    */
   sqlite3_stmt *m_stmt;
+
+  /**
+   * The number of rows affected by the last execution of this statement.
+   */
+  uint64_t m_nbAffectedRows;
 
 }; // class SqlLiteStmt
 

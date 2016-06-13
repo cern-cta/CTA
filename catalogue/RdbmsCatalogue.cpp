@@ -147,7 +147,20 @@ bool RdbmsCatalogue::adminUserExists(const std::string adminUsername) const {
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":ADMIN_USER_NAME", username);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -220,7 +233,7 @@ void RdbmsCatalogue::createAdminHost(
   const std::string &hostName,
   const std::string &comment) {
   try {
-    if (adminHostExists(hostName)) {
+    if(adminHostExists(hostName)) {
       throw UserError(std::string("Cannot create admin host " + hostName +
         " because an admin host with the same name already exists"));
     }
@@ -297,7 +310,20 @@ bool RdbmsCatalogue::adminHostExists(const std::string adminHost) const {
 // deleteAdminHost
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteAdminHost(const std::string &hostName) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM ADMIN_HOST WHERE ADMIN_HOST_NAME = :ADMIN_HOST_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":ADMIN_HOST_NAME", hostName);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete admin-host ") + hostName + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -319,7 +345,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-        "FROM "
+      "FROM "
         "ADMIN_HOST";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -329,18 +355,12 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
       host.name = rset->columnText("ADMIN_HOST_NAME");
       host.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       host.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -375,7 +395,7 @@ void RdbmsCatalogue::createStorageClass(
   const uint64_t nbCopies,
   const std::string &comment) {
   try {
-    if (storageClassExists(name)) {
+    if(storageClassExists(name)) {
       throw UserError(std::string("Cannot create storage class ") + name +
         " because a storage class with the same name already exists");
     }
@@ -460,12 +480,17 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &name) {
       "DELETE FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindString(":STORAGE_CLASS_NAME", name);
 
     stmt->executeNonQuery();
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete storage-class ") + name + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -503,18 +528,12 @@ std::list<common::dataStructures::StorageClass>
       storageClass.nbCopies = rset->columnUint64("NB_COPIES");
       storageClass.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       storageClass.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -639,7 +658,20 @@ bool RdbmsCatalogue::tapePoolExists(const std::string &tapePoolName) const {
 // deleteTapePool
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapePool(const std::string &name) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":TAPE_POOL_NAME", name);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -677,18 +709,12 @@ std::list<common::dataStructures::TapePool>
 
       pool.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       pool.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -793,7 +819,29 @@ void RdbmsCatalogue::createArchiveRoute(
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql =
+      "DELETE FROM "
+        "ARCHIVE_ROUTE "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "COPY_NB = :COPY_NB;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt->bindUint64(":COPY_NB", copyNb);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      UserError ue;
+      ue.getMessage() << "Cannot delete archive route for storage-class " << storageClassName + " and copy number " <<
+        copyNb << " because it does not exist";
+      throw ue;
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -831,18 +879,12 @@ std::list<common::dataStructures::ArchiveRoute>
 
       route.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       route.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -882,7 +924,7 @@ void RdbmsCatalogue::createLogicalLibrary(
   const std::string &name,
   const std::string &comment) {
   try {
-    if (logicalLibraryExists(name)) {
+    if(logicalLibraryExists(name)) {
       throw UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
     }
@@ -959,7 +1001,20 @@ bool RdbmsCatalogue::logicalLibraryExists(const std::string &logicalLibraryName)
 // deleteLogicalLibrary
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -993,18 +1048,12 @@ std::list<common::dataStructures::LogicalLibrary>
 
       lib.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       lib.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -1043,7 +1092,7 @@ void RdbmsCatalogue::createTape(
   const bool fullValue,
   const std::string &comment) {
   try {
-    if (tapeExists(vid)) {
+    if(tapeExists(vid)) {
       throw UserError(std::string("Cannot create tape ") + vid +
         " because a tape with the same volume identifier already exists");
     }
@@ -1174,7 +1223,20 @@ bool RdbmsCatalogue::tapeExists(const std::string &vid) const {
 // deleteTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTape(const std::string &vid) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM TAPE WHERE VID = :VID;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete tape ") + vid + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1306,18 +1368,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
 
       tape.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       tape.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -1431,10 +1487,14 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createRequester(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const common::dataStructures::UserIdentity &user,
+  const std::string &requesterName,
   const std::string &mountPolicy,
   const std::string &comment) {
   try {
+    if(requesterExists(requesterName)) {
+      throw UserError(std::string("Cannot create requester ") + requesterName +
+        " because a requester with the same username already exists");
+    }
     const uint64_t now = time(NULL);
     const char *const sql =
       "INSERT INTO REQUESTER("
@@ -1465,7 +1525,7 @@ void RdbmsCatalogue::createRequester(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
-    stmt->bindString(":REQUESTER_NAME", user.name);
+    stmt->bindString(":REQUESTER_NAME", requesterName);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
 
     stmt->bindString(":USER_COMMENT", comment);
@@ -1479,6 +1539,8 @@ void RdbmsCatalogue::createRequester(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1487,8 +1549,21 @@ void RdbmsCatalogue::createRequester(
 //------------------------------------------------------------------------------
 // deleteRequester
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteRequester(const common::dataStructures::UserIdentity &user) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::deleteRequester(const std::string &requesterName) {
+  try {
+    const char *const sql = "DELETE FROM REQUESTER WHERE REQUESTER_NAME = :REQUESTER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete requester ") + requesterName + " because they do not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1525,18 +1600,12 @@ std::list<common::dataStructures::Requester>
 
       user.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
-
       common::dataStructures::EntryLog creationLog;
       creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
       creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
       creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
       user.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
 
       common::dataStructures::EntryLog updateLog;
       updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
@@ -1581,7 +1650,7 @@ void RdbmsCatalogue::createMountPolicy(
   const uint64_t maxDrivesAllowed,
   const std::string &comment) {
   try {
-    if (mountPolicyExists(name)) {
+    if(mountPolicyExists(name)) {
       throw UserError(std::string("Cannot create mount policy ") + name +
         " because a mount policy with the same name already exists");
     }
@@ -1658,6 +1727,83 @@ void RdbmsCatalogue::createMountPolicy(
 }
 
 //------------------------------------------------------------------------------
+// assignMountPolicyToRequester
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::assignMountPolicyToRequester(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &mountPolicyName,
+  const std::string &requesterName,
+  const std::string &comment) {
+  try {
+    std::unique_ptr<common::dataStructures::MountPolicy> requesterMountPolicy(getRequesterMountPolicy(requesterName));
+    if(NULL != requesterMountPolicy.get()) {
+      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester " + requesterName +
+        " because the requester is already assigned mount-policy " + requesterMountPolicy->name);
+    }
+    if(!mountPolicyExists(mountPolicyName)) {
+      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester " + requesterName +
+        " because mount-policy " + mountPolicyName + " does not exist");
+    }
+    const uint64_t now = time(NULL);
+    const char *const sql =
+      "INSERT INTO REQUESTER("
+        "REQUESTER_NAME,"
+        "MOUNT_POLICY_NAME,"
+
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+      "VALUES("
+        ":REQUESTER_NAME,"
+        ":MOUNT_POLICY_NAME,"
+
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
+
+    stmt->bindString(":USER_COMMENT", comment);
+
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+
+    stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// assignMountPolicyToRequesterGroup
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
+  const std::string &requesterGroupName) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // mountPolicyExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::mountPolicyExists(const std::string &mountPolicyName) const {
@@ -1679,10 +1825,135 @@ bool RdbmsCatalogue::mountPolicyExists(const std::string &mountPolicyName) const
 }
 
 //------------------------------------------------------------------------------
+// requesterExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::requesterExists(const std::string &requesterName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "REQUESTER_NAME AS REQUESTER_NAME "
+      "FROM "
+        "REQUESTER "
+      "WHERE "
+        "REQUESTER_NAME = :REQUESTER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getRequesterMountPolicy
+//------------------------------------------------------------------------------
+common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(const std::string &requesterName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+
+        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
+
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "MOUNT_POLICY "
+      "INNER JOIN "
+        "REQUESTER "
+      "ON "
+        "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    if(rset->next()) {
+      std::unique_ptr<common::dataStructures::MountPolicy> policy(new common::dataStructures::MountPolicy);
+
+      policy->name = rset->columnText("MOUNT_POLICY_NAME");
+
+      policy->archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
+      policy->archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+
+      policy->retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
+      policy->retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+
+      policy->maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+
+      policy->comment = rset->columnText("USER_COMMENT");
+
+      policy->creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      policy->creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      policy->creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+
+      common::dataStructures::EntryLog updateLog;
+      policy->lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      policy->lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      policy->lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      return policy.release();
+    } else {
+      return NULL;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// requesterGroupExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::requesterGroupExists(const std::string &requesterGroupName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME "
+      "FROM "
+        "REQUESTER_GROUP "
+      "WHERE "
+        "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // deleteMountPolicy
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "DELETE FROM MOUNT_POLICY WHERE MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":MOUNT_POLICY_NAME", name);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete mount policy ") + name + " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1723,38 +1994,22 @@ std::list<common::dataStructures::MountPolicy>
       policy.name = rset->columnText("MOUNT_POLICY_NAME");
 
       policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy.archiveMinRequestAge =
-        rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy.retrievePriority =
-        rset->columnUint64("RETRIEVE_PRIORITY");
-      policy.retrieveMinRequestAge =
-        rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
-      policy.maxDrivesAllowed =
-        rset->columnUint64("MAX_DRIVES_ALLOWED");
+      policy.maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
 
       policy.comment = rset->columnText("USER_COMMENT");
 
-      common::dataStructures::UserIdentity creatorUI;
-      creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
+      policy.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      policy.creationLog = creationLog;
-
-      common::dataStructures::UserIdentity updaterUI;
-      updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      policy.lastModificationLog = updateLog;
+      policy.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       policies.push_back(policy);
     }
@@ -2063,7 +2318,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
     std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(id));
 
     // Throw an exception if the archive file does not exist
-    if (NULL == file.get()) {
+    if(NULL == file.get()) {
       exception::Exception ex;
       ex.getMessage() << "No such archive file with ID " << id;
       throw (ex);
@@ -2107,7 +2362,7 @@ common::dataStructures::ArchiveFileQueueCriteria
     throw ex;
   }
 
-  common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user);
+  common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user.name);
 
   // Now that we have both the archive routes and the mount policy it's safe to
   // consume an archive file identifier
@@ -2175,8 +2430,7 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageCl
 //------------------------------------------------------------------------------
 // getArchiveMountPolicy
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy RdbmsCatalogue::
-  getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const {
+common::dataStructures::MountPolicy RdbmsCatalogue::getMountPolicyForAUser(const std::string &username) const {
   const char *const sql =
     "SELECT "
       "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
@@ -2204,7 +2458,7 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
     "WHERE "
       "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME";
   std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-  stmt->bindString(":REQUESTER_NAME", user.name);
+  stmt->bindString(":REQUESTER_NAME", username);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
   if(rset->next()) {
     common::dataStructures::MountPolicy policy;
@@ -2238,8 +2492,7 @@ common::dataStructures::MountPolicy RdbmsCatalogue::
     return policy;
   } else {
     exception::Exception ex;
-    ex.getMessage() << "Failed to find a mount policy for user " <<
-      user;
+    ex.getMessage() << "Failed to find a mount policy for user " << username;
     throw ex;
   }
 }
@@ -2379,7 +2632,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user) {
   const std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles = getTapeFiles(archiveFileId);
-  const common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user);
+  const common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user.name);
 
   return common::dataStructures::RetrieveFileQueueCriteria(tapeFiles, mountPolicy);
 }
@@ -2422,6 +2675,15 @@ std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFile
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// getMountPolicies
+//------------------------------------------------------------------------------
+RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::string &requesterName,
+  const std::string &requesterGroupName) {
+  RequesterAndGroupMountPolicies policies;
+  return policies;
 }
 
 //------------------------------------------------------------------------------

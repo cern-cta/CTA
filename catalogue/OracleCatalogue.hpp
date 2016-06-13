@@ -59,6 +59,16 @@ public:
   virtual ~OracleCatalogue();
 
   /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * @param archiveFileId The unique identifier of the archive file.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const uint64_t archiveFileId);
+
+  /**
    * Returns a unique archive ID that can be used by a new archive file within
    * the catalogue.
    *

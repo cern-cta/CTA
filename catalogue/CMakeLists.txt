@@ -61,9 +61,9 @@ target_link_libraries (ctacatalogue
   ${SQLITE_LIBRARIES})
 
 add_custom_command(OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql
-  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql > sqlite_catalogue_schema.sql
+  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql > sqlite_catalogue_schema.sql
   COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql > oracle_catalogue_schema.sql
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql catalogue_common_schema.sql)
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sqlite_catalogue_schema.sql
   DESTINATION usr/share/cta-${CTA_VERSION}/sql
@@ -74,7 +74,7 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
   DEPENDS sqlite_catalogue_schema.sql)
 
 add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp

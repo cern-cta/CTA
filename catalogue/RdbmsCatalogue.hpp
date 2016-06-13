@@ -20,6 +20,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/DbConn.hpp"
+#include "catalogue/RequesterAndGroupMountPolicies.hpp"
 
 #include <memory>
 #include <mutex>
@@ -118,8 +119,13 @@ public:
   virtual void setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue); // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment);
 
-  virtual void createRequester(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy, const std::string &comment);
-  virtual void deleteRequester(const common::dataStructures::UserIdentity &user);
+  virtual void createRequester(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &requesterName,
+    const std::string &mountPolicy,
+    const std::string &comment);
+
+  virtual void deleteRequester(const std::string &requesterName);
   virtual std::list<common::dataStructures::Requester> getRequesters() const;
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy);
   virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment);
@@ -133,6 +139,35 @@ public:
     const uint64_t minRetrieveRequestAge,
     const uint64_t maxDrivesAllowed,
     const std::string &comment);
+
+  /**
+   * Assigns the specified mount policy to the specified requester.
+   *
+   * Please note that requester mount-policies overrule requester-group
+   * mount-policies.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterName The name of the requester.
+   * @param comment Comment.
+   */
+  virtual void assignMountPolicyToRequester(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &mountPolicyName,
+    const std::string &requesterName,
+    const std::string &comment);
+
+  /**
+   * Assigns the specified mount policy to the specified requester group.
+   *
+   * Please note that requester mount-policies overrule requester-group
+   * mount-policies.
+   *
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterGrouprName The name of the requester group.
+   */
+  virtual void assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
+    const std::string &requesterGroupName);
 
   virtual void deleteMountPolicy(const std::string &name);
   virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const;
@@ -219,15 +254,15 @@ public:
   /**
    * Returns the mount policy for the specified end user.
    *
-   * @param user The name of the end user.
-   * @return The archive mount policy.
+   * @param username The name of the end user.
+   * @return The mount policy.
    */
-  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const;
+  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const std::string &username) const;
 
   /**
    * Returns true if the specified user has admin privileges.
    *
-   * @param cliIdentity The user.
+   * @param cliIdentity The user of the command-line tool.
    * @return True if the specified user has admin privileges.:w
    */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const;
@@ -297,6 +332,30 @@ protected:
    * @return True if the mount policy exists.
    */
   bool mountPolicyExists(const std::string &mountPolicyName) const;
+
+  /**
+   * Returns true if the specified requester exists.
+   *
+   * @param requesterName The username of the requester.
+   * @return True if the requester exists.
+   */
+  bool requesterExists(const std::string &requesterName) const;
+
+  /**
+   * Returns the specified requester mount-policy or NULL if one does not exist.
+   *
+   * @param requesterName The name of the requester.
+   * @return The mount policy.
+   */
+  common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &requesterName) const;
+
+  /**
+   * Returns true if the specified requester group exists.
+   *
+   * @param requesterGroupName The name of the requester group.
+   * @return True if the requester group exists.
+   */
+  bool requesterGroupExists(const std::string &requesterGroupName) const;
 
   /**
    * An RdbmsCatalogue specific method that inserts the specified row into the
@@ -408,6 +467,16 @@ protected:
    * @return The tape files as a map from tape copy number to tape file.
    */
   std::map<uint64_t, common::dataStructures::TapeFile>getTapeFiles(const uint64_t archiveFileId) const;
+
+  /**
+   * Returns the mount policies for the specified requester and requester group.
+   *
+   * @param requesterName The name of the requester.
+   * @param requesterGroupName The name of the requester group.
+   * @return The mount policies.
+   */
+  RequesterAndGroupMountPolicies getMountPolicies(const std::string &requesterName,
+    const std::string &requesterGroupName);
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within

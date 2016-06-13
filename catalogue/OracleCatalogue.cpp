@@ -41,6 +41,13 @@ OracleCatalogue::~OracleCatalogue() {
 }
 
 //------------------------------------------------------------------------------
+// deleteArchiveFile
+//------------------------------------------------------------------------------
+common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uint64_t archiveFileId) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t OracleCatalogue::getNextArchiveFileId() {

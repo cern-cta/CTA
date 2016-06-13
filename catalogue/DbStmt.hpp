@@ -78,6 +78,14 @@ public:
    */
   virtual void executeNonQuery() = 0;
 
+  /**
+   * Returns the number of rows affected by the last execution of this
+   * statement.
+   *
+   * @return The number of affected rows.
+   */
+  virtual uint64_t getNbAffectedRows() const = 0;
+
 }; // class DbStmt
 
 } // namespace catalogue

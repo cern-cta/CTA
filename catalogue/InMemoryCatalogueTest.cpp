@@ -47,10 +47,73 @@ public:
 protected:
 
   virtual void SetUp() {
+    using namespace cta;
     using namespace cta::catalogue;
 
     const DbLogin catalogueLogin(DbLogin::DBTYPE_IN_MEMORY, "", "", "");
     m_catalogue.reset(dynamic_cast<RdbmsCatalogue*>(CatalogueFactory::create(catalogueLogin)));
+
+    {
+      const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
+      for(auto &adminUser: adminUsers) {
+        m_catalogue->deleteAdminUser(adminUser.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::AdminHost> adminHosts = m_catalogue->getAdminHosts();
+      for(auto &adminHost: adminHosts) {
+        m_catalogue->deleteAdminHost(adminHost.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
+      for(auto &archiveRoute: archiveRoutes) {
+        m_catalogue->deleteArchiveRoute(archiveRoute.storageClassName, archiveRoute.copyNb);
+      }
+    }
+    {
+      const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+      for(auto &requester: requesters) {
+        m_catalogue->deleteRequester(requester.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::ArchiveFile> archiveFiles =
+        m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "");
+      for(auto &archiveFile: archiveFiles) {
+        m_catalogue->deleteArchiveFile(archiveFile.archiveFileID);
+      }
+    }
+    {
+      const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes("", "", "", "", "", "", "", "");
+      for(auto &tape: tapes) {
+        m_catalogue->deleteTape(tape.vid);
+      }
+    }
+    {
+      const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+      for(auto &storageClass: storageClasses) {
+        m_catalogue->deleteStorageClass(storageClass.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::TapePool> tapePools = m_catalogue->getTapePools();
+      for(auto &tapePool: tapePools) {
+        m_catalogue->deleteTapePool(tapePool.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::LogicalLibrary> logicalLibraries = m_catalogue->getLogicalLibraries();
+      for(auto &logicalLibrary: logicalLibraries) {
+        m_catalogue->deleteLogicalLibrary(logicalLibrary.name);
+      }
+    }
+    {
+      const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+      for(auto &mountPolicy: mountPolicies) {
+        m_catalogue->deleteMountPolicy(mountPolicy.name);
+      }
+    }
   }
 
   virtual void TearDown() {
@@ -210,6 +273,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser) {
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
   using namespace cta;
 
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
   m_catalogue->createBootstrapAdminAndHostNoAuth(
     m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
@@ -234,6 +299,43 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminUser_same_twice) {
 
   ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username,
     "comment 2"), catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteAdminUser) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  m_catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->deleteAdminUser(m_bootstrapAdminSI.username);
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteAdminUser_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_sdmin_user"), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost) {
@@ -345,6 +447,43 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createAdminHost_same_twice) {
     anotherAdminHost, "comment 2"), catalogue::UserError);
 }
 
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteAdminHost) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+
+  m_catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->deleteAdminHost(m_bootstrapAdminSI.host);
+
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteAdminHost_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+  ASSERT_THROW(m_catalogue->deleteAdminHost("non_exstant_admin_host"), catalogue::UserError);
+}
+
 TEST_F(cta_catalogue_InMemoryCatalogueTest, isAdmin_false) {
   using namespace cta;
 
@@ -401,6 +540,46 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createStorageClass_same_twice) {
     storageClassName, nbCopies, comment), catalogue::UserError);
 }
 
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteStorageClass) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  const std::string comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
+
+  const std::list<common::dataStructures::StorageClass> storageClasses =
+    m_catalogue->getStorageClasses();
+
+  ASSERT_EQ(1, storageClasses.size());
+
+  const common::dataStructures::StorageClass storageClass =
+    storageClasses.front();
+  ASSERT_EQ(storageClassName, storageClass.name);
+  ASSERT_EQ(nbCopies, storageClass.nbCopies);
+  ASSERT_EQ(comment, storageClass.comment);
+
+  const common::dataStructures::EntryLog creationLog = storageClass.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    storageClass.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteStorageClass(storageClass.name);
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteStorageClass_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_THROW(m_catalogue->deleteStorageClass("non_existant_storage_class"), catalogue::UserError);
+}
+
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool) {
   using namespace cta;
       
@@ -444,6 +623,48 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTapePool_same_twice) {
     comment);
   ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment),
     catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTapePool) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  const std::string comment = "create tape pool";
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+    comment);
+
+  const std::list<common::dataStructures::TapePool> pools =
+    m_catalogue->getTapePools();
+
+  ASSERT_EQ(1, pools.size());
+
+  const common::dataStructures::TapePool pool = pools.front();
+  ASSERT_EQ(tapePoolName, pool.name);
+  ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+  ASSERT_EQ(is_encrypted, pool.encryption);
+  ASSERT_EQ(comment, pool.comment);
+
+  const common::dataStructures::EntryLog creationLog = pool.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    pool.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteTapePool(pool.name);
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTapePool_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute) {
@@ -512,6 +733,63 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRouteTapePool_same_twic
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_cliSI,
     storageClassName, copyNb, tapePoolName, comment),
     exception::Exception);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveRoute) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "create archive route";
+  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+    comment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes =
+    m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(comment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
+    m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  ASSERT_EQ(1, copyToPoolMap.size());
+  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
+  ASSERT_EQ(copyNb, maplet.first);
+  ASSERT_EQ(tapePoolName, maplet.second);
+
+  m_catalogue->deleteArchiveRoute(storageClassName, copyNb);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveRoute_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+  ASSERT_THROW(m_catalogue->deleteArchiveRoute("non_existant_storage_class", 1234), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createArchiveRoute_deleteStorageClass) {
@@ -598,6 +876,43 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createLogicalLibrary_same_twice) {
   ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment), catalogue::UserError);
 }
 
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteLogicalLibrary) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+      
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "create logical library";
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
+      
+  const std::list<common::dataStructures::LogicalLibrary> libs =
+    m_catalogue->getLogicalLibraries();
+      
+  ASSERT_EQ(1, libs.size());
+      
+  const common::dataStructures::LogicalLibrary lib = libs.front();
+  ASSERT_EQ(logicalLibraryName, lib.name);
+  ASSERT_EQ(comment, lib.comment);
+
+  const common::dataStructures::EntryLog creationLog = lib.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    lib.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteLogicalLibrary(logicalLibraryName);
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteLogicalLibrary_non_existant) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"), catalogue::UserError);
+}
+
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
   using namespace cta;
 
@@ -665,6 +980,61 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_same_twice) {
     comment), catalogue::UserError);
 }
 
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+
+  const std::list<common::dataStructures::Tape> tapes =
+    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+
+  ASSERT_EQ(1, tapes.size());
+
+  const common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(encryptionKey, tape.encryptionKey);
+  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_TRUE(disabledValue == tape.disabled);
+  ASSERT_TRUE(fullValue == tape.full);
+  ASSERT_EQ(comment, tape.comment);
+
+  const common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteTape(tape.vid);
+  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_THROW(m_catalogue->deleteTape("non_exsitant_tape"), catalogue::UserError);
+}
+
 TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapesForWriting) {
   using namespace cta;
 
@@ -703,13 +1073,13 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy) {
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
 
-  const std::string name = "mount_group";
+  const std::string name = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 2;
   const uint64_t retrievePriority = 3;
   const uint64_t minRetrieveRequestAge = 4;
   const uint64_t maxDrivesAllowed = 5;
-  const std::string &comment = "create mount group";
+  const std::string &comment = "create mount policy";
 
   m_catalogue->createMountPolicy(
     m_cliSI,
@@ -721,31 +1091,31 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy) {
     maxDrivesAllowed,
     comment);
 
-  const std::list<common::dataStructures::MountPolicy> groups =
+  const std::list<common::dataStructures::MountPolicy> mountPolicies =
     m_catalogue->getMountPolicies();
 
-  ASSERT_EQ(1, groups.size());
+  ASSERT_EQ(1, mountPolicies.size());
 
-  const common::dataStructures::MountPolicy group = groups.front();
+  const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
 
-  ASSERT_EQ(name, group.name);
+  ASSERT_EQ(name, mountPolicy.name);
 
-  ASSERT_EQ(archivePriority, group.archivePriority);
-  ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
+  ASSERT_EQ(archivePriority, mountPolicy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, mountPolicy.archiveMinRequestAge);
 
-  ASSERT_EQ(retrievePriority, group.retrievePriority);
-  ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
+  ASSERT_EQ(retrievePriority, mountPolicy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
 
-  ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
+  ASSERT_EQ(maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
 
-  ASSERT_EQ(comment, group.comment);
+  ASSERT_EQ(comment, mountPolicy.comment);
 
-  const common::dataStructures::EntryLog creationLog = group.creationLog;
+  const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
   const common::dataStructures::EntryLog lastModificationLog =
-    group.lastModificationLog;
+    mountPolicy.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
@@ -754,13 +1124,13 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy_same_twice) {
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
 
-  const std::string name = "mount_group";
+  const std::string name = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 4;
   const uint64_t retrievePriority = 5;
   const uint64_t minRetrieveRequestAge = 8;
   const uint64_t maxDrivesAllowed = 9;
-  const std::string &comment = "create mount group";
+  const std::string &comment = "create mount policy";
 
   m_catalogue->createMountPolicy(
     m_cliSI,
@@ -783,12 +1153,74 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createMountPolicy_same_twice) {
     comment), catalogue::UserError);
 }
 
-TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteMountPolicy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  const std::string name = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+  const std::string &comment = "create mount policy";
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    name,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    comment);
+
+  const std::list<common::dataStructures::MountPolicy> mountPolicies =
+    m_catalogue->getMountPolicies();
+
+  ASSERT_EQ(1, mountPolicies.size());
+
+  const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
+
+  ASSERT_EQ(name, mountPolicy.name);
+
+  ASSERT_EQ(archivePriority, mountPolicy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, mountPolicy.archiveMinRequestAge);
+
+  ASSERT_EQ(retrievePriority, mountPolicy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
+
+  ASSERT_EQ(maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
+
+  ASSERT_EQ(comment, mountPolicy.comment);
+
+  const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    mountPolicy.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteMountPolicy(name);
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteMountPolicy_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+  ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existant_mount_policy"), catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createRequester) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
 
-  const std::string mountPolicyName = "mount_group";
+  const std::string mountPolicyName = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 4;
   const uint64_t retrievePriority = 5;
@@ -805,28 +1237,23 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {
     maxDrivesAllowed,
     "create mount group");
 
-  const std::string comment = "create user";
-  const std::string userName = "user_name";
-  const std::string group = "group";
-  cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=userName;
-  userIdentity.group=group;
-  m_catalogue->createRequester(m_cliSI, userIdentity, mountPolicyName, comment);
+  const std::string comment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequester(m_cliSI, requesterName, mountPolicyName, comment);
 
-  const std::list<common::dataStructures::Requester> users = m_catalogue->getRequesters();
-  ASSERT_EQ(1, users.size());
+  const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+  ASSERT_EQ(1, requesters.size());
 
-  const common::dataStructures::Requester user = users.front();
+  const common::dataStructures::Requester requester = requesters.front();
 
-  ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountPolicyName, user.mountPolicy);
-  ASSERT_EQ(comment, user.comment);
-  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, user.creationLog.host);
-  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+  ASSERT_EQ(requesterName, requester.name);
+  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
+  ASSERT_EQ(comment, requester.comment);
+  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
+  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
 
-  const common::dataStructures::MountPolicy policy =
-    m_catalogue->getMountPolicyForAUser(userIdentity);
+  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(requesterName);
 
   ASSERT_EQ(archivePriority, policy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
@@ -835,12 +1262,12 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser) {
   ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
 }
 
-TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser_same_twice) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createRequester_same_twice) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
 
-  const std::string mountPolicyName = "mount_group";
+  const std::string mountPolicyName = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 4;
   const uint64_t retrievePriority = 5;
@@ -857,16 +1284,156 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createUser_same_twice) {
     maxDrivesAllowed,
     "create mount group");
   
-  const std::string comment = "create user";
-  const std::string name = "name";
-  const std::string mountPolicy = "mount_group";
-  const std::string group = "group";
-  cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=name;
-  userIdentity.group=group;
-  m_catalogue->createRequester(m_cliSI, userIdentity, mountPolicyName, comment);
-  ASSERT_THROW(m_catalogue->createRequester(m_cliSI, userIdentity, mountPolicy, comment),
-    exception::Exception);
+  const std::string comment = "create requester";
+  const std::string requesterName = "requester_name";
+  const std::string mountPolicy = "mount_policy";
+  m_catalogue->createRequester(m_cliSI, requesterName, mountPolicyName, comment);
+  ASSERT_THROW(m_catalogue->createRequester(m_cliSI, requesterName, mountPolicy, comment), catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteRequester) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+
+  const std::string comment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequester(m_cliSI, requesterName, mountPolicyName, comment);
+
+  const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+  ASSERT_EQ(1, requesters.size());
+
+  const common::dataStructures::Requester requester = requesters.front();
+
+  ASSERT_EQ(requesterName, requester.name);
+  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
+  ASSERT_EQ(comment, requester.comment);
+  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
+  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
+
+  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(requesterName);
+
+  ASSERT_EQ(archivePriority, policy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
+  ASSERT_EQ(retrievePriority, policy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
+
+  m_catalogue->deleteRequester(requesterName);
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteRequester_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+  ASSERT_THROW(m_catalogue->deleteRequester("non_existant_requester"), catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, assignMountPolicyToRequester) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+
+  const std::string comment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->assignMountPolicyToRequester(m_cliSI, mountPolicyName, requesterName, comment);
+
+  const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+  ASSERT_EQ(1, requesters.size());
+
+  const common::dataStructures::Requester requester = requesters.front();
+
+  ASSERT_EQ(requesterName, requester.name);
+  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
+  ASSERT_EQ(comment, requester.comment);
+  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
+  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
+
+  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(requesterName);
+
+  ASSERT_EQ(archivePriority, policy.archivePriority);
+  ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
+  ASSERT_EQ(maxDrivesAllowed, policy.maxDrivesAllowed);
+  ASSERT_EQ(retrievePriority, policy.retrievePriority);
+  ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, assignMountPolicyToRequester_same_twice) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount group");
+
+  const std::string comment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->assignMountPolicyToRequester(m_cliSI, mountPolicyName, requesterName, comment);
+  ASSERT_THROW(m_catalogue->assignMountPolicyToRequester(m_cliSI, mountPolicyName, requesterName, comment),
+    catalogue::UserError);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, assignMountPolicyToRequester_non_existant_mount_policy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesters().empty());
+
+  const std::string comment = "create requester";
+  const std::string mountPolicyName = "non_existant_mount_policy";
+  const std::string requesterName = "requsterName";
+  ASSERT_THROW(m_catalogue->assignMountPolicyToRequester(m_cliSI, mountPolicyName, requesterName, comment),
+    catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
@@ -874,7 +1441,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
 
   ASSERT_TRUE(m_catalogue->getRequesters().empty());
 
-  const std::string mountPolicyName = "mount_group";
+  const std::string mountPolicyName = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 2;
   const uint64_t retrievePriority = 3;
@@ -891,28 +1458,23 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
     maxDrivesAllowed,
     "create mount group");
 
-  const std::string userComment = "create user";
-  const std::string userName = "user_name";
-  const std::string group = "group";
-  cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=userName;
-  userIdentity.group=group;
-  m_catalogue->createRequester(m_cliSI, userIdentity, mountPolicyName, userComment);
+  const std::string userComment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequester(m_cliSI, requesterName, mountPolicyName, userComment);
 
-  const std::list<common::dataStructures::Requester> users = m_catalogue->getRequesters();
-  ASSERT_EQ(1, users.size());
+  const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+  ASSERT_EQ(1, requesters.size());
 
-  const common::dataStructures::Requester user = users.front();
+  const common::dataStructures::Requester requester = requesters.front();
 
-  ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountPolicyName, user.mountPolicy);
-  ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, user.creationLog.host);
-  ASSERT_EQ(user.creationLog, user.lastModificationLog);
+  ASSERT_EQ(requesterName, requester.name);
+  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
+  ASSERT_EQ(userComment, requester.comment);
+  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
+  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
 
-  const common::dataStructures::MountPolicy policy =
-    m_catalogue->getMountPolicyForAUser(userIdentity);
+  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(requesterName);
 
   ASSERT_EQ(archivePriority, policy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
@@ -964,11 +1526,20 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(copyNb, maplet.first);
   ASSERT_EQ(tapePoolName, maplet.second);
 
-  for(uint64_t i = 1; i<=10; i++) {
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+  uint64_t expectedArchiveFileId = 0;
+  for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
       m_catalogue->prepareForNewFile(storageClassName, userIdentity);
 
-    ASSERT_EQ(i, queueCriteria.fileId);
+    if(0 == i) {
+      expectedArchiveFileId = queueCriteria.fileId;
+    } else {
+      expectedArchiveFileId++;
+    }
+    ASSERT_EQ(expectedArchiveFileId, queueCriteria.fileId);
 
     ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
     ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
@@ -1148,7 +1719,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
   }
 
-  const std::string mountPolicyName = "mount_group";
+  const std::string mountPolicyName = "mount_policy";
   const uint64_t archivePriority = 1;
   const uint64_t minArchiveRequestAge = 2;
   const uint64_t retrievePriority = 3;
@@ -1165,27 +1736,23 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     maxDrivesAllowed,
     "create mount group");
 
-  const std::string userComment = "create user";
-  const std::string userName = "user_name";
-  const std::string group = "group";
-  cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=userName;
-  userIdentity.group=group;
-  m_catalogue->createRequester(m_cliSI, userIdentity, mountPolicyName, userComment);
+  const std::string userComment = "create requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequester(m_cliSI, requesterName, mountPolicyName, userComment);
 
-  const std::list<common::dataStructures::Requester> users = m_catalogue->getRequesters();
-  ASSERT_EQ(1, users.size());
+  const std::list<common::dataStructures::Requester> requesters = m_catalogue->getRequesters();
+  ASSERT_EQ(1, requesters.size());
 
-  const common::dataStructures::Requester user = users.front();
+  const common::dataStructures::Requester requester = requesters.front();
 
-  ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountPolicyName, user.mountPolicy);
-  ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(m_cliSI.username, user.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, user.creationLog.host);
-  ASSERT_EQ(user.creationLog, user.lastModificationLog);  
+  ASSERT_EQ(requesterName, requester.name);
+  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
+  ASSERT_EQ(userComment, requester.comment);
+  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
+  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
 
-  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(userIdentity);
+  const common::dataStructures::MountPolicy policy = m_catalogue->getMountPolicyForAUser(requesterName);
 
   ASSERT_EQ(archivePriority, policy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, policy.archiveMinRequestAge);
@@ -1193,6 +1760,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(retrievePriority, policy.retrievePriority);
   ASSERT_EQ(minRetrieveRequestAge, policy.retrieveMinRequestAge);
 
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue->prepareToRetrieveFile(archiveFileId, userIdentity);
 
@@ -1630,6 +2200,241 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
   file2Written.copyNb               = 2;
 
   ASSERT_THROW(m_catalogue->fileWrittenToTape(file2Written), exception::Exception);
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
+  using namespace cta;
+
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID456";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+  m_catalogue->createTape(m_cliSI, vid2, logicalLibraryName, tapePoolName,
+    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    comment);
+
+  const std::list<common::dataStructures::Tape> tapes =
+    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+
+  ASSERT_EQ(2, tapes.size());
+
+  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+  {
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(comment, tape.comment);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+  {
+    auto it = vidToTape.find(vid2);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid2, tape.vid);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(comment, tape.comment);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+
+  const uint64_t archiveFileSize = 1;
+
+  catalogue::TapeFileWritten file1Written;
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileUser         = "public_disk_user";
+  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file1Written.size                 = archiveFileSize;
+  file1Written.storageClassName     = storageClassName;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.compressedSize       = 1;
+  file1Written.copyNb               = 1;
+  m_catalogue->fileWrittenToTape(file1Written);
+
+  {
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file1Written.vid, "", "", "", "", "", "", "");
+    ASSERT_EQ(1, tapes.size());
+    const common::dataStructures::Tape &tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  catalogue::TapeFileWritten file2Written;
+  file2Written.archiveFileId        = file1Written.archiveFileId;
+  file2Written.diskInstance         = file1Written.diskInstance;
+  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.diskFilePath         = file1Written.diskFilePath;
+  file2Written.diskFileUser         = file1Written.diskFileUser;
+  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
+  file2Written.size                 = archiveFileSize;
+  file2Written.storageClassName     = storageClassName;
+  file2Written.vid                  = vid2;
+  file2Written.fSeq                 = 1;
+  file2Written.blockId              = 4331;
+  file2Written.compressedSize       = 1;
+  file2Written.copyNb               = 2;
+  m_catalogue->fileWrittenToTape(file2Written);
+
+  {
+    ASSERT_EQ(2, m_catalogue->getTapes("", "", "", "", "", "", "", "").size());
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file2Written.vid, "", "", "", "", "", "", "");
+    ASSERT_EQ(1, tapes.size());
+    const common::dataStructures::Tape &tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
+
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+
+    auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
+    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    ASSERT_EQ(file2Written.vid, tapeFile2.vid);
+    ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
+    ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
+    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
+  }
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->deleteArchiveFile(archiveFileId);
+
+    ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
+
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+
+    auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
+    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    ASSERT_EQ(file2Written.vid, tapeFile2.vid);
+    ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
+    ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
+    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
+  }
+
+  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile_non_existant) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), catalogue::UserError);
 }
 
 } // namespace unitTests

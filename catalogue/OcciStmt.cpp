@@ -144,6 +144,13 @@ void OcciStmt::executeNonQuery() {
 }
 
 //------------------------------------------------------------------------------
+// getNbAffectedRows
+//------------------------------------------------------------------------------
+uint64_t OcciStmt::getNbAffectedRows() const {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
 oracle::occi::Statement *OcciStmt::get() const {

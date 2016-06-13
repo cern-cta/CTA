@@ -138,11 +138,11 @@ public:
 
   virtual void createRequester(
     const common::dataStructures::SecurityIdentity &cliIdentity,
-    const common::dataStructures::UserIdentity &user,
+    const std::string &requesterName,
     const std::string &mountPolicy,
     const std::string &comment) = 0;
 
-  virtual void deleteRequester(const common::dataStructures::UserIdentity &user) = 0;
+  virtual void deleteRequester(const std::string &requesterName) = 0;
   virtual std::list<common::dataStructures::Requester> getRequesters() const = 0;
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
@@ -156,6 +156,35 @@ public:
     const uint64_t minRetrieveRequestAge, 
     const uint64_t maxDrivesAllowed, 
     const std::string &comment) = 0;
+
+  /**
+   * Assigns the specified mount policy to the specified requester.
+   *
+   * Please note that requester mount-policies overrule requester-group
+   * mount-policies.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterName The name of the requester.
+   * @param comment Comment.
+   */
+  virtual void assignMountPolicyToRequester(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &mountPolicyName,
+    const std::string &requesterName,
+    const std::string &comment) = 0;
+
+  /**
+   * Assigns the specified mount policy to the specified requester group.
+   *
+   * Please note that requester mount-policies overrule requester-group
+   * mount-policies.
+   *
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterGrouprName The name of the requester group.
+   */
+  virtual void assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
+    const std::string &requesterGroupName) = 0;
 
   virtual void deleteMountPolicy(const std::string &name) = 0;
   virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
@@ -223,6 +252,16 @@ public:
   virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
 
   /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * @param archiveFileId The unique identifier of the archive file.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const uint64_t archiveFileId) = 0;
+
+  /**
    * Prepares for a file retrieval by returning the information required to
    * queue the associated retrieve request(s).
    *
@@ -243,10 +282,10 @@ public:
   /**
    * Returns the mount policy for the specified end user.
    *
-   * @param user The name of the end user.
+   * @param username The name of the end user.
    * @return The mount policy.
    */
-  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const common::dataStructures::UserIdentity &user) const = 0;
+  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const std::string &username) const = 0;
 
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 

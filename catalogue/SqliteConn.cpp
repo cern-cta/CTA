@@ -33,10 +33,23 @@ namespace catalogue {
 SqliteConn::SqliteConn(const std::string &filename) {
   try {
     m_conn = NULL;
-    if (sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI, NULL)) {
+    if(sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, NULL)) {
       std::string msg = sqlite3_errmsg(m_conn);
       sqlite3_close(m_conn);
       throw exception::Exception(msg);
+    }
+    {
+      char *errMsg = NULL;
+      if(SQLITE_OK != sqlite3_exec(m_conn, "PRAGMA foreign_keys = ON;", NULL, NULL, &errMsg)) {
+        exception::Exception ex;
+        ex.getMessage() << "Failed to to set PRAGMA foreign_keys = ON";
+        if(NULL != errMsg) {
+          ex.getMessage() << ": " << errMsg;
+          sqlite3_free(errMsg);
+        }
+        sqlite3_close(m_conn);
+        throw ex;
+      }
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -78,7 +91,7 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
       throw exception::Exception(msg);
     }
 
-    return new SqliteStmt(sql, stmt);
+    return new SqliteStmt(*this, sql, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

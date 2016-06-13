@@ -169,9 +169,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   const std::string userName = "user_name";
   const std::string userGroup = "group";
   cta::common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name=userName;
-  userIdentity.group=userGroup;
-  catalogue.createRequester(s_adminOnAdminHost, userIdentity, mountPolicyName, userComment);
+  catalogue.createRequester(s_adminOnAdminHost, userName, mountPolicyName, userComment);
 
   std::list<common::dataStructures::Requester> users;
   users = catalogue.getRequesters();

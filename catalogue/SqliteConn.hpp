@@ -39,6 +39,12 @@ class SqliteConn: public DbConn {
 public:
 
   /**
+   * The SqliteStmt class can lock the m_mutex member of the SqliteConn class
+   * and it can read the pointer to the SQLite connection.
+   */
+  friend SqliteStmt;
+
+  /**
    * Constructor.
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
