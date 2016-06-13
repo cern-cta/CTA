@@ -21,6 +21,8 @@
 #include "common/dataStructures/FrontendReturnCode.hpp"
 
 #include "XrdCl/XrdClCopyProcess.hh"
+#include "XrdCl/XrdClEnv.hh"
+#include "XrdCl/XrdClDefaultEnv.hh"
 
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
@@ -115,6 +117,11 @@ int sendCommand(const int argc, const char **argv) {
   properties.Set("target", "-"); //destination is stdout
   XrdCl::PropertyList results;
   XrdCl::CopyProcess copyProcess;
+  
+  //ConnectionWindow timeout. This is redundant now because we already have a timeout in place with std::async
+  //but may be handy in the future if we change the frontend xroot paradigm (for example to XrdSsi)
+  //XrdCl::Env *env = XrdCl::DefaultEnv::GetEnv();
+  //env->PutInt("ConnectionWindow", 1);
   
   XrdCl::XRootDStatus status = copyProcess.AddJob(properties, &results);
   if(!status.IsOK())
