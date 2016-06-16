@@ -84,7 +84,7 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 //------------------------------------------------------------------------------
 XrdSfsFile * XrdCtaFilesystem::newFile(char *user, int MonID)
 {  
-  return new cta::xrootPlugins::XrdCtaFile(m_catalogue.get(), m_scheduler.get(), user, MonID);
+  return new cta::xrootPlugins::XrdCtaFile(m_catalogue.get(), m_scheduler.get(), m_log.get(), user, MonID);
 }
 
 //------------------------------------------------------------------------------
@@ -262,6 +262,14 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
   using namespace cta;
+  
+  // Try to instantiate the logging system API
+  try {
+    m_log.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-frontend", log::DEBUG));
+  } catch(exception::Exception &ex) {
+    throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
+  }
+  
   const catalogue::DbLogin catalogueLogin = catalogue::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
   m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
 

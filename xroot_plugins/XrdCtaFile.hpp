@@ -20,6 +20,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "common/log/SyslogLogger.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -55,7 +56,7 @@ public:
   virtual int sync(XrdSfsAio *aiop);
   virtual int truncate(XrdSfsFileOffset fsize);
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
-  XrdCtaFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, const char *user=0, int MonID=0);
+  XrdCtaFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, cta::log::Logger *log, const char *user=0, int MonID=0);
   ~XrdCtaFile();
   
 protected:
@@ -69,6 +70,11 @@ protected:
    * The scheduler object pointer
    */
   cta::Scheduler *m_scheduler;
+  
+  /**
+   * The scheduler object pointer
+   */
+  cta::log::Logger *m_log;
   
   /**
    * This is the string holding the result of the command

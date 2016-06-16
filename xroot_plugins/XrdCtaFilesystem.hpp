@@ -20,6 +20,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/Configuration.hpp"
+#include "common/log/SyslogLogger.hpp"
 #include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -94,6 +95,11 @@ protected:
    * The scheduler.
    */
   std::unique_ptr<cta::Scheduler> m_scheduler;
+  
+  /**
+   * The logger.
+   */
+  std::unique_ptr<log::Logger> m_log;
 }; // XrdCtaFilesystem
 
 }}

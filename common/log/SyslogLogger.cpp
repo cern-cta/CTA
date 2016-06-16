@@ -46,15 +46,15 @@
 cta::log::SyslogLogger::SyslogLogger(const std::string &socketName,
   const std::string &programName, const int logMask):
   Logger(programName, logMask),
-  m_socketName(socketName),
+  m_socketName(_PATH_LOG),
   m_logFile(-1) {
   struct stat fileStatus;
   bzero(&fileStatus, sizeof(fileStatus));
-  if(stat(socketName.c_str(), &fileStatus)) {
+  if(stat(m_socketName.c_str(), &fileStatus)) {
     const std::string errMsg = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate syslog logger: Failed to stat"
-      " socket \"" << socketName << "\"" ": " << errMsg;
+      " socket \"" << m_socketName << "\"" ": " << errMsg;
     throw ex;
   }
 }
@@ -147,28 +147,30 @@ void cta::log::SyslogLogger::reducedSyslog(const std::string& msg) {
   // Truncate the log message if it exceeds the permitted maximum
   std::string truncatedMsg = msg.substr(0, m_maxMsgLen);
 
-  int send_flags = MSG_NOSIGNAL;
-
-  // enter critical section
-  threading::MutexLocker lock(m_mutex);
-
-  // Try to connect if not already connected
-  openLog();
-
-  // If connected
-  if(-1 != m_logFile) {
-    // If sending the log message fails then try to reopen the syslog
-    // connection and try again
-    if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
-      closeLog();
-      openLog();
-      if (-1 != m_logFile) {
-        // If the second attempt to send the log message fails then give up and
-        // attempt re-open next time
-        if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
-          closeLog();
-        }
-      }
-    }
-  }
+//  int send_flags = MSG_NOSIGNAL;
+//
+//  // enter critical section
+//  threading::MutexLocker lock(m_mutex);
+//
+//  // Try to connect if not already connected
+//  openLog();
+//
+//  // If connected
+//  if(-1 != m_logFile) {
+//    // If sending the log message fails then try to reopen the syslog
+//    // connection and try again
+//    if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
+//      closeLog();
+//      openLog();
+//      if (-1 != m_logFile) {
+//        // If the second attempt to send the log message fails then give up and
+//        // attempt re-open next time
+//        if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
+//          closeLog();
+//        }
+//      }
+//    }
+//  }
+  
+  syslog(LOG_LOCAL3|LOG_INFO, truncatedMsg.c_str());
 }

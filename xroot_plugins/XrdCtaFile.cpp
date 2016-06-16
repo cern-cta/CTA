@@ -315,11 +315,13 @@ int XrdCtaFile::getCXinfo(char cxtype[4], int &cxrsz) {
 XrdCtaFile::XrdCtaFile(
   cta::catalogue::Catalogue *catalogue,
   cta::Scheduler *scheduler,
+  cta::log::Logger *log,
   const char *user,
   int MonID):
   error(user, MonID),
   m_catalogue(catalogue),
   m_scheduler(scheduler),
+  m_log(log),
   m_data(""),
   m_rc(cta::common::dataStructures::FrontendReturnCode::ok) {  
 }
@@ -2384,6 +2386,7 @@ int XrdCtaFile::xCom_liststorageclass(const std::vector<std::string> &tokens, co
 // getGenericHelp
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
+  
   std::stringstream help;
   help << "CTA ADMIN commands:" << std::endl;
   help << "" << std::endl;
