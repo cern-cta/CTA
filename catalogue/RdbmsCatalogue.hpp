@@ -119,14 +119,6 @@ public:
   virtual void setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue); // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment);
 
-  virtual void createRequester(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &requesterName,
-    const std::string &mountPolicy,
-    const std::string &comment);
-
-  virtual void deleteRequester(const std::string &requesterName);
-  virtual std::list<common::dataStructures::Requester> getRequesters() const;
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy);
   virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment);
 
@@ -141,36 +133,87 @@ public:
     const std::string &comment);
 
   /**
-   * Assigns the specified mount policy to the specified requester.
+   * Returns the list of all existing mount policies.
    *
-   * Please note that requester mount-policies overrule requester-group
-   * mount-policies.
+   * @return the list of all existing mount policies.
+   */
+  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const;
+
+  /**
+   * Deletes the specified mount policy.
+   *
+   * @param name The name of the mount policy.
+   */
+  virtual void deleteMountPolicy(const std::string &name);
+
+  /**
+   * Creates the rule that the specified mount policy will be used for the
+   * specified requester.
+   *
+   * Please note that requester mount-rules overrule requester-group
+   * mount-rules.
    *
    * @param cliIdentity The user of the command-line tool.
    * @param mountPolicyName The name of the mount policy.
    * @param requesterName The name of the requester.
    * @param comment Comment.
    */
-  virtual void assignMountPolicyToRequester(
+  virtual void createRequesterMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
     const std::string &requesterName,
     const std::string &comment);
 
   /**
-   * Assigns the specified mount policy to the specified requester group.
+   * Returns the rules that specify which mount policy is be used for which
+   * requester.
    *
-   * Please note that requester mount-policies overrule requester-group
-   * mount-policies.
-   *
-   * @param mountPolicyName The name of the mount policy.
-   * @param requesterGrouprName The name of the requester group.
+   * @return the rules that specify which mount policy is be used for which
+   * requester.
    */
-  virtual void assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
-    const std::string &requesterGroupName);
+  virtual std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const;
 
-  virtual void deleteMountPolicy(const std::string &name);
-  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const;
+  /**
+   * Deletes the specified mount rule.
+   *
+   * @param requesterName The name of the requester.
+   */
+  virtual void deleteRequesterMountRule(const std::string &requesterName);
+
+  /**
+   * Creates the rule that the specified mount policy will be used for the
+   * specified requester group.
+   *
+   * Please note that requester mount-rules overrule requester-group
+   * mount-rules.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterGroupName The name of the requester group.
+   * @param comment Comment.
+   */
+  virtual void createRequesterGroupMountRule(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &mountPolicyName,
+    const std::string &requesterGroupName,
+    const std::string &comment);
+
+  /**
+   * Returns the rules that specify which mount policy is be used for which
+   * requester group.
+   *
+   * @return the rules that specify which mount policy is be used for which
+   * requester group.
+   */
+  virtual std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const;
+
+  /**
+   * Deletes the specified mount rule.
+   *
+   * @param requesterGroupName The name of the requester group.
+   */
+  virtual void deleteRequesterGroupMountRule(const std::string &requesterGroupName);
+
   virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority);
   virtual void modifyMountPolicyArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued);
   virtual void modifyMountPolicyArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued);
@@ -345,7 +388,7 @@ protected:
    * Returns the specified requester mount-policy or NULL if one does not exist.
    *
    * @param requesterName The name of the requester.
-   * @return The mount policy.
+   * @return The mount policy or NULL if one does not exists.
    */
   common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &requesterName) const;
 
@@ -356,6 +399,15 @@ protected:
    * @return True if the requester group exists.
    */
   bool requesterGroupExists(const std::string &requesterGroupName) const;
+
+  /**
+   * Returns the specified requester-group mount-policy or NULL if one does not
+   * exist.
+   *
+   * @param requesterGroupName The name of the requester group.
+   * @return The mount policy or NULL if one does not exists.
+   */
+  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &requesterGroupName) const;
 
   /**
    * An RdbmsCatalogue specific method that inserts the specified row into the

@@ -1125,7 +1125,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
         m_rc = cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry;        
         return SFS_OK;
       }
-      m_catalogue->createRequester(cliIdentity, userIdentity.name, mountpolicy, comment);
+      m_catalogue->createRequesterMountRule(cliIdentity, mountpolicy, userIdentity.name, comment);
     }
     else if("ch" == tokens[2]) { //ch
       std::string mountpolicy = getOptionValue(tokens, "-u", "--mountpolicy", false);
@@ -1143,11 +1143,11 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
       }
     }
     else { //rm
-      m_catalogue->deleteRequester(userIdentity.name);
+      m_catalogue->deleteRequesterMountRule(userIdentity.name);
     }
   }
   else if("ls" == tokens[2]) { //ls
-    std::list<cta::common::dataStructures::Requester> list= m_catalogue->getRequesters();
+    std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue->getRequesterMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","group","cta group","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
@@ -1155,7 +1155,7 @@ int XrdCtaFile::xCom_user(const std::vector<std::string> &tokens, const cta::com
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(it->group);
+        currentRow.push_back("GROUP_TO_BE_DELETED");
         currentRow.push_back(it->mountPolicy);
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);

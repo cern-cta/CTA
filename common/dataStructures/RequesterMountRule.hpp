@@ -30,29 +30,26 @@ namespace common {
 namespace dataStructures {
 
 /**
- * This is the disk system user that triggered the request (any of: archival, 
- * retrieval, deletion of an archive file, cancel of an ongoing retrieval, 
- * update of a file metadata, listing of storage classes). It may or may not be 
- * the owner of the file (basically there's no relationship between the two) 
+ * Rule specifying which mount policy will be used for a specific data-transfer
+ * requester.
  */
-struct Requester {
+struct RequesterMountRule {
 
-  Requester();
+  RequesterMountRule();
 
-  bool operator==(const Requester &rhs) const;
+  bool operator==(const RequesterMountRule &rhs) const;
 
-  bool operator!=(const Requester &rhs) const;
+  bool operator!=(const RequesterMountRule &rhs) const;
 
   std::string name;
-  std::string group;
   std::string mountPolicy;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct Requester
+}; // struct RequesterMountRule
 
-std::ostream &operator<<(std::ostream &os, const Requester &obj);
+std::ostream &operator<<(std::ostream &os, const RequesterMountRule &obj);
 
 } // namespace dataStructures
 } // namespace common

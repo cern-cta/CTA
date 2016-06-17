@@ -45,7 +45,8 @@
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RepackType.hpp"
-#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/RequesterGroupMountRule.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
@@ -136,14 +137,6 @@ public:
   virtual void setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void createRequester(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &requesterName,
-    const std::string &mountPolicy,
-    const std::string &comment) = 0;
-
-  virtual void deleteRequester(const std::string &requesterName) = 0;
-  virtual std::list<common::dataStructures::Requester> getRequesters() const = 0;
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const common::dataStructures::UserIdentity &user, const std::string &comment) = 0;
 
@@ -158,36 +151,87 @@ public:
     const std::string &comment) = 0;
 
   /**
-   * Assigns the specified mount policy to the specified requester.
+   * Returns the list of all existing mount policies.
    *
-   * Please note that requester mount-policies overrule requester-group
-   * mount-policies.
+   * @return the list of all existing mount policies.
+   */
+  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+
+  /**
+   * Deletes the specified mount policy.
+   *
+   * @param name The name of the mount policy.
+   */
+  virtual void deleteMountPolicy(const std::string &name) = 0;
+
+  /**
+   * Creates the rule that the specified mount policy will be used for the
+   * specified requester.
+   *
+   * Please note that requester mount-rules overrule requester-group
+   * mount-rules.
    *
    * @param cliIdentity The user of the command-line tool.
    * @param mountPolicyName The name of the mount policy.
    * @param requesterName The name of the requester.
    * @param comment Comment.
    */
-  virtual void assignMountPolicyToRequester(
+  virtual void createRequesterMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
     const std::string &requesterName,
     const std::string &comment) = 0;
 
   /**
-   * Assigns the specified mount policy to the specified requester group.
+   * Returns the rules that specify which mount policy is be used for which
+   * requester.
    *
-   * Please note that requester mount-policies overrule requester-group
-   * mount-policies.
-   *
-   * @param mountPolicyName The name of the mount policy.
-   * @param requesterGrouprName The name of the requester group.
+   * @return the rules that specify which mount policy is be used for which
+   * requester.
    */
-  virtual void assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
-    const std::string &requesterGroupName) = 0;
+  virtual std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const = 0;
 
-  virtual void deleteMountPolicy(const std::string &name) = 0;
-  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+  /**
+   * Deletes the specified mount rule.
+   *
+   * @param requesterName The name of the requester.
+   */
+  virtual void deleteRequesterMountRule(const std::string &requesterName) = 0;
+
+  /**
+   * Creates the rule that the specified mount policy will be used for the
+   * specified requester group.
+   *
+   * Please note that requester mount-rules overrule requester-group
+   * mount-rules.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param mountPolicyName The name of the mount policy.
+   * @param requesterGroupName The name of the requester group.
+   * @param comment Comment.
+   */
+  virtual void createRequesterGroupMountRule(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &mountPolicyName,
+    const std::string &requesterGroupName,
+    const std::string &comment) = 0;
+
+  /**
+   * Returns the rules that specify which mount policy is be used for which
+   * requester group.
+   *
+   * @return the rules that specify which mount policy is be used for which
+   * requester group.
+   */
+  virtual std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const = 0;
+
+  /**
+   * Deletes the specified mount rule.
+   *
+   * @param requesterGroupName The name of the requester group.
+   */
+  virtual void deleteRequesterGroupMountRule(const std::string &requesterGroupName) = 0;
+
   virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) = 0;
   virtual void modifyMountPolicyArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued) = 0;
   virtual void modifyMountPolicyArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) = 0;
@@ -278,14 +322,6 @@ public:
     const common::dataStructures::UserIdentity &user) = 0;
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
-
-  /**
-   * Returns the mount policy for the specified end user.
-   *
-   * @param username The name of the end user.
-   * @return The mount policy.
-   */
-  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const std::string &username) const = 0;
 
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 

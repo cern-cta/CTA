@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/Requester.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -27,33 +27,31 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Requester::Requester() {}
+RequesterMountRule::RequesterMountRule() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool Requester::operator==(const Requester &rhs) const {
+bool RequesterMountRule::operator==(const RequesterMountRule &rhs) const {
   return name==rhs.name
-      && group==rhs.group
-      && mountPolicy==rhs.mountPolicy
-      && creationLog==rhs.creationLog
-      && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+    && mountPolicy==rhs.mountPolicy
+    && creationLog==rhs.creationLog
+    && lastModificationLog==rhs.lastModificationLog
+    && comment==rhs.comment;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool Requester::operator!=(const Requester &rhs) const {
+bool RequesterMountRule::operator!=(const RequesterMountRule &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const Requester &obj) {
+std::ostream &operator<<(std::ostream &os, const RequesterMountRule &obj) {
   os << "(name=" << obj.name
-     << " group=" << obj.group
      << " mountPolicy=" << obj.mountPolicy
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog

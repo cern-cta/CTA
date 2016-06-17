@@ -191,22 +191,13 @@ RdbmsCatalogue::getAdminUsers() const {
       common::dataStructures::AdminUser admin;
 
       admin.name = rset->columnText("ADMIN_USER_NAME");
-
       admin.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      admin.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      admin.lastModificationLog = updateLog;
+      admin.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      admin.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      admin.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      admin.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      admin.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      admin.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       admins.push_back(admin);
     }
@@ -354,20 +345,12 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 
       host.name = rset->columnText("ADMIN_HOST_NAME");
       host.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      host.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      host.lastModificationLog = updateLog;
+      host.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      host.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      host.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      host.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      host.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      host.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       hosts.push_back(host);
     }
@@ -527,20 +510,12 @@ std::list<common::dataStructures::StorageClass>
       storageClass.name = rset->columnText("STORAGE_CLASS_NAME");
       storageClass.nbCopies = rset->columnUint64("NB_COPIES");
       storageClass.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      storageClass.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      storageClass.lastModificationLog = updateLog;
+      storageClass.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      storageClass.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      storageClass.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      storageClass.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      storageClass.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      storageClass.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       storageClasses.push_back(storageClass);
     }
@@ -706,22 +681,13 @@ std::list<common::dataStructures::TapePool>
       pool.name = rset->columnText("TAPE_POOL_NAME");
       pool.nbPartialTapes = rset->columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset->columnUint64("IS_ENCRYPTED");
-
       pool.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      pool.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      pool.lastModificationLog = updateLog;
+      pool.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      pool.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      pool.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      pool.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      pool.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      pool.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       pools.push_back(pool);
     }
@@ -876,22 +842,13 @@ std::list<common::dataStructures::ArchiveRoute>
       route.storageClassName = rset->columnText("STORAGE_CLASS_NAME");
       route.copyNb = rset->columnUint64("COPY_NB");
       route.tapePoolName = rset->columnText("TAPE_POOL_NAME");
-
       route.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      route.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      route.lastModificationLog = updateLog;
+      route.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      route.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      route.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      route.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      route.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      route.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       routes.push_back(route);
     }
@@ -1045,22 +1002,13 @@ std::list<common::dataStructures::LogicalLibrary>
       common::dataStructures::LogicalLibrary lib;
 
       lib.name = rset->columnText("LOGICAL_LIBRARY_NAME");
-
       lib.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      lib.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      lib.lastModificationLog = updateLog;
+      lib.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      lib.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      lib.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      lib.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      lib.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      lib.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       libs.push_back(lib);
     }
@@ -1367,20 +1315,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
       tape.lastWriteLog.time = rset->columnUint64("LAST_WRITE_TIME");
 
       tape.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      tape.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      tape.lastModificationLog = updateLog;
+      tape.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      tape.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      tape.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      tape.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      tape.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      tape.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
       tapes.push_back(tape);
     }
@@ -1480,147 +1420,6 @@ void RdbmsCatalogue::setTapeLbp(const common::dataStructures::SecurityIdentity &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
-// createRequester
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::createRequester(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &requesterName,
-  const std::string &mountPolicy,
-  const std::string &comment) {
-  try {
-    if(requesterExists(requesterName)) {
-      throw UserError(std::string("Cannot create requester ") + requesterName +
-        " because a requester with the same username already exists");
-    }
-    const uint64_t now = time(NULL);
-    const char *const sql =
-      "INSERT INTO REQUESTER("
-        "REQUESTER_NAME,"
-        "MOUNT_POLICY_NAME,"
-
-        "USER_COMMENT,"
-
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
-
-        "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME)"
-      "VALUES("
-        ":REQUESTER_NAME,"
-        ":MOUNT_POLICY_NAME,"
-
-        ":USER_COMMENT,"
-
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
-
-        ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-
-    stmt->bindString(":REQUESTER_NAME", requesterName);
-    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
-
-    stmt->bindString(":USER_COMMENT", comment);
-
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
-    stmt->bindUint64(":CREATION_LOG_TIME", now);
-
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
-    stmt->bindUint64(":LAST_UPDATE_TIME", now);
-
-    stmt->executeNonQuery();
-  } catch(UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// deleteRequester
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteRequester(const std::string &requesterName) {
-  try {
-    const char *const sql = "DELETE FROM REQUESTER WHERE REQUESTER_NAME = :REQUESTER_NAME;";
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":REQUESTER_NAME", requesterName);
-    stmt->executeNonQuery();
-
-    if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete requester ") + requesterName + " because they do not exist");
-    }
-  } catch(UserError &) {
-    throw;
-  } catch (exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// getRequesters
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::Requester>
-  RdbmsCatalogue::getRequesters() const {
-  try {
-    std::list<common::dataStructures::Requester> users;
-    const char *const sql =
-      "SELECT "
-        "REQUESTER_NAME AS REQUESTER_NAME,"
-        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
-
-        "USER_COMMENT AS USER_COMMENT,"
-
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "REQUESTER";
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
-    while(rset->next()) {
-      common::dataStructures::Requester user;
-
-      user.name = rset->columnText("REQUESTER_NAME");
-      user.group = "N/A";
-      user.mountPolicy = rset->columnText("MOUNT_POLICY_NAME");
-
-      user.comment = rset->columnText("USER_COMMENT");
-
-      common::dataStructures::EntryLog creationLog;
-      creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-      creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-      creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-      user.creationLog = creationLog;
-
-      common::dataStructures::EntryLog updateLog;
-      updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-      updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-      updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-      user.lastModificationLog = updateLog;
-
-      users.push_back(user);
-    }
-
-    return users;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1727,26 +1526,27 @@ void RdbmsCatalogue::createMountPolicy(
 }
 
 //------------------------------------------------------------------------------
-// assignMountPolicyToRequester
+// createRequesterMountRule
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::assignMountPolicyToRequester(
+void RdbmsCatalogue::createRequesterMountRule(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &mountPolicyName,
   const std::string &requesterName,
   const std::string &comment) {
   try {
-    std::unique_ptr<common::dataStructures::MountPolicy> requesterMountPolicy(getRequesterMountPolicy(requesterName));
-    if(NULL != requesterMountPolicy.get()) {
-      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester " + requesterName +
-        " because the requester is already assigned mount-policy " + requesterMountPolicy->name);
+    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterMountPolicy(requesterName));
+    if(NULL != mountPolicy.get()) {
+      throw UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName + " to requester " +
+        requesterName + " because a rule already exists assigning the requester to mount-policy " +
+        mountPolicy->name);
     }
     if(!mountPolicyExists(mountPolicyName)) {
-      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester " + requesterName +
-        " because mount-policy " + mountPolicyName + " does not exist");
+      throw UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName + " to requester " +
+        requesterName + " because mount-policy " + mountPolicyName + " does not exist");
     }
     const uint64_t now = time(NULL);
     const char *const sql =
-      "INSERT INTO REQUESTER("
+      "INSERT INTO REQUESTER_MOUNT_RULE("
         "REQUESTER_NAME,"
         "MOUNT_POLICY_NAME,"
 
@@ -1796,11 +1596,277 @@ void RdbmsCatalogue::assignMountPolicyToRequester(
 }
 
 //------------------------------------------------------------------------------
-// assignMountPolicyToRequesterGroup
+// getRequesterMountRules
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::assignMountPolicyToRequesterGroup(const std::string &mountPolicyName,
-  const std::string &requesterGroupName) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequesterMountRules() const {
+  try {
+    std::list<common::dataStructures::RequesterMountRule> rules;
+    const char *const sql =
+      "SELECT "
+        "REQUESTER_NAME AS REQUESTER_NAME,"
+        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_MOUNT_RULE;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    while(rset->next()) {
+      common::dataStructures::RequesterMountRule rule;
+
+      rule.name = rset->columnText("REQUESTER_NAME");
+      rule.mountPolicy = rset->columnText("MOUNT_POLICY_NAME");
+      rule.comment = rset->columnText("USER_COMMENT");
+      rule.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      rule.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      rule.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      rule.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      rule.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      rule.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      rules.push_back(rule);
+    }
+
+    return rules;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteRequesterMountRule
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteRequesterMountRule(const std::string &requesterName) {
+  try {
+    const char *const sql = "DELETE FROM REQUESTER_MOUNT_RULE WHERE REQUESTER_NAME = :REQUESTER_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete mount rule for requester ") + requesterName +
+        " because the rule does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// createRequesterGroupMountRule
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::createRequesterGroupMountRule(
+  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &mountPolicyName,
+  const std::string &requesterGroupName,
+  const std::string &comment) {
+  try {
+    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterGroupMountPolicy(requesterGroupName));
+    if(NULL != mountPolicy.get()) {
+      throw UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
+        " to requester-group " + requesterGroupName + " because a rule already exists assigning the requester-group to "
+        "mount-policy " + mountPolicy->name);
+    }
+    if(!mountPolicyExists(mountPolicyName)) {
+      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
+        requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
+    }
+    const uint64_t now = time(NULL);
+    const char *const sql =
+      "INSERT INTO REQUESTER_GROUP_MOUNT_RULE("
+        "REQUESTER_GROUP_NAME,"
+        "MOUNT_POLICY_NAME,"
+
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+      "VALUES("
+        ":REQUESTER_GROUP_NAME,"
+        ":MOUNT_POLICY_NAME,"
+
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+
+    stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
+
+    stmt->bindString(":USER_COMMENT", comment);
+
+    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+
+    stmt->executeNonQuery();
+  } catch(UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getRequesterGroupMountPolicy
+//------------------------------------------------------------------------------
+common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolicy(
+  const std::string &requesterGroupName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+
+        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
+
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "MOUNT_POLICY "
+      "INNER JOIN "
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "ON "
+        "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    if(rset->next()) {
+      std::unique_ptr<common::dataStructures::MountPolicy> policy(new common::dataStructures::MountPolicy);
+
+      policy->name = rset->columnText("MOUNT_POLICY_NAME");
+
+      policy->archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
+      policy->archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+
+      policy->retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
+      policy->retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+
+      policy->maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+
+      policy->comment = rset->columnText("USER_COMMENT");
+      policy->creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      policy->creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      policy->creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      policy->lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      policy->lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      policy->lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      return policy.release();
+    } else {
+      return NULL;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getRequesterGroupMountRules
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRequesterGroupMountRules() const {
+  try {
+    std::list<common::dataStructures::RequesterGroupMountRule> rules;
+    const char *const sql =
+      "SELECT "
+        "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME,"
+        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_GROUP_MOUNT_RULE;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    while(rset->next()) {
+      common::dataStructures::RequesterGroupMountRule rule;
+
+      rule.name = rset->columnText("REQUESTER_GROUP_NAME");
+      rule.mountPolicy = rset->columnText("MOUNT_POLICY_NAME");
+
+      rule.comment = rset->columnText("USER_COMMENT");
+      rule.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      rule.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      rule.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      rule.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      rule.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      rule.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      rules.push_back(rule);
+    }
+
+    return rules;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteRequesterGroupMountRule
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &requesterGroupName) {
+  try {
+    const char *const sql =
+      "DELETE FROM REQUESTER_GROUP_MOUNT_RULE WHERE REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME;";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw UserError(std::string("Cannot delete the mount rule for requester group ") + requesterGroupName +
+        " because it does not exist");
+    }
+  } catch(UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1833,7 +1899,7 @@ bool RdbmsCatalogue::requesterExists(const std::string &requesterName) const {
       "SELECT "
         "REQUESTER_NAME AS REQUESTER_NAME "
       "FROM "
-        "REQUESTER "
+        "REQUESTER_MOUNT_RULE "
       "WHERE "
         "REQUESTER_NAME = :REQUESTER_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -1874,11 +1940,11 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(con
       "FROM "
         "MOUNT_POLICY "
       "INNER JOIN "
-        "REQUESTER "
+        "REQUESTER_MOUNT_RULE "
       "ON "
-        "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
+        "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME "
       "WHERE "
-        "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME;";
+        "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":REQUESTER_NAME", requesterName);
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -1924,7 +1990,7 @@ bool RdbmsCatalogue::requesterGroupExists(const std::string &requesterGroupName)
       "SELECT "
         "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME "
       "FROM "
-        "REQUESTER_GROUP "
+        "REQUESTER_GROUP_MOUNT_RULE "
       "WHERE "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME;";
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -2428,7 +2494,7 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageCl
 }
 
 //------------------------------------------------------------------------------
-// getArchiveMountPolicy
+// getMountPolicyForAUser
 //------------------------------------------------------------------------------
 common::dataStructures::MountPolicy RdbmsCatalogue::getMountPolicyForAUser(const std::string &username) const {
   const char *const sql =
@@ -2453,10 +2519,10 @@ common::dataStructures::MountPolicy RdbmsCatalogue::getMountPolicyForAUser(const
       "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
     "FROM "
       "MOUNT_POLICY "
-    "INNER JOIN REQUESTER ON "
-      "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER.MOUNT_POLICY_NAME "
+    "INNER JOIN REQUESTER_MOUNT_RULE ON "
+      "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME "
     "WHERE "
-      "REQUESTER.REQUESTER_NAME = :REQUESTER_NAME";
+      "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME";
   std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
   stmt->bindString(":REQUESTER_NAME", username);
   std::unique_ptr<DbRset> rset(stmt->executeQuery());
@@ -2476,19 +2542,14 @@ common::dataStructures::MountPolicy RdbmsCatalogue::getMountPolicyForAUser(const
 
     policy.comment = rset->columnText("USER_COMMENT");
 
-    common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+    policy.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+    policy.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+    policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
-    policy.creationLog = creationLog;
+    policy.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+    policy.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+    policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
-    common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-    policy.lastModificationLog = updateLog;
     return policy;
   } else {
     exception::Exception ex;
@@ -2661,14 +2722,14 @@ std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFile
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset->next()) {
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = rset->columnText("VID");
-        tapeFile.fSeq = rset->columnUint64("FSEQ");
-        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
-        tapeFile.copyNb = rset->columnUint64("COPY_NB");
-        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
+      common::dataStructures::TapeFile tapeFile;
+      tapeFile.vid = rset->columnText("VID");
+      tapeFile.fSeq = rset->columnUint64("FSEQ");
+      tapeFile.blockId = rset->columnUint64("BLOCK_ID");
+      tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
+      tapeFile.copyNb = rset->columnUint64("COPY_NB");
+      tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+      tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
     }
 
     return tapeFiles;
