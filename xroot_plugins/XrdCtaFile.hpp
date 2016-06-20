@@ -74,7 +74,7 @@ protected:
   /**
    * The scheduler object pointer
    */
-  cta::log::Logger *m_log;
+  cta::log::Logger &m_log;
   
   /**
    * This is the string holding the result of the command
@@ -87,6 +87,16 @@ protected:
   cta::common::dataStructures::FrontendReturnCode m_rc;
   
   /**
+   * The original client request represented as a vector of strings
+   */
+  std::vector<std::string> m_tokens;
+  
+  /**
+   * The client identity info: username and host
+   */
+  cta::common::dataStructures::SecurityIdentity m_cliIdentity;
+  
+  /**
    * Decodes a string in base 64
    * 
    * @param msg string to decode
@@ -95,12 +105,11 @@ protected:
   std::string decode(const std::string msg) const;
   
   /**
-   * Checks whether client has correct permissions and returns the corresponding SecurityIdentity structure
+   * Checks whether client has correct permissions and fills the corresponding SecurityIdentity structure
    * 
    * @param client  The client security entity
-   * @return        The requester cta structure
    */
-  cta::common::dataStructures::SecurityIdentity checkClient(const XrdSecEntity *client);
+  void checkClient(const XrdSecEntity *client);
   
   /**
    * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
@@ -118,7 +127,7 @@ protected:
    * @param requester  The requester identity
    * @return           SFS_OK in case command succeeded, SFS_ERROR otherwise
    */
-  int dispatchCommand(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  int dispatchCommand();
   
   /**
    * Given the command line string vector it returns the value of the specified option or an empty string if absent
@@ -129,7 +138,7 @@ protected:
    * @param encoded         True if the argument is encoded, false otherwise
    * @return the value of the option or an empty string if absent
    */
-  std::string getOptionValue(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  std::string getOptionValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
   
   /**
    * Given the command line string vector it returns true if the specified option is present, false otherwise
@@ -139,36 +148,36 @@ protected:
    * @param optionLongName  The long name of the required option
    * @return true if the specified option is present, false otherwise
    */
-  bool hasOption(const std::vector<std::string> &tokens, const std::string& optionShortName, const std::string& optionLongName);
+  bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
   
-  int xCom_bootstrap(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_admin(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_adminhost(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_tapepool(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_archiveroute(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_logicallibrary(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_tape(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_storageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_user(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_mountpolicy(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_dedication(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_repack(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_shrink(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_verify(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_archivefile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_test(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_drive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_reconcile(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_listpendingarchives(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_listpendingretrieves(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_listdrivestates(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_archive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_retrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_deletearchive(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_cancelretrieve(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_updatefileinfo(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_updatefilestorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  int xCom_liststorageclass(const std::vector<std::string> &tokens, const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  int xCom_bootstrap();
+  int xCom_admin();
+  int xCom_adminhost();
+  int xCom_tapepool();
+  int xCom_archiveroute();
+  int xCom_logicallibrary();
+  int xCom_tape();
+  int xCom_storageclass();
+  int xCom_user();
+  int xCom_mountpolicy();
+  int xCom_dedication();
+  int xCom_repack();
+  int xCom_shrink();
+  int xCom_verify();
+  int xCom_archivefile();
+  int xCom_test();
+  int xCom_drive();
+  int xCom_reconcile();
+  int xCom_listpendingarchives();
+  int xCom_listpendingretrieves();
+  int xCom_listdrivestates();
+  int xCom_archive();
+  int xCom_retrieve();
+  int xCom_deletearchive();
+  int xCom_cancelretrieve();
+  int xCom_updatefileinfo();
+  int xCom_updatefilestorageclass();
+  int xCom_liststorageclass();
   
   /**
    * Returns the response string properly formatted in a table
@@ -211,6 +220,16 @@ protected:
    * @return the conversion result
    */
   uint64_t stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const;
+  
+  /**
+   * Sets the return code of the cmdline client and its output. Always returns SFS_OK, which is the only xroot return 
+   * code that allows the copy process to happen successfully. Logs the original request and any error in processing it.
+   * 
+   * @param  rc The return code of the cmdline client
+   * @param  returnString The output of the cmdline client
+   * @return SFS_OK
+   */
+  int logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
 };
 
 }}

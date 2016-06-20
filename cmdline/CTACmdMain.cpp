@@ -174,6 +174,7 @@ int main(const int argc, const char **argv) {
       return fut.get();
     }
     else {//timeout
+      std::cerr << "Failed to execute the command. CTA front end server TIMEOUT!" << std::endl;
       exit(cta::common::dataStructures::FrontendReturnCode::ctaFrontendTimeout);
     }
   } catch(cta::exception::Exception &ex) {
