@@ -472,70 +472,48 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
   }
 }
 
-/*
-TEST_P(SchedulerTest, retry_archive_until_max_reached) {
+TEST_P(SchedulerTest, DISABLED_retry_archive_until_max_reached) {
   using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-  MountCriteriaByDirection mcbd(MountCriteria(1,1,0,1), MountCriteria(1,1,0,1));
-  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TestTapePool", mcbd));
-
-  const std::string libraryName = "TestLogicalLibrary";
-  const std::string libraryComment = "Library comment";
-  ASSERT_NO_THROW(scheduler.createLogicalLibrary(s_adminOnAdminHost, libraryName,
-    libraryComment));
-  {
-    std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
-      s_adminOnAdminHost));
-    ASSERT_EQ(1, libraries.size());
   
-    LogicalLibrary logicalLibrary;
-    ASSERT_NO_THROW(logicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, logicalLibrary.name);
-    ASSERT_EQ(libraryComment, logicalLibrary.creationLog.comment);
+  setupDefaultCatalogue();
+
+  auto &scheduler = getScheduler();
+  
+  uint64_t archiveFileId;
+  {
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DRData drData;
+    drData.drBlob="blob";
+    drData.drGroup="group2";
+    drData.drOwner="cms_user";
+    drData.drPath="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumType="Adler32";
+    request.checksumValue="1111";
+    request.creationLog=creationLog;
+    request.diskpoolName="diskpool1";
+    request.diskpoolThroughput=200*1000*1000;
+    request.drData=drData;
+    request.diskFileID="diskFileID";
+    request.instance="cms";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::UserIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    request.storageClass=s_storageClassName;
+    archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
   }
-
-  const std::string vid = "TestVid";
-  const uint64_t capacityInBytes = 12345678;
-  const std::string tapeComment = "Tape comment";  
-  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName,
-    tapePoolName, capacityInBytes, tapeComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
   
   {
     // Emulate a tape server by asking for a mount and then a file
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
@@ -544,6 +522,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     // The file should be retried 10 times
     for (int i=0; i<5; i++) {
       std::unique_ptr<cta::ArchiveJob> archiveJob;
+      // Validate we got the right file
+      ASSERT_EQ(archiveFileId, archiveJob->archiveFile.fileId);
       ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
       ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
       ASSERT_NO_THROW(archiveJob->failed(cta::exception::Exception("Archive failed")));
@@ -554,29 +534,37 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
   }
 }
-*/
-/*
+
 TEST_P(SchedulerTest, retrieve_non_existing_file) {
   using namespace cta;
-
+  
+  setupDefaultCatalogue();
+  
   Scheduler &scheduler = getScheduler();
 
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
   {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_FALSE(itor.hasMore());
-  }
-
-  {
-    std::list<std::string> archiveFiles;
-    archiveFiles.push_back("/non_existing_file");
-    ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
-      archiveFiles, "mock:non_existing_file"), std::exception);
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DRData drData;
+    drData.drBlob="blob";
+    drData.drGroup="group2";
+    drData.drOwner="cms_user";
+    drData.drPath="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = 12345;
+    request.creationLog = creationLog;
+    request.diskpoolName = "diskpool1";
+    request.diskpoolThroughput = 200*1000*1000;
+    request.drData = drData;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    ASSERT_THROW(scheduler.queueRetrieve(s_adminOnAdminHost, request), cta::exception::Exception);
   }
 }
-*/
+
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
