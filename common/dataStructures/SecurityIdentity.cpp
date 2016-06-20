@@ -30,6 +30,12 @@ namespace dataStructures {
 SecurityIdentity::SecurityIdentity() {}
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host):
+  username(username), host(host) {}
+
+//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool SecurityIdentity::operator==(const SecurityIdentity &rhs) const {

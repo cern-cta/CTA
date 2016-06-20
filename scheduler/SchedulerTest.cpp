@@ -108,98 +108,104 @@ public:
     }
     return *ptr;
   }
+  
+  void setupDefaultCatalogue() {
+    using namespace cta;
+    auto & catalogue=getCatalogue();
+
+    const std::string mountPolicyName = "mount_group";
+    const uint64_t archivePriority = 1;
+    const uint64_t minArchiveRequestAge = 2;
+    const uint64_t retrievePriority = 3;
+    const uint64_t minRetrieveRequestAge = 4;
+    const uint64_t maxDrivesAllowed = 5;
+    const std::string mountPolicyComment = "create mount group";
+
+    ASSERT_TRUE(catalogue.getMountPolicies().empty());
+
+    catalogue.createMountPolicy(
+      s_adminOnAdminHost,
+      mountPolicyName,
+      archivePriority,
+      minArchiveRequestAge,
+      retrievePriority,
+      minRetrieveRequestAge,
+      maxDrivesAllowed,
+      mountPolicyComment);
+
+    const std::list<common::dataStructures::MountPolicy> groups =
+      catalogue.getMountPolicies();
+    ASSERT_EQ(1, groups.size());
+    const common::dataStructures::MountPolicy group = groups.front();
+    ASSERT_EQ(mountPolicyName, group.name);
+    ASSERT_EQ(archivePriority, group.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
+    ASSERT_EQ(retrievePriority, group.retrievePriority);
+    ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
+    ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
+    ASSERT_EQ(mountPolicyComment, group.comment);
+
+    const std::string userComment = "create user";
+    cta::common::dataStructures::UserIdentity userIdentity;
+    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_userName, userComment);
+
+    std::list<common::dataStructures::RequesterMountRule> users;
+    users = catalogue.getRequesterMountRules();
+    ASSERT_EQ(1, users.size());
+
+    const common::dataStructures::RequesterMountRule user = users.front();
+
+    ASSERT_EQ(s_userName, user.name);
+    ASSERT_EQ(mountPolicyName, user.mountPolicy);
+    ASSERT_EQ(userComment, user.comment);
+    ASSERT_EQ(s_adminOnAdminHost.username, user.creationLog.username);
+    ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);
+    ASSERT_EQ(user.creationLog, user.lastModificationLog);
+
+    const uint16_t nbCopies = 1;
+    const std::string storageClassComment = "Storage-class comment";
+    ASSERT_NO_THROW(catalogue.createStorageClass(s_adminOnAdminHost, s_storageClassName,
+      nbCopies, storageClassComment));
+
+    const uint16_t nbPartialTapes = 1;
+    const std::string tapePoolComment = "Tape-pool comment";
+    const bool tapePoolEncryption = false;
+    ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName,
+      nbPartialTapes, tapePoolEncryption, tapePoolComment));
+    const uint16_t copyNb = 1;
+    const std::string archiveRouteComment = "Archive-route comment";
+    ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName,
+      copyNb, s_tapePoolName, archiveRouteComment));
+  }
 
 private:
 
   // Prevent copying
-  SchedulerTest(const SchedulerTest &);
+  SchedulerTest(const SchedulerTest &) = delete;
 
   // Prevent assignment
-  SchedulerTest & operator= (const SchedulerTest &);
+  SchedulerTest & operator= (const SchedulerTest &) = delete;
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
+  
+protected:
+  // Default parameters for storage classes, etc...
+  const std::string s_userName = "user_name";
+  const std::string s_storageClassName = "TestStorageClass";
+  const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
+  const std::string s_tapePoolName = "TestTapePool";
+  const std::string s_libraryName = "TestLogicalLibrary";
+  const std::string s_vid = "TestVid";
 
 }; // class SchedulerTest
 
 TEST_P(SchedulerTest, archive_to_new_file) {
   using namespace cta;
 
-  catalogue::Catalogue &catalogue = getCatalogue();
+  setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
-  
-  cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost;
-  s_adminOnAdminHost.username="admin1";
-  s_adminOnAdminHost.host="host1";
-
-  const std::string mountPolicyName = "mount_group";
-  const uint64_t archivePriority = 1;
-  const uint64_t minArchiveRequestAge = 2;
-  const uint64_t retrievePriority = 3;
-  const uint64_t minRetrieveRequestAge = 4;
-  const uint64_t maxDrivesAllowed = 5;
-  const std::string mountPolicyComment = "create mount group";
-
-  ASSERT_TRUE(catalogue.getMountPolicies().empty());
-
-  catalogue.createMountPolicy(
-    s_adminOnAdminHost,
-    mountPolicyName,
-    archivePriority,
-    minArchiveRequestAge,
-    retrievePriority,
-    minRetrieveRequestAge,
-    maxDrivesAllowed,
-    mountPolicyComment);
-
-  const std::list<common::dataStructures::MountPolicy> groups =
-    catalogue.getMountPolicies();
-  ASSERT_EQ(1, groups.size());
-  const common::dataStructures::MountPolicy group = groups.front();
-  ASSERT_EQ(mountPolicyName, group.name);
-  ASSERT_EQ(archivePriority, group.archivePriority);
-  ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
-  ASSERT_EQ(retrievePriority, group.retrievePriority);
-  ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
-  ASSERT_EQ(mountPolicyComment, group.comment);
-
-  const std::string userComment = "create user";
-  const std::string userName = "user_name";
-  cta::common::dataStructures::UserIdentity userIdentity;
-  catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, userName, userComment);
-
-  std::list<common::dataStructures::RequesterMountRule> users;
-  users = catalogue.getRequesterMountRules();
-  ASSERT_EQ(1, users.size());
-
-  const common::dataStructures::RequesterMountRule user = users.front();
-
-  ASSERT_EQ(userName, user.name);
-  ASSERT_EQ(mountPolicyName, user.mountPolicy);
-  ASSERT_EQ(userComment, user.comment);
-  ASSERT_EQ(s_adminOnAdminHost.username, user.creationLog.username);
-  ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);
-  ASSERT_EQ(user.creationLog, user.lastModificationLog);
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(catalogue.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  const bool tapePoolEncryption = false;
-  ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolEncryption, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
   
   cta::common::dataStructures::EntryLog creationLog;
   creationLog.host="host2";
@@ -221,11 +227,11 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.instance="cms";
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
-  requester.name = userName;
+  requester.name = s_userName;
   requester.group = "userGroup";
   request.requester = requester;
   request.srcURL="srcURL";
-  request.storageClass=storageClassName;
+  request.storageClass=s_storageClassName;
 
   scheduler.queueArchive(s_adminOnAdminHost, request);
 
@@ -235,7 +241,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
     const std::string pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool);
+    ASSERT_TRUE(s_tapePoolName == pool);
     auto poolRqsts = poolItor->second;
     ASSERT_EQ(1, poolRqsts.size());
     std::set<std::string> remoteFiles;
@@ -249,728 +255,100 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 }
 
+TEST_P(SchedulerTest, DISABLED_delete_archive_request) {
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  
+  setupDefaultCatalogue();
+
+  cta::common::dataStructures::EntryLog creationLog;
+  creationLog.host="host2";
+  creationLog.time=0;
+  creationLog.username="admin1";
+  cta::common::dataStructures::DRData drData;
+  drData.drBlob="blob";
+  drData.drGroup="group2";
+  drData.drOwner="cms_user";
+  drData.drPath="path/to/file";
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumType="Adler32";
+  request.checksumValue="1111";
+  request.creationLog=creationLog;
+  request.diskpoolName="diskpool1";
+  request.diskpoolThroughput=200*1000*1000;
+  request.drData=drData;
+  request.diskFileID="diskFileID";
+  request.instance="cms";
+  request.fileSize=100*1000*1000;
+  cta::common::dataStructures::UserIdentity requester;
+  requester.name = s_userName;
+  requester.group = "userGroup";
+  request.requester = requester;
+  request.srcURL="srcURL";
+  request.storageClass=s_storageClassName;
+
+  auto archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
+  
+  // Check that we have the file in the queues
+  // TODO: for this to work all the time, we need an index of all requests
+  // (otherwise we miss the selected ones).
+  // Could also be limited to querying by ID (global index needed)
+  bool found=false;
+  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+    for (auto & req: tp.second) {
+      if (req.archiveFileID == archiveFileId)
+        found = true;
+    }
+  }
+  ASSERT_TRUE(found);
+  
+  // Remove the request
+  cta::common::dataStructures::DeleteArchiveRequest dar;
+  dar.archiveFileID = archiveFileId;
+  dar.requester.group = "group1";
+  dar.requester.name = "user1";
+  scheduler.deleteArchive(s_adminOnAdminHost, dar);
+  
+  // Validate that the request is gone.
+  found=false;
+  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+    for (auto & req: tp.second) {
+      if (req.archiveFileID == archiveFileId)
+        found = true;
+    }
+  }
+  ASSERT_FALSE(found);
+}
+
 /*
-TEST_P(SchedulerTest, archive_to_new_user_file_as_admin) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_adminOnAdminHost, remoteFiles, archiveFile), std::exception);
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    ASSERT_FALSE(itor.hasMore());
-  }
-
-  {
-    ASSERT_NO_THROW(ASSERT_TRUE(scheduler.getArchiveRequests(s_adminOnAdminHost).empty()));
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_TRUE(poolRqsts.empty());
-  }
-}
-
-TEST_P(SchedulerTest, archive_twice_to_same_file) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
-    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
-      archiveFile));
-    ASSERT_TRUE(status.get());
-    ASSERT_EQ(storageClassName, status->storageClassName);
-  }
-
-  {
-    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
-    ASSERT_EQ(1, rqsts.size());
-    auto poolItor = rqsts.cbegin();
-    ASSERT_FALSE(poolItor == rqsts.cend());
-    const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.name);
-    auto poolRqsts = poolItor->second;
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin();
-      rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
-      archiveFiles.end());
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
-      rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
-  }
-
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
-    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
-      archiveFile));
-    ASSERT_TRUE(status.get());
-    ASSERT_EQ(storageClassName, status->storageClassName);
-  }
-
-  {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
-    ASSERT_EQ(1, rqsts.size());
-    auto poolItor = rqsts.cbegin();
-    ASSERT_FALSE(poolItor == rqsts.cend());
-    const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.name);
-    auto poolRqsts = poolItor->second;
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin();
-      rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
-      archiveFiles.end());
-  }
-}
-
-TEST_P(SchedulerTest, delete_archive_request) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
-    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
-      archiveFile));
-    ASSERT_TRUE(status.get());
-    ASSERT_EQ(storageClassName, status->storageClassName);
-  }
-
-  {
-    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
-    ASSERT_EQ(1, rqsts.size());
-    auto poolItor = rqsts.cbegin();
-    ASSERT_FALSE(poolItor == rqsts.cend());
-    const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.name);
-    auto poolRqsts = poolItor->second;
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin();
-      rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
-      archiveFiles.end());
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
-      rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
-  }
-
-  ASSERT_NO_THROW(scheduler.deleteArchiveRequest(s_userOnUserHost,
-    "/grandparent/parent_file"));
-
-  {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
-    ASSERT_TRUE(rqsts.empty());
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_TRUE(poolRqsts.empty());
-  }
-
-  {
-    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
-    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_userOnUserHost,
-      "/grandparent/parent_file"));
-    ASSERT_FALSE(status.get());
-  }
-}
-
-TEST_P(SchedulerTest, archive_to_new_file_with_no_storage_class) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest, create_zero_copy_storage_class) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 0;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment), std::exception);
-}
-
-TEST_P(SchedulerTest, archive_to_new_file_with_no_route) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest,
-  archive_to_new_file_with_incomplete_routing) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 2;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest, archive_to_directory) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  remoteFiles.push_back(s_remoteFileRawPath2);
-  remoteFiles.push_back(s_remoteFileRawPath3);
-  remoteFiles.push_back(s_remoteFileRawPath4);
-  const std::string archiveFile  = "/grandparent";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
-
-  {
-    ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    std::set<std::string> archiveFileNames;
-    ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    while(itor.hasMore()) {
-      const common::archiveNS::ArchiveDirEntry entry = itor.next();
-      archiveFileNames.insert(entry.name);
-    }
-    ASSERT_EQ(4, archiveFileNames.size());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename1) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename2) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename3) != archiveFileNames.end());
-    ASSERT_TRUE(archiveFileNames.find(s_remoteFilename4) != archiveFileNames.end());
-  }
-
-  {
-    const auto rqsts = scheduler.getArchiveRequests(s_userOnUserHost);
-    ASSERT_EQ(1, rqsts.size());
-    auto poolItor = rqsts.cbegin();
-    ASSERT_FALSE(poolItor == rqsts.cend());
-    const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.name);
-    const auto poolRqsts = poolItor->second;
-    ASSERT_EQ(4, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin();
-      rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(4, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath2) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath3) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath4) == remoteFiles.end());
-    ASSERT_EQ(4, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile1") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile2") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile3") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile4") == remoteFiles.end());
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_EQ(4, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
-      rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(4, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath2) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath3) == remoteFiles.end());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath4) == remoteFiles.end());
-    ASSERT_EQ(4, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile1") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile2") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile3") == remoteFiles.end());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/remoteFile4") == remoteFiles.end());
-  }
-}
-
-TEST_P(SchedulerTest,
-  archive_to_directory_without_storage_class) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  remoteFiles.push_back(s_remoteFileRawPath2);
-  remoteFiles.push_back(s_remoteFileRawPath3);
-  remoteFiles.push_back(s_remoteFileRawPath4);
-  const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
-    archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest, archive_to_directory_with_no_route) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  remoteFiles.push_back(s_remoteFileRawPath2);
-  remoteFiles.push_back(s_remoteFileRawPath3);
-  remoteFiles.push_back(s_remoteFileRawPath4);
-  const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles,
-    archiveFile), std::exception);
-}
-
-TEST_P(SchedulerTest, archive_to_directory_with_incomplete_routing) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 2;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  remoteFiles.push_back(s_remoteFileRawPath2);
-  remoteFiles.push_back(s_remoteFileRawPath3);
-  remoteFiles.push_back(s_remoteFileRawPath4);
-  const std::string archiveFile  = "/grandparent";
-  ASSERT_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile), std::exception);
-}
-
 TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
-
-  ASSERT_NO_THROW(scheduler.setOwner(s_adminOnAdminHost, "/", s_user));
-
-  const std::string storageClassName = "TestStorageClass";
-  const uint16_t nbCopies = 1;
-  const std::string storageClassComment = "Storage-class comment";
-  ASSERT_NO_THROW(scheduler.createStorageClass(s_adminOnAdminHost, storageClassName,
-    nbCopies, storageClassComment));
-
-  const std::string dirPath = "/grandparent";
-  const uint16_t mode = 0777;
-  ASSERT_NO_THROW(scheduler.createDir(s_userOnUserHost, dirPath, mode));
-  ASSERT_NO_THROW(scheduler.setDirStorageClass(s_userOnUserHost, dirPath,
-    storageClassName));
-
-  const std::string tapePoolName = "TestTapePool";
-  const uint16_t nbPartialTapes = 1;
-  const std::string tapePoolComment = "Tape-pool comment";
-  ASSERT_NO_THROW(scheduler.createTapePool(s_adminOnAdminHost, tapePoolName,
-    nbPartialTapes, tapePoolComment));
-  MountCriteriaByDirection mcbd(MountCriteria(1,1,0,1), MountCriteria(1,1,0,1));
-  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TestTapePool", mcbd));
-
-  const std::string libraryName = "TestLogicalLibrary";
+  auto &catalogue = getCatalogue();
+  
   const std::string libraryComment = "Library comment";
-  ASSERT_NO_THROW(scheduler.createLogicalLibrary(s_adminOnAdminHost, libraryName,
+  ASSERT_NO_THROW(catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryComment));
   {
-    std::list<LogicalLibrary> libraries;
-    ASSERT_NO_THROW(libraries = scheduler.getLogicalLibraries(
-      s_adminOnAdminHost));
+    auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
   
-    LogicalLibrary logicalLibrary;
-    ASSERT_NO_THROW(logicalLibrary = libraries.front());
-    ASSERT_EQ(libraryName, logicalLibrary.name);
-    ASSERT_EQ(libraryComment, logicalLibrary.creationLog.comment);
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
   }
 
-  const std::string vid = "TestVid";
   const uint64_t capacityInBytes = 12345678;
-  const std::string tapeComment = "Tape comment";  
-  ASSERT_NO_THROW(scheduler.createTape(s_adminOnAdminHost, vid, libraryName,
-    tapePoolName, capacityInBytes, tapeComment));
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  ASSERT_NO_THROW(catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
+    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment));
 
   const uint16_t copyNb = 1;
   const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(scheduler.createArchiveRoute(s_adminOnAdminHost, storageClassName,
+  ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, storageClassName,
     copyNb, tapePoolName, archiveRouteComment));
 
   std::list<std::string> remoteFiles;
@@ -1063,7 +441,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
@@ -1097,7 +475,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     auto tapeItor = rqsts.cbegin();
     ASSERT_FALSE(tapeItor == rqsts.cend());
     const Tape &tape = tapeItor->first;
-    ASSERT_TRUE(vid == tape.vid);
+    ASSERT_TRUE(s_vid == tape.vid);
     auto tapeRqsts = tapeItor->second;
     ASSERT_EQ(1, tapeRqsts.size());
     std::set<std::string> remoteFiles;
@@ -1118,7 +496,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(libraryName, "drive0").release()));
+    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::RETRIEVE, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -1132,7 +510,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
   }
 }
-
+*/
+/*
 TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   using namespace cta;
 
@@ -1214,7 +593,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
   }
 }
-
+*/
+/*
 TEST_P(SchedulerTest, retrieve_non_existing_file) {
   using namespace cta;
 
@@ -1236,6 +616,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
   }
 }
 */
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
