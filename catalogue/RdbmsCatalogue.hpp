@@ -297,18 +297,13 @@ public:
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
 
   /**
-   * Returns the mount policy for the specified end user.
+   * Returns true if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
    *
-   * @param username The name of the end user.
-   * @return The mount policy.
-   */
-  virtual common::dataStructures::MountPolicy getMountPolicyForAUser(const std::string &username) const;
-
-  /**
-   * Returns true if the specified user has admin privileges.
-   *
-   * @param cliIdentity The user of the command-line tool.
-   * @return True if the specified user has admin privileges.:w
+   * @param cliIdentity The name of the user and the host on which they are
+   * running the CTA command-line tool.
+   * @return True if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
    */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const;
 

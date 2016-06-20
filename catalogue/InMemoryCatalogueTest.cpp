@@ -1247,17 +1247,17 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createRequesterMountRule) {
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
 
-  const std::list<common::dataStructures::RequesterMountRule> requesters = m_catalogue->getRequesterMountRules();
-  ASSERT_EQ(1, requesters.size());
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
 
-  const common::dataStructures::RequesterMountRule requester = requesters.front();
+  const common::dataStructures::RequesterMountRule rule = rules.front();
 
-  ASSERT_EQ(requesterName, requester.name);
-  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
-  ASSERT_EQ(comment, requester.comment);
-  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
-  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createRequesterMountRule_same_twice) {
@@ -1480,7 +1480,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteRequesterGroupMountRule_non_ex
   ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existant_requester_group"), catalogue::UserError);
 }
 
-TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
+TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile_requester_mount_rule) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
@@ -1500,23 +1500,23 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount group");
+    "create mount policy");
 
   const std::string comment = "create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
 
-  const std::list<common::dataStructures::RequesterMountRule> requesters = m_catalogue->getRequesterMountRules();
-  ASSERT_EQ(1, requesters.size());
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
 
-  const common::dataStructures::RequesterMountRule requester = requesters.front();
+  const common::dataStructures::RequesterMountRule rule = rules.front();
 
-  ASSERT_EQ(requesterName, requester.name);
-  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
-  ASSERT_EQ(comment, requester.comment);
-  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
-  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
@@ -1528,16 +1528,13 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
-    "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
-    archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
 
-  const std::list<common::dataStructures::ArchiveRoute> routes =
-    m_catalogue->getArchiveRoutes();
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
@@ -1551,12 +1548,229 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile) {
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    route.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  ASSERT_EQ(1, copyToPoolMap.size());
+  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
+  ASSERT_EQ(copyNb, maplet.first);
+  ASSERT_EQ(tapePoolName, maplet.second);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+  uint64_t expectedArchiveFileId = 0;
+  for(uint64_t i = 0; i<10; i++) {
+    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+
+    if(0 == i) {
+      expectedArchiveFileId = queueCriteria.fileId;
+    } else {
+      expectedArchiveFileId++;
+    }
+    ASSERT_EQ(expectedArchiveFileId, queueCriteria.fileId);
+
+    ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
+    ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
+    ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
+    ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
+    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+  }
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile_requester_group_mount_rule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount policy");
+
+  const std::string comment = "create mount rule for requester group";
+  const std::string requesterGroupName = "requester_group_name";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment);
+
+  const std::list<common::dataStructures::RequesterGroupMountRule> rules = m_catalogue->getRequesterGroupMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterGroupMountRule rule = rules.front();
+
+  ASSERT_EQ(requesterGroupName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "create archive route";
+  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  ASSERT_EQ(1, copyToPoolMap.size());
+  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
+  ASSERT_EQ(copyNb, maplet.first);
+  ASSERT_EQ(tapePoolName, maplet.second);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = "username";
+  userIdentity.group = requesterGroupName;
+  uint64_t expectedArchiveFileId = 0;
+  for(uint64_t i = 0; i<10; i++) {
+    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+
+    if(0 == i) {
+      expectedArchiveFileId = queueCriteria.fileId;
+    } else {
+      expectedArchiveFileId++;
+    }
+    ASSERT_EQ(expectedArchiveFileId, queueCriteria.fileId);
+
+    ASSERT_EQ(1, queueCriteria.copyToPoolMap.size());
+    ASSERT_EQ(copyNb, queueCriteria.copyToPoolMap.begin()->first);
+    ASSERT_EQ(tapePoolName, queueCriteria.copyToPoolMap.begin()->second);
+    ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
+    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+  }
+}
+
+TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile_requester_mount_rule_overide) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "create mount policy");
+
+  const std::string requesterRuleComment = "create mount rule for requester";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, requesterRuleComment);
+
+  const std::list<common::dataStructures::RequesterMountRule> requesterRules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, requesterRules.size());
+
+  const common::dataStructures::RequesterMountRule requesterRule = requesterRules.front();
+
+  ASSERT_EQ(requesterName, requesterRule.name);
+  ASSERT_EQ(mountPolicyName, requesterRule.mountPolicy);
+  ASSERT_EQ(requesterRuleComment, requesterRule.comment);
+  ASSERT_EQ(m_cliSI.username, requesterRule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requesterRule.creationLog.host);
+  ASSERT_EQ(requesterRule.creationLog, requesterRule.lastModificationLog);
+
+  const std::string requesterGroupRuleComment = "create mount rule for requester group";
+  const std::string requesterGroupName = "requester_group_name";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterName, requesterGroupRuleComment);
+
+  const std::list<common::dataStructures::RequesterGroupMountRule> requesterGroupRules =
+    m_catalogue->getRequesterGroupMountRules();
+  ASSERT_EQ(1, requesterGroupRules.size());
+
+  const common::dataStructures::RequesterGroupMountRule requesterGroupRule = requesterGroupRules.front();
+
+  ASSERT_EQ(requesterName, requesterGroupRule.name);
+  ASSERT_EQ(mountPolicyName, requesterGroupRule.mountPolicy);
+  ASSERT_EQ(requesterGroupRuleComment, requesterGroupRule.comment);
+  ASSERT_EQ(m_cliSI.username, requesterGroupRule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, requesterGroupRule.creationLog.host);
+  ASSERT_EQ(requesterGroupRule.creationLog, requesterGroupRule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 2;
+  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies,
+    "create storage class");
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "create archive route";
+  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_cliSI.username, creationLog.username);
+  ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClassName);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
@@ -1601,8 +1815,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   const bool fullValue = false;
   const std::string createTapeComment = "create tape";
 
-  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-                                    "create logical library");
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "create logical library");
   m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
   m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -1770,23 +1983,23 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount group");
+    "create mount policy");
 
   const std::string comment = "create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
 
-  const std::list<common::dataStructures::RequesterMountRule> requesters = m_catalogue->getRequesterMountRules();
-  ASSERT_EQ(1, requesters.size());
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
 
-  const common::dataStructures::RequesterMountRule requester = requesters.front();
+  const common::dataStructures::RequesterMountRule rule = rules.front();
 
-  ASSERT_EQ(requesterName, requester.name);
-  ASSERT_EQ(mountPolicyName, requester.mountPolicy);
-  ASSERT_EQ(comment, requester.comment);
-  ASSERT_EQ(m_cliSI.username, requester.creationLog.username);
-  ASSERT_EQ(m_cliSI.host, requester.creationLog.host);
-  ASSERT_EQ(requester.creationLog, requester.lastModificationLog);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+  ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;

@@ -2420,9 +2420,8 @@ void RdbmsCatalogue::setDriveStatus(const common::dataStructures::SecurityIdenti
 //------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileQueueCriteria
-  RdbmsCatalogue::prepareForNewFile(
-  const std::string &storageClass, const common::dataStructures::UserIdentity &user) {
+common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &storageClass,
+  const common::dataStructures::UserIdentity &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
     getTapeCopyToPoolMap(storageClass);
   const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClass);
@@ -2442,14 +2441,23 @@ common::dataStructures::ArchiveFileQueueCriteria
     throw ex;
   }
 
-  common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user.name);
+  const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(user.name, user.group);
+  // Requester mount policies overrule requester group mount policies
+  common::dataStructures::MountPolicy mountPolicy;
+  if(!mountPolicies.requesterMountPolicies.empty()) {
+     mountPolicy = mountPolicies.requesterMountPolicies.front();
+  } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+     mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+  } else {
+    throw UserError(std::string("Cannot prepare for a new archive file because no mount policy exists for " +
+      user.name + ":" + user.group));
+  }
 
   // Now that we have both the archive routes and the mount policy it's safe to
   // consume an archive file identifier
   const uint64_t archiveFileId = getNextArchiveFileId();
 
-  return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId,
-    copyToPoolMap, mountPolicy);
+  return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId, copyToPoolMap, mountPolicy);
 }
 
 //------------------------------------------------------------------------------
@@ -2504,71 +2512,6 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageCl
     return nbRoutes;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// getMountPolicyForAUser
-//------------------------------------------------------------------------------
-common::dataStructures::MountPolicy RdbmsCatalogue::getMountPolicyForAUser(const std::string &username) const {
-  const char *const sql =
-    "SELECT "
-      "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
-
-      "ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
-      "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
-      "RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
-      "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
-
-      "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-
-      "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
-
-      "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-      "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-    "FROM "
-      "MOUNT_POLICY "
-    "INNER JOIN REQUESTER_MOUNT_RULE ON "
-      "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME "
-    "WHERE "
-      "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME";
-  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-  stmt->bindString(":REQUESTER_NAME", username);
-  std::unique_ptr<DbRset> rset(stmt->executeQuery());
-  if(rset->next()) {
-    common::dataStructures::MountPolicy policy;
-
-    policy.name = rset->columnText("MOUNT_POLICY_NAME");
-
-    policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-    policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
-
-    policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
-    policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-
-    policy.maxDrivesAllowed =
-      rset->columnUint64("MAX_DRIVES_ALLOWED");
-
-    policy.comment = rset->columnText("USER_COMMENT");
-
-    policy.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-    policy.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
-    policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-
-    policy.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-    policy.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
-    policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
-
-    return policy;
-  } else {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to find a mount policy for user " << username;
-    throw ex;
   }
 }
 
@@ -2703,13 +2646,30 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 //------------------------------------------------------------------------------
 // prepareToRetrieveFile
 //------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
-  const uint64_t archiveFileId,
+common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user) {
-  const std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles = getTapeFiles(archiveFileId);
-  const common::dataStructures::MountPolicy mountPolicy = getMountPolicyForAUser(user.name);
+  try {
+    const std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles = getTapeFiles(archiveFileId);
 
-  return common::dataStructures::RetrieveFileQueueCriteria(tapeFiles, mountPolicy);
+    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(user.name, user.group);
+    // Requester mount policies overrule requester group mount policies
+    common::dataStructures::MountPolicy mountPolicy;
+    if(!mountPolicies.requesterMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterMountPolicies.front();
+    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+    } else {
+      UserError ue;
+      ue.getMessage() << "Cannot prepare to retrieve the file with archive file ID because  no mount policy exists "
+        "for " + user.name + ":" + user.group;
+      throw ue;
+    }
+    return common::dataStructures::RetrieveFileQueueCriteria(tapeFiles, mountPolicy);
+  } catch(UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -2757,8 +2717,94 @@ std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFile
 //------------------------------------------------------------------------------
 RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::string &requesterName,
   const std::string &requesterGroupName) {
-  RequesterAndGroupMountPolicies policies;
-  return policies;
+  try {
+    const char *const sql =
+      "SELECT "
+        "'REQUESTER' AS RULE_TYPE,"
+        "REQUESTER_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,"
+
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_MOUNT_RULE "
+      "INNER JOIN "
+        "MOUNT_POLICY "
+      "ON "
+        "REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME "
+      "UNION "
+      "SELECT "
+        "'REQUESTER_GROUP' AS RULE_TYPE,"
+        "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME AS ASSIGNEE,"
+
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "INNER JOIN "
+        "MOUNT_POLICY "
+      "ON "
+        "REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME;";
+
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+
+    RequesterAndGroupMountPolicies policies;
+    while(rset->next()) {
+      common::dataStructures::MountPolicy policy;
+
+      policy.name = rset->columnText("MOUNT_POLICY_NAME");
+      policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+      policy.comment = rset->columnText("USER_COMMENT");
+      policy.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      policy.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      if(rset->columnText("RULE_TYPE") == "REQUESTER") {
+        policies.requesterMountPolicies.push_back(policy);
+      } else {
+        policies.requesterGroupMountPolicies.push_back(policy);
+      }
+    }
+
+    return policies;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

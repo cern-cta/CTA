@@ -325,6 +325,15 @@ public:
 
   virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const = 0;
 
+  /**
+   * Returns true if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   *
+   * @param cliIdentity The name of the user and the host on which they are
+   * running the CTA command-line tool.
+   * @return True if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 
   /**
