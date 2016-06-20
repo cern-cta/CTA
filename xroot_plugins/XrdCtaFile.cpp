@@ -75,25 +75,25 @@ void XrdCtaFile::checkClient(const XrdSecEntity *client) {
 // logRequestAndSetCmdlineResult
 //------------------------------------------------------------------------------
 int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString) {
-  m_data = returnString;
-  m_rc = rc;
+  m_cmdlineOutput = returnString;
+  m_cmdlineReturnCode = rc;
   
   std::list<log::Param> params;
   params.push_back(log::Param("USERNAME", m_cliIdentity.username));
   params.push_back(log::Param("HOST", m_cliIdentity.host));
-  params.push_back(log::Param("RETURN_CODE", toString(m_rc)));
+  params.push_back(log::Param("RETURN_CODE", toString(m_cmdlineReturnCode)));
   std::stringstream originalRequest;
-  for(auto it=m_tokens.begin(); it!=m_tokens.end(); it++) {
+  for(auto it=m_requestTokens.begin(); it!=m_requestTokens.end(); it++) {
     originalRequest << *it << " ";
   }
   params.push_back(log::Param("REQUEST", originalRequest.str()));
   
-  switch(m_rc) {
+  switch(m_cmdlineReturnCode) {
     case cta::common::dataStructures::FrontendReturnCode::ok:
       m_log(log::INFO, "Successful Request", params);
       break;
     case cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry:
-      m_log(log::USERERR, "Syntax error or missing arguments in request", params);
+      m_log(log::USERERR, "Syntax error or missing argument(s) in request", params);
       break;
     default:
       params.push_back(log::Param("ERROR", returnString));
@@ -108,7 +108,7 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
 // commandDispatcher
 //------------------------------------------------------------------------------
 int XrdCtaFile::dispatchCommand() {
-  std::string command(m_tokens.at(1));
+  std::string command(m_requestTokens.at(1));
   
   std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
           "ta","tape","sc","storageclass","us","user","mg","mountpolicy","de","dedication","re","repack","sh","shrink","ve","verify",
@@ -149,7 +149,7 @@ int XrdCtaFile::dispatchCommand() {
   else if("lsc"  == command || "liststorageclass"       == command) {return xCom_liststorageclass();}
   
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_tokens.at(0)));
+    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_requestTokens.at(0)));
   }
 }
 
@@ -181,14 +181,14 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
       //in cryptopp-5.6.3 (using Base64URLEncoder instead of Base64Encoder) but we 
       //currently have cryptopp-5.6.2. To be changed in the future...
       item = decode(item);
-      m_tokens.push_back(item);
+      m_requestTokens.push_back(item);
     }
 
-    if(m_tokens.size() == 0) { //this should never happen
+    if(m_requestTokens.size() == 0) { //this should never happen
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(""));
     }
-    if(m_tokens.size() < 2) {
-      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_tokens.at(0)));
+    if(m_requestTokens.size() < 2) {
+      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_requestTokens.at(0)));
     }    
     return dispatchCommand();
   } catch (cta::exception::Exception &ex) {
@@ -227,9 +227,9 @@ const char* XrdCtaFile::FName() {
 // getMmap
 //------------------------------------------------------------------------------
 int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
-  m_data = std::to_string(m_rc) + m_data;
-  *Addr = const_cast<char *>(m_data.c_str());
-  Size = m_data.length();
+  m_cmdlineOutput = std::to_string(m_cmdlineReturnCode) + m_cmdlineOutput;
+  *Addr = const_cast<char *>(m_cmdlineOutput.c_str());
+  Size = m_cmdlineOutput.length();
   return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
 }
 
@@ -237,9 +237,9 @@ int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize XrdCtaFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
-//  if((unsigned long)offset<m_data.length()) {
-//    strncpy(buffer, m_data.c_str()+offset, size);
-//    return m_data.length()-offset;
+//  if((unsigned long)offset<m_cmdlineOutput.length()) {
+//    strncpy(buffer, m_cmdlineOutput.c_str()+offset, size);
+//    return m_cmdlineOutput.length()-offset;
 //  }
 //  else {
 //    return SFS_OK;
@@ -284,7 +284,7 @@ int XrdCtaFile::write(XrdSfsAio *aioparm) {
 // stat
 //------------------------------------------------------------------------------
 int XrdCtaFile::stat(struct stat *buf) {
-  buf->st_size=m_data.length();
+  buf->st_size=m_cmdlineOutput.length();
   return SFS_OK;
 }
 
@@ -333,8 +333,8 @@ XrdCtaFile::XrdCtaFile(
   m_catalogue(catalogue),
   m_scheduler(scheduler),
   m_log(*log),
-  m_data(""),
-  m_rc(cta::common::dataStructures::FrontendReturnCode::ok) {  
+  m_cmdlineOutput(""),
+  m_cmdlineReturnCode(cta::common::dataStructures::FrontendReturnCode::ok) {  
 }
 
 //------------------------------------------------------------------------------
@@ -360,10 +360,10 @@ void XrdCtaFile::replaceAll(std::string& str, const std::string& from, const std
 // getOptionValue
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::getOptionValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
-  for(auto it=m_tokens.cbegin(); it!=m_tokens.cend(); it++) {
+  for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       auto it_next=it+1;
-      if(it_next!=m_tokens.cend()) {
+      if(it_next!=m_requestTokens.cend()) {
         if(!encoded) return *it_next;
         else return decode(*it_next);
       }
@@ -379,7 +379,7 @@ std::string XrdCtaFile::getOptionValue(const std::string& optionShortName, const
 // hasOption
 //------------------------------------------------------------------------------
 bool XrdCtaFile::hasOption(const std::string& optionShortName, const std::string& optionLongName) {
-  for(auto it=m_tokens.cbegin(); it!=m_tokens.cend(); it++) {
+  for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       return true;
     }
@@ -457,7 +457,7 @@ uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, c
 int XrdCtaFile::xCom_bootstrap() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
+  help << m_requestTokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
   std::string username = getOptionValue("-u", "--username", false);
   std::string hostname = getOptionValue("-h", "--hostname", false);
   std::string comment = getOptionValue("-m", "--comment", false);
@@ -474,25 +474,25 @@ int XrdCtaFile::xCom_bootstrap() {
 int XrdCtaFile::xCom_admin() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ad/admin add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " ad/admin add/ch/rm/ls:" << std::endl
        << "\tadd --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --username/-u <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string username = getOptionValue("-u", "--username", false);
     if(username.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2)) {
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if("add" == m_tokens.at(2)) { //add
+      if("add" == m_requestTokens.at(2)) { //add
         m_catalogue->createAdminUser(m_cliIdentity, username, comment);
       }
       else { //ch
@@ -503,7 +503,7 @@ int XrdCtaFile::xCom_admin() {
       m_catalogue->deleteAdminUser(username);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::AdminUser> list= m_catalogue->getAdminUsers();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -531,25 +531,25 @@ int XrdCtaFile::xCom_admin() {
 int XrdCtaFile::xCom_adminhost() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ah/adminhost add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " ah/adminhost add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <host_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string hostname = getOptionValue("-n", "--name", false);
     if(hostname.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2)) {
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if("add" == m_tokens.at(2)) { //add
+      if("add" == m_requestTokens.at(2)) { //add
         m_catalogue->createAdminHost(m_cliIdentity, hostname, comment);
       }
       else { //ch
@@ -560,7 +560,7 @@ int XrdCtaFile::xCom_adminhost() {
       m_catalogue->deleteAdminHost(hostname);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::AdminHost> list= m_catalogue->getAdminHosts();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -588,20 +588,20 @@ int XrdCtaFile::xCom_adminhost() {
 int XrdCtaFile::xCom_tapepool() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " tp/tapepool add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " tp/tapepool add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> [--encryption/-e or --clear/-c] --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--encryption/-e or --clear/-c] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string name = getOptionValue("-n", "--name", false);
     if(name.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string ptn_s = getOptionValue("-p", "--partialtapesnumber", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()||ptn_s.empty()) {
@@ -615,7 +615,7 @@ int XrdCtaFile::xCom_tapepool() {
       encryption=hasOption("-e", "--encryption");
       m_catalogue->createTapePool(m_cliIdentity, name, ptn, encryption, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string ptn_s = getOptionValue("-p", "--partialtapesnumber", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()&&ptn_s.empty()) {
@@ -639,7 +639,7 @@ int XrdCtaFile::xCom_tapepool() {
       m_catalogue->deleteTapePool(name);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::TapePool> list= m_catalogue->getTapePools();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -669,22 +669,22 @@ int XrdCtaFile::xCom_tapepool() {
 int XrdCtaFile::xCom_archiveroute() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ar/archiveroute add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " ar/archiveroute add/ch/rm/ls:" << std::endl
        << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string scn = getOptionValue("-s", "--storageclass", false);
     std::string cn_s = getOptionValue("-c", "--copynb", false);
     if(scn.empty()||cn_s.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }    
     uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string tapepool = getOptionValue("-t", "--tapepool", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()||tapepool.empty()) {
@@ -692,7 +692,7 @@ int XrdCtaFile::xCom_archiveroute() {
       }
       m_catalogue->createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string tapepool = getOptionValue("-t", "--tapepool", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()&&tapepool.empty()) {
@@ -709,7 +709,7 @@ int XrdCtaFile::xCom_archiveroute() {
       m_catalogue->deleteArchiveRoute(scn, cn);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue->getArchiveRoutes();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -739,22 +739,22 @@ int XrdCtaFile::xCom_archiveroute() {
 int XrdCtaFile::xCom_logicallibrary() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ll/logicallibrary add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " ll/logicallibrary add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string name = getOptionValue("-n", "--name", false);
     if(name.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2)) {
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       std::string comment = getOptionValue("-m", "--comment", false);
-      if("add" == m_tokens.at(2)) { //add
+      if("add" == m_requestTokens.at(2)) { //add
         if(comment.empty()) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
@@ -771,7 +771,7 @@ int XrdCtaFile::xCom_logicallibrary() {
       m_catalogue->deleteLogicalLibrary(name);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue->getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -799,7 +799,7 @@ int XrdCtaFile::xCom_logicallibrary() {
 int XrdCtaFile::xCom_tape() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
+  help << m_requestTokens.at(0) << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
        << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--encryptionkey/-k <encryption_key>]" << std::endl
        << "\t        [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--comment/-m <\"comment\">] " << std::endl
        << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--encryptionkey/-k <encryption_key>]" << std::endl
@@ -809,15 +809,15 @@ int XrdCtaFile::xCom_tape() {
        << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
        << "\t        [--lbp/-p or --nolbp/-P] [--enabled/-e or --disabled/-d] [--free/-f or --full/-F] [--busy/-b or --notbusy/-n]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f] [--lbp/-l] [--tag/-t <tag_name>]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2) || "reclaim" == m_tokens.at(2) || "label" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
     std::string vid = getOptionValue("-v", "--vid", false);
     if(vid.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
       std::string tapepool = getOptionValue("-t", "--tapepool", false);
       std::string capacity_s = getOptionValue("-c", "--capacity", false);
@@ -836,7 +836,7 @@ int XrdCtaFile::xCom_tape() {
       std::string encryptionkey = getOptionValue("-k", "--encryptionkey", false);
       m_catalogue->createTape(m_cliIdentity, vid, logicallibrary, tapepool, encryptionkey, capacity, disabled, full, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
       std::string tapepool = getOptionValue("-t", "--tapepool", false);
       std::string capacity_s = getOptionValue("-c", "--capacity", false);
@@ -878,17 +878,17 @@ int XrdCtaFile::xCom_tape() {
         m_scheduler->setTapeFull(m_cliIdentity, vid, true);
       }
     }
-    else if("reclaim" == m_tokens.at(2)) { //reclaim
+    else if("reclaim" == m_requestTokens.at(2)) { //reclaim
       m_catalogue->reclaimTape(m_cliIdentity, vid);
     }
-    else if("label" == m_tokens.at(2)) { //label
+    else if("label" == m_requestTokens.at(2)) { //label
       m_scheduler->labelTape(m_cliIdentity, vid, hasOption("-f", "--force"), hasOption("-l", "--lbp"), getOptionValue("-t", "--tag", false));
     }
     else { //rm
       m_catalogue->deleteTape(vid);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::string vid = getOptionValue("-v", "--vid", false);
     std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
     std::string tapepool = getOptionValue("-t", "--tapepool", false);
@@ -971,20 +971,20 @@ int XrdCtaFile::xCom_tape() {
 int XrdCtaFile::xCom_storageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " sc/storageclass add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " sc/storageclass add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <storage_class_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string scn = getOptionValue("-n", "--name", false);
     if(scn.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string cn_s = getOptionValue("-c", "--copynb", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()||cn_s.empty()) {
@@ -993,7 +993,7 @@ int XrdCtaFile::xCom_storageclass() {
       uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
       m_catalogue->createStorageClass(m_cliIdentity, scn, cn, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string cn_s = getOptionValue("-c", "--copynb", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()&&cn_s.empty()) {
@@ -1011,7 +1011,7 @@ int XrdCtaFile::xCom_storageclass() {
       m_catalogue->deleteStorageClass(scn);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::StorageClass> list= m_catalogue->getStorageClasses();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1040,20 +1040,20 @@ int XrdCtaFile::xCom_storageclass() {
 int XrdCtaFile::xCom_requestermountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " rmr/requestermountrule add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " rmr/requestermountrule add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string name = getOptionValue("-n", "--name", false);
     if(name.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()||mountpolicy.empty()) {
@@ -1061,7 +1061,7 @@ int XrdCtaFile::xCom_requestermountrule() {
       }
       m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy, name, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()&&mountpolicy.empty()) {
@@ -1078,7 +1078,7 @@ int XrdCtaFile::xCom_requestermountrule() {
       m_catalogue->deleteRequesterMountRule(name);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue->getRequesterMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1107,20 +1107,20 @@ int XrdCtaFile::xCom_requestermountrule() {
 int XrdCtaFile::xCom_groupmountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " gmr/groupmountrule add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " gmr/groupmountrule add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string name = getOptionValue("-n", "--name", false);
     if(name.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()||mountpolicy.empty()) {
@@ -1128,7 +1128,7 @@ int XrdCtaFile::xCom_groupmountrule() {
       }
       m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy, name, comment);
     }
-    else if("ch" == m_tokens.at(2)) { //ch
+    else if("ch" == m_requestTokens.at(2)) { //ch
       std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
       std::string comment = getOptionValue("-m", "--comment", false);
       if(comment.empty()&&mountpolicy.empty()) {
@@ -1145,7 +1145,7 @@ int XrdCtaFile::xCom_groupmountrule() {
       m_catalogue->deleteRequesterGroupMountRule(name);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RequesterGroupMountRule> list= m_catalogue->getRequesterGroupMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1174,29 +1174,29 @@ int XrdCtaFile::xCom_groupmountrule() {
 int XrdCtaFile::xCom_mountpolicy() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " mg/mountpolicy add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " mg/mountpolicy add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <mountpolicy_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
        << "\t    --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <mountpolicy_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
        << "\t   [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <mountpolicy_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string group = getOptionValue("-n", "--name", false);
     if(group.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2)) {      
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {      
       std::string archivepriority_s = getOptionValue("--ap", "--archivepriority", false);
       std::string minarchiverequestage_s = getOptionValue("--aa", "--minarchiverequestage", false);
       std::string retrievepriority_s = getOptionValue("--rp", "--retrievepriority", false);
       std::string minretrieverequestage_s = getOptionValue("--ra", "--minretrieverequestage", false);
       std::string maxdrivesallowed_s = getOptionValue("-d", "--maxdrivesallowed", false);
       std::string comment = getOptionValue("-m", "--comment", false);
-      if("add" == m_tokens.at(2)) { //add
+      if("add" == m_requestTokens.at(2)) { //add
         if(archivepriority_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
                 ||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1208,7 +1208,7 @@ int XrdCtaFile::xCom_mountpolicy() {
         uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed/-d", maxdrivesallowed_s);
         m_catalogue->createMountPolicy(m_cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
       }
-      else if("ch" == m_tokens.at(2)) { //ch
+      else if("ch" == m_requestTokens.at(2)) { //ch
         if(archivepriority_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
                 &&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1242,7 +1242,7 @@ int XrdCtaFile::xCom_mountpolicy() {
       m_catalogue->deleteMountPolicy(group);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue->getMountPolicies();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1275,20 +1275,20 @@ int XrdCtaFile::xCom_mountpolicy() {
 int XrdCtaFile::xCom_dedication() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " de/dedication add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " de/dedication add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string drive = getOptionValue("-n", "--name", false);
     if(drive.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     } 
-    if("add" == m_tokens.at(2) || "ch" == m_tokens.at(2)) {
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       bool readonly = hasOption("-r", "--readonly");
       bool writeonly = hasOption("-w", "--writeonly");
       std::string vid = getOptionValue("-v", "--vid", false);
@@ -1296,7 +1296,7 @@ int XrdCtaFile::xCom_dedication() {
       std::string from_s = getOptionValue("-f", "--from", false);
       std::string until_s = getOptionValue("-u", "--until", false);
       std::string comment = getOptionValue("-m", "--comment", false);
-      if("add" == m_tokens.at(2)) { //add
+      if("add" == m_requestTokens.at(2)) { //add
         if(comment.empty()||from_s.empty()||until_s.empty()||(vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
@@ -1318,7 +1318,7 @@ int XrdCtaFile::xCom_dedication() {
         }
         m_catalogue->createDedication(m_cliIdentity, drive, type, tag, vid, from, until, comment);
       }
-      else if("ch" == m_tokens.at(2)) { //ch
+      else if("ch" == m_requestTokens.at(2)) { //ch
         if((comment.empty()&&from_s.empty()&&until_s.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
@@ -1359,7 +1359,7 @@ int XrdCtaFile::xCom_dedication() {
       m_catalogue->deleteDedication(drive);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::Dedication> list= m_catalogue->getDedications();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1404,20 +1404,20 @@ int XrdCtaFile::xCom_dedication() {
 int XrdCtaFile::xCom_repack() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " re/repack add/rm/ls/err:" << std::endl
+  help << m_requestTokens.at(0) << " re/repack add/rm/ls/err:" << std::endl
        << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "err" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string vid = getOptionValue("-v", "--vid", false);
     if(vid.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string tag = getOptionValue("-t", "--tag", false);
       bool justexpand = hasOption("-e", "--justexpand");
       bool justrepack = hasOption("-r", "--justrepack");
@@ -1433,7 +1433,7 @@ int XrdCtaFile::xCom_repack() {
       }
       m_scheduler->repack(m_cliIdentity, vid, tag, type);
     }
-    else if("err" == m_tokens.at(2)) { //err
+    else if("err" == m_requestTokens.at(2)) { //err
       cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid);
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
@@ -1452,7 +1452,7 @@ int XrdCtaFile::xCom_repack() {
       m_scheduler->cancelRepack(m_cliIdentity, vid);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RepackInfo> list;
     std::string vid = getOptionValue("-v", "--vid", false);
     if(vid.empty()) {      
@@ -1509,7 +1509,7 @@ int XrdCtaFile::xCom_repack() {
 int XrdCtaFile::xCom_shrink() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
+  help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
   std::string tapepool = getOptionValue("-t", "--tapepool", false);
   if(tapepool.empty()) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1524,20 +1524,20 @@ int XrdCtaFile::xCom_shrink() {
 int XrdCtaFile::xCom_verify() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ve/verify add/rm/ls/err:" << std::endl
+  help << m_requestTokens.at(0) << " ve/verify add/rm/ls/err:" << std::endl
        << "\tadd [--vid/-v <vid>] [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  [--vid/-v <vid>]" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("add" == m_tokens.at(2) || "err" == m_tokens.at(2) || "rm" == m_tokens.at(2)) {
+  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     std::string vid = getOptionValue("-v", "--vid", false);
     if(vid.empty()) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
-    if("add" == m_tokens.at(2)) { //add
+    if("add" == m_requestTokens.at(2)) { //add
       std::string tag = getOptionValue("-t", "--tag", false);
       std::string numberOfFiles_s = getOptionValue("-p", "--partial", false);
       bool complete = hasOption("-c", "--complete");
@@ -1550,7 +1550,7 @@ int XrdCtaFile::xCom_verify() {
       }
       m_scheduler->verify(m_cliIdentity, vid, tag, numberOfFiles);
     }
-    else if("err" == m_tokens.at(2)) { //err
+    else if("err" == m_requestTokens.at(2)) { //err
       cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid);
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
@@ -1569,7 +1569,7 @@ int XrdCtaFile::xCom_verify() {
       m_scheduler->cancelVerify(m_cliIdentity, vid);
     }
   }
-  else if("ls" == m_tokens.at(2)) { //ls
+  else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::VerifyInfo> list;
     std::string vid = getOptionValue("-v", "--vid", false);
     if(vid.empty()) {      
@@ -1612,12 +1612,12 @@ int XrdCtaFile::xCom_verify() {
 int XrdCtaFile::xCom_archivefile() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
+  help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("ls" == m_tokens.at(2)) { //ls
+  if("ls" == m_requestTokens.at(2)) { //ls
     std::string id_s = getOptionValue("-I", "--id", false);
     std::string eosid = getOptionValue("-e", "--eosid", false);
     std::string copynb = getOptionValue("-c", "--copynb", false);
@@ -1684,11 +1684,11 @@ int XrdCtaFile::xCom_archivefile() {
 int XrdCtaFile::xCom_test() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
+  help << m_requestTokens.at(0) << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
        << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   std::string drive = getOptionValue("-d", "--drive", false);
@@ -1697,7 +1697,7 @@ int XrdCtaFile::xCom_test() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   std::string tag = getOptionValue("-t", "--tag", false);
-  if("read" == m_tokens.at(2)) {
+  if("read" == m_requestTokens.at(2)) {
     std::string firstfseq_s = getOptionValue("-f", "--firstfseq", false);
     std::string lastfseq_s = getOptionValue("-l", "--lastfseq", false);
     std::string output = getOptionValue("-o", "--output", false);
@@ -1728,9 +1728,9 @@ int XrdCtaFile::xCom_test() {
            << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesRead << " #Bytes: " << res.totalBytesRead 
            << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesRead/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
   }
-  else if("write" == m_tokens.at(2) || "write_auto" == m_tokens.at(2)) {
+  else if("write" == m_requestTokens.at(2) || "write_auto" == m_requestTokens.at(2)) {
     cta::common::dataStructures::WriteTestResult res;
-    if("write" == m_tokens.at(2)) { //write
+    if("write" == m_requestTokens.at(2)) { //write
       std::string file = getOptionValue("-f", "--file", false);
       if(file.empty()) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1787,20 +1787,20 @@ int XrdCtaFile::xCom_test() {
 int XrdCtaFile::xCom_drive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " dr/drive up/down (it is a synchronous command):" << std::endl
+  help << m_requestTokens.at(0) << " dr/drive up/down (it is a synchronous command):" << std::endl
        << "\tup   --drive/-d <drive_name>" << std::endl
        << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;  
-  if(m_tokens.size() < 3) {
+  if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   std::string drive = getOptionValue("-d", "--drive", false);
   if(drive.empty()) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  if("up" == m_tokens.at(2)) {
+  if("up" == m_requestTokens.at(2)) {
     m_scheduler->setDriveStatus(m_cliIdentity, drive, true, false);
   }
-  else if("down" == m_tokens.at(2)) {
+  else if("down" == m_requestTokens.at(2)) {
     m_scheduler->setDriveStatus(m_cliIdentity, drive, false, hasOption("-f", "--force"));
   }
   else {
@@ -1815,7 +1815,7 @@ int XrdCtaFile::xCom_drive() {
 int XrdCtaFile::xCom_reconcile() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
+  help << m_requestTokens.at(0) << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
   std::list<cta::common::dataStructures::ArchiveFile> list = m_scheduler->reconcile(m_cliIdentity);  
   if(list.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
@@ -1852,7 +1852,7 @@ int XrdCtaFile::xCom_reconcile() {
 int XrdCtaFile::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
+  help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
   std::string tapepool = getOptionValue("-t", "--tapepool", false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
@@ -1919,7 +1919,7 @@ int XrdCtaFile::xCom_listpendingarchives() {
 int XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
+  help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
   std::string vid = getOptionValue("-v", "--vid", false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
@@ -1985,7 +1985,7 @@ int XrdCtaFile::xCom_listpendingretrieves() {
 int XrdCtaFile::xCom_listdrivestates() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " lds/listdrivestates [--header/-h]" << std::endl;
+  help << m_requestTokens.at(0) << " lds/listdrivestates [--header/-h]" << std::endl;
   std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(m_cliIdentity);  
   if(result.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
@@ -2019,7 +2019,7 @@ int XrdCtaFile::xCom_listdrivestates() {
 int XrdCtaFile::xCom_archive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
+  help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
                     << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
@@ -2079,7 +2079,7 @@ int XrdCtaFile::xCom_archive() {
 int XrdCtaFile::xCom_retrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+  help << m_requestTokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -2126,7 +2126,7 @@ int XrdCtaFile::xCom_retrieve() {
 int XrdCtaFile::xCom_deletearchive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
+  help << m_requestTokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -2155,7 +2155,7 @@ int XrdCtaFile::xCom_deletearchive() {
 int XrdCtaFile::xCom_cancelretrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+  help << m_requestTokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -2197,7 +2197,7 @@ int XrdCtaFile::xCom_cancelretrieve() {
 int XrdCtaFile::xCom_updatefilestorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
+  help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -2239,7 +2239,7 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
 int XrdCtaFile::xCom_updatefileinfo() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
+  help << m_requestTokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
@@ -2273,7 +2273,7 @@ int XrdCtaFile::xCom_updatefileinfo() {
 int XrdCtaFile::xCom_liststorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_tokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
+  help << m_requestTokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
   std::string encoded_s = getOptionValue("", "--encoded", false);
   if(encoded_s!="true" && encoded_s!="false") {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());

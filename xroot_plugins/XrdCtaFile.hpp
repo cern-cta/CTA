@@ -79,17 +79,17 @@ protected:
   /**
    * This is the string holding the result of the command
    */
-  std::string m_data;
+  std::string m_cmdlineOutput;
   
   /**
    * This is the return code to be passed to the client
    */
-  cta::common::dataStructures::FrontendReturnCode m_rc;
+  cta::common::dataStructures::FrontendReturnCode m_cmdlineReturnCode;
   
   /**
    * The original client request represented as a vector of strings
    */
-  std::vector<std::string> m_tokens;
+  std::vector<std::string> m_requestTokens;
   
   /**
    * The client identity info: username and host
