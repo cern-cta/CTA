@@ -321,121 +321,74 @@ TEST_P(SchedulerTest, DISABLED_delete_archive_request) {
   ASSERT_FALSE(found);
 }
 
-/*
-TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
+TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
   
-  const std::string libraryComment = "Library comment";
+  setupDefaultCatalogue();
+  
+  uint64_t archiveFileId;
+  {
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DRData drData;
+    drData.drBlob="blob";
+    drData.drGroup="group2";
+    drData.drOwner="cms_user";
+    drData.drPath="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumType="Adler32";
+    request.checksumValue="1111";
+    request.creationLog=creationLog;
+    request.diskpoolName="diskpool1";
+    request.diskpoolThroughput=200*1000*1000;
+    request.drData=drData;
+    request.diskFileID="diskFileID";
+    request.instance="cms";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::UserIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    request.storageClass=s_storageClassName;
+    archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
+  }
+  
+  // Check that we have the file in the queues
+  // TODO: for this to work all the time, we need an index of all requests
+  // (otherwise we miss the selected ones).
+  // Could also be limited to querying by ID (global index needed)
+  bool found=false;
+  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+    for (auto & req: tp.second) {
+      if (req.archiveFileID == archiveFileId)
+        found = true;
+    }
+  }
+  ASSERT_TRUE(found);
+
+  // Create the environment for the migration to happen (library + tape) 
+    const std::string libraryComment = "Library comment";
   ASSERT_NO_THROW(catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryComment));
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
-  
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-
   const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   ASSERT_NO_THROW(catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
     s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment));
-
-  const uint16_t copyNb = 1;
-  const std::string archiveRouteComment = "Archive-route comment";
-  ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, storageClassName,
-    copyNb, tapePoolName, archiveRouteComment));
-
-  std::list<std::string> remoteFiles;
-  remoteFiles.push_back(s_remoteFileRawPath1);
-  const std::string archiveFile  = "/grandparent/parent_file";
-  ASSERT_NO_THROW(scheduler.queueArchiveRequest(s_userOnUserHost, remoteFiles, archiveFile));
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost, "/"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("grandparent"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_DIRECTORY, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    common::archiveNS::ArchiveDirIterator itor;
-    ASSERT_NO_THROW(itor = scheduler.getDirContents(s_userOnUserHost,
-      "/grandparent"));
-    ASSERT_TRUE(itor.hasMore());
-    common::archiveNS::ArchiveDirEntry entry;
-    ASSERT_NO_THROW(entry = itor.next());
-    ASSERT_EQ(std::string("parent_file"), entry.name);
-    ASSERT_EQ(common::archiveNS::ArchiveDirEntry::ENTRYTYPE_FILE, entry.type);
-    ASSERT_EQ(storageClassName, entry.status.storageClassName);
-  }
-
-  {
-    std::unique_ptr<common::archiveNS::ArchiveFileStatus> status;
-    ASSERT_NO_THROW(status = scheduler.statArchiveFile(s_adminOnAdminHost,
-      archiveFile));
-    ASSERT_TRUE(status.get());
-    ASSERT_EQ(storageClassName, status->storageClassName);
-  }
-
-  {
-    decltype(scheduler.getArchiveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getArchiveRequests(s_userOnUserHost));
-    ASSERT_EQ(1, rqsts.size());
-    auto poolItor = rqsts.cbegin();
-    ASSERT_FALSE(poolItor == rqsts.cend());
-    const TapePool &pool = poolItor->first;
-    ASSERT_TRUE(tapePoolName == pool.name);
-    auto poolRqsts = poolItor->second;
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin();
-      rqstItor != poolRqsts.cend(); rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
-      archiveFiles.end());
-  }
-
-  {
-    const auto poolRqsts = scheduler.getArchiveRequests(s_userOnUserHost,
-      tapePoolName);
-    ASSERT_EQ(1, poolRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = poolRqsts.cbegin(); rqstItor != poolRqsts.cend();
-      rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile.path.getRaw());
-      archiveFiles.insert(rqstItor->archiveFile);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteFileRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") == archiveFiles.end());
-  }
-
-  // The file has not yet been archived, there is no 'm' bit in the archive
-  // namespace and therefore an attempted retrive request should fail at this point
-  {
-    std::list<std::string> archiveFiles;
-    archiveFiles.push_back("/grandparent/parent_file");
-    ASSERT_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost, archiveFiles,
-      s_remoteTargetRawPath1), std::exception);
-  }
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed
@@ -451,8 +404,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveJob->nameServerTapeFile.tapeFileLocation.blockId = 1;
-    archiveJob->nameServerTapeFile.copyNb = archiveJob->nameServerTapeFile.tapeFileLocation.copyNb;
-    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, ntohl(0x12345687));
+    archiveJob->nameServerTapeFile.tapeFileLocation.fSeq = 1;
+    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, 0x12345687);
     archiveJob->nameServerTapeFile.checksum = checksum;
     ASSERT_NO_THROW(archiveJob->complete());
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
@@ -461,35 +414,43 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 
   {
-    
-    std::list<std::string> archiveFiles;
-    archiveFiles.push_back("/grandparent/parent_file");
-    ASSERT_NO_THROW(scheduler.queueRetrieveRequest(s_userOnUserHost,
-      archiveFiles, s_remoteTargetRawPath1));
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DRData drData;
+    drData.drBlob="blob";
+    drData.drGroup="group2";
+    drData.drOwner="cms_user";
+    drData.drPath="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskpoolName = "diskpool1";
+    request.diskpoolThroughput = 200*1000*1000;
+    request.drData = drData;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve(s_adminOnAdminHost, request);
   }
 
+  // Check that the retrieve request is queued
   {
-    decltype(scheduler.getRetrieveRequests(s_userOnUserHost)) rqsts;
-    ASSERT_NO_THROW(rqsts = scheduler.getRetrieveRequests(s_userOnUserHost));
+    auto rqsts = scheduler.getPendingRetrieveJobs();
+    // We expect 1 tape with queued jobs
     ASSERT_EQ(1, rqsts.size());
-    auto tapeItor = rqsts.cbegin();
-    ASSERT_FALSE(tapeItor == rqsts.cend());
-    const Tape &tape = tapeItor->first;
-    ASSERT_TRUE(s_vid == tape.vid);
-    auto tapeRqsts = tapeItor->second;
-    ASSERT_EQ(1, tapeRqsts.size());
-    std::set<std::string> remoteFiles;
-    std::set<std::string> archiveFiles;
-    for(auto rqstItor = tapeRqsts.cbegin(); rqstItor != tapeRqsts.cend();
-      rqstItor++) {
-      remoteFiles.insert(rqstItor->remoteFile);
-      archiveFiles.insert(rqstItor->archiveFile.path);
-    }
-    ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(s_remoteTargetRawPath1) == remoteFiles.end());
-    ASSERT_EQ(1, archiveFiles.size());
-    ASSERT_FALSE(archiveFiles.find("/grandparent/parent_file") ==
-      archiveFiles.end());
+    // We expect the queue to contain 1 job
+    ASSERT_EQ(1, rqsts.cbegin()->second.size());
+    // We expect the job to be single copy
+    auto & job = rqsts.cbegin()->second.back();
+    ASSERT_EQ(1, job.tapeCopies.size());
+    // We expect the copy to be on the provided tape.
+    ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
+    // Check the remote target
+    ASSERT_EQ("dstURL", job.request.dstURL);
+    // Check the archive file ID
+    ASSERT_EQ(archiveFileId, job.request.archiveFileID);
   }
   
   {
@@ -510,7 +471,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
   }
 }
-*/
+
 /*
 TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   using namespace cta;
