@@ -158,7 +158,8 @@ protected:
   int xCom_logicallibrary();
   int xCom_tape();
   int xCom_storageclass();
-  int xCom_user();
+  int xCom_requestermountrule();
+  int xCom_groupmountrule();
   int xCom_mountpolicy();
   int xCom_dedication();
   int xCom_repack();
