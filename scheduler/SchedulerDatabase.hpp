@@ -65,7 +65,6 @@ class LogicalLibrary;
 class RetrieveRequestDump;
 class RetrieveToFileRequest;
 class SchedulerDatabase;
-class SecurityIdentity;
 class StorageClass;
 class Tape;
 class TapeMount;
@@ -122,12 +121,11 @@ public:
   /**
    * Deletes the specified archive request.
    *
-   * @param requester The identity of the requester.
    * @param archiveFile The ID of the destination file within the
    * archive catalogue.
    */
   virtual void deleteArchiveRequest(
-    const SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &cliIdentity,
     uint64_t archiveFileId) = 0;
   
   /*
@@ -153,7 +151,7 @@ public:
    * @param fileId Id of the destination file within the archive catalogue.
    */
   virtual std::unique_ptr<ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
-    const SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &cliIdentity,
     uint64_t fileId) = 0;
 
   /*============ Archive management: tape server side =======================*/
@@ -243,7 +241,7 @@ public:
    * @param remoteFile The URL of the destination file.
    */
   virtual void deleteRetrieveRequest(
-    const SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
   
   /*============ Retrieve management: tape server side ======================*/

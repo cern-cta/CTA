@@ -27,5 +27,5 @@ cta::MockNameServer::~MockNameServer() {
 //------------------------------------------------------------------------------
 // addTapeFile
 //------------------------------------------------------------------------------
-void cta::MockNameServer::addTapeFile(const SecurityIdentity &cliIdentity, const std::string &path, const NameServerTapeFile &tapeFile) {
+void cta::MockNameServer::addTapeFile(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &path, const NameServerTapeFile &tapeFile) {
 }

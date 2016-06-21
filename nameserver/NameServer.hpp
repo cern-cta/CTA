@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/archiveNS/ArchiveFileStatus.hpp"
-#include "common/SecurityIdentity.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "nameserver/NameServerTapeFile.hpp"
 
 #include <list>
@@ -48,7 +48,7 @@ public:
    * @param nameServerTapeFile The tape file entry.
    */
   virtual void addTapeFile(
-    const SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &path,
     const NameServerTapeFile &tapeFile) = 0;
   

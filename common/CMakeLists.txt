@@ -102,7 +102,6 @@ set (COMMON_LIB_SRC_FILES
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
   Configuration.cpp
-  SecurityIdentity.cpp
   TapePool.cpp
   Timer.cpp
   UserIdentity.cpp

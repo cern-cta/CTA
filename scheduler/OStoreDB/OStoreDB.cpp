@@ -17,7 +17,7 @@
  */
 
 #include "OStoreDB.hpp"
-#include "common/SecurityIdentity.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/RetrieveQueue.hpp"
@@ -362,7 +362,7 @@ void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request,
   }
 }
 
-void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester, 
+void OStoreDB::deleteArchiveRequest(const common::dataStructures::SecurityIdentity& requester, 
   uint64_t fileId) {
   // First of, find the archive request form all the tape pools.
   objectstore::RootEntry re(m_objectStore);
@@ -411,7 +411,7 @@ void OStoreDB::deleteArchiveRequest(const SecurityIdentity& requester,
 }
 
 std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
-  OStoreDB::markArchiveRequestForDeletion(const SecurityIdentity& requester,
+  OStoreDB::markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity& requester,
   uint64_t fileId) {
   assertAgentSet();
   // Construct the return value immediately
@@ -800,7 +800,7 @@ std::map<cta::Tape, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveReques
 //  return ret;
 }
 
-void OStoreDB::deleteRetrieveRequest(const SecurityIdentity& requester, 
+void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
   }

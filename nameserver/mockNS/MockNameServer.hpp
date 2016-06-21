@@ -20,7 +20,7 @@
 
 #include "common/UserIdentity.hpp"
 #include "nameserver/NameServer.hpp"
-#include "common/SecurityIdentity.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 
 // The header file for atomic was is actually called cstdatomic in gcc 4.4
 #if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
@@ -56,7 +56,7 @@ public:
    * @param nameServerTapeFile The tape file entry.
    */
   void addTapeFile(
-    const SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &path,
     const NameServerTapeFile &tapeFile);
 

@@ -22,11 +22,9 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabaseFactory.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "common/SecurityIdentity.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 
@@ -88,17 +86,17 @@ public:
   static const std::string s_adminHost;
   static const std::string s_userHost;
 
-  static const cta::UserIdentity s_system;
-  static const cta::UserIdentity s_admin;
-  static const cta::UserIdentity s_user;
+  static const std::string s_system;
+  static const std::string s_admin;
+  static const std::string s_user;
 
-  static const cta::SecurityIdentity s_systemOnSystemHost;
+  static const cta::common::dataStructures::SecurityIdentity s_systemOnSystemHost;
 
-  static const cta::SecurityIdentity s_adminOnAdminHost;
-  static const cta::SecurityIdentity s_adminOnUserHost;
+  static const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost;
+  static const cta::common::dataStructures::SecurityIdentity s_adminOnUserHost;
 
-  static const cta::SecurityIdentity s_userOnAdminHost;
-  static const cta::SecurityIdentity s_userOnUserHost;
+  static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
+  static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
 private:
 
@@ -116,17 +114,17 @@ const std::string SchedulerDatabaseTest::s_systemHost = "systemhost";
 const std::string SchedulerDatabaseTest::s_adminHost = "adminhost";
 const std::string SchedulerDatabaseTest::s_userHost = "userhost";
 
-const cta::UserIdentity SchedulerDatabaseTest::s_system(1111, 1111);
-const cta::UserIdentity SchedulerDatabaseTest::s_admin(2222, 2222);
-const cta::UserIdentity SchedulerDatabaseTest::s_user(3333, 3333);
+const std::string SchedulerDatabaseTest::s_system = "systemuser";
+const std::string SchedulerDatabaseTest::s_admin = "adminuser";
+const std::string SchedulerDatabaseTest::s_user = "user";
 
-const cta::SecurityIdentity SchedulerDatabaseTest::s_systemOnSystemHost(SchedulerDatabaseTest::s_system, SchedulerDatabaseTest::s_systemHost);
+const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_systemOnSystemHost(SchedulerDatabaseTest::s_system, SchedulerDatabaseTest::s_systemHost);
 
-const cta::SecurityIdentity SchedulerDatabaseTest::s_adminOnAdminHost(SchedulerDatabaseTest::s_admin, SchedulerDatabaseTest::s_adminHost);
-const cta::SecurityIdentity SchedulerDatabaseTest::s_adminOnUserHost(SchedulerDatabaseTest::s_admin, SchedulerDatabaseTest::s_userHost);
+const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_adminOnAdminHost(SchedulerDatabaseTest::s_admin, SchedulerDatabaseTest::s_adminHost);
+const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_adminOnUserHost(SchedulerDatabaseTest::s_admin, SchedulerDatabaseTest::s_userHost);
 
-const cta::SecurityIdentity SchedulerDatabaseTest::s_userOnAdminHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_adminHost);
-const cta::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
+const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnAdminHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_adminHost);
+const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB

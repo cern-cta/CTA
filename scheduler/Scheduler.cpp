@@ -74,7 +74,8 @@ void cta::Scheduler::queueRetrieve(
 // deleteArchive
 //------------------------------------------------------------------------------
 void cta::Scheduler::deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  m_catalogue.deleteArchiveFile(request.archiveFileID);
+  m_db.deleteArchiveRequest(cliIdentity, request.archiveFileID);
 }
 
 //------------------------------------------------------------------------------

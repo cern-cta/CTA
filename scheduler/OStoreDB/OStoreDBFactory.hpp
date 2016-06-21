@@ -23,6 +23,7 @@
 #include "common/archiveNS/StorageClass.hpp"
 #include "common/TapePool.hpp"
 #include "common/archiveNS/Tape.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "objectstore/RootEntry.hpp"
@@ -57,15 +58,15 @@ public:
   }
 
   
-  void deleteArchiveRequest(const SecurityIdentity& cliIdentity, uint64_t archiveFileId) override {
+  void deleteArchiveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, uint64_t archiveFileId) override {
     m_OStoreDB.deleteArchiveRequest(cliIdentity, archiveFileId);
   }
 
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, uint64_t fileId) override {
+  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override {
     return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, fileId);
   }
 
-  virtual void deleteRetrieveRequest(const SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
+  virtual void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 

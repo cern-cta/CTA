@@ -156,7 +156,7 @@ public:
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
-  virtual void deleteArchiveRequest(const SecurityIdentity& requester, uint64_t fileId) override;
+  virtual void deleteArchiveRequest(const common::dataStructures::SecurityIdentity& requester, uint64_t fileId) override;
   class ArchiveToFileRequestCancelation:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
@@ -173,7 +173,7 @@ public:
     bool m_closed;
     friend class OStoreDB;
   };
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const SecurityIdentity &cliIdentity, uint64_t fileId) override;
+  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override;
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override;
   
@@ -191,7 +191,7 @@ public:
 
   std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override;
 
-  void deleteRetrieveRequest(const SecurityIdentity& requester, 
+  void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
     const std::string& remoteFile) override;
   
   /* === Drive state handling  ============================================== */
