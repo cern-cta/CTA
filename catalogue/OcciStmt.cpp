@@ -147,7 +147,7 @@ void OcciStmt::executeNonQuery() {
 // getNbAffectedRows
 //------------------------------------------------------------------------------
 uint64_t OcciStmt::getNbAffectedRows() const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  return m_stmt->getUb8RowCount();
 }
 
 //------------------------------------------------------------------------------
