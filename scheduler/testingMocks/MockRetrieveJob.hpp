@@ -28,8 +28,8 @@ namespace cta {
     int completes;
     int failures;
     MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(rm,
-    cta::common::archiveNS::ArchiveFile(), 
-    std::string(), cta::NameServerTapeFile(),
+    cta::common::dataStructures::ArchiveFile(), 
+    std::string(), cta::common::dataStructures::TapeFile(),
     cta::PositioningMethod::ByBlock), completes(0), failures(0) {} 
     
     virtual void complete() { completes++;  }

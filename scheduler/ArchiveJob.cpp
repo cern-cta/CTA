@@ -30,45 +30,46 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   catalogue::Catalogue & catalogue,
-  const common::archiveNS::ArchiveFile &archiveFile,
+  const common::dataStructures::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
-  const NameServerTapeFile &nsTapeFile):
+  const common::dataStructures::TapeFile &tapeFile):
   m_mount(mount), m_catalogue(catalogue),
   archiveFile(archiveFile),
   remotePathAndStatus(remotePathAndStatus),
-  nameServerTapeFile(nsTapeFile) {}
+  tapeFile(tapeFile) {}
 
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::complete() {
   // First check that the block Id for the file has been set.
-  if (nameServerTapeFile.tapeFileLocation.blockId ==
-      std::numeric_limits<decltype(nameServerTapeFile.tapeFileLocation.blockId)>::max())
+  if (tapeFile.blockId ==
+      std::numeric_limits<decltype(tapeFile.blockId)>::max())
     throw BlockIdNotSet("In cta::ArchiveJob::complete(): Block ID not set");
   // Also check the checksum has been set
-  if (nameServerTapeFile.checksum.getType() == Checksum::CHECKSUMTYPE_NONE)
+  if (!archiveFile.checksumType.size() || !archiveFile.checksumValue.size())
     throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksum not set");
   // We are good to go to record the data in the persistent storage.
   // First make the file safe on tape.
-  m_dbJob->bumpUpTapeFileCount(nameServerTapeFile.tapeFileLocation.fSeq);
+  m_dbJob->bumpUpTapeFileCount(tapeFile.fSeq);
   // Now record the data in the archiveNS. The checksum will be validated if already
   // present, of inserted if not.
   catalogue::TapeFileWritten fileReport;
-  fileReport.archiveFileId = archiveFile.fileId;
-  fileReport.blockId = nameServerTapeFile.tapeFileLocation.blockId;
-  fileReport.checksum = nameServerTapeFile.checksum;
-  fileReport.compressedSize = nameServerTapeFile.compressedSize;
-  fileReport.copyNb = nameServerTapeFile.tapeFileLocation.copyNb;
+  fileReport.archiveFileId = archiveFile.archiveFileID;
+  fileReport.blockId = tapeFile.blockId;
+  fileReport.checksumType = tapeFile.checksumType;
+  fileReport.checksumValue = tapeFile.checksumValue;
+  fileReport.compressedSize = tapeFile.compressedSize;
+  fileReport.copyNb = tapeFile.copyNb;
   //TODO fileReport.diskFileGroup
   //TODO fileReport.diskFilePath
   //TODO fileReport.diskFileRecoveryBlob
   //TODO fileReport.diskFileUser
   //TODO fileReport.diskInstance
-  fileReport.fSeq = nameServerTapeFile.tapeFileLocation.fSeq;
-  fileReport.size = nameServerTapeFile.size;
+  fileReport.fSeq = tapeFile.fSeq;
+  fileReport.size = archiveFile.fileSize;
   //TODO fileReport.storageClassName
-  fileReport.vid = nameServerTapeFile.tapeFileLocation.vid;
+  fileReport.vid = tapeFile.vid;
   m_catalogue.fileWrittenToTape(fileReport);
   //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);

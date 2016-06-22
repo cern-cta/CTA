@@ -47,7 +47,7 @@ namespace daemon {
           MigrationMemoryManager& mm,castor::server::AtomicFlag& errorFlag): 
     m_archiveJob(archiveJob),m_memManager(mm), m_fifo(blockCount),
     m_blockCount(blockCount),m_errorFlag(errorFlag), 
-    m_archiveFile(m_archiveJob->archiveFile), m_nameServerTapeFile(m_archiveJob->nameServerTapeFile),
+    m_archiveFile(m_archiveJob->archiveFile), m_tapeFile(m_archiveJob->tapeFile),
     m_remotePathAndStatus(m_archiveJob->remotePathAndStatus)
   {
     //register its fifo to the memory manager as a client in order to get mem block
@@ -57,7 +57,7 @@ namespace daemon {
 // fileSize
 //------------------------------------------------------------------------------
   uint64_t TapeWriteTask::fileSize() { 
-    return m_archiveFile.size; 
+    return m_archiveFile.fileSize; 
   }
 //------------------------------------------------------------------------------
 // execute
@@ -70,10 +70,9 @@ namespace daemon {
     using castor::log::ScopedParamContainer;
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_archiveJob->archiveFile.nsHostName)
-          .add("fileId",m_archiveJob->archiveFile.fileId)
-          .add("fileSize",m_archiveJob->archiveFile.size)
-          .add("fSeq",m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq)
+    params.add("fileId",m_archiveJob->archiveFile.archiveFileID)
+          .add("fileSize",m_archiveJob->archiveFile.fileSize)
+          .add("fSeq",m_archiveJob->tapeFile.fSeq)
           .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
     
     // We will clock the stats for the file itself, and eventually add those
@@ -87,11 +86,11 @@ namespace daemon {
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-    session.validateNextFSeq(m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+    session.validateNextFSeq(m_archiveJob->tapeFile.fSeq);
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
-      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.fileId, m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+      watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_LBPMode = output->getLBPMode();
       m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
@@ -127,11 +126,15 @@ namespace daemon {
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_archiveJob->nameServerTapeFile.tapeFileLocation.fSeq);
-      m_archiveJob->nameServerTapeFile.checksum = 
-          cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, (uint32_t)ckSum);
-      m_archiveJob->nameServerTapeFile.compressedSize = m_taskStats.dataVolume;
-      m_archiveJob->nameServerTapeFile.tapeFileLocation.blockId = output->getBlockId();
+      session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+      m_archiveJob->tapeFile.checksumType = "adler32";
+      { 
+        std::stringstream cs;
+        cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
+        m_archiveJob->tapeFile.checksumValue = cs.str();
+      }
+      m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
+      m_archiveJob->tapeFile.blockId = output->getBlockId();
       reportPacker.reportCompletedJob(std::move(m_archiveJob));
       m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
@@ -218,7 +221,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
     using namespace castor::log;
-    if(m_archiveJob->archiveFile.fileId != mb->m_fileid
+    if(m_archiveJob->archiveFile.archiveFileID != mb->m_fileid
             || memBlockId != mb->m_fileBlock
             || mb->isFailed()
             || mb->isCanceled()) {
@@ -315,11 +318,10 @@ namespace daemon {
                 /1000/1000/m_taskStats.totalTime:0.0)
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
-           .add("fileSize",m_archiveFile.size)
-           .add("NSHOST",m_archiveFile.nsHostName)
-           .add("NSFILEID",m_archiveFile.fileId)
-           .add("fSeq",m_nameServerTapeFile.tapeFileLocation.fSeq)
-           .add("lastModificationTime",m_archiveFile.lastModificationTime)
+           .add("fileSize",m_archiveFile.fileSize)
+           .add("NSFILEID",m_archiveFile.archiveFileID)
+           .add("fSeq",m_tapeFile.fSeq)
+           .add("reconciliationTime",m_archiveFile.reconciliationTime)
            .add("LBPMode", m_LBPMode);
      
      lc.log(level, msg);

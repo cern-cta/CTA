@@ -74,6 +74,12 @@ public:
   /** Queue an archive request and return the CTA file ID */
   virtual uint64_t queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request);
   virtual void queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request);
+  /** A deleteArchive command should be authorized only if:
+   - the instance of the file to be deleted coincides with the instance from
+     where the command was executed
+   - the EOS username and/or group (of the original delete requester) provided
+     in the command line belongs to the instance from where the command was
+     executed */
   virtual void deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request);
   virtual void cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request);
   virtual void updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request);

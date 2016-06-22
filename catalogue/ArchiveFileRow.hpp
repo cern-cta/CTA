@@ -89,11 +89,16 @@ struct ArchiveFileRow {
    * The uncompressed size of the tape file in bytes.
    */
   uint64_t size;
-
+  
   /**
-   * Checksum of the tape file contents.
+   * Checksum type of the tape file content
    */
-  Checksum checksum;
+  std::string checksumType;
+  
+  /**
+   * Checksum value of the file type content
+   */
+  std::string checksumValue;
 
   /**
    * The name of the file's storage class.

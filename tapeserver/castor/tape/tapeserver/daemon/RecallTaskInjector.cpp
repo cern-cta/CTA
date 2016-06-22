@@ -90,10 +90,9 @@ void RecallTaskInjector::injectBulkRecalls(std::vector<std::unique_ptr<cta::Retr
     (*it)->positioningMethod=cta::PositioningMethod::ByBlock;
 
     LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->archiveFile.nsHostName)),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->nameServerTapeFile.tapeFileLocation.fSeq)),
-      LogContext::ScopedParam(m_lc, Param("blockID", (*it)->nameServerTapeFile.tapeFileLocation.blockId)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.archiveFileID)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeFile.fSeq)),
+      LogContext::ScopedParam(m_lc, Param("blockID", (*it)->tapeFile.blockId)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->remotePath))
     };
     tape::utils::suppresUnusedVariable(sp);
@@ -125,7 +124,7 @@ bool RecallTaskInjector::synchronousInjection()
       std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob();
       if(!job.get()) break;
       files++;
-      bytes+=job->archiveFile.size;
+      bytes+=job->archiveFile.fileSize;
       jobs.emplace_back(job.release());
     }
   } catch (castor::exception::Exception & ex) {
@@ -193,7 +192,7 @@ void RecallTaskInjector::WorkerThread::run()
         std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob();
         if(!job.get()) break;
         files++;
-        bytes+=job->archiveFile.size;
+        bytes+=job->archiveFile.fileSize;
         jobs.emplace_back(job.release());
       }
       

@@ -28,8 +28,9 @@ namespace cta {
     int completes;
     int failures;
     MockArchiveJob(cta::ArchiveMount & am, cta::catalogue::Catalogue &catalogue): cta::ArchiveJob(am, 
-        catalogue, cta::common::archiveNS::ArchiveFile(), 
-        cta::RemotePathAndStatus(), cta::NameServerTapeFile()), completes(0), failures(0) {} 
+        catalogue, cta::common::dataStructures::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::common::dataStructures::TapeFile()),
+        completes(0), failures(0) {} 
       
     ~MockArchiveJob() throw() {} 
 

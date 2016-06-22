@@ -69,10 +69,9 @@ public:
     
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
-    params.add("NSHOSTNAME", m_retrieveJob->archiveFile.nsHostName)
-          .add("NSFILEID", m_retrieveJob->archiveFile.fileId)
-          .add("BlockId", m_retrieveJob->nameServerTapeFile.tapeFileLocation.blockId)
-          .add("fSeq", m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq)
+    params.add("NSFILEID", m_retrieveJob->archiveFile.archiveFileID)
+          .add("BlockId", m_retrieveJob->tapeFile.blockId)
+          .add("fSeq", m_retrieveJob->tapeFile.fSeq)
           .add("path", m_retrieveJob->remotePath);
     
     // We will clock the stats for the file itself, and eventually add those
@@ -103,7 +102,7 @@ public:
 
       lc.log(LOG_INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
-      watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.fileId, m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+      watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->tapeFile.fSeq);
       localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       currentErrorToCount = "Error_tapeReadData";
       while (stillReading) {
@@ -111,9 +110,9 @@ public:
         mb=m_mm.getFreeBlock();
         localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
         
-        mb->m_fSeq = m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq;
+        mb->m_fSeq = m_retrieveJob->tapeFile.fSeq;
         mb->m_fileBlock = fileBlock++;
-        mb->m_fileid = m_retrieveJob->archiveFile.fileId;
+        mb->m_fileid = m_retrieveJob->archiveFile.archiveFileID;
         mb->m_tapeFileBlock = tapeBlock;
         mb->m_tapeBlockSize = rf->getBlockSize();
         try {
@@ -193,8 +192,8 @@ public:
    */
   void reportCancellationToDiskTask(){
     MemBlock* mb =m_mm.getFreeBlock();
-    mb->m_fSeq = m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq;
-    mb->m_fileid = m_retrieveJob->archiveFile.fileId;
+    mb->m_fSeq = m_retrieveJob->tapeFile.fSeq;
+    mb->m_fileid = m_retrieveJob->archiveFile.archiveFileID;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
      m_fifo.pushDataBlock(mb);
@@ -210,8 +209,8 @@ private:
     // fill it up
     if (!mb) {
       mb=m_mm.getFreeBlock();
-      mb->m_fSeq = m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq;
-      mb->m_fileid = m_retrieveJob->archiveFile.fileId;
+      mb->m_fSeq = m_retrieveJob->tapeFile.fSeq;
+      mb->m_fileid = m_retrieveJob->archiveFile.archiveFileID;
     }
     //mark the block failed and push it (plus signal the end)
      mb->markAsFailed(msg,code);

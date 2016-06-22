@@ -20,8 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
-#include "RetrieveToFileRequest.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
+#include "RetrieveRequest.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 
 namespace cta { namespace objectstore {
@@ -43,7 +42,7 @@ public:
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  void addJob(const RetrieveToFileRequest::JobDump & job,
+  void addJob(const RetrieveRequest::JobDump & job,
     const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
     time_t startTime);
   struct JobsSummary {

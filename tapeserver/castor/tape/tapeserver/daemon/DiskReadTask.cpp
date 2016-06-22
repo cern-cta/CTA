@@ -40,7 +40,7 @@ m_nextTask(destination),m_archiveJob(archiveJob),
         m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
 {
   m_archiveJobCachedInfo.remotePath = m_archiveJob->remotePathAndStatus.path.getRaw();
-  m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.fileId;
+  m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.archiveFileID;
 }
 
 //------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   castor::utils::Timer localTime;
   castor::utils::Timer totalTime(localTime);
   size_t blockId=0;
-  size_t migratingFileSize=m_archiveJob->archiveFile.size;
+  size_t migratingFileSize=m_archiveJob->archiveFile.fileSize;
   MemBlock* mb=NULL;
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
@@ -81,7 +81,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     
     m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
      
-    LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.fileId));
+    LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.archiveFileID));
     lc.log(LOG_INFO,"Opened disk file for read");
     
     while(migratingFileSize>0){
@@ -92,7 +92,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       m_stats.waitFreeMemoryTime+=localTime.secs(castor::utils::Timer::resetCounter);
       
       //set metadata and read the data
-      mb->m_fileid = m_archiveJob->archiveFile.fileId;
+      mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
       mb->m_fileBlock = blockId++;
       
       currentErrorToCount = "Error_diskRead";
@@ -182,7 +182,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
       mb = m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->m_fileid = m_archiveJob->archiveFile.fileId;
+    mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
     mb->markAsCancelled();
     m_nextTask.pushDataBlock(mb);
     mb=NULL;

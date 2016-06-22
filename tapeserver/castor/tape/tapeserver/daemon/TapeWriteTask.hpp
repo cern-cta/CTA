@@ -182,12 +182,12 @@ private:
   /**
    * The NS archive file information
    */
-  cta::common::archiveNS::ArchiveFile m_archiveFile;
+  cta::common::dataStructures::ArchiveFile m_archiveFile;
   
   /**
    * The file archive result for the NS
    */
-  cta::NameServerTapeFile m_nameServerTapeFile;
+  cta::common::dataStructures::TapeFile m_tapeFile;
   
   /**
    * The remote file information

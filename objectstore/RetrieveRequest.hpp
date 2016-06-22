@@ -24,7 +24,8 @@
 #include "common/dataStructures/DRData.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
+#include "common/dataStructures/TapeFile.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -39,7 +40,7 @@ public:
   RetrieveRequest(GenericObject & go);
   void initialize();
   // Job management ============================================================
-  void addJob(const cta::TapeFileLocation & tapeFileLocation,
+  void addJob(const cta::common::dataStructures::TapeFile & tapeFile,
     const std::string & tapeaddress);
   void setJobFailureLimits(uint16_t copyNumber,
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
@@ -75,8 +76,8 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID();
+  void setArchiveFile(const cta::common::dataStructures::ArchiveFile & archiveFile);
+  cta::common::dataStructures::ArchiveFile getArchiveFile();
 
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName();
@@ -93,8 +94,8 @@ public:
   void setRequester(const cta::common::dataStructures::UserIdentity &requester);
   cta::common::dataStructures::UserIdentity getRequester();
 
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog();
+  void setEntryLog (const objectstore::EntryLog& entryLog);
+  objectstore::EntryLog getEntryLog();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

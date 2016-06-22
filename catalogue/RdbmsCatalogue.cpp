@@ -2345,7 +2345,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
 
         archiveFile.archiveFileID = archiveFileId;
         archiveFile.diskInstance = rset->columnText("DISK_INSTANCE");
-        archiveFile.diskFileID = rset->columnText("DISK_FILE_ID");
+        archiveFile.dstURL = rset->columnText("DISK_FILE_ID");
         archiveFile.drData.drPath = rset->columnText("DISK_FILE_PATH");
         archiveFile.drData.drOwner = rset->columnText("DISK_FILE_USER");
         archiveFile.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
@@ -2651,9 +2651,9 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
   const TapeFileWritten &actual) const {
   // Throw an exception if the common disk information of this tape file
   // written event does not match the previous
-  if(expected.diskFileID != actual.diskFileId) {
+  if(expected.dstURL != actual.diskFileId) {
     exception::Exception ex;
-    ex.getMessage() << "Disk file ID mismatch: expected=" << expected.diskFileID << " actual=" <<
+    ex.getMessage() << "Disk file ID mismatch: expected=" << expected.dstURL << " actual=" <<
     actual.diskFileId;
     throw ex;
   }
@@ -2970,7 +2970,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
 
         archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset->columnText("DISK_INSTANCE");
-        archiveFile->diskFileID = rset->columnText("DISK_FILE_ID");
+        archiveFile->dstURL = rset->columnText("DISK_FILE_ID");
         archiveFile->drData.drPath = rset->columnText("DISK_FILE_PATH");
         archiveFile->drData.drOwner = rset->columnText("DISK_FILE_USER");
         archiveFile->drData.drGroup = rset->columnText("DISK_FILE_GROUP");

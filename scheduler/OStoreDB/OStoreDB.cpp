@@ -23,7 +23,6 @@
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/ArchiveRequest.hpp"
-#include "objectstore/RetrieveToFileRequest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
@@ -32,12 +31,8 @@
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveToFileRequest.hpp"
-#include "common/archiveNS/StorageClass.hpp"
 #include "common/TapePool.hpp"
-#include "common/archiveNS/Tape.hpp"
 #include "RetrieveToFileRequest.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
-#include "common/archiveNS/ArchiveFile.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include <algorithm>
@@ -761,7 +756,7 @@ std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByRequester(const st
 
 
 
-std::map<cta::Tape, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequests() const {
+std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequests() const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 //  std::map<cta::Tape, std::list<RetrieveRequestDump> > ret;
 //  // Get list of tape pools and then tapes
@@ -1410,7 +1405,7 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
 
 OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, 
     objectstore::Backend& os, objectstore::Agent& ag): m_jobOwned(false),
-  m_objectStore(os), m_agent(ag), m_rtfr(jobAddress, os) { }
+  m_objectStore(os), m_agent(ag), m_retrieveRequest(jobAddress, os) { }
 
 void OStoreDB::RetrieveJob::fail() {
   throw NotImplemented("");
@@ -1489,13 +1484,13 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 
 void OStoreDB::RetrieveJob::succeed() {
   // Lock the request and set the job as successful.
-  objectstore::ScopedExclusiveLock rtfrl(m_rtfr);
-  m_rtfr.fetch();
-  std::string rtfrAddress = m_rtfr.getAddressIfSet();
-  if (m_rtfr.setJobSuccessful(m_copyNb)) {
-    m_rtfr.remove();
+  objectstore::ScopedExclusiveLock rtfrl(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+  std::string rtfrAddress = m_retrieveRequest.getAddressIfSet();
+  if (m_retrieveRequest.setJobSuccessful(m_copyNb)) {
+    m_retrieveRequest.remove();
   } else {
-    m_rtfr.commit();
+    m_retrieveRequest.commit();
   }
   // We no more own the job (which could be gone)
   m_jobOwned = false;

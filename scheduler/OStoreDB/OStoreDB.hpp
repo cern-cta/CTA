@@ -23,7 +23,7 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
-#include "objectstore/RetrieveToFileRequest.hpp"
+#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 
 namespace cta {
@@ -141,7 +141,7 @@ public:
     uint16_t m_copyNb;
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
-    objectstore::RetrieveToFileRequest m_rtfr;
+    objectstore::RetrieveRequest m_retrieveRequest;
     std::map<std::string, std::string> m_vidToAddress; /**< Cache of tape objects
                                                         *  addresses filled up at queuing time */
   };
@@ -189,7 +189,7 @@ public:
   
   std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(const std::string& vid) const override;
 
-  std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override;
+  std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override;
 
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
     const std::string& remoteFile) override;

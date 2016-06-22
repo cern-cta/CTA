@@ -39,7 +39,7 @@ ArchiveFile::ArchiveFile():
 //------------------------------------------------------------------------------
 bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
   return archiveFileID == rhs.archiveFileID
-      && diskFileID    == rhs.diskFileID
+      && dstURL    == rhs.dstURL
       && diskInstance  == rhs.diskInstance
       && fileSize      == rhs.fileSize
       && checksumType  == rhs.checksumType
@@ -63,7 +63,7 @@ std::ostream &operator<<(std::ostream &os, ArchiveFile &obj) {
   os <<
     "{"
     "archiveFileID="      << obj.archiveFileID      << ","
-    "diskFileID="         << obj.diskFileID         << ","
+    "diskFileID="         << obj.dstURL         << ","
     "diskInstance="       << obj.diskInstance       << ","
     "fileSize="           << obj.fileSize           << ","
     "checksumType="       << obj.checksumType       << ","

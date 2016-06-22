@@ -21,7 +21,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/Configuration.hpp"
 #include "common/log/SyslogLogger.hpp"
-#include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "remotens/EosNS.hpp"

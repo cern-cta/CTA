@@ -77,7 +77,7 @@ std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
     return std::unique_ptr<cta::RetrieveJob>();
   // We have something to retrieve: prepare the response
   std::unique_ptr<cta::RetrieveJob> ret (new RetrieveJob(*this, 
-    dbJob->archiveFile, dbJob->remoteFile, dbJob->nameServerTapeFile, 
+    dbJob->archiveFile, dbJob->remoteFile, dbJob->tapeFile, 
     PositioningMethod::ByBlock));
   ret->m_dbJob.reset(dbJob.release());
   return ret;

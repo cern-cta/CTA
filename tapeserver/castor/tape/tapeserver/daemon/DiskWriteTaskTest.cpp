@@ -30,10 +30,8 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include "scheduler/Scheduler.hpp"
-#include "nameserver/mockNS/MockNameServer.hpp"
 #include "remotens/MockRemoteNS.hpp"
 
 #include <memory>
@@ -56,8 +54,8 @@ namespace unitTests{
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
     TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::common::archiveNS::ArchiveFile(), 
-    std::string(), cta::NameServerTapeFile(),
+    cta::common::dataStructures::ArchiveFile(), 
+    std::string(), cta::common::dataStructures::TapeFile(),
     cta::PositioningMethod::ByBlock) {}
   };
   
@@ -105,7 +103,7 @@ namespace unitTests{
     DiskFileFactory fileFactory("RFIO","");
     
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
-    fileToRecall->archiveFile.fileId = 0;
+    fileToRecall->archiveFile.archiveFileID = 0;
     DiskWriteTask t(fileToRecall.release(),mm);
     for(int i=0;i<6;++i){
       MemBlock* mb=mm.getFreeBlock();

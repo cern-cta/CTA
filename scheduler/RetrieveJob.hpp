@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveFile.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/PositioningMethod.hpp"
@@ -55,9 +53,9 @@ public:
    * @param positioningMethod the positioning method
    */
   RetrieveJob(RetrieveMount &mount,
-  const common::archiveNS::ArchiveFile &archiveFile,
+  const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &remotePath,
-  const NameServerTapeFile &tapeFileLocation,
+  const common::dataStructures::TapeFile &tapeFileLocation,
   const PositioningMethod positioningMethod);
   
 private:
@@ -103,7 +101,7 @@ public:
   /**
    * The NS archive file information
    */
-  common::archiveNS::ArchiveFile archiveFile;
+  common::dataStructures::ArchiveFile archiveFile;
   
   /**
    * The remote file path
@@ -113,7 +111,7 @@ public:
   /**
    * The location of the tape file
    */
-  NameServerTapeFile nameServerTapeFile;
+  common::dataStructures::TapeFile tapeFile;
   
   /**
    * The positioning method
@@ -121,10 +119,16 @@ public:
   PositioningMethod positioningMethod;
   
   /**
-   * The checksum of the transferred data. This should be set before calling 
+   * The checksum type of the transferred data. This should be set before calling 
    * complete()
    */
-  Checksum transferredChecksum;
+  std::string transferredChecksumType;
+  
+  /**
+   * The checksum value of the transferred data. This should be set before calling 
+   * complete()
+   */
+  std::string transferredChecksumValue;
   
   /**
    * The size of the transferred data. This should be set before calling 

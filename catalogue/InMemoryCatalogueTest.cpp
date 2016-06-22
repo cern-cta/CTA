@@ -1684,7 +1684,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
@@ -1726,7 +1726,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
@@ -1909,7 +1909,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
@@ -1959,7 +1959,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
@@ -2076,7 +2076,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
@@ -2190,7 +2190,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
@@ -2339,7 +2339,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
@@ -2389,7 +2389,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
@@ -2424,7 +2424,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->deleteArchiveFile(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.dstURL);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 

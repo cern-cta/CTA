@@ -31,7 +31,6 @@
 #include "castor/exception/Errnum.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "nameserver/NameServer.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -41,16 +40,16 @@ namespace unitTests {
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
     TestingRetrieveJob() : cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::common::archiveNS::ArchiveFile(), 
-    std::string(), cta::NameServerTapeFile(),
+    cta::common::dataStructures::ArchiveFile(), 
+    std::string(), cta::common::dataStructures::TapeFile(),
     cta::PositioningMethod::ByBlock) {}
   };
 
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
     TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
-        *((cta::catalogue::Catalogue *)NULL), cta::common::archiveNS::ArchiveFile(), 
-        cta::RemotePathAndStatus(), cta::NameServerTapeFile()) {
+        *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
+        cta::RemotePathAndStatus(), cta::common::dataStructures::TapeFile()) {
     }
   };
   
@@ -59,12 +58,12 @@ namespace unitTests {
     virtual void SetUp() {
       block_size = 262144;
       label = "K00001";
-      fileToRecall.nameServerTapeFile.tapeFileLocation.blockId = 0;
-      fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq = 1;
-      fileToRecall.archiveFile.fileId = 1;
-      fileToMigrate.archiveFile.size = 500;
-      fileToMigrate.archiveFile.fileId = 1;
-      fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq = 1;
+      fileToRecall.tapeFile.blockId = 0;
+      fileToRecall.tapeFile.fSeq = 1;
+      fileToRecall.archiveFile.archiveFileID = 1;
+      fileToMigrate.archiveFile.fileSize = 500;
+      fileToMigrate.archiveFile.archiveFileID = 1;
+      fileToMigrate.tapeFile.fSeq = 1;
       volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *lsWithoutLbp;

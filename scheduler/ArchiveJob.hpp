@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "common/archiveNS/TapeFileLocation.hpp"
-#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -56,9 +54,9 @@ protected:
   ArchiveJob(
   ArchiveMount &mount,
   catalogue::Catalogue & catalogue,
-  const common::archiveNS::ArchiveFile &archiveFile,
+  const common::dataStructures::ArchiveFile &archiveFile,
   const RemotePathAndStatus &remotePathAndStatus,
-  const NameServerTapeFile &nameServerTapeFile);
+  const common::dataStructures::TapeFile &tapeFile);
 
 public:
 
@@ -112,7 +110,7 @@ public:
   /**
    * The NS archive file information
    */
-  common::archiveNS::ArchiveFile archiveFile;
+  common::dataStructures::ArchiveFile archiveFile;
   
   /**
    * The remote file information
@@ -122,7 +120,7 @@ public:
   /**
    * The file archive result for the NS
    */
-  NameServerTapeFile nameServerTapeFile;
+  common::dataStructures::TapeFile tapeFile;
 
 }; // class ArchiveJob
 

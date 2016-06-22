@@ -1646,7 +1646,7 @@ int XrdCtaFile::xCom_archivefile() {
             currentRow.push_back(jt->second.vid);
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-            currentRow.push_back(it->diskFileID);
+            currentRow.push_back(it->dstURL);
             currentRow.push_back(it->diskInstance);
             currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
             currentRow.push_back(it->checksumType);
@@ -1829,7 +1829,7 @@ int XrdCtaFile::xCom_reconcile() {
         currentRow.push_back(jt->second.vid);
         currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
         currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-        currentRow.push_back(it->diskFileID);
+        currentRow.push_back(it->dstURL);
         currentRow.push_back(it->diskInstance);
         currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
         currentRow.push_back(it->checksumType);

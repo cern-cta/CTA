@@ -51,9 +51,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
   castor::utils::Timer totalTime(localTime);
   castor::utils::Timer transferTime(localTime);
   log::ScopedParamContainer URLcontext(lc);
-  URLcontext.add("NSFILEID",m_retrieveJob->archiveFile.fileId)
+  URLcontext.add("NSFILEID",m_retrieveJob->archiveFile.archiveFileID)
             .add("path", m_retrieveJob->remotePath)
-            .add("fSeq",m_retrieveJob->nameServerTapeFile.tapeFileLocation.fSeq);
+            .add("fSeq",m_retrieveJob->tapeFile.fSeq);
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -120,7 +120,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     } //end of while(1)
     logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     m_retrieveJob->transferredSize = m_stats.dataVolume;
-    m_retrieveJob->transferredChecksum = cta::Checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, (uint32_t)checksum);
+    m_retrieveJob->transferredChecksumType = "adler32";
+    { 
+      std::stringstream cs;
+      cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)checksum;
+      m_retrieveJob->transferredChecksumValue = cs.str();
+    }
     reporter.reportCompletedJob(std::move(m_retrieveJob));
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
@@ -201,7 +206,7 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------  
   void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
     using namespace castor::log;
-    if(m_retrieveJob->archiveFile.fileId != static_cast<unsigned int>(mb->m_fileid)
+    if(m_retrieveJob->archiveFile.archiveFileID != static_cast<unsigned int>(mb->m_fileid)
             || blockId != mb->m_fileBlock  || mb->isFailed() ){
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
@@ -254,7 +259,7 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_retrieveJob->archiveFile.fileId)
+           .add("FILEID",m_retrieveJob->archiveFile.archiveFileID)
            .add("path",m_retrieveJob->remotePath);
     lc.log(level,msg);
 }

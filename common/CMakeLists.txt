@@ -67,11 +67,11 @@ set (COMMON_LIB_SRC_FILES
   admin/AdminHost.cpp
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
-  archiveNS/ArchiveFile.cpp
-  archiveNS/ArchiveFileStatus.cpp
-  archiveNS/StorageClass.cpp
-  archiveNS/Tape.cpp
-  archiveNS/TapeFileLocation.cpp
+#  archiveNS/ArchiveFile.cpp
+#  archiveNS/ArchiveFileStatus.cpp
+#  archiveNS/StorageClass.cpp
+#  archiveNS/Tape.cpp
+#  archiveNS/TapeFileLocation.cpp
   checksum/Checksum.cpp
   exception/Backtrace.cpp
   exception/Errnum.cpp

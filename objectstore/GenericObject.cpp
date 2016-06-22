@@ -21,7 +21,6 @@
 #include "Agent.hpp"
 #include "ArchiveRequest.hpp"
 #include "DriveRegister.hpp"
-#include "RetrieveToFileRequest.hpp"
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "ArchiveQueue.hpp"
@@ -143,7 +142,7 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
     case serializers::ArchiveRequest_t:
       return dumpWithType<ArchiveRequest>(this, lock);
     case serializers::RetrieveToFileRequest_t:
-      return dumpWithType<RetrieveToFileRequest>(this, lock);
+      return dumpWithType<RetrieveRequest>(this, lock);
     case serializers::SchedulerGlobalLock_t:
       return dumpWithType<SchedulerGlobalLock>(this, lock);
     default:

@@ -54,11 +54,10 @@ namespace daemon {
 
     const uint64_t blockCapacity = m_memManager.blockCapacity();
     for(auto it= jobs.begin();it!=jobs.end();++it){
-      const uint64_t fileSize = (*it)->archiveFile.size;
+      const uint64_t fileSize = (*it)->archiveFile.fileSize;
       LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->archiveFile.nsHostName)),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.fileId)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->nameServerTapeFile.tapeFileLocation.fSeq)),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.archiveFileID)),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeFile.fSeq)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->remotePathAndStatus.path.getRaw()))
       };
       tape::utils::suppresUnusedVariable(sp);      
@@ -110,7 +109,7 @@ namespace daemon {
         std::unique_ptr<cta::ArchiveJob> job=m_archiveMount.getNextJob();
         if(!job.get()) break;
         files++;
-        bytes+=job->archiveFile.size;
+        bytes+=job->archiveFile.fileSize;
         jobs.push_back(job.release());
       }
     } catch (castor::exception::Exception & ex) {
@@ -129,7 +128,7 @@ namespace daemon {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
     } else {
-      m_firstFseqToWrite = jobs.front()->nameServerTapeFile.tapeFileLocation.fSeq;
+      m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;
       injectBulkMigrations(jobs);
       return true;
     }
@@ -171,7 +170,7 @@ namespace daemon {
           std::unique_ptr<cta::ArchiveJob> job=m_parent.m_archiveMount.getNextJob();
           if(!job.get()) break;
           files++;
-          bytes+=job->archiveFile.size;
+          bytes+=job->archiveFile.archiveFileID;
           jobs.push_back(job.release());
         }
 

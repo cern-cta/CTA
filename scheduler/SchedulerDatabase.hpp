@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveFile.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
@@ -27,13 +25,13 @@
 #include "common/DriveState.hpp"
 #include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "nameserver/NameServerTapeFile.hpp"
 #include "scheduler/MountType.hpp"
 
 #include <list>
@@ -51,11 +49,6 @@ namespace admin {
   class AdminHost;
   class AdminUser;
 } // cta::common::admin
-namespace archiveNS {
-  class ArchiveFile;
-  class ArchiveDirIterator;
-  class ArchiveFileStatus;
-} // cta::common::archiveNS
 namespace archiveRoute {
   class ArchiveRoute;
 } // cta::common::archiveRoute
@@ -182,8 +175,8 @@ public:
   class ArchiveJob {
   public:
     cta::RemotePathAndStatus remoteFile;
-    cta::common::archiveNS::ArchiveFile archiveFile;
-    cta::NameServerTapeFile nameServerTapeFile;
+    cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::TapeFile tapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
@@ -209,7 +202,7 @@ public:
    * @return All of the existing retrieve jobs grouped by tape and then
    * sorted by creation time in ascending order (oldest first).
    */
-  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests()
+  virtual std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests()
     const = 0;
 
   /**
@@ -268,8 +261,8 @@ public:
     friend class RetrieveMount;
   public:
     std::string remoteFile;
-    cta::common::archiveNS::ArchiveFile archiveFile;
-    cta::NameServerTapeFile nameServerTapeFile;
+    cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::TapeFile tapeFile;
     virtual void succeed() = 0;
     virtual void fail() = 0;
     virtual ~RetrieveJob() {}

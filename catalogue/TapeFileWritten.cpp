@@ -46,7 +46,8 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     diskFileGroup == rhs.diskFileGroup &&
     diskFileRecoveryBlob == rhs.diskFileRecoveryBlob &&
     size == rhs.size &&
-    checksum == rhs.checksum &&
+    checksumType == rhs.checksumType &&
+    checksumValue == rhs.checksumValue &&
     storageClassName == rhs.storageClassName &&
     vid == rhs.vid &&
     fSeq == rhs.fSeq &&
@@ -69,7 +70,7 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "diskFileGroup=" << obj.diskFileGroup <<
   "diskFileRecoveryBlob=" << obj.diskFileRecoveryBlob <<
   "size=" << obj.size <<
-  "checksum=" << obj.checksum <<
+  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue <<
   "storageClassName=" << obj.storageClassName <<
   "vid=" << obj.vid <<
   "fSeq=" << obj.fSeq <<

@@ -38,7 +38,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ArchiveFile archiveFile1;
 
   archiveFile1.archiveFileID = 1234;
-  archiveFile1.diskFileID = "EOS_file_ID";
+  archiveFile1.dstURL = "EOS_file_ID";
   archiveFile1.fileSize = 1;
   archiveFile1.checksumType = "checksum_type";
   archiveFile1.checksumValue = "cheskum_value";
@@ -75,7 +75,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile2 = archiveFile1;
 
   ASSERT_EQ(archiveFile1.archiveFileID, archiveFile2.archiveFileID);
-  ASSERT_EQ(archiveFile1.diskFileID, archiveFile2.diskFileID);
+  ASSERT_EQ(archiveFile1.dstURL, archiveFile2.dstURL);
   ASSERT_EQ(archiveFile1.fileSize, archiveFile2.fileSize);
   ASSERT_EQ(archiveFile1.checksumType, archiveFile2.checksumType);
   ASSERT_EQ(archiveFile1.checksumValue, archiveFile2.checksumValue);

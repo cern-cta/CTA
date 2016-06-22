@@ -67,6 +67,16 @@ struct TapeFile {
    * The time the file recorded in the catalogue. 
    */
   time_t creationTime;
+  
+  /**
+   * The checksum type
+   */
+  std::string checksumType;
+  
+  /**
+   * The checksum value 
+   */
+  std::string checksumValue;
 
 }; // struct TapeFile
 

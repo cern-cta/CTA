@@ -28,7 +28,6 @@
 #include "ArchiveRequest.hpp"
 #include "EntryLog.hpp"
 #include "Agent.hpp"
-#include "common/archiveNS/Tape.hpp"
 
 namespace cta { namespace objectstore {
   

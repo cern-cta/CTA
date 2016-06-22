@@ -91,10 +91,15 @@ struct TapeFileWritten {
   uint64_t size;
 
   /**
-   * Checksum of the tape file contents.
+   * Checksum type for the tape file contents.
    */
-  Checksum checksum;
+  std::string checksumType;
 
+  /**
+   * Checksum value for the tape file contents.
+   */
+  std::string checksumValue;
+  
   /**
    * The name of the file's storage class.
    */

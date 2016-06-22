@@ -403,10 +403,11 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     std::unique_ptr<cta::ArchiveJob> archiveJob;
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
-    archiveJob->nameServerTapeFile.tapeFileLocation.blockId = 1;
-    archiveJob->nameServerTapeFile.tapeFileLocation.fSeq = 1;
+    archiveJob->tapeFile.blockId = 1;
+    archiveJob->tapeFile.fSeq = 1;
     cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, 0x12345687);
-    archiveJob->nameServerTapeFile.checksum = checksum;
+    archiveJob->tapeFile.checksumType = "adler32";
+    archiveJob->tapeFile.checksumValue = "1234abcd";
     ASSERT_NO_THROW(archiveJob->complete());
     ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
@@ -523,7 +524,7 @@ TEST_P(SchedulerTest, DISABLED_retry_archive_until_max_reached) {
     for (int i=0; i<5; i++) {
       std::unique_ptr<cta::ArchiveJob> archiveJob;
       // Validate we got the right file
-      ASSERT_EQ(archiveFileId, archiveJob->archiveFile.fileId);
+      ASSERT_EQ(archiveFileId, archiveJob->archiveFile.archiveFileID);
       ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
       ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
       ASSERT_NO_THROW(archiveJob->failed(cta::exception::Exception("Archive failed")));

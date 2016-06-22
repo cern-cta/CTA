@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveFile.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "scheduler/UserRetrieveRequest.hpp"
 
 #include <list>
@@ -56,8 +56,8 @@ public:
    * @param creationLog The creation log parameters
    */
   RetrieveToFileRequest(
-    const cta::common::archiveNS::ArchiveFile &archiveFile,
-    const std::list<TapeFileLocation> &tapeCopies,
+    const cta::common::dataStructures::ArchiveFile &archiveFile,
+    const std::list<common::dataStructures::TapeFile> &tapeCopies,
     const std::string &remoteFile,
     const uint64_t priority,
     const common::dataStructures::EntryLog & creationLog);
@@ -67,14 +67,14 @@ public:
    *
    * @return The source archive file.
    */
-  const cta::common::archiveNS::ArchiveFile &getArchiveFile() const throw();
+  const cta::common::dataStructures::ArchiveFile &getArchiveFile() const throw();
   
   /**
    * Returns the physical location(s) of the archive file on tape.
    *
    * @return The physical location(s) of the archive file on tape.
    */
-  const std::list<TapeFileLocation> &getTapeCopies() const throw();
+  const std::list<common::dataStructures::TapeFile> &getTapeCopies() const throw();
 
   /**
    * Returns the URL of the destination remote file.
@@ -88,12 +88,12 @@ private:
   /**
    * The full path of the source archive file.
    */
-  cta::common::archiveNS::ArchiveFile m_archiveFile;
+  cta::common::dataStructures::ArchiveFile m_archiveFile;
   
   /**
    * The physical location(s) of the archive file on tape.
    */
-  std::list<TapeFileLocation> m_tapeCopies;
+  std::list<common::dataStructures::TapeFile> m_tapeCopies;
 
   /**
    * The URL of the destination remote file.

@@ -50,7 +50,6 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteConn.hpp"
-#include "nameserver/mockNS/MockNameServer.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendPopulator.hpp"
@@ -559,7 +558,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     zmqContext.get());
   
   cta::EosNS eosNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort"));
-  cta::MockNameServer mockNs;
   std::unique_ptr<cta::objectstore::Backend> backend(
     cta::objectstore::BackendFactory::createBackend(
       castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "ObjectStoreBackendPath"))

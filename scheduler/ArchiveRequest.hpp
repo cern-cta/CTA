@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveFile.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/UserArchiveRequest.hpp"
 #include "SchedulerDatabase.hpp"
@@ -71,7 +70,7 @@ struct ArchiveRequest: public UserArchiveRequest {
    */
   ArchiveRequest(
     const RemotePathAndStatus &remoteFilePath,
-    const cta::common::archiveNS::ArchiveFile &archiveFile,
+    const cta::common::dataStructures::ArchiveFile &archiveFile,
     const std::map<uint16_t, std::string> &copyNbToPoolMap,
     const uint64_t priority,
     const CreationLog & creationLog);
@@ -84,7 +83,7 @@ struct ArchiveRequest: public UserArchiveRequest {
   /**
    * The destination archive file.
    */
-  cta::common::archiveNS::ArchiveFile archiveFile;
+  cta::common::dataStructures::ArchiveFile archiveFile;
 
   /**
    * The mapping from archive copy number to destination tape pool.

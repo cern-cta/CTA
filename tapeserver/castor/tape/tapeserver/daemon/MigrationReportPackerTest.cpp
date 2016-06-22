@@ -25,9 +25,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/CatalogueFactory.hpp"
-#include "nameserver/mockNS/MockNameServer.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
-//#include "scheduler/mockDB/MockSchedulerDatabase.hpp"
 
 #include <gtest/gtest.h>
 
@@ -187,9 +185,9 @@ namespace unitTests {
       migratedNullFile.reset(mockJob.release());
     }
 
-    migratedBigFile->archiveFile.size=100000;
-    migratedFileSmall->archiveFile.size=1;
-    migratedNullFile->archiveFile.size=0;
+    migratedBigFile->archiveFile.fileSize=100000;
+    migratedFileSmall->archiveFile.fileSize=1;
+    migratedNullFile->archiveFile.fileSize=0;
     
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile");
     castor::log::LogContext lc(log);  

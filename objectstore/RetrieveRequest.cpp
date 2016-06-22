@@ -22,11 +22,13 @@
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
 
-cta::objectstore::RetrieveRequest::RetrieveRequest(
+namespace cta { namespace objectstore {
+
+RetrieveRequest::RetrieveRequest(
   const std::string& address, Backend& os): 
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(os, address) { }
 
-cta::objectstore::RetrieveRequest::RetrieveRequest(GenericObject& go):
+RetrieveRequest::RetrieveRequest(GenericObject& go):
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -34,28 +36,28 @@ cta::objectstore::RetrieveRequest::RetrieveRequest(GenericObject& go):
   getPayloadFromHeader();
 }
 
-void cta::objectstore::RetrieveRequest::initialize() {
+void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::RetrieveRequest::addJob(const cta::TapeFileLocation & tapeFileLocation,
+void RetrieveRequest::addJob(const cta::common::dataStructures::TapeFile & tapeFile,
     const std::string& tapeaddress) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
-  j->set_copynb(tapeFileLocation.copyNb);
+  j->set_copynb(tapeFile.copyNb);
   j->set_status(serializers::RetrieveJobStatus::RJS_LinkingToTape);
-  j->set_tape(tapeFileLocation.vid);
+  j->set_tape(tapeFile.vid);
   j->set_tapeaddress(tapeaddress);
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
-  j->set_blockid(tapeFileLocation.blockId);
-  j->set_fseq(tapeFileLocation.fSeq);
+  j->set_blockid(tapeFile.blockId);
+  j->set_fseq(tapeFile.fSeq);
 }
 
-bool cta::objectstore::RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
+bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
@@ -74,25 +76,53 @@ bool cta::objectstore::RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
 
 
 //------------------------------------------------------------------------------
-// setArchiveFileID
+// setArchiveFile
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setArchiveFileID(const uint64_t archiveFileID) {
+void RetrieveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile) {
   checkPayloadWritable();
-  m_payload.set_archivefileid(archiveFileID);
+  auto *af = m_payload.mutable_archivefile();
+  af->set_checksumtype(archiveFile.checksumType);
+  af->set_checksumvalue(archiveFile.checksumValue);
+  af->set_fileid(archiveFile.archiveFileID);
+  af->set_creationtime(archiveFile.creationTime);
+  af->set_size(archiveFile.fileSize);
 }
 
 //------------------------------------------------------------------------------
 // getArchiveFileID
 //------------------------------------------------------------------------------
-uint64_t cta::objectstore::RetrieveRequest::getArchiveFileID() {
+
+cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
   checkPayloadReadable();
-  return m_payload.archivefileid();
+  common::dataStructures::ArchiveFile ret;
+  ret.archiveFileID = m_payload.archivefile().fileid();
+  ret.checksumType = m_payload.archivefile().checksumtype();
+  ret.checksumValue = m_payload.archivefile().checksumvalue();
+  ret.creationTime = m_payload.archivefile().creationtime();
+  ret.dstURL = m_payload.dsturl();
+  ret.diskInstance = m_payload.diskinstance();
+  ret.drData.drBlob = m_payload.drdata().drblob();
+  ret.drData.drGroup = m_payload.drdata().drgroup();
+  ret.drData.drOwner = m_payload.drdata().drowner();
+  ret.drData.drPath = m_payload.drdata().drpath();
+  ret.fileSize = m_payload.archivefile().size();
+  ret.reconciliationTime = m_payload.reconcilationtime();
+  ret.storageClass = m_payload.storageclass();
+  for (auto & j: m_payload.jobs()) {
+    ret.tapeFiles[j.copynb()].blockId = j.blockid();
+    ret.tapeFiles[j.copynb()].compressedSize = j.compressedsize();
+    ret.tapeFiles[j.copynb()].copyNb = j.copynb();
+    ret.tapeFiles[j.copynb()].creationTime = j.creationtime();
+    ret.tapeFiles[j.copynb()].fSeq = j.fseq();
+    ret.tapeFiles[j.copynb()].vid = j.tape();
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
 // setDiskpoolName
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
+void RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
   checkPayloadWritable();
   m_payload.set_diskpoolname(diskpoolName);
 }
@@ -100,7 +130,7 @@ void cta::objectstore::RetrieveRequest::setDiskpoolName(const std::string &diskp
 //------------------------------------------------------------------------------
 // getDiskpoolName
 //------------------------------------------------------------------------------
-std::string cta::objectstore::RetrieveRequest::getDiskpoolName() {
+std::string RetrieveRequest::getDiskpoolName() {
   checkPayloadReadable();
   return m_payload.diskpoolname();
 }
@@ -108,7 +138,7 @@ std::string cta::objectstore::RetrieveRequest::getDiskpoolName() {
 //------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
+void RetrieveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
   checkPayloadWritable();
   m_payload.set_diskpoolthroughput(diskpoolThroughput);
 }
@@ -116,7 +146,7 @@ void cta::objectstore::RetrieveRequest::setDiskpoolThroughput(const uint64_t dis
 //------------------------------------------------------------------------------
 // getDiskpoolThroughput
 //------------------------------------------------------------------------------
-uint64_t cta::objectstore::RetrieveRequest::getDiskpoolThroughput() {
+uint64_t RetrieveRequest::getDiskpoolThroughput() {
   checkPayloadReadable();
   return m_payload.diskpoolthroughput();
 }
@@ -124,7 +154,7 @@ uint64_t cta::objectstore::RetrieveRequest::getDiskpoolThroughput() {
 //------------------------------------------------------------------------------
 // setDrData
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
+void RetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
   checkPayloadWritable();
   auto payloadDrData = m_payload.mutable_drdata();
   payloadDrData->set_drblob(drData.drBlob);
@@ -136,7 +166,7 @@ void cta::objectstore::RetrieveRequest::setDrData(const cta::common::dataStructu
 //------------------------------------------------------------------------------
 // getDrData
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DRData cta::objectstore::RetrieveRequest::getDrData() {
+cta::common::dataStructures::DRData RetrieveRequest::getDrData() {
   checkPayloadReadable();
   cta::common::dataStructures::DRData drData;
   auto payloadDrData = m_payload.drdata();
@@ -150,7 +180,7 @@ cta::common::dataStructures::DRData cta::objectstore::RetrieveRequest::getDrData
 //------------------------------------------------------------------------------
 // setDstURL
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setDstURL(const std::string &dstURL) {
+void RetrieveRequest::setDstURL(const std::string &dstURL) {
   checkPayloadWritable();
   m_payload.set_dsturl(dstURL);
 }
@@ -158,7 +188,7 @@ void cta::objectstore::RetrieveRequest::setDstURL(const std::string &dstURL) {
 //------------------------------------------------------------------------------
 // getDstURL
 //------------------------------------------------------------------------------
-std::string cta::objectstore::RetrieveRequest::getDstURL() {
+std::string RetrieveRequest::getDstURL() {
   checkPayloadReadable();
   return m_payload.dsturl();
 }
@@ -166,7 +196,7 @@ std::string cta::objectstore::RetrieveRequest::getDstURL() {
 //------------------------------------------------------------------------------
 // setRequester
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
+void RetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
   payloadRequester->set_name(requester.name);
@@ -176,7 +206,7 @@ void cta::objectstore::RetrieveRequest::setRequester(const cta::common::dataStru
 //------------------------------------------------------------------------------
 // getRequester
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity cta::objectstore::RetrieveRequest::getRequester() {
+cta::common::dataStructures::UserIdentity RetrieveRequest::getRequester() {
   checkPayloadReadable();
   cta::common::dataStructures::UserIdentity requester;
   auto payloadRequester = m_payload.requester();
@@ -186,30 +216,34 @@ cta::common::dataStructures::UserIdentity cta::objectstore::RetrieveRequest::get
 }
 
 //------------------------------------------------------------------------------
-// setCreationLog
+// setEntryLog
 //------------------------------------------------------------------------------
-void cta::objectstore::RetrieveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+
+void RetrieveRequest::setEntryLog(const objectstore::EntryLog& entryLog) {
   checkPayloadWritable();
   auto payloadCreationLog = m_payload.mutable_creationlog();
-  payloadCreationLog->set_time(creationLog.time);
-  payloadCreationLog->set_host(creationLog.host);
-  payloadCreationLog->set_username(creationLog.username);
+  payloadCreationLog->set_time(entryLog.time);
+  payloadCreationLog->set_host(entryLog.host);
+  payloadCreationLog->set_username(entryLog.username);
 }
 
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog cta::objectstore::RetrieveRequest::getCreationLog() {
-  checkPayloadReadable();
-  cta::common::dataStructures::EntryLog creationLog;
+objectstore::EntryLog RetrieveRequest::getEntryLog() {
+  checkHeaderReadable();
+  cta::common::dataStructures::EntryLog entryLog;
   auto payloadCreationLog = m_payload.creationlog();
-  creationLog.username=payloadCreationLog.username();
-  creationLog.host=payloadCreationLog.host();
-  creationLog.time=payloadCreationLog.time();
-  return creationLog;  
+  entryLog.username=payloadCreationLog.username();
+  entryLog.host=payloadCreationLog.host();
+  entryLog.time=payloadCreationLog.time();
+  return entryLog;  
 }
 
-auto cta::objectstore::RetrieveRequest::dumpJobs() -> std::list<JobDump> {
+//------------------------------------------------------------------------------
+// dumpJobs
+//------------------------------------------------------------------------------
+auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl = m_payload.jobs();
@@ -222,7 +256,7 @@ auto cta::objectstore::RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-auto  cta::objectstore::RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
+auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   checkPayloadReadable();
   // find the job
   auto & jl = m_payload.jobs();
@@ -240,21 +274,27 @@ auto  cta::objectstore::RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   throw NoSuchJob("In objectstore::RetrieveRequest::getJob(): job not found for this copyNb");
 }
 
-std::string cta::objectstore::RetrieveRequest::dump() {
+std::string RetrieveRequest::dump() {
   checkPayloadReadable();
   std::stringstream ret;
   ret << "RetrieveRequest" << std::endl;
   struct json_object * jo = json_object_new_object();
-  json_object_object_add(jo, "archivefileid", json_object_new_int64(m_payload.archivefileid()));
+  struct json_object * jaf = json_object_new_object();
+  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().fileid()));
+  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().creationtime()));
+  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumtype().c_str()));
+  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumvalue().c_str()));
+  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
+  json_object_object_add(jo, "creationlog", jaf);
   json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
   json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
   json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
   // Object for creation log
-  json_object * jaf = json_object_new_object();
-  json_object_object_add(jaf, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
-  json_object_object_add(jaf, "time", json_object_new_int64(m_payload.creationlog().time()));
-  json_object_object_add(jaf, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
-  json_object_object_add(jo, "creationlog", jaf);
+  json_object * jcl = json_object_new_object();
+  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
+  json_object_object_add(jcl, "time", json_object_new_int64(m_payload.creationlog().time()));
+  json_object_object_add(jcl, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
+  json_object_object_add(jo, "creationlog", jcl);
   // Array for jobs
   json_object * jja = json_object_new_array();
   auto & jl = m_payload.jobs();
@@ -289,4 +329,6 @@ std::string cta::objectstore::RetrieveRequest::dump() {
   json_object_put(jo);
   return ret.str();
 }
+
+}} // namespace cta::objectstore
 

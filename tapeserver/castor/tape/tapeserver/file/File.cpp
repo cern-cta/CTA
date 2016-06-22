@@ -145,13 +145,13 @@ namespace castor {
         const cta::RetrieveJob &filetoRecall,
         const tape::tapeserver::daemon::VolumeInfo &volInfo)  {
         const std::string &volId = volInfo.vid;
-        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.archiveFile.fileId, hexadecimal)) { 
+        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.archiveFile.archiveFileID, hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkHDR1] - Invalid fileid detected: (0x)\"" 
               << hdr1.getFileId() << "\". Wanted: 0x" << std::hex 
-              << filetoRecall.archiveFile.fileId << std::endl;
+              << filetoRecall.archiveFile.archiveFileID << std::endl;
           throw TapeFormatError(ex_str.str());
         }
 
@@ -167,11 +167,11 @@ namespace castor {
       void HeaderChecker::checkUHL1(const UHL1 &uhl1,
         const cta::RetrieveJob &fileToRecall)  {
         if(!checkHeaderNumericalField(uhl1.getfSeq(),
-          fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq, decimal)) {
+          fileToRecall.tapeFile.fSeq, decimal)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: \"" 
               << uhl1.getfSeq() << "\". Wanted: "
-              << fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq;
+              << fileToRecall.tapeFile.fSeq;
           throw TapeFormatError(ex_str.str());
         }
       }
@@ -214,16 +214,16 @@ namespace castor {
         m_session->release();
       }
       void ReadFile::positionByFseq(const cta::RetrieveJob &fileToRecall) {
-        if(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq<1) {
+        if(fileToRecall.tapeFile.fSeq<1) {
           std::stringstream err;
           err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
-                  << fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq << ")";
+                  << fileToRecall.tapeFile.fSeq << ")";
           throw castor::exception::InvalidArgument(err.str());
         }
         
-        int64_t fSeq_delta = fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq 
+        int64_t fSeq_delta = fileToRecall.tapeFile.fSeq 
             - m_session->getCurrentFseq();
-        if(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq == 1) { 
+        if(fileToRecall.tapeFile.fSeq == 1) { 
           // special case: we can rewind the tape to be faster 
           //(TODO: in the future we could also think of a threshold above 
           //which we rewind the tape anyway and then space forward)       
@@ -253,15 +253,15 @@ namespace castor {
       }
         
       void ReadFile::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
-        if(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId > 
-          std::numeric_limits<decltype(fileToRecall.nameServerTapeFile.tapeFileLocation.blockId)>::max()){
+        if(fileToRecall.tapeFile.blockId > 
+          std::numeric_limits<decltype(fileToRecall.tapeFile.blockId)>::max()){
           std::stringstream ex_str;
-          ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.nameServerTapeFile.tapeFileLocation.blockId;
+          ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.tapeFile.blockId;
           throw castor::exception::Exception(ex_str.str());
         }
        // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-        const uint32_t destination_block = fileToRecall.nameServerTapeFile.tapeFileLocation.blockId ? 
-          fileToRecall.nameServerTapeFile.tapeFileLocation.blockId : 1;
+        const uint32_t destination_block = fileToRecall.tapeFile.blockId ? 
+          fileToRecall.tapeFile.blockId : 1;
         /* 
         we position using the sg locate because it is supposed to do the 
         right thing possibly in a more optimized way (better than st's 
@@ -305,7 +305,7 @@ namespace castor {
         }
 
         //save the current fSeq into the read session
-        m_session->setCurrentFseq(fileToRecall.nameServerTapeFile.tapeFileLocation.fSeq);
+        m_session->setCurrentFseq(fileToRecall.tapeFile.fSeq);
 
         HDR1 hdr1;
         HDR2 hdr2;
@@ -530,11 +530,11 @@ namespace castor {
         m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0)
       {
         // Check the sanity of the parameters. fSeq should be >= 1
-        if (0 == m_fileToMigrate.archiveFile.fileId || m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq<1) {
+        if (0 == m_fileToMigrate.archiveFile.archiveFileID || m_fileToMigrate.tapeFile.fSeq<1) {
           std::stringstream err;
           err << "Unexpected fileId in WriteFile::WriteFile (expected != 0, got: "
-              << m_fileToMigrate.archiveFile.fileId << ") or fSeq (expected >=1, got: "
-              << m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq << ")";
+              << m_fileToMigrate.archiveFile.archiveFileID << ") or fSeq (expected >=1, got: "
+              << m_fileToMigrate.tapeFile.fSeq << ")";
           throw castor::exception::InvalidArgument(err.str());
         }
         if(m_session->isCorrupted()) {
@@ -545,16 +545,16 @@ namespace castor {
         HDR2 hdr2;
         UHL1 uhl1;
         std::stringstream s;
-        s << std::hex << m_fileToMigrate.archiveFile.fileId;
+        s << std::hex << m_fileToMigrate.archiveFile.archiveFileID;
         std::string fileId;
         s >> fileId;
         std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-        hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq);
+        hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq);
         hdr2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-        uhl1.fill(m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(), 
+        uhl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(), 
             m_session->getHostName(), m_session->m_drive.getDeviceInfo());
         /* Before writing anything, we record the blockId of the file */
-        if (1 == m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq) {
+        if (1 == m_fileToMigrate.tapeFile.fSeq) {
           m_blockId = 0;
         } else {
           m_blockId = getPosition();
@@ -602,13 +602,13 @@ namespace castor {
         EOF2 eof2;
         UTL1 utl1;
         std::stringstream s;
-        s << std::hex << m_fileToMigrate.archiveFile.fileId;
+        s << std::hex << m_fileToMigrate.archiveFile.archiveFileID;
         std::string fileId;
         s >> fileId;
         std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-        eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_numberOfBlocks);
+        eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq, m_numberOfBlocks);
         eof2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-        utl1.fill(m_fileToMigrate.nameServerTapeFile.tapeFileLocation.fSeq, m_currentBlockSize, m_session->getSiteName(),
+        utl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(),
             m_session->getHostName(), m_session->m_drive.getDeviceInfo());
         m_session->m_drive.writeBlock(&eof1, sizeof(eof1));
         m_session->m_drive.writeBlock(&eof2, sizeof(eof2));

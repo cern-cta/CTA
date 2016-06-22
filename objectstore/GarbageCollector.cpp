@@ -18,7 +18,6 @@
 
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
-//#include "FIFO.hpp"
 #include <algorithm>
 
 namespace cta { namespace objectstore {

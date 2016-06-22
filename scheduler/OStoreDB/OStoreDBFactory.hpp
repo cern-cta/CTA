@@ -20,9 +20,7 @@
 
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "common/archiveNS/StorageClass.hpp"
 #include "common/TapePool.hpp"
-#include "common/archiveNS/Tape.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
@@ -78,7 +76,7 @@ public:
     return m_OStoreDB.getArchiveJobs(tapePoolName);
   }
 
-  virtual std::map<Tape, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
+  virtual std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
     return m_OStoreDB.getRetrieveRequests();
   }
 

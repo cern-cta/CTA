@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "common/archiveNS/ArchiveFile.hpp"
-#include "common/archiveNS/TapeFileLocation.hpp"
 #include "common/CreationLog.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 
 #include <list>
 #include <string>
@@ -35,10 +35,10 @@ namespace cta {
 struct RetrieveRequestDump {
   uint64_t priority; /**< The priority of the request. */
   common::dataStructures::EntryLog entryLog; /**< The time at which the request was created. */
-  cta::common::archiveNS::ArchiveFile archiveFile; /**< he full path of the source archive file. */
+  cta::common::dataStructures::ArchiveFile archiveFile; /**< The full path of the source archive file. */
   uint64_t activeCopyNb; /**< The tape copy number currenty considered for retrieve. */
-  std::list<TapeFileLocation> tapeCopies; /**<The location of the copies on tape. */
-  std::string remoteFile; /**< The URL of the destination remote file. */
+  std::list<cta::common::dataStructures::TapeFile> tapeFiles; /**<The location of the copies on tape. */
+  std::string dstURL; /**< The URL of the destination remote file. */
 }; // struct RetrieveFromTapeCopyRequest
 
 } // namespace cta

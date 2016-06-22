@@ -88,7 +88,7 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   return ret.str();
 }
 
-void cta::objectstore::RetrieveQueue::addJob(const RetrieveToFileRequest::JobDump& job,
+void cta::objectstore::RetrieveQueue::addJob(const RetrieveRequest::JobDump& job,
   const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
   time_t startTime) {
   checkPayloadWritable();
@@ -124,20 +124,20 @@ auto cta::objectstore::RetrieveQueue::dumpAndFetchRetrieveRequests()
   auto & rjl = m_payload.retrievejobs();
   for (auto rj=rjl.begin(); rj!=rjl.end(); rj++) {
     try {
-      cta::objectstore::RetrieveToFileRequest rtfr(rj->address(),m_objectStore);
-      objectstore::ScopedSharedLock rtfrl(rtfr);
-      rtfr.fetch();
+      cta::objectstore::RetrieveRequest retrieveRequest(rj->address(),m_objectStore);
+      objectstore::ScopedSharedLock rtfrl(retrieveRequest);
+      retrieveRequest.fetch();
       ret.push_back(RetrieveRequestDump());
       auto & retReq = ret.back();
-      retReq.archiveFile = rtfr.getArchiveFile();
-      retReq.remoteFile = rtfr.getRemoteFile();
-      retReq.entryLog = rtfr.getEntryLog();
+      retReq.archiveFile = retrieveRequest.getArchiveFile();
+      retReq.dstURL = retrieveRequest.getDstURL();
+      retReq.entryLog = retrieveRequest.getEntryLog();
       // Find the copy number from the list of jobs
       retReq.activeCopyNb = rj->copynb();
-      auto jl = rtfr.dumpJobs();
+      auto jl = retrieveRequest.dumpJobs();
       for (auto j=jl.begin(); j!= jl.end(); j++) {
-        retReq.tapeCopies.push_back(TapeFileLocation());
-        auto & retJob = retReq.tapeCopies.back();
+        retReq.tapeFiles.push_back(common::dataStructures::TapeFile());
+        auto & retJob = retReq.tapeFiles.back();
         retJob.blockId = j->blockid;
         retJob.copyNb = j->copyNb;
         retJob.fSeq = j->fseq;

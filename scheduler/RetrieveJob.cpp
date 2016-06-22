@@ -28,14 +28,14 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
-  const common::archiveNS::ArchiveFile &archiveFile,
+  const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &remotePath,
-  const NameServerTapeFile &nameServerTapeFile,
+  const common::dataStructures::TapeFile &tapeFile,
   const PositioningMethod positioningMethod):
   m_mount(mount),
   archiveFile(archiveFile),
   remotePath(remotePath),
-  nameServerTapeFile(nameServerTapeFile),
+  tapeFile(tapeFile),
   positioningMethod(positioningMethod),
   transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
