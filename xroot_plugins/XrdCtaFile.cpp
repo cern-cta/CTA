@@ -1633,29 +1633,30 @@ int XrdCtaFile::xCom_archivefile() {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if(!summary) {
-      std::list<cta::common::dataStructures::ArchiveFile> list=m_catalogue->getArchiveFiles(id_s, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
-      if(list.size()>0) {
+      std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(); // TO BE DONE - Pass in the SEARCH CRITERIA
+      if(itor->hasMore()) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
         if(hasOption("-h", "--header")) responseTable.push_back(header);    
-        for(auto it = list.cbegin(); it != list.cend(); it++) {
-          for(auto jt = it->tapeFiles.cbegin(); jt != it->tapeFiles.cend(); jt++) {
+        while(itor->hasMore()) {
+          const cta::common::dataStructures::ArchiveFile archiveFile = itor->next();
+          for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
             std::vector<std::string> currentRow;
-            currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
+            currentRow.push_back(std::to_string((unsigned long long)archiveFile.archiveFileID));
             currentRow.push_back(std::to_string((unsigned long long)jt->first));
             currentRow.push_back(jt->second.vid);
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-            currentRow.push_back(it->dstURL);
-            currentRow.push_back(it->diskInstance);
-            currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
-            currentRow.push_back(it->checksumType);
-            currentRow.push_back(it->checksumValue);
-            currentRow.push_back(it->storageClass);
-            currentRow.push_back(it->drData.drOwner);
-            currentRow.push_back(it->drData.drGroup);
-            currentRow.push_back(it->drData.drPath);    
-            currentRow.push_back(std::to_string((unsigned long long)it->creationTime));          
+            currentRow.push_back(archiveFile.dstURL);
+            currentRow.push_back(archiveFile.diskInstance);
+            currentRow.push_back(std::to_string((unsigned long long)archiveFile.fileSize));
+            currentRow.push_back(archiveFile.checksumType);
+            currentRow.push_back(archiveFile.checksumValue);
+            currentRow.push_back(archiveFile.storageClass);
+            currentRow.push_back(archiveFile.drData.drOwner);
+            currentRow.push_back(archiveFile.drData.drGroup);
+            currentRow.push_back(archiveFile.drData.drPath);    
+            currentRow.push_back(std::to_string((unsigned long long)archiveFile.creationTime));          
             responseTable.push_back(currentRow);
           }
         }
@@ -1663,7 +1664,7 @@ int XrdCtaFile::xCom_archivefile() {
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(id_s, eosid, copynb, tapepool, vid, owner, group, storageclass, path);
+      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(); // TO BE DONE - Pass in SEARCH CRITERIA
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};

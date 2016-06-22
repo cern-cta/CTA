@@ -22,6 +22,7 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
+  ArchiveFileItor.cpp
   AutoRollback.cpp
   Catalogue.cpp
   CatalogueFactory.cpp

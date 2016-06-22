@@ -84,10 +84,9 @@ protected:
       }
     }
     {
-      const std::list<common::dataStructures::ArchiveFile> archiveFiles =
-        m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "");
-      for(auto &archiveFile: archiveFiles) {
-        m_catalogue->deleteArchiveFile(archiveFile.archiveFileID);
+      std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
+      while(itor->hasMore()) {
+        m_catalogue->deleteArchiveFile(itor->next().archiveFileID);
       }
     }
     {
@@ -153,6 +152,32 @@ protected:
       }
 
       return vidToTape;
+    } catch(exception::Exception &ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    }
+  }
+
+  /**
+   * Creates a map from archive file ID to archive file from the specified iterator.
+   *
+   * @param itor Iterator over archive files.
+   * @return Map from archive file ID to archive file.
+   */
+  std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileItorToMap(cta::catalogue::ArchiveFileItor &itor) {
+    using namespace cta;
+
+    try {
+      std::map<uint64_t, common::dataStructures::ArchiveFile> m;
+      while(itor.hasMore()) {
+        const common::dataStructures::ArchiveFile archiveFile = itor.next();
+        if(m.end() != m.find(archiveFile.archiveFileID)) {
+          exception::Exception ex;
+          ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
+          throw ex;
+        }
+        m[archiveFile.archiveFileID] = archiveFile;
+      }
+      return m;
     } catch(exception::Exception &ex) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     }
@@ -1867,7 +1892,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   const std::string storageClassName = "storage_class";
@@ -2085,7 +2110,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   const std::string storageClassName = "storage_class";
@@ -2252,7 +2277,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   const std::string storageClassName = "storage_class";
@@ -2372,7 +2397,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   const std::string storageClassName = "storage_class";
@@ -2515,7 +2540,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   const std::string storageClassName = "storage_class";
@@ -2546,6 +2571,37 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    std::unique_ptr<catalogue::ArchiveFileItor> archiveFileItor = m_catalogue->getArchiveFileItor();
+    const std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
+    ASSERT_EQ(1, m.size());
+    auto mItor = m.find(file1Written.archiveFileId);
+    ASSERT_FALSE(m.end() == mItor);
+
+    const common::dataStructures::ArchiveFile archiveFile = mItor->second;
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.dstURL);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
   {
@@ -2596,6 +2652,50 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    std::unique_ptr<catalogue::ArchiveFileItor> archiveFileItor = m_catalogue->getArchiveFileItor();
+    const std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
+    ASSERT_EQ(1, m.size());
+
+    {
+      auto mItor = m.find(file1Written.archiveFileId);
+      ASSERT_FALSE(m.end() == mItor);
+
+      const common::dataStructures::ArchiveFile archiveFile = mItor->second;
+
+      ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(file2Written.diskFileId, archiveFile.dstURL);
+      ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+      ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
+
+      ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
+      ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
+      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
+      ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+
+      ASSERT_EQ(2, archiveFile.tapeFiles.size());
+
+      auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+      ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+      const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+      ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+      ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+      ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+      ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+      ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+
+      auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
+      ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+      const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+      ASSERT_EQ(file2Written.vid, tapeFile2.vid);
+      ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
+      ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
+      ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+      ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
+    }
   }
 
   {
@@ -2668,13 +2768,13 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getArchiveFiles("", "", "", "", "", "", "", "", "").empty());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), catalogue::UserError);
 }
 

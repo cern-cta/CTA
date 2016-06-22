@@ -2292,20 +2292,87 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFiles
+// getArchiveFileItor
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
-  const std::string &id,
-  const std::string &eosid,
-  const std::string &copynb,
-  const std::string &tapepool,
-  const std::string &vid,
-  const std::string &owner,
-  const std::string &group,
-  const std::string &storageclass,
-  const std::string &path) {
+std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
+  const uint64_t nbArchiveFilesToPrefetch) const {
   try {
-    const char *const sql =
+    return std::unique_ptr<ArchiveFileItor>(new ArchiveFileItorImpl(*this, nbArchiveFilesToPrefetch, searchCriteria));
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+RdbmsCatalogue::ArchiveFileItorImpl::ArchiveFileItorImpl(
+  const RdbmsCatalogue &catalogue,
+  const uint64_t nbArchiveFilesToPrefetch,
+  const ArchiveFileSearchCriteria &searchCriteria):
+  m_catalogue(catalogue),
+  m_nbArchiveFilesToPrefetch(nbArchiveFilesToPrefetch),
+  m_searchCriteria(searchCriteria),
+  m_nextArchiveFileId(1) {
+  try {
+    m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
+      m_searchCriteria);
+    if(!m_prefechedArchiveFiles.empty()) {
+      m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+RdbmsCatalogue::ArchiveFileItorImpl::~ArchiveFileItorImpl() {
+}
+
+//------------------------------------------------------------------------------
+// hasMore
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::ArchiveFileItorImpl::hasMore() const {
+  return !m_prefechedArchiveFiles.empty();
+}
+
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+common::dataStructures::ArchiveFile RdbmsCatalogue::ArchiveFileItorImpl::next() {
+  try {
+    if(m_prefechedArchiveFiles.empty()) {
+      throw exception::Exception("No more archive files to iterate over");
+    }
+
+    common::dataStructures::ArchiveFile archiveFile = m_prefechedArchiveFiles.front();
+    m_prefechedArchiveFiles.pop_front();
+
+    if(m_prefechedArchiveFiles.empty()) {
+      m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
+        m_searchCriteria);
+      if(!m_prefechedArchiveFiles.empty()) {
+        m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
+      }
+    }
+
+    return archiveFile;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFilesForItor
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesForItor(
+  const uint64_t startingArchiveFileId,
+  const uint64_t maxNbArchiveFiles,
+  const ArchiveFileSearchCriteria &searchCriteria) const {
+  try {
+    std::string sql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
@@ -2325,19 +2392,83 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "ORDER BY "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID,"
-        "TAPE_FILE.COPY_NB"
-    ;
+      "LEFT OUTER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
+      "WHERE "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID >= :STARTING_ARCHIVE_FILE_ID";
+    if(!searchCriteria.archiveFileId.empty()) {
+      sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+    }
+    if(!searchCriteria.diskInstance.empty()) {
+      sql += " AND ARCHIVE_FILE.DISK_INSTANCE = :DISK_INSTANCE";
+    }
+    if(!searchCriteria.diskFileId.empty()) {
+      sql += " AND ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+    }
+    if(!searchCriteria.diskFilePath.empty()) {
+      sql += " AND ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
+    }
+    if(!searchCriteria.diskFileUser.empty()) {
+      sql += " AND ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
+    }
+    if(!searchCriteria.diskFileGroup.empty()) {
+      sql += " AND ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
+    }
+    if(!searchCriteria.storageClass.empty()) {
+      sql += " AND ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    }
+    if(!searchCriteria.vid.empty()) {
+      sql += " AND TAPE_FILE.VID = :VID";
+    }
+    if(!searchCriteria.tapeFileCopyNb.empty()) {
+      sql += " AND TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
+    }
+    if(!searchCriteria.tapePool.empty()) {
+      sql += " AND TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    }
+    sql += " ORDER BY ARCHIVE_FILE.ARCHIVE_FILE_ID, TAPE_FILE.COPY_NB";
+
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindUint64(":STARTING_ARCHIVE_FILE_ID", startingArchiveFileId);
+    if(!searchCriteria.archiveFileId.empty()) {
+      stmt->bindUint64(":ARCHIVE_FILE_ID", utils::toUint64(searchCriteria.archiveFileId));
+    }
+    if(!searchCriteria.diskInstance.empty()) {
+      stmt->bindString(":DISK_INSTANCE", searchCriteria.diskInstance);
+    }
+    if(!searchCriteria.diskFileId.empty()) {
+      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId);
+    }
+    if(!searchCriteria.diskFilePath.empty()) {
+      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath);
+    }
+    if(!searchCriteria.diskFileUser.empty()) {
+      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser);
+    }
+    if(!searchCriteria.diskFileGroup.empty()) {
+      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup);
+    }
+    if(!searchCriteria.storageClass.empty()) {
+      stmt->bindString(":STORAGE_CLASS", searchCriteria.storageClass);
+    }
+    if(!searchCriteria.vid.empty()) {
+      stmt->bindString(":VID", searchCriteria.vid);
+    }
+    if(!searchCriteria.tapeFileCopyNb.empty()) {
+      stmt->bindUint64(":TAPE_FILE_COPY_NB", utils::toUint64(searchCriteria.tapeFileCopyNb));
+    }
+    if(!searchCriteria.tapePool.empty()) {
+      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
+    }
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
-    while (rset->next()) {
+    while (rset->next() && archiveFiles.size() < maxNbArchiveFiles ) {
       const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
 
       if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
@@ -2385,8 +2516,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFiles(
 //------------------------------------------------------------------------------
 // getArchiveFileSummary
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getArchiveFileSummary(const std::string &id, const std::string &eosid,
-        const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) {
+common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getArchiveFileSummary(
+  const ArchiveFileSearchCriteria &searchCriteria) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -2977,7 +3108,8 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(const std::string &vid) const {
 //------------------------------------------------------------------------------
 // getArchiveFile
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(const uint64_t archiveFileId) const {
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(const uint64_t archiveFileId)
+  const {
   try {
     const char *const sql =
       "SELECT "

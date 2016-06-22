@@ -68,8 +68,7 @@ namespace utils {
    * @return The names of the enclosed file or directory of each of the
    * specified paths.
    */
-  std::list<std::string> getEnclosedNames(
-    const std::list<std::string> &paths);
+  std::list<std::string> getEnclosedNames(const std::list<std::string> &paths);
 
   /**
    * Returns the result of trimming both left and right slashes from the
@@ -100,8 +99,7 @@ namespace utils {
    * @param result The vector when the result of spliting the string will be
    * stored.
    */
-  void splitString(const std::string &str, const char separator,
-    std::vector<std::string> &result);
+  void splitString(const std::string &str, const char separator, std::vector<std::string> &result);
   
 
   /**
@@ -148,8 +146,7 @@ namespace utils {
    * @param name The name of the extended attribute.
    * @param value The value of the extended attribute.
    */
-  void setXattr(const std::string &path, const std::string &name,
-    const std::string &value);
+  void setXattr(const std::string &path, const std::string &name, const std::string &value);
 
   /**
    * C++ wrapper around the getxattr() function.

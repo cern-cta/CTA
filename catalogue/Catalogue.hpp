@@ -18,11 +18,10 @@
 
 #pragma once
 
-#include <list>
-#include <stdint.h>
-#include <string>
-#include <map>
-
+#include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/ArchiveFileSearchCriteria.hpp"
+#include "catalogue/TapeFileWritten.hpp"
+#include "catalogue/TapeForWriting.hpp"
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -60,8 +59,12 @@
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
-#include "TapeFileWritten.hpp"
-#include "TapeForWriting.hpp"
+
+#include <list>
+#include <stdint.h>
+#include <string>
+#include <map>
+#include <memory>
 
 namespace cta {
 
@@ -256,10 +259,27 @@ public:
   virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) = 0;
   virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) = 0;
 
-  virtual std::list<common::dataStructures::ArchiveFile> getArchiveFiles(const std::string &id, const std::string &eosid,
-   const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;
-  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const std::string &id, const std::string &eosid,
-   const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path) = 0;
+  /**
+   * Returns an iterator over the list of archive files that meet the specified
+   * search criteria.  Please note that the list is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
+   * @return An iterator over the list of archive files.
+   */
+  virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(
+    const ArchiveFileSearchCriteria &searchCriteria = ArchiveFileSearchCriteria(),
+    const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
+
+  /**
+   * Returns a summary of the archive files that meet the specified search
+   * criteria.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The summary.
+   */
+  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
+    const ArchiveFileSearchCriteria &searchCriteria = ArchiveFileSearchCriteria()) const = 0;
 
   /**
    * Returns the archive file with the specified unique identifier.

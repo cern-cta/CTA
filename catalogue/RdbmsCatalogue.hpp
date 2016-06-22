@@ -238,10 +238,26 @@ public:
   virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp);
   virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment);
 
-  virtual std::list<common::dataStructures::ArchiveFile> getArchiveFiles(const std::string &id, const std::string &eosid,
-   const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
-  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(const std::string &id, const std::string &eosid,
-   const std::string &copynb, const std::string &tapepool, const std::string &vid, const std::string &owner, const std::string &group, const std::string &storageclass, const std::string &path);
+  /**
+   * Returns an iterator over the list of archive files that meet the specified
+   * search criteria.  Please note that the list is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
+   * @return An iterator over the list of archive files.
+   */
+  virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
+    const uint64_t nbArchiveFilesToPrefetch) const;
+
+  /**
+   * Returns a summary of the archive files that meet the specified search
+   * criteria.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The summary.
+   */
+  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
+    const ArchiveFileSearchCriteria &searchCriteria) const;
 
   /**
    * Returns the archive file with the specified unique identifier.
@@ -547,6 +563,84 @@ protected:
    * @param vid The volume identifier of the tape.
    */
   virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) = 0;
+
+  /**
+   * Nested class used to implement the getArchiveFileItor() method.
+   */
+  class ArchiveFileItorImpl: public ArchiveFileItor {
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param catalogue The RdbmsCatalogue.
+     * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
+     * @param searchCriteria The criteria used to select the archive files.
+     */
+    ArchiveFileItorImpl(
+      const RdbmsCatalogue &catalogue,
+      const uint64_t nbArchiveFilesToPrefetch,
+      const ArchiveFileSearchCriteria &searchCriteria);
+
+    /**
+     * Destructor.
+     */
+    virtual ~ArchiveFileItorImpl();
+
+    /**
+     * Returns true if a call to next would return another archive file.
+     */
+    virtual bool hasMore() const;
+
+    /**
+     * Returns the next archive or throws an exception if there isn't one.
+     */
+    virtual common::dataStructures::ArchiveFile next();
+
+  private:
+
+    /**
+     * The RdbmsCatalogue.
+     */
+    const RdbmsCatalogue &m_catalogue;
+
+    /**
+     * The number of archive files to prefetch.
+     */
+    const uint64_t m_nbArchiveFilesToPrefetch;
+
+    /**
+     * The criteria used to select the archive files.
+     */
+    ArchiveFileSearchCriteria m_searchCriteria;
+
+    /**
+     * The current offset into the list of archive files in the form of an
+     * archive file ID.
+     */
+    uint64_t m_nextArchiveFileId;
+
+    /**
+     * The current list of prefetched archive files.
+     */
+    std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
+  };
+
+  /**
+   * Returns the specified archive files.  This method is called by the nested
+   * class ArchiveFileItorImpl.  Please note that the list of files is ordered
+   * by archive file IDs.
+   *
+   * @param startingArchiveFileId The unique identifier of the first archive
+   * file to be returned.
+   * @param nbArchiveFiles The maximum number of archive files to be returned.
+   * @param searchCriteria The criteria used to select the archive files.
+   * @return The archive files.
+   */
+  std::list<common::dataStructures::ArchiveFile> getArchiveFilesForItor(
+    const uint64_t startingArchiveFileId,
+    const uint64_t maxNbArchiveFiles,
+    const ArchiveFileSearchCriteria &searchCriteria) const;
 
 }; // class RdbmsCatalogue
 
