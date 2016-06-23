@@ -2093,7 +2093,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
-  const uint64_t nbArchiveFiles = 100;
+  const uint64_t nbArchiveFiles = 10;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     const uint64_t archiveFileSize = 1;
     std::ostringstream diskFileId;
@@ -2174,6 +2174,100 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
       ASSERT_EQ(fileWritten.compressedSize, archiveFile.tapeFiles.begin()->second.compressedSize);
       ASSERT_EQ(fileWritten.copyNb, archiveFile.tapeFiles.begin()->first);
       ASSERT_EQ(fileWritten.copyNb, archiveFile.tapeFiles.begin()->second.copyNb);
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.archiveFileId = "10";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(1, m.size());
+      ASSERT_EQ(10, m.begin()->first);
+      ASSERT_EQ(10, m.begin()->second.archiveFileID);
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.diskInstance = "PUBLIC";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.diskFileId = "12345687";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(1, m.size());
+      ASSERT_EQ("12345687", m.begin()->second.diskFileId);
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.diskFilePath = "/public_dir/public_file_10";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(1, m.size());
+      ASSERT_EQ("/public_dir/public_file_10", m.begin()->second.diskFileInfo.path);
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.diskFileUser = "public_disk_user";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.diskFileGroup = "public_disk_group";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.storageClass = "storage_class";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.vid = vid;
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.tapeFileCopyNb = "1";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.tapePool = "tape_pool_name";
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(nbArchiveFiles, m.size());
+    }
+
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      std::ostringstream nonExistantArchiveFileId;
+      nonExistantArchiveFileId << (nbArchiveFiles + 1234);
+      searchCriteria.archiveFileId = nonExistantArchiveFileId.str();
+      archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(0, m.size());
     }
   }
 }

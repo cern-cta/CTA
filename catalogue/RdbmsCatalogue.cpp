@@ -2461,7 +2461,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
       stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup);
     }
     if(!searchCriteria.storageClass.empty()) {
-      stmt->bindString(":STORAGE_CLASS", searchCriteria.storageClass);
+      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass);
     }
     if(!searchCriteria.vid.empty()) {
       stmt->bindString(":VID", searchCriteria.vid);
