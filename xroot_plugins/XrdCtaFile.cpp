@@ -20,6 +20,8 @@
 #include "xroot_plugins/XrdCtaFile.hpp"
 
 #include "XrdSec/XrdSecEntity.hh"
+
+#include "catalogue/ArchiveFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
 
@@ -1612,14 +1614,14 @@ int XrdCtaFile::xCom_verify() {
 int XrdCtaFile::xCom_archivefile() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--eosid/-e <eos_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
-          "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
+  help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--diskid/-d <disk_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
+          "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--instance/-i <instance>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("ls" == m_requestTokens.at(2)) { //ls
-    std::string id_s = getOptionValue("-I", "--id", false);
-    std::string eosid = getOptionValue("-e", "--eosid", false);
+    std::string id = getOptionValue("-I", "--id", false);
+    std::string diskid = getOptionValue("-d", "--diskid", false);
     std::string copynb = getOptionValue("-c", "--copynb", false);
     std::string tapepool = getOptionValue("-t", "--tapepool", false);
     std::string vid = getOptionValue("-v", "--vid", false);
@@ -1627,13 +1629,25 @@ int XrdCtaFile::xCom_archivefile() {
     std::string group = getOptionValue("-g", "--group", false);
     std::string storageclass = getOptionValue("-s", "--storageclass", false);
     std::string path = getOptionValue("-p", "--path", false);
+    std::string instance = getOptionValue("-i", "--instance", false);
     bool summary = hasOption("-S", "--summary");
     bool all = hasOption("-a", "--all");
-    if(!all && (id_s.empty() && eosid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
+    if(!all && (instance.empty() && id.empty() && diskid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
+    cta::catalogue::ArchiveFileSearchCriteria searchCriteria;
+    searchCriteria.archiveFileId = id;
+    searchCriteria.diskFileGroup = group;
+    searchCriteria.diskFileId = diskid;
+    searchCriteria.diskFilePath = path;
+    searchCriteria.diskFileUser = owner;
+    searchCriteria.diskInstance = instance;
+    searchCriteria.storageClass = storageclass;
+    searchCriteria.tapeFileCopyNb = copynb;
+    searchCriteria.tapePool = tapepool;
+    searchCriteria.vid = vid;
     if(!summary) {
-      std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(); // TO BE DONE - Pass in the SEARCH CRITERIA
+      std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
@@ -1664,7 +1678,7 @@ int XrdCtaFile::xCom_archivefile() {
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(); // TO BE DONE - Pass in SEARCH CRITERIA
+      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};
