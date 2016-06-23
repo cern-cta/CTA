@@ -53,6 +53,11 @@ struct TapeForWriting {
    * The volume identifier of the tape.
    */
   std::string vid;
+  
+  /**
+   * The name of the tape pool
+   */
+  std::string tapePool;
 
   /**
    * The file sequence number of the last file successfully written to the tape.
