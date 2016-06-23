@@ -2315,6 +2315,12 @@ RdbmsCatalogue::ArchiveFileItorImpl::ArchiveFileItorImpl(
   m_searchCriteria(searchCriteria),
   m_nextArchiveFileId(1) {
   try {
+    if(1 > m_nbArchiveFilesToPrefetch) {
+      exception::Exception ex;
+      ex.getMessage() << "nbArchiveFilesToPrefetch must equal to or greater than 1: actual=" <<
+        m_nbArchiveFilesToPrefetch;
+      throw ex;
+    }
     m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
       m_searchCriteria);
     if(!m_prefechedArchiveFiles.empty()) {

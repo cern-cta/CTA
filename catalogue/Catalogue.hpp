@@ -261,10 +261,17 @@ public:
 
   /**
    * Returns an iterator over the list of archive files that meet the specified
-   * search criteria.  Please note that the list is ordered by archive file ID.
+   * search criteria.
+   *
+   * Please note that the list is ordered by archive file ID.
+   *
+   * Please note that this method will throw an exception if the
+   * nbArchiveFilesToPrefetch parameter is set to 0.  The parameter must be set
+   * to a value greater than or equal to 1.
    *
    * @param searchCriteria The search criteria.
    * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
+   * This parameter must be set to a value equal to or greater than 1.
    * @return An iterator over the list of archive files.
    */
   virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(
@@ -357,8 +364,9 @@ public:
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
 
   /**
-   * Returns the list of tapes that can be written to be a tape drive in the
-   * specified logical library.
+   * Returns the list of tapes that can be written to by a tape drive in the
+   * specified logical library, in other words tapes that are not disabled, not
+   * full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
    */
