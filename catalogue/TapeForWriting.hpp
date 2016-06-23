@@ -55,7 +55,7 @@ struct TapeForWriting {
   std::string vid;
   
   /**
-   * The name of the tape pool
+   * The name of the tape pool.
    */
   std::string tapePool;
 

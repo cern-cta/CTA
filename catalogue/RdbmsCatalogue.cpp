@@ -2994,6 +2994,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     const char *const sql =
       "SELECT "
         "VID AS VID,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "DATA_IN_BYTES AS DATA_IN_BYTES,"
         "LAST_FSEQ AS LAST_FSEQ,"
@@ -3011,6 +3012,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       TapeForWriting tape;
 
       tape.vid = rset->columnText("VID");
+      tape.tapePool = rset->columnText("TAPE_POOL_NAME");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");

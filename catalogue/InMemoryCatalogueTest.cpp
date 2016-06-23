@@ -1093,6 +1093,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapesForWriting) {
 
   const catalogue::TapeForWriting tape = tapes.front();
   ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(tapePoolName, tape.tapePool);
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
