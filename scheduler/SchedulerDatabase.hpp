@@ -279,7 +279,7 @@ public:
     std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
     uint64_t priority;    /**< The priority for the mount, defined as the highest priority of all queued jobs */
     uint64_t maxDrivesAllowed; /**< The maximum number of drives allowed for this tape pool, defined as the highest value amongst jobs */
-    time_t minArchiveRequestAge; /**< The maximum amount of time to wait before forcing a mount in the absence of enough data. Defined as the smallest value amongst jobs.*/
+    uint64_t minArchiveRequestAge; /**< The maximum amount of time to wait before forcing a mount in the absence of enough data. Defined as the smallest value amongst jobs.*/
     uint64_t filesQueued; /**< The number of files queued for this queue */
     uint64_t bytesQueued; /**< The amount of data currently queued */
     time_t oldestJobStartTime; /**< Creation time of oldest request */

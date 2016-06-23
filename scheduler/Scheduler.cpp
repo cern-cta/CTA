@@ -282,12 +282,15 @@ std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveState
 // getNextMount
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
+  /*
   // In order to decide the next mount to do, we have to take a global lock on 
   // the scheduling, retrieve a list of all running mounts, queues sizes for 
-  // tapes and tape pools, order the candidates by priority
-  // below threshold, and pick one at a time, we then attempt to get a tape 
-  // from the catalogue (for the archive mounts), and walk the list until we
-  // mount or find nothing to do.
+  // tapes and tape pools, filter the tapes which are actually accessible to
+  // this drive (by library and dedication), order the candidates by priority
+  // below threshold, and pick one at a time. In addition, for archives, we
+  // might not find a suitable tape (by library and dedication). In such a case,
+  // we should find out if no tape at all is available, and log an error if 
+  // so.
   // We then skip to the next candidate, until we find a suitable one and
   // return the mount, or exhaust all of them an 
   // Many steps for this logic are not specific for the database and are hence
@@ -333,17 +336,17 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
       existingMounts = 0;
     } 
     bool mountPassesACriteria = false;
-    if (m->bytesQueued / (1 + existingMounts) >= m_minBytesToWarrantAMount)
+    if (m->bytesQueued / (1 + existingMounts) >= m->mountCriteria.maxBytesQueued)
       mountPassesACriteria = true;
-    if (m->filesQueued / (1 + existingMounts) >= m_minFilesToWarrantAMount)
+    if (m->filesQueued / (1 + existingMounts) >= m->mountCriteria.maxFilesQueued)
       mountPassesACriteria = true;
-    if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
+    if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > (int64_t)m->mountCriteria.maxAge))
       mountPassesACriteria = true;
-    if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
+    if (!mountPassesACriteria || existingMounts >= m->mountCriteria.quota) {
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
-      m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
+      m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->mountCriteria.quota;
       m++;
    }
   }
@@ -361,7 +364,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
     if (m->type==cta::MountType::ARCHIVE) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
-      auto tapesList = m_catalogue.getTapesForWriting(logicalLibraryName);
+      auto tapesList = m_db.getTapes();
       // The first tape matching will go for a prototype.
       // TODO: improve to reuse already partially written tapes
       for (auto t=tapesList.begin(); t!=tapesList.end(); t++) {
