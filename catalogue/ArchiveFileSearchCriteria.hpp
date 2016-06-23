@@ -24,7 +24,13 @@ namespace cta {
 namespace catalogue {
 
 /**
- * A set of database login details.
+ * The collection of criteria used to select a set of archive files.
+ *
+ * An archive file is selected if it means all of the specified criteria.
+ *
+ * A criterion is only considered specified if it has been set.
+ *
+ * Please note that no wild cards, for example '*' or '%', are supported.
  */
 struct ArchiveFileSearchCriteria {
 
