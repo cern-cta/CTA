@@ -90,7 +90,7 @@ protected:
       }
     }
     {
-      const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes("", "", "", "", "", "", "", "");
+      const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
       for(auto &tape: tapes) {
         m_catalogue->deleteTape(tape.vid);
       }
@@ -947,7 +947,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteLogicalLibrary_non_existant) {
 TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
@@ -966,7 +966,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape) {
     comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -1014,7 +1014,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_same_twice) {
 TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
@@ -1033,7 +1033,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape) {
     comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -1056,20 +1056,20 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape) {
   ASSERT_EQ(creationLog, lastModificationLog);
 
   m_catalogue->deleteTape(tape.vid);
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape_non_existant) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
   ASSERT_THROW(m_catalogue->deleteTape("non_exsitant_tape"), catalogue::UserError);
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogueTest, getTapesForWriting) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
@@ -1829,7 +1829,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareForNewFile_requester_mount_ru
 TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getTapes("", "", "", "", "", "", "", "").empty());
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid1 = "VID123";
   const std::string vid2 = "VID456";
@@ -1848,7 +1848,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   m_catalogue->createTape(m_cliSI, vid2, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
 
-  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes("", "", "", "", "", "", "", "");
+  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
     auto it = vidToTape.find(vid1);
@@ -2062,7 +2062,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
-  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes("", "", "", "", "", "", "", "");
+  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -2118,7 +2118,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
     fileWritten.copyNb = 1;
     m_catalogue->fileWrittenToTape(fileWritten);
 
-    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(vid, tape.vid);
@@ -2296,7 +2296,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
                           comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(2, tapes.size());
 
@@ -2371,7 +2371,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
-    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file1Written.vid, "", "", "", "", "", "", "");
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -2420,8 +2422,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
   m_catalogue->fileWrittenToTape(file2Written);
 
   {
-    ASSERT_EQ(2, m_catalogue->getTapes("", "", "", "", "", "", "", "").size());
-    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file2Written.vid, "", "", "", "", "", "", "");
+    ASSERT_EQ(2, m_catalogue->getTapes().size());
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file2Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -2483,7 +2487,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
                           comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -2538,7 +2542,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
-    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file1Written.vid, "", "", "", "", "", "", "");
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -2607,7 +2613,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
                           comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -2726,7 +2732,7 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     comment);
 
   const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes("", "", "", "", "", "", "", "");
+    m_catalogue->getTapes();
 
   ASSERT_EQ(2, tapes.size());
 
@@ -2801,7 +2807,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
-    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file1Written.vid, "", "", "", "", "", "", "");
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -2881,8 +2889,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
   m_catalogue->fileWrittenToTape(file2Written);
 
   {
-    ASSERT_EQ(2, m_catalogue->getTapes("", "", "", "", "", "", "", "").size());
-    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(file2Written.vid, "", "", "", "", "", "", "");
+    ASSERT_EQ(2, m_catalogue->getTapes().size());
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file2Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);

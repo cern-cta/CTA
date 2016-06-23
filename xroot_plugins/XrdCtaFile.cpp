@@ -873,39 +873,31 @@ int XrdCtaFile::xCom_tape() {
     std::string capacity = getOptionValue("-c", "--capacity", false);
     if((hasOption("-e", "--enabled") && hasOption("-d", "--disabled")) 
             || (hasOption("-f", "--free") && hasOption("-F", "--full")) 
+            // TODO BUSY IS GONE!!!!!
             || (hasOption("-b", "--busy") && hasOption("-n", "--notbusy"))
             || (hasOption("-p", "--lbp") && hasOption("-P", "--nolbp"))) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
-    std::string disabled="";
-    std::string full="";
-    std::string busy="";
-    std::string lbp="";
+    cta::catalogue::TapeSearchCriteria searchCriteria;
     if(hasOption("-e", "--enabled")) {
-      disabled = "false";
+      searchCriteria.isDisabled = "false";
     }
     if(hasOption("-d", "--disabled")) {
-      disabled = "true";
+      searchCriteria.isDisabled = "true";
     }
     if(hasOption("-f", "--free")) {
-      full = "false";
+      searchCriteria.isFull = "false";
     }
     if(hasOption("-F", "--full")) {
-      full = "true";
-    }
-    if(hasOption("-b", "--busy")) {
-      busy = "false";
-    }
-    if(hasOption("-n", "--notbusy")) {
-      busy = "true";
+      searchCriteria.isFull = "true";
     }
     if(hasOption("-p", "--lbp")) {
-      lbp = "false";
+      searchCriteria.lbpIsOn = "true";
     }
     if(hasOption("-P", "--nolbp")) {
-      lbp = "true";
+      searchCriteria.lbpIsOn = "false";
     }
-    std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(vid, logicallibrary, tapepool, capacity, disabled, full, busy, lbp);
+    std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","busy","full","disabled","lpb","label drive","label time",

@@ -22,6 +22,7 @@
 #include "catalogue/ArchiveFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -124,8 +125,16 @@ public:
   virtual void createTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
                           const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment) = 0;
   virtual void deleteTape(const std::string &vid) = 0;
-  virtual std::list<common::dataStructures::Tape> getTapes(const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-        const std::string &capacityInBytes, const std::string &disabledValue, const std::string &fullValue, const std::string &busyValue, const std::string &lbpValue) = 0;
+
+  /**
+   * Returns the list of tapes that meet the specified search criteria.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The list of tapes.
+   */
+  virtual std::list<common::dataStructures::Tape> getTapes(
+    const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const = 0;
+
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;

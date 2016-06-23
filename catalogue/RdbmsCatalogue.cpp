@@ -25,12 +25,46 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
+#include <ctype.h>
 #include <iostream>
 #include <memory>
 #include <time.h>
 
 namespace cta {
 namespace catalogue {
+
+namespace {
+
+/**
+ * Returns an all upper-case version of the specified string.
+ *
+ * @param str The string to be copied into an all upper case version of itself.
+ * @return An all upper-case version of the specified string.
+ */
+std::string toUpper(const std::string &str) {
+  std::string upperStr;
+
+  for(auto c: str) {
+    upperStr += toupper(c);
+  }
+
+  return upperStr;
+}
+
+/**
+ * Returns true of the specified string in considered to be a valid
+ * representation of a boolean value.
+ *
+ * @param str The string to be tested.
+ * @return True if the specified string is a valid representation of a boolean value.
+ */
+bool isValidBool(const std::string &str) {
+  const std::string upperStr = toUpper(str);
+
+  return upperStr == "TRUE" || upperStr == "FALSE";
+}
+
+} // anonymous namespace
 
 //------------------------------------------------------------------------------
 // constructor
@@ -1190,15 +1224,7 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
-  const std::string &vid,
-  const std::string &logicalLibraryName,
-  const std::string &tapePoolName,
-  const std::string &capacityInBytes,
-  const std::string &disabledValue,
-  const std::string &fullValue,
-  const std::string &busyValue,
-  const std::string &lbpValue) {
+std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearchCriteria &searchCriteria) const {
   try {
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
@@ -1232,63 +1258,73 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
+        "FROM "
         "TAPE";
 
     if(!(
-      vid.empty()                &&
-      logicalLibraryName.empty() &&
-      tapePoolName.empty()       &&
-      capacityInBytes.empty()    &&
-      disabledValue.empty()      &&
-      fullValue.empty()          &&
-      busyValue.empty()          &&
-      lbpValue.empty())) {
+      searchCriteria.vid.empty()             &&
+      searchCriteria.logicalLibrary.empty()  &&
+      searchCriteria.tapePool.empty()        &&
+      searchCriteria.capacityInBytes.empty() &&
+      searchCriteria.isDisabled.empty()      &&
+      searchCriteria.isFull.empty()          &&
+      searchCriteria.lbpIsOn.empty())) {
       sql += " WHERE ";
     }
 
     bool addedAWhereConstraint = false;
 
-    if(!vid.empty()) {
+    if(!searchCriteria.vid.empty()) {
       sql += " VID = :VID";
       addedAWhereConstraint = true;
     }
-    if(!logicalLibraryName.empty()) {
+    if(!searchCriteria.logicalLibrary.empty()) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
       addedAWhereConstraint = true;
     }
-    if(!tapePoolName.empty()) {
+    if(!searchCriteria.tapePool.empty()) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " TAPE_POOL_NAME = :TAPE_POOL_NAME";
       addedAWhereConstraint = true;
     }
-    if(!capacityInBytes.empty()) {
-      if(!utils::isValidUInt(capacityInBytes)) {
-        throw exception::Exception(capacityInBytes + " is not an unsigned integer");
+    if(!searchCriteria.capacityInBytes.empty()) {
+      if(!utils::isValidUInt(searchCriteria.capacityInBytes)) {
+        throw UserError("Capacity in bytes " + searchCriteria.capacityInBytes + " is not a valid unsigned integer");
       }
       if(addedAWhereConstraint) sql += " AND ";
       sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
     }
-    if(!disabledValue.empty()) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Search by disabledValue in not supported");
+    if(!searchCriteria.isDisabled.empty()) {
+      if(!isValidBool(searchCriteria.isDisabled)) {
+        throw UserError("Disabled tapes search criterion " + searchCriteria.isDisabled + " is not a valid boolean");
+      }
+      sql += " IS_DISABLED = :IS_DISABLED";
     }
-    if(!fullValue.empty()) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Search by fullValue in not supported");
+    if(!searchCriteria.isFull.empty()) {
+      if(!isValidBool(searchCriteria.isFull)) {
+        throw UserError("Full tapes search criterion " + searchCriteria.isFull + " is not a valid boolean");
+      }
+      sql += " IS_FULL = :IS_FULL";
     }
-    if(!busyValue.empty()) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Search by busyValue in not supported");
-    }
-    if(!lbpValue.empty()) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Search by lbpValue in not supported");
+    if(!searchCriteria.lbpIsOn.empty()) {
+      if(!isValidBool(searchCriteria.lbpIsOn)) {
+        throw UserError("LBP search criterion " + searchCriteria.lbpIsOn + " is not a valid boolean");
+      }
+      sql += " LBP_IS_ON = :LBP_IS_ON";
     }
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
-    if(!vid.empty()) stmt->bindString(":VID", vid);
-    if(!logicalLibraryName.empty()) stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    if(!tapePoolName.empty()) stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
-    if(!capacityInBytes.empty()) stmt->bindUint64(":CAPACITY_IN_BYTES", utils::toUint64(capacityInBytes));
+    if(!searchCriteria.vid.empty()) stmt->bindString(":VID", searchCriteria.vid);
+    if(!searchCriteria.logicalLibrary.empty()) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary);
+    if(!searchCriteria.tapePool.empty()) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
+    if(!searchCriteria.capacityInBytes.empty()) stmt->bindUint64(":CAPACITY_IN_BYTES",
+        utils::toUint64(searchCriteria.capacityInBytes));
+    if(!searchCriteria.isDisabled.empty()) stmt->bindUint64(":IS_DISABLED",
+        toUpper(searchCriteria.isDisabled) == "TRUE");
+    if(!searchCriteria.isFull.empty()) stmt->bindUint64(":IS_FULL", toUpper(searchCriteria.isFull) == "TRUE");
+    if(!searchCriteria.lbpIsOn.empty()) stmt->bindUint64(":LBP_IS_ON", toUpper(searchCriteria.lbpIsOn) == "TRUE");
 
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
@@ -2409,6 +2445,10 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID >= :STARTING_ARCHIVE_FILE_ID";
     if(!searchCriteria.archiveFileId.empty()) {
+      if(!utils::isValidUInt(searchCriteria.archiveFileId)) {
+        throw UserError(std::string("Archive file ID ") + searchCriteria.archiveFileId +
+          " is not a valid unsigned integer");
+      }
       sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     }
     if(!searchCriteria.diskInstance.empty()) {
@@ -2433,6 +2473,10 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
       sql += " AND TAPE_FILE.VID = :VID";
     }
     if(!searchCriteria.tapeFileCopyNb.empty()) {
+      if(!utils::isValidUInt(searchCriteria.tapeFileCopyNb)) {
+        throw UserError(std::string("Tape-file copy-number ") + searchCriteria.tapeFileCopyNb +
+          " is not a valid unsigned integer");
+      }
       sql += " AND TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
     }
     if(!searchCriteria.tapePool.empty()) {
