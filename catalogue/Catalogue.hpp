@@ -34,7 +34,7 @@
 #include "common/dataStructures/Dedication.hpp"
 #include "common/dataStructures/DedicationType.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/ListStorageClassRequest.hpp"

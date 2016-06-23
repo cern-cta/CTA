@@ -91,10 +91,10 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE");
         archiveFile->diskFileId = selectRset->columnText("DISK_FILE_ID");
-        archiveFile->drData.drPath = selectRset->columnText("DISK_FILE_PATH");
-        archiveFile->drData.drOwner = selectRset->columnText("DISK_FILE_USER");
-        archiveFile->drData.drGroup = selectRset->columnText("DISK_FILE_GROUP");
-        archiveFile->drData.drBlob = selectRset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->diskFileInfo.path = selectRset->columnText("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = selectRset->columnText("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = selectRset->columnText("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnText("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = selectRset->columnUint64("FILE_SIZE");
         archiveFile->checksumType = selectRset->columnText("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset->columnText("CHECKSUM_VALUE");

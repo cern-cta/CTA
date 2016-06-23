@@ -32,22 +32,22 @@ namespace dataStructures {
  * This struct holds all the data necessary to rebuild the original disk based 
  * file in case of disaster 
  */
-struct DRData {
+struct DiskFileInfo {
 
-  DRData();
+  DiskFileInfo();
 
-  bool operator==(const DRData &rhs) const;
+  bool operator==(const DiskFileInfo &rhs) const;
 
-  bool operator!=(const DRData &rhs) const;
+  bool operator!=(const DiskFileInfo &rhs) const;
 
-  std::string drPath;
-  std::string drOwner;
-  std::string drGroup;
-  std::string drBlob;
+  std::string path;
+  std::string owner;
+  std::string group;
+  std::string recoveryBlob;
 
-}; // struct DRData
+}; // struct DiskFileInfo
 
-std::ostream &operator<<(std::ostream &os, const DRData &obj);
+std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj);
 
 } // namespace dataStructures
 } // namespace common

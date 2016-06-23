@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 
@@ -45,7 +45,7 @@ struct RetrieveRequest {
   UserIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
   EntryLog creationLog;

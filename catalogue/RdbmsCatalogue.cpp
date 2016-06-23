@@ -2483,10 +2483,10 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
         archiveFile.archiveFileID = archiveFileId;
         archiveFile.diskInstance = rset->columnText("DISK_INSTANCE");
         archiveFile.diskFileId = rset->columnText("DISK_FILE_ID");
-        archiveFile.drData.drPath = rset->columnText("DISK_FILE_PATH");
-        archiveFile.drData.drOwner = rset->columnText("DISK_FILE_USER");
-        archiveFile.drData.drGroup = rset->columnText("DISK_FILE_GROUP");
-        archiveFile.drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile.diskFileInfo.path = rset->columnText("DISK_FILE_PATH");
+        archiveFile.diskFileInfo.owner = rset->columnText("DISK_FILE_USER");
+        archiveFile.diskFileInfo.group = rset->columnText("DISK_FILE_GROUP");
+        archiveFile.diskFileInfo.recoveryBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
         archiveFile.fileSize = rset->columnUint64("FILE_SIZE");
         archiveFile.checksumType = rset->columnText("CHECKSUM_TYPE");
         archiveFile.checksumValue = rset->columnText("CHECKSUM_VALUE");
@@ -2754,25 +2754,25 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
     actual.diskInstance;
     throw ex;
   }
-  if(expected.drData.drPath != actual.diskFilePath) {
+  if(expected.diskFileInfo.path != actual.diskFilePath) {
     exception::Exception ex;
-    ex.getMessage() << "Disk file path mismatch: expected=" << expected.drData.drPath << " actual=" <<
+    ex.getMessage() << "Disk file path mismatch: expected=" << expected.diskFileInfo.path << " actual=" <<
     actual.diskFilePath;
     throw ex;
   }
-  if(expected.drData.drOwner != actual.diskFileUser) {
+  if(expected.diskFileInfo.owner != actual.diskFileUser) {
     exception::Exception ex;
-    ex.getMessage() << "Disk file user mismatch: expected=" << expected.drData.drOwner << " actual=" <<
+    ex.getMessage() << "Disk file user mismatch: expected=" << expected.diskFileInfo.owner << " actual=" <<
     actual.diskFileUser;
     throw ex;
   }
-  if(expected.drData.drGroup != actual.diskFileGroup) {
+  if(expected.diskFileInfo.group != actual.diskFileGroup) {
     exception::Exception ex;
-    ex.getMessage() << "Disk file group mismatch: expected=" << expected.drData.drGroup << " actual=" <<
+    ex.getMessage() << "Disk file group mismatch: expected=" << expected.diskFileInfo.group << " actual=" <<
     actual.diskFileGroup;
     throw ex;
   }
-  if(expected.drData.drGroup != actual.diskFileGroup) {
+  if(expected.diskFileInfo.group != actual.diskFileGroup) {
     exception::Exception ex;
     ex.getMessage() << "Disk recovery blob mismatch";
     throw ex;
@@ -3157,10 +3157,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset->columnText("DISK_INSTANCE");
         archiveFile->diskFileId = rset->columnText("DISK_FILE_ID");
-        archiveFile->drData.drPath = rset->columnText("DISK_FILE_PATH");
-        archiveFile->drData.drOwner = rset->columnText("DISK_FILE_USER");
-        archiveFile->drData.drGroup = rset->columnText("DISK_FILE_GROUP");
-        archiveFile->drData.drBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->diskFileInfo.path = rset->columnText("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = rset->columnText("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = rset->columnText("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = rset->columnText("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = rset->columnUint64("FILE_SIZE");
         archiveFile->checksumType = rset->columnText("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset->columnText("CHECKSUM_VALUE");

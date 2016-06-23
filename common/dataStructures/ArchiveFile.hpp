@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
 namespace cta {
@@ -62,7 +62,7 @@ struct ArchiveFile {
    */
   std::string checksumValue;
   std::string storageClass;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
   /**
    * This map represents the non-necessarily-exhaustive set of tape copies 
    * to be listed by the operator. For example, if the listing requested is 

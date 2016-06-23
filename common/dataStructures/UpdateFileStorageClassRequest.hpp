@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
@@ -45,7 +45,7 @@ struct UpdateFileStorageClassRequest {
   UserIdentity requester;
   uint64_t archiveFileID;
   std::string storageClass;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
 
 }; // struct UpdateFileStorageClassRequest
 

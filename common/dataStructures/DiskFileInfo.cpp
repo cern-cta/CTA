@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -27,33 +27,33 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DRData::DRData() {}
+DiskFileInfo::DiskFileInfo() {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool DRData::operator==(const DRData &rhs) const {
-  return drPath==rhs.drPath
-      && drOwner==rhs.drOwner
-      && drGroup==rhs.drGroup
-      && drBlob==rhs.drBlob;
+bool DiskFileInfo::operator==(const DiskFileInfo &rhs) const {
+  return path==rhs.path
+      && owner==rhs.owner
+      && group==rhs.group
+      && recoveryBlob==rhs.recoveryBlob;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool DRData::operator!=(const DRData &rhs) const {
+bool DiskFileInfo::operator!=(const DiskFileInfo &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const DRData &obj) {
-  os << "(drPath=" << obj.drPath
-     << " drOwner=" << obj.drOwner
-     << " drGroup=" << obj.drGroup
-     << " drBlob=" << obj.drBlob << ")";
+std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj) {
+  os << "(path=" << obj.path
+     << " owner=" << obj.owner
+     << " group=" << obj.group
+     << " recoveryBlob=" << obj.recoveryBlob << ")";
   return os;
 }
 

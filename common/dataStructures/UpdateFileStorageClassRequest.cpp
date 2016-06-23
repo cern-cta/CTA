@@ -37,7 +37,7 @@ bool UpdateFileStorageClassRequest::operator==(const UpdateFileStorageClassReque
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID
       && storageClass==rhs.storageClass
-      && drData==rhs.drData;
+      && diskFileInfo==rhs.diskFileInfo;
 }
 
 //------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ std::ostream &operator<<(std::ostream &os, const UpdateFileStorageClassRequest &
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID
      << " storageClass=" << obj.storageClass
-     << " drData=" << obj.drData << ")";
+     << " diskFileInfo=" << obj.diskFileInfo << ")";
   return os;
 }
 

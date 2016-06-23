@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 
@@ -56,7 +56,7 @@ struct ArchiveRequest {
    */
   std::string checksumValue;
   std::string storageClass;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
   EntryLog creationLog;

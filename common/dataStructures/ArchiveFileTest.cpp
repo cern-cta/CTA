@@ -45,10 +45,10 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile1.storageClass = "storage_class";
 
   archiveFile1.diskInstance = "recovery_instance";
-  archiveFile1.drData.drPath = "recovery_path";
-  archiveFile1.drData.drOwner = "recovery_owner";
-  archiveFile1.drData.drGroup = "recovery_group";
-  archiveFile1.drData.drBlob = "recovery_blob";
+  archiveFile1.diskFileInfo.path = "recovery_path";
+  archiveFile1.diskFileInfo.owner = "recovery_owner";
+  archiveFile1.diskFileInfo.group = "recovery_group";
+  archiveFile1.diskFileInfo.recoveryBlob = "recovery_blob";
 
   TapeFile tapeFile1;
   tapeFile1.vid = "VID1";
@@ -82,10 +82,10 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.storageClass, archiveFile2.storageClass);
 
   ASSERT_EQ(archiveFile1.diskInstance, archiveFile2.diskInstance);
-  ASSERT_EQ(archiveFile1.drData.drPath, archiveFile2.drData.drPath);
-  ASSERT_EQ(archiveFile1.drData.drOwner, archiveFile2.drData.drOwner);
-  ASSERT_EQ(archiveFile1.drData.drGroup, archiveFile2.drData.drGroup);
-  ASSERT_EQ(archiveFile1.drData.drBlob, archiveFile2.drData.drBlob);
+  ASSERT_EQ(archiveFile1.diskFileInfo.path, archiveFile2.diskFileInfo.path);
+  ASSERT_EQ(archiveFile1.diskFileInfo.owner, archiveFile2.diskFileInfo.owner);
+  ASSERT_EQ(archiveFile1.diskFileInfo.group, archiveFile2.diskFileInfo.group);
+  ASSERT_EQ(archiveFile1.diskFileInfo.recoveryBlob, archiveFile2.diskFileInfo.recoveryBlob);
 
   ASSERT_EQ(2, archiveFile2.tapeFiles.size());
 

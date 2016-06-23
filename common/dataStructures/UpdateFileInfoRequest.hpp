@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 
 namespace cta {
 namespace common {
@@ -42,7 +42,7 @@ struct UpdateFileInfoRequest {
   bool operator!=(const UpdateFileInfoRequest &rhs) const;
 
   uint64_t archiveFileID;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
 
 }; // struct UpdateFileInfoRequest
 

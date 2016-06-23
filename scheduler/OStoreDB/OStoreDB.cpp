@@ -277,7 +277,7 @@ void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request,
   ar.setCreationLog(request.creationLog);
   ar.setDiskpoolName(request.diskpoolName);
   ar.setDiskpoolThroughput(request.diskpoolThroughput);
-  ar.setDrData(request.drData);
+  ar.setDiskFileInfo(request.diskFileInfo);
   ar.setDiskFileID(request.diskFileID);
   ar.setFileSize(request.fileSize);
   ar.setInstance(request.instance);
@@ -575,7 +575,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().request.diskFileID = osar.getDiskFileID();
       ret.back().request.diskpoolName = osar.getDiskpoolName();
       ret.back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
-      ret.back().request.drData = osar.getDrData();
+      ret.back().request.diskFileInfo = osar.getDiskFileInfo();
       ret.back().request.fileSize = osar.getFileSize();
       ret.back().request.instance = osar.getInstance();
       ret.back().request.requester = osar.getRequester();
@@ -627,7 +627,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
       ret[tpp.tapePool].back().request.diskFileID = osar.getDiskFileID();
       ret[tpp.tapePool].back().request.diskpoolName = osar.getDiskpoolName();
       ret[tpp.tapePool].back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
-      ret[tpp.tapePool].back().request.drData = osar.getDrData();
+      ret[tpp.tapePool].back().request.diskFileInfo = osar.getDiskFileInfo();
       ret[tpp.tapePool].back().request.fileSize = osar.getFileSize();
       ret[tpp.tapePool].back().request.instance = osar.getInstance();
       ret[tpp.tapePool].back().request.requester = osar.getRequester();

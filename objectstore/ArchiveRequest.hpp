@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
@@ -79,8 +79,8 @@ public:
   void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
   uint64_t getDiskpoolThroughput();
 
-  void setDrData(const cta::common::dataStructures::DRData &drData);
-  cta::common::dataStructures::DRData getDrData();
+  void setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo);
+  cta::common::dataStructures::DiskFileInfo getDiskFileInfo();
 
   void setDiskFileID(const std::string &diskFileID);
   std::string getDiskFileID();  

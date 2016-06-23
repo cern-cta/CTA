@@ -101,10 +101,10 @@ cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
   ret.creationTime = m_payload.archivefile().creationtime();
   ret.diskFileId = m_payload.archivefile().diskfileid();
   ret.diskInstance = m_payload.diskinstance();
-  ret.drData.drBlob = m_payload.drdata().drblob();
-  ret.drData.drGroup = m_payload.drdata().drgroup();
-  ret.drData.drOwner = m_payload.drdata().drowner();
-  ret.drData.drPath = m_payload.drdata().drpath();
+  ret.diskFileInfo.recoveryBlob = m_payload.diskfileinfo().recoveryblob();
+  ret.diskFileInfo.group = m_payload.diskfileinfo().group();
+  ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
+  ret.diskFileInfo.path = m_payload.diskfileinfo().path();
   ret.fileSize = m_payload.archivefile().size();
   ret.reconciliationTime = m_payload.reconcilationtime();
   ret.storageClass = m_payload.storageclass();
@@ -152,29 +152,29 @@ uint64_t RetrieveRequest::getDiskpoolThroughput() {
 }
 
 //------------------------------------------------------------------------------
-// setDrData
+// setDiskFileInfo
 //------------------------------------------------------------------------------
-void RetrieveRequest::setDrData(const cta::common::dataStructures::DRData &drData) {
+void RetrieveRequest::setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo) {
   checkPayloadWritable();
-  auto payloadDrData = m_payload.mutable_drdata();
-  payloadDrData->set_drblob(drData.drBlob);
-  payloadDrData->set_drgroup(drData.drGroup);
-  payloadDrData->set_drowner(drData.drOwner);
-  payloadDrData->set_drpath(drData.drPath);
+  auto payloadDiskFileInfo = m_payload.mutable_diskfileinfo();
+  payloadDiskFileInfo->set_recoveryblob(diskFileInfo.recoveryBlob);
+  payloadDiskFileInfo->set_group(diskFileInfo.group);
+  payloadDiskFileInfo->set_owner(diskFileInfo.owner);
+  payloadDiskFileInfo->set_path(diskFileInfo.path);
 }
 
 //------------------------------------------------------------------------------
-// getDrData
+// getDiskFileInfo
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DRData RetrieveRequest::getDrData() {
+cta::common::dataStructures::DiskFileInfo RetrieveRequest::getDiskFileInfo() {
   checkPayloadReadable();
-  cta::common::dataStructures::DRData drData;
-  auto payloadDrData = m_payload.drdata();
-  drData.drBlob=payloadDrData.drblob();
-  drData.drGroup=payloadDrData.drgroup();
-  drData.drOwner=payloadDrData.drowner();
-  drData.drPath=payloadDrData.drpath();
-  return drData;
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  auto payloadDiskFileInfo = m_payload.diskfileinfo();
+  diskFileInfo.recoveryBlob=payloadDiskFileInfo.recoveryblob();
+  diskFileInfo.group=payloadDiskFileInfo.group();
+  diskFileInfo.owner=payloadDiskFileInfo.owner();
+  diskFileInfo.path=payloadDiskFileInfo.path();
+  return diskFileInfo;
 }
 
 //------------------------------------------------------------------------------
@@ -313,13 +313,13 @@ std::string RetrieveRequest::dump() {
     json_object_array_add(jja, jj);
   }
   json_object_object_add(jo, "jobs", jja);
-  // Object for drdata
+  // Object for diskfileinfo
   json_object * jlog = json_object_new_object();
-  json_object_object_add(jlog, "drblob", json_object_new_string(m_payload.drdata().drblob().c_str()));
-  json_object_object_add(jlog, "drgroup", json_object_new_string(m_payload.drdata().drgroup().c_str()));
-  json_object_object_add(jlog, "drowner", json_object_new_string(m_payload.drdata().drowner().c_str()));
-  json_object_object_add(jlog, "drpath", json_object_new_string(m_payload.drdata().drpath().c_str()));
-  json_object_object_add(jo, "drdata", jlog);
+  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
+  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
+  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
+  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
+  json_object_object_add(jo, "diskfileinfo", jlog);
   // Object for requester
   json_object * jrf = json_object_new_object();
   json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));

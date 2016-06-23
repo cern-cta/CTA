@@ -318,7 +318,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setChecksumValue("");
     ar.setDiskpoolName("");
     ar.setDiskpoolThroughput(666);
-    ar.setDrData(cta::common::dataStructures::DRData());
+    ar.setDiskFileInfo(cta::common::dataStructures::DiskFileInfo());
     ar.setInstance("eoseos");
     ar.setFileSize(667);
     ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));

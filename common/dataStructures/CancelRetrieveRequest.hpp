@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DRData.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
@@ -44,7 +44,7 @@ struct CancelRetrieveRequest {
   UserIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
-  DRData drData;
+  DiskFileInfo diskFileInfo;
 
 }; // struct CancelRetrieveRequest
 

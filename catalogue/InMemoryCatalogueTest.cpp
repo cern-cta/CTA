@@ -1928,10 +1928,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -1970,10 +1970,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -2292,10 +2292,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -2342,10 +2342,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -2459,10 +2459,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -2573,10 +2573,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -2728,10 +2728,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -2753,10 +2753,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file1Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -2811,10 +2811,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-      ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
-      ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
-      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
-      ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+      ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
+      ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
+      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -2847,10 +2847,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -2882,10 +2882,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file2Written.diskFilePath, archiveFile.drData.drPath);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.drData.drOwner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.drData.drGroup);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+    ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 

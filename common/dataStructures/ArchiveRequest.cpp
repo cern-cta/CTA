@@ -43,7 +43,7 @@ bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
       && checksumType==rhs.checksumType
       && checksumValue==rhs.checksumValue
       && storageClass==rhs.storageClass
-      && drData==rhs.drData
+      && diskFileInfo==rhs.diskFileInfo
       && diskpoolName==rhs.diskpoolName
       && diskpoolThroughput==rhs.diskpoolThroughput
       && creationLog==rhs.creationLog;
@@ -68,7 +68,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
      << " checksumType=" << obj.checksumType
      << " checksumValue=" << obj.checksumValue
      << " storageClass=" << obj.storageClass
-     << " drData=" << obj.drData
+     << " diskFileInfo=" << obj.diskFileInfo
      << " diskpoolName=" << obj.diskpoolName
      << " diskpoolThroughput=" << obj.diskpoolThroughput
      << " creationLog=" << obj.creationLog << ")";

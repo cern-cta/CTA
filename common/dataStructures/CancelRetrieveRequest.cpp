@@ -37,7 +37,7 @@ bool CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
   return requester==rhs.requester
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
-      && drData==rhs.drData;
+      && diskFileInfo==rhs.diskFileInfo;
 }
 
 //------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
-     << " drData=" << obj.drData << ")";
+     << " diskFileInfo=" << obj.diskFileInfo << ")";
   return os;
 }
 

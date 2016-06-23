@@ -35,7 +35,7 @@ UpdateFileInfoRequest::UpdateFileInfoRequest():
 //------------------------------------------------------------------------------
 bool UpdateFileInfoRequest::operator==(const UpdateFileInfoRequest &rhs) const {
   return archiveFileID==rhs.archiveFileID
-      && drData==rhs.drData;
+      && diskFileInfo==rhs.diskFileInfo;
 }
 
 //------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ bool UpdateFileInfoRequest::operator!=(const UpdateFileInfoRequest &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const UpdateFileInfoRequest &obj) {
   os << "(archiveFileID=" << obj.archiveFileID
-     << " drData=" << obj.drData << ")";
+     << " diskFileInfo=" << obj.diskFileInfo << ")";
   return os;
 }
 
