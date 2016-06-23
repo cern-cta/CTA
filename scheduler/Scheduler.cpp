@@ -298,6 +298,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // First, get the mount-related info from the DB
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo();
+  __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
   // We should now filter the potential mounts to keep only the ones we are
   // compatible with (match the logical library for retrieves).
@@ -382,8 +383,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
           std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount(m_catalogue));
           // Get the db side of the session
           try {
-            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t.vid,
-                t.tapePool, 
+            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
                 cta::utils::getShortHostname(), 

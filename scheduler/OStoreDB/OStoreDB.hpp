@@ -54,7 +54,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      const std::string & vid, const std::string & tapePool,
+      const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
       const std::string & hostName, time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(

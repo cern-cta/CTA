@@ -33,6 +33,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/MountType.hpp"
+#include "catalogue/TapeForWriting.hpp"
 
 #include <list>
 #include <map>
@@ -333,8 +334,8 @@ public:
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const std::string & vid,
-      const std::string & tapePool, const std::string driveName, 
+    virtual std::unique_ptr<ArchiveMount> createArchiveMount(
+      const catalogue::TapeForWriting & tape, const std::string driveName, 
       const std::string & logicalLibrary, const std::string & hostName, 
       time_t startTime) = 0;
     /**
