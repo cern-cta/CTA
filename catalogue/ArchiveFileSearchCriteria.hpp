@@ -26,7 +26,7 @@ namespace catalogue {
 /**
  * The collection of criteria used to select a set of archive files.
  *
- * An archive file is selected if it means all of the specified criteria.
+ * An archive file is selected if it meets all of the specified criteria.
  *
  * A criterion is only considered specified if it has been set.
  *
