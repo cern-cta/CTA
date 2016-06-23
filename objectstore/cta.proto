@@ -191,9 +191,10 @@ message MountCriteria {
 message ArchiveFile {
   required uint64 fileId = 4351;
   required uint64 size = 4352;
-  required string checksumtype = 4353;
-  required string checksumvalue = 4354;
-  required uint64 creationtime = 4355;
+  required string diskfileid = 4353;
+  required string checksumtype = 4354;
+  required string checksumvalue = 4355;
+  required uint64 creationtime = 4356;
 }
 
 // ------------- Archive Jobs --------------------------------------------------

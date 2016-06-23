@@ -99,7 +99,7 @@ cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
   ret.checksumType = m_payload.archivefile().checksumtype();
   ret.checksumValue = m_payload.archivefile().checksumvalue();
   ret.creationTime = m_payload.archivefile().creationtime();
-  ret.dstURL = m_payload.dsturl();
+  ret.diskFileId = m_payload.archivefile().diskfileid();
   ret.diskInstance = m_payload.diskinstance();
   ret.drData.drBlob = m_payload.drdata().drblob();
   ret.drData.drGroup = m_payload.drdata().drgroup();

@@ -50,7 +50,7 @@ struct ArchiveFile {
   bool operator!=(const ArchiveFile &rhs) const;
 
   uint64_t archiveFileID;
-  std::string dstURL;
+  std::string diskFileId;
   std::string diskInstance;
   uint64_t fileSize;
   /**

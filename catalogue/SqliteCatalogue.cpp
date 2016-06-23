@@ -90,7 +90,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE");
-        archiveFile->dstURL = selectRset->columnText("DISK_FILE_ID");
+        archiveFile->diskFileId = selectRset->columnText("DISK_FILE_ID");
         archiveFile->drData.drPath = selectRset->columnText("DISK_FILE_PATH");
         archiveFile->drData.drOwner = selectRset->columnText("DISK_FILE_USER");
         archiveFile->drData.drGroup = selectRset->columnText("DISK_FILE_GROUP");
