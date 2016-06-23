@@ -2161,10 +2161,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      ASSERT_EQ(fileWritten.diskFilePath, archiveFile.drData.drPath);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.drData.drOwner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.drData.drGroup);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.drData.drBlob);
+      ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
+      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
+      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(1, archiveFile.tapeFiles.size());
