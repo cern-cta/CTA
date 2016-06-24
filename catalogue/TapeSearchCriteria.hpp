@@ -57,17 +57,17 @@ struct TapeSearchCriteria {
   /**
    * Set to true if searching for disabled tapes.
    */
-  std::string isDisabled;
+  std::string disabled;
 
   /**
    * Set to true if searching for full tapes.
    */
-  std::string isFull;
+  std::string full;
 
   /**
    * Set to true if searching for tapes with logical block protection enabled.
    */
-  std::string lbpIsOn;
+  std::string lbp;
 
 }; // struct TapeSearchCriteria
 

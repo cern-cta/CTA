@@ -1011,6 +1011,133 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_same_twice) {
     comment), catalogue::UserError);
 }
 
+TEST_F(cta_catalogue_InMemoryCatalogueTest, createTape_many_tapes) {
+  using namespace cta;
+
+  const std::string logicalLibrary = "logical_library_name";
+  const std::string tapePool = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabled = true;
+  const bool full = false;
+  const std::string comment = "create tape";
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibrary, "create logical library");
+
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  m_catalogue->createTapePool(m_cliSI, tapePool, 2, true, "create tape pool");
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+  const uint64_t nbTapes = 10;
+
+  for(uint64_t i = 1; i <= nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "vid" << i;
+
+    m_catalogue->createTape(m_cliSI, vid.str(), logicalLibrary, tapePool, encryptionKey, capacityInBytes, disabled,
+      full, comment);
+  }
+
+  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+  ASSERT_EQ(nbTapes, tapes.size());
+  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+  ASSERT_EQ(nbTapes, vidToTape.size());
+
+  for(uint64_t i = 1; i <= nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "vid" << i;
+
+    auto vidAndTapeItor = vidToTape.find(vid.str());
+    ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
+
+    const common::dataStructures::Tape tape = vidAndTapeItor->second;
+    ASSERT_EQ(vid.str(), tape.vid);
+    ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
+    ASSERT_EQ(tapePool, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabled == tape.disabled);
+    ASSERT_TRUE(full == tape.full);
+    ASSERT_EQ(comment, tape.comment);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "vid1";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+    ASSERT_EQ("vid1", vidToTape.begin()->first);
+    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.logicalLibrary = logicalLibrary;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(logicalLibrary, vidToTape.begin()->second.logicalLibraryName);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.tapePool = tapePool;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(tapePool, vidToTape.begin()->second.tapePoolName);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.capacityInBytes = "10000000000000";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.disabled = "true";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_TRUE(vidToTape.begin()->second.disabled);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.full = "false";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_FALSE(vidToTape.begin()->second.full);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "non_existant_vid";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_TRUE(tapes.empty());
+  }
+}
+
 TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteTape) {
   using namespace cta;
 

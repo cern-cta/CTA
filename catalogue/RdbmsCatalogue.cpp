@@ -1266,9 +1266,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       searchCriteria.logicalLibrary.empty()  &&
       searchCriteria.tapePool.empty()        &&
       searchCriteria.capacityInBytes.empty() &&
-      searchCriteria.isDisabled.empty()      &&
-      searchCriteria.isFull.empty()          &&
-      searchCriteria.lbpIsOn.empty())) {
+      searchCriteria.disabled.empty()      &&
+      searchCriteria.full.empty()          &&
+      searchCriteria.lbp.empty())) {
       sql += " WHERE ";
     }
 
@@ -1295,21 +1295,21 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       if(addedAWhereConstraint) sql += " AND ";
       sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
     }
-    if(!searchCriteria.isDisabled.empty()) {
-      if(!isValidBool(searchCriteria.isDisabled)) {
-        throw UserError("Disabled tapes search criterion " + searchCriteria.isDisabled + " is not a valid boolean");
+    if(!searchCriteria.disabled.empty()) {
+      if(!isValidBool(searchCriteria.disabled)) {
+        throw UserError("Disabled tapes search criterion " + searchCriteria.disabled + " is not a valid boolean");
       }
       sql += " IS_DISABLED = :IS_DISABLED";
     }
-    if(!searchCriteria.isFull.empty()) {
-      if(!isValidBool(searchCriteria.isFull)) {
-        throw UserError("Full tapes search criterion " + searchCriteria.isFull + " is not a valid boolean");
+    if(!searchCriteria.full.empty()) {
+      if(!isValidBool(searchCriteria.full)) {
+        throw UserError("Full tapes search criterion " + searchCriteria.full + " is not a valid boolean");
       }
       sql += " IS_FULL = :IS_FULL";
     }
-    if(!searchCriteria.lbpIsOn.empty()) {
-      if(!isValidBool(searchCriteria.lbpIsOn)) {
-        throw UserError("LBP search criterion " + searchCriteria.lbpIsOn + " is not a valid boolean");
+    if(!searchCriteria.lbp.empty()) {
+      if(!isValidBool(searchCriteria.lbp)) {
+        throw UserError("LBP search criterion " + searchCriteria.lbp + " is not a valid boolean");
       }
       sql += " LBP_IS_ON = :LBP_IS_ON";
     }
@@ -1321,10 +1321,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(!searchCriteria.tapePool.empty()) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
     if(!searchCriteria.capacityInBytes.empty()) stmt->bindUint64(":CAPACITY_IN_BYTES",
         utils::toUint64(searchCriteria.capacityInBytes));
-    if(!searchCriteria.isDisabled.empty()) stmt->bindUint64(":IS_DISABLED",
-        toUpper(searchCriteria.isDisabled) == "TRUE");
-    if(!searchCriteria.isFull.empty()) stmt->bindUint64(":IS_FULL", toUpper(searchCriteria.isFull) == "TRUE");
-    if(!searchCriteria.lbpIsOn.empty()) stmt->bindUint64(":LBP_IS_ON", toUpper(searchCriteria.lbpIsOn) == "TRUE");
+    if(!searchCriteria.disabled.empty()) stmt->bindUint64(":IS_DISABLED", toUpper(searchCriteria.disabled) == "TRUE");
+    if(!searchCriteria.full.empty()) stmt->bindUint64(":IS_FULL", toUpper(searchCriteria.full) == "TRUE");
+    if(!searchCriteria.lbp.empty()) stmt->bindUint64(":LBP_IS_ON", toUpper(searchCriteria.lbp) == "TRUE");
 
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {

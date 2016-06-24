@@ -880,22 +880,22 @@ int XrdCtaFile::xCom_tape() {
     }
     cta::catalogue::TapeSearchCriteria searchCriteria;
     if(hasOption("-e", "--enabled")) {
-      searchCriteria.isDisabled = "false";
+      searchCriteria.disabled = "false";
     }
     if(hasOption("-d", "--disabled")) {
-      searchCriteria.isDisabled = "true";
+      searchCriteria.disabled = "true";
     }
     if(hasOption("-f", "--free")) {
-      searchCriteria.isFull = "false";
+      searchCriteria.full = "false";
     }
     if(hasOption("-F", "--full")) {
-      searchCriteria.isFull = "true";
+      searchCriteria.full = "true";
     }
     if(hasOption("-p", "--lbp")) {
-      searchCriteria.lbpIsOn = "true";
+      searchCriteria.lbp = "true";
     }
     if(hasOption("-P", "--nolbp")) {
-      searchCriteria.lbpIsOn = "false";
+      searchCriteria.lbp = "false";
     }
     std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
     if(list.size()>0) {
