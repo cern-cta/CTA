@@ -7,7 +7,7 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-add_library (XrdCtaOfs MODULE XrdCtaFilesystem.cpp XrdCtaFile.cpp)
+add_library (XrdCtaOfs MODULE XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
 target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaremotens protobuf ctaobjectstore cryptopp)
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

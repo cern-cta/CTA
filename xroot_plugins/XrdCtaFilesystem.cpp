@@ -36,6 +36,7 @@
 #include "XrdVersion.hh"
 #include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
+#include "XrdCtaDir.hpp"
 
 #include <memory>
 #include <iostream>
@@ -89,8 +90,7 @@ XrdSfsFile * XrdCtaFilesystem::newFile(char *user, int MonID)
 //------------------------------------------------------------------------------
 XrdSfsDirectory * XrdCtaFilesystem::newDir(char *user, int MonID)
 {
-  (void)user; (void)MonID;
-  return NULL;
+  return new cta::xrootPlugins::XrdCtaDir(m_catalogue.get(), m_log.get(), user, MonID);;
 }
 
 //------------------------------------------------------------------------------

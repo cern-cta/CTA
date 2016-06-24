@@ -44,31 +44,7 @@ void XrdCtaFile::checkClient(const XrdSecEntity *client) {
   if(client==NULL || client->name==NULL || client->host==NULL) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (NULL pointer detected!)");
   }
-  struct passwd pwd;
-  struct passwd *result;
-  long bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-  if (bufsize == -1)
-  {
-    bufsize = 16384;
-  }
-  std::unique_ptr<char> buf((char *)malloc((size_t)bufsize));
-  if(buf.get() == NULL)
-  {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] malloc of the buffer failed");
-  }
-  int rc = getpwnam_r(client->name, &pwd, buf.get(), bufsize, &result);
-  if(result == NULL)
-  {
-    if (rc == 0)
-    {
-      throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] User "+client->name+" not found");
-    }
-    else
-    {
-      throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] getpwnam_r failed");
-    }
-  }
-  std::cout << "Request received from client. Username: " << client->name << " uid: " << pwd.pw_uid << " gid: " << pwd.pw_gid << std::endl;
+  std::cout << "FILE Request received from client. Username: " << client->name << " Host: " << client->host << std::endl;
   m_cliIdentity.username=client->name;
   m_cliIdentity.host=client->host;
 }
