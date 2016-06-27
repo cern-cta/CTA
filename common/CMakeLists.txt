@@ -130,7 +130,8 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp
   utils/UtilsTest.cpp
-  UserIdentityTest.cpp)
+  UserIdentityTest.cpp
+  optionalTest.cpp)
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
