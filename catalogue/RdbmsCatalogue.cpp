@@ -1128,7 +1128,7 @@ void RdbmsCatalogue::createTape(
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt->bindString(":ENCRYPTION_KEY", encryptionKey);
-    stmt->bindString(":CAPACITY_IN_BYTES", std::to_string(capacityInBytes));
+    stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
     stmt->bindUint64(":IS_DISABLED", disabledValue);
@@ -1292,7 +1292,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(!searchCriteria.vid.empty()) stmt->bindString(":VID", searchCriteria.vid);
     if(!searchCriteria.logicalLibrary.empty()) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary);
     if(!searchCriteria.tapePool.empty()) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
-    if(!searchCriteria.capacityInBytes.empty()) stmt->bindString(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes);
+    if(!searchCriteria.capacityInBytes.empty()) stmt->bindUint64(":CAPACITY_IN_BYTES", utils::toUint64(searchCriteria.capacityInBytes));
     if(!searchCriteria.disabled.empty()) stmt->bindUint64(":IS_DISABLED", toUpper(searchCriteria.disabled) == "TRUE");
     if(!searchCriteria.full.empty()) stmt->bindUint64(":IS_FULL", toUpper(searchCriteria.full) == "TRUE");
     if(!searchCriteria.lbp.empty()) stmt->bindUint64(":LBP_IS_ON", toUpper(searchCriteria.lbp) == "TRUE");
@@ -1305,7 +1305,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
       tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
-      tape.capacityInBytes = utils::toUint64(rset->columnText("CAPACITY_IN_BYTES"));
+      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
       tape.disabled = rset->columnUint64("IS_DISABLED");
@@ -2286,8 +2286,8 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
     stmt->bindString(":DISK_FILE_GROUP", row.diskFileGroup);
     stmt->bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
     stmt->bindUint64(":FILE_SIZE", row.size);
-    stmt->bindString(":CHECKSUM_TYPE", "HELP");
-    stmt->bindString(":CHECKSUM_VALUE", "HELP");
+    stmt->bindString(":CHECKSUM_TYPE", row.checksumType);
+    stmt->bindString(":CHECKSUM_VALUE", row.checksumValue);
     stmt->bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt->bindUint64(":CREATION_TIME", now);
     stmt->bindUint64(":RECONCILIATION_TIME", now);
@@ -2672,6 +2672,18 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageCl
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
   try {
+    if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
+    if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
+    if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
+    if(event.diskFileUser.empty()) throw exception::Exception("diskFileUser is an empty string");
+    if(event.diskFileGroup.empty()) throw exception::Exception("diskFileGroup is an empty string");
+    if(event.diskFileRecoveryBlob.empty()) throw exception::Exception("diskFileRecoveryBlob is an empty string");
+    if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
+    if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");
+    if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
+    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
+    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
+
     const time_t now = time(NULL);
     std::lock_guard<std::mutex> m_lock(m_mutex);
 
@@ -2685,7 +2697,7 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
         event.fSeq;
       throw ex;
     }
-    updateTapeLastFSeq(event.vid, event.fSeq);
+    updateTape(event);
 
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(event.archiveFileId);
 
@@ -2697,6 +2709,8 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;
       row.size = event.size;
+      row.checksumType = event.checksumType;
+      row.checksumValue = event.checksumValue;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
       row.diskFileUser = event.diskFileUser;
@@ -2725,18 +2739,29 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 }
 
 //------------------------------------------------------------------------------
-// updateTapeLastFSeq
+// updateTape
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::updateTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq) {
-  const char *const sql =
-    "UPDATE TAPE SET "
-      "LAST_FSEQ = :LAST_FSEQ "
-    "WHERE "
-      "VID=:VID";
-  std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-  stmt->bindString(":VID", vid);
-  stmt->bindUint64(":LAST_FSEQ", lastFSeq);
-  stmt->executeNonQuery();
+void RdbmsCatalogue::updateTape(const TapeFileWritten &event) {
+  try {
+    const time_t now = time(NULL);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "LAST_FSEQ = :LAST_FSEQ,"
+        "DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,"
+        "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
+      "WHERE "
+        "VID=:VID";
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":VID", event.vid);
+    stmt->bindUint64(":LAST_FSEQ", event.fSeq);
+    stmt->bindUint64(":DATA_IN_BYTES", event.compressedSize);
+    stmt->bindString(":LAST_WRITE_DRIVE", event.tapeDrive);
+    stmt->bindUint64(":LAST_WRITE_TIME", now);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3028,7 +3053,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 
       tape.vid = rset->columnText("VID");
       tape.tapePool = rset->columnText("TAPE_POOL_NAME");
-      tape.capacityInBytes = utils::toUint64(rset->columnText("CAPACITY_IN_BYTES"));
+      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
       tape.lbp = rset->columnUint64("LBP_IS_ON");

@@ -2028,6 +2028,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
 
   const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
@@ -2038,12 +2041,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   file1Written.diskFileGroup        = "public_disk_group";
   file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
   file1Written.storageClassName     = storageClassName;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
@@ -2052,6 +2058,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -2080,12 +2088,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
   file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
+  file2Written.checksumType         = checksumType;
+  file2Written.checksumValue        = checksumValue;
   file2Written.storageClassName     = storageClassName;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file2Written);
 
   {
@@ -2094,6 +2105,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -2219,6 +2232,10 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
   const uint64_t nbCopies = 1;
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
 
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
+
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   const uint64_t nbArchiveFiles = 10;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -2237,12 +2254,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
     fileWritten.diskFileGroup = "public_disk_group";
     fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
     fileWritten.size = archiveFileSize;
+    fileWritten.checksumType = checksumType;
+    fileWritten.checksumValue = checksumValue;
     fileWritten.storageClassName = storageClassName;
     fileWritten.vid = vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
     fileWritten.compressedSize = 1;
     fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
     m_catalogue->fileWrittenToTape(fileWritten);
 
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -2275,6 +2295,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
       fileWritten.diskFileGroup = "public_disk_group";
       fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
+      fileWritten.checksumType = checksumType;
+      fileWritten.checksumValue = checksumValue;
       fileWritten.storageClassName = storageClassName;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
@@ -2293,6 +2315,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_many_archive_files
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
       ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
+      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
+      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(1, archiveFile.tapeFiles.size());
       ASSERT_EQ(fileWritten.vid, archiveFile.tapeFiles.begin()->second.vid);
@@ -2479,6 +2503,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
 
   const uint64_t archiveFileSize = 1;
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
@@ -2489,12 +2516,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
   file1Written.diskFileGroup        = "public_disk_group";
   file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
   file1Written.storageClassName     = storageClassName;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
@@ -2512,6 +2542,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -2540,12 +2572,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
   file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
+  file2Written.checksumType         = checksumType;
+  file2Written.checksumValue        = checksumValue;
   file2Written.storageClassName     = storageClassName;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file2Written);
 
   {
@@ -2564,6 +2599,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_diffe
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -2641,6 +2678,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
   }
 
   const uint64_t archiveFileId = 1234;
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
@@ -2660,12 +2700,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
   file1Written.diskFileGroup        = "public_disk_group";
   file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
   file1Written.storageClassName     = storageClassName;
   file1Written.vid                  = vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
@@ -2683,6 +2726,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -2711,12 +2756,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_same_
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
   file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
+  file2Written.checksumType         = checksumType;
+  file2Written.checksumValue        = checksumValue;
   file2Written.storageClassName     = storageClassName;
   file2Written.vid                  = vid;
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
   ASSERT_THROW(m_catalogue->fileWrittenToTape(file2Written), exception::Exception);
 }
 
@@ -2773,6 +2821,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
     "create storage class");
 
   const uint64_t archiveFileSize = 1;
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
@@ -2783,12 +2834,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
   file1Written.diskFileGroup        = "public_disk_group";
   file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
   file1Written.storageClassName     = storageClassName;
   file1Written.vid                  = vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
@@ -2797,6 +2851,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -2825,12 +2881,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, fileWrittenToTape_2_tape_files_corru
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
   file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
+  file2Written.checksumType         = checksumType;
+  file2Written.checksumValue        = checksumValue;
   file2Written.storageClassName     = storageClassName;
   file2Written.vid                  = "VID123";
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
 
   ASSERT_THROW(m_catalogue->fileWrittenToTape(file2Written), exception::Exception);
 }
@@ -2915,6 +2974,9 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
   m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
 
   const uint64_t archiveFileSize = 1;
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
@@ -2925,12 +2987,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
   file1Written.diskFileGroup        = "public_disk_group";
   file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
   file1Written.storageClassName     = storageClassName;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file1Written);
 
   {
@@ -2954,6 +3019,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -2979,6 +3046,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -3007,12 +3076,15 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
   file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
+  file2Written.checksumType         = checksumType;
+  file2Written.checksumValue        = checksumValue;
   file2Written.storageClassName     = storageClassName;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
   m_catalogue->fileWrittenToTape(file2Written);
 
   {
@@ -3039,6 +3111,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+      ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
+      ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -3075,6 +3149,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -3110,6 +3186,8 @@ TEST_F(cta_catalogue_InMemoryCatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);

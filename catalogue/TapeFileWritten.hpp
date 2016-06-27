@@ -132,6 +132,11 @@ struct TapeFileWritten {
    */
   uint64_t copyNb;
 
+  /**
+   * The name of the tape drive that wrote the file.
+   */
+  std::string tapeDrive;
+
 }; // struct TapeFileWritten
 
 /**

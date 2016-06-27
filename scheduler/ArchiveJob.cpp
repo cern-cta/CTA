@@ -70,6 +70,7 @@ void cta::ArchiveJob::complete() {
   fileReport.size = archiveFile.fileSize;
   //TODO fileReport.storageClassName
   fileReport.vid = tapeFile.vid;
+  //TODO fileReport.tapeDrive
   m_catalogue.fileWrittenToTape(fileReport);
   //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);

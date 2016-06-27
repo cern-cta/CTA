@@ -53,7 +53,8 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     fSeq == rhs.fSeq &&
     blockId == rhs.blockId &&
     compressedSize == rhs.compressedSize &&
-    copyNb == rhs.copyNb;
+    copyNb == rhs.copyNb &&
+    tapeDrive == rhs.tapeDrive;
 }
 
 //------------------------------------------------------------------------------
@@ -62,21 +63,22 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
 std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   os <<
   "{"
-  "archiveFileId=" << obj.archiveFileId <<
-  "diskInstance=" << obj.diskInstance <<
-  "diskFileId=" << obj.diskFileId <<
-  "diskFilePath=" << obj.diskFilePath <<
-  "diskFileUser=" << obj.diskFileUser <<
-  "diskFileGroup=" << obj.diskFileGroup <<
-  "diskFileRecoveryBlob=" << obj.diskFileRecoveryBlob <<
-  "size=" << obj.size <<
-  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue <<
-  "storageClassName=" << obj.storageClassName <<
-  "vid=" << obj.vid <<
-  "fSeq=" << obj.fSeq <<
-  "blockId=" << obj.blockId <<
-  "compressedSize=" << obj.compressedSize <<
-  "copyNb=" << obj.copyNb <<
+  "archiveFileId=" << obj.archiveFileId << ","
+  "diskInstance=" << obj.diskInstance << ","
+  "diskFileId=" << obj.diskFileId << ","
+  "diskFilePath=" << obj.diskFilePath << ","
+  "diskFileUser=" << obj.diskFileUser << ","
+  "diskFileGroup=" << obj.diskFileGroup << ","
+  "diskFileRecoveryBlob=" << obj.diskFileRecoveryBlob << ","
+  "size=" << obj.size << ","
+  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue << ","
+  "storageClassName=" << obj.storageClassName << ","
+  "vid=" << obj.vid << ","
+  "fSeq=" << obj.fSeq << ","
+  "blockId=" << obj.blockId << ","
+  "compressedSize=" << obj.compressedSize << ","
+  "copyNb=" << obj.copyNb << ","
+  "tapeDrive=" << obj.tapeDrive <<
   "}";
   return os;
 }

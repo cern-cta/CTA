@@ -110,7 +110,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::str
     tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
     tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
     tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
-    tape.capacityInBytes = utils::toUint64(rset->columnText("CAPACITY_IN_BYTES"));
+    tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
     tape.disabled = rset->columnUint64("IS_DISABLED");

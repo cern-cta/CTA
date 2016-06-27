@@ -19,6 +19,7 @@
 #include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 #include <cstring>
 #include <map>
@@ -161,7 +162,12 @@ uint64_t OcciRset::columnUint64(const std::string &colName) const {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
-    return m_rset->getUInt(colIdx);
+    const std::string stringValue = m_rset->getString(colIdx);
+    if(!utils::isValidUInt(stringValue)) {
+      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
+        " which is not a valid unsigned integer");
+    }
+    return utils::toUint64(stringValue);
   } catch(exception::Exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       ne.getMessage().str());

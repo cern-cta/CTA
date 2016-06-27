@@ -514,12 +514,11 @@ protected:
   uint64_t getTapeLastFSeq(const std::string &vid) const;
 
   /**
-   * Updates the lastFSeq column of the specified tape within the Tape table.
+   * Updates the appropriate tape based on the ocuurence of the specified event.
    *
-   * @param vid The volume identifier of the tape.
-   * @param lastFseq The new value of the lastFseq column.
+   * @param event
    */
-  void updateTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq);
+  void updateTape(const TapeFileWritten &event);
 
   /**
    * Returns the specified archive file or a NULL pointer if it does not exist.
