@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/CatalogueTest.hpp"
 #include "tests/OraUnitTestsCmdLineArgs.hpp"
 
 #include <gmock/gmock.h>
@@ -32,8 +33,9 @@ static void printUsage(std::ostream &os) {
 }
 
 /**
- * Parses the specified command-line arguments.  This should be called after Google test has consumed all of its
- * command-line options from the command-line.
+ * Parses the specified command-line arguments.  This should be called after
+ * Google test has consumed all of its command-line options from the
+ * command-line.
  */
 static CmdLineArgs parseCmdLine(const int argc, char ** argv) {
   if(argc != 2) {

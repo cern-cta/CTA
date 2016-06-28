@@ -84,6 +84,8 @@ add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
 
 set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueFactoryTest.cpp
+  CatalogueTest.cpp
+  DbLoginFactory.cpp
   DbLoginTest.cpp
   ParamNameToIdxTest.cpp
   InMemoryCatalogueTest.cpp
@@ -98,10 +100,13 @@ target_link_libraries (ctacatalogueunittests
 install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES
+  CatalogueTest.cpp
+  DbLoginFactory.cpp
   OcciConnTest.cpp
   OcciEnvTest.cpp
   OcciRsetTest.cpp
-  OcciStmtTest.cpp)
+  OcciStmtTest.cpp
+  OracleCatalogueTest.cpp)
 
 add_library (ctacatalogueoraunittests SHARED
   ${CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES})

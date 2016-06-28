@@ -53,10 +53,10 @@ add_executable(cta-oraUnitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-oraUnitTests
-        ctacatalogueoraunittests
-        ${GMOCK_LIB}
-        gtest
-        pthread)
+  ctacatalogueoraunittests
+  ${GMOCK_LIB}
+  gtest
+  pthread)
 
 add_executable(cta-unitTests-multiProcess
   unit_tests.cpp
