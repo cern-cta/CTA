@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include <string>
+#include <algorithm>
 
 namespace unitTests {
 
@@ -204,6 +205,28 @@ TEST_F(cta_optionalTest, comparisons) {
   ASSERT_TRUE(o2 > nullopt);
   ASSERT_FALSE(o1 > nullopt);
   ASSERT_TRUE(o1 >= nullopt);
+}
+
+
+TEST_F(cta_optionalTest, sort) {
+  using namespace cta;
+  
+  std::vector<optional<std::string>> v;
+  v.push_back(std::string("Hobgoblin"));
+  v.push_back(std::string("Aquator"));
+  v.push_back(std::string("Griffin"));
+  v.push_back(std::string("Ice monster"));
+  v.push_back(std::string("Centaur"));
+  v.push_back(nullopt);
+  v.push_back(std::string("Emu"));
+  v.push_back(std::string("Venus Fly Trap"));
+  v.push_back(std::string("Bat"));
+  v.push_back(std::string("Dragon"));
+  
+  ASSERT_NO_THROW(std::sort(v.begin(), v.end()));
+  ASSERT_TRUE(v.front()==nullopt);
+  ASSERT_TRUE(v.back()==std::string("Venus Fly Trap"));
+  
 }
 
 } // namespace unitTests
