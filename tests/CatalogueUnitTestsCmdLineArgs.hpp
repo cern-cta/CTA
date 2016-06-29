@@ -18,14 +18,20 @@
 
 #include <string>
 
-struct CmdLineArgs {
+/**
+ * Structure to store the command-line arguments of the CTA-catalogue unit-tests
+ * program.
+ */
+struct CatalogueUnitTestsCmdLineArgs {
   /**
-   * The oracle database connection string.
+   * Absolute path to the file containing the connection details of a test CTA
+   * catalogue database.
    */
-  std::string oraDbConnFile;
+  std::string dbConfigPath;
 };
 
 /**
- * Declaration of the global variable used to store the command-line arguments so that they are visible to the tests.
+ * Declaration of the global variable used to store the command-line arguments
+ * so that they are visible to the tests.
  */
-extern CmdLineArgs g_cmdLineArgs;
+extern CatalogueUnitTestsCmdLineArgs g_cmdLineArgs;

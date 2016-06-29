@@ -16,9 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tests/OraUnitTestsCmdLineArgs.hpp"
+#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
 
-//----------------------------------------------------------------------------------------------------------------------
-// Definition of the global variable used to store the command-line arguments so that they are visible to the tests.
-//----------------------------------------------------------------------------------------------------------------------
-CmdLineArgs g_cmdLineArgs;
+/**
+ * Global variable used to store the command-line arguments so that they are
+ * visible to the tests.
+ */
+CatalogueUnitTestsCmdLineArgs g_cmdLineArgs;

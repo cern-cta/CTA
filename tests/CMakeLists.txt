@@ -22,7 +22,7 @@ add_executable(cta-unitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-unitTests
-  ctacatalogueunittests
+  ctainmemorycatalogueunittests
   ctaexceptionunittests
   ctaiounittests
   ctalegacymsgunittests
@@ -47,13 +47,13 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
-add_executable(cta-oraUnitTests
-  OraUnitTestsCmdLineArgs.cpp
-  oraUnitTests.cpp
+add_executable(cta-catalogueUnitTests
+  CatalogueUnitTestsCmdLineArgs.cpp
+  catalogueUnitTests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(cta-oraUnitTests
-  ctacatalogueoraunittests
+target_link_libraries(cta-catalogueUnitTests
+  ctacatalogueunittests
   ${GMOCK_LIB}
   gtest
   pthread)
@@ -95,7 +95,7 @@ target_link_libraries(cta-systemTests
   gtest
   pthread)
 
-install(TARGETS cta-oraUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
+install(TARGETS cta-catalogueUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

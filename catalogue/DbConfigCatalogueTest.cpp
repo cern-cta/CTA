@@ -17,20 +17,22 @@
  */
 
 #include "catalogue/CatalogueTest.hpp"
-#include "tests/OraUnitTestsCmdLineArgs.hpp"
+#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
 
 namespace {
 
 /**
- * Creates DbLogin objects for in-memory catalogue databases.
+ * Creates DbLogin objects for the test catalogue database whose database login
+ * details are specified in a database configuration file passed on the
+ * command-line to the catalogue unit-tests program.
  */
-class OracleDbLoginFactory: public cta::catalogue::DbLoginFactory {
+class DbConfigFileLoginFactory: public cta::catalogue::DbLoginFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~OracleDbLoginFactory() {
+  virtual ~DbConfigFileLoginFactory() {
   }
 
   /**
@@ -40,17 +42,17 @@ public:
    */
   virtual cta::catalogue::DbLogin create() {
     using namespace cta::catalogue;
-    return DbLogin::parseFile(g_cmdLineArgs.oraDbConnFile);
+    return DbLogin::parseFile(g_cmdLineArgs.dbConfigPath);
   }
 }; // class OracleDbLoginFactory
 
-OracleDbLoginFactory g_oracleDbLoginFactory;
+DbConfigFileLoginFactory g_dbConfigLoginFactory;
 
 } // anonymous namespace
 
 namespace unitTests {
 
-INSTANTIATE_TEST_CASE_P(Oracle, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::catalogue::DbLoginFactory*>(&g_oracleDbLoginFactory)));
+INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_CatalogueTest,
+  ::testing::Values(dynamic_cast<cta::catalogue::DbLoginFactory*>(&g_dbConfigLoginFactory)));
 
 } // namespace unitTests

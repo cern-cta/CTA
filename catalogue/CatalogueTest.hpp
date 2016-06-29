@@ -33,6 +33,10 @@ namespace unitTests {
 
 class cta_catalogue_CatalogueTest : public ::testing::TestWithParam<cta::catalogue::DbLoginFactory*> {
 public:
+
+  /**
+   * Constructor.
+   */
   cta_catalogue_CatalogueTest():
     m_bootstrapComment("bootstrap") {
 

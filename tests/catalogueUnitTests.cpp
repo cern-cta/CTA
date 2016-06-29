@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/CatalogueTest.hpp"
-#include "tests/OraUnitTestsCmdLineArgs.hpp"
+#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -29,7 +29,7 @@
 static void printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    '\t' << "cta-oraUnitTest [Google test options] databaseConnectionFile" << std::endl;
+    '\t' << "cta-catalogueUnitTests [Google test options] databaseConnectionFile" << std::endl;
 }
 
 /**
@@ -37,15 +37,15 @@ static void printUsage(std::ostream &os) {
  * Google test has consumed all of its command-line options from the
  * command-line.
  */
-static CmdLineArgs parseCmdLine(const int argc, char ** argv) {
+static CatalogueUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
   if(argc != 2) {
     std::cerr << "Invalid number of command-line arguments";
     printUsage(std::cerr);
     exit(1);
   }
 
-  CmdLineArgs cmdLineArgs;
-  cmdLineArgs.oraDbConnFile = argv[1];
+  CatalogueUnitTestsCmdLineArgs cmdLineArgs;
+  cmdLineArgs.dbConfigPath = argv[1];
 
   return cmdLineArgs;
 }

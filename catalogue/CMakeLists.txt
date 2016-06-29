@@ -83,14 +83,27 @@ add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
   COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp > InMemoryCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
 
-set(CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  CatalogueFactoryTest.cpp
+set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
+  CatalogueFactoryTest.cpp
   DbLoginFactory.cpp
   DbLoginTest.cpp
   ParamNameToIdxTest.cpp
   InMemoryCatalogueTest.cpp
   SqliteStmtTest.cpp)
+
+add_library (ctainmemorycatalogueunittests SHARED
+  ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
+
+target_link_libraries (ctainmemorycatalogueunittests
+  ctacatalogue)
+
+install(TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+  CatalogueTest.cpp
+  DbConfigCatalogueTest.cpp
+  DbLoginFactory.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
@@ -99,23 +112,6 @@ target_link_libraries (ctacatalogueunittests
   ctacatalogue)
 
 install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-set (CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES
-  CatalogueTest.cpp
-  DbLoginFactory.cpp
-  OcciConnTest.cpp
-  OcciEnvTest.cpp
-  OcciRsetTest.cpp
-  OcciStmtTest.cpp
-  OracleCatalogueTest.cpp)
-
-add_library (ctacatalogueoraunittests SHARED
-  ${CATALOGUE_ORA_UNIT_TESTS_LIB_SRC_FILES})
-
-target_link_libraries (ctacatalogueoraunittests
-  ctacatalogue)
-
-install(TARGETS ctacatalogueoraunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (FILES cta_catalogue_db.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
