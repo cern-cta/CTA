@@ -513,7 +513,7 @@ int XrdCtaFile::xCom_bootstrap() {
   if(!username||!hostname||!comment) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, *username, *hostname, *comment);
+  m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username.value(), hostname.value(), comment.value());
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -542,14 +542,14 @@ int XrdCtaFile::xCom_admin() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if("add" == m_requestTokens.at(2)) { //add
-        m_catalogue->createAdminUser(m_cliIdentity, *username, *comment);
+        m_catalogue->createAdminUser(m_cliIdentity, username.value(), comment.value());
       }
       else { //ch
-        m_catalogue->modifyAdminUserComment(m_cliIdentity, *username, *comment);
+        m_catalogue->modifyAdminUserComment(m_cliIdentity, username.value(), comment.value());
       }
     }
     else { //rm
-      m_catalogue->deleteAdminUser(*username);
+      m_catalogue->deleteAdminUser(username.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -599,14 +599,14 @@ int XrdCtaFile::xCom_adminhost() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if("add" == m_requestTokens.at(2)) { //add
-        m_catalogue->createAdminHost(m_cliIdentity, *hostname, *comment);
+        m_catalogue->createAdminHost(m_cliIdentity, hostname.value(), comment.value());
       }
       else { //ch
-        m_catalogue->modifyAdminHostComment(m_cliIdentity, *hostname, *comment);
+        m_catalogue->modifyAdminHostComment(m_cliIdentity, hostname.value(), comment.value());
       }
     }
     else { //rm
-      m_catalogue->deleteAdminHost(*hostname);
+      m_catalogue->deleteAdminHost(hostname.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -661,7 +661,7 @@ int XrdCtaFile::xCom_tapepool() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       encryption=hasOption("-e", "--encryption");
-      m_catalogue->createTapePool(m_cliIdentity, *name, *ptn, encryption, *comment);
+      m_catalogue->createTapePool(m_cliIdentity, name.value(), ptn.value(), encryption, comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false);
@@ -670,20 +670,20 @@ int XrdCtaFile::xCom_tapepool() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(comment) {
-        m_catalogue->modifyTapePoolComment(m_cliIdentity, *name, *comment);
+        m_catalogue->modifyTapePoolComment(m_cliIdentity, name.value(), comment.value());
       }
       if(ptn) {
-        m_catalogue->modifyTapePoolNbPartialTapes(m_cliIdentity, *name, *ptn);
+        m_catalogue->modifyTapePoolNbPartialTapes(m_cliIdentity, name.value(), ptn.value());
       }
       if(hasOption("-e", "--encryption")) {
-        m_catalogue->setTapePoolEncryption(m_cliIdentity, *name, true);
+        m_catalogue->setTapePoolEncryption(m_cliIdentity, name.value(), true);
       }
       if(hasOption("-c", "--clear")) {
-        m_catalogue->setTapePoolEncryption(m_cliIdentity, *name, false);
+        m_catalogue->setTapePoolEncryption(m_cliIdentity, name.value(), false);
       }
     }
     else { //rm
-      m_catalogue->deleteTapePool(*name);
+      m_catalogue->deleteTapePool(name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -736,7 +736,7 @@ int XrdCtaFile::xCom_archiveroute() {
       if(!comment||!tapepool) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createArchiveRoute(m_cliIdentity, *scn, *cn, *tapepool, *comment);
+      m_catalogue->createArchiveRoute(m_cliIdentity, scn.value(), cn.value(), tapepool.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
@@ -745,14 +745,14 @@ int XrdCtaFile::xCom_archiveroute() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(comment) {
-        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, *scn, *cn, *comment);
+        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, scn.value(), cn.value(), comment.value());
       }
       if(tapepool) {
-        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, *scn, *cn, *tapepool);
+        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, scn.value(), cn.value(), tapepool.value());
       }
     }
     else { //rm
-      m_catalogue->deleteArchiveRoute(*scn, *cn);
+      m_catalogue->deleteArchiveRoute(scn.value(), cn.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -804,17 +804,17 @@ int XrdCtaFile::xCom_logicallibrary() {
         if(!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        m_catalogue->createLogicalLibrary(m_cliIdentity, *name, *comment);
+        m_catalogue->createLogicalLibrary(m_cliIdentity, name.value(), comment.value());
       }
       else { //ch
         if(!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        m_catalogue->modifyLogicalLibraryComment(m_cliIdentity, *name, *comment);
+        m_catalogue->modifyLogicalLibraryComment(m_cliIdentity, name.value(), comment.value());
       }
     }
     else { //rm
-      m_catalogue->deleteLogicalLibrary(*name);
+      m_catalogue->deleteLogicalLibrary(name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -879,7 +879,7 @@ int XrdCtaFile::xCom_tape() {
       disabled=hasOption("-d", "--disabled");
       full=hasOption("-F", "--full");
       optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false);
-      m_catalogue->createTape(m_cliIdentity, *vid, *logicallibrary, *tapepool, *encryptionkey, *capacity, disabled, full, *comment);
+      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey.value(), capacity.value(), disabled, full, comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false);
@@ -895,42 +895,42 @@ int XrdCtaFile::xCom_tape() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(logicallibrary) {
-        m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, *vid, *logicallibrary);
+        m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, vid.value(), logicallibrary.value());
       }
       if(tapepool) {
-        m_catalogue->modifyTapeTapePoolName(m_cliIdentity, *vid, *tapepool);
+        m_catalogue->modifyTapeTapePoolName(m_cliIdentity, vid.value(), tapepool.value());
       }
       if(capacity) {
-        m_catalogue->modifyTapeCapacityInBytes(m_cliIdentity, *vid, *capacity);
+        m_catalogue->modifyTapeCapacityInBytes(m_cliIdentity, vid.value(), capacity.value());
       }
       if(comment) {
-        m_catalogue->modifyTapeComment(m_cliIdentity, *vid, *comment);
+        m_catalogue->modifyTapeComment(m_cliIdentity, vid.value(), comment.value());
       }
       if(encryptionkey) {
-        m_catalogue->modifyTapeEncryptionKey(m_cliIdentity, *vid, *encryptionkey);
+        m_catalogue->modifyTapeEncryptionKey(m_cliIdentity, vid.value(), encryptionkey.value());
       }
       if(hasOption("-e", "--enabled")) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, *vid, false);
+        m_scheduler->setTapeDisabled(m_cliIdentity, vid.value(), false);
       }
       if(hasOption("-d", "--disabled")) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, *vid, true);
+        m_scheduler->setTapeDisabled(m_cliIdentity, vid.value(), true);
       }
       if(hasOption("-f", "--free")) {
-        m_scheduler->setTapeFull(m_cliIdentity, *vid, false);
+        m_scheduler->setTapeFull(m_cliIdentity, vid.value(), false);
       }
       if(hasOption("-F", "--full")) {
-        m_scheduler->setTapeFull(m_cliIdentity, *vid, true);
+        m_scheduler->setTapeFull(m_cliIdentity, vid.value(), true);
       }
     }
     else if("reclaim" == m_requestTokens.at(2)) { //reclaim
-      m_catalogue->reclaimTape(m_cliIdentity, *vid);
+      m_catalogue->reclaimTape(m_cliIdentity, vid.value());
     }
     else if("label" == m_requestTokens.at(2)) { //label
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
-      m_scheduler->labelTape(m_cliIdentity, *vid, hasOption("-f", "--force"), hasOption("-l", "--lbp"), *tag);
+      m_scheduler->labelTape(m_cliIdentity, vid.value(), hasOption("-f", "--force"), hasOption("-l", "--lbp"), tag.value());
     }
     else { //rm
-      m_catalogue->deleteTape(*vid);
+      m_catalogue->deleteTape(vid.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1027,7 +1027,7 @@ int XrdCtaFile::xCom_storageclass() {
       if(!comment||!cn) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createStorageClass(m_cliIdentity, *scn, *cn, *comment);
+      m_catalogue->createStorageClass(m_cliIdentity, scn.value(), cn.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false);
@@ -1036,14 +1036,14 @@ int XrdCtaFile::xCom_storageclass() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(comment) {
-        m_catalogue->modifyStorageClassComment(m_cliIdentity, *scn, *comment);
+        m_catalogue->modifyStorageClassComment(m_cliIdentity, scn.value(), comment.value());
       }
       if(cn) {
-        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, *scn, *cn);
+        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, scn.value(), cn.value());
       }
     }
     else { //rm
-      m_catalogue->deleteStorageClass(*scn);
+      m_catalogue->deleteStorageClass(scn.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1094,7 +1094,7 @@ int XrdCtaFile::xCom_requestermountrule() {
       if(!comment||!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createRequesterMountRule(m_cliIdentity, *mountpolicy, *name, *comment);
+      m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy.value(), name.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
@@ -1103,14 +1103,14 @@ int XrdCtaFile::xCom_requestermountrule() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(comment) {
-        m_catalogue->modifyRequesterComment(m_cliIdentity, *name, *comment);
+        m_catalogue->modifyRequesterComment(m_cliIdentity, name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, *name, *mountpolicy);
+        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, name.value(), mountpolicy.value());
       }
     }
     else { //rm
-      m_catalogue->deleteRequesterMountRule(*name);
+      m_catalogue->deleteRequesterMountRule(name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1161,7 +1161,7 @@ int XrdCtaFile::xCom_groupmountrule() {
       if(!comment||!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, *mountpolicy, *name, *comment);
+      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), name.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
@@ -1170,14 +1170,14 @@ int XrdCtaFile::xCom_groupmountrule() {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if(comment) {
-        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, *name, *comment);
+        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, *name, *mountpolicy);
+        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, name.value(), mountpolicy.value());
       }
     }
     else { //rm
-      m_catalogue->deleteRequesterGroupMountRule(*name);
+      m_catalogue->deleteRequesterGroupMountRule(name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1236,7 +1236,7 @@ int XrdCtaFile::xCom_mountpolicy() {
                 ||!minretrieverequestage||!maxdrivesallowed||!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        m_catalogue->createMountPolicy(m_cliIdentity, *group, *archivepriority, *minarchiverequestage, *retrievepriority, *minretrieverequestage, *maxdrivesallowed, *comment);
+        m_catalogue->createMountPolicy(m_cliIdentity, group.value(), archivepriority.value(), minarchiverequestage.value(), retrievepriority.value(), minretrieverequestage.value(), maxdrivesallowed.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
         if(!archivepriority&&!minarchiverequestage&&!retrievepriority
@@ -1244,27 +1244,27 @@ int XrdCtaFile::xCom_mountpolicy() {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
         if(archivepriority) {
-          m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, *group, *archivepriority);
+          m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, group.value(), archivepriority.value());
         }
         if(minarchiverequestage) {
-          m_catalogue->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, *group, *minarchiverequestage);
+          m_catalogue->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group.value(), minarchiverequestage.value());
         }
         if(retrievepriority) {
-          m_catalogue->modifyMountPolicyRetrievePriority(m_cliIdentity, *group, *retrievepriority);
+          m_catalogue->modifyMountPolicyRetrievePriority(m_cliIdentity, group.value(), retrievepriority.value());
         }
         if(minretrieverequestage) {
-          m_catalogue->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, *group, *minretrieverequestage);
+          m_catalogue->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group.value(), minretrieverequestage.value());
         }
         if(maxdrivesallowed) {
-          m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, *group, *maxdrivesallowed);
+          m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group.value(), maxdrivesallowed.value());
         }
         if(comment) {
-          m_catalogue->modifyMountPolicyComment(m_cliIdentity, *group, *comment);
+          m_catalogue->modifyMountPolicyComment(m_cliIdentity, group.value(), comment.value());
         }
       }
     }
     else { //rm
-      m_catalogue->deleteMountPolicy(*group);
+      m_catalogue->deleteMountPolicy(group.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1332,37 +1332,37 @@ int XrdCtaFile::xCom_dedication() {
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_catalogue->createDedication(m_cliIdentity, *drive, type, *tag, *vid, *from, *until, *comment);
+        m_catalogue->createDedication(m_cliIdentity, drive.value(), type, tag.value(), vid.value(), from.value(), until.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
         if((!comment&&!from&&!until&&!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
         if(comment) {
-          m_catalogue->modifyDedicationComment(m_cliIdentity, *drive, *comment);
+          m_catalogue->modifyDedicationComment(m_cliIdentity, drive.value(), comment.value());
         }
         if(from) {
-          m_catalogue->modifyDedicationFrom(m_cliIdentity, *drive, *from);
+          m_catalogue->modifyDedicationFrom(m_cliIdentity, drive.value(), from.value());
         }
         if(until) {
-          m_catalogue->modifyDedicationUntil(m_cliIdentity, *drive, *until);
+          m_catalogue->modifyDedicationUntil(m_cliIdentity, drive.value(), until.value());
         }
         if(vid) {
-          m_catalogue->modifyDedicationVid(m_cliIdentity, *drive, *vid);
+          m_catalogue->modifyDedicationVid(m_cliIdentity, drive.value(), vid.value());
         }
         if(tag) {
-          m_catalogue->modifyDedicationTag(m_cliIdentity, *drive, *tag);
+          m_catalogue->modifyDedicationTag(m_cliIdentity, drive.value(), tag.value());
         }
         if(readonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, *drive, cta::common::dataStructures::DedicationType::readonly);          
+          m_catalogue->modifyDedicationType(m_cliIdentity, drive.value(), cta::common::dataStructures::DedicationType::readonly);          
         }
         if(writeonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, *drive, cta::common::dataStructures::DedicationType::writeonly);
+          m_catalogue->modifyDedicationType(m_cliIdentity, drive.value(), cta::common::dataStructures::DedicationType::writeonly);
         }
       }
     }
     else { //rm
-      m_catalogue->deleteDedication(*drive);
+      m_catalogue->deleteDedication(drive.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1437,10 +1437,10 @@ int XrdCtaFile::xCom_repack() {
       if(justrepack) {
         type=cta::common::dataStructures::RepackType::justrepack;
       }
-      m_scheduler->repack(m_cliIdentity, *vid, *tag, type);
+      m_scheduler->repack(m_cliIdentity, vid.value(), tag.value(), type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, *vid);
+      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -1455,7 +1455,7 @@ int XrdCtaFile::xCom_repack() {
       }
     }
     else { //rm
-      m_scheduler->cancelRepack(m_cliIdentity, *vid);
+      m_scheduler->cancelRepack(m_cliIdentity, vid.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1465,7 +1465,7 @@ int XrdCtaFile::xCom_repack() {
       list = m_scheduler->getRepacks(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getRepack(m_cliIdentity, *vid));
+      list.push_back(m_scheduler->getRepack(m_cliIdentity, vid.value()));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1520,7 +1520,7 @@ int XrdCtaFile::xCom_shrink() {
   if(!tapepool) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  m_scheduler->shrink(m_cliIdentity, *tapepool);
+  m_scheduler->shrink(m_cliIdentity, tapepool.value());
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -1550,10 +1550,10 @@ int XrdCtaFile::xCom_verify() {
       if(complete&&numberOfFiles) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_scheduler->verify(m_cliIdentity, *vid, *tag, *numberOfFiles);
+      m_scheduler->verify(m_cliIdentity, vid.value(), tag.value(), numberOfFiles.value());
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, *vid);
+      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -1568,7 +1568,7 @@ int XrdCtaFile::xCom_verify() {
       }
     }
     else { //rm
-      m_scheduler->cancelVerify(m_cliIdentity, *vid);
+      m_scheduler->cancelVerify(m_cliIdentity, vid.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1578,7 +1578,7 @@ int XrdCtaFile::xCom_verify() {
       list = m_scheduler->getVerifys(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getVerify(m_cliIdentity, *vid));
+      list.push_back(m_scheduler->getVerify(m_cliIdentity, vid.value()));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1720,7 +1720,7 @@ int XrdCtaFile::xCom_test() {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }    
     bool checkchecksum = hasOption("-c", "--checkchecksum");
-    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, *drive, *vid, *firstfseq, *lastfseq, checkchecksum, *output, *tag);   
+    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag.value());   
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
     responseTable.push_back(header);
@@ -1748,23 +1748,23 @@ int XrdCtaFile::xCom_test() {
       if(!file) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }  
-      res = m_scheduler->writeTest(m_cliIdentity, *drive, *vid, *file, *tag);
+      res = m_scheduler->writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag.value());
     }
     else { //write_auto
       optional<uint64_t> number = getOptionUint64Value("-n", "--number", false);
       optional<uint64_t> size = getOptionUint64Value("-s", "--size", false);
       optional<std::string> input = getOptionStringValue("-i", "--input", false);
-      if(!number||!size||(*input!="zero"&&*input!="urandom")) {
+      if(!number||!size||(input.value()!="zero"&&input.value()!="urandom")) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       cta::common::dataStructures::TestSourceType type;
-      if(*input=="zero") { //zero
+      if(input.value()=="zero") { //zero
         type = cta::common::dataStructures::TestSourceType::devzero;
       }
       else { //urandom
         type = cta::common::dataStructures::TestSourceType::devurandom;
       }
-      res = m_scheduler->write_autoTest(m_cliIdentity, *drive, *vid, *number, *size, type, *tag);
+      res = m_scheduler->write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag.value());
     }
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
@@ -1809,10 +1809,10 @@ int XrdCtaFile::xCom_drive() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("up" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, *drive, true, false);
+    m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), true, false);
   }
   else if("down" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, *drive, false, hasOption("-f", "--force"));
+    m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), false, hasOption("-f", "--force"));
   }
   else {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1871,9 +1871,9 @@ int XrdCtaFile::xCom_listpendingarchives() {
     result = m_scheduler->getPendingArchiveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(*tapepool);
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool.value());
     if(list.size()>0) {
-      result[*tapepool] = list;
+      result[tapepool.value()] = list;
     }
   }
   if(result.size()>0) {
@@ -1938,9 +1938,9 @@ int XrdCtaFile::xCom_listpendingretrieves() {
     result = m_scheduler->getPendingRetrieveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(*vid);
+    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(vid.value());
     if(list.size()>0) {
-      result[*vid] = list;
+      result[vid.value()] = list;
     }
   }
   if(result.size()>0) {
@@ -2037,7 +2037,7 @@ int XrdCtaFile::xCom_archive() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   optional<std::string> diskid = getOptionStringValue("", "--diskid", encoded);
@@ -2058,25 +2058,25 @@ int XrdCtaFile::xCom_archive() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=*recoveryblob;
-  diskFileInfo.group=*diskfilegroup;
-  diskFileInfo.owner=*diskfileowner;
-  diskFileInfo.path=*diskfilepath;
+  diskFileInfo.recoveryBlob=recoveryblob.value();
+  diskFileInfo.group=diskfilegroup.value();
+  diskFileInfo.owner=diskfileowner.value();
+  diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType=*checksumtype;
-  request.checksumValue=*checksumvalue;
-  request.diskpoolName=*diskpool;
-  request.diskpoolThroughput=*throughput;
+  request.checksumType=checksumtype.value();
+  request.checksumValue=checksumvalue.value();
+  request.diskpoolName=diskpool.value();
+  request.diskpoolThroughput=throughput.value();
   request.diskFileInfo=diskFileInfo;
-  request.diskFileID=*diskid;
-  request.instance=*instance;
-  request.fileSize=*size;
+  request.diskFileID=diskid.value();
+  request.instance=instance.value();
+  request.fileSize=size.value();
   request.requester=originator;
-  request.srcURL=*srcurl;
-  request.storageClass=*storageclass;  
+  request.srcURL=srcurl.value();
+  request.storageClass=storageclass.value();  
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity, request);
   cmdlineOutput << archiveFileId << std::endl;
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -2094,7 +2094,7 @@ int XrdCtaFile::xCom_retrieve() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
@@ -2109,20 +2109,20 @@ int XrdCtaFile::xCom_retrieve() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=*recoveryblob;
-  diskFileInfo.group=*diskfilegroup;
-  diskFileInfo.owner=*diskfileowner;
-  diskFileInfo.path=*diskfilepath;
+  diskFileInfo.recoveryBlob=recoveryblob.value();
+  diskFileInfo.group=diskfilegroup.value();
+  diskFileInfo.owner=diskfileowner.value();
+  diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::RetrieveRequest request;
-  request.diskpoolName=*diskpool;
-  request.diskpoolThroughput=*throughput;
+  request.diskpoolName=diskpool.value();
+  request.diskpoolThroughput=throughput.value();
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=*id;
+  request.archiveFileID=id.value();
   request.requester=originator;
-  request.dstURL=*dsturl;
+  request.dstURL=dsturl.value();
   m_scheduler->queueRetrieve(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2138,7 +2138,7 @@ int XrdCtaFile::xCom_deletearchive() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
@@ -2146,10 +2146,10 @@ int XrdCtaFile::xCom_deletearchive() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::DeleteArchiveRequest request;
-  request.archiveFileID=*id;
+  request.archiveFileID=id.value();
   request.requester=originator;
   m_scheduler->deleteArchive(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -2167,7 +2167,7 @@ int XrdCtaFile::xCom_cancelretrieve() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
@@ -2180,18 +2180,18 @@ int XrdCtaFile::xCom_cancelretrieve() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=*recoveryblob;
-  diskFileInfo.group=*diskfilegroup;
-  diskFileInfo.owner=*diskfileowner;
-  diskFileInfo.path=*diskfilepath;
+  diskFileInfo.recoveryBlob=recoveryblob.value();
+  diskFileInfo.group=diskfilegroup.value();
+  diskFileInfo.owner=diskfileowner.value();
+  diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::CancelRetrieveRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=*id;
+  request.archiveFileID=id.value();
   request.requester=originator;
-  request.dstURL=*dsturl;
+  request.dstURL=dsturl.value();
   m_scheduler->cancelRetrieve(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2208,7 +2208,7 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
@@ -2221,18 +2221,18 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=*recoveryblob;
-  diskFileInfo.group=*diskfilegroup;
-  diskFileInfo.owner=*diskfileowner;
-  diskFileInfo.path=*diskfilepath;
+  diskFileInfo.recoveryBlob=recoveryblob.value();
+  diskFileInfo.group=diskfilegroup.value();
+  diskFileInfo.owner=diskfileowner.value();
+  diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::UpdateFileStorageClassRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=*id;
+  request.archiveFileID=id.value();
   request.requester=originator;
-  request.storageClass=*storageclass;
+  request.storageClass=storageclass.value();
   m_scheduler->updateFileStorageClass(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2249,7 +2249,7 @@ int XrdCtaFile::xCom_updatefileinfo() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
   optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
@@ -2259,13 +2259,13 @@ int XrdCtaFile::xCom_updatefileinfo() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=*recoveryblob;
-  diskFileInfo.group=*diskfilegroup;
-  diskFileInfo.owner=*diskfileowner;
-  diskFileInfo.path=*diskfilepath;
+  diskFileInfo.recoveryBlob=recoveryblob.value();
+  diskFileInfo.group=diskfilegroup.value();
+  diskFileInfo.owner=diskfileowner.value();
+  diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::UpdateFileInfoRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=*id;
+  request.archiveFileID=id.value();
   m_scheduler->updateFileInfo(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2281,15 +2281,15 @@ int XrdCtaFile::xCom_liststorageclass() {
   if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = *encoded_s;
+  bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded);
   optional<std::string> group = getOptionStringValue("", "--group", encoded);
   if(!user || !group) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=*user;
-  originator.group=*group;
+  originator.name=user.value();
+  originator.group=group.value();
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
   m_scheduler->listStorageClass(m_cliIdentity, request);
