@@ -1231,7 +1231,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-        "FROM "
+      "FROM "
         "TAPE";
 
     if(!(

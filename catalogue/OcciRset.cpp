@@ -145,7 +145,11 @@ oracle::occi::ResultSet *OcciRset::operator->() const {
 std::string OcciRset::columnText(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
-    return m_rset->getString(colIdx);
+    const std::string stringValue = m_rset->getString(colIdx);
+    if(stringValue.empty()) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+    }
+    return stringValue;
   } catch(exception::Exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       ne.getMessage().str());
