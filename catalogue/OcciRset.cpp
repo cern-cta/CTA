@@ -140,14 +140,14 @@ oracle::occi::ResultSet *OcciRset::operator->() const {
 }
 
 //------------------------------------------------------------------------------
-// columnText
+// columnOptionalText
 //------------------------------------------------------------------------------
-std::string OcciRset::columnText(const std::string &colName) const {
+optional<std::string> OcciRset::columnOptionalText(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
     if(stringValue.empty()) {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+      return nullopt;
     }
     return stringValue;
   } catch(exception::Exception &ne) {
@@ -160,16 +160,16 @@ std::string OcciRset::columnText(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
-// columnUint64
+// columnOptionalUint64
 //------------------------------------------------------------------------------
-uint64_t OcciRset::columnUint64(const std::string &colName) const {
+optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) const {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
     if(stringValue.empty()) {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+      throw nullopt;
     }
     if(!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +

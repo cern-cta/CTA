@@ -82,22 +82,22 @@ public:
   /**
    * Returns the value of the specified column as a string.
    *
-   * Please note that if the value of the column is NULL within the database
-   * then an empty string shall be returned.  Use the columnIsNull() method to
-   * determine whether not a column contains a NULL value.
+   * This method will return a NULL column value as an optional with no value.
    *
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual std::string columnText(const std::string &colName) const;
+  virtual optional<std::string> columnOptionalText(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
    *
+   * This method will return a NULL column value as an optional with no value.
+   *
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual uint64_t columnUint64(const std::string &colName) const;
+  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
 
   /**
    * Idempotent close() method.  The destructor calls this method.

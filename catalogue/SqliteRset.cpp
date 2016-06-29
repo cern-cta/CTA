@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/NullDbValue.hpp"
 #include "catalogue/Sqlite.hpp"
 #include "catalogue/SqliteRset.hpp"
 #include "catalogue/SqliteStmt.hpp"
@@ -205,23 +206,27 @@ bool SqliteRset::columnIsNull(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
-// columnText
+// columnOptionalText
 //------------------------------------------------------------------------------
-std::string SqliteRset::columnText(const std::string &colName) const {
+optional<std::string> SqliteRset::columnOptionalText(const std::string &colName) const {
   const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
   if(SQLITE_NULL == idxAndType.colType) {
-    return "";
+    return nullopt;
   } else {
-    return (const char *) sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
+    return optional<std::string>((const char *) sqlite3_column_text(m_stmt.get(), idxAndType.colIdx));
   }
 }
 
 //------------------------------------------------------------------------------
-// columnUint64
+// columnOptionalUint64
 //------------------------------------------------------------------------------
-uint64_t SqliteRset::columnUint64(const std::string &colName) const {
+optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) const {
   const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
-  return (uint64_t)sqlite3_column_int64(m_stmt.get(), idxAndType.colIdx);
+  if(SQLITE_NULL == idxAndType.colType) {
+    return nullopt;
+  } else {
+    return optional<uint64_t>(sqlite3_column_int64(m_stmt.get(), idxAndType.colIdx));
+  }
 }
 
 } // namespace catalogue

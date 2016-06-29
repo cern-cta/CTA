@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/DbRset.hpp"
+#include "catalogue/NullDbValue.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -25,6 +26,30 @@ namespace catalogue {
 // destructor
 //------------------------------------------------------------------------------
 DbRset::~DbRset() throw() {
+}
+
+//------------------------------------------------------------------------------
+// columnText
+//------------------------------------------------------------------------------
+std::string DbRset::columnText(const std::string &colName) const {
+  const optional<std::string> col = columnOptionalText(colName);
+  if(col) {
+    return col.value();
+  } else {
+    throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnUint64
+//------------------------------------------------------------------------------
+uint64_t DbRset::columnUint64(const std::string &colName) const {
+  const optional<uint64_t> col = columnOptionalUint64(colName);
+  if(col) {
+    return col.value();
+  } else {
+    throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+  }
 }
 
 } // namespace catalogue

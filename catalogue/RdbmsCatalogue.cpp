@@ -1339,7 +1339,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       } else {
         tape.lastWriteLog.drive = rset->columnText("LAST_WRITE_DRIVE");
       }
-
       if(rset->columnIsNull("LAST_WRITE_TIME")) {
         tape.lastWriteLog.time = 0;
       } else {
