@@ -335,9 +335,9 @@ void XrdCtaFile::replaceAll(std::string& str, const std::string& from, const std
 }
 
 //------------------------------------------------------------------------------
-// getOptionValue
+// getOption
 //------------------------------------------------------------------------------
-std::string XrdCtaFile::getOptionValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+std::string XrdCtaFile::getOption(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
   for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
     if(optionShortName == *it || optionLongName == *it) {
       auto it_next=it+1;
@@ -351,6 +351,50 @@ std::string XrdCtaFile::getOptionValue(const std::string& optionShortName, const
     }
   }
   return "";
+}
+
+//------------------------------------------------------------------------------
+// getOptionStringValue
+//------------------------------------------------------------------------------
+optional<std::string> XrdCtaFile::getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+  std::string option = getOption(optionShortName, optionLongName, encoded);
+  if(option.empty()) {
+    return optional<std::string>();
+  }
+  return optional<std::string>(option);
+}
+
+//------------------------------------------------------------------------------
+// getOptionUint64Value
+//------------------------------------------------------------------------------
+optional<uint64_t> XrdCtaFile::getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+  std::string option = getOption(optionShortName, optionLongName, encoded);
+  if(option.empty()) {
+    return optional<uint64_t>();
+  }
+  return optional<uint64_t>(stringParameterToUint64(optionLongName, option));
+}
+
+//------------------------------------------------------------------------------
+// getOptionBoolValue
+//------------------------------------------------------------------------------
+optional<bool> XrdCtaFile::getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+  std::string option = getOption(optionShortName, optionLongName, encoded);
+  if(option.empty()) {
+    return optional<bool>();
+  }
+  return optional<bool>(stringParameterToBool(optionLongName, option));
+}
+
+//------------------------------------------------------------------------------
+// getOptionTimeValue
+//------------------------------------------------------------------------------
+optional<time_t> XrdCtaFile::getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+  std::string option = getOption(optionShortName, optionLongName, encoded);
+  if(option.empty()) {
+    return optional<time_t>();
+  }
+  return optional<time_t>(stringParameterToTime(optionLongName, option));
 }
 
 //------------------------------------------------------------------------------
@@ -425,8 +469,35 @@ uint64_t XrdCtaFile::stringParameterToUint64(const std::string &parameterName, c
   } catch(cta::exception::Exception &ex) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+
             ") could not be converted to uint64_t because: " + ex.getMessageValue());
+  }
+}
+
+//------------------------------------------------------------------------------
+// stringParameterToBool
+//------------------------------------------------------------------------------
+bool XrdCtaFile::stringParameterToBool(const std::string &parameterName, const std::string &parameterValue) const {
+  if(parameterValue == "true") {
+    return true;
   } 
-  return 0;
+  else if(parameterValue == "false") {
+    return false;
+  } 
+  else {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+
+            ") could not be converted to bool: the only values allowed are \"true\" and \"false\"");
+  }
+}
+
+//------------------------------------------------------------------------------
+// stringParameterToTime
+//------------------------------------------------------------------------------
+time_t XrdCtaFile::stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const {
+  struct tm time;
+  if(NULL==strptime(parameterValue.c_str(), "%d/%m/%Y", &time)) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+
+            ") could not be interpreted as a time, the allowed format is: <DD/MM/YYYY>");
+  }
+  return mktime(&time);
 }
 
 //------------------------------------------------------------------------------
@@ -436,13 +507,13 @@ int XrdCtaFile::xCom_bootstrap() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  std::string username = getOptionValue("-u", "--username", false);
-  std::string hostname = getOptionValue("-h", "--hostname", false);
-  std::string comment = getOptionValue("-m", "--comment", false);
-  if(username.empty()||hostname.empty()||comment.empty()) {
+  optional<std::string> username = getOptionStringValue("-u", "--username", false);
+  optional<std::string> hostname = getOptionStringValue("-h", "--hostname", false);
+  optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+  if(!username||!hostname||!comment) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username, hostname, comment);
+  m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, *username, *hostname, *comment);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -461,24 +532,24 @@ int XrdCtaFile::xCom_admin() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string username = getOptionValue("-u", "--username", false);
-    if(username.empty()) {
+    optional<std::string> username = getOptionStringValue("-u", "--username", false);
+    if(!username) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()) {
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if("add" == m_requestTokens.at(2)) { //add
-        m_catalogue->createAdminUser(m_cliIdentity, username, comment);
+        m_catalogue->createAdminUser(m_cliIdentity, *username, *comment);
       }
       else { //ch
-        m_catalogue->modifyAdminUserComment(m_cliIdentity, username, comment);
+        m_catalogue->modifyAdminUserComment(m_cliIdentity, *username, *comment);
       }
     }
     else { //rm
-      m_catalogue->deleteAdminUser(username);
+      m_catalogue->deleteAdminUser(*username);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -518,24 +589,24 @@ int XrdCtaFile::xCom_adminhost() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string hostname = getOptionValue("-n", "--name", false);
-    if(hostname.empty()) {
+    optional<std::string> hostname = getOptionStringValue("-n", "--name", false);
+    if(!hostname) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()) {
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if("add" == m_requestTokens.at(2)) { //add
-        m_catalogue->createAdminHost(m_cliIdentity, hostname, comment);
+        m_catalogue->createAdminHost(m_cliIdentity, *hostname, *comment);
       }
       else { //ch
-        m_catalogue->modifyAdminHostComment(m_cliIdentity, hostname, comment);
+        m_catalogue->modifyAdminHostComment(m_cliIdentity, *hostname, *comment);
       }
     }
     else { //rm
-      m_catalogue->deleteAdminHost(hostname);
+      m_catalogue->deleteAdminHost(*hostname);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -575,46 +646,44 @@ int XrdCtaFile::xCom_tapepool() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string name = getOptionValue("-n", "--name", false);
-    if(name.empty()) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", false);
+    if(!name) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2)) { //add
-      std::string ptn_s = getOptionValue("-p", "--partialtapesnumber", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()||ptn_s.empty()) {
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment||!ptn) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      uint64_t ptn = stringParameterToUint64("--partialtapesnumber/-p", ptn_s);
       bool encryption=false;
       if((hasOption("-e", "--encryption") && hasOption("-c", "--clear"))) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       encryption=hasOption("-e", "--encryption");
-      m_catalogue->createTapePool(m_cliIdentity, name, ptn, encryption, comment);
+      m_catalogue->createTapePool(m_cliIdentity, *name, *ptn, encryption, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string ptn_s = getOptionValue("-p", "--partialtapesnumber", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()&&ptn_s.empty()) {
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment&&!ptn) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyTapePoolComment(m_cliIdentity, name, comment);
+      if(comment) {
+        m_catalogue->modifyTapePoolComment(m_cliIdentity, *name, *comment);
       }
-      if(!ptn_s.empty()) {
-        uint64_t ptn = stringParameterToUint64("--partialtapesnumber/-p", ptn_s);
-        m_catalogue->modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn);
+      if(ptn) {
+        m_catalogue->modifyTapePoolNbPartialTapes(m_cliIdentity, *name, *ptn);
       }
       if(hasOption("-e", "--encryption")) {
-        m_catalogue->setTapePoolEncryption(m_cliIdentity, name, true);
+        m_catalogue->setTapePoolEncryption(m_cliIdentity, *name, true);
       }
       if(hasOption("-c", "--clear")) {
-        m_catalogue->setTapePoolEncryption(m_cliIdentity, name, false);
+        m_catalogue->setTapePoolEncryption(m_cliIdentity, *name, false);
       }
     }
     else { //rm
-      m_catalogue->deleteTapePool(name);
+      m_catalogue->deleteTapePool(*name);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -656,35 +725,34 @@ int XrdCtaFile::xCom_archiveroute() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string scn = getOptionValue("-s", "--storageclass", false);
-    std::string cn_s = getOptionValue("-c", "--copynb", false);
-    if(scn.empty()||cn_s.empty()) {
+    optional<std::string> scn = getOptionStringValue("-s", "--storageclass", false);
+    optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false);
+    if(!scn||!cn) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-    }    
-    uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
+    }
     if("add" == m_requestTokens.at(2)) { //add
-      std::string tapepool = getOptionValue("-t", "--tapepool", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()||tapepool.empty()) {
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment||!tapepool) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
+      m_catalogue->createArchiveRoute(m_cliIdentity, *scn, *cn, *tapepool, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string tapepool = getOptionValue("-t", "--tapepool", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()&&tapepool.empty()) {
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment&&!tapepool) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment);
+      if(comment) {
+        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, *scn, *cn, *comment);
       }
-      if(!tapepool.empty()) {
-        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool);
+      if(tapepool) {
+        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, *scn, *cn, *tapepool);
       }
     }
     else { //rm
-      m_catalogue->deleteArchiveRoute(scn, cn);
+      m_catalogue->deleteArchiveRoute(*scn, *cn);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -726,27 +794,27 @@ int XrdCtaFile::xCom_logicallibrary() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string name = getOptionValue("-n", "--name", false);
-    if(name.empty()) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", false);
+    if(!name) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      std::string comment = getOptionValue("-m", "--comment", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(comment.empty()) {
+        if(!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        m_catalogue->createLogicalLibrary(m_cliIdentity, name, comment);
+        m_catalogue->createLogicalLibrary(m_cliIdentity, *name, *comment);
       }
       else { //ch
-        if(comment.empty()) {
+        if(!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        m_catalogue->modifyLogicalLibraryComment(m_cliIdentity, name, comment);
+        m_catalogue->modifyLogicalLibraryComment(m_cliIdentity, *name, *comment);
       }
     }
     else { //rm
-      m_catalogue->deleteLogicalLibrary(name);
+      m_catalogue->deleteLogicalLibrary(*name);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -791,19 +859,18 @@ int XrdCtaFile::xCom_tape() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
-    std::string vid = getOptionValue("-v", "--vid", false);
-    if(vid.empty()) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    if(!vid) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2)) { //add
-      std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
-      std::string tapepool = getOptionValue("-t", "--tapepool", false);
-      std::string capacity_s = getOptionValue("-c", "--capacity", false);
-      if(logicallibrary.empty()||tapepool.empty()||capacity_s.empty()) {
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false);
+      if(!logicallibrary||!tapepool||!capacity) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      uint64_t capacity = stringParameterToUint64("--capacity/-c", capacity_s);
-      std::string comment = getOptionValue("-m", "--comment", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
       bool disabled=false;
       bool full=false;
       if((hasOption("-e", "--enabled") && hasOption("-d", "--disabled")) || (hasOption("-f", "--free") && hasOption("-F", "--full"))) {
@@ -811,69 +878,69 @@ int XrdCtaFile::xCom_tape() {
       }
       disabled=hasOption("-d", "--disabled");
       full=hasOption("-F", "--full");
-      std::string encryptionkey = getOptionValue("-k", "--encryptionkey", false);
-      m_catalogue->createTape(m_cliIdentity, vid, logicallibrary, tapepool, encryptionkey, capacity, disabled, full, comment);
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false);
+      m_catalogue->createTape(m_cliIdentity, *vid, *logicallibrary, *tapepool, *encryptionkey, *capacity, disabled, full, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
-      std::string tapepool = getOptionValue("-t", "--tapepool", false);
-      std::string capacity_s = getOptionValue("-c", "--capacity", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      std::string encryptionkey = getOptionValue("-k", "--encryptionkey", false);
-      if(comment.empty() && logicallibrary.empty() && tapepool.empty() && capacity_s.empty() && encryptionkey.empty() && !hasOption("-e", "--enabled")
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false);
+      if(!comment && !logicallibrary && !tapepool && !capacity && !encryptionkey && !hasOption("-e", "--enabled")
               && !hasOption("-d", "--disabled") && !hasOption("-f", "--free") && !hasOption("-F", "--full")) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
       if((hasOption("-e", "--enabled") && hasOption("-d", "--disabled")) || (hasOption("-f", "--free") && hasOption("-F", "--full"))) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!logicallibrary.empty()) {
-        m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary);
+      if(logicallibrary) {
+        m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, *vid, *logicallibrary);
       }
-      if(!tapepool.empty()) {
-        m_catalogue->modifyTapeTapePoolName(m_cliIdentity, vid, tapepool);
+      if(tapepool) {
+        m_catalogue->modifyTapeTapePoolName(m_cliIdentity, *vid, *tapepool);
       }
-      if(!capacity_s.empty()) {
-        uint64_t capacity = stringParameterToUint64("--capacity/-c", capacity_s);
-        m_catalogue->modifyTapeCapacityInBytes(m_cliIdentity, vid, capacity);
+      if(capacity) {
+        m_catalogue->modifyTapeCapacityInBytes(m_cliIdentity, *vid, *capacity);
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyTapeComment(m_cliIdentity, vid, comment);
+      if(comment) {
+        m_catalogue->modifyTapeComment(m_cliIdentity, *vid, *comment);
       }
-      if(!encryptionkey.empty()) {
-        m_catalogue->modifyTapeEncryptionKey(m_cliIdentity, vid, encryptionkey);
+      if(encryptionkey) {
+        m_catalogue->modifyTapeEncryptionKey(m_cliIdentity, *vid, *encryptionkey);
       }
       if(hasOption("-e", "--enabled")) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, vid, false);
+        m_scheduler->setTapeDisabled(m_cliIdentity, *vid, false);
       }
       if(hasOption("-d", "--disabled")) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, vid, true);
+        m_scheduler->setTapeDisabled(m_cliIdentity, *vid, true);
       }
       if(hasOption("-f", "--free")) {
-        m_scheduler->setTapeFull(m_cliIdentity, vid, false);
+        m_scheduler->setTapeFull(m_cliIdentity, *vid, false);
       }
       if(hasOption("-F", "--full")) {
-        m_scheduler->setTapeFull(m_cliIdentity, vid, true);
+        m_scheduler->setTapeFull(m_cliIdentity, *vid, true);
       }
     }
     else if("reclaim" == m_requestTokens.at(2)) { //reclaim
-      m_catalogue->reclaimTape(m_cliIdentity, vid);
+      m_catalogue->reclaimTape(m_cliIdentity, *vid);
     }
     else if("label" == m_requestTokens.at(2)) { //label
-      m_scheduler->labelTape(m_cliIdentity, vid, hasOption("-f", "--force"), hasOption("-l", "--lbp"), getOptionValue("-t", "--tag", false));
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
+      m_scheduler->labelTape(m_cliIdentity, *vid, hasOption("-f", "--force"), hasOption("-l", "--lbp"), *tag);
     }
     else { //rm
-      m_catalogue->deleteTape(vid);
+      m_catalogue->deleteTape(*vid);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
-    std::string vid = getOptionValue("-v", "--vid", false);
-    std::string logicallibrary = getOptionValue("-l", "--logicallibrary", false);
-    std::string tapepool = getOptionValue("-t", "--tapepool", false);
-    std::string capacity = getOptionValue("-c", "--capacity", false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false);
+    optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+    optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false);
     if((hasOption("-e", "--enabled") && hasOption("-d", "--disabled")) 
             || (hasOption("-f", "--free") && hasOption("-F", "--full")) 
-            // TODO BUSY IS GONE!!!!!
+            // TODO BUSY IS GONE!
             || (hasOption("-b", "--busy") && hasOption("-n", "--notbusy"))
             || (hasOption("-p", "--lbp") && hasOption("-P", "--nolbp"))) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -950,35 +1017,33 @@ int XrdCtaFile::xCom_storageclass() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string scn = getOptionValue("-n", "--name", false);
-    if(scn.empty()) {
+    optional<std::string> scn = getOptionStringValue("-n", "--name", false);
+    if(!scn) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
     if("add" == m_requestTokens.at(2)) { //add
-      std::string cn_s = getOptionValue("-c", "--copynb", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()||cn_s.empty()) {
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment||!cn) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      }  
-      uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
-      m_catalogue->createStorageClass(m_cliIdentity, scn, cn, comment);
+      }
+      m_catalogue->createStorageClass(m_cliIdentity, *scn, *cn, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string cn_s = getOptionValue("-c", "--copynb", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()&&cn_s.empty()) {
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment&&!cn) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyStorageClassComment(m_cliIdentity, scn, comment);
+      if(comment) {
+        m_catalogue->modifyStorageClassComment(m_cliIdentity, *scn, *comment);
       }
-      if(!cn_s.empty()) {  
-        uint64_t cn = stringParameterToUint64("--copynb/-c", cn_s);
-        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, scn, cn);
+      if(cn) {
+        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, *scn, *cn);
       }
     }
     else { //rm
-      m_catalogue->deleteStorageClass(scn);
+      m_catalogue->deleteStorageClass(*scn);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1019,33 +1084,33 @@ int XrdCtaFile::xCom_requestermountrule() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string name = getOptionValue("-n", "--name", false);
-    if(name.empty()) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", false);
+    if(!name) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2)) { //add
-      std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()||mountpolicy.empty()) {
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment||!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy, name, comment);
+      m_catalogue->createRequesterMountRule(m_cliIdentity, *mountpolicy, *name, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()&&mountpolicy.empty()) {
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment&&!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyRequesterComment(m_cliIdentity, name, comment);
+      if(comment) {
+        m_catalogue->modifyRequesterComment(m_cliIdentity, *name, *comment);
       }
-      if(!mountpolicy.empty()) {
-        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, name, mountpolicy);
+      if(mountpolicy) {
+        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, *name, *mountpolicy);
       }
     }
     else { //rm
-      m_catalogue->deleteRequesterMountRule(name);
+      m_catalogue->deleteRequesterMountRule(*name);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1086,33 +1151,33 @@ int XrdCtaFile::xCom_groupmountrule() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string name = getOptionValue("-n", "--name", false);
-    if(name.empty()) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", false);
+    if(!name) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2)) { //add
-      std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()||mountpolicy.empty()) {
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment||!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy, name, comment);
+      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, *mountpolicy, *name, *comment);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      std::string mountpolicy = getOptionValue("-u", "--mountpolicy", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
-      if(comment.empty()&&mountpolicy.empty()) {
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
+      if(!comment&&!mountpolicy) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      if(!comment.empty()) {
-        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, name, comment);
+      if(comment) {
+        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, *name, *comment);
       }
-      if(!mountpolicy.empty()) {
-        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, name, mountpolicy);
+      if(mountpolicy) {
+        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, *name, *mountpolicy);
       }
     }
     else { //rm
-      m_catalogue->deleteRequesterGroupMountRule(name);
+      m_catalogue->deleteRequesterGroupMountRule(*name);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1155,61 +1220,51 @@ int XrdCtaFile::xCom_mountpolicy() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string group = getOptionValue("-n", "--name", false);
-    if(group.empty()) {
+    optional<std::string> group = getOptionStringValue("-n", "--name", false);
+    if(!group) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {      
-      std::string archivepriority_s = getOptionValue("--ap", "--archivepriority", false);
-      std::string minarchiverequestage_s = getOptionValue("--aa", "--minarchiverequestage", false);
-      std::string retrievepriority_s = getOptionValue("--rp", "--retrievepriority", false);
-      std::string minretrieverequestage_s = getOptionValue("--ra", "--minretrieverequestage", false);
-      std::string maxdrivesallowed_s = getOptionValue("-d", "--maxdrivesallowed", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
+      optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false);
+      optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false);
+      optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false);
+      optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false);
+      optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(archivepriority_s.empty()||minarchiverequestage_s.empty()||retrievepriority_s.empty()
-                ||minretrieverequestage_s.empty()||maxdrivesallowed_s.empty()||comment.empty()) {
+        if(!archivepriority||!minarchiverequestage||!retrievepriority
+                ||!minretrieverequestage||!maxdrivesallowed||!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        uint64_t archivepriority = stringParameterToUint64("--archivepriority/--ap", archivepriority_s);
-        uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage/--aa", minarchiverequestage_s);
-        uint64_t retrievepriority = stringParameterToUint64("--retrievepriority/--rp", retrievepriority_s);
-        uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage/--ra", minretrieverequestage_s);
-        uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed/-d", maxdrivesallowed_s);
-        m_catalogue->createMountPolicy(m_cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority, minretrieverequestage, maxdrivesallowed, comment);
+        m_catalogue->createMountPolicy(m_cliIdentity, *group, *archivepriority, *minarchiverequestage, *retrievepriority, *minretrieverequestage, *maxdrivesallowed, *comment);
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
-        if(archivepriority_s.empty()&&minarchiverequestage_s.empty()&&retrievepriority_s.empty()
-                &&minretrieverequestage_s.empty()&&maxdrivesallowed_s.empty()&&comment.empty()) {
+        if(!archivepriority&&!minarchiverequestage&&!retrievepriority
+                &&!minretrieverequestage&&!maxdrivesallowed&&!comment) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        if(!archivepriority_s.empty()) {
-          uint64_t archivepriority = stringParameterToUint64("--archivepriority/--ap", archivepriority_s);
-          m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority);
+        if(archivepriority) {
+          m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, *group, *archivepriority);
         }
-        if(!minarchiverequestage_s.empty()) {
-          uint64_t minarchiverequestage = stringParameterToUint64("--minarchiverequestage/--aa", minarchiverequestage_s);
-          m_catalogue->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage);
+        if(minarchiverequestage) {
+          m_catalogue->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, *group, *minarchiverequestage);
         }
-        if(!retrievepriority_s.empty()) {
-          uint64_t retrievepriority = stringParameterToUint64("--retrievepriority/--rp", retrievepriority_s);
-          m_catalogue->modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority);
+        if(retrievepriority) {
+          m_catalogue->modifyMountPolicyRetrievePriority(m_cliIdentity, *group, *retrievepriority);
         }
-        if(!minretrieverequestage_s.empty()) {
-          uint64_t minretrieverequestage = stringParameterToUint64("--minretrieverequestage/--ra", minretrieverequestage_s);
-          m_catalogue->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage);
+        if(minretrieverequestage) {
+          m_catalogue->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, *group, *minretrieverequestage);
         }
-        if(!maxdrivesallowed_s.empty()) {
-          uint64_t maxdrivesallowed = stringParameterToUint64("--maxdrivesallowed/-d", maxdrivesallowed_s);
-          m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group, maxdrivesallowed);
+        if(maxdrivesallowed) {
+          m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, *group, *maxdrivesallowed);
         }
-        if(!comment.empty()) {
-          m_catalogue->modifyMountPolicyComment(m_cliIdentity, group, comment);
+        if(comment) {
+          m_catalogue->modifyMountPolicyComment(m_cliIdentity, *group, *comment);
         }
       }
     }
     else { //rm
-      m_catalogue->deleteMountPolicy(group);
+      m_catalogue->deleteMountPolicy(*group);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1254,31 +1309,22 @@ int XrdCtaFile::xCom_dedication() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string drive = getOptionValue("-n", "--name", false);
-    if(drive.empty()) {
+    optional<std::string> drive = getOptionStringValue("-n", "--name", false);
+    if(!drive) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     } 
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       bool readonly = hasOption("-r", "--readonly");
       bool writeonly = hasOption("-w", "--writeonly");
-      std::string vid = getOptionValue("-v", "--vid", false);
-      std::string tag = getOptionValue("-t", "--tag", false);
-      std::string from_s = getOptionValue("-f", "--from", false);
-      std::string until_s = getOptionValue("-u", "--until", false);
-      std::string comment = getOptionValue("-m", "--comment", false);
+      optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
+      optional<time_t> from = getOptionTimeValue("-f", "--from", false);
+      optional<time_t> until = getOptionTimeValue("-u", "--until", false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(comment.empty()||from_s.empty()||until_s.empty()||(vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if(!comment||!from||!until||(!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        struct tm time;
-        if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
-          return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-        }
-        time_t from = mktime(&time);  // timestamp in current timezone
-        if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
-          return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-        }
-        time_t until = mktime(&time);  // timestamp in current timezone
         cta::common::dataStructures::DedicationType type=cta::common::dataStructures::DedicationType::readwrite;
         if(readonly) {
           type=cta::common::dataStructures::DedicationType::readonly;
@@ -1286,47 +1332,37 @@ int XrdCtaFile::xCom_dedication() {
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_catalogue->createDedication(m_cliIdentity, drive, type, tag, vid, from, until, comment);
+        m_catalogue->createDedication(m_cliIdentity, *drive, type, *tag, *vid, *from, *until, *comment);
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
-        if((comment.empty()&&from_s.empty()&&until_s.empty()&&vid.empty()&&tag.empty()&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+        if((!comment&&!from&&!until&&!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
         }
-        if(!comment.empty()) {
-          m_catalogue->modifyDedicationComment(m_cliIdentity, drive, comment);
+        if(comment) {
+          m_catalogue->modifyDedicationComment(m_cliIdentity, *drive, *comment);
         }
-        if(!from_s.empty()) {
-          struct tm time;
-          if(NULL==strptime(from_s.c_str(), "%d/%m/%Y", &time)) {
-            return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-          }
-          time_t from = mktime(&time);  // timestamp in current timezone
-          m_catalogue->modifyDedicationFrom(m_cliIdentity, drive, from);
+        if(from) {
+          m_catalogue->modifyDedicationFrom(m_cliIdentity, *drive, *from);
         }
-        if(!until_s.empty()) {
-          struct tm time;
-          if(NULL==strptime(until_s.c_str(), "%d/%m/%Y", &time)) {
-            return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-          }
-          time_t until = mktime(&time);  // timestamp in current timezone
-          m_catalogue->modifyDedicationUntil(m_cliIdentity, drive, until);
+        if(until) {
+          m_catalogue->modifyDedicationUntil(m_cliIdentity, *drive, *until);
         }
-        if(!vid.empty()) {
-          m_catalogue->modifyDedicationVid(m_cliIdentity, drive, vid);
+        if(vid) {
+          m_catalogue->modifyDedicationVid(m_cliIdentity, *drive, *vid);
         }
-        if(!tag.empty()) {
-          m_catalogue->modifyDedicationTag(m_cliIdentity, drive, tag);
+        if(tag) {
+          m_catalogue->modifyDedicationTag(m_cliIdentity, *drive, *tag);
         }
         if(readonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, drive, cta::common::dataStructures::DedicationType::readonly);          
+          m_catalogue->modifyDedicationType(m_cliIdentity, *drive, cta::common::dataStructures::DedicationType::readonly);          
         }
         if(writeonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, drive, cta::common::dataStructures::DedicationType::writeonly);
+          m_catalogue->modifyDedicationType(m_cliIdentity, *drive, cta::common::dataStructures::DedicationType::writeonly);
         }
       }
     }
     else { //rm
-      m_catalogue->deleteDedication(drive);
+      m_catalogue->deleteDedication(*drive);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
@@ -1383,12 +1419,12 @@ int XrdCtaFile::xCom_repack() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string vid = getOptionValue("-v", "--vid", false);
-    if(vid.empty()) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    if(!vid) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
     if("add" == m_requestTokens.at(2)) { //add
-      std::string tag = getOptionValue("-t", "--tag", false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
       bool justexpand = hasOption("-e", "--justexpand");
       bool justrepack = hasOption("-r", "--justrepack");
       if(justexpand&&justrepack) {
@@ -1401,10 +1437,10 @@ int XrdCtaFile::xCom_repack() {
       if(justrepack) {
         type=cta::common::dataStructures::RepackType::justrepack;
       }
-      m_scheduler->repack(m_cliIdentity, vid, tag, type);
+      m_scheduler->repack(m_cliIdentity, *vid, *tag, type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid);
+      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, *vid);
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -1419,17 +1455,17 @@ int XrdCtaFile::xCom_repack() {
       }
     }
     else { //rm
-      m_scheduler->cancelRepack(m_cliIdentity, vid);
+      m_scheduler->cancelRepack(m_cliIdentity, *vid);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RepackInfo> list;
-    std::string vid = getOptionValue("-v", "--vid", false);
-    if(vid.empty()) {      
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    if(!vid) {      
       list = m_scheduler->getRepacks(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getRepack(m_cliIdentity, vid));
+      list.push_back(m_scheduler->getRepack(m_cliIdentity, *vid));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1480,11 +1516,11 @@ int XrdCtaFile::xCom_shrink() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
-  std::string tapepool = getOptionValue("-t", "--tapepool", false);
-  if(tapepool.empty()) {
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+  if(!tapepool) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  m_scheduler->shrink(m_cliIdentity, tapepool);
+  m_scheduler->shrink(m_cliIdentity, *tapepool);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -1503,25 +1539,21 @@ int XrdCtaFile::xCom_verify() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    std::string vid = getOptionValue("-v", "--vid", false);
-    if(vid.empty()) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    if(!vid) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }  
     if("add" == m_requestTokens.at(2)) { //add
-      std::string tag = getOptionValue("-t", "--tag", false);
-      std::string numberOfFiles_s = getOptionValue("-p", "--partial", false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
+      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false); //0 means do a complete verification
       bool complete = hasOption("-c", "--complete");
-      if(complete&&!numberOfFiles_s.empty()) {
+      if(complete&&numberOfFiles) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      uint64_t numberOfFiles=0; //0 means do a complete verification
-      if(!numberOfFiles_s.empty()) {
-        numberOfFiles = stringParameterToUint64("--partial/-p", numberOfFiles_s);
-      }
-      m_scheduler->verify(m_cliIdentity, vid, tag, numberOfFiles);
+      m_scheduler->verify(m_cliIdentity, *vid, *tag, *numberOfFiles);
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid);
+      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, *vid);
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -1536,17 +1568,17 @@ int XrdCtaFile::xCom_verify() {
       }
     }
     else { //rm
-      m_scheduler->cancelVerify(m_cliIdentity, vid);
+      m_scheduler->cancelVerify(m_cliIdentity, *vid);
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::VerifyInfo> list;
-    std::string vid = getOptionValue("-v", "--vid", false);
-    if(vid.empty()) {      
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    if(!vid) {      
       list = m_scheduler->getVerifys(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getVerify(m_cliIdentity, vid));
+      list.push_back(m_scheduler->getVerify(m_cliIdentity, *vid));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1588,19 +1620,19 @@ int XrdCtaFile::xCom_archivefile() {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("ls" == m_requestTokens.at(2)) { //ls
-    std::string id = getOptionValue("-I", "--id", false);
-    std::string diskid = getOptionValue("-d", "--diskid", false);
-    std::string copynb = getOptionValue("-c", "--copynb", false);
-    std::string tapepool = getOptionValue("-t", "--tapepool", false);
-    std::string vid = getOptionValue("-v", "--vid", false);
-    std::string owner = getOptionValue("-o", "--owner", false);
-    std::string group = getOptionValue("-g", "--group", false);
-    std::string storageclass = getOptionValue("-s", "--storageclass", false);
-    std::string path = getOptionValue("-p", "--path", false);
-    std::string instance = getOptionValue("-i", "--instance", false);
+    optional<uint64_t> id = getOptionUint64Value("-I", "--id", false);
+    optional<std::string> diskid = getOptionStringValue("-d", "--diskid", false);
+    optional<uint64_t> copynb = getOptionUint64Value("-c", "--copynb", false);
+    optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+    optional<std::string> owner = getOptionStringValue("-o", "--owner", false);
+    optional<std::string> group = getOptionStringValue("-g", "--group", false);
+    optional<std::string> storageclass = getOptionStringValue("-s", "--storageclass", false);
+    optional<std::string> path = getOptionStringValue("-p", "--path", false);
+    optional<std::string> instance = getOptionStringValue("-i", "--instance", false);
     bool summary = hasOption("-S", "--summary");
     bool all = hasOption("-a", "--all");
-    if(!all && (instance.empty() && id.empty() && diskid.empty() && copynb.empty() && tapepool.empty() && vid.empty() && owner.empty() && group.empty() && storageclass.empty() && path.empty())) {
+    if(!all && (!instance && !id && !diskid && !copynb && !tapepool && !vid && !owner && !group && !storageclass && !path)) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }
     cta::catalogue::ArchiveFileSearchCriteria searchCriteria;
@@ -1674,23 +1706,21 @@ int XrdCtaFile::xCom_test() {
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  std::string drive = getOptionValue("-d", "--drive", false);
-  std::string vid = getOptionValue("-v", "--vid", false);
-  if(vid.empty() || drive.empty()) {
+  optional<std::string> drive = getOptionStringValue("-d", "--drive", false);
+  optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
+  if(!vid || !drive) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  std::string tag = getOptionValue("-t", "--tag", false);
+  optional<std::string> tag = getOptionStringValue("-t", "--tag", false);
   if("read" == m_requestTokens.at(2)) {
-    std::string firstfseq_s = getOptionValue("-f", "--firstfseq", false);
-    std::string lastfseq_s = getOptionValue("-l", "--lastfseq", false);
-    std::string output = getOptionValue("-o", "--output", false);
-    if(firstfseq_s.empty() || lastfseq_s.empty() || output.empty()) {
+    optional<uint64_t> firstfseq = getOptionUint64Value("-f", "--firstfseq", false);
+    optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", false);
+    optional<std::string> output = getOptionStringValue("-o", "--output", false);
+    if(!firstfseq || !lastfseq || !output) {
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     }    
     bool checkchecksum = hasOption("-c", "--checkchecksum");
-    uint64_t firstfseq = stringParameterToUint64("--firstfseq/-f", firstfseq_s);
-    uint64_t lastfseq = stringParameterToUint64("--lastfseq/-l", lastfseq_s);
-    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag);   
+    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, *drive, *vid, *firstfseq, *lastfseq, checkchecksum, *output, *tag);   
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
     responseTable.push_back(header);
@@ -1714,29 +1744,27 @@ int XrdCtaFile::xCom_test() {
   else if("write" == m_requestTokens.at(2) || "write_auto" == m_requestTokens.at(2)) {
     cta::common::dataStructures::WriteTestResult res;
     if("write" == m_requestTokens.at(2)) { //write
-      std::string file = getOptionValue("-f", "--file", false);
-      if(file.empty()) {
+      optional<std::string> file = getOptionStringValue("-f", "--file", false);
+      if(!file) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }  
-      res = m_scheduler->writeTest(m_cliIdentity, drive, vid, file, tag);
+      res = m_scheduler->writeTest(m_cliIdentity, *drive, *vid, *file, *tag);
     }
     else { //write_auto
-      std::string number_s = getOptionValue("-n", "--number", false);
-      std::string size_s = getOptionValue("-s", "--size", false);
-      std::string input = getOptionValue("-i", "--input", false);
-      if(number_s.empty()||size_s.empty()||(input!="zero"&&input!="urandom")) {
+      optional<uint64_t> number = getOptionUint64Value("-n", "--number", false);
+      optional<uint64_t> size = getOptionUint64Value("-s", "--size", false);
+      optional<std::string> input = getOptionStringValue("-i", "--input", false);
+      if(!number||!size||(*input!="zero"&&*input!="urandom")) {
         return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       }
-      uint64_t number = stringParameterToUint64("--number/-n", number_s);
-      uint64_t size = stringParameterToUint64("--size/-s", size_s);
       cta::common::dataStructures::TestSourceType type;
-      if(input=="zero") { //zero
+      if(*input=="zero") { //zero
         type = cta::common::dataStructures::TestSourceType::devzero;
       }
       else { //urandom
         type = cta::common::dataStructures::TestSourceType::devurandom;
       }
-      res = m_scheduler->write_autoTest(m_cliIdentity, drive, vid, number, size, type, tag);
+      res = m_scheduler->write_autoTest(m_cliIdentity, *drive, *vid, *number, *size, type, *tag);
     }
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
@@ -1776,15 +1804,15 @@ int XrdCtaFile::xCom_drive() {
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  std::string drive = getOptionValue("-d", "--drive", false);
-  if(drive.empty()) {
+  optional<std::string> drive = getOptionStringValue("-d", "--drive", false);
+  if(!drive) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("up" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, drive, true, false);
+    m_scheduler->setDriveStatus(m_cliIdentity, *drive, true, false);
   }
   else if("down" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, drive, false, hasOption("-f", "--force"));
+    m_scheduler->setDriveStatus(m_cliIdentity, *drive, false, hasOption("-f", "--force"));
   }
   else {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -1836,16 +1864,16 @@ int XrdCtaFile::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
-  std::string tapepool = getOptionValue("-t", "--tapepool", false);
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
-  if(tapepool.empty()) {
+  if(!tapepool) {
     result = m_scheduler->getPendingArchiveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool);
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(*tapepool);
     if(list.size()>0) {
-      result[tapepool] = list;
+      result[*tapepool] = list;
     }
   }
   if(result.size()>0) {
@@ -1903,16 +1931,16 @@ int XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
-  std::string vid = getOptionValue("-v", "--vid", false);
+  optional<std::string> vid = getOptionStringValue("-v", "--vid", false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
-  if(vid.empty()) {
+  if(!vid) {
     result = m_scheduler->getPendingRetrieveJobs();
   }
   else {
-    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(vid);
+    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(*vid);
     if(list.size()>0) {
-      result[vid] = list;
+      result[*vid] = list;
     }
   }
   if(result.size()>0) {
@@ -2005,52 +2033,50 @@ int XrdCtaFile::xCom_archive() {
   help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
                     << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  std::string diskid = getOptionValue("", "--diskid", encoded);
-  std::string instance = getOptionValue("", "--instance", encoded);
-  std::string srcurl = getOptionValue("", "--srcurl", encoded);
-  std::string size_s = getOptionValue("", "--size", encoded);
-  std::string checksumtype = getOptionValue("", "--checksumtype", encoded);
-  std::string checksumvalue = getOptionValue("", "--checksumvalue", encoded);
-  std::string storageclass = getOptionValue("", "--storageclass", encoded);
-  std::string diskfilepath = getOptionValue("", "--diskfilepath", encoded);
-  std::string diskfileowner = getOptionValue("", "--diskfileowner", encoded);
-  std::string diskfilegroup = getOptionValue("", "--diskfilegroup", encoded);
-  std::string recoveryblob = getOptionValue("", "--recoveryblob", encoded);
-  std::string diskpool = getOptionValue("", "--diskpool", encoded);
-  std::string throughput_s = getOptionValue("", "--throughput", encoded);
-  if(user.empty() || group.empty() || diskid.empty() || srcurl.empty() || size_s.empty() || checksumtype.empty() || checksumvalue.empty()
-          || storageclass.empty() || instance.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  optional<std::string> diskid = getOptionStringValue("", "--diskid", encoded);
+  optional<std::string> instance = getOptionStringValue("", "--instance", encoded);
+  optional<std::string> srcurl = getOptionStringValue("", "--srcurl", encoded);
+  optional<uint64_t> size = getOptionUint64Value("", "--size", encoded);
+  optional<std::string> checksumtype = getOptionStringValue("", "--checksumtype", encoded);
+  optional<std::string> checksumvalue = getOptionStringValue("", "--checksumvalue", encoded);
+  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", encoded);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded);
+  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded);
+  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded);
+  if(!user || !group || !diskid || !srcurl || !size || !checksumtype || !checksumvalue
+          || !storageclass || !instance || !diskfilepath || !diskfileowner || !diskfilegroup || !recoveryblob || !diskpool || !throughput) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t size = stringParameterToUint64("--size", size_s);
-  uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=recoveryblob;
-  diskFileInfo.group=diskfilegroup;
-  diskFileInfo.owner=diskfileowner;
-  diskFileInfo.path=diskfilepath;
+  diskFileInfo.recoveryBlob=*recoveryblob;
+  diskFileInfo.group=*diskfilegroup;
+  diskFileInfo.owner=*diskfileowner;
+  diskFileInfo.path=*diskfilepath;
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType=checksumtype;
-  request.checksumValue=checksumvalue;
-  request.diskpoolName=diskpool;
-  request.diskpoolThroughput=throughput;
+  request.checksumType=*checksumtype;
+  request.checksumValue=*checksumvalue;
+  request.diskpoolName=*diskpool;
+  request.diskpoolThroughput=*throughput;
   request.diskFileInfo=diskFileInfo;
-  request.diskFileID=diskid;
-  request.instance=instance;
-  request.fileSize=size;
+  request.diskFileID=*diskid;
+  request.instance=*instance;
+  request.fileSize=*size;
   request.requester=originator;
-  request.srcURL=srcurl;
-  request.storageClass=storageclass;  
+  request.srcURL=*srcurl;
+  request.storageClass=*storageclass;  
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity, request);
   cmdlineOutput << archiveFileId << std::endl;
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -2064,41 +2090,39 @@ int XrdCtaFile::xCom_retrieve() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  std::string id_s = getOptionValue("", "--id", encoded);
-  std::string dsturl = getOptionValue("", "--dsturl", encoded);
-  std::string diskfilepath = getOptionValue("", "--diskfilepath", encoded);
-  std::string diskfileowner = getOptionValue("", "--diskfileowner", encoded);
-  std::string diskfilegroup = getOptionValue("", "--diskfilegroup", encoded);
-  std::string recoveryblob = getOptionValue("", "--recoveryblob", encoded);
-  std::string diskpool = getOptionValue("", "--diskpool", encoded);
-  std::string throughput_s = getOptionValue("", "--throughput", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty() || diskpool.empty() || throughput_s.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
+  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", encoded);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded);
+  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded);
+  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded);
+  if(!user || !group || !id || !dsturl || !diskfilepath || !diskfileowner || !diskfilegroup || !recoveryblob || !diskpool || !throughput) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t id = stringParameterToUint64("--id", id_s);
-  uint64_t throughput = stringParameterToUint64("--throughput", throughput_s);
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=recoveryblob;
-  diskFileInfo.group=diskfilegroup;
-  diskFileInfo.owner=diskfileowner;
-  diskFileInfo.path=diskfilepath;
+  diskFileInfo.recoveryBlob=*recoveryblob;
+  diskFileInfo.group=*diskfilegroup;
+  diskFileInfo.owner=*diskfileowner;
+  diskFileInfo.path=*diskfilepath;
   cta::common::dataStructures::RetrieveRequest request;
-  request.diskpoolName=diskpool;
-  request.diskpoolThroughput=throughput;
+  request.diskpoolName=*diskpool;
+  request.diskpoolThroughput=*throughput;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=id;
+  request.archiveFileID=*id;
   request.requester=originator;
-  request.dstURL=dsturl;
+  request.dstURL=*dsturl;
   m_scheduler->queueRetrieve(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2110,23 +2134,22 @@ int XrdCtaFile::xCom_deletearchive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  std::string id_s = getOptionValue("", "--id", encoded);
-  if(user.empty() || group.empty() || id_s.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
+  if(!user || !group || !id) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::DeleteArchiveRequest request;
-  request.archiveFileID=id;
+  request.archiveFileID=*id;
   request.requester=originator;
   m_scheduler->deleteArchive(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -2140,36 +2163,35 @@ int XrdCtaFile::xCom_cancelretrieve() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  std::string id_s = getOptionValue("", "--id", encoded);
-  std::string dsturl = getOptionValue("", "--dsturl", encoded);
-  std::string diskfilepath = getOptionValue("", "--diskfilepath", encoded);
-  std::string diskfileowner = getOptionValue("", "--diskfileowner", encoded);
-  std::string diskfilegroup = getOptionValue("", "--diskfilegroup", encoded);
-  std::string recoveryblob = getOptionValue("", "--recoveryblob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || dsturl.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
+  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", encoded);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded);
+  if(!user || !group || !id || !dsturl || !diskfilepath || !diskfileowner || !diskfilegroup || !recoveryblob) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=recoveryblob;
-  diskFileInfo.group=diskfilegroup;
-  diskFileInfo.owner=diskfileowner;
-  diskFileInfo.path=diskfilepath;
+  diskFileInfo.recoveryBlob=*recoveryblob;
+  diskFileInfo.group=*diskfilegroup;
+  diskFileInfo.owner=*diskfileowner;
+  diskFileInfo.path=*diskfilepath;
   cta::common::dataStructures::CancelRetrieveRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=id;
+  request.archiveFileID=*id;
   request.requester=originator;
-  request.dstURL=dsturl;
+  request.dstURL=*dsturl;
   m_scheduler->cancelRetrieve(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2182,36 +2204,35 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  std::string id_s = getOptionValue("", "--id", encoded);
-  std::string storageclass = getOptionValue("", "--storageclass", encoded);
-  std::string diskfilepath = getOptionValue("", "--diskfilepath", encoded);
-  std::string diskfileowner = getOptionValue("", "--diskfileowner", encoded);
-  std::string diskfilegroup = getOptionValue("", "--diskfilegroup", encoded);
-  std::string recoveryblob = getOptionValue("", "--recoveryblob", encoded);
-  if(user.empty() || group.empty() || id_s.empty() || storageclass.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
+  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", encoded);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded);
+  if(!user || !group || !id || !storageclass || !diskfilepath || !diskfileowner || !diskfilegroup || !recoveryblob) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=recoveryblob;
-  diskFileInfo.group=diskfilegroup;
-  diskFileInfo.owner=diskfileowner;
-  diskFileInfo.path=diskfilepath;
+  diskFileInfo.recoveryBlob=*recoveryblob;
+  diskFileInfo.group=*diskfilegroup;
+  diskFileInfo.owner=*diskfileowner;
+  diskFileInfo.path=*diskfilepath;
   cta::common::dataStructures::UpdateFileStorageClassRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=id;
+  request.archiveFileID=*id;
   request.requester=originator;
-  request.storageClass=storageclass;
+  request.storageClass=*storageclass;
   m_scheduler->updateFileStorageClass(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2224,28 +2245,27 @@ int XrdCtaFile::xCom_updatefileinfo() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string id_s = getOptionValue("", "--id", encoded);
-  std::string diskfilepath = getOptionValue("", "--diskfilepath", encoded);
-  std::string diskfileowner = getOptionValue("", "--diskfileowner", encoded);
-  std::string diskfilegroup = getOptionValue("", "--diskfilegroup", encoded);
-  std::string recoveryblob = getOptionValue("", "--recoveryblob", encoded);
-  if(id_s.empty() || diskfilepath.empty() || diskfileowner.empty() || diskfilegroup.empty() || recoveryblob.empty()) {
+  bool encoded = *encoded_s;
+  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded);
+  if(!id || !diskfilepath || !diskfileowner || !diskfilegroup || !recoveryblob) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  uint64_t id = stringParameterToUint64("--id", id_s);
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob=recoveryblob;
-  diskFileInfo.group=diskfilegroup;
-  diskFileInfo.owner=diskfileowner;
-  diskFileInfo.path=diskfilepath;
+  diskFileInfo.recoveryBlob=*recoveryblob;
+  diskFileInfo.group=*diskfilegroup;
+  diskFileInfo.owner=*diskfileowner;
+  diskFileInfo.path=*diskfilepath;
   cta::common::dataStructures::UpdateFileInfoRequest request;
   request.diskFileInfo=diskFileInfo;
-  request.archiveFileID=id;
+  request.archiveFileID=*id;
   m_scheduler->updateFileInfo(m_cliIdentity, request);
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2257,19 +2277,19 @@ int XrdCtaFile::xCom_liststorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
-  std::string encoded_s = getOptionValue("", "--encoded", false);
-  if(encoded_s!="true" && encoded_s!="false") {
+  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false);
+  if(!encoded_s) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
-  bool encoded = encoded_s=="true"?true:false;
-  std::string user = getOptionValue("", "--user", encoded);
-  std::string group = getOptionValue("", "--group", encoded);
-  if(user.empty() || group.empty()) {
+  bool encoded = *encoded_s;
+  optional<std::string> user = getOptionStringValue("", "--user", encoded);
+  optional<std::string> group = getOptionStringValue("", "--group", encoded);
+  if(!user || !group) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   cta::common::dataStructures::UserIdentity originator;
-  originator.name=user;
-  originator.group=group;
+  originator.name=*user;
+  originator.group=*group;
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
   m_scheduler->listStorageClass(m_cliIdentity, request);

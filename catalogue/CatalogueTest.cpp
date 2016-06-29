@@ -2174,7 +2174,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::ArchiveFileSearchCriteria searchCriteria;
-      searchCriteria.archiveFileId = "10";
+      searchCriteria.archiveFileId = 10;
       archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(1, m.size());
@@ -2242,7 +2242,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::ArchiveFileSearchCriteria searchCriteria;
-      searchCriteria.tapeFileCopyNb = "1";
+      searchCriteria.tapeFileCopyNb = 1;
       archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
@@ -2258,9 +2258,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::ArchiveFileSearchCriteria searchCriteria;
-      std::ostringstream nonExistantArchiveFileId;
-      nonExistantArchiveFileId << (nbArchiveFiles + 1234);
-      searchCriteria.archiveFileId = nonExistantArchiveFileId.str();
+      searchCriteria.archiveFileId = nbArchiveFiles + 1234;
       archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(0, m.size());

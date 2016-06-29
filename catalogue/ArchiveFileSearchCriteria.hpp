@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "common/optional.hpp"
+
 namespace cta {
 namespace catalogue {
 
@@ -37,12 +39,12 @@ struct ArchiveFileSearchCriteria {
   /**
    * The unique identifier of an archive file.
    */
-  std::string archiveFileId;
+  optional<uint64_t> archiveFileId;
 
   /**
    * The name of a disk instance.
    */
-  std::string diskInstance;
+  optional<std::string> diskInstance;
 
   /**
    * The unique identifier of a disk file within its disk instance.
@@ -50,42 +52,42 @@ struct ArchiveFileSearchCriteria {
    * The combination of diskInstance and diskFileId is unique across all disk
    * instances.
    */
-  std::string diskFileId;
+  optional<std::string> diskFileId;
 
   /**
    * The absolute path of a file within its disk instance.
    */
-  std::string diskFilePath;
+  optional<std::string> diskFilePath;
 
   /**
    * The owner of a file within its disk instance.
    */
-  std::string diskFileUser;
+  optional<std::string> diskFileUser;
 
   /**
    * The group of a file within its disk instance.
    */
-  std::string diskFileGroup;
+  optional<std::string> diskFileGroup;
 
   /**
    * The storage class name of the file.
    */
-  std::string storageClass;
+  optional<std::string> storageClass;
 
   /**
    * The volume identifier of a tape.
    */
-  std::string vid;
+  optional<std::string> vid;
 
   /**
    * The copy number of a tape file.
    */
-  std::string tapeFileCopyNb;
+  optional<uint64_t> tapeFileCopyNb;
 
   /**
    * The name of a tape pool.
    */
-  std::string tapePool;
+  optional<std::string> tapePool;
 
 }; // struct ArchiveFileSearchCriteria
 

@@ -28,7 +28,7 @@ struct nullopt_t {
     nullopt_t() {}
 };
 
-nullopt_t nullopt{};
+extern nullopt_t nullopt;
 
 template <class T> class optional
 {

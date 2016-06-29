@@ -21,6 +21,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/FrontendReturnCode.hpp"
 #include "common/log/SyslogLogger.hpp"
+#include "common/optional.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -123,27 +124,37 @@ protected:
   /**
    * Parses the command line and dispatches it to the relevant function
    * 
-   * @param tokens     The command line tokens
    * @param requester  The requester identity
    * @return           SFS_OK in case command succeeded, SFS_ERROR otherwise
    */
   int dispatchCommand();
   
   /**
-   * Given the command line string vector it returns the value of the specified option or an empty string if absent
+   * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
    * 
-   * @param tokens          The command line tokens 
    * @param optionShortName The short name of the required option
    * @param optionLongName  The long name of the required option
    * @param encoded         True if the argument is encoded, false otherwise
-   * @return the value of the option or an empty string if absent
+   * @return the option value (empty if absent)
    */
-  std::string getOptionValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  
+  /**
+   * Returns the string/numerical/boolean value of the specified option
+   * 
+   * @param optionShortName The short name of the required option
+   * @param optionLongName  The long name of the required option
+   * @param encoded         True if the argument is encoded, false otherwise
+   * @return the option value (empty if absent)
+   */
+  std::string getOption(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
   
   /**
    * Given the command line string vector it returns true if the specified option is present, false otherwise
    * 
-   * @param tokens          The command line tokens 
    * @param optionShortName The short name of the required option
    * @param optionLongName  The long name of the required option
    * @return true if the specified option is present, false otherwise
@@ -221,6 +232,24 @@ protected:
    * @return the conversion result
    */
   uint64_t stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const;
+  
+  /**
+   * Converts a parameter string into a bool (throws a cta::exception if it fails)
+   * 
+   * @param  parameterName The name of the parameter
+   * @param  parameterValue The value of the parameter
+   * @return the conversion result
+   */
+  bool stringParameterToBool(const std::string &parameterName, const std::string &parameterValue) const;
+  
+  /**
+   * Converts a parameter string into a time_t (throws a cta::exception if it fails)
+   * 
+   * @param  parameterName The name of the parameter
+   * @param  parameterValue The value of the parameter
+   * @return the conversion result
+   */
+  time_t stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const;
   
   /**
    * Sets the return code of the cmdline client and its output. Always returns SFS_OK, which is the only xroot return 

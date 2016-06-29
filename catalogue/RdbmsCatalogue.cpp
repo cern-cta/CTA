@@ -2415,77 +2415,69 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID >= :STARTING_ARCHIVE_FILE_ID";
-    if(!searchCriteria.archiveFileId.empty()) {
-      if(!utils::isValidUInt(searchCriteria.archiveFileId)) {
-        throw UserError(std::string("Archive file ID ") + searchCriteria.archiveFileId +
-          " is not a valid unsigned integer");
-      }
+    if(searchCriteria.archiveFileId) {
       sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     }
-    if(!searchCriteria.diskInstance.empty()) {
+    if(searchCriteria.diskInstance) {
       sql += " AND ARCHIVE_FILE.DISK_INSTANCE = :DISK_INSTANCE";
     }
-    if(!searchCriteria.diskFileId.empty()) {
+    if(searchCriteria.diskFileId) {
       sql += " AND ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
     }
-    if(!searchCriteria.diskFilePath.empty()) {
+    if(searchCriteria.diskFilePath) {
       sql += " AND ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
     }
-    if(!searchCriteria.diskFileUser.empty()) {
+    if(searchCriteria.diskFileUser) {
       sql += " AND ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
     }
-    if(!searchCriteria.diskFileGroup.empty()) {
+    if(searchCriteria.diskFileGroup) {
       sql += " AND ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
     }
-    if(!searchCriteria.storageClass.empty()) {
+    if(searchCriteria.storageClass) {
       sql += " AND ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     }
-    if(!searchCriteria.vid.empty()) {
+    if(searchCriteria.vid) {
       sql += " AND TAPE_FILE.VID = :VID";
     }
-    if(!searchCriteria.tapeFileCopyNb.empty()) {
-      if(!utils::isValidUInt(searchCriteria.tapeFileCopyNb)) {
-        throw UserError(std::string("Tape-file copy-number ") + searchCriteria.tapeFileCopyNb +
-          " is not a valid unsigned integer");
-      }
+    if(searchCriteria.tapeFileCopyNb) {
       sql += " AND TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
     }
-    if(!searchCriteria.tapePool.empty()) {
+    if(searchCriteria.tapePool) {
       sql += " AND TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
     sql += " ORDER BY ARCHIVE_FILE.ARCHIVE_FILE_ID, TAPE_FILE.COPY_NB";
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindUint64(":STARTING_ARCHIVE_FILE_ID", startingArchiveFileId);
-    if(!searchCriteria.archiveFileId.empty()) {
-      stmt->bindUint64(":ARCHIVE_FILE_ID", utils::toUint64(searchCriteria.archiveFileId));
+    if(searchCriteria.archiveFileId) {
+      stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
-    if(!searchCriteria.diskInstance.empty()) {
-      stmt->bindString(":DISK_INSTANCE", searchCriteria.diskInstance);
+    if(searchCriteria.diskInstance) {
+      stmt->bindString(":DISK_INSTANCE", searchCriteria.diskInstance.value());
     }
-    if(!searchCriteria.diskFileId.empty()) {
-      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId);
+    if(searchCriteria.diskFileId) {
+      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
     }
-    if(!searchCriteria.diskFilePath.empty()) {
-      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath);
+    if(searchCriteria.diskFilePath) {
+      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
-    if(!searchCriteria.diskFileUser.empty()) {
-      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser);
+    if(searchCriteria.diskFileUser) {
+      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
     }
-    if(!searchCriteria.diskFileGroup.empty()) {
-      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup);
+    if(searchCriteria.diskFileGroup) {
+      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
     }
-    if(!searchCriteria.storageClass.empty()) {
-      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass);
+    if(searchCriteria.storageClass) {
+      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
     }
-    if(!searchCriteria.vid.empty()) {
-      stmt->bindString(":VID", searchCriteria.vid);
+    if(searchCriteria.vid) {
+      stmt->bindString(":VID", searchCriteria.vid.value());
     }
-    if(!searchCriteria.tapeFileCopyNb.empty()) {
-      stmt->bindUint64(":TAPE_FILE_COPY_NB", utils::toUint64(searchCriteria.tapeFileCopyNb));
+    if(searchCriteria.tapeFileCopyNb) {
+      stmt->bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
     }
-    if(!searchCriteria.tapePool.empty()) {
-      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
+    if(searchCriteria.tapePool) {
+      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
