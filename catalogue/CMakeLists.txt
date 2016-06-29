@@ -35,6 +35,7 @@ set (CATALOGUE_LIB_SRC_FILES
   InMemoryCatalogue.cpp
   InMemoryCatalogueSchema.cpp
   TapeFileWritten.cpp
+  NullDbValue.cpp
   OcciConn.cpp
   OcciEnv.cpp
   OcciEnvSingleton.cpp

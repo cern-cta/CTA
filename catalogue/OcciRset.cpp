@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/NullDbValue.hpp"
 #include "catalogue/OcciRset.hpp"
 #include "catalogue/OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
@@ -163,6 +164,9 @@ uint64_t OcciRset::columnUint64(const std::string &colName) const {
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
+    if(stringValue.empty()) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+    }
     if(!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
         " which is not a valid unsigned integer");

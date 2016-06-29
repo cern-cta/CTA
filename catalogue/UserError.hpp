@@ -39,7 +39,7 @@ public:
    */
   UserError(const std::string &context = "", const bool embedBacktrace = true);
 
-}; // class DbLogin
+}; // class UserError
 
 } // namespace catalogue
 } // namespace cta
