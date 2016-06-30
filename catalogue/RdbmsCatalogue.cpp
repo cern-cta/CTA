@@ -33,39 +33,6 @@
 namespace cta {
 namespace catalogue {
 
-namespace {
-
-/**
- * Returns an all upper-case version of the specified string.
- *
- * @param str The string to be copied into an all upper case version of itself.
- * @return An all upper-case version of the specified string.
- */
-std::string toUpper(const std::string &str) {
-  std::string upperStr;
-
-  for(auto c: str) {
-    upperStr += toupper(c);
-  }
-
-  return upperStr;
-}
-
-/**
- * Returns true of the specified string in considered to be a valid
- * representation of a boolean value.
- *
- * @param str The string to be tested.
- * @return True if the specified string is a valid representation of a boolean value.
- */
-bool isValidBool(const std::string &str) {
-  const std::string upperStr = toUpper(str);
-
-  return upperStr == "TRUE" || upperStr == "FALSE";
-}
-
-} // anonymous namespace
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
