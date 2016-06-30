@@ -589,7 +589,7 @@ void RdbmsCatalogue::createTapePool(
 
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
-    stmt->bindUint64(":IS_ENCRYPTED", encryptionValue);
+    stmt->bindUint64(":IS_ENCRYPTED", encryptionValue ? 1 : 0);
 
     stmt->bindString(":USER_COMMENT", comment);
 
@@ -653,8 +653,7 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapePool>
-  RdbmsCatalogue::getTapePools() const {
+std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const {
   try {
     std::list<common::dataStructures::TapePool> pools;
     const char *const sql =
