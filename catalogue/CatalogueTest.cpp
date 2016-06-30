@@ -823,9 +823,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
   ASSERT_EQ(comment, tape.comment);
-  ASSERT_FALSE((bool)tape.labelLog);
-  ASSERT_FALSE((bool)tape.lastReadLog);
-  ASSERT_FALSE((bool)tape.lastWriteLog);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
 
   const common::dataStructures::EntryLog creationLog = tape.creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -907,9 +907,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     ASSERT_TRUE(disabled == tape.disabled);
     ASSERT_TRUE(full == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -1023,9 +1023,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
   ASSERT_EQ(comment, tape.comment);
-  ASSERT_FALSE((bool)tape.labelLog);
-  ASSERT_FALSE((bool)tape.lastReadLog);
-  ASSERT_FALSE((bool)tape.lastWriteLog);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
 
   const common::dataStructures::EntryLog creationLog = tape.creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -1841,9 +1841,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(createTapeComment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -1864,9 +1864,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(createTapeComment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2077,9 +2077,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2323,9 +2323,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2346,9 +2346,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2533,9 +2533,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2670,9 +2670,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
   ASSERT_EQ(comment, tape.comment);
-  ASSERT_FALSE((bool)tape.labelLog);
-  ASSERT_FALSE((bool)tape.lastReadLog);
-  ASSERT_FALSE((bool)tape.lastWriteLog);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
 
   const common::dataStructures::EntryLog creationLog = tape.creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2806,9 +2806,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
@@ -2829,9 +2829,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE((bool)tape.labelLog);
-    ASSERT_FALSE((bool)tape.lastReadLog);
-    ASSERT_FALSE((bool)tape.lastWriteLog);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
