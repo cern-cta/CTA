@@ -169,7 +169,7 @@ optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) co
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
     if(stringValue.empty()) {
-      throw nullopt;
+      return nullopt;
     }
     if(!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
