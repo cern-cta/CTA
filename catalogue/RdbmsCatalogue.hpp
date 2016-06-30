@@ -100,8 +100,21 @@ public:
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const;
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment);
 
-  virtual void createTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName,
-                          const std::string &encryptionKey, const uint64_t capacityInBytes, const bool disabledValue, const bool fullValue, const std::string &comment);
+  /**
+   * Creates a tape which is assumed to have logical block protection (LBP)
+   * enabled.
+   */
+  virtual void createTape(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &vid,
+    const std::string &logicalLibraryName,
+    const std::string &tapePoolName,
+    const std::string &encryptionKey,
+    const uint64_t capacityInBytes,
+    const bool disabled,
+    const bool full,
+    const std::string &comment);
+
   virtual void deleteTape(const std::string &vid);
 
   /**

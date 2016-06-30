@@ -1077,7 +1077,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
-  ASSERT_FALSE(tape.lbp);
+  ASSERT_TRUE(tape.lbp);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {

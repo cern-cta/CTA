@@ -1037,8 +1037,8 @@ void RdbmsCatalogue::createTape(
   const std::string &tapePoolName,
   const std::string &encryptionKey,
   const uint64_t capacityInBytes,
-  const bool disabledValue,
-  const bool fullValue,
+  const bool disabled,
+  const bool full,
   const std::string &comment) {
   try {
     if(tapeExists(vid)) {
@@ -1098,9 +1098,9 @@ void RdbmsCatalogue::createTape(
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
-    stmt->bindUint64(":IS_DISABLED", disabledValue);
-    stmt->bindUint64(":IS_FULL", fullValue);
-    stmt->bindUint64(":LBP_IS_ON", 0);
+    stmt->bindUint64(":IS_DISABLED", disabled ? 1 : 0);
+    stmt->bindUint64(":IS_FULL", full ? 1 : 0);
+    stmt->bindUint64(":LBP_IS_ON", 1);
 
     stmt->bindString(":USER_COMMENT", comment);
 
@@ -1245,7 +1245,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(searchCriteria.lbp) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " LBP_IS_ON = :LBP_IS_ON";
-      addedAWhereConstraint = true;
     }
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
@@ -1254,9 +1253,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(searchCriteria.logicalLibrary) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.capacityInBytes) stmt->bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
-    if(searchCriteria.disabled) stmt->bindUint64(":IS_DISABLED", searchCriteria.disabled.value());
-    if(searchCriteria.full) stmt->bindUint64(":IS_FULL", searchCriteria.full.value());
-    if(searchCriteria.lbp) stmt->bindUint64(":LBP_IS_ON", searchCriteria.lbp.value());
+    if(searchCriteria.disabled) stmt->bindUint64(":IS_DISABLED", searchCriteria.disabled.value() ? 1 : 0);
+    if(searchCriteria.full) stmt->bindUint64(":IS_FULL", searchCriteria.full.value() ? 1 : 0);
+    if(searchCriteria.lbp) stmt->bindUint64(":LBP_IS_ON", searchCriteria.lbp.value() ? 1 : 0);
 
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
