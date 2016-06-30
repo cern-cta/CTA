@@ -1230,15 +1230,22 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
+      addedAWhereConstraint = true;
     }
     if(searchCriteria.disabled) {
+      if(addedAWhereConstraint) sql += " AND ";
       sql += " IS_DISABLED = :IS_DISABLED";
+      addedAWhereConstraint = true;
     }
     if(searchCriteria.full) {
+      if(addedAWhereConstraint) sql += " AND ";
       sql += " IS_FULL = :IS_FULL";
+      addedAWhereConstraint = true;
     }
     if(searchCriteria.lbp) {
+      if(addedAWhereConstraint) sql += " AND ";
       sql += " LBP_IS_ON = :LBP_IS_ON";
+      addedAWhereConstraint = true;
     }
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
