@@ -52,6 +52,7 @@ struct ArchiveFileQueueCriteria {
     const TapeCopyToPoolMap &copyToPoolMap,
     const MountPolicy &mountPolicy);
 
+  // TODO: rename to archiveFileId?
   /**
    * The unique archive-file identifier.
    */

@@ -54,7 +54,7 @@ struct TapeFileWritten {
    * The instance name of the source disk system.
    */
   std::string diskInstance;
-
+  
   /**
    * The identifier of the source disk file which is unique within it's host
    * disk system.  Two files from different disk systems may have the same
@@ -62,7 +62,7 @@ struct TapeFileWritten {
    * globally unique, in other words unique within the CTA catalogue.
    */
   std::string diskFileId;
-
+  
   /**
    * The path of the source disk file within its host disk system.
    */

@@ -58,7 +58,7 @@ namespace daemon {
       LogContext::ScopedParam sp[]={
       LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->archiveFile.archiveFileID)),
       LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeFile.fSeq)),
-      LogContext::ScopedParam(m_lc, Param("path", (*it)->remotePathAndStatus.path.getRaw()))
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->srcURL))
       };
       tape::utils::suppresUnusedVariable(sp);      
       

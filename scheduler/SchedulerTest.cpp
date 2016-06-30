@@ -342,8 +342,8 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="Adler32";
-    request.checksumValue="1111";
+    request.checksumType="adler32";
+    request.checksumValue="1234abcd";
     request.creationLog=creationLog;
     request.diskpoolName="diskpool1";
     request.diskpoolThroughput=200*1000*1000;
@@ -394,24 +394,23 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
-    ASSERT_NO_THROW(archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release())));
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
+    archiveJob.reset(archiveMount->getNextJob().release());
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    cta::Checksum checksum(cta::Checksum::CHECKSUMTYPE_ADLER32, 0x12345687);
     archiveJob->tapeFile.checksumType = "adler32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
-    ASSERT_NO_THROW(archiveJob->complete());
-    ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
+    archiveJob->complete();
+    archiveJob.reset(archiveMount->getNextJob().release());
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
-    ASSERT_NO_THROW(archiveMount->complete());
+    archiveMount->complete();
   }
 
   {

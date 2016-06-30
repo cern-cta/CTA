@@ -51,8 +51,8 @@ public:
   void removeIfEmpty();
   
   // ArchiveQueue Manipulations =====================================================
-  CTA_GENERATE_EXCEPTION_CLASS(TapePoolQueueNotEmpty);
-  CTA_GENERATE_EXCEPTION_CLASS(WrongTapePoolQueue);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchivelQueueNotEmpty);
+  CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the tape pool structure and updates 
    * the pointer to it. It needs to implicitly commit the object to the store. */
   std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, Agent & agent);
@@ -60,6 +60,7 @@ public:
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchTapePoolQueue);
   void removeArchiveQueueAndCommit(const std::string & tapePool);
+  void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress);
   std::string getArchiveQueueAddress(const std::string & tapePool);
   class ArchiveQueueDump {
   public:

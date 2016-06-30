@@ -45,6 +45,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotFetched);
   CTA_GENERATE_EXCEPTION_CLASS(NotInitialized);  
   CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
+  CTA_GENERATE_EXCEPTION_CLASS(InvalidAddress);
 protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 
@@ -85,6 +86,8 @@ public:
   void setAddress(const std::string & name) {
     if (m_nameSet)
       throw AddressAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
+    if (name.empty())
+      throw InvalidAddress("In ObjectOps::setName: empty name");
     m_name = name;
     m_nameSet = true;
   }
@@ -164,6 +167,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(AlreadyLocked);
   CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
+  CTA_GENERATE_EXCEPTION_CLASS(MissingAddress);
   
 protected:
   ScopedLock(): m_objectOps(NULL), m_locked(false) {}
@@ -177,6 +181,13 @@ protected:
   void checkLocked() {
     if (!m_locked)
       throw NotLocked("In ScopedLock::checkLocked: trying to unlock an unlocked lock");
+  }
+  void checkObjectAndAddressSet() {
+    if (!m_objectOps) {
+      throw MissingAddress("In ScopedLock::checkAddressSet: trying to lock a NULL object");
+    } else if (!m_objectOps->m_nameSet || m_objectOps->m_name.empty()) {
+      throw MissingAddress("In ScopedLock::checkAddressSet: trying to lock an object without address");
+    }
   }
   virtual void releaseIfNeeded() {
     if(!m_locked) return;
@@ -195,6 +206,7 @@ public:
   void lock(ObjectOpsBase & oo) {
     checkNotLocked();
     m_objectOps  = & oo;
+    checkObjectAndAddressSet();
     m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
     m_objectOps->m_locksCount++;
     m_locked = true;
@@ -210,6 +222,7 @@ public:
   void lock(ObjectOpsBase & oo) {
     checkNotLocked();
     m_objectOps = &oo;
+    checkObjectAndAddressSet();
     m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet()));
     m_objectOps->m_locksCount++;
     m_objectOps->m_locksForWriteCount++;

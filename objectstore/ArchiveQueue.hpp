@@ -34,6 +34,8 @@ namespace cta { namespace objectstore {
 class GenericObject;
 
 class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
+  // TODO: rename tapepoolname field to tapepool (including in probuf)
+  
 public:
   // Constructor
   ArchiveQueue(const std::string & address, Backend & os);
@@ -44,9 +46,9 @@ public:
   // In memory initialiser
   void initialize(const std::string & name);
   
-  // Set/get name
-  void setName(const std::string & name);
-  std::string getName();
+  // Set/get tape pool
+  void setTapePool(const std::string & name);
+  std::string getTapePool();
   
   // Archive jobs management ===================================================  
   void addJob(const ArchiveRequest::JobDump & job,

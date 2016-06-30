@@ -65,7 +65,7 @@ void GenericObject::transplantHeader(ObjectOpsBase& destination) {
   destination.m_name = m_name;
   destination.m_nameSet = m_nameSet;
   destination.m_payloadInterpreted = false;
-    }
+}
 
 Backend& GenericObject::objectStore() {
   return m_objectStore;

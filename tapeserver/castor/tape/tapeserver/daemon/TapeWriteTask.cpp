@@ -48,7 +48,7 @@ namespace daemon {
     m_archiveJob(archiveJob),m_memManager(mm), m_fifo(blockCount),
     m_blockCount(blockCount),m_errorFlag(errorFlag), 
     m_archiveFile(m_archiveJob->archiveFile), m_tapeFile(m_archiveJob->tapeFile),
-    m_remotePathAndStatus(m_archiveJob->remotePathAndStatus)
+    m_srcURL(m_archiveJob->srcURL)
   {
     //register its fifo to the memory manager as a client in order to get mem block
     mm.addClient(&m_fifo); 
@@ -73,7 +73,7 @@ namespace daemon {
     params.add("fileId",m_archiveJob->archiveFile.archiveFileID)
           .add("fileSize",m_archiveJob->archiveFile.fileSize)
           .add("fSeq",m_archiveJob->tapeFile.fSeq)
-          .add("path",m_archiveJob->remotePathAndStatus.path.getRaw());
+          .add("diskURL",m_archiveJob->srcURL);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.

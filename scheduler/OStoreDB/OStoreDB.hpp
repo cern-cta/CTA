@@ -91,7 +91,7 @@ public:
   
   /* === Archive Job Handling =============================================== */
   class ArchiveJob: public SchedulerDatabase::ArchiveJob {
-    friend class ArchiveMount;
+    friend class OStoreDB::ArchiveMount;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
@@ -103,7 +103,6 @@ public:
     ArchiveJob(const std::string &, objectstore::Backend &,
       objectstore::Agent &, ArchiveMount &);
     bool m_jobOwned;
-    uint16_t m_copyNb;
     uint64_t m_mountId;
     std::string m_tapePool;
     objectstore::Backend & m_objectStore;

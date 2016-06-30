@@ -66,6 +66,12 @@ namespace cta {
      * @return The volume identifier of the tape to be mounted.
      */
     virtual std::string getVid() const;
+    
+    /**
+     * Returns the drive namn
+     * @return The drive name
+     */
+    virtual std::string getDrive() const;
 
     /**
      * Returns the mount transaction id.

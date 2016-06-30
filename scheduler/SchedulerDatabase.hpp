@@ -175,7 +175,7 @@ public:
    */
   class ArchiveJob {
   public:
-    cta::RemotePathAndStatus remoteFile;
+    std::string srcURL;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void succeed() = 0;

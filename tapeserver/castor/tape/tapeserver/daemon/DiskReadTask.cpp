@@ -39,7 +39,7 @@ DiskReadTask::DiskReadTask(DataConsumer & destination,
 m_nextTask(destination),m_archiveJob(archiveJob),
         m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
 {
-  m_archiveJobCachedInfo.remotePath = m_archiveJob->remotePathAndStatus.path.getRaw();
+  m_archiveJobCachedInfo.remotePath = m_archiveJob->srcURL;
   m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.archiveFileID;
 }
 
@@ -68,9 +68,9 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     checkMigrationFailing();
     currentErrorToCount = "Error_diskOpenForRead";
     std::unique_ptr<tape::diskFile::ReadFile> sourceFile(
-      fileFactory.createReadFile(m_archiveJob->remotePathAndStatus.path.getRaw()));
+      fileFactory.createReadFile(m_archiveJob->srcURL));
     log::ScopedParamContainer URLcontext(lc);
-    URLcontext.add("path", m_archiveJob->remotePathAndStatus.path.getRaw())
+    URLcontext.add("path", m_archiveJob->srcURL)
               .add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
     if(migratingFileSize != sourceFile->size()){

@@ -307,23 +307,27 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     // collector.
     cta::objectstore::ArchiveRequest ar(atfrAddr, be);
     ar.initialize();
-    ar.setArchiveFileID(123456789L);
-    ar.setDiskFileID("eos://diskFile");
+    cta::common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = 123456789L;
+    aFile.diskFileId = "eos://diskFile";
+    aFile.checksumType = "";
+    aFile.checksumValue = "";
+    aFile.creationTime = 0;
+    aFile.reconciliationTime = 0;
+    aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    aFile.diskInstance = "eoseos";
+    aFile.fileSize = 667;
+    aFile.storageClass = "sc";
+    ar.setArchiveFile(aFile);
     ar.addJob(1, "ArchiveQueue0", tpAddr[0], 1, 1);
     ar.addJob(2, "ArchiveQueue1", tpAddr[1], 1, 1);    
     ar.setOwner(agA.getAddressIfSet());
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
-    ar.setChecksumType("");
-    ar.setChecksumValue("");
     ar.setDiskpoolName("");
     ar.setDiskpoolThroughput(666);
-    ar.setDiskFileInfo(cta::common::dataStructures::DiskFileInfo());
-    ar.setInstance("eoseos");
-    ar.setFileSize(667);
     ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setStorageClass("sc");
     ar.setCreationLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
@@ -349,7 +353,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, policy, time(NULL));
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
       aq.commit();
     }
     if (pass < 4) { pass++; continue; }
@@ -367,7 +371,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFileID(), 1000+pass, policy, time(NULL));
+      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
       aq.commit();
     }
     if (pass < 5) { pass++; continue; }

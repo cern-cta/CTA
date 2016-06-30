@@ -28,12 +28,14 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <json-c/json.h>
 
+namespace cta { namespace objectstore {
+
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
-cta::objectstore::RootEntry::RootEntry(Backend & os):
+RootEntry::RootEntry(Backend & os):
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, "root") {}
 
-cta::objectstore::RootEntry::RootEntry(GenericObject& go): 
+RootEntry::RootEntry(GenericObject& go): 
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -43,13 +45,13 @@ cta::objectstore::RootEntry::RootEntry(GenericObject& go):
 
 // Initialiser. This uses the base object's initialiser and sets the defaults 
 // of payload.
-void cta::objectstore::RootEntry::initialize() {
+void RootEntry::initialize() {
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::initialize();
   // There is nothing to do for the payload.
   m_payloadInterpreted = true;
 }
 
-bool cta::objectstore::RootEntry::isEmpty() {
+bool RootEntry::isEmpty() {
   checkPayloadReadable();
   if (m_payload.has_driveregisterpointer() &&
       m_payload.driveregisterpointer().address().size())
@@ -69,7 +71,7 @@ bool cta::objectstore::RootEntry::isEmpty() {
   return true;
 }
 
-void cta::objectstore::RootEntry::removeIfEmpty() {
+void RootEntry::removeIfEmpty() {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw NotEmpty("In RootEntry::removeIfEmpty(): root entry not empty");
@@ -86,12 +88,12 @@ void cta::objectstore::RootEntry::removeIfEmpty() {
 // removeOccurences
 namespace {
   bool operator==(const std::string &tp,
-    const cta::objectstore::serializers::ArchiveQueuePointer & tpp) {
+    const serializers::ArchiveQueuePointer & tpp) {
     return tpp.name() == tp;
   }
 }
 
-std::string cta::objectstore::RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, Agent& agent) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, Agent& agent) {
   checkPayloadWritable();
   // Check the tape pool does not already exist
   try {
@@ -128,29 +130,44 @@ std::string cta::objectstore::RootEntry::addOrGetArchiveQueueAndCommit(const std
   return tapePoolQueueAddress;
 }
 
-void cta::objectstore::RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
+void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
   checkPayloadWritable();
   // find the address of the tape pool object
   try {
     auto tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
     // Open the tape pool object
     ArchiveQueue aq (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-    ScopedExclusiveLock tpl(aq);
-    aq.fetch();
-    // Verify this is the tapepool we're looking for.
-    if (aq.getName() != tapePool) {
-      std::stringstream err;
-      err << "Unexpected tape pool name found in object pointed to for tape pool: "
-          << tapePool << " found: " << aq.getName();
-      throw WrongTapePoolQueue(err.str());
+    ScopedExclusiveLock aql;
+    try {
+      aql.lock(aq);
+      aq.fetch();
+    } catch (cta::exception::Exception & ex) {
+      // The archive queue seems to not be there. Make sure this is the case:
+      if (aq.exists()) {
+        // We failed to access the queue, yet it is present. This is an error.
+        // Let the exception pass through.
+        throw;
+      } else {
+        // The queue object is already gone. We can skip to removing the 
+        // reference from the RootEntry
+        goto deleteFromRootEntry;
+      }
     }
-    // Check the tape pool is empty
+    // Verify this is the archive queue we're looking for.
+    if (aq.getTapePool() != tapePool) {
+      std::stringstream err;
+      err << "Unexpected tape pool name found in archive queue pointed to for tape pool: "
+          << tapePool << " found: " << aq.getTapePool();
+      throw WrongArchiveQueue(err.str());
+    }
+    // Check the archive queue is empty
     if (!aq.isEmpty()) {
-      throw TapePoolQueueNotEmpty ("In RootEntry::removeTapePoolQueueAndCommit: trying to "
+      throw ArchivelQueueNotEmpty ("In RootEntry::removeTapePoolQueueAndCommit: trying to "
           "remove a non-empty tape pool");
     }
     // We can delete the pool
     aq.remove();
+  deleteFromRootEntry:
     // ... and remove it from our entry
     serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
     // We commit for safety and symmetry with the add operation
@@ -161,7 +178,7 @@ void cta::objectstore::RootEntry::removeArchiveQueueAndCommit(const std::string&
   }
 }
 
-std::string cta::objectstore::RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
+std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
   checkPayloadReadable();
   try {
     auto & tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
@@ -171,7 +188,7 @@ std::string cta::objectstore::RootEntry::getArchiveQueueAddress(const std::strin
   }
 }
 
-auto cta::objectstore::RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
+auto RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
   checkPayloadReadable();
   std::list<ArchiveQueueDump> ret;
   auto & tpl = m_payload.archivequeuepointers();
@@ -187,7 +204,7 @@ auto cta::objectstore::RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueD
 // ================ Drive register manipulation ================================
 // =============================================================================
 
-std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
+std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
   Agent & agent, const EntryLog & log) {
   checkPayloadWritable();
   // Check if the drive register exists
@@ -225,7 +242,7 @@ std::string cta::objectstore::RootEntry::addOrGetDriveRegisterPointerAndCommit(
   }
 }
 
-void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
+void RootEntry::removeDriveRegisterAndCommit() {
   checkPayloadWritable();
   // Get the address of the drive register (nothing to do if there is none)
   if (!m_payload.has_driveregisterpointer() || 
@@ -248,7 +265,7 @@ void cta::objectstore::RootEntry::removeDriveRegisterAndCommit() {
   commit();
 }
 
-std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
+std::string RootEntry::getDriveRegisterAddress() {
   checkPayloadReadable();
   if (m_payload.has_driveregisterpointer() && 
       m_payload.driveregisterpointer().address().size()) {
@@ -262,7 +279,7 @@ std::string cta::objectstore::RootEntry::getDriveRegisterAddress() {
 // ================ Agent register manipulation ================================
 // =============================================================================
 // Get the name of the agent register (or exception if not available)
-std::string cta::objectstore::RootEntry::getAgentRegisterAddress() {
+std::string RootEntry::getAgentRegisterAddress() {
   checkPayloadReadable();
   // If the registry is defined, return it, job done.
   if (m_payload.has_agentregisterpointer() &&
@@ -272,7 +289,7 @@ std::string cta::objectstore::RootEntry::getAgentRegisterAddress() {
 }
 
 // Get the name of a (possibly freshly created) agent register
-std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
+std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
   const EntryLog & log) {
   // Check if the agent register exists
   try {
@@ -318,7 +335,7 @@ std::string cta::objectstore::RootEntry::addOrGetAgentRegisterPointerAndCommit(A
   }
 }
 
-void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
+void RootEntry::removeAgentRegisterAndCommit() {
   checkPayloadWritable();
   // Check that we do have an agent register set. Cleanup a potential intent as
   // well
@@ -353,7 +370,7 @@ void cta::objectstore::RootEntry::removeAgentRegisterAndCommit() {
   }
 }
 
-void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& address) {
+void RootEntry::addIntendedAgentRegistry(const std::string& address) {
   checkPayloadWritable();
   // We are supposed to have only one intended agent registry at a time.
   // If we got the lock and there is one entry, this means the previous
@@ -361,7 +378,7 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
   // When getting here, having a set pointer to the registry is an error.
   if (m_payload.has_agentregisterpointer() &&
       m_payload.agentregisterpointer().address().size()) {
-    throw exception::Exception("In cta::objectstore::RootEntry::addIntendedAgentRegistry:"
+    throw exception::Exception("In RootEntry::addIntendedAgentRegistry:"
         " pointer to registry already set");
   }
   if (m_payload.agentregisterintent().size()) {
@@ -389,7 +406,7 @@ void cta::objectstore::RootEntry::addIntendedAgentRegistry(const std::string& ad
 // ================ Scheduler global lock manipulation =========================
 // =============================================================================
 
-std::string cta::objectstore::RootEntry::getSchedulerGlobalLock() {
+std::string RootEntry::getSchedulerGlobalLock() {
   checkPayloadReadable();
   // If the scheduler lock is defined, return it, job done.
   if (m_payload.has_schedulerlockpointer() &&
@@ -399,7 +416,7 @@ std::string cta::objectstore::RootEntry::getSchedulerGlobalLock() {
 }
 
 // Get the name of a (possibly freshly created) scheduler global lock
-std::string cta::objectstore::RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
+std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
   const EntryLog & log) {
   checkPayloadWritable();
   // Check if the drive register exists
@@ -437,7 +454,7 @@ std::string cta::objectstore::RootEntry::addOrGetSchedulerGlobalLockAndCommit(Ag
   }
 }
 
-void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
+void RootEntry::removeSchedulerGlobalLockAndCommit() {
   checkPayloadWritable();
   // Get the address of the scheduler lock (nothing to do if there is none)
   if (!m_payload.has_schedulerlockpointer() ||
@@ -462,7 +479,7 @@ void cta::objectstore::RootEntry::removeSchedulerGlobalLockAndCommit() {
 
 
 // Dump the root entry
-std::string cta::objectstore::RootEntry::dump () {  
+std::string RootEntry::dump () {  
   checkPayloadReadable();
   std::stringstream ret;
   ret << "RootEntry" << std::endl;
@@ -526,3 +543,5 @@ std::string cta::objectstore::RootEntry::dump () {
   json_object_put(jo);
   return ret.str();
 }
+
+}} // namespace cta::objectstore

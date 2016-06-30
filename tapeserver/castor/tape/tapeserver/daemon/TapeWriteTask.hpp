@@ -192,7 +192,7 @@ private:
   /**
    * The remote file information
    */
-  cta::RemotePathAndStatus m_remotePathAndStatus; 
+  std::string m_srcURL; 
 
 };
 

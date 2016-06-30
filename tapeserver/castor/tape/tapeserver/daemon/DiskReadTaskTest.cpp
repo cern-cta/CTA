@@ -41,7 +41,7 @@ namespace unitTests{
   public:
     TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
         *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
-        cta::RemotePathAndStatus(), cta::common::dataStructures::TapeFile()) {
+        "", cta::common::dataStructures::TapeFile()) {
     }
   };
   
@@ -123,7 +123,7 @@ namespace unitTests{
     TestingArchiveJob file;
 
     file.archiveFile.fileSize = fileSize;
-    file.remotePathAndStatus.path.setPath(url);
+    file.srcURL = url;
 
     const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
     int value=std::ceil(1024*2000./blockSize);

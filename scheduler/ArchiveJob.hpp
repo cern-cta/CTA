@@ -55,7 +55,7 @@ protected:
   ArchiveMount &mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
-  const RemotePathAndStatus &remotePathAndStatus,
+  const std::string &srcURL,
   const common::dataStructures::TapeFile &tapeFile);
 
 public:
@@ -67,6 +67,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);
+  CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
   /**
    * Indicates that the job was successful and updates the backend store
    *
@@ -115,7 +116,7 @@ public:
   /**
    * The remote file information
    */
-  RemotePathAndStatus remotePathAndStatus; 
+  std::string srcURL; 
   
   /**
    * The file archive result for the NS

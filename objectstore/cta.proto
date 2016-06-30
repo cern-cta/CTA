@@ -340,11 +340,13 @@ message ArchiveRequest {
   required MountPolicy mountPolicy = 8995;
   required string checksumtype = 9000;
   required string checksumvalue = 9010;
+  required uint64 creationtime = 9015;
+  required uint64 reconcilationtime = 9017;
   required string diskpoolName = 9020;
   required uint64 diskpoolThroughput = 9030;
   required DiskFileInfo diskFileInfo = 9040;
   required string diskFileID = 9050;
-  required string instance = 9055;
+  required string diskinstance = 9055;
   required uint64 fileSize = 9060;
   required User requester = 9070;
   required string srcURL = 9080;
@@ -374,7 +376,7 @@ message ValueCountPair {
 }
 
 message ArchiveQueue {
-  required string tapepoolname = 10000;
+  required string tapepool = 10000;
   repeated ArchiveJobPointer pendingarchivejobs = 10010;
   repeated ArchiveJobPointer orphanedarchivejobsnscreation = 10020;
   repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 10030;

@@ -23,6 +23,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
@@ -60,18 +61,15 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);
+  // Get a job owner
+  std::string getJobOwner(uint16_t copyNumber);
   // Request management ========================================================
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFileID(const uint64_t archiveFileID);
-  uint64_t getArchiveFileID();
-  
-  void setChecksumType(const std::string &checksumType);
-  std::string getChecksumType();
-
-  void setChecksumValue(const std::string &checksumValue);
-  std::string getChecksumValue();
+  // TODO: ArchiveFile comes with extraneous information. 
+  void setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile);
+  cta::common::dataStructures::ArchiveFile getArchiveFile();
 
   void setDiskpoolName(const std::string &diskpoolName);
   std::string getDiskpoolName();
@@ -79,27 +77,13 @@ public:
   void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
   uint64_t getDiskpoolThroughput();
 
-  void setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo);
-  cta::common::dataStructures::DiskFileInfo getDiskFileInfo();
-
-  void setDiskFileID(const std::string &diskFileID);
-  std::string getDiskFileID();  
-
-  void setInstance(const std::string &instance);
-  std::string getInstance();
-
-  void setFileSize(const uint64_t fileSize);
-  uint64_t getFileSize();
-
   void setRequester(const cta::common::dataStructures::UserIdentity &requester);
   cta::common::dataStructures::UserIdentity getRequester();
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL();
 
-  void setStorageClass(const std::string &storageClass);
-  std::string getStorageClass();
-
+  // TODO: rename
   void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getCreationLog();
   

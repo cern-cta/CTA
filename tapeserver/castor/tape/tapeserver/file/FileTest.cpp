@@ -49,7 +49,7 @@ namespace unitTests {
   public:
     TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
         *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
-        cta::RemotePathAndStatus(), cta::common::dataStructures::TapeFile()) {
+        "", cta::common::dataStructures::TapeFile()) {
     }
   };
   

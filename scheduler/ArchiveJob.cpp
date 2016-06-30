@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/ArchiveJob.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include <limits>
 
 //------------------------------------------------------------------------------
@@ -31,11 +32,11 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
-  const RemotePathAndStatus &remotePathAndStatus,
+  const std::string &srcURL,
   const common::dataStructures::TapeFile &tapeFile):
   m_mount(mount), m_catalogue(catalogue),
   archiveFile(archiveFile),
-  remotePathAndStatus(remotePathAndStatus),
+  srcURL(srcURL),
   tapeFile(tapeFile) {}
 
 //------------------------------------------------------------------------------
@@ -47,12 +48,15 @@ void cta::ArchiveJob::complete() {
       std::numeric_limits<decltype(tapeFile.blockId)>::max())
     throw BlockIdNotSet("In cta::ArchiveJob::complete(): Block ID not set");
   // Also check the checksum has been set
-  if (!archiveFile.checksumType.size() || !archiveFile.checksumValue.size())
-    throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksum not set");
+  if (archiveFile.checksumType.empty() || archiveFile.checksumValue.empty() || 
+      tapeFile.checksumType.empty() || tapeFile.checksumValue.empty())
+    throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksums not set");
+  // And matches
+  if (archiveFile.checksumType != tapeFile.checksumType || 
+      archiveFile.checksumValue != tapeFile.checksumValue)
+    throw ChecksumMismatch("In cta::ArchiveJob::complete(): checksum mismatch");
   // We are good to go to record the data in the persistent storage.
-  // First make the file safe on tape.
-  m_dbJob->bumpUpTapeFileCount(tapeFile.fSeq);
-  // Now record the data in the archiveNS. The checksum will be validated if already
+  // Record the data in the archiveNS. The checksum will be validated if already
   // present, of inserted if not.
   catalogue::TapeFileWritten fileReport;
   fileReport.archiveFileId = archiveFile.archiveFileID;
@@ -61,17 +65,18 @@ void cta::ArchiveJob::complete() {
   fileReport.checksumValue = tapeFile.checksumValue;
   fileReport.compressedSize = tapeFile.compressedSize;
   fileReport.copyNb = tapeFile.copyNb;
-  //TODO fileReport.diskFileGroup
-  //TODO fileReport.diskFilePath
-  //TODO fileReport.diskFileRecoveryBlob
-  //TODO fileReport.diskFileUser
-  //TODO fileReport.diskInstance
+  fileReport.diskFileId = archiveFile.diskFileId;
+  fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
+  fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+  fileReport.diskFilePath = archiveFile.diskFileInfo.path;
+  fileReport.diskFileRecoveryBlob = archiveFile.diskFileInfo.recoveryBlob;
+  fileReport.diskInstance = archiveFile.diskInstance;
   fileReport.fSeq = tapeFile.fSeq;
   fileReport.size = archiveFile.fileSize;
-  //TODO fileReport.storageClassName
+  fileReport.storageClassName = archiveFile.storageClass;
+  fileReport.tapeDrive = m_mount.getDrive();
   fileReport.vid = tapeFile.vid;
-  //TODO fileReport.tapeDrive
-  m_catalogue.fileWrittenToTape(fileReport);
+  m_catalogue.fileWrittenToTape (fileReport);
   //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
   // We can now record the success for the job in the database

@@ -131,52 +131,43 @@ void cta::objectstore::ArchiveRequest::setAllJobsPendingNSdeletion() {
   }
 }
 
-//------------------------------------------------------------------------------
-// setArchiveFileID
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setArchiveFileID(const uint64_t archiveFileID) {
+
+
+void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile) {
   checkPayloadWritable();
-  m_payload.set_archivefileid(archiveFileID);
+  // TODO: factor out the archivefile structure from the flat ArchiveRequest.
+  m_payload.set_archivefileid(archiveFile.archiveFileID);
+  m_payload.set_checksumtype(archiveFile.checksumType);
+  m_payload.set_checksumvalue(archiveFile.checksumValue);
+  m_payload.set_creationtime(archiveFile.creationTime);
+  m_payload.set_diskfileid(archiveFile.diskFileId);
+  m_payload.mutable_diskfileinfo()->set_group(archiveFile.diskFileInfo.group);
+  m_payload.mutable_diskfileinfo()->set_owner(archiveFile.diskFileInfo.owner);
+  m_payload.mutable_diskfileinfo()->set_path(archiveFile.diskFileInfo.path);
+  m_payload.mutable_diskfileinfo()->set_recoveryblob(archiveFile.diskFileInfo.recoveryBlob);
+  m_payload.set_diskinstance(archiveFile.diskInstance);
+  m_payload.set_filesize(archiveFile.fileSize);
+  m_payload.set_reconcilationtime(archiveFile.reconciliationTime);
+  m_payload.set_storageclass(archiveFile.storageClass);
 }
 
-//------------------------------------------------------------------------------
-// getArchiveFileID
-//------------------------------------------------------------------------------
-uint64_t cta::objectstore::ArchiveRequest::getArchiveFileID() {
+cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   checkPayloadReadable();
-  return m_payload.archivefileid();
-}
-
-//------------------------------------------------------------------------------
-// setChecksumType
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setChecksumType(const std::string &checksumType) {
-  checkPayloadWritable();
-  m_payload.set_checksumtype(checksumType);
-}
-
-//------------------------------------------------------------------------------
-// getChecksumType
-//------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getChecksumType() {
-  checkPayloadReadable();
-  return m_payload.checksumtype();
-}
-
-//------------------------------------------------------------------------------
-// setChecksumValue
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setChecksumValue(const std::string &checksumValue) {
-  checkPayloadWritable();
-  m_payload.set_checksumvalue(checksumValue);
-}
-
-//------------------------------------------------------------------------------
-// getChecksumValue
-//------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getChecksumValue() {
-  checkPayloadReadable();
-  return m_payload.checksumvalue();
+  cta::common::dataStructures::ArchiveFile ret;
+  ret.archiveFileID = m_payload.archivefileid();
+  ret.checksumType = m_payload.checksumtype();
+  ret.checksumValue = m_payload.checksumvalue();
+  ret.creationTime = m_payload.creationtime();
+  ret.diskFileId = m_payload.diskfileid();
+  ret.diskFileInfo.group = m_payload.diskfileinfo().group();
+  ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
+  ret.diskFileInfo.path = m_payload.diskfileinfo().path();
+  ret.diskFileInfo.recoveryBlob = m_payload.diskfileinfo().recoveryblob();
+  ret.diskInstance = m_payload.diskinstance();
+  ret.fileSize = m_payload.filesize();
+  ret.reconciliationTime = m_payload.reconcilationtime();
+  ret.storageClass = m_payload.storageclass();
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -230,84 +221,11 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
   checkPayloadReadable();
   cta::common::dataStructures::MountPolicy mountPolicy;
   auto payloadMountPolicy = m_payload.mountpolicy();
+  mountPolicy.name=payloadMountPolicy.name();
   mountPolicy.maxDrivesAllowed=payloadMountPolicy.maxdrives();
   mountPolicy.archiveMinRequestAge=payloadMountPolicy.minrequestage();
   mountPolicy.archivePriority=payloadMountPolicy.priority();
   return mountPolicy;
-}
-
-//------------------------------------------------------------------------------
-// setDiskFileInfo
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo) {
-  checkPayloadWritable();
-  auto payloadDiskFileInfo = m_payload.mutable_diskfileinfo();
-  payloadDiskFileInfo->set_recoveryblob(diskFileInfo.recoveryBlob);
-  payloadDiskFileInfo->set_group(diskFileInfo.group);
-  payloadDiskFileInfo->set_owner(diskFileInfo.owner);
-  payloadDiskFileInfo->set_path(diskFileInfo.path);
-}
-
-//------------------------------------------------------------------------------
-// getDiskFileInfo
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DiskFileInfo cta::objectstore::ArchiveRequest::getDiskFileInfo() {
-  checkPayloadReadable();
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  auto payloadDiskFileInfo = m_payload.diskfileinfo();
-  diskFileInfo.recoveryBlob=payloadDiskFileInfo.recoveryblob();
-  diskFileInfo.group=payloadDiskFileInfo.group();
-  diskFileInfo.owner=payloadDiskFileInfo.owner();
-  diskFileInfo.path=payloadDiskFileInfo.path();
-  return diskFileInfo;
-}
-
-//------------------------------------------------------------------------------
-// setDiskFileID
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setDiskFileID(const std::string &diskFileID) {
-  checkPayloadWritable();
-  m_payload.set_diskfileid(diskFileID);
-}
-
-//------------------------------------------------------------------------------
-// getDiskFileID
-//------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getDiskFileID() {
-  checkPayloadReadable();
-  return m_payload.diskfileid();
-}
-
-//------------------------------------------------------------------------------
-// setInstance
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setInstance(const std::string &instance) {
-  checkPayloadWritable();
-  m_payload.set_instance(instance);
-}
-
-//------------------------------------------------------------------------------
-// getInstance
-//------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getInstance() {
-  checkPayloadReadable();
-  return m_payload.instance();
-}
-
-//------------------------------------------------------------------------------
-// setFileSize
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setFileSize(const uint64_t fileSize) {
-  checkPayloadWritable();
-  m_payload.set_filesize(fileSize);
-}
-
-//------------------------------------------------------------------------------
-// getFileSize
-//------------------------------------------------------------------------------
-uint64_t cta::objectstore::ArchiveRequest::getFileSize() {
-  checkPayloadReadable();
-  return m_payload.filesize();
 }
 
 //------------------------------------------------------------------------------
@@ -346,22 +264,6 @@ void ArchiveRequest::setSrcURL(const std::string &srcURL) {
 std::string ArchiveRequest::getSrcURL() {
   checkPayloadReadable();
   return m_payload.srcurl();
-}
-
-//------------------------------------------------------------------------------
-// setStorageClass
-//------------------------------------------------------------------------------
-void ArchiveRequest::setStorageClass(const std::string &storageClass) {
-  checkPayloadWritable();
-  m_payload.set_storageclass(storageClass);
-}
-
-//------------------------------------------------------------------------------
-// getStorageClass
-//------------------------------------------------------------------------------
-std::string ArchiveRequest::getStorageClass() {
-  checkPayloadReadable();
-  return m_payload.storageclass();
 }
 
 //------------------------------------------------------------------------------
@@ -506,6 +408,16 @@ void ArchiveRequest::setJobOwner(
   throw NoSuchJob("In ArchiveRequest::setJobOwner: no such job");
 }
 
+std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
+  checkPayloadReadable();
+  auto jl = m_payload.jobs();
+  auto j=std::find_if(jl.begin(), jl.end(), [&](decltype(*jl.begin())& j2){ return j2.copynb() == copyNumber; });
+  if (jl.end() == j)
+    throw NoSuchJob("In ArchiveRequest::getJobOwner: no such job");
+  return j->owner();
+}
+
+
 bool ArchiveRequest::finishIfNecessary() {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
@@ -534,7 +446,7 @@ std::string ArchiveRequest::dump() {
   json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
   json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
   json_object_object_add(jo, "diskfileid", json_object_new_string(m_payload.diskfileid().c_str()));
-  json_object_object_add(jo, "instance", json_object_new_string(m_payload.instance().c_str()));
+  json_object_object_add(jo, "instance", json_object_new_string(m_payload.diskinstance().c_str()));
   json_object_object_add(jo, "filesize", json_object_new_int64(m_payload.filesize()));
   json_object_object_add(jo, "srcurl", json_object_new_string(m_payload.srcurl().c_str()));
   json_object_object_add(jo, "storageclass", json_object_new_string(m_payload.storageclass().c_str()));

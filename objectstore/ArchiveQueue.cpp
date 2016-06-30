@@ -43,7 +43,7 @@ std::string ArchiveQueue::dump() {
   ret << "ArchiveQueue" << std::endl;
   struct json_object * jo = json_object_new_object();
   
-  json_object_object_add(jo, "name", json_object_new_string(m_payload.tapepoolname().c_str()));
+  json_object_object_add(jo, "name", json_object_new_string(m_payload.tapepool().c_str()));
   json_object_object_add(jo, "ArchiveJobsTotalSize", json_object_new_int64(m_payload.archivejobstotalsize()));
   json_object_object_add(jo, "oldestJobCreationTime", json_object_new_int64(m_payload.oldestjobcreationtime()));
   {
@@ -91,7 +91,7 @@ void ArchiveQueue::initialize(const std::string& name) {
   // Setup underlying object
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::initialize();
   // Setup the object so it's valid
-  m_payload.set_tapepoolname(name);
+  m_payload.set_tapepool(name);
   // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
   m_payload.set_oldestjobcreationtime(0);
@@ -142,14 +142,14 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner) {
   remove();
 }
 
-void ArchiveQueue::setName(const std::string& name) {
+void ArchiveQueue::setTapePool(const std::string& name) {
   checkPayloadWritable();
-  m_payload.set_tapepoolname(name);
+  m_payload.set_tapepool(name);
 }
 
-std::string ArchiveQueue::getName() {
+std::string ArchiveQueue::getTapePool() {
   checkPayloadReadable();
-  return m_payload.tapepoolname();
+  return m_payload.tapepool();
 }
 
 void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
@@ -218,6 +218,7 @@ bool ArchiveQueue::addJobIfNecessary(
 }
 
 void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
+  // TODO: remove the summary of the job from the queue's counts.
   checkPayloadWritable();
   auto * jl=m_payload.mutable_pendingarchivejobs();
   bool found = false;
@@ -246,9 +247,10 @@ auto ArchiveQueue::dumpJobs() -> std::list<ArchiveQueue::JobDump> {
   auto & jl=m_payload.pendingarchivejobs();
   for (auto j=jl.begin(); j!=jl.end(); j++) {
     ret.push_back(JobDump());
-    ret.back().address = j->address();
-    ret.back().size = j->size();
-    ret.back().copyNb = j->copynb();
+    JobDump & jd = ret.back();
+    jd.address = j->address();
+    jd.size = j->size();
+    jd.copyNb = j->copynb();
   }
   return ret;
 }

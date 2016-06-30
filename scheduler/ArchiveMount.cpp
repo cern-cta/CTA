@@ -53,6 +53,14 @@ std::string cta::ArchiveMount::getVid() const {
 }
 
 //------------------------------------------------------------------------------
+// getDrive
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getDrive() const {
+  return m_dbMount->mountInfo.drive;
+}
+
+
+//------------------------------------------------------------------------------
 // getPoolName
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getPoolName() const {
@@ -90,7 +98,7 @@ std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
     return std::unique_ptr<cta::ArchiveJob>();
   // We have something to archive: prepare the response
   std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_catalogue,
-      dbJob->archiveFile, dbJob->remoteFile, dbJob->tapeFile));
+      dbJob->archiveFile, dbJob->srcURL, dbJob->tapeFile));
   ret->m_dbJob.reset(dbJob.release());
   return ret;
 }
