@@ -438,6 +438,19 @@ protected:
   common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &requesterGroupName) const;
 
   /**
+   * Returns the specified tape log information from the specified database
+   * result set.
+   *
+   * @param rset The result set.
+   * @param driveColNAme The name of the database column that contains the name
+   * of the tape drive.
+   * @param timeColNAme The name of the database column that contains the time
+   * stamp.
+   */
+  optional<common::dataStructures::TapeLog> getTapeLogFromRset(const DbRset &rset,
+    const std::string &driveColName, const std::string &timeColName) const;
+
+  /**
    * An RdbmsCatalogue specific method that inserts the specified row into the
    * ArchiveFile table.
    *

@@ -54,6 +54,19 @@ std::ostream &operator<<(std::ostream &os, const TapeLog &obj) {
   return os;
 }
 
+//------------------------------------------------------------------------------
+// operator<<
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os, const optional<TapeLog> &obj) {
+  if(obj) {
+    os << "(drive=" << obj.value().drive
+       << " time=" << obj.value().time << ")";
+  } else {
+    os << "(N/A)";
+  }
+  return os;
+}
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

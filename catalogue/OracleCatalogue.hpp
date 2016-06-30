@@ -79,7 +79,7 @@ public:
   virtual uint64_t getNextArchiveFileId();
 
   /**
-   * Selects the specified tape within th eTape table for update.
+   * Selects the specified tape within the Tape table for update.
    *
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because some database technologies directly support SELECT FOR UPDATE

@@ -32,11 +32,15 @@ DbRset::~DbRset() throw() {
 // columnText
 //------------------------------------------------------------------------------
 std::string DbRset::columnText(const std::string &colName) const {
-  const optional<std::string> col = columnOptionalText(colName);
-  if(col) {
-    return col.value();
-  } else {
-    throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+  try {
+    const optional<std::string> col = columnOptionalText(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -44,11 +48,15 @@ std::string DbRset::columnText(const std::string &colName) const {
 // columnUint64
 //------------------------------------------------------------------------------
 uint64_t DbRset::columnUint64(const std::string &colName) const {
-  const optional<uint64_t> col = columnOptionalUint64(colName);
-  if(col) {
-    return col.value();
-  } else {
-    throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+  try {
+    const optional<uint64_t> col = columnOptionalUint64(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

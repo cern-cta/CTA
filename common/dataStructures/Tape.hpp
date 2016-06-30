@@ -18,13 +18,14 @@
 
 #pragma once
 
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/TapeLog.hpp"
+#include "common/optional.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/TapeLog.hpp"
 
 namespace cta {
 namespace common {
@@ -55,9 +56,9 @@ struct Tape {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  TapeLog labelLog;
-  TapeLog lastWriteLog;
-  TapeLog lastReadLog;
+  optional<TapeLog> labelLog;
+  optional<TapeLog> lastWriteLog;
+  optional<TapeLog> lastReadLog;
 
 }; // struct Tape
 

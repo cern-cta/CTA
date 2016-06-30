@@ -1312,38 +1312,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       tape.full = rset->columnUint64("IS_FULL");
       tape.lbp = rset->columnUint64("LBP_IS_ON");
 
-      if(rset->columnIsNull("LABEL_DRIVE")) {
-        tape.labelLog.drive = "N/A";
-      } else {
-        tape.labelLog.drive = rset->columnText("LABEL_DRIVE");
-      }
-      if(rset->columnIsNull("LABEL_TIME")) {
-        tape.labelLog.time = 0;
-      } else {
-        tape.labelLog.time = rset->columnUint64("LABEL_TIME");
-      }
-
-      if(rset->columnIsNull("LAST_READ_DRIVE")) {
-        tape.lastReadLog.drive = "N/A";
-      } else {
-        tape.lastReadLog.drive = rset->columnText("LAST_READ_DRIVE");
-      }
-      if(rset->columnIsNull("LAST_READ_TIME")) {
-        tape.lastReadLog.time = 0;
-      } else {
-        tape.lastReadLog.time = rset->columnUint64("LAST_READ_TIME");
-      }
-
-      if(rset->columnIsNull("LAST_WRITE_DRIVE")) {
-        tape.lastWriteLog.drive = "N/A";
-      } else {
-        tape.lastWriteLog.drive = rset->columnText("LAST_WRITE_DRIVE");
-      }
-      if(rset->columnIsNull("LAST_WRITE_TIME")) {
-        tape.lastWriteLog.time = 0;
-      } else {
-        tape.lastWriteLog.time = rset->columnUint64("LAST_WRITE_TIME");
-      }
+      tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
+      tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+      tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
       tape.comment = rset->columnText("USER_COMMENT");
       tape.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
@@ -1357,6 +1328,39 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     }
 
     return tapes;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTapeLogFromRset
+//------------------------------------------------------------------------------
+optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const DbRset &rset,
+  const std::string &driveColName, const std::string &timeColName) const {
+  try {
+    const optional<std::string> drive = rset.columnOptionalText(driveColName);
+    const optional<uint64_t> time = rset.columnOptionalUint64(timeColName);
+
+    if(!drive && !time) {
+      return nullopt;
+    }
+
+    if(drive && !time) {
+      throw exception::Exception(std::string("Database column ") + driveColName + " contains " + drive.value() +
+        " but column " + timeColName + " is NULL");
+    }
+
+    if(time && !drive) {
+      throw exception::Exception(std::string("Database column ") + timeColName + " contains " +
+        std::to_string(time.value()) + " but column " + driveColName + " is NULL");
+    }
+
+    common::dataStructures::TapeLog tapeLog;
+    tapeLog.drive = drive.value();
+    tapeLog.time = time.value();
+
+    return tapeLog;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

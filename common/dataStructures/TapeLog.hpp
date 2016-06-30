@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "common/optional.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
@@ -46,6 +48,8 @@ struct TapeLog {
 }; // struct TapeLog
 
 std::ostream &operator<<(std::ostream &os, const TapeLog &obj);
+
+std::ostream &operator<<(std::ostream &os, const optional<TapeLog> &obj);
 
 } // namespace dataStructures
 } // namespace common

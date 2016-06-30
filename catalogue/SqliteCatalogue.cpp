@@ -247,38 +247,9 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(const std::str
     tape.full = rset->columnUint64("IS_FULL");
     tape.lbp = rset->columnUint64("LBP_IS_ON");
 
-    if(rset->columnIsNull("LABEL_DRIVE")) {
-      tape.labelLog.drive = "N/A";
-    } else {
-      tape.labelLog.drive = rset->columnText("LABEL_DRIVE");
-    }
-    if(rset->columnIsNull("LABEL_TIME")) {
-      tape.labelLog.time = 0;
-    } else {
-      tape.labelLog.time = rset->columnUint64("LABEL_TIME");
-    }
-
-    if(rset->columnIsNull("LAST_READ_DRIVE")) {
-      tape.lastReadLog.drive = "N/A";
-    } else {
-      tape.lastReadLog.drive = rset->columnText("LAST_READ_DRIVE");
-    }
-    if(rset->columnIsNull("LAST_READ_TIME")) {
-      tape.lastReadLog.time = 0;
-    } else {
-      tape.lastReadLog.time = rset->columnUint64("LAST_READ_TIME");
-    }
-
-    if(rset->columnIsNull("LAST_WRITE_DRIVE")) {
-      tape.lastWriteLog.drive = "N/A";
-    } else {
-      tape.lastWriteLog.drive = rset->columnText("LAST_WRITE_DRIVE");
-    }
-    if(rset->columnIsNull("LAST_WRITE_TIME")) {
-      tape.lastWriteLog.time = 0;
-    } else {
-      tape.lastWriteLog.time = rset->columnUint64("LAST_WRITE_TIME");
-    }
+    tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
     tape.comment = rset->columnText("USER_COMMENT");
 

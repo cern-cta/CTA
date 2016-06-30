@@ -117,14 +117,9 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::str
     tape.full = rset->columnUint64("IS_FULL");
     tape.lbp = rset->columnUint64("LBP_IS_ON");
 
-    tape.labelLog.drive = rset->columnText("LABEL_DRIVE");
-    tape.labelLog.time = rset->columnUint64("LABEL_TIME");
-
-    tape.lastReadLog.drive = rset->columnText("LAST_READ_DRIVE");
-    tape.lastReadLog.time = rset->columnUint64("LAST_READ_TIME");
-
-    tape.lastWriteLog.drive = rset->columnText("LAST_WRITE_DRIVE");
-    tape.lastWriteLog.time = rset->columnUint64("LAST_WRITE_TIME");
+    tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
     tape.comment = rset->columnText("USER_COMMENT");
 
