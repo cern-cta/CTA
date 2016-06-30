@@ -1234,68 +1234,55 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       "FROM "
         "TAPE";
 
-    if(!(
-      searchCriteria.vid.empty()             &&
-      searchCriteria.logicalLibrary.empty()  &&
-      searchCriteria.tapePool.empty()        &&
-      searchCriteria.capacityInBytes.empty() &&
-      searchCriteria.disabled.empty()      &&
-      searchCriteria.full.empty()          &&
-      searchCriteria.lbp.empty())) {
+    if(searchCriteria.vid||
+       searchCriteria.logicalLibrary||
+       searchCriteria.tapePool||
+       searchCriteria.capacityInBytes||
+       searchCriteria.disabled||
+       searchCriteria.full||
+       searchCriteria.lbp) {
       sql += " WHERE ";
     }
 
     bool addedAWhereConstraint = false;
 
-    if(!searchCriteria.vid.empty()) {
+    if(searchCriteria.vid) {
       sql += " VID = :VID";
       addedAWhereConstraint = true;
     }
-    if(!searchCriteria.logicalLibrary.empty()) {
+    if(searchCriteria.logicalLibrary) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
       addedAWhereConstraint = true;
     }
-    if(!searchCriteria.tapePool.empty()) {
+    if(searchCriteria.tapePool) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " TAPE_POOL_NAME = :TAPE_POOL_NAME";
       addedAWhereConstraint = true;
     }
-    if(!searchCriteria.capacityInBytes.empty()) {
-      if(!utils::isValidUInt(searchCriteria.capacityInBytes)) {
-        throw UserError("Capacity in bytes " + searchCriteria.capacityInBytes + " is not a valid unsigned integer");
-      }
+    if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
     }
-    if(!searchCriteria.disabled.empty()) {
-      if(!isValidBool(searchCriteria.disabled)) {
-        throw UserError("Disabled tapes search criterion " + searchCriteria.disabled + " is not a valid boolean");
-      }
+    if(searchCriteria.disabled) {
       sql += " IS_DISABLED = :IS_DISABLED";
     }
-    if(!searchCriteria.full.empty()) {
-      if(!isValidBool(searchCriteria.full)) {
-        throw UserError("Full tapes search criterion " + searchCriteria.full + " is not a valid boolean");
-      }
+    if(searchCriteria.full) {
       sql += " IS_FULL = :IS_FULL";
     }
-    if(!searchCriteria.lbp.empty()) {
-      if(!isValidBool(searchCriteria.lbp)) {
-        throw UserError("LBP search criterion " + searchCriteria.lbp + " is not a valid boolean");
-      }
+    if(searchCriteria.lbp) {
       sql += " LBP_IS_ON = :LBP_IS_ON";
     }
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
 
-    if(!searchCriteria.vid.empty()) stmt->bindString(":VID", searchCriteria.vid);
-    if(!searchCriteria.logicalLibrary.empty()) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary);
-    if(!searchCriteria.tapePool.empty()) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool);
-    if(!searchCriteria.capacityInBytes.empty()) stmt->bindUint64(":CAPACITY_IN_BYTES", utils::toUint64(searchCriteria.capacityInBytes));
-    if(!searchCriteria.disabled.empty()) stmt->bindUint64(":IS_DISABLED", toUpper(searchCriteria.disabled) == "TRUE");
-    if(!searchCriteria.full.empty()) stmt->bindUint64(":IS_FULL", toUpper(searchCriteria.full) == "TRUE");
-    if(!searchCriteria.lbp.empty()) stmt->bindUint64(":LBP_IS_ON", toUpper(searchCriteria.lbp) == "TRUE");
+    if(searchCriteria.vid) stmt->bindString(":VID", searchCriteria.vid.value());
+    if(searchCriteria.logicalLibrary) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
+    if(searchCriteria.tapePool) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+    if(searchCriteria.capacityInBytes) stmt->bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
+    if(searchCriteria.disabled) stmt->bindUint64(":IS_DISABLED", searchCriteria.disabled.value());
+    if(searchCriteria.full) stmt->bindUint64(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.lbp) stmt->bindUint64(":LBP_IS_ON", searchCriteria.lbp.value());
 
     std::unique_ptr<DbRset> rset(stmt->executeQuery());
     while (rset->next()) {

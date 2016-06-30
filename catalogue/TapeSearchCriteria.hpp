@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "common/optional.hpp"
+
 namespace cta {
 namespace catalogue {
 
@@ -37,37 +39,37 @@ struct TapeSearchCriteria {
   /**
    * The volume identifier of a tape.
    */
-  std::string vid;
+  optional<std::string> vid;
 
   /**
    * The name of a logical library.
    */
-  std::string logicalLibrary;
+  optional<std::string> logicalLibrary;
 
   /**
    * The name of a tape pool.
    */
-  std::string tapePool;
+  optional<std::string> tapePool;
 
   /**
    * The capacity of a tape in bytes
    */
-  std::string capacityInBytes;
+  optional<uint64_t> capacityInBytes;
 
   /**
    * Set to true if searching for disabled tapes.
    */
-  std::string disabled;
+  optional<bool> disabled;
 
   /**
    * Set to true if searching for full tapes.
    */
-  std::string full;
+  optional<bool> full;
 
   /**
    * Set to true if searching for tapes with logical block protection enabled.
    */
-  std::string lbp;
+  optional<bool> lbp;
 
 }; // struct TapeSearchCriteria
 

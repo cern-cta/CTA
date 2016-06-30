@@ -95,7 +95,22 @@ protected:
   /**
    * The client identity info: username and host
    */
-  cta::common::dataStructures::SecurityIdentity m_cliIdentity;
+  cta::common::dataStructures::SecurityIdentity m_cliIdentity;  
+  
+  /**
+   * Vector containing required options which are missing from the user command
+   */
+  std::vector<std::string> m_missingRequiredOptions;
+  
+  /**
+   * Vector containing optional options which are missing from the user command
+   */
+  std::vector<std::string> m_missingOptionalOptions;
+  
+  /**
+   * Vector containing optional options which are present in the user command
+   */
+  std::vector<std::string> m_optionalOptions;
   
   /**
    * Decodes a string in base 64
@@ -137,10 +152,10 @@ protected:
    * @param encoded         True if the argument is encoded, false otherwise
    * @return the option value (empty if absent)
    */
-  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
-  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
-  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
-  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded);
+  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
+  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
+  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
+  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
   
   /**
    * Returns the string/numerical/boolean value of the specified option
@@ -260,6 +275,11 @@ protected:
    * @return SFS_OK
    */
   int logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
+  
+  /**
+   * Returns true if all needed options are present. False otherwise.
+   */
+  bool optionsOk();
 };
 
 }}
