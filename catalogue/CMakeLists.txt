@@ -65,12 +65,7 @@ target_link_libraries (ctacatalogue
 add_custom_command (OUTPUT create_sqlite_catalogue_schema.sql create_oracle_catalogue_schema.sql
   COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql > create_sqlite_catalogue_schema.sql
   COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_trailer.sql > create_oracle_catalogue_schema.sql
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_trailer.sql)
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/create_sqlite_catalogue_schema.sql
   DESTINATION usr/share/cta-${CTA_VERSION}/sql
