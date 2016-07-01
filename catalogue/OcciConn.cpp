@@ -99,14 +99,22 @@ DbStmt *OcciConn::createStmt(const std::string &sql) {
 // commit
 //------------------------------------------------------------------------------
 void OcciConn::commit() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    m_conn->commit();
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
 }
 
 //------------------------------------------------------------------------------
-// commit
+// rollback
 //------------------------------------------------------------------------------
 void OcciConn::rollback() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    m_conn->rollback();
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
 }
 
 } // namespace catalogue
