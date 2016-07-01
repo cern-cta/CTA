@@ -989,18 +989,30 @@ int XrdCtaFile::xCom_tape() {
         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
-        // TODO currentRow.push_back(it->labelLog.drive);
-        currentRow.push_back("TODO");
-        // TODO currentRow.push_back(std::to_string((unsigned long long)it->labelLog.time));
-        currentRow.push_back("TODO");
-        // TODO currentRow.push_back(it->lastWriteLog.drive);
-        currentRow.push_back("TODO");
-        // TODO currentRow.push_back(std::to_string((unsigned long long)it->lastWriteLog.time));
-        currentRow.push_back("TODO");
-        // TODO currentRow.push_back(it->lastReadLog.drive);
-        currentRow.push_back("TODO");
-        // TODO currentRow.push_back(std::to_string((unsigned long long)it->lastReadLog.time));
-        currentRow.push_back("TODO");
+        if(it->labelLog) {
+          currentRow.push_back(it->labelLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->labelLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
+        if(it->lastWriteLog) {
+          currentRow.push_back(it->lastWriteLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->lastWriteLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
+        if(it->lastReadLog) {
+          currentRow.push_back(it->lastReadLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->lastReadLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
