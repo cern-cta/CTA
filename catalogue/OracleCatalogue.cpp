@@ -19,6 +19,7 @@
 #include "catalogue/OcciConn.hpp"
 #include "catalogue/OcciEnvSingleton.hpp"
 #include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
@@ -45,14 +46,124 @@ OracleCatalogue::~OracleCatalogue() {
 // deleteArchiveFile
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uint64_t archiveFileId) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
+
+    const char *selectSql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.FILE_SIZE AS FILE_SIZE,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "LEFT OUTER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "WHERE "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "FOR UPDATE";
+    std::unique_ptr<DbStmt> selectStmt(m_conn->createStmt(selectSql));
+    selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    std::unique_ptr<DbRset> selectRset(selectStmt->executeQuery());
+    while(selectRset->next()) {
+      if(NULL == archiveFile.get()) {
+        archiveFile.reset(new common::dataStructures::ArchiveFile);
+
+        archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE");
+        archiveFile->diskFileId = selectRset->columnText("DISK_FILE_ID");
+        archiveFile->diskFileInfo.path = selectRset->columnText("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = selectRset->columnText("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = selectRset->columnText("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->fileSize = selectRset->columnUint64("FILE_SIZE");
+        archiveFile->checksumType = selectRset->columnText("CHECKSUM_TYPE");
+        archiveFile->checksumValue = selectRset->columnText("CHECKSUM_VALUE");
+        archiveFile->storageClass = selectRset->columnText("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = selectRset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = selectRset->columnUint64("RECONCILIATION_TIME");
+      }
+
+      // If there is a tape file
+      if(!selectRset->columnIsNull("VID")) {
+        // Add the tape file to the archive file's in-memory structure
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = selectRset->columnText("VID");
+        tapeFile.fSeq = selectRset->columnUint64("FSEQ");
+        tapeFile.blockId = selectRset->columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.copyNb = selectRset->columnUint64("COPY_NB");
+        tapeFile.creationTime = selectRset->columnUint64("TAPE_FILE_CREATION_TIME");
+        archiveFile->tapeFiles[selectRset->columnUint64("COPY_NB")] = tapeFile;
+      }
+    }
+
+    if(NULL == archiveFile.get()) {
+      UserError ue;
+      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
+      throw ue;
+    }
+
+    {
+      const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt->executeNonQuery();
+    }
+
+    {
+      const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt->executeNonQuery();
+    }
+
+    m_conn->commit();
+
+    return *archiveFile;
+  } catch(UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t OracleCatalogue::getNextArchiveFileId() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
+      "FROM "
+        "DUAL";
+
+    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    if (!rset->next()) {
+      throw exception::Exception(std::string("Result set is unexpectedly empty"));
+    }
+
+    return rset->columnUint64("ARCHIVE_FILE_ID");
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -95,7 +206,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::str
         "TAPE "
       "WHERE "
         "VID = :VID "
-      "FOR UPDATE;";
+      "FOR UPDATE";
 
     std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":VID", vid);
