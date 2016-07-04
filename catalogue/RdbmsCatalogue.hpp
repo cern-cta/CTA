@@ -19,7 +19,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/DbConn.hpp"
+#include "rdbms/DbConn.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
 
 #include <memory>
@@ -460,7 +460,7 @@ protected:
    * @param timeColNAme The name of the database column that contains the time
    * stamp.
    */
-  optional<common::dataStructures::TapeLog> getTapeLogFromRset(const DbRset &rset,
+  optional<common::dataStructures::TapeLog> getTapeLogFromRset(const rdbms::DbRset &rset,
     const std::string &driveColName, const std::string &timeColName) const;
 
   /**
@@ -479,7 +479,7 @@ protected:
   /**
    * The connection to the underlying relational database.
    */
-  std::unique_ptr<DbConn> m_conn;
+  std::unique_ptr<rdbms::DbConn> m_conn;
 
   /**
    * Creates the database schema.

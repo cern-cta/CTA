@@ -129,6 +129,7 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctamediachangerutils.so
 %attr(0755,root,root) %{_libdir}/libctamessages.so
 %attr(0755,root,root) %{_libdir}/libctamessagesutils.so
+%attr(0755,root,root) %{_libdir}/libctardbms.so
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverdaemonutils.so
 %attr(0644,root,root) %{_sysconfdir}/cta/cta_catalogue_db.conf.example

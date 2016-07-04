@@ -16,40 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueTest.hpp"
+#pragma once
 
-namespace unitTests {
+#include "DbLogin.hpp"
 
-namespace {
+namespace cta {
+namespace rdbms {
 
 /**
- * Creates DbLogin objects for in-memory catalogue databases.
+ * Abstract class specifying the interface to a factory of DbLogin objects.
  */
-class InMemoryDbLoginFactory: public cta::rdbms::DbLoginFactory {
+class DbLoginFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~InMemoryDbLoginFactory() {
-  }
+  virtual ~DbLoginFactory() = 0;
 
   /**
    * Returns a newly created DbLogin object.
    *
    * @return A newly created DbLogin object.
    */
-  virtual cta::rdbms::DbLogin create() {
-    using namespace cta::catalogue;
-    return cta::rdbms::DbLogin(cta::rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
-  }
-}; // class InMemoryDbLoginFactory
+  virtual DbLogin create() = 0;
 
-InMemoryDbLoginFactory g_inMemoryDbLoginFactory;
+}; // class DbLogin
 
-} // anonymous namespace
-
-INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::DbLoginFactory*>(&g_inMemoryDbLoginFactory)));
-
-} // namespace unitTests
+} // namespace rdbms
+} // namespace cta

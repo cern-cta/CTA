@@ -18,37 +18,27 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-#include "rdbms/DbLogin.hpp"
-
-#include <memory>
-#include <mutex>
+#include <sqlite3.h>
+#include <string>
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 /**
- * Factory for creating CTA catalogue objects.  This class is a singleton in
- * order to enforce a single OCCI environment.
+ * A helper class for working with SQLite.
  */
-class CatalogueFactory {
+class Sqlite {
 public:
 
   /**
-   * Prevent objects of this class from being instantiated.
-   */
-  CatalogueFactory() = delete;
-
-  /**
-   * Creates a CTA catalogue object using the specified database login details.
+   * Returns the string representation of the specified SQLite return code.
    *
-   * @param dbLogin The database connection details.
-   * @return The newly created CTA catalogue object.  Please note that it is the
-   * responsibility of the caller to delete the returned CTA catalogue object.
+   * @param rc The SQLite return code.
+   * @return The string representation of the SQLite return code.
    */
-  static Catalogue *create(const rdbms::DbLogin &dbLogin);
+  static std::string rcToStr(const int rc);
 
-}; // class CatalogueFactory
+}; // class SqlLiteStmt
 
-} // namespace catalogue
+} // namespace rdbms
 } // namespace cta

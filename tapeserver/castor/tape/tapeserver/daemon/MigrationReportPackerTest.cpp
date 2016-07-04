@@ -39,9 +39,10 @@ namespace unitTests {
   protected:
 
     void SetUp() {
+      using namespace cta;
       using namespace cta::catalogue;
 
-      DbLogin catalogueLogin(DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+      rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
       m_catalogue.reset(CatalogueFactory::create(catalogueLogin));
     }
 

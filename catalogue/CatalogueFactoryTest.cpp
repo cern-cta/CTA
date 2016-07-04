@@ -58,7 +58,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  DbLogin dbLogin(DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+  rdbms::DbLogin dbLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
   std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(dbLogin));
   ASSERT_TRUE(NULL != catalogue.get());
 

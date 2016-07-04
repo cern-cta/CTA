@@ -18,37 +18,54 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-#include "rdbms/DbLogin.hpp"
+#include "OcciEnv.hpp"
 
 #include <memory>
 #include <mutex>
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 /**
- * Factory for creating CTA catalogue objects.  This class is a singleton in
- * order to enforce a single OCCI environment.
+ * A singleton version of OcciEnv.
  */
-class CatalogueFactory {
+class OcciEnvSingleton: public OcciEnv {
 public:
 
   /**
-   * Prevent objects of this class from being instantiated.
+   * Returns the single instance of this class.
    */
-  CatalogueFactory() = delete;
+  static OcciEnvSingleton &instance();
+
+private:
 
   /**
-   * Creates a CTA catalogue object using the specified database login details.
-   *
-   * @param dbLogin The database connection details.
-   * @return The newly created CTA catalogue object.  Please note that it is the
-   * responsibility of the caller to delete the returned CTA catalogue object.
+   * Mutex used to implement a critical region around the implementation of the
+   * instance() method.
    */
-  static Catalogue *create(const rdbms::DbLogin &dbLogin);
+  static std::mutex s_mutex;
 
-}; // class CatalogueFactory
+  /**
+   * The single instance of this class.
+   */
+  static std::unique_ptr<OcciEnvSingleton> s_instance;
 
-} // namespace catalogue
+  /**
+   * Private constructor because this class is a singleton.
+   */
+  OcciEnvSingleton();
+
+  /**
+   * Prevent copying.
+   */
+  OcciEnvSingleton(const OcciEnvSingleton &) = delete;
+
+  /**
+   * Prevent assignment.
+   */
+  void operator=(const OcciEnvSingleton &) = delete;
+
+}; // class OcciEnvSingleton
+
+} // namespace rdbms
 } // namespace cta

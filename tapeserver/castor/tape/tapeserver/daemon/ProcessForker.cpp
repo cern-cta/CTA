@@ -48,8 +48,8 @@
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/Sqlite.hpp"
-#include "catalogue/SqliteConn.hpp"
+#include "rdbms/Sqlite.hpp"
+#include "rdbms/SqliteConn.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendPopulator.hpp"
@@ -569,7 +569,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
-  const cta::catalogue::DbLogin catalogueLogin = cta::catalogue::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
+  const cta::rdbms::DbLogin catalogueLogin = cta::rdbms::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
   std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin));
   cta::Scheduler scheduler(*catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
 

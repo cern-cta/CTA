@@ -1,11 +1,11 @@
 /*
- * The CERN Tape Archive(CTA) project
- * Copyright(C) 2015  CERN
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- *(at your option) any later version.
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,51 +16,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/RdbmsCatalogueSchema.hpp"
-#include "rdbms/SqliteConn.hpp"
+#include "OcciEnvSingleton.hpp"
+#include "OcciConn.hpp"
+#include "OcciEnv.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "SqliteConn.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <memory>
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 //------------------------------------------------------------------------------
-// constructor
+// s_mutex
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue() {
-  std::unique_ptr<rdbms::SqliteConn> sqliteConn(new rdbms::SqliteConn(":memory:"));
-  m_conn.reset(sqliteConn.release());
-  createCatalogueSchema();
-}
+std::mutex OcciEnvSingleton::s_mutex;
 
 //------------------------------------------------------------------------------
-// createCatalogueSchema
+// s_instance
 //------------------------------------------------------------------------------
-void InMemoryCatalogue::createCatalogueSchema() {
-  RdbmsCatalogueSchema schema;
-  executeNonQueryMultiStmt(schema.sql);
-}
+std::unique_ptr<OcciEnvSingleton> OcciEnvSingleton::s_instance;
 
 //------------------------------------------------------------------------------
-// executeMultiStmt
+// instance
 //------------------------------------------------------------------------------
-void InMemoryCatalogue::executeNonQueryMultiStmt(const std::string &multiStmt) {
-  std::string::size_type searchPos = 0;
-  std::string::size_type findResult = std::string::npos;
+OcciEnvSingleton &OcciEnvSingleton::instance() {
+  try {
+    std::lock_guard<std::mutex> lock(s_mutex);
 
-  while(std::string::npos != (findResult = multiStmt.find(';', searchPos))) {
-    const std::string::size_type length = findResult - searchPos + 1;
-    const std::string sql = multiStmt.substr(searchPos, length);
-    searchPos = findResult + 1;
-    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->executeNonQuery();
+    if(NULL == s_instance.get()) {
+      s_instance.reset(new OcciEnvSingleton());
+    }
+    return *s_instance;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
 
 //------------------------------------------------------------------------------
-// destructor
+// constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
+OcciEnvSingleton::OcciEnvSingleton() {
 }
 
-} // namespace catalogue
+} // namespace rdbms
 } // namespace cta

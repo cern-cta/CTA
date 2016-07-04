@@ -18,37 +18,29 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-#include "rdbms/DbLogin.hpp"
-
-#include <memory>
-#include <mutex>
+#include "common/exception/Exception.hpp"
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 /**
- * Factory for creating CTA catalogue objects.  This class is a singleton in
- * order to enforce a single OCCI environment.
+ * An exception class representing an unexpected encounter with a NULL database
+ * value (not to be confused with a NULL C/C++ pointer).
  */
-class CatalogueFactory {
+class NullDbValue: public exception::Exception {
 public:
 
   /**
-   * Prevent objects of this class from being instantiated.
-   */
-  CatalogueFactory() = delete;
-
-  /**
-   * Creates a CTA catalogue object using the specified database login details.
+   * Constructor.
    *
-   * @param dbLogin The database connection details.
-   * @return The newly created CTA catalogue object.  Please note that it is the
-   * responsibility of the caller to delete the returned CTA catalogue object.
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
    */
-  static Catalogue *create(const rdbms::DbLogin &dbLogin);
+  NullDbValue(const std::string &context = "", const bool embedBacktrace = true);
 
-}; // class CatalogueFactory
+}; // class NullDbValue
 
-} // namespace catalogue
+} // namespace rdbms
 } // namespace cta

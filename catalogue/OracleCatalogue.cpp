@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/OcciConn.hpp"
-#include "catalogue/OcciEnvSingleton.hpp"
+#include "rdbms/OcciConn.hpp"
+#include "rdbms/OcciEnvSingleton.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
@@ -33,7 +33,7 @@ OracleCatalogue::OracleCatalogue(
   const std::string &username,
   const std::string &password,
   const std::string &database) {
-  m_conn.reset(OcciEnvSingleton::instance().createConn(username, password, database));
+  m_conn.reset(rdbms::OcciEnvSingleton::instance().createConn(username, password, database));
 }
 
 //------------------------------------------------------------------------------
@@ -77,9 +77,9 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uin
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
-    std::unique_ptr<DbStmt> selectStmt(m_conn->createStmt(selectSql));
+    std::unique_ptr<rdbms::DbStmt> selectStmt(m_conn->createStmt(selectSql));
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<DbRset> selectRset(selectStmt->executeQuery());
+    std::unique_ptr<rdbms::DbRset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
       if(NULL == archiveFile.get()) {
         archiveFile.reset(new common::dataStructures::ArchiveFile);
@@ -121,14 +121,14 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uin
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
@@ -154,8 +154,8 @@ uint64_t OracleCatalogue::getNextArchiveFileId() {
       "FROM "
         "DUAL";
 
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     if (!rset->next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
@@ -208,9 +208,9 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::str
         "VID = :VID "
       "FOR UPDATE";
 
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     if (!rset->next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }

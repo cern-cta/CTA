@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/DbConn.hpp"
+#include "rdbms/DbConn.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
@@ -81,7 +81,7 @@ public:
 
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    catalogue::DbLogin catalogueLogin(catalogue::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+    rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
     m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
 
     m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));

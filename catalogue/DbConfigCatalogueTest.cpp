@@ -26,7 +26,7 @@ namespace {
  * details are specified in a database configuration file passed on the
  * command-line to the catalogue unit-tests program.
  */
-class DbConfigFileLoginFactory: public cta::catalogue::DbLoginFactory {
+class DbConfigFileLoginFactory: public cta::rdbms::DbLoginFactory {
 public:
 
   /**
@@ -40,9 +40,9 @@ public:
    *
    * @return A newly created DbLogin object.
    */
-  virtual cta::catalogue::DbLogin create() {
+  virtual cta::rdbms::DbLogin create() {
     using namespace cta::catalogue;
-    return DbLogin::parseFile(g_cmdLineArgs.dbConfigPath);
+    return cta::rdbms::DbLogin::parseFile(g_cmdLineArgs.dbConfigPath);
   }
 }; // class OracleDbLoginFactory
 
@@ -53,6 +53,6 @@ DbConfigFileLoginFactory g_dbConfigLoginFactory;
 namespace unitTests {
 
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::catalogue::DbLoginFactory*>(&g_dbConfigLoginFactory)));
+  ::testing::Values(dynamic_cast<cta::rdbms::DbLoginFactory*>(&g_dbConfigLoginFactory)));
 
 } // namespace unitTests

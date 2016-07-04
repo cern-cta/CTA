@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/AutoRollback.hpp"
+#include "rdbms/AutoRollback.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
-#include "catalogue/SqliteConn.hpp"
+#include "rdbms/SqliteConn.hpp"
 #include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -31,7 +31,7 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 SqliteCatalogue::SqliteCatalogue(const std::string &filename) {
-  std::unique_ptr<SqliteConn> sqliteConn(new SqliteConn(filename));
+  std::unique_ptr<rdbms::SqliteConn> sqliteConn(new rdbms::SqliteConn(filename));
   m_conn.reset(sqliteConn.release());
 }
 
@@ -82,9 +82,9 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    std::unique_ptr<DbStmt> selectStmt(m_conn->createStmt(selectSql));
+    std::unique_ptr<rdbms::DbStmt> selectStmt(m_conn->createStmt(selectSql));
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<DbRset> selectRset(selectStmt->executeQuery());
+    std::unique_ptr<rdbms::DbRset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
       if(NULL == archiveFile.get()) {
         archiveFile.reset(new common::dataStructures::ArchiveFile);
@@ -126,14 +126,14 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
@@ -154,7 +154,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
 uint64_t SqliteCatalogue::getNextArchiveFileId() {
   try {
     m_conn->executeNonQuery("BEGIN EXCLUSIVE;");
-    AutoRollback autoRollback(m_conn.get());
+    rdbms::AutoRollback autoRollback(m_conn.get());
 
     m_conn->executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1;");
     uint64_t archiveFileId = 0;
@@ -164,8 +164,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId() {
           "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
-      std::unique_ptr<DbRset> rset(stmt->executeQuery());
+      std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
       if(!rset->next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
@@ -227,9 +227,9 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(const std::str
       "WHERE "
         "VID = :VID;";
 
-    std::unique_ptr<DbStmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     if (!rset->next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }

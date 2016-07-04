@@ -23,32 +23,14 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileItor.cpp
-  AutoRollback.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
-  ColumnNameToIdx.cpp
-  ColumnNameToIdxAndType.cpp
-  DbConn.cpp
-  DbLogin.cpp
-  DbRset.cpp
-  DbStmt.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueSchema.cpp
   TapeFileWritten.cpp
-  NullDbValue.cpp
-  OcciConn.cpp
-  OcciEnv.cpp
-  OcciEnvSingleton.cpp
-  OcciRset.cpp
-  OcciStmt.cpp
   OracleCatalogue.cpp
-  ParamNameToIdx.cpp
   RdbmsCatalogue.cpp
-  Sqlite.cpp
   SqliteCatalogue.cpp
-  SqliteConn.cpp
-  SqliteRset.cpp
-  SqliteStmt.cpp
   TapeForWriting.cpp
   UserError.cpp)
 
@@ -59,6 +41,7 @@ install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
   ctacommon
+  ctardbms
   ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})
 
@@ -91,11 +74,11 @@ add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   CatalogueFactoryTest.cpp
-  DbLoginFactory.cpp
-  DbLoginTest.cpp
-  ParamNameToIdxTest.cpp
+  ../rdbms/DbLoginFactory.cpp
+  ../rdbms/DbLoginTest.cpp
+  ../rdbms/ParamNameToIdxTest.cpp
   InMemoryCatalogueTest.cpp
-  SqliteStmtTest.cpp)
+  ../rdbms/SqliteStmtTest.cpp)
 
 add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
@@ -108,7 +91,7 @@ install(TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LI
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   DbConfigCatalogueTest.cpp
-  DbLoginFactory.cpp)
+  ../rdbms/DbLoginFactory.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

@@ -16,40 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/OracleCatalogue.hpp"
-#include "catalogue/SqliteCatalogue.hpp"
+#include "DbConn.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <memory>
+
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 //------------------------------------------------------------------------------
-// create
+// destructor
 //------------------------------------------------------------------------------
-Catalogue *CatalogueFactory::create(const rdbms::DbLogin &dbLogin) {
+DbConn::~DbConn() throw() {
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void DbConn::executeNonQuery(const std::string &sql) {
   try {
-    switch(dbLogin.dbType) {
-    case rdbms::DbLogin::DBTYPE_IN_MEMORY:
-      return new InMemoryCatalogue();
-    case rdbms::DbLogin::DBTYPE_ORACLE:
-      return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database);
-    case rdbms::DbLogin::DBTYPE_SQLITE:
-      return new SqliteCatalogue(dbLogin.database);
-    case rdbms::DbLogin::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
-        throw ex;
-      }
-    }
+    std::unique_ptr<DbStmt> stmt(createStmt(sql));
+    stmt->executeNonQuery();
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
   }
 }
 
-} // namespace catalogue
+} // namespace rdbms
 } // namespace cta
