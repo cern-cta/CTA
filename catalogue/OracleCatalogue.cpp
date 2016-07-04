@@ -109,6 +109,9 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uin
         tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE");
         tapeFile.copyNb = selectRset->columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
+        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+
         archiveFile->tapeFiles[selectRset->columnUint64("COPY_NB")] = tapeFile;
       }
     }

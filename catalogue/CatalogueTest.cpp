@@ -2002,6 +2002,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -2050,6 +2052,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
@@ -2058,6 +2062,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
     ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
   }
 
   const std::string mountPolicyName = "mount_policy";
@@ -2283,6 +2289,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.fSeq, archiveFile.tapeFiles.begin()->second.fSeq);
       ASSERT_EQ(fileWritten.blockId, archiveFile.tapeFiles.begin()->second.blockId);
       ASSERT_EQ(fileWritten.compressedSize, archiveFile.tapeFiles.begin()->second.compressedSize);
+      ASSERT_EQ(fileWritten.checksumType, archiveFile.tapeFiles.begin()->second.checksumType);
+      ASSERT_EQ(fileWritten.checksumValue, archiveFile.tapeFiles.begin()->second.checksumValue);
       ASSERT_EQ(fileWritten.copyNb, archiveFile.tapeFiles.begin()->first);
       ASSERT_EQ(fileWritten.copyNb, archiveFile.tapeFiles.begin()->second.copyNb);
     }
@@ -2524,6 +2532,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -2582,6 +2592,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -2591,6 +2603,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
     ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 }
@@ -2711,6 +2725,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -2839,6 +2855,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -3013,6 +3031,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -3040,6 +3060,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -3106,6 +3128,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
       ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+      ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+      ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
       ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -3115,6 +3139,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
       ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+      ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
+      ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
       ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
     }
   }
@@ -3144,6 +3170,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -3153,6 +3181,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
     ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
@@ -3181,6 +3211,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -3190,6 +3222,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
     ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
+    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
+    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 

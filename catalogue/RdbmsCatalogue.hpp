@@ -566,14 +566,6 @@ protected:
     const TapeFileWritten &actual) const;
 
   /**
-   * Returns the tape files for the specified archive file.
-   *
-   * @param archiveFileId The unique identifier of the archive file.
-   * @return The tape files as a map from tape copy number to tape file.
-   */
-  std::map<uint64_t, common::dataStructures::TapeFile>getTapeFiles(const uint64_t archiveFileId) const;
-
-  /**
    * Returns the mount policies for the specified requester and requester group.
    *
    * @param requesterName The name of the requester.

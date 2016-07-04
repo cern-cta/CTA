@@ -2502,6 +2502,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
         tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
         tapeFile.copyNb = rset->columnUint64("COPY_NB");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
+        tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
 
         archiveFile.tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
       }
@@ -2838,46 +2840,6 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 }
 
 //------------------------------------------------------------------------------
-// getTapeFiles
-//------------------------------------------------------------------------------
-std::map<uint64_t, common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFiles(const uint64_t archiveFileId) const {
-  try {
-    std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles;
-
-    const char *const sql =
-      "SELECT "
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-      "FROM "
-        "TAPE_FILE "
-      "WHERE "
-        "TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while (rset->next()) {
-      common::dataStructures::TapeFile tapeFile;
-      tapeFile.vid = rset->columnText("VID");
-      tapeFile.fSeq = rset->columnUint64("FSEQ");
-      tapeFile.blockId = rset->columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
-      tapeFile.copyNb = rset->columnUint64("COPY_NB");
-      tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
-    }
-
-    return tapeFiles;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // getMountPolicies
 //------------------------------------------------------------------------------
 RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::string &requesterName,
@@ -3207,6 +3169,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE");
         tapeFile.copyNb = rset->columnUint64("COPY_NB");
         tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
+        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+
         archiveFile->tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
       }
     }
