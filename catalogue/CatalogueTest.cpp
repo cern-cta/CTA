@@ -2203,6 +2203,37 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
   std::list<uint64_t> prefetches = {1, 2, 3, nbArchiveFiles - 1, nbArchiveFiles, nbArchiveFiles+1, nbArchiveFiles*2};
   for(auto prefetch: prefetches) {
+    {
+      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      searchCriteria.archiveFileId = 1;
+      searchCriteria.diskInstance = "PUBLIC";
+      searchCriteria.diskFileId = std::to_string(12345678);
+      searchCriteria.diskFilePath = "/public_dir/public_file_1";
+      searchCriteria.diskFileUser = "public_disk_user";
+      searchCriteria.diskFileGroup = "public_disk_group";
+      searchCriteria.storageClass = storageClassName;
+      searchCriteria.vid = vid;
+      searchCriteria.tapeFileCopyNb = 1;
+      searchCriteria.tapePool = tapePoolName;
+
+      std::unique_ptr<catalogue::ArchiveFileItor> archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria,
+        prefetch);
+      std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
+      ASSERT_EQ(1, m.size());
+
+      const auto idAndFile = m.find(1);
+      ASSERT_FALSE(m.end() == idAndFile);
+      const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
+      ASSERT_EQ(searchCriteria.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(searchCriteria.diskFileId, archiveFile.diskFileId);
+      ASSERT_EQ(searchCriteria.diskFilePath, archiveFile.diskFileInfo.path);
+      ASSERT_EQ(searchCriteria.diskFileUser, archiveFile.diskFileInfo.owner);
+      ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
+      ASSERT_EQ(1, archiveFile.tapeFiles.size());
+      ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->second.vid);
+    }
     std::unique_ptr<catalogue::ArchiveFileItor> archiveFileItor =
       m_catalogue->getArchiveFileItor(catalogue::ArchiveFileSearchCriteria(), prefetch);
     std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
