@@ -2805,7 +2805,12 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user) {
   try {
-    const std::map<uint64_t, common::dataStructures::TapeFile> tapeFiles = getTapeFiles(archiveFileId);
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(archiveFileId);
+    if(NULL == archiveFile.get()) {
+      exception::Exception ex;
+      ex.getMessage() << "Archive file with ID " << archiveFileId << " does not exist";
+      throw ex;
+    }
 
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(user.name, user.group);
     // Requester mount policies overrule requester group mount policies
@@ -2820,7 +2825,11 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
         "for " + user.name + ":" + user.group;
       throw ue;
     }
-    return common::dataStructures::RetrieveFileQueueCriteria(tapeFiles, mountPolicy);
+
+    common::dataStructures::RetrieveFileQueueCriteria criteria;
+    criteria.archiveFile = *archiveFile;
+    criteria.mountPolicy = mountPolicy;
+    return criteria;
   } catch(UserError &) {
     throw;
   } catch(exception::Exception &ex) {

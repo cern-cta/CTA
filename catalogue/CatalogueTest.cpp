@@ -2099,7 +2099,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue->prepareToRetrieveFile(archiveFileId, userIdentity);
 
-  ASSERT_EQ(2, queueCriteria.tapeFiles.size());
+  ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);

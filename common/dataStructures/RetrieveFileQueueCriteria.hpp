@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/TapeFile.hpp"
 
 #include <map>
 #include <stdint.h>
@@ -34,26 +34,9 @@ namespace dataStructures {
 struct RetrieveFileQueueCriteria {
 
   /**
-   * Constructor.
+   * The archived file.
    */
-  RetrieveFileQueueCriteria();
-
-  /**
-   * Constructor.
-   *
-   * @param tapeFiles The location(s) of the file on tape as a map from tape
-   * copy number to location.
-   * @param mountPolicy The mount policy.
-   */
-  RetrieveFileQueueCriteria(
-    const std::map<uint64_t, TapeFile> &tapeFiles,
-    const MountPolicy &mountPolicy);
-
-  /**
-   * The location(s) of the file on tape as a map from tape copy number to
-   * location.
-   */
-  std::map<uint64_t, TapeFile> tapeFiles;
+  ArchiveFile archiveFile;
 
   /**
    * The mount policy.
