@@ -1034,6 +1034,25 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_TRUE(tapes.empty());
   }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "vid1";
+    searchCriteria.logicalLibrary = logicalLibrary;
+    searchCriteria.tapePool = tapePool;
+    searchCriteria.capacityInBytes = 10000000000000;
+    searchCriteria.disabled = true;
+    searchCriteria.full = false;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ("vid1", vidToTape.begin()->first);
+    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
+    ASSERT_EQ(logicalLibrary, vidToTape.begin()->second.logicalLibraryName);
+    ASSERT_EQ(tapePool, vidToTape.begin()->second.tapePoolName);
+    ASSERT_EQ(capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_TRUE(vidToTape.begin()->second.disabled);
+    ASSERT_FALSE(vidToTape.begin()->second.full);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
