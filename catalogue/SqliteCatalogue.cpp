@@ -18,8 +18,8 @@
 
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
-#include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/DbConnFactoryFactory.hpp"
@@ -30,10 +30,14 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(const std::string &filename) {
+SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbDbConns) {
   using namespace rdbms;
-  const DbLogin dbLogin(DbLogin::DBTYPE_SQLITE, "", "", filename);
-  m_conn.reset(DbConnFactoryFactory::create(dbLogin)->create());
+  try {
+    const DbLogin dbLogin(DbLogin::DBTYPE_SQLITE, "", "", filename);
+    m_connPool.reset(new rdbms::DbConnPool(DbConnFactoryFactory::create(dbLogin), nbDbConns));
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

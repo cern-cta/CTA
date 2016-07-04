@@ -42,10 +42,12 @@ public:
    * Creates a CTA catalogue object using the specified database login details.
    *
    * @param dbLogin The database connection details.
+   * @param nbDbConns The maximum number of concurrent connections to the
+   * underlying relational database.
    * @return The newly created CTA catalogue object.  Please note that it is the
    * responsibility of the caller to delete the returned CTA catalogue object.
    */
-  static Catalogue *create(const rdbms::DbLogin &dbLogin);
+  static Catalogue *create(const rdbms::DbLogin &dbLogin, const uint64_t nbDbConns);
 
 }; // class CatalogueFactory
 

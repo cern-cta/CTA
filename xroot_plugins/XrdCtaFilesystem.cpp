@@ -268,7 +268,8 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   }
   
   const rdbms::DbLogin catalogueLogin = rdbms::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
-  m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
+  const uint64_t nbDbConns = 2;
+  m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin, nbDbConns));
 
   m_scheduler.reset(new cta::Scheduler(*m_catalogue, m_scheddb, 5, 2*1000*1000));
 

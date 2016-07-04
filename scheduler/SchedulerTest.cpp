@@ -87,7 +87,6 @@ public:
     m_db = param.dbFactory.create();
     //m_catalogue.reset(new catalogue::SchemaCreatingSqliteCatalogue(m_tempSqliteFile.path()));
     m_catalogue.reset(new catalogue::InMemoryCatalogue());
-
     m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
   }
 

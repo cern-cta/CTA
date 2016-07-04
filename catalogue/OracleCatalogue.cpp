@@ -31,10 +31,15 @@ namespace catalogue {
 OracleCatalogue::OracleCatalogue(
   const std::string &username,
   const std::string &password,
-  const std::string &database) {
+  const std::string &database,
+  const uint64_t nbDbConns) {
   using namespace rdbms;
-  const DbLogin dbLogin(DbLogin::DBTYPE_ORACLE, username, password, database);
-  m_conn.reset(DbConnFactoryFactory::create(dbLogin)->create());
+  try {
+    const DbLogin dbLogin(DbLogin::DBTYPE_ORACLE, username, password, database);
+    m_connPool.reset(new rdbms::DbConnPool(DbConnFactoryFactory::create(dbLogin), nbDbConns));
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

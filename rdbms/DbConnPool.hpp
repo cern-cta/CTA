@@ -21,6 +21,7 @@
 #include "DbConn.hpp"
 #include "DbConnFactory.hpp"
 #include "DbLogin.hpp"
+#include "PooledDbConn.hpp"
 
 #include <condition_variable>
 #include <memory>
@@ -45,6 +46,16 @@ public:
   DbConnPool(const DbLogin &dbLogin, const uint64_t nbDbConns);
 
   /**
+   * Constructor.
+   *
+   * @param dbConnFactory Factory to be used to create new database connections.
+   * Please note that the DbConnPool will take ownership of the factory and
+   * therefore the destructor of DbConnPool will delete the factory.
+   * @param nbDbConns The number of database connections within the pool.
+   */
+  DbConnPool(DbConnFactory *const dbConnFactory, const uint64_t nbDbConns);
+
+  /**
    * Destructor.
    */
   ~DbConnPool() throw();
@@ -59,6 +70,17 @@ public:
    * @return A connection from the pool.
    */
   DbConn *getDbConn();
+
+  /**
+   * Takes a connection from the pool.
+   *
+   * Please note that this method will block if the pool is empty.  In such a
+   * situation this method will unblock when a connection is returned to the
+   * pool.
+   *
+   * @return A connection from the pool.
+   */
+  PooledDbConn getPooledDbConn();
 
   /**
    * Returns the specified database connection to the pool.

@@ -570,7 +570,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::objectstore::BackendPopulator backendPopulator(*backend);
   cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
   const cta::rdbms::DbLogin catalogueLogin = cta::rdbms::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
-  std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin));
+  const uint64_t nbDbConns = 2;
+  std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin, nbDbConns));
   cta::Scheduler scheduler(*catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
 
   castor::tape::System::realWrapper sysWrapper;

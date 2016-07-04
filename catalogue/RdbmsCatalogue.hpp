@@ -19,8 +19,9 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
-#include "rdbms/DbConn.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
+#include "rdbms/DbConn.hpp"
+#include "rdbms/DbConnPool.hpp"
 
 #include <memory>
 #include <mutex>
@@ -565,6 +566,11 @@ protected:
    * The connection to the underlying relational database.
    */
   std::unique_ptr<rdbms::DbConn> m_conn;
+
+  /**
+   * The pool of connections to the underlying relational database.
+   */
+  std::unique_ptr<rdbms::DbConnPool> m_connPool;
 
   /**
    * Creates the database schema.

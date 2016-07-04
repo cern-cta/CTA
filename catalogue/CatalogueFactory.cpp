@@ -28,15 +28,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-Catalogue *CatalogueFactory::create(const rdbms::DbLogin &dbLogin) {
+Catalogue *CatalogueFactory::create(const rdbms::DbLogin &dbLogin, const uint64_t nbDbConns) {
   try {
     switch(dbLogin.dbType) {
     case rdbms::DbLogin::DBTYPE_IN_MEMORY:
       return new InMemoryCatalogue();
     case rdbms::DbLogin::DBTYPE_ORACLE:
-      return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database);
+      return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database, nbDbConns);
     case rdbms::DbLogin::DBTYPE_SQLITE:
-      return new SqliteCatalogue(dbLogin.database);
+      return new SqliteCatalogue(dbLogin.database, nbDbConns);
     case rdbms::DbLogin::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

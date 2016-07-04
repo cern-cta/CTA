@@ -19,6 +19,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "rdbms/SqliteConn.hpp"
+#include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
 namespace catalogue {
