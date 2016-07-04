@@ -53,13 +53,13 @@ extern "C"
     try {
       return new cta::xrootPlugins::XrdCtaFilesystem();
     } catch (cta::exception::Exception &ex) {
-      std::cout << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
+      std::cerr << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
       return NULL;
     } catch (std::exception &ex) {
-      std::cout << "[ERROR] Could not load the CTA xroot plugin. Exception caught: " << ex.what() << "\n";
+      std::cerr << "[ERROR] Could not load the CTA xroot plugin. Exception caught: " << ex.what() << "\n";
       return NULL;
     } catch (...) {
-      std::cout << "[ERROR] Could not load the CTA xroot plugin. Unknown exception caught!" << "\n";
+      std::cerr << "[ERROR] Could not load the CTA xroot plugin. Unknown exception caught!" << "\n";
       return NULL;
     }
   }
