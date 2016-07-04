@@ -25,11 +25,14 @@ set (RDBMS_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
   DbConn.cpp
+  DbConnFactory.cpp
+  DbConnPool.cpp
   DbLogin.cpp
   DbRset.cpp
   DbStmt.cpp
   NullDbValue.cpp
   OcciConn.cpp
+  OcciConnFactory.cpp
   OcciEnv.cpp
   OcciEnvSingleton.cpp
   OcciRset.cpp
@@ -37,6 +40,7 @@ set (RDBMS_LIB_SRC_FILES
   ParamNameToIdx.cpp
   Sqlite.cpp
   SqliteConn.cpp
+  SqliteConnFactory.cpp
   SqliteRset.cpp
   SqliteStmt.cpp)
 
