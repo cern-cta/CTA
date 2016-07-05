@@ -19,8 +19,8 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueTest.hpp"
-#include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <gtest/gtest.h>
 #include <limits>

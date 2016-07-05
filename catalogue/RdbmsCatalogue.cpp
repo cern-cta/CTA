@@ -17,13 +17,13 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "rdbms/AutoRollback.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
-#include "catalogue/UserError.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/AutoRollback.hpp"
 
 #include <ctype.h>
 #include <iostream>

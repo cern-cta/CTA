@@ -20,7 +20,6 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/DbLoginFactory.hpp"
 

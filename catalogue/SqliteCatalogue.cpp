@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rdbms/AutoRollback.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "rdbms/SqliteConn.hpp"
-#include "catalogue/UserError.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/AutoRollback.hpp"
 
 namespace cta {
 namespace catalogue {

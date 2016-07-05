@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/UserError.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
 namespace catalogue {

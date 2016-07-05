@@ -75,6 +75,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
+  exception/UserError.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

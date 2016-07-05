@@ -31,8 +31,7 @@ set (CATALOGUE_LIB_SRC_FILES
   OracleCatalogue.cpp
   RdbmsCatalogue.cpp
   SqliteCatalogue.cpp
-  TapeForWriting.cpp
-  UserError.cpp)
+  TapeForWriting.cpp)
 
 add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})
