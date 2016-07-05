@@ -71,19 +71,46 @@ public:
    */
   virtual ~Scheduler() throw();
 
-  /** Queue an archive request and return the CTA file ID */
+  /** 
+   * Queue an archive request and return the CTA file ID. 
+   * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)
+   */
   virtual uint64_t queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request);
+  
+  /**
+   * Queue a retrieve request. 
+   * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
+   */
   virtual void queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request);
-  /** A deleteArchive command should be authorized only if:
-   - the instance of the file to be deleted coincides with the instance from
-     where the command was executed
-   - the EOS username and/or group (of the original delete requester) provided
-     in the command line belongs to the instance from where the command was
-     executed */
+  
+  /** 
+   * Delete an archived file or a file which is in the process of being archived.
+   * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
+   */
   virtual void deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request);
+  
+  /** 
+   * Cancel an ongoing retrieval.
+   * Throws a UserError exception in case of wrong request parameters (ex. file not being retrieved)
+   */
   virtual void cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request);
+  
+  /** 
+   * Update the file information of an archived file.
+   * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
+   */
   virtual void updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request);
+  
+  /** 
+   * Update the storage class of an archived file.
+   * Throws a UserError exception in case of wrong request parameters (ex. unknown storage class)
+   */
   virtual void updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
+  
+  /** 
+   * List the storage classes that a specific user is allowed to use (the ones belonging to the instance from where
+   * the command was issued)
+   */
   virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request);
 
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const std::string &tag);
