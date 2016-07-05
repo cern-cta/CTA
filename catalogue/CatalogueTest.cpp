@@ -175,7 +175,7 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminUser_same_twice) {
   m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, "comment 1");
 
   ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username,
-    "comment 2"), catalogue::UserError);
+    "comment 2"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser) {
@@ -212,7 +212,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
-  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_sdmin_user"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_sdmin_user"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
@@ -321,7 +321,7 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminHost_same_twice) {
   m_catalogue->createAdminHost(m_bootstrapAdminSI, anotherAdminHost, "comment 1");
 
   ASSERT_THROW(m_catalogue->createAdminHost(m_bootstrapAdminSI,
-    anotherAdminHost, "comment 2"), catalogue::UserError);
+    anotherAdminHost, "comment 2"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost) {
@@ -358,7 +358,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-  ASSERT_THROW(m_catalogue->deleteAdminHost("non_exstant_admin_host"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteAdminHost("non_exstant_admin_host"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, isAdmin_false) {
@@ -381,40 +381,41 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  const std::string comment = "create storage class";
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
     m_catalogue->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
 
-  const common::dataStructures::StorageClass storageClass =
-    storageClasses.front();
-  ASSERT_EQ(storageClassName, storageClass.name);
-  ASSERT_EQ(nbCopies, storageClass.nbCopies);
-  ASSERT_EQ(comment, storageClass.comment);
+  ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+  ASSERT_EQ(storageClass.name, storageClasses.front().name);
+  ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
+  ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
 
-  const common::dataStructures::EntryLog creationLog = storageClass.creationLog;
+  const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    storageClass.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  const std::string comment = "create storage class";
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
-  ASSERT_THROW(m_catalogue->createStorageClass(m_cliSI,
-    storageClassName, nbCopies, comment), catalogue::UserError);
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+  ASSERT_THROW(m_catalogue->createStorageClass(m_cliSI, storageClass), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
@@ -422,31 +423,31 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  const std::string comment = "create storage class";
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, comment);
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
     m_catalogue->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
 
-  const common::dataStructures::StorageClass storageClass =
-    storageClasses.front();
-  ASSERT_EQ(storageClassName, storageClass.name);
-  ASSERT_EQ(nbCopies, storageClass.nbCopies);
-  ASSERT_EQ(comment, storageClass.comment);
+  ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+  ASSERT_EQ(storageClass.name, storageClasses.front().name);
+  ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
+  ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
 
-  const common::dataStructures::EntryLog creationLog = storageClass.creationLog;
+  const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    storageClass.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  m_catalogue->deleteStorageClass(storageClass.name);
+  m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name);
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 }
 
@@ -454,7 +455,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
-  ASSERT_THROW(m_catalogue->deleteStorageClass("non_existant_storage_class"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteStorageClass("non_existant_disk_instance", "non_existant_storage_class"),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
@@ -499,7 +501,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
     comment);
   ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment),
-    catalogue::UserError);
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
@@ -541,18 +543,23 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
-  ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
       
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
-      
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
@@ -560,16 +567,16 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
       
-  const std::list<common::dataStructures::ArchiveRoute> routes =
-    m_catalogue->getArchiveRoutes();
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
       
   ASSERT_EQ(1, routes.size());
       
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(comment, route.comment);
@@ -582,8 +589,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
     route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
@@ -592,11 +598,18 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
   using namespace cta;
-  
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
-      
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
@@ -605,21 +618,25 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_cliSI,
-    storageClassName, copyNb, tapePoolName, comment),
-    exception::Exception);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb,
+    tapePoolName, comment), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   using namespace cta;
 
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -628,16 +645,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
 
-  const std::list<common::dataStructures::ArchiveRoute> routes =
-    m_catalogue->getArchiveRoutes();
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(comment, route.comment);
@@ -646,18 +663,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    route.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
   ASSERT_EQ(tapePoolName, maplet.second);
 
-  m_catalogue->deleteArchiveRoute(storageClassName, copyNb);
+  m_catalogue->deleteArchiveRoute(storageClass.diskInstance, storageClass.name, copyNb);
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 }
@@ -666,7 +681,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
-  ASSERT_THROW(m_catalogue->deleteArchiveRoute("non_existant_storage_class", 1234), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteArchiveRoute("non_existant_disk_instance", "non_existant_storage_class", 1234),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
@@ -674,9 +690,12 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -685,16 +704,16 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   const uint64_t copyNb = 1;
   const std::string comment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName,
-                               comment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    comment);
 
-  const std::list<common::dataStructures::ArchiveRoute> routes =
-    m_catalogue->getArchiveRoutes();
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(comment, route.comment);
@@ -708,13 +727,13 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   ASSERT_EQ(creationLog, lastModificationLog);
 
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClassName);
+    m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
   ASSERT_EQ(tapePoolName, maplet.second);
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClassName), exception::Exception);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
@@ -750,7 +769,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "create logical library";
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
-  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
@@ -787,7 +806,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existant) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape) {
@@ -903,7 +922,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
   ASSERT_THROW(m_catalogue->createTape(m_cliSI, vid, logicalLibraryName,
     tapePoolName, encryptionKey, capacityInBytes, disabledValue, fullValue,
-    comment), catalogue::UserError);
+    comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
@@ -1110,7 +1129,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
-  ASSERT_THROW(m_catalogue->deleteTape("non_exsitant_tape"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteTape("non_exsitant_tape"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
@@ -1229,7 +1248,7 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy_same_twice) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    comment), catalogue::UserError);
+    comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy) {
@@ -1291,7 +1310,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-  ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existant_mount_policy"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existant_mount_policy"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
@@ -1317,8 +1336,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
@@ -1356,10 +1376,11 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_same_twice) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
-  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment),
-    catalogue::UserError);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
+  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
+    comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existant_mount_policy) {
@@ -1369,9 +1390,10 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existant_mount_
 
   const std::string comment = "create mount rule for requester";
   const std::string mountPolicyName = "non_existant_mount_policy";
+  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment),
-    catalogue::UserError);
+  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
+    comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
@@ -1397,14 +1419,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const common::dataStructures::RequesterMountRule rule = rules.front();
 
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
   ASSERT_EQ(mountPolicyName, rule.mountPolicy);
   ASSERT_EQ(comment, rule.comment);
@@ -1412,7 +1436,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
   ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
-  m_catalogue->deleteRequesterMountRule(requesterName);
+  m_catalogue->deleteRequesterMountRule(diskInstanceName, requesterName);
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 }
 
@@ -1420,7 +1444,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
-  ASSERT_THROW(m_catalogue->deleteRequesterMountRule("non_existant_requester"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteRequesterMountRule("non_existant_disk_instance", "non_existant_requester"),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
@@ -1446,8 +1471,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester group";
-  const std::string requesterGroupName = "requester_group_name";
-  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment);
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
   const std::list<common::dataStructures::RequesterGroupMountRule> rules =
     m_catalogue->getRequesterGroupMountRules();
@@ -1486,10 +1512,11 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_same_twice) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester group";
-  const std::string requesterGroupName = "requester_group_name";
-  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment);
-  ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment),
-    catalogue::UserError);
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
+  ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName,
+    requesterGroupName, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existant_mount_policy) {
@@ -1499,9 +1526,10 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existant_m
 
   const std::string comment = "create mount rule for requester group";
   const std::string mountPolicyName = "non_existant_mount_policy";
-  const std::string requesterGroupName = "requester_group_name";
-  ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment),
-    catalogue::UserError);
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName,
+    requesterGroupName, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
@@ -1527,14 +1555,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester group";
-  const std::string requesterGroupName = "requester_group_name";
-  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment);
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
   const std::list<common::dataStructures::RequesterGroupMountRule> rules = m_catalogue->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
 
   const common::dataStructures::RequesterGroupMountRule rule = rules.front();
 
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterGroupName, rule.name);
   ASSERT_EQ(mountPolicyName, rule.mountPolicy);
   ASSERT_EQ(comment, rule.comment);
@@ -1542,7 +1572,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
   ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
-  m_catalogue->deleteRequesterGroupMountRule(requesterGroupName);
+  m_catalogue->deleteRequesterGroupMountRule(diskInstanceName, requesterGroupName);
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
 }
 
@@ -1550,7 +1580,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule_non_existant) 
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
-  ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existant_requester_group"), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existant_disk_isntance", "non_existant_requester_group"),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
@@ -1576,14 +1607,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const common::dataStructures::RequesterMountRule rule = rules.front();
 
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
   ASSERT_EQ(mountPolicyName, rule.mountPolicy);
   ASSERT_EQ(comment, rule.comment);
@@ -1593,10 +1626,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies,
-    "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -1605,14 +1640,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -1624,7 +1660,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
@@ -1636,7 +1672,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;
@@ -1677,8 +1713,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
     "create mount policy");
 
   const std::string comment = "create mount rule for requester group";
-  const std::string requesterGroupName = "requester_group_name";
-  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterGroupName, comment);
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
   const std::list<common::dataStructures::RequesterGroupMountRule> rules = m_catalogue->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
@@ -1694,9 +1731,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -1705,14 +1745,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -1725,7 +1766,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
   ASSERT_EQ(creationLog, lastModificationLog);
 
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClassName);
+    m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
@@ -1737,7 +1778,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;
@@ -1778,8 +1819,10 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
     "create mount policy");
 
   const std::string requesterRuleComment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, requesterRuleComment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
+    requesterRuleComment);
 
   const std::list<common::dataStructures::RequesterMountRule> requesterRules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, requesterRules.size());
@@ -1794,8 +1837,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   ASSERT_EQ(requesterRule.creationLog, requesterRule.lastModificationLog);
 
   const std::string requesterGroupRuleComment = "create mount rule for requester group";
-  const std::string requesterGroupName = "requester_group_name";
-  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, requesterName, requesterGroupRuleComment);
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
+    requesterGroupRuleComment);
 
   const std::list<common::dataStructures::RequesterGroupMountRule> requesterGroupRules =
     m_catalogue->getRequesterGroupMountRules();
@@ -1812,10 +1856,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies,
-    "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -1824,14 +1870,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "create archive route";
-  m_catalogue->createArchiveRoute(m_cliSI, storageClassName, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClassName, route.storageClassName);
+  ASSERT_EQ(storageClass.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -1843,7 +1890,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClassName);
+  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
   ASSERT_EQ(1, copyToPoolMap.size());
   std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
   ASSERT_EQ(copyNb, maplet.first);
@@ -1855,7 +1902,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClassName, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;
@@ -1949,9 +1996,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -1960,7 +2010,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
@@ -1969,7 +2019,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
-  file1Written.storageClassName     = storageClassName;
+  file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -2018,7 +2068,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
-  file2Written.storageClassName     = storageClassName;
+  file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -2084,14 +2134,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const common::dataStructures::RequesterMountRule rule = rules.front();
 
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
   ASSERT_EQ(mountPolicyName, rule.mountPolicy);
   ASSERT_EQ(comment, rule.comment);
@@ -2163,9 +2215,12 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 1;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
@@ -2182,7 +2237,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     catalogue::TapeFileWritten fileWritten;
     fileWritten.archiveFileId = i;
-    fileWritten.diskInstance = "PUBLIC";
+    fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
     fileWritten.diskFileUser = "public_disk_user";
@@ -2191,7 +2246,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     fileWritten.size = archiveFileSize;
     fileWritten.checksumType = checksumType;
     fileWritten.checksumValue = checksumValue;
-    fileWritten.storageClassName = storageClassName;
+    fileWritten.storageClassName = storageClass.name;
     fileWritten.vid = vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
@@ -2212,12 +2267,12 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::ArchiveFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = 1;
-      searchCriteria.diskInstance = "PUBLIC";
+      searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileId = std::to_string(12345678);
       searchCriteria.diskFilePath = "/public_dir/public_file_1";
       searchCriteria.diskFileUser = "public_disk_user";
       searchCriteria.diskFileGroup = "public_disk_group";
-      searchCriteria.storageClass = storageClassName;
+      searchCriteria.storageClass = storageClass.name;
       searchCriteria.vid = vid;
       searchCriteria.tapeFileCopyNb = 1;
       searchCriteria.tapePool = tapePoolName;
@@ -2254,7 +2309,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = "PUBLIC";
+      fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
@@ -2263,7 +2318,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
-      fileWritten.storageClassName = storageClassName;
+      fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
       fileWritten.blockId = i * 100;
@@ -2307,7 +2362,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::ArchiveFileSearchCriteria searchCriteria;
-      searchCriteria.diskInstance = "PUBLIC";
+      searchCriteria.diskInstance = storageClass.diskInstance;
       archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
@@ -2470,9 +2525,12 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
   const std::string checksumType = "checksum_type";
@@ -2481,7 +2539,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
@@ -2490,7 +2548,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
-  file1Written.storageClassName     = storageClassName;
+  file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -2548,7 +2606,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
-  file2Written.storageClassName     = storageClassName;
+  file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -2666,15 +2724,18 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
@@ -2683,7 +2744,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
-  file1Written.storageClassName     = storageClassName;
+  file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -2741,7 +2802,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
-  file2Written.storageClassName     = storageClassName;
+  file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid;
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
@@ -2801,10 +2862,12 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies,
-    "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
   const std::string checksumType = "checksum_type";
@@ -2813,7 +2876,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
@@ -2822,7 +2885,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
-  file1Written.storageClassName     = storageClassName;
+  file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -2871,7 +2934,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
-  file2Written.storageClassName     = storageClassName;
+  file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = "VID123";
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
@@ -2963,9 +3026,12 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  const std::string storageClassName = "storage_class";
-  const uint64_t nbCopies = 2;
-  m_catalogue->createStorageClass(m_cliSI, storageClassName, nbCopies, "create storage class");
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
   const std::string checksumType = "checksum_type";
@@ -2974,7 +3040,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
   catalogue::TapeFileWritten file1Written;
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = "PUBLIC";
+  file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
@@ -2983,7 +3049,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
-  file1Written.storageClassName     = storageClassName;
+  file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -3076,7 +3142,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
-  file2Written.storageClassName     = storageClassName;
+  file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -3234,7 +3300,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
-  ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), catalogue::UserError);
+  ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), exception::UserError);
 }
 
 } // namespace unitTests

@@ -41,7 +41,17 @@ struct RequesterGroupMountRule {
 
   bool operator!=(const RequesterGroupMountRule &rhs) const;
 
+  /**
+   * The name of the disk instance to which the requester group belongs.
+   */
+  std::string diskInstance;
+
+  /**
+   * The name of the requester group which is only guaranteed to be unique
+   * within its disk instance.
+   */
   std::string name;
+
   std::string mountPolicy;
   EntryLog creationLog;
   EntryLog lastModificationLog;

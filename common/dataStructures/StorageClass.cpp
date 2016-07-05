@@ -34,7 +34,8 @@ StorageClass::StorageClass():
 // operator==
 //------------------------------------------------------------------------------
 bool StorageClass::operator==(const StorageClass &rhs) const {
-  return name==rhs.name
+  return diskInstance==rhs.diskInstance
+      && name==rhs.name
       && nbCopies==rhs.nbCopies
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -52,7 +53,8 @@ bool StorageClass::operator!=(const StorageClass &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const StorageClass &obj) {
-  os << "(name=" << obj.name
+  os << "(diskInstance=" << obj.diskInstance
+     << " name=" << obj.name
      << " nbCopies=" << obj.nbCopies
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog

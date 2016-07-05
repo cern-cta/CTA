@@ -72,20 +72,21 @@ protected:
     {
       const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
       for(auto &archiveRoute: archiveRoutes) {
-        m_catalogue->deleteArchiveRoute(archiveRoute.storageClassName, archiveRoute.copyNb);
+        m_catalogue->deleteArchiveRoute(archiveRoute.diskInstanceName, archiveRoute.storageClassName,
+          archiveRoute.copyNb);
       }
     }
     {
       const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
       for(auto &rule: rules) {
-        m_catalogue->deleteRequesterMountRule(rule.name);
+        m_catalogue->deleteRequesterMountRule(rule.diskInstance, rule.name);
       }
     }
     {
       const std::list<common::dataStructures::RequesterGroupMountRule> rules =
         m_catalogue->getRequesterGroupMountRules();
       for(auto &rule: rules) {
-        m_catalogue->deleteRequesterGroupMountRule(rule.name);
+        m_catalogue->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
       }
     }
     {
@@ -103,7 +104,7 @@ protected:
     {
       const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
       for(auto &storageClass: storageClasses) {
-        m_catalogue->deleteStorageClass(storageClass.name);
+        m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name);
       }
     }
     {

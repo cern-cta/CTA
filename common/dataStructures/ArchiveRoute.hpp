@@ -41,8 +41,22 @@ struct ArchiveRoute {
 
   bool operator!=(const ArchiveRoute &rhs) const;
 
+  /**
+   * The name of the disk instance to which the storage class belongs.
+   */
+  std::string diskInstanceName;
+
+  /**
+   * The name of the storage class which is only guranateed to be unique within
+   * its disk instance.
+   */
   std::string storageClassName;
+
+  /**
+   * The cipy number of the tape file.
+   */
   uint64_t copyNb;
+
   std::string tapePoolName;
   EntryLog creationLog;
   EntryLog lastModificationLog;

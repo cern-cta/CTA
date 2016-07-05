@@ -33,7 +33,8 @@ RequesterGroupMountRule::RequesterGroupMountRule() {}
 // operator==
 //------------------------------------------------------------------------------
 bool RequesterGroupMountRule::operator==(const RequesterGroupMountRule &rhs) const {
-  return name==rhs.name
+  return diskInstance==rhs.diskInstance
+    && name==rhs.name
     && mountPolicy==rhs.mountPolicy
     && creationLog==rhs.creationLog
     && lastModificationLog==rhs.lastModificationLog
@@ -51,7 +52,8 @@ bool RequesterGroupMountRule::operator!=(const RequesterGroupMountRule &rhs) con
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const RequesterGroupMountRule &obj) {
-  os << "(name=" << obj.name
+  os << "(diskInstance=" << obj.diskInstance
+     << " name=" << obj.name
      << " mountPolicy=" << obj.mountPolicy
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog

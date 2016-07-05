@@ -41,7 +41,17 @@ struct RequesterMountRule {
 
   bool operator!=(const RequesterMountRule &rhs) const;
 
+  /**
+   * The name of the disk instance to which the requester belongs.
+   */
+  std::string diskInstance;
+
+  /**
+   * The name of the requester which is only guaranteed to be unqiue within its
+   * disk instance.
+   */
   std::string name;
+
   std::string mountPolicy;
   EntryLog creationLog;
   EntryLog lastModificationLog;

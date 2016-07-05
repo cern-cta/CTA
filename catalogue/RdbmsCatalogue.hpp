@@ -76,8 +76,26 @@ public:
   virtual std::list<common::dataStructures::AdminHost> getAdminHosts() const;
   virtual void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment);
 
-  virtual void createStorageClass(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies, const std::string &comment);
-  virtual void deleteStorageClass(const std::string &name);
+  /**
+   * Creates the specified storage class.
+   *
+   * @param cliIdentity The identity of the command-line interface.
+   * @param storageClass The storage class.
+   */
+  virtual void createStorageClass(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::StorageClass &storageClass);
+
+  /**
+   * Deletes the specified storage class.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param stoargeClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk isntance.
+   */
+  virtual void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName);
+
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const;
   virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies);
   virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment);
@@ -89,8 +107,29 @@ public:
   virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment);
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue);
 
-  virtual void createArchiveRoute(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName, const std::string &comment);
-  virtual void deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb);
+  virtual void createArchiveRoute(
+    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const uint64_t copyNb,
+    const std::string &tapePoolName,
+    const std::string &comment);
+
+
+  /**
+   * Deletes the specified archive route.
+   *
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @param copyNb The copy number of the tape file.
+   */
+  virtual void deleteArchiveRoute(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName, 
+    const uint64_t copyNb);
+
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const;
   virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName);
   virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment);
@@ -177,12 +216,16 @@ public:
    *
    * @param cliIdentity The user of the command-line tool.
    * @param mountPolicyName The name of the mount policy.
-   * @param requesterName The name of the requester.
+   * @param diskInstance The name of the disk instance to which the requester
+   * belongs.
+   * @param requesterName The name of the requester which is only guarantted to
+   * be unique within its disk instance.
    * @param comment Comment.
    */
   virtual void createRequesterMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
+    const std::string &diskInstance,
     const std::string &requesterName,
     const std::string &comment);
 
@@ -198,9 +241,12 @@ public:
   /**
    * Deletes the specified mount rule.
    *
-   * @param requesterName The name of the requester.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester belongs.
+   * @param requesterName The name of the requester which is only guaranteed to
+   * be unique within its disk instance.
    */
-  virtual void deleteRequesterMountRule(const std::string &requesterName);
+  virtual void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName);
 
   /**
    * Creates the rule that the specified mount policy will be used for the
@@ -211,12 +257,16 @@ public:
    *
    * @param cliIdentity The user of the command-line tool.
    * @param mountPolicyName The name of the mount policy.
-   * @param requesterGroupName The name of the requester group.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester group belongs.
+   * @param requesterGroupName The name of the requester group which is only
+   * guarantted to be unique within its disk instance.
    * @param comment Comment.
    */
   virtual void createRequesterGroupMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
+    const std::string &diskInstanceName,
     const std::string &requesterGroupName,
     const std::string &comment);
 
@@ -232,9 +282,14 @@ public:
   /**
    * Deletes the specified mount rule.
    *
-   * @param requesterGroupName The name of the requester group.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester group belongs.
+   * @param requesterGroupName The name of the requester group which is only
+   * guaranteed to be unique within its disk instance.
    */
-  virtual void deleteRequesterGroupMountRule(const std::string &requesterGroupName);
+  virtual void deleteRequesterGroupMountRule(
+    const std::string &diskInstanceName,
+    const std::string &requesterGroupName);
 
   virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority);
   virtual void modifyMountPolicyArchiveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveFilesQueued);
@@ -380,10 +435,12 @@ protected:
   /**
    * Returns true if the specified storage class exists.
    *
-   * @param storageClassName The name of the storage class.
+   * @param diskInstance The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClass The name of the storage class.
    * @return True if the storage class exists.
    */
-  bool storageClassExists(const std::string &storageClassName) const;
+  bool storageClassExists(const std::string &diskInstance, const std::string &storageClass) const;
 
   /**
    * Returns true if the specified tape pool exists.
@@ -418,37 +475,51 @@ protected:
   bool mountPolicyExists(const std::string &mountPolicyName) const;
 
   /**
-   * Returns true if the specified requester exists.
+   * Returns true if the specified requester mount-rule exists.
    *
-   * @param requesterName The username of the requester.
-   * @return True if the requester exists.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester belongs.
+   * @param requesterName The username of the requester which is only guaranteed
+   * to be unique within its disk instance.
+   * @return True if the requester mount-rule exists.
    */
-  bool requesterExists(const std::string &requesterName) const;
+  bool requesterMountRuleExists(const std::string &diskInstanceName, const std::string &requesterName) const;
 
   /**
    * Returns the specified requester mount-policy or NULL if one does not exist.
    *
-   * @param requesterName The name of the requester.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester belongs.
+   * @param requesterName The name of the requester which is only guaranteed to
+   * be unique within its disk instance.
    * @return The mount policy or NULL if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &requesterName) const;
+  common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &diskInstanceName,
+    const std::string &requesterName) const;
 
   /**
-   * Returns true if the specified requester group exists.
+   * Returns true if the specified requester-group mount-rule exists.
    *
-   * @param requesterGroupName The name of the requester group.
-   * @return True if the requester group exists.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester group belongs.
+   * @param requesterGroupName The name of the requester group which is only
+   * guaranteed to be unique within its disk instance.
+   * @return True if the requester-group mount-rule exists.
    */
-  bool requesterGroupExists(const std::string &requesterGroupName) const;
+  bool requesterGroupMountRuleExists(const std::string &diskInstanceName, const std::string &requesterGroupName) const;
 
   /**
    * Returns the specified requester-group mount-policy or NULL if one does not
    * exist.
    *
-   * @param requesterGroupName The name of the requester group.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester group belongs.
+   * @param requesterGroupName The name of the requester group which is only
+   * guaranteed to be unique within its disk instance.
    * @return The mount policy or NULL if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &requesterGroupName) const;
+  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &diskInstanceName,
+    const std::string &requesterGroupName) const;
 
   /**
    * Returns the specified tape log information from the specified database

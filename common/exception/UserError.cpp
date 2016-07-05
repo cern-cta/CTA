@@ -19,7 +19,7 @@
 #include "common/exception/UserError.hpp"
 
 namespace cta {
-namespace catalogue {
+namespace exception {
 
 //------------------------------------------------------------------------------
 // constructor

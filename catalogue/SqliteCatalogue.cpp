@@ -18,11 +18,11 @@
 
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
-#include "rdbms/SqliteConn.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
+#include "rdbms/SqliteConn.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -58,7 +58,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
     const char *selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
@@ -90,7 +90,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
         archiveFile.reset(new common::dataStructures::ArchiveFile);
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE");
+        archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset->columnText("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = selectRset->columnText("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = selectRset->columnText("DISK_FILE_USER");
@@ -122,7 +122,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
     }
 
     if(NULL == archiveFile.get()) {
-      UserError ue;
+      exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
       throw ue;
     }
@@ -144,7 +144,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uin
     m_conn->commit();
 
     return *archiveFile;
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

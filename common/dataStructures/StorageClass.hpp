@@ -42,10 +42,40 @@ struct StorageClass {
 
   bool operator!=(const StorageClass &rhs) const;
 
+  /**
+   * The name of the disk instance to which the storage class belongs.
+   *
+   * Please note that the name of a storage class is only gauranteed to be
+   * unique within its disk instance.
+   */
+  std::string diskInstance;
+
+  /**
+   * The name of the storage class.
+   *
+   * Please note that the name of a storage class is only gauranteed to be
+   * unique within its disk instance.
+   */
   std::string name;
+
+  /**
+   * The number of copies on tape.
+   */
   uint64_t nbCopies;
+
+  /**
+   * The creation log.
+   */
   EntryLog creationLog;
+
+  /**
+   * Th alst modification log.
+   */
   EntryLog lastModificationLog;
+
+  /**
+   * The comment.
+   */
   std::string comment;
 
 }; // struct StorageClass

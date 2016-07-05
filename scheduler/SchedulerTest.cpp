@@ -145,27 +145,28 @@ public:
     ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
-    const std::string userComment = "create user";
+    const std::string ruleComment = "create requester mount-rule";
     cta::common::dataStructures::UserIdentity userIdentity;
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_userName, userComment);
+    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
-    std::list<common::dataStructures::RequesterMountRule> users;
-    users = catalogue.getRequesterMountRules();
-    ASSERT_EQ(1, users.size());
+    const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
+    ASSERT_EQ(1, rules.size());
 
-    const common::dataStructures::RequesterMountRule user = users.front();
+    const common::dataStructures::RequesterMountRule rule = rules.front();
 
-    ASSERT_EQ(s_userName, user.name);
-    ASSERT_EQ(mountPolicyName, user.mountPolicy);
-    ASSERT_EQ(userComment, user.comment);
-    ASSERT_EQ(s_adminOnAdminHost.username, user.creationLog.username);
-    ASSERT_EQ(s_adminOnAdminHost.host, user.creationLog.host);
-    ASSERT_EQ(user.creationLog, user.lastModificationLog);
+    ASSERT_EQ(s_userName, rule.name);
+    ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(ruleComment, rule.comment);
+    ASSERT_EQ(s_adminOnAdminHost.username, rule.creationLog.username);
+    ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
+    ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
-    const uint16_t nbCopies = 1;
-    const std::string storageClassComment = "Storage-class comment";
-    ASSERT_NO_THROW(catalogue.createStorageClass(s_adminOnAdminHost, s_storageClassName,
-      nbCopies, storageClassComment));
+    common::dataStructures::StorageClass storageClass;
+    storageClass.diskInstance = s_diskInstance;
+    storageClass.name = s_storageClassName;
+    storageClass.nbCopies = 1;
+    storageClass.comment = "create storage class";
+    m_catalogue->createStorageClass(s_adminOnAdminHost, storageClass);
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
@@ -174,8 +175,8 @@ public:
       nbPartialTapes, tapePoolEncryption, tapePoolComment));
     const uint16_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    ASSERT_NO_THROW(catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName,
-      copyNb, s_tapePoolName, archiveRouteComment));
+    catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,
+      archiveRouteComment);
   }
 
 private:
@@ -193,6 +194,7 @@ private:
 protected:
   // Default parameters for storage classes, etc...
   const std::string s_userName = "user_name";
+  const std::string s_diskInstance = "disk_instance";
   const std::string s_storageClassName = "TestStorageClass";
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
   const std::string s_tapePoolName = "TestTapePool";

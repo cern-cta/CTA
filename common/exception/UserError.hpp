@@ -21,7 +21,7 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
-namespace catalogue {
+namespace exception {
 
 /**
  * An exception class representng a user as opposed to an application error.
@@ -41,5 +41,5 @@ public:
 
 }; // class UserError
 
-} // namespace catalogue
+} // namespace exception
 } // namespace cta

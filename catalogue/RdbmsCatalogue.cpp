@@ -56,7 +56,7 @@ void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
   try {
     createAdminUser(cliIdentity, username, comment);
     createAdminHost(cliIdentity, hostName, comment);
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -72,7 +72,7 @@ void RdbmsCatalogue::createAdminUser(
   const std::string &comment) {
   try {
     if(adminUserExists(username)) {
-      throw UserError(std::string("Cannot create admin user " + username +
+      throw exception::UserError(std::string("Cannot create admin user " + username +
         " because an admin user with the same name already exists"));
     }
     const uint64_t now = time(NULL);
@@ -116,7 +116,7 @@ void RdbmsCatalogue::createAdminUser(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -155,9 +155,9 @@ void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
+      throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -226,7 +226,7 @@ void RdbmsCatalogue::createAdminHost(
   const std::string &comment) {
   try {
     if(adminHostExists(hostName)) {
-      throw UserError(std::string("Cannot create admin host " + hostName +
+      throw exception::UserError(std::string("Cannot create admin host " + hostName +
         " because an admin host with the same name already exists"));
     }
     const uint64_t now = time(NULL);
@@ -270,7 +270,7 @@ void RdbmsCatalogue::createAdminHost(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -309,9 +309,9 @@ void RdbmsCatalogue::deleteAdminHost(const std::string &hostName) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete admin-host ") + hostName + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete admin-host ") + hostName + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -375,17 +375,16 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createStorageClass(
   const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &name,
-  const uint64_t nbCopies,
-  const std::string &comment) {
+  const common::dataStructures::StorageClass &storageClass) {
   try {
-    if(storageClassExists(name)) {
-      throw UserError(std::string("Cannot create storage class ") + name +
-        " because a storage class with the same name already exists");
+    if(storageClassExists(storageClass.diskInstance, storageClass.name)) {
+      throw exception::UserError(std::string("Cannot create storage class ") + storageClass.diskInstance + ":" +
+        storageClass.name + " because it already exists");
     }
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO STORAGE_CLASS("
+        "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "NB_COPIES,"
 
@@ -398,7 +397,8 @@ void RdbmsCatalogue::createStorageClass(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-        "VALUES("
+      "VALUES("
+        ":DISK_INSTANCE_NAME,"
         ":STORAGE_CLASS_NAME,"
         ":NB_COPIES,"
 
@@ -413,10 +413,11 @@ void RdbmsCatalogue::createStorageClass(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
-    stmt->bindString(":STORAGE_CLASS_NAME", name);
-    stmt->bindUint64(":NB_COPIES", nbCopies);
+    stmt->bindString(":DISK_INSTANCE_NAME", storageClass.diskInstance);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClass.name);
+    stmt->bindUint64(":NB_COPIES", storageClass.nbCopies);
 
-    stmt->bindString(":USER_COMMENT", comment);
+    stmt->bindString(":USER_COMMENT", storageClass.comment);
 
     stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
     stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
@@ -427,7 +428,7 @@ void RdbmsCatalogue::createStorageClass(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -437,17 +438,20 @@ void RdbmsCatalogue::createStorageClass(
 //------------------------------------------------------------------------------
 // storageClassExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::storageClassExists(const std::string &storageClassName) const {
+bool RdbmsCatalogue::storageClassExists(const std::string &diskInstance, const std::string &storageClass) const {
   try {
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
       "FROM "
         "STORAGE_CLASS "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstance);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     return rset->next();
   } catch (exception::Exception &ex) {
@@ -458,22 +462,25 @@ bool RdbmsCatalogue::storageClassExists(const std::string &storageClassName) con
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteStorageClass(const std::string &name) {
+void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) {
   try {
     const char *const sql =
       "DELETE FROM "
         "STORAGE_CLASS "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
-    stmt->bindString(":STORAGE_CLASS_NAME", name);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
 
     stmt->executeNonQuery();
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete storage-class ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete storage-class ") + diskInstanceName + ":" +
+        storageClassName + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -489,6 +496,7 @@ std::list<common::dataStructures::StorageClass>
     std::list<common::dataStructures::StorageClass> storageClasses;
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "NB_COPIES AS NB_COPIES,"
 
@@ -508,6 +516,7 @@ std::list<common::dataStructures::StorageClass>
     while (rset->next()) {
       common::dataStructures::StorageClass storageClass;
 
+      storageClass.diskInstance = rset->columnText("DISK_INSTANCE_NAME");
       storageClass.name = rset->columnText("STORAGE_CLASS_NAME");
       storageClass.nbCopies = rset->columnUint64("NB_COPIES");
       storageClass.comment = rset->columnText("USER_COMMENT");
@@ -552,7 +561,7 @@ void RdbmsCatalogue::createTapePool(
   const std::string &comment) {
   try {
     if(tapePoolExists(name)) {
-      throw UserError(std::string("Cannot create tape pool ") + name +
+      throw exception::UserError(std::string("Cannot create tape pool ") + name +
         " because a tape pool with the same name already exists");
     }
     const time_t now = time(NULL);
@@ -602,7 +611,7 @@ void RdbmsCatalogue::createTapePool(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -641,9 +650,9 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -724,6 +733,7 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createArchiveRoute(
   const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &diskInstanceName,
   const std::string &storageClassName,
   const uint64_t copyNb,
   const std::string &tapePoolName,
@@ -732,6 +742,7 @@ void RdbmsCatalogue::createArchiveRoute(
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO ARCHIVE_ROUTE("
+        "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "COPY_NB,"
         "TAPE_POOL_NAME,"
@@ -746,6 +757,7 @@ void RdbmsCatalogue::createArchiveRoute(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
+        ":DISK_INSTANCE_NAME,"
         ":STORAGE_CLASS_NAME,"
         ":COPY_NB,"
         ":TAPE_POOL_NAME,"
@@ -761,6 +773,7 @@ void RdbmsCatalogue::createArchiveRoute(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -784,26 +797,29 @@ void RdbmsCatalogue::createArchiveRoute(
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint64_t copyNb) {
+void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, const std::string &storageClassName,
+  const uint64_t copyNb) {
   try {
     const char *const sql =
       "DELETE FROM "
         "ARCHIVE_ROUTE "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
         "COPY_NB = :COPY_NB";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      UserError ue;
-      ue.getMessage() << "Cannot delete archive route for storage-class " << storageClassName + " and copy number " <<
-        copyNb << " because it does not exist";
+      exception::UserError ue;
+      ue.getMessage() << "Cannot delete archive route for storage-class " << diskInstanceName + ":" + storageClassName +
+        " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -813,12 +829,12 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &storageClassName, con
 //------------------------------------------------------------------------------
 // getArchiveRoutes
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveRoute>
-  RdbmsCatalogue::getArchiveRoutes() const {
+std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes() const {
   try {
     std::list<common::dataStructures::ArchiveRoute> routes;
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "COPY_NB AS COPY_NB,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -839,6 +855,7 @@ std::list<common::dataStructures::ArchiveRoute>
     while (rset->next()) {
       common::dataStructures::ArchiveRoute route;
 
+      route.diskInstanceName = rset->columnText("DISK_INSTANCE_NAME");
       route.storageClassName = rset->columnText("STORAGE_CLASS_NAME");
       route.copyNb = rset->columnUint64("COPY_NB");
       route.tapePoolName = rset->columnText("TAPE_POOL_NAME");
@@ -882,7 +899,7 @@ void RdbmsCatalogue::createLogicalLibrary(
   const std::string &comment) {
   try {
     if(logicalLibraryExists(name)) {
-      throw UserError(std::string("Cannot create logical library ") + name +
+      throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
     }
     const time_t now = time(NULL);
@@ -926,7 +943,7 @@ void RdbmsCatalogue::createLogicalLibrary(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(std::exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
@@ -965,9 +982,9 @@ void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1041,7 +1058,7 @@ void RdbmsCatalogue::createTape(
   const std::string &comment) {
   try {
     if(tapeExists(vid)) {
-      throw UserError(std::string("Cannot create tape ") + vid +
+      throw exception::UserError(std::string("Cannot create tape ") + vid +
         " because a tape with the same volume identifier already exists");
     }
     const time_t now = time(NULL);
@@ -1112,7 +1129,7 @@ void RdbmsCatalogue::createTape(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1151,9 +1168,9 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete tape ") + vid + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete tape ") + vid + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1458,7 +1475,7 @@ void RdbmsCatalogue::createMountPolicy(
   const std::string &comment) {
   try {
     if(mountPolicyExists(name)) {
-      throw UserError(std::string("Cannot create mount policy ") + name +
+      throw exception::UserError(std::string("Cannot create mount policy ") + name +
         " because a mount policy with the same name already exists");
     }
     const time_t now = time(NULL);
@@ -1526,7 +1543,7 @@ void RdbmsCatalogue::createMountPolicy(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1539,22 +1556,25 @@ void RdbmsCatalogue::createMountPolicy(
 void RdbmsCatalogue::createRequesterMountRule(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &mountPolicyName,
+  const std::string &diskInstanceName,
   const std::string &requesterName,
   const std::string &comment) {
   try {
-    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterMountPolicy(requesterName));
+    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterMountPolicy(diskInstanceName,
+      requesterName));
     if(NULL != mountPolicy.get()) {
-      throw UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName + " to requester " +
-        requesterName + " because a rule already exists assigning the requester to mount-policy " +
+      throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName + " to requester " +
+        diskInstanceName + ":" + requesterName + " because the requester is already assigned to mount-policy " +
         mountPolicy->name);
     }
     if(!mountPolicyExists(mountPolicyName)) {
-      throw UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName + " to requester " +
-        requesterName + " because mount-policy " + mountPolicyName + " does not exist");
+      throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName + " to requester " +
+        diskInstanceName + ":" + requesterName + " because mount-policy " + mountPolicyName + " does not exist");
     }
     const uint64_t now = time(NULL);
     const char *const sql =
       "INSERT INTO REQUESTER_MOUNT_RULE("
+        "DISK_INSTANCE_NAME,"
         "REQUESTER_NAME,"
         "MOUNT_POLICY_NAME,"
 
@@ -1568,6 +1588,7 @@ void RdbmsCatalogue::createRequesterMountRule(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
+        ":DISK_INSTANCE_NAME,"
         ":REQUESTER_NAME,"
         ":MOUNT_POLICY_NAME,"
 
@@ -1582,6 +1603,7 @@ void RdbmsCatalogue::createRequesterMountRule(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
 
@@ -1596,7 +1618,7 @@ void RdbmsCatalogue::createRequesterMountRule(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1611,6 +1633,7 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
     std::list<common::dataStructures::RequesterMountRule> rules;
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "REQUESTER_NAME AS REQUESTER_NAME,"
         "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
 
@@ -1630,6 +1653,7 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
     while(rset->next()) {
       common::dataStructures::RequesterMountRule rule;
 
+      rule.diskInstance = rset->columnText("DISK_INSTANCE_NAME");
       rule.name = rset->columnText("REQUESTER_NAME");
       rule.mountPolicy = rset->columnText("MOUNT_POLICY_NAME");
       rule.comment = rset->columnText("USER_COMMENT");
@@ -1652,18 +1676,24 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
 //------------------------------------------------------------------------------
 // deleteRequesterMountRule
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteRequesterMountRule(const std::string &requesterName) {
+void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) {
   try {
-    const char *const sql = "DELETE FROM REQUESTER_MOUNT_RULE WHERE REQUESTER_NAME = :REQUESTER_NAME";
+    const char *const sql =
+      "DELETE FROM "
+        "REQUESTER_MOUNT_RULE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete mount rule for requester ") + requesterName +
+      throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":" + requesterName +
         " because the rule does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1676,22 +1706,25 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &requesterName) 
 void RdbmsCatalogue::createRequesterGroupMountRule(
   const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &mountPolicyName,
+  const std::string &diskInstanceName,
   const std::string &requesterGroupName,
   const std::string &comment) {
   try {
-    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterGroupMountPolicy(requesterGroupName));
+    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterGroupMountPolicy(diskInstanceName,
+     requesterGroupName));
     if(NULL != mountPolicy.get()) {
-      throw UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-        " to requester-group " + requesterGroupName + " because a rule already exists assigning the requester-group to "
-        "mount-policy " + mountPolicy->name);
+      throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
+        " to requester-group " + diskInstanceName + ":" + requesterGroupName +
+        " because a rule already exists assigning the requester-group to mount-policy " + mountPolicy->name);
     }
     if(!mountPolicyExists(mountPolicyName)) {
-      throw UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
-        requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
+      throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
+        diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
     }
     const uint64_t now = time(NULL);
     const char *const sql =
       "INSERT INTO REQUESTER_GROUP_MOUNT_RULE("
+        "DISK_INSTANCE_NAME,"
         "REQUESTER_GROUP_NAME,"
         "MOUNT_POLICY_NAME,"
 
@@ -1705,6 +1738,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
+        ":DISK_INSTANCE_NAME,"
         ":REQUESTER_GROUP_NAME,"
         ":MOUNT_POLICY_NAME,"
 
@@ -1719,6 +1753,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
         ":LAST_UPDATE_TIME)";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
 
@@ -1733,7 +1768,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1744,6 +1779,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
 common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolicy(
+  const std::string &diskInstanceName,
   const std::string &requesterGroupName) const {
   try {
     const char *const sql =
@@ -1774,8 +1810,10 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
       "ON "
         "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME "
       "WHERE "
+        "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     if(rset->next()) {
@@ -1816,6 +1854,7 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
     std::list<common::dataStructures::RequesterGroupMountRule> rules;
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME,"
         "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
 
@@ -1835,6 +1874,7 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
     while(rset->next()) {
       common::dataStructures::RequesterGroupMountRule rule;
 
+      rule.diskInstance = rset->columnText("DISK_INSTANCE_NAME");
       rule.name = rset->columnText("REQUESTER_GROUP_NAME");
       rule.mountPolicy = rset->columnText("MOUNT_POLICY_NAME");
 
@@ -1858,19 +1898,25 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
 //------------------------------------------------------------------------------
 // deleteRequesterGroupMountRule
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &requesterGroupName) {
+void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstanceName,
+  const std::string &requesterGroupName) {
   try {
     const char *const sql =
-      "DELETE FROM REQUESTER_GROUP_MOUNT_RULE WHERE REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
+      "DELETE FROM "
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete the mount rule for requester group ") + requesterGroupName +
-        " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete the mount rule for requester group ") + diskInstanceName + ":" +
+        requesterGroupName + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1899,9 +1945,10 @@ bool RdbmsCatalogue::mountPolicyExists(const std::string &mountPolicyName) const
 }
 
 //------------------------------------------------------------------------------
-// requesterExists
+// requesterMountRuleExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::requesterExists(const std::string &requesterName) const {
+bool RdbmsCatalogue::requesterMountRuleExists(const std::string &diskInstanceName,
+  const std::string &requesterName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1909,8 +1956,10 @@ bool RdbmsCatalogue::requesterExists(const std::string &requesterName) const {
       "FROM "
         "REQUESTER_MOUNT_RULE "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_NAME = :REQUESTER_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     return rset->next();
@@ -1922,7 +1971,9 @@ bool RdbmsCatalogue::requesterExists(const std::string &requesterName) const {
 //------------------------------------------------------------------------------
 // getRequesterMountPolicy
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(const std::string &requesterName) const {
+common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
+  const std::string &diskInstanceName,
+  const std::string &requesterName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1952,8 +2003,10 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(con
       "ON "
         "MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME "
       "WHERE "
+        "REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     if(rset->next()) {
@@ -1990,18 +2043,22 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(con
 }
 
 //------------------------------------------------------------------------------
-// requesterGroupExists
+// requesterGroupMountRuleExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::requesterGroupExists(const std::string &requesterGroupName) const {
+bool RdbmsCatalogue::requesterGroupMountRuleExists(const std::string &diskInstanceName,
+  const std::string &requesterGroupName) const {
   try {
     const char *const sql =
       "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
         "REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME "
       "FROM "
         "REQUESTER_GROUP_MOUNT_RULE "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     return rset->next();
@@ -2021,9 +2078,9 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
     stmt->executeNonQuery();
 
     if(0 == stmt->getNbAffectedRows()) {
-      throw UserError(std::string("Cannot delete mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot delete mount policy ") + name + " because it does not exist");
     }
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2033,8 +2090,7 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
 //------------------------------------------------------------------------------
 // getMountPolicies
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::MountPolicy>
-  RdbmsCatalogue::getMountPolicies() const {
+std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies() const {
   try {
     std::list<common::dataStructures::MountPolicy> policies;
     const char *const sql =
@@ -2233,11 +2289,16 @@ void RdbmsCatalogue::modifyDedicationComment(const common::dataStructures::Secur
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
   try {
+    if(!storageClassExists(row.diskInstance, row.storageClassName)) {
+      throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
+        " does not exist");
+    }
+
     const time_t now = time(NULL);
     const char *const sql =
       "INSERT INTO ARCHIVE_FILE("
         "ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE,"
+        "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
         "DISK_FILE_PATH,"
         "DISK_FILE_USER,"
@@ -2251,7 +2312,7 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
         "RECONCILIATION_TIME)"
       "VALUES("
         ":ARCHIVE_FILE_ID,"
-        ":DISK_INSTANCE,"
+        ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
         ":DISK_FILE_USER,"
@@ -2266,7 +2327,7 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
-    stmt->bindString(":DISK_INSTANCE", row.diskInstance);
+    stmt->bindString(":DISK_INSTANCE_NAME", row.diskInstance);
     stmt->bindString(":DISK_FILE_ID", row.diskFileId);
     stmt->bindString(":DISK_FILE_PATH", row.diskFilePath);
     stmt->bindString(":DISK_FILE_USER", row.diskFileUser);
@@ -2375,7 +2436,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
     std::string sql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
@@ -2406,7 +2467,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
       sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     }
     if(searchCriteria.diskInstance) {
-      sql += " AND ARCHIVE_FILE.DISK_INSTANCE = :DISK_INSTANCE";
+      sql += " AND ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
     }
     if(searchCriteria.diskFileId) {
       sql += " AND ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
@@ -2440,7 +2501,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
       stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
     if(searchCriteria.diskInstance) {
-      stmt->bindString(":DISK_INSTANCE", searchCriteria.diskInstance.value());
+      stmt->bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
     }
     if(searchCriteria.diskFileId) {
       stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
@@ -2475,7 +2536,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
         common::dataStructures::ArchiveFile archiveFile;
 
         archiveFile.archiveFileID = archiveFileId;
-        archiveFile.diskInstance = rset->columnText("DISK_INSTANCE");
+        archiveFile.diskInstance = rset->columnText("DISK_INSTANCE_NAME");
         archiveFile.diskFileId = rset->columnText("DISK_FILE_ID");
         archiveFile.diskFileInfo.path = rset->columnText("DISK_FILE_PATH");
         archiveFile.diskFileInfo.owner = rset->columnText("DISK_FILE_USER");
@@ -2582,7 +2643,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
   } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
   } else {
-    throw UserError(std::string("Cannot prepare for a new archive file because no mount policy exists for " +
+    throw exception::UserError(std::string("Cannot prepare for a new archive file because no mount policy exists for " +
       user.name + ":" + user.group));
   }
 
@@ -2822,7 +2883,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
-      UserError ue;
+      exception::UserError ue;
       ue.getMessage() << "Cannot prepare to retrieve the file with archive file ID because  no mount policy exists "
         "for " + user.name + ":" + user.group;
       throw ue;
@@ -2832,7 +2893,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     criteria.archiveFile = *archiveFile;
     criteria.mountPolicy = mountPolicy;
     return criteria;
-  } catch(UserError &) {
+  } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -3112,7 +3173,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     const char *const sql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE AS DISK_INSTANCE,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
@@ -3145,7 +3206,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile.reset(new common::dataStructures::ArchiveFile);
 
         archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = rset->columnText("DISK_INSTANCE");
+        archiveFile->diskInstance = rset->columnText("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset->columnText("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset->columnText("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = rset->columnText("DISK_FILE_USER");
