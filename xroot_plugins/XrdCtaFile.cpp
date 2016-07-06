@@ -927,14 +927,12 @@ int XrdCtaFile::xCom_tape() {
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, true, false);
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
       optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, true, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
-      std::string encryptionkey_value = encryptionkey? encryptionkey.value():"-";
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      std::string comment_value = comment? comment.value():"-";
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, true, true, "-");
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, true, "-");
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, true, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", false, true, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey_value, capacity.value(), disabled.value(), full.value(), comment_value);
+      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey.value(), capacity.value(), disabled.value(), full.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
