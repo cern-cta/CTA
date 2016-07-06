@@ -164,6 +164,17 @@ public:
    */
   virtual std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria) const;
 
+  /**
+   * Returns the tapes with the specified volume identifiers.
+   *
+   * This method will throw an exception if it cannot find ALL of the specified
+   * tapes.
+   *
+   * @param vids The tape volume identifiers (VIDs).
+   * @return Map from tape volume identifier to tape.
+   */
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const;
+
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName);
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName);

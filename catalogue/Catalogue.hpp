@@ -59,13 +59,15 @@
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
+#include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 
 #include <list>
-#include <stdint.h>
-#include <string>
 #include <map>
 #include <memory>
+#include <set>
+#include <stdint.h>
+#include <string>
 
 namespace cta {
 
@@ -180,6 +182,17 @@ public:
    */
   virtual std::list<common::dataStructures::Tape> getTapes(
     const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const = 0;
+
+  /**
+   * Returns the tapes with the specified volume identifiers.
+   *
+   * This method will throw an exception if it cannot find ALL of the specified
+   * tapes.
+   *
+   * @param vids The tape volume identifiers (VIDs).
+   * @return Map from tape volume identifier to tape.
+   */
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
 
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) = 0;

@@ -1052,6 +1052,46 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     ASSERT_TRUE(vidToTape.begin()->second.disabled);
     ASSERT_FALSE(vidToTape.begin()->second.full);
   }
+
+  {
+    std::set<std::string> vids;
+    for(uint64_t i = 1; i <= nbTapes; i++) {
+      std::ostringstream vid;
+      vid << "vid" << i;
+      vids.insert(vid.str());
+    }
+
+    const common::dataStructures::VidToTapeMap vidToTape = m_catalogue->getTapesByVid(vids);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+
+    for(uint64_t i = 1; i <= nbTapes; i++) {
+      std::ostringstream vid;
+      vid << "vid" << i;
+
+      auto vidAndTapeItor = vidToTape.find(vid.str());
+      ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
+
+      const common::dataStructures::Tape tape = vidAndTapeItor->second;
+      ASSERT_EQ(vid.str(), tape.vid);
+      ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
+      ASSERT_EQ(tapePool, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabled == tape.disabled);
+      ASSERT_TRUE(full == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
@@ -3262,6 +3302,22 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
   ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+  std::set<std::string> vids = {{"non_existent_tape"}};
+  ASSERT_THROW(m_catalogue->getTapesByVid(vids), exception::Exception);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_no_vids) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+  std::set<std::string> vids;
+  ASSERT_TRUE(m_catalogue->getTapesByVid(vids).empty());
 }
 
 } // namespace unitTests

@@ -1310,6 +1310,109 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
 }
 
 //------------------------------------------------------------------------------
+// getTapesByVid
+//------------------------------------------------------------------------------
+common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
+  try {
+    common::dataStructures::VidToTapeMap vidToTapeMap;
+    std::string sql =
+      "SELECT "
+        "VID AS VID,"
+        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "LAST_FSEQ AS LAST_FSEQ,"
+        "IS_DISABLED AS IS_DISABLED,"
+        "IS_FULL AS IS_FULL,"
+        "LBP_IS_ON AS LBP_IS_ON,"
+
+        "LABEL_DRIVE AS LABEL_DRIVE,"
+        "LABEL_TIME AS LABEL_TIME,"
+
+        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "LAST_READ_TIME AS LAST_READ_TIME,"
+
+        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "TAPE";
+
+    if(!vids.empty()) {
+      sql += " WHERE ";
+    }
+
+    {
+      for(uint64_t vidNb = 1; vidNb <= vids.size(); vidNb++) {
+        if(1 < vidNb) {
+          sql += " OR ";
+        }
+        sql += "VID = :VID" + std::to_string(vidNb);
+      }
+    }
+
+    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+
+    {
+      uint64_t vidNb = 1;
+      for(auto &vid : vids) {
+        stmt->bindString(":VID" + std::to_string(vidNb), vid);
+        vidNb++;
+      }
+    }
+
+    std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
+    while (rset->next()) {
+      common::dataStructures::Tape tape;
+
+      tape.vid = rset->columnText("VID");
+      tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
+      tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
+      tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
+      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
+      tape.disabled = rset->columnUint64("IS_DISABLED");
+      tape.full = rset->columnUint64("IS_FULL");
+      tape.lbp = rset->columnUint64("LBP_IS_ON");
+
+      tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
+      tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+      tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+
+      tape.comment = rset->columnText("USER_COMMENT");
+      tape.creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
+      tape.creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+      tape.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      tape.lastModificationLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
+      tape.lastModificationLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+      tape.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+
+      vidToTapeMap[tape.vid] = tape;
+    }
+
+    if(vids.size() != vidToTapeMap.size()) {
+      throw exception::Exception("Not all tapes were found");
+    }
+
+    return vidToTapeMap;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // getTapeLogFromRset
 //------------------------------------------------------------------------------
 optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const rdbms::DbRset &rset,
