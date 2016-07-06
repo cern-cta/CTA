@@ -352,8 +352,6 @@ public:
    */
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id);
   
-  virtual void setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force);
-
   /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.

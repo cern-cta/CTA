@@ -2605,13 +2605,6 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
 }
           
 //------------------------------------------------------------------------------
-// setDriveStatus
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,

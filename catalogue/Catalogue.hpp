@@ -369,8 +369,6 @@ public:
    * @return The archive file.
    */
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
-  
-  virtual void setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) = 0;
 
   /**
    * Prepares the catalogue for a new archive file and returns the information
