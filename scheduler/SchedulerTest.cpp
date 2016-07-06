@@ -17,21 +17,21 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
-#include "rdbms/DbConn.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "rdbms/DbConn.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "scheduler/ArchiveMount.hpp"
-#include "scheduler/RetrieveMount.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -133,8 +133,7 @@ public:
       maxDrivesAllowed,
       mountPolicyComment);
 
-    const std::list<common::dataStructures::MountPolicy> groups =
-      catalogue.getMountPolicies();
+    const std::list<common::dataStructures::MountPolicy> groups = catalogue.getMountPolicies();
     ASSERT_EQ(1, groups.size());
     const common::dataStructures::MountPolicy group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
@@ -226,7 +225,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
-  request.instance="cms";
+  request.instance=s_diskInstance;
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = s_userName;

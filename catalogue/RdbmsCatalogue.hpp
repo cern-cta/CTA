@@ -353,20 +353,25 @@ public:
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id);
   
   virtual void setDriveStatus(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force);
+
   /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
    *
-   * @param storageClass The storage class of the file to be archived.  This
-   * will be used by the Catalogue to determine the destinate tape pool for
-   * each tape copy.
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
    * @param user The user for whom the file is to be archived.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
   virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
-    const std::string &storageClass,
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
     const common::dataStructures::UserIdentity &user);
 
   /**
@@ -391,8 +396,6 @@ public:
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user);
-
-  virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &storageClass) const;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
@@ -744,6 +747,20 @@ protected:
     const uint64_t startingArchiveFileId,
     const uint64_t maxNbArchiveFiles,
     const ArchiveFileSearchCriteria &searchCriteria) const;
+
+  /**
+   * Returns the mapping from tape copy to tape pool for the specified storage
+   * class.
+   *
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @return The mapping from tape copy to tape pool for the specified storage
+   * class.
+   */
+  virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &diskInstanceName,
+    const std::string &storageClassName) const;
 
 }; // class RdbmsCatalogue
 

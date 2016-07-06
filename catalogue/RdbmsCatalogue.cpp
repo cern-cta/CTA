@@ -2614,24 +2614,22 @@ void RdbmsCatalogue::setDriveStatus(const common::dataStructures::SecurityIdenti
 //------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &storageClass,
-  const common::dataStructures::UserIdentity &user) {
-  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    getTapeCopyToPoolMap(storageClass);
-  const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClass);
+common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,
+  const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
+  const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(diskInstanceName,
+    storageClassName);
+  const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClassName);
 
   // Check that the number of archive routes is correct
   if(copyToPoolMap.empty()) {
     exception::Exception ex;
-    ex.getMessage() << "Storage class " << storageClass << " has no archive"
-      " routes";
+    ex.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
     throw ex;
   }
   if(copyToPoolMap.size() != expectedNbRoutes) {
     exception::Exception ex;
-    ex.getMessage() << "Storage class " << storageClass << " does not have the"
-      " expected number of archive routes routes: expected=" << expectedNbRoutes
-      << ", actual=" << copyToPoolMap.size();
+    ex.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
+      " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" << copyToPoolMap.size();
     throw ex;
   }
 
@@ -2657,8 +2655,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
 //------------------------------------------------------------------------------
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::
-  getTapeCopyToPoolMap(const std::string &storageClass) const {
+common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(const std::string &diskInstanceName,
+  const std::string &storageClassName) const {
   try {
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
     const char *const sql =
@@ -2668,9 +2666,11 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::
       "FROM "
         "ARCHIVE_ROUTE "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     while (rset->next()) {
       const uint64_t copyNb = rset->columnUint64("COPY_NB");

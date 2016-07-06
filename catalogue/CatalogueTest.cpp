@@ -585,15 +585,8 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   ASSERT_EQ(m_cliSI.username, creationLog.username);
   ASSERT_EQ(m_cliSI.host, creationLog.host);
   
-  const common::dataStructures::EntryLog lastModificationLog =
-    route.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
-
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
@@ -666,12 +659,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
-
   m_catalogue->deleteArchiveRoute(storageClass.diskInstance, storageClass.name, copyNb);
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
@@ -725,13 +712,6 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   const common::dataStructures::EntryLog lastModificationLog =
     route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
-
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
 
   ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name), exception::Exception);
 }
@@ -1660,19 +1640,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
-
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;
@@ -1765,20 +1739,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap =
-    m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
-
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = "username";
   userIdentity.group = requesterGroupName;
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;
@@ -1890,19 +1857,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::TapeCopyToPoolMap copyToPoolMap = m_catalogue->getTapeCopyToPoolMap(storageClass.name);
-  ASSERT_EQ(1, copyToPoolMap.size());
-  std::pair<uint64_t, std::string> maplet = *(copyToPoolMap.begin());
-  ASSERT_EQ(copyNb, maplet.first);
-  ASSERT_EQ(tapePoolName, maplet.second);
-
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
     const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareForNewFile(storageClass.name, userIdentity);
+      m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
       expectedArchiveFileId = queueCriteria.fileId;

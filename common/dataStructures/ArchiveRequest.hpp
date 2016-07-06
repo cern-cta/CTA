@@ -18,14 +18,14 @@
 
 #pragma once
 
+#include "common/dataStructures/DiskFileInfo.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/UserIdentity.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -44,7 +44,12 @@ struct ArchiveRequest {
 
   UserIdentity requester;
   std::string diskFileID;
+
+  /**
+   * The name of the disk instance.
+   */
   std::string instance;
+
   std::string srcURL;
   uint64_t fileSize;
   /**

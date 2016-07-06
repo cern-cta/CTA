@@ -57,7 +57,7 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 // queueArchive
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {
-  auto catalogueInfo = m_catalogue.prepareForNewFile(request.storageClass, request.requester);
+  auto catalogueInfo = m_catalogue.prepareForNewFile(request.instance, request.storageClass, request.requester);
   m_db.queue(request, catalogueInfo);
   return catalogueInfo.fileId;
 }
