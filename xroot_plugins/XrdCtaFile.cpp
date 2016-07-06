@@ -764,9 +764,9 @@ int XrdCtaFile::xCom_archiveroute() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ar/archiveroute add/ch/rm/ls:" << std::endl
-       << "\tadd --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
+       << "\tadd --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
@@ -774,38 +774,38 @@ int XrdCtaFile::xCom_archiveroute() {
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> scn = getOptionStringValue("-s", "--storageclass", false, true);
     optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, true);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true);
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->createArchiveRoute(m_cliIdentity, scn.value(), diskInstance, cn.value(), tapepool.value(), comment.value());
+      m_catalogue->createArchiveRoute(m_cliIdentity, scn.value(), in.value(), cn.value(), tapepool.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       if(comment) {
-        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, scn.value(), cn.value(), comment.value());
+        m_catalogue->modifyArchiveRouteComment(m_cliIdentity, in.value(), scn.value(), cn.value(), comment.value());
       }
       if(tapepool) {
-        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, scn.value(), cn.value(), tapepool.value());
+        m_catalogue->modifyArchiveRouteTapePoolName(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value());
       }
     }
     else { //rm
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->deleteArchiveRoute(diskInstance, scn.value(), cn.value());
+      m_catalogue->deleteArchiveRoute(in.value(), scn.value(), cn.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue->getArchiveRoutes();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstanceName);
         currentRow.push_back(it->storageClassName);
         currentRow.push_back(std::to_string((unsigned long long)it->copyNb));
         currentRow.push_back(it->tapePoolName);
@@ -1035,21 +1035,22 @@ int XrdCtaFile::xCom_storageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sc/storageclass add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <storage_class_name>" << std::endl
+       << "\tadd --instance/-i <instance_name> --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --instance/-i <instance_name> --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --instance/-i <instance_name> --name/-n <storage_class_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> scn = getOptionStringValue("-n", "--name", false, true);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true);
     if("add" == m_requestTokens.at(2)) { //add
       optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, true);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       common::dataStructures::StorageClass storageClass;
-      storageClass.diskInstance = "TODO_disk_instance"; // TODO
+      storageClass.diskInstance = in.value();
       storageClass.name = scn.value();
       storageClass.nbCopies = cn.value();
       storageClass.comment = comment.value();
@@ -1060,25 +1061,26 @@ int XrdCtaFile::xCom_storageclass() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       if(comment) {
-        m_catalogue->modifyStorageClassComment(m_cliIdentity, scn.value(), comment.value());
+        m_catalogue->modifyStorageClassComment(m_cliIdentity, in.value(), scn.value(), comment.value());
       }
       if(cn) {
-        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, scn.value(), cn.value());
+        m_catalogue->modifyStorageClassNbCopies(m_cliIdentity, in.value(), scn.value(), cn.value());
       }
     }
     else { //rm
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->deleteStorageClass(diskInstance, scn.value());
+      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      m_catalogue->deleteStorageClass(in.value(), scn.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::StorageClass> list= m_catalogue->getStorageClasses();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {"instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
         currentRow.push_back(it->name);
         currentRow.push_back(std::to_string((unsigned long long)it->nbCopies));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
@@ -1101,21 +1103,21 @@ int XrdCtaFile::xCom_requestermountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " rmr/requestermountrule add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <user_name>" << std::endl
+       << "\tadd --instance/-i <instance_name> --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true);
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy.value(), diskInstance, name.value(),
+      m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
@@ -1123,25 +1125,26 @@ int XrdCtaFile::xCom_requestermountrule() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       if(comment) {
-        m_catalogue->modifyRequesterComment(m_cliIdentity, name.value(), comment.value());
+        m_catalogue->modifyRequesterComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, name.value(), mountpolicy.value());
+        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
       }
     }
     else { //rm
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->deleteRequesterMountRule(diskInstance, name.value());
+      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      m_catalogue->deleteRequesterMountRule(in.value(), name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue->getRequesterMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {"instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
         currentRow.push_back(it->name);
         currentRow.push_back(it->mountPolicy);
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
@@ -1164,21 +1167,21 @@ int XrdCtaFile::xCom_groupmountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " gmr/groupmountrule add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <user_name>" << std::endl
+       << "\tadd --instance/-i <instance_name> --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
+       << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
+       << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true);
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), diskInstance, name.value(),
+      m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
@@ -1186,26 +1189,26 @@ int XrdCtaFile::xCom_groupmountrule() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
       if(comment) {
-        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, name.value(), comment.value());
+        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, name.value(), mountpolicy.value());
+        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
       }
     }
     else { //rm
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      const std::string diskInstance = "disk_instance_TODO"; // TODO
-      m_catalogue->deleteRequesterGroupMountRule(diskInstance, name.value());
+      m_catalogue->deleteRequesterGroupMountRule(in.value(), name.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RequesterGroupMountRule> list= m_catalogue->getRequesterGroupMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {"instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
         currentRow.push_back(it->name);
         currentRow.push_back(it->mountPolicy);
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);

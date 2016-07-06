@@ -539,14 +539,14 @@ std::list<common::dataStructures::StorageClass>
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) {
+void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -879,14 +879,14 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
+void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
+void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -1436,28 +1436,28 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 //------------------------------------------------------------------------------
 // modifyRequesterMountPolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterName, const std::string &mountPolicy) {
+void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyRequesterComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterName, const std::string &comment) {
+void RdbmsCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyRequesterMountPolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterGroupMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterGroupName, const std::string &mountPolicy) {
+void RdbmsCatalogue::modifyRequesterGroupMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyRequesterComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterGroupName, const std::string &comment) {
+void RdbmsCatalogue::modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 

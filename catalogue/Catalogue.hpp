@@ -115,8 +115,8 @@ public:
   virtual void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) = 0;
 
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
-  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbCopies) = 0;
-  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) = 0;
+  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) = 0;
 
   virtual void createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
   virtual void deleteTapePool(const std::string &name) = 0;
@@ -148,8 +148,8 @@ public:
     const uint64_t copyNb) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
+  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
@@ -195,10 +195,10 @@ public:
   virtual void setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterName, const std::string &mountPolicy) = 0;
-  virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterName, const std::string &comment) = 0;
-  virtual void modifyRequesterGroupMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
-  virtual void modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &requesterGroupName, const std::string &comment) = 0;
+  virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
+  virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
+  virtual void modifyRequesterGroupMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
+  virtual void modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
 
    virtual void createMountPolicy(
     const common::dataStructures::SecurityIdentity &cliIdentity,
