@@ -147,15 +147,22 @@ protected:
   /**
    * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
    * 
-   * @param optionShortName The short name of the required option
-   * @param optionLongName  The long name of the required option
-   * @param encoded         True if the argument is encoded, false otherwise
+   * @param optionShortName      The short name of the required option
+   * @param optionLongName       The long name of the required option
+   * @param encoded              True if the argument is encoded, false otherwise
+   * @param required             True if the option is required, false otherwise
+   * @param useDefaultIfMissing  True if the default value (next parameter) is to be used if option is missing from cmdline, false otherwise
+   * @param default              Value of the default in case option is missing from cmdline (and useDefaultIfMissing is true)
    * @return the option value (empty if absent)
    */
-  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
-  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
-  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
-  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, const bool encoded, const bool required);
+  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, 
+    const bool encoded, const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="-");
+  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, 
+    const bool encoded, const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="0");
+  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, 
+    const bool encoded, const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="false");
+  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, 
+    const bool encoded, const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="01/01/1970");
   
   /**
    * Returns the string/numerical/boolean value of the specified option
