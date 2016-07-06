@@ -114,7 +114,7 @@ int XrdCtaFile::dispatchCommand() {
   std::string command(m_requestTokens.at(1));
   
   std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
-          "ta","tape","sc","storageclass","us","user","mg","mountpolicy","de","dedication","re","repack","sh","shrink","ve","verify",
+          "ta","tape","sc","storageclass","us","user","mp","mountpolicy","de","dedication","re","repack","sh","shrink","ve","verify",
           "af","archivefile","te","test","dr","drive","rc","reconcile","lpa","listpendingarchives","lpr","listpendingretrieves","lds","listdrivestates"};
   
   if (std::find(adminCommands.begin(), adminCommands.end(), command) != adminCommands.end()) {
@@ -131,7 +131,7 @@ int XrdCtaFile::dispatchCommand() {
   else if("sc"   == command || "storageclass"           == command) {return xCom_storageclass();}
   else if("rmr"  == command || "requestermountrule"     == command) {return xCom_requestermountrule();}
   else if("gmr"  == command || "groupmountrule"         == command) {return xCom_groupmountrule();}
-  else if("mg"   == command || "mountpolicy"            == command) {return xCom_mountpolicy();}
+  else if("mp"   == command || "mountpolicy"            == command) {return xCom_mountpolicy();}
   else if("de"   == command || "dedication"             == command) {return xCom_dedication();}
   else if("re"   == command || "repack"                 == command) {return xCom_repack();}
   else if("sh"   == command || "shrink"                 == command) {return xCom_shrink();}
@@ -1250,7 +1250,7 @@ int XrdCtaFile::xCom_groupmountrule() {
 int XrdCtaFile::xCom_mountpolicy() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " mg/mountpolicy add/ch/rm/ls:" << std::endl
+  help << m_requestTokens.at(0) << " mp/mountpolicy add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <mountpolicy_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
        << "\t    --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <mountpolicy_name> [--archivepriority/--ap <priority_value>] [--minarchiverequestage/--aa <minRequestAge>] [--retrievepriority/--rp <priority_value>]" << std::endl
@@ -2305,6 +2305,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " listpendingarchives/lpa"                             << std::endl;
   help << programName << " listpendingretrieves/lpr"                            << std::endl;
   help << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl;
+  help << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl;
   help << programName << " reconcile/rc"                                        << std::endl;
   help << programName << " repack/re                add/rm/ls/err"              << std::endl;
   help << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl;
@@ -2313,8 +2314,6 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl;
   help << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl;
   help << programName << " test/te                  read/write"                 << std::endl;
-  help << programName << " user/us                  add/ch/rm/ls"               << std::endl;
-  help << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl;
   help << programName << " verify/ve                add/rm/ls/err"              << std::endl;
   help << "" << std::endl;
   help << "CTA EOS commands:" << std::endl;
