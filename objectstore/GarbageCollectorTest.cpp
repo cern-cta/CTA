@@ -27,7 +27,7 @@
 #include "DriveRegister.hpp"
 #include "ArchiveRequest.hpp"
 #include "ArchiveQueue.hpp"
-#include "EntryLog.hpp"
+#include "EntryLogSerDeser.hpp"
 
 namespace unitTests {
 
@@ -42,7 +42,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -90,7 +90,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -147,7 +147,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -204,7 +204,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);
@@ -261,7 +261,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agent, el);

@@ -18,24 +18,28 @@
 
 #pragma once
 
-#include "common/CreationLog.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/TapeFile.hpp"
-
-#include <list>
-#include <string>
+#include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace exception {
 
 /**
- * Class representing a user request to retrieve a single archive file to a 
- * single remote file.
+ * An exception class representing an application error that should not be retried.
  */
-struct RetrieveRequestDump {
-  cta::common::dataStructures::RetrieveRequest retrieveRequest; /**< The full path of the source archive file. */
-  cta::common::dataStructures::RetrieveFileQueueCriteria criteria; /**< The list of tape files and mount criteria */
-  uint64_t activeCopyNb; /**< The tape copy number currenty considered for retrieve. */
-}; // struct RetrieveFromTapeCopyRequest
+class NonRetryableError: public exception::Exception {
+public:
 
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  NonRetryableError(const std::string &context = "", const bool embedBacktrace = true);
+
+}; // class UserError
+
+} // namespace exception
 } // namespace cta

@@ -23,6 +23,7 @@
 #include "ArchiveMount.hpp"
 #include "RetrieveMount.hpp"
 #include "common/utils/utils.hpp"
+#include "common/exception/NonRetryableError.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -30,6 +31,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
+#include <random>
+#include <chrono>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -58,7 +61,7 @@ void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::Sec
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {
   auto catalogueInfo = m_catalogue.prepareForNewFile(request.instance, request.storageClass, request.requester);
-  m_db.queue(request, catalogueInfo);
+  m_db.queueArchive(request, catalogueInfo);
   return catalogueInfo.fileId;
 }
 
@@ -68,9 +71,43 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
 void cta::Scheduler::queueRetrieve(
   const cta::common::dataStructures::SecurityIdentity &cliIdentity,
   const cta::common::dataStructures::RetrieveRequest &request) {
+  // Get the 
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(request.archiveFileID, request.requester);
-  m_db.queue(request, queueCriteria);
+  // Get the statuses of the tapes on which we have files.
+  std::set<std::string> vids;
+  for (auto & tf: queueCriteria.archiveFile.tapeFiles) {
+    vids.insert(tf.second.vid);
+  }
+  auto tapeStatuses = m_catalogue.getTapesByVid(vids);
+  // Filter out the tapes with are disabled
+  for (auto & t: tapeStatuses) {
+    if (t.second.disabled)
+      vids.erase(t.second.vid);
+  }
+  if (vids.empty())
+    throw cta::exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
+  // Get the statistics for the potential tapes on which we will retrieve.
+  auto stats=m_db.getRetrieveQueueStatistics(queueCriteria, vids);
+  // Sort the potential queues.
+  stats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
+  // If there are several equivalent entries, choose randomly among them.
+  // First element will always be selected.
+  std::set<std::string> candidateVids;
+  for (auto & s: stats) {
+    if (!(s<stats.front()) && !(s>stats.front()))
+      candidateVids.insert(s.vid);
+  }
+  if (candidateVids.empty())
+    throw cta::exception::Exception("In Scheduler::queueRetrieve(): failed to sort and select candidate VIDs");
+  // We need to get a random number [0, candidateVids.size() -1]
+  std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
+  std::uniform_int_distribution<size_t> distribution(0, candidateVids.size() -1);
+  size_t index=distribution(dre);
+  auto it=candidateVids.cbegin();
+  std::advance(it, index);
+  std::string selectedVid=*it;
+  m_db.queueRetrieve(request, queueCriteria, selectedVid);
 }
 
 //------------------------------------------------------------------------------
@@ -84,7 +121,7 @@ void cta::Scheduler::deleteArchive(const cta::common::dataStructures::SecurityId
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
-void cta::Scheduler::cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request) {
+void cta::Scheduler::cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity,  const cta::common::dataStructures::CancelRetrieveRequest &request) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

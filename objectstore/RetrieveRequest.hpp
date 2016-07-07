@@ -20,19 +20,22 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "TapeFileSerDeser.hpp"
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
 namespace cta { namespace objectstore {
   
 class Backend;
 class Agent;
 class GenericObject;
-class EntryLog;
+class EntryLogSerDeser;
 
 class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t> {
 public:
@@ -40,8 +43,7 @@ public:
   RetrieveRequest(GenericObject & go);
   void initialize();
   // Job management ============================================================
-  void addJob(const cta::common::dataStructures::TapeFile & tapeFile,
-    const std::string & tapeaddress);
+  void addJob(const cta::common::dataStructures::TapeFile & tapeFile, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobFailureLimits(uint16_t copyNumber,
     uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
@@ -49,11 +51,12 @@ public:
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   class JobDump {
   public:
-    uint16_t copyNb;
-    std::string tape;
-    std::string tapeAddress;
-    uint64_t fseq;
-    uint64_t blockid;
+    common::dataStructures::TapeFile tapeFile;
+    uint32_t maxTotalRetries;
+    uint32_t maxRetriesWithinMount;
+    uint32_t retriesWithinMount;
+    uint32_t totalRetries;
+    // TODO: status
   };
   JobDump getJob(uint16_t copyNb);
   struct FailuresCount {
@@ -76,26 +79,14 @@ public:
   void setSuccessful();
   void setFailed();
   // ===========================================================================
-  void setArchiveFile(const cta::common::dataStructures::ArchiveFile & archiveFile);
-  cta::common::dataStructures::ArchiveFile getArchiveFile();
-
-  void setDiskpoolName(const std::string &diskpoolName);
-  std::string getDiskpoolName();
-
-  void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
-  uint64_t getDiskpoolThroughput();
-
-  void setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo);
-  cta::common::dataStructures::DiskFileInfo getDiskFileInfo();
-
-  void setDstURL(const std::string &dstURL);
-  std::string getDstURL();
-
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester();
-
-  void setEntryLog (const objectstore::EntryLog& entryLog);
-  objectstore::EntryLog getEntryLog();
+  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
+  cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
+  
+  void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
+  cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
+  
+  void setActiveCopyNumber(uint32_t activeCopyNb);
+  uint32_t getActiveCopyNumber();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

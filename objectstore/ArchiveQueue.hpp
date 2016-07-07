@@ -26,7 +26,7 @@
 #include "common/MountControl.hpp"
 #include "ArchiveRequest.hpp"
 #include "ArchiveRequest.hpp"
-#include "EntryLog.hpp"
+#include "EntryLogSerDeser.hpp"
 #include "Agent.hpp"
 
 namespace cta { namespace objectstore {

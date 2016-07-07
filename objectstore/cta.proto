@@ -86,30 +86,22 @@ message UserIdentity {
   required string group = 11;
 }
 
-// The creation log attached to each element
-message CreationLog {
-  required string username = 20;
-  required string host = 21;
-  required uint64 time = 22;
-  optional string comment = 23;
-}
-
 // Pointer to the drive register (register defined further)
 message DriveRegisterPointer {
   required string address = 90;
-  required CreationLog log = 91;
+  required EntryLog log = 91;
 }
 
 // Pointer to the agent register (register defined further)
 message AgentRegisterPointer {
   required string address = 100;
-  required CreationLog log = 101;
+  required EntryLog log = 101;
 }
 
 // Pointer to the scheduler global lock
 message SchedulerGlobalLockPointer {
   required string address = 110;
-  required CreationLog log = 111;
+  required EntryLog log = 111;
 }
 
 // Pointer to the archive queue
@@ -266,7 +258,7 @@ message RetrieveToFileRequest {
   required uint64 size = 4802;
   repeated RetrieveJobEntry jobs = 4803;
   required uint64 priority = 4804;
-  required CreationLog log = 4805;
+  required EntryLog log = 4805;
   required uint64 diskfileid = 4806;
   optional string retrievetodiraddress = 4807;
 }
@@ -295,7 +287,7 @@ message DriveState {
   required DriveStatus drivestatus = 5016;
   optional string currentvid = 5017;
   optional string currenttapepool = 5018;
-  required CreationLog creationlog = 5019;
+  required EntryLog creationlog = 5019;
 }
 
 message DriveRegister {
@@ -330,49 +322,76 @@ message EntryLog {
 
 message MountPolicy {
   required string name = 8980;
-  required uint64 minRequestAge = 8981;
-  required uint64 priority = 8982;
-  required uint64 maxDrives = 8983;
+  required uint64 archivepriority = 8981;
+  required uint64 archiveminrequestage = 8982;
+  required uint64 retrievepriority = 8983;
+  required uint64 retieveminrequestage = 8984;
+  required uint64 maxdrivesallowed = 8985;
+  required EntryLog creationlog = 8986;
+  required EntryLog lastmodificationlog = 8987;
+  required string comment = 8988;
 }
 
 message ArchiveRequest {
   required uint64 archiveFileID = 8990;
-  required MountPolicy mountPolicy = 8995;
+  required MountPolicy mountpolicy = 8995;
   required string checksumtype = 9000;
   required string checksumvalue = 9010;
   required uint64 creationtime = 9015;
   required uint64 reconcilationtime = 9017;
-  required string diskpoolName = 9020;
-  required uint64 diskpoolThroughput = 9030;
-  required DiskFileInfo diskFileInfo = 9040;
-  required string diskFileID = 9050;
+  required string diskpoolname = 9020;
+  required uint64 diskpoolthroughput = 9030;
+  required DiskFileInfo diskfileinfo = 9040;
+  required string diskfileid = 9050;
   required string diskinstance = 9055;
-  required uint64 fileSize = 9060;
+  required uint64 filesize = 9060;
   required User requester = 9070;
-  required string srcURL = 9080;
-  required string storageClass = 9090;
-  required EntryLog creationLog = 9091;
+  required string srcurl = 9080;
+  required string storageclass = 9090;
+  required EntryLog creationlog = 9091;
   repeated ArchiveJobEntry jobs = 9092;
 }
 
+message SchedulerRetrieveRequest {
+  required UserIdentity requester = 9100;
+  required uint64 ArchiveFileId = 9101;
+  required string dstURL = 9102;
+  required DiskFileInfo diskfileinfo = 9103;
+  required string diskpoolname = 9104;
+  required uint64 diskpoolthroughput = 9105;
+  required EntryLog entrylog = 9106;
+}
+
+message TapeFile {
+  required string vid = 9120;
+  required uint64 fseq = 9121;
+  required uint64 blockid = 9122;
+  required uint64 compressedsize = 9123;
+  required uint64 copynb = 9124;
+  required uint64 creationtime = 9125;
+  required string checksumtype = 9126;
+  required string checksumvalue = 9127;
+}
+
+message RetrieveJob {
+  required TapeFile tapefile = 9200;
+  required uint32 maxtotalretries = 9201;
+  required uint32 maxretrieswithinmount = 9202;
+  required uint32 retrieswithinmount = 9203;
+  required uint32 totalretries = 9204;
+  required RetrieveJobStatus status = 9205;
+}
+
 message RetrieveRequest {
-  required ArchiveFile archivefile = 9100;
-  required MountPolicy mountPolicy = 9105;
-  required string diskpoolName = 9110;
-  required uint64 diskpoolThroughput = 9120;
-  required DiskFileInfo diskFileInfo = 9130;
-  required string dstURL = 9140;
-  required string diskinstance = 9145;
-  required uint64 reconcilationtime = 9147;
-  required User requester = 9150;
-  required EntryLog creationLog = 9151;
-  repeated RetrieveJobEntry jobs = 9152;
-  required string storageclass = 9153;
+  required SchedulerRetrieveRequest schedulerrequest = 9150;
+  required MountPolicy mountpolicy = 9151;
+  required uint32 activecopynb = 9152;
+  repeated RetrieveJob jobs = 9153;
 }
 
 message ValueCountPair {
-  required uint64 value = 9201;
-  required uint64 count = 9202;
+  required uint64 value = 9301;
+  required uint64 count = 9302;
 }
 
 message ArchiveQueue {

@@ -48,7 +48,7 @@ struct RetrieveRequest {
   DiskFileInfo diskFileInfo;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
-  EntryLog creationLog;
+  EntryLog entryLog;
 
 }; // struct RetrieveRequest
 

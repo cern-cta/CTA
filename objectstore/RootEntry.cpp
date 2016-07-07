@@ -174,7 +174,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     commit();
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
-    throw NoSuchTapePoolQueue("In RootEntry::removeTapePoolQueueAndCommit: trying to remove non-existing tape pool");
+    throw NoSuchArchiveQueue("In RootEntry::removeTapePoolQueueAndCommit: trying to remove non-existing tape pool");
   }
 }
 
@@ -184,7 +184,7 @@ std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
     auto & tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
     return tpp.address();
   } catch (serializers::NotFound &) {
-    throw NotAllocated("In RootEntry::getTapePoolQueueAddress: tape pool not allocated");
+    throw NoSuchArchiveQueue("In RootEntry::getArchiveQueueAddress: archive queue not allocated");
   }
 }
 
@@ -201,11 +201,27 @@ auto RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
 }
 
 // =============================================================================
+// ========== Retrieve queues manipulations ====================================
+// =============================================================================
+
+std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Agent& agent) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+std::string RootEntry::getRetrieveQueue(const std::string& vid) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+void RootEntry::removeArchiveQueueIfAddressMatchesAndCommit(const std::string& tapePool, const std::string& archiveQueueAddress) {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+// =============================================================================
 // ================ Drive register manipulation ================================
 // =============================================================================
 
 std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
-  Agent & agent, const EntryLog & log) {
+  Agent & agent, const EntryLogSerDeser & log) {
   checkPayloadWritable();
   // Check if the drive register exists
   try {
@@ -290,7 +306,7 @@ std::string RootEntry::getAgentRegisterAddress() {
 
 // Get the name of a (possibly freshly created) agent register
 std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
-  const EntryLog & log) {
+  const EntryLogSerDeser & log) {
   // Check if the agent register exists
   try {
     return getAgentRegisterAddress();
@@ -417,7 +433,7 @@ std::string RootEntry::getSchedulerGlobalLock() {
 
 // Get the name of a (possibly freshly created) scheduler global lock
 std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
-  const EntryLog & log) {
+  const EntryLogSerDeser & log) {
   checkPayloadWritable();
   // Check if the drive register exists
   try {
@@ -491,7 +507,6 @@ std::string RootEntry::dump () {
     json_object * pointer = json_object_new_object();
     json_object_object_add(pointer, "address", json_object_new_string(m_payload.driveregisterpointer().address().c_str()));
     json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.driveregisterpointer().log().comment().c_str()));
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
     json_object * id = json_object_new_object();
@@ -504,7 +519,6 @@ std::string RootEntry::dump () {
     json_object * pointer = json_object_new_object();
     json_object_object_add(pointer, "address", json_object_new_string(m_payload.agentregisterpointer().address().c_str()));
     json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.agentregisterpointer().log().comment().c_str()));
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
     json_object * id = json_object_new_object();
@@ -517,7 +531,6 @@ std::string RootEntry::dump () {
     json_object * pointer = json_object_new_object();
     json_object_object_add(pointer, "address", json_object_new_string(m_payload.schedulerlockpointer().address().c_str()));
     json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "comment", json_object_new_string(m_payload.schedulerlockpointer().log().comment().c_str()));
     json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
     json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
     json_object * id = json_object_new_object();

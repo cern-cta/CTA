@@ -150,7 +150,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   
-  void queue(const cta::common::dataStructures::ArchiveRequest &request, 
+  void queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
@@ -179,10 +179,13 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
   /* === Retrieve requests handling  ======================================== */
+  std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
+  
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  void queue(const cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) override;
+  void queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
+    const std::string &vid) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
   

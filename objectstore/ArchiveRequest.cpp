@@ -20,6 +20,7 @@
 #include "GenericObject.hpp"
 #include "ArchiveQueue.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "MountPolicySerDeser.hpp"
 #include <json-c/json.h>
 
 namespace cta { namespace objectstore {
@@ -207,11 +208,7 @@ uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
 //------------------------------------------------------------------------------
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
-  auto payloadMountPolicy = m_payload.mutable_mountpolicy();
-  payloadMountPolicy->set_name(mountPolicy.name);
-  payloadMountPolicy->set_maxdrives(mountPolicy.maxDrivesAllowed);
-  payloadMountPolicy->set_minrequestage(mountPolicy.archiveMinRequestAge);
-  payloadMountPolicy->set_priority(mountPolicy.archivePriority);
+  MountPolicySerDeser(mountPolicy).serialize(*m_payload.mutable_mountpolicy());
 }
 
 //------------------------------------------------------------------------------
@@ -219,13 +216,9 @@ void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStr
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMountPolicy() {
   checkPayloadReadable();
-  cta::common::dataStructures::MountPolicy mountPolicy;
-  auto payloadMountPolicy = m_payload.mountpolicy();
-  mountPolicy.name=payloadMountPolicy.name();
-  mountPolicy.maxDrivesAllowed=payloadMountPolicy.maxdrives();
-  mountPolicy.archiveMinRequestAge=payloadMountPolicy.minrequestage();
-  mountPolicy.archivePriority=payloadMountPolicy.priority();
-  return mountPolicy;
+  MountPolicySerDeser mp;
+  mp.deserialize(m_payload.mountpolicy());
+  return mp;
 }
 
 //------------------------------------------------------------------------------

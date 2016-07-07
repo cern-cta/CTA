@@ -51,8 +51,8 @@ public:
   
   ~OStoreDBWrapper() throw () {}
 
-  void queue(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
-    return m_OStoreDB.queue(request, criteria);
+  void queueArchive(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
+    return m_OStoreDB.queueArchive(request, criteria);
   }
 
   
@@ -60,11 +60,11 @@ public:
     m_OStoreDB.deleteArchiveRequest(cliIdentity, archiveFileId);
   }
 
-  virtual std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override {
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override {
     return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, fileId);
   }
 
-  virtual void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
+  void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 
@@ -76,11 +76,11 @@ public:
     return m_OStoreDB.getArchiveJobs(tapePoolName);
   }
 
-  virtual std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
+  std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
     return m_OStoreDB.getRetrieveRequests();
   }
 
-  virtual std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
+  std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
     return m_OStoreDB.getRetrieveRequestsByVid(vid);
   }
   
@@ -89,16 +89,23 @@ public:
   }
 
   
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
   }
+  
+  std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+          const std::set<std::string> & vidsToConsider) override {
+    return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
+  }
 
-  virtual void queue(const common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria) override {
-    m_OStoreDB.queue(rqst, criteria);
+
+  void queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria,
+    const std::string &vid) override {
+    m_OStoreDB.queueRetrieve(rqst, criteria, vid);
   }
   
-  virtual std::list<cta::common::DriveState> getDriveStates() const override {
+  std::list<cta::common::DriveState> getDriveStates() const override {
     return m_OStoreDB.getDriveStates();
   }
 private:
@@ -120,7 +127,7 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::EntryLog cl("user0", "systemhost", time(NULL));
+  objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();
@@ -151,7 +158,7 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.fetch();
   m_agent.generateName("OStoreDBFactory");
   m_agent.initialize();
-  objectstore::EntryLog cl("user0", "systemhost", time(NULL));
+  objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
   rel.release();
   m_agent.insertAndRegisterSelf();

@@ -52,7 +52,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::Agent agent(be);
     agent.generateName("unitTest");
     re.fetch();
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
     re.addOrGetAgentRegisterPointerAndCommit(agent, el);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
@@ -70,7 +70,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
 
 TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::Agent ag(be);
   ag.initialize();
@@ -91,7 +91,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     ASSERT_THROW(re.getArchiveQueueAddress("tapePool1"),
-      cta::objectstore::RootEntry::NotAllocated);
+      cta::objectstore::RootEntry::NoSuchArchiveQueue);
     tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", ag);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
@@ -136,7 +136,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::Agent ag(be);
   ag.initialize();
@@ -190,7 +190,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::Agent ag(be);
   ag.generateName("UnitTests");
@@ -237,7 +237,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLog el("user0",
+    cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::Agent ag(be);
   ag.initialize();

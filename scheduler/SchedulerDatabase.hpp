@@ -42,6 +42,7 @@
 #include <memory>
 #include <vector>
 #include <stdexcept>
+#include <set>
 
 namespace cta {
 // Forward declarations for opaque references.
@@ -88,9 +89,9 @@ public:
    *
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
-   * decide how to quue the request.
+   * decide how to queue the request.
    */
-  virtual void queue(const cta::common::dataStructures::ArchiveRequest &request, 
+  virtual void queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
 
   /**
@@ -187,14 +188,51 @@ public:
   /*============ Retrieve  management: user side ============================*/
 
   /**
+   * A representation of an existing retrieve queue. This is a (simpler) relative 
+   * to the PotentialMount used for mount scheduling. This summary will be used to 
+   * decide which retrieve job to use for multiple copy files. 
+   * In order to have a stable comparison, we compare on byte number and not file counts.
+   */
+  struct RetrieveQueueStatistics {
+    std::string vid;
+    uint64_t bytesQueued;
+    uint64_t filesQueued;
+    uint64_t currentPriority;
+    
+    bool operator <(const RetrieveQueueStatistics& right) const {
+      return right > * this; // Reuse greater than operator
+    }
+    
+    bool operator >(const RetrieveQueueStatistics& right) const {
+      return bytesQueued > right.bytesQueued || currentPriority > right.currentPriority;
+    }
+    
+    static bool leftGreaterThanRight (const RetrieveQueueStatistics& left, const RetrieveQueueStatistics& right) {
+      return left > right;
+    }
+
+  };
+  
+  /**
+   * Get the retrieve queue statistics for the vids of the tape files from the criteria, that are also
+   * listed in the set. 
+   * @param criteria the retrieve criteria, containing the list of tape files.
+   * @param vidsToConsider list of vids to considers. Other vids should not be considered.
+   * @return the list of statistics.
+   */
+  virtual std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
+    const std::set<std::string> & vidsToConsider) = 0;
+  /**
    * Queues the specified request.
    *
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
+   * @param vid: the vid of the retrieve queue on which we will queue the request.
    */
-  virtual void queue(const cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) = 0;
+  virtual void queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
+    const std::string &vid) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then
@@ -285,7 +323,7 @@ public:
     uint64_t bytesQueued; /**< The amount of data currently queued */
     time_t oldestJobStartTime; /**< Creation time of oldest request */
     std::string logicalLibrary; /**< The logical library (for a retrieve) */
-    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 [ ratio of existing mounts/quota (for faire share of mounts)*/
+    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing mounts/quota (for faire share of mounts)*/
     
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)

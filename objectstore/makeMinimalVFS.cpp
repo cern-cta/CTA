@@ -53,7 +53,7 @@ int main(int argc, char ** argv) {
     cta::objectstore::Agent ag(*be);
     ag.generateName("makeMinimalVFS");
     ag.initialize();
-    cta::objectstore::EntryLog el("user0", "systemhost", time(NULL));
+    cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));
     re.addOrGetAgentRegisterPointerAndCommit(ag,el);
     rel.release();
     ag.insertAndRegisterSelf();

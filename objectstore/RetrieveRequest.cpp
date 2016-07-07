@@ -18,7 +18,8 @@
 
 #include "RetrieveRequest.hpp"
 #include "GenericObject.hpp"
-#include "EntryLog.hpp"
+#include "EntryLogSerDeser.hpp"
+#include "DiskFileInfoSerDeser.hpp"
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
 
@@ -43,25 +44,22 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void RetrieveRequest::addJob(const cta::common::dataStructures::TapeFile & tapeFile,
-    const std::string& tapeaddress) {
+void RetrieveRequest::addJob(const cta::common::dataStructures::TapeFile & tapeFile, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
-  auto *j = m_payload.add_jobs();
-  j->set_copynb(tapeFile.copyNb);
-  j->set_status(serializers::RetrieveJobStatus::RJS_LinkingToTape);
-  j->set_tape(tapeFile.vid);
-  j->set_tapeaddress(tapeaddress);
-  j->set_totalretries(0);
-  j->set_retrieswithinmount(0);
-  j->set_blockid(tapeFile.blockId);
-  j->set_fseq(tapeFile.fSeq);
+  auto *tf = m_payload.add_jobs();
+  TapeFileSerDeser(tapeFile).serialize(*tf->mutable_tapefile());
+  tf->set_maxretrieswithinmount(maxRetiesWithinMount);
+  tf->set_maxtotalretries(maxTotalRetries);
+  tf->set_retrieswithinmount(0);
+  tf->set_totalretries(0);
+  tf->set_status(serializers::RetrieveJobStatus::RJS_Pending);
 }
 
 bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
+    if (j->tapefile().copynb() == copyNumber) {
       j->set_status(serializers::RetrieveJobStatus::RJS_Complete);
       for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
         if (j2->status()!= serializers::RetrieveJobStatus::RJS_Complete &&
@@ -76,168 +74,56 @@ bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
 
 
 //------------------------------------------------------------------------------
-// setArchiveFile
+// setSchedulerRequest
 //------------------------------------------------------------------------------
-void RetrieveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile) {
+void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest) {
   checkPayloadWritable();
-  auto *af = m_payload.mutable_archivefile();
-  af->set_checksumtype(archiveFile.checksumType);
-  af->set_checksumvalue(archiveFile.checksumValue);
-  af->set_fileid(archiveFile.archiveFileID);
-  af->set_creationtime(archiveFile.creationTime);
-  af->set_size(archiveFile.fileSize);
+  auto *sr = m_payload.mutable_schedulerrequest();
+  sr->mutable_requester()->set_name(retrieveRequest.requester.name);
+  sr->mutable_requester()->set_group(retrieveRequest.requester.group);
+  sr->set_archivefileid(retrieveRequest.archiveFileID);
+  sr->set_dsturl(retrieveRequest.dstURL);
+  DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
+  dfisd.serialize(*sr->mutable_diskfileinfo());
+  sr->set_diskpoolname(retrieveRequest.diskpoolName);
+  sr->set_diskpoolthroughput(retrieveRequest.diskpoolThroughput);
+  objectstore::EntryLogSerDeser el(retrieveRequest.entryLog);
+  el.serialize(*sr->mutable_entrylog());
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileID
+// getSchedulerRequest
 //------------------------------------------------------------------------------
 
-cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
+cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerRequest() {
   checkPayloadReadable();
-  common::dataStructures::ArchiveFile ret;
-  ret.archiveFileID = m_payload.archivefile().fileid();
-  ret.checksumType = m_payload.archivefile().checksumtype();
-  ret.checksumValue = m_payload.archivefile().checksumvalue();
-  ret.creationTime = m_payload.archivefile().creationtime();
-  ret.diskFileId = m_payload.archivefile().diskfileid();
-  ret.diskInstance = m_payload.diskinstance();
-  ret.diskFileInfo.recoveryBlob = m_payload.diskfileinfo().recoveryblob();
-  ret.diskFileInfo.group = m_payload.diskfileinfo().group();
-  ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
-  ret.diskFileInfo.path = m_payload.diskfileinfo().path();
-  ret.fileSize = m_payload.archivefile().size();
-  ret.reconciliationTime = m_payload.reconcilationtime();
-  ret.storageClass = m_payload.storageclass();
-  for (auto & j: m_payload.jobs()) {
-    ret.tapeFiles[j.copynb()].blockId = j.blockid();
-    ret.tapeFiles[j.copynb()].compressedSize = j.compressedsize();
-    ret.tapeFiles[j.copynb()].copyNb = j.copynb();
-    ret.tapeFiles[j.copynb()].creationTime = j.creationtime();
-    ret.tapeFiles[j.copynb()].fSeq = j.fseq();
-    ret.tapeFiles[j.copynb()].vid = j.tape();
-  }
+  common::dataStructures::RetrieveRequest ret;
+  ret.requester.name = m_payload.schedulerrequest().requester().name();
+  ret.requester.group = m_payload.schedulerrequest().requester().group();
+  ret.archiveFileID = m_payload.schedulerrequest().archivefileid();
+  objectstore::EntryLogSerDeser el(ret.entryLog);
+  el.deserialize(m_payload.schedulerrequest().entrylog());
+  ret.dstURL = m_payload.schedulerrequest().dsturl();
+  ret.diskpoolName = m_payload.schedulerrequest().diskpoolname();
+  ret.diskpoolThroughput = m_payload.schedulerrequest().diskpoolthroughput();
+  objectstore::DiskFileInfoSerDeser dfisd;
+  dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
+  ret.diskFileInfo = dfisd;
   return ret;
 }
 
 //------------------------------------------------------------------------------
-// setDiskpoolName
+// setRetrieveFileQueueCriteria
 //------------------------------------------------------------------------------
-void RetrieveRequest::setDiskpoolName(const std::string &diskpoolName) {
+
+void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   checkPayloadWritable();
-  m_payload.set_diskpoolname(diskpoolName);
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolName
-//------------------------------------------------------------------------------
-std::string RetrieveRequest::getDiskpoolName() {
-  checkPayloadReadable();
-  return m_payload.diskpoolname();
-}
-
-//------------------------------------------------------------------------------
-// setDiskpoolThroughput
-//------------------------------------------------------------------------------
-void RetrieveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
-  checkPayloadWritable();
-  m_payload.set_diskpoolthroughput(diskpoolThroughput);
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolThroughput
-//------------------------------------------------------------------------------
-uint64_t RetrieveRequest::getDiskpoolThroughput() {
-  checkPayloadReadable();
-  return m_payload.diskpoolthroughput();
-}
-
-//------------------------------------------------------------------------------
-// setDiskFileInfo
-//------------------------------------------------------------------------------
-void RetrieveRequest::setDiskFileInfo(const cta::common::dataStructures::DiskFileInfo &diskFileInfo) {
-  checkPayloadWritable();
-  auto payloadDiskFileInfo = m_payload.mutable_diskfileinfo();
-  payloadDiskFileInfo->set_recoveryblob(diskFileInfo.recoveryBlob);
-  payloadDiskFileInfo->set_group(diskFileInfo.group);
-  payloadDiskFileInfo->set_owner(diskFileInfo.owner);
-  payloadDiskFileInfo->set_path(diskFileInfo.path);
-}
-
-//------------------------------------------------------------------------------
-// getDiskFileInfo
-//------------------------------------------------------------------------------
-cta::common::dataStructures::DiskFileInfo RetrieveRequest::getDiskFileInfo() {
-  checkPayloadReadable();
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  auto payloadDiskFileInfo = m_payload.diskfileinfo();
-  diskFileInfo.recoveryBlob=payloadDiskFileInfo.recoveryblob();
-  diskFileInfo.group=payloadDiskFileInfo.group();
-  diskFileInfo.owner=payloadDiskFileInfo.owner();
-  diskFileInfo.path=payloadDiskFileInfo.path();
-  return diskFileInfo;
-}
-
-//------------------------------------------------------------------------------
-// setDstURL
-//------------------------------------------------------------------------------
-void RetrieveRequest::setDstURL(const std::string &dstURL) {
-  checkPayloadWritable();
-  m_payload.set_dsturl(dstURL);
-}
-
-//------------------------------------------------------------------------------
-// getDstURL
-//------------------------------------------------------------------------------
-std::string RetrieveRequest::getDstURL() {
-  checkPayloadReadable();
-  return m_payload.dsturl();
-}
-
-//------------------------------------------------------------------------------
-// setRequester
-//------------------------------------------------------------------------------
-void RetrieveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
-  checkPayloadWritable();
-  auto payloadRequester = m_payload.mutable_requester();
-  payloadRequester->set_name(requester.name);
-  payloadRequester->set_group(requester.group);
-}
-
-//------------------------------------------------------------------------------
-// getRequester
-//------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity RetrieveRequest::getRequester() {
-  checkPayloadReadable();
-  cta::common::dataStructures::UserIdentity requester;
-  auto payloadRequester = m_payload.requester();
-  requester.name=payloadRequester.name();
-  requester.group=payloadRequester.group();
-  return requester;
-}
-
-//------------------------------------------------------------------------------
-// setEntryLog
-//------------------------------------------------------------------------------
-
-void RetrieveRequest::setEntryLog(const objectstore::EntryLog& entryLog) {
-  checkPayloadWritable();
-  auto payloadCreationLog = m_payload.mutable_creationlog();
-  payloadCreationLog->set_time(entryLog.time);
-  payloadCreationLog->set_host(entryLog.host);
-  payloadCreationLog->set_username(entryLog.username);
-}
-
-//------------------------------------------------------------------------------
-// getCreationLog
-//------------------------------------------------------------------------------
-objectstore::EntryLog RetrieveRequest::getEntryLog() {
-  checkHeaderReadable();
-  cta::common::dataStructures::EntryLog entryLog;
-  auto payloadCreationLog = m_payload.creationlog();
-  entryLog.username=payloadCreationLog.username();
-  entryLog.host=payloadCreationLog.host();
-  entryLog.time=payloadCreationLog.time();
-  return entryLog;  
+  for (auto &tf: criteria.archiveFile.tapeFiles) {
+    // TODO add mount criteria
+    const uint32_t hardcodedRetriesWithinMount = 3;
+    const uint32_t hardcodedTotalRetries = 6;
+    addJob(tf.second, hardcodedRetriesWithinMount, hardcodedTotalRetries);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -246,55 +132,83 @@ objectstore::EntryLog RetrieveRequest::getEntryLog() {
 auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
-  auto & jl = m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
+  for (auto & j: m_payload.jobs()) {
     ret.push_back(JobDump());
-    ret.back().copyNb = j->copynb();
-    ret.back().tape = j->tape();
-    ret.back().tapeAddress = j->tapeaddress();
+    TapeFileSerDeser tf;
+    tf.deserialize(j.tapefile());
+    ret.back().tapeFile=tf;
+    ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
+    ret.back().maxTotalRetries=j.maxtotalretries();
+    ret.back().retriesWithinMount=j.retrieswithinmount();
+    ret.back().totalRetries=j.totalretries();
+    // TODO: status
   }
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// getJob
+//------------------------------------------------------------------------------
 auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   checkPayloadReadable();
   // find the job
-  auto & jl = m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    if (j->copynb() == copyNb) {
+  for (auto & j: m_payload.jobs()) {
+    if (j.tapefile().copynb()==copyNb) {
       JobDump ret;
-      ret.blockid = j->blockid();
-      ret.copyNb = j->copynb();
-      ret.fseq = j->fseq();
-      ret.tape = j->tape();
-      ret.tapeAddress = j->tapeaddress();
-      return ret;
+      TapeFileSerDeser tf;
+      tf.deserialize(j.tapefile());
+      ret.tapeFile=tf;
+      ret.maxRetriesWithinMount=j.maxretrieswithinmount();
+      ret.maxTotalRetries=j.maxtotalretries();
+      ret.retriesWithinMount=j.retrieswithinmount();
+      ret.totalRetries=j.totalretries();
     }
   }
   throw NoSuchJob("In objectstore::RetrieveRequest::getJob(): job not found for this copyNb");
 }
+
+RetrieveRequest::FailuresCount RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t sessionId) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+void RetrieveRequest::finish() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+uint32_t RetrieveRequest::getActiveCopyNumber() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+
+
+
 
 std::string RetrieveRequest::dump() {
   checkPayloadReadable();
   std::stringstream ret;
   ret << "RetrieveRequest" << std::endl;
   struct json_object * jo = json_object_new_object();
-  struct json_object * jaf = json_object_new_object();
-  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().fileid()));
-  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().creationtime()));
-  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumtype().c_str()));
-  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumvalue().c_str()));
-  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
-  json_object_object_add(jo, "creationlog", jaf);
-  json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
-  json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
-  json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
-  // Object for creation log
-  json_object * jcl = json_object_new_object();
-  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
-  json_object_object_add(jcl, "time", json_object_new_int64(m_payload.creationlog().time()));
-  json_object_object_add(jcl, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
-  json_object_object_add(jo, "creationlog", jcl);
+//  struct json_object * jaf = json_object_new_object();
+  // TODO: fill up again
+//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().fileid()));
+//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().creationtime()));
+//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumtype().c_str()));
+//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumvalue().c_str()));
+//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
+//  json_object_object_add(jo, "creationlog", jaf);
+//  json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
+//  json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
+//  json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
+//  // Object for creation log
+//  json_object * jcl = json_object_new_object();
+//  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
+//  json_object_object_add(jcl, "time", json_object_new_int64(m_payload.creationlog().time()));
+//  json_object_object_add(jcl, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
+//  json_object_object_add(jo, "creationlog", jcl);
   // Array for jobs
   json_object * jja = json_object_new_array();
   auto & jl = m_payload.jobs();
@@ -302,29 +216,31 @@ std::string RetrieveRequest::dump() {
     // Object for job
     json_object * jj = json_object_new_object();
     
-    json_object_object_add(jj, "copynb", json_object_new_int(j->copynb()));
+    // TODO: fix
+    //json_object_object_add(jj, "copynb", json_object_new_int(j->copynb()));
     json_object_object_add(jj, "retrieswithinmount", json_object_new_int(j->retrieswithinmount()));
     json_object_object_add(jj, "totalretries", json_object_new_int(j->totalretries()));
     json_object_object_add(jj, "status", json_object_new_int64(j->status()));
-    json_object_object_add(jj, "fseq", json_object_new_int64(j->fseq()));
-    json_object_object_add(jj, "blockid", json_object_new_int64(j->blockid()));
-    json_object_object_add(jj, "tape", json_object_new_string(j->tape().c_str()));
-    json_object_object_add(jj, "tapeAddress", json_object_new_string(j->tapeaddress().c_str()));
+    //json_object_object_add(jj, "fseq", json_object_new_int64(j->fseq()));
+    //json_object_object_add(jj, "blockid", json_object_new_int64(j->blockid()));
+    //json_object_object_add(jj, "tape", json_object_new_string(j->tape().c_str()));
+    //json_object_object_add(jj, "tapeAddress", json_object_new_string(j->tapeaddress().c_str()));
     json_object_array_add(jja, jj);
   }
   json_object_object_add(jo, "jobs", jja);
   // Object for diskfileinfo
-  json_object * jlog = json_object_new_object();
-  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
-  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
-  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
-  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
-  json_object_object_add(jo, "diskfileinfo", jlog);
-  // Object for requester
-  json_object * jrf = json_object_new_object();
-  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
-  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
-  json_object_object_add(jo, "requester", jrf);
+//  json_object * jlog = json_object_new_object();
+  // TODO: fill up again
+//  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
+//  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
+//  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
+//  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
+//  json_object_object_add(jo, "diskfileinfo", jlog);
+//  // Object for requester
+//  json_object * jrf = json_object_new_object();
+//  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
+//  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
+//  json_object_object_add(jo, "requester", jrf);
   ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
   json_object_put(jo);
   return ret.str();

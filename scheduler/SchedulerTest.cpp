@@ -426,7 +426,7 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
-    request.creationLog = creationLog;
+    request.entryLog = creationLog;
     request.diskpoolName = "diskpool1";
     request.diskpoolThroughput = 200*1000*1000;
     request.diskFileInfo = diskFileInfo;
@@ -555,7 +555,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
-    request.creationLog = creationLog;
+    request.entryLog = creationLog;
     request.diskpoolName = "diskpool1";
     request.diskpoolThroughput = 200*1000*1000;
     request.diskFileInfo = diskFileInfo;

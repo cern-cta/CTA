@@ -47,11 +47,13 @@ struct TapeFile {
    * The position of the file on tape in the form of its file sequence 
    * number. 
    */
+  // TODO: could be modified to match SCSI nomenclature (Logical file identifier), delta factor 3 between our files and tape's
   uint64_t fSeq;
   /**
    * The position of the file on tape in the form of its logical block 
    * identifier. 
    */
+  // TODO: change denomination to match SCSI nomenclature (logical object identifier).
   uint64_t blockId;
   /**
    * The compressed size of the tape file in bytes. In other words the 

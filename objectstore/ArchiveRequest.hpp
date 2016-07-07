@@ -33,7 +33,7 @@ namespace cta { namespace objectstore {
 class Backend;
 class Agent;
 class GenericObject;
-class EntryLog;
+class EntryLogSerDeser;
 
 class ArchiveRequest: public ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t> {
 public:

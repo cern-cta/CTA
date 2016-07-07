@@ -19,7 +19,7 @@
 #include "ArchiveQueue.hpp"
 #include "GenericObject.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
-#include "EntryLog.hpp"
+#include "EntryLogSerDeser.hpp"
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
 #include <json-c/json.h>

@@ -18,7 +18,7 @@
 
 #include "RetrieveQueue.hpp"
 #include "GenericObject.hpp"
-#include "EntryLog.hpp"
+#include "EntryLogSerDeser.hpp"
 #include <json-c/json.h>
 
 cta::objectstore::RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
@@ -105,7 +105,7 @@ void cta::objectstore::RetrieveQueue::addJob(const RetrieveRequest::JobDump& job
   auto * j = m_payload.add_retrievejobs();
   j->set_address(retrieveToFileAddress);
   j->set_size(size);
-  j->set_copynb(job.copyNb);
+  j->set_copynb(job.tapeFile.copyNb);
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
@@ -129,20 +129,9 @@ auto cta::objectstore::RetrieveQueue::dumpAndFetchRetrieveRequests()
       retrieveRequest.fetch();
       ret.push_back(RetrieveRequestDump());
       auto & retReq = ret.back();
-      retReq.archiveFile = retrieveRequest.getArchiveFile();
-      retReq.dstURL = retrieveRequest.getDstURL();
-      retReq.entryLog = retrieveRequest.getEntryLog();
-      // Find the copy number from the list of jobs
-      retReq.activeCopyNb = rj->copynb();
-      auto jl = retrieveRequest.dumpJobs();
-      for (auto j=jl.begin(); j!= jl.end(); j++) {
-        retReq.tapeFiles.push_back(common::dataStructures::TapeFile());
-        auto & retJob = retReq.tapeFiles.back();
-        retJob.blockId = j->blockid;
-        retJob.copyNb = j->copyNb;
-        retJob.fSeq = j->fseq;
-        retJob.vid = j->tape;
-      }
+      retReq.retrieveRequest = retrieveRequest.getSchedulerRequest();
+      retReq.criteria = retrieveRequest.getRetrieveFileQueueCriteria();
+      retReq.activeCopyNb = retrieveRequest.getActiveCopyNumber();
     } catch (cta::exception::Exception &) {}
   }
   return ret;

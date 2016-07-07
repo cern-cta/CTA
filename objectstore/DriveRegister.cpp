@@ -67,7 +67,6 @@ std::string cta::objectstore::DriveRegister::dump() {
     json_object * creationlog_jot = json_object_new_object();
     json_object_object_add(creationlog_jot, "host", json_object_new_string(i->creationlog().host().c_str()));
     json_object_object_add(creationlog_jot, "time", json_object_new_int64(i->creationlog().time()));
-    json_object_object_add(creationlog_jot, "comment", json_object_new_string(i->creationlog().comment().c_str()));
     json_object_object_add(jot, "creationlog", creationlog_jot);
     
     json_object * mounttype_jot = json_object_new_object();
@@ -131,7 +130,7 @@ namespace {
 }
 
 void cta::objectstore::DriveRegister::addDrive(const std::string & driveName,
-    const std::string & logicalLibrary, const EntryLog & creationLog) { 
+    const std::string & logicalLibrary, const EntryLogSerDeser & creationLog) { 
   //add logical library to the parameters
   checkPayloadWritable();
   // Check that we are not trying to duplicate a drive
@@ -279,7 +278,7 @@ void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& drive
     if (!alreadyInSessionStatuses.count((int)status)) {
       // TODO: the creation should be moved to another place to better logging
       // Explicitely by scheduler? To be decided.
-      EntryLog el("name0", "", reportTime);
+      EntryLogSerDeser el("name0", "", reportTime);
       addDrive(driveName, logicalLibary, el);
     } else {
       throw NoSuchDrive("In DriveRegister::reportDriveStatus(): No such drive");

@@ -41,7 +41,7 @@ bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
       && diskFileInfo==rhs.diskFileInfo
       && diskpoolName==rhs.diskpoolName
       && diskpoolThroughput==rhs.diskpoolThroughput
-      && creationLog==rhs.creationLog;
+      && entryLog==rhs.entryLog;
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " diskFileInfo=" << obj.diskFileInfo
      << " diskpoolName=" << obj.diskpoolName
      << " diskpoolThroughput=" << obj.diskpoolThroughput
-     << " creationLog=" << obj.creationLog << ")";
+     << " creationLog=" << obj.entryLog << ")";
   return os;
 }
 

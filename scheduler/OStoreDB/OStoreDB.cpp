@@ -23,6 +23,7 @@
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/RetrieveRequest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
@@ -33,7 +34,6 @@
 #include "scheduler/RetrieveToFileRequest.hpp"
 #include "common/TapePool.hpp"
 #include "RetrieveToFileRequest.hpp"
-#include "objectstore/ArchiveRequest.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
@@ -265,7 +265,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 }
 */
 
-void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request, 
+void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
   assertAgentSet();
   // Construct the return value immediately
@@ -306,7 +306,7 @@ void OStoreDB::queue(const cta::common::dataStructures::ArchiveRequest &request,
     jl.back().tapePool = copy.second;
     jl.back().ArchiveQueueAddress = aqaddr;
   }
-  if (!jl.size()) {
+  if (jl.empty()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
   }
   // We create the object here
@@ -645,22 +645,69 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
   return ret;
 }
 
+std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueueStatistics(
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+  const std::set<std::string> & vidsToConsider) {
+  std::list<RetrieveQueueStatistics> ret;
+  // Find the retrieve queues for each vid if they exist (absence is possible).
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  rel.release();
+  for (auto &tf:criteria.archiveFile.tapeFiles) {
+    if (!vidsToConsider.count(tf.second.vid))
+      continue;
+    std::string rqAddr;
+    try {
+      std::string rqAddr = re.getRetrieveQueue(tf.second.vid);
+    } catch (cta::exception::Exception &) {
+      ret.push_back(RetrieveQueueStatistics());
+      ret.back().vid=tf.second.vid;
+      ret.back().bytesQueued=0;
+      ret.back().currentPriority=0;
+      ret.back().filesQueued=0;
+    }
+    RetrieveQueue rq(rqAddr, m_objectStore);
+    ScopedSharedLock rql(rq);
+    rq.fetch();
+    rql.release();
+    if (rq.getVid() != tf.second.vid)
+      throw cta::exception::Exception("In OStoreDB::getRetrieveQueueStatistics(): unexpected vid for retrieve queue");
+    ret.push_back(RetrieveQueueStatistics());
+    ret.back().vid=rq.getVid();
+    ret.back().currentPriority=rq.getJobsSummary().priority;
+    ret.back().bytesQueued=rq.getJobsSummary().bytes;
+    ret.back().filesQueued=rq.getJobsSummary().files;
+  }
+  return ret;
+}
 
-void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
-  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-//  assertAgentSet();
-//  // Check at least one potential tape copy is provided.
-//  // In order to post the job, construct it first.
-//  objectstore::RetrieveRequest rReq(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
-//  rReq.initialize();
-//  rReq.setArchiveFile(rqst.());
-//  rReq.setRemoteFile(rqst.getRemoteFile());
-//  rReq.setPriority(rqst.priority);
-//  rReq.setEntryLog(rqst.entryLog);
-//  rReq.setSize(rqst.getArchiveFile().size);
-//  // We will need to identity tapes is order to construct the request.
-//  // First load all the tapes information in a memory map
+
+void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+  const std::string &vid) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  assertAgentSet();
+  // Check that the requested retrieve job (for the provided vid) exists.
+  if (!std::count_if(criteria.archiveFile.tapeFiles.cbegin(), 
+                     criteria.archiveFile.tapeFiles.end(),
+                     [vid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == vid; }))
+    throw RetrieveRequestHasNoCopies("In OStoreDB::queueRetrieve(): no tape file for requested vid.");
+  // 
+  // In order to post the job, construct it first in memory.
+  objectstore::RetrieveRequest rReq(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
+  rReq.initialize();
+  rReq.setSchedulerRequest(rqst);
+  rReq.setRetrieveFileQueueCriteria(criteria);
+  // Find the retrieve queue (or create it if necessary)
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(vid, *m_agent);
+  // TODO: complete implementation.
+//  
+//  
+//  
 //  std::map<std::string, std::string> vidToAddress;
 //  RootEntry re(m_objectStore);
 //  ScopedSharedLock rel(re);
@@ -678,7 +725,7 @@ void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
 //  for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
 //    // Check the tape copy copynumber (range = [1 - copyCount] )
 //    if (tc->copyNb > rqst.getTapeCopies().size() || tc->copyNb < 1) {
-//      throw TapeCopyNumberOutOfRange("In OStoreDB::queue(RetrieveToFile): copy number out of range");
+//      throw TapeCopyNumberOutOfRange("In OStoreDB::OStoreDB::queueRetrieve(): copy number out of range");
 //    }
 //  }
 //  // Add all the tape copies to the request
@@ -687,7 +734,7 @@ void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
 //      rReq.addJob(*tc, vidToAddress.at(tc->vid));
 //    }
 //  } catch (std::out_of_range &) {
-//    throw NoSuchTape("In OStoreDB::queue(RetrieveToFile): tape not found");
+//    throw NoSuchTape("In OStoreDB::OStoreDB::queueRetrieve(): tape not found");
 //  }
 //  // We now need to select the tape from which we will migrate next. This should
 //  // be the tape with the most jobs already queued.
@@ -737,7 +784,7 @@ void OStoreDB::queue(const cta::common::dataStructures::RetrieveRequest& rqst,
 //    jd.tapeAddress = vidToAddress.at(selectedVid);
 //    jd.fseq = selectedFseq;
 //    jd.blockid = selectedBlockid;
-//    tp.addJob(jd, rReq.getAddressIfSet(), rqst.getArchiveFile().size, rqst.priority, rqst.creationLog.time);
+//    tp.addJob(jd, rReq.getAddressIfSet(), rqst.getArchiveFile().size, rqst.priority, rqst.entryLog.time);
 //    tp.commit();
 //  }
 //  // The request is now fully set. It belongs to the tape.
@@ -805,7 +852,7 @@ std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequ
 void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
-  }
+}
 
 std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {
   RootEntry re(m_objectStore);
