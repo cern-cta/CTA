@@ -30,6 +30,155 @@
 
 namespace unitTests {
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
+  m_bootstrapComment("bootstrap") {
+
+  m_cliSI.username = "cli_user_name";
+  m_cliSI.host = "cli_host";
+
+  m_bootstrapAdminSI.username = "bootstrap_admin_user_name";
+  m_bootstrapAdminSI.host = "bootstrap_host";
+
+  m_adminSI.username = "admin_user_name";
+  m_adminSI.host = "admin_host";
+}
+
+//------------------------------------------------------------------------------
+// Setup
+//------------------------------------------------------------------------------
+void cta_catalogue_CatalogueTest::SetUp() {
+  using namespace cta;
+  using namespace cta::catalogue;
+
+  m_catalogue.reset(CatalogueFactory::create(GetParam()->create()));
+
+  {
+    const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
+    for(auto &adminUser: adminUsers) {
+      m_catalogue->deleteAdminUser(adminUser.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::AdminHost> adminHosts = m_catalogue->getAdminHosts();
+    for(auto &adminHost: adminHosts) {
+    m_catalogue->deleteAdminHost(adminHost.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
+    for(auto &archiveRoute: archiveRoutes) {
+      m_catalogue->deleteArchiveRoute(archiveRoute.diskInstanceName, archiveRoute.storageClassName,
+        archiveRoute.copyNb);
+    }
+  }
+  {
+    const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+    for(auto &rule: rules) {
+      m_catalogue->deleteRequesterMountRule(rule.diskInstance, rule.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::RequesterGroupMountRule> rules =
+      m_catalogue->getRequesterGroupMountRules();
+    for(auto &rule: rules) {
+      m_catalogue->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
+    }
+  }
+  {
+    std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
+    while(itor->hasMore()) {
+      m_catalogue->deleteArchiveFile(itor->next().archiveFileID);
+    }
+  }
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    for(auto &tape: tapes) {
+      m_catalogue->deleteTape(tape.vid);
+    }
+  }
+  {
+    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+    for(auto &storageClass: storageClasses) {
+      m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::TapePool> tapePools = m_catalogue->getTapePools();
+    for(auto &tapePool: tapePools) {
+      m_catalogue->deleteTapePool(tapePool.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::LogicalLibrary> logicalLibraries = m_catalogue->getLogicalLibraries();
+    for(auto &logicalLibrary: logicalLibraries) {
+      m_catalogue->deleteLogicalLibrary(logicalLibrary.name);
+    }
+  }
+  {
+    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+    for(auto &mountPolicy: mountPolicies) {
+      m_catalogue->deleteMountPolicy(mountPolicy.name);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// TearDown
+//------------------------------------------------------------------------------
+void cta_catalogue_CatalogueTest::TearDown() {
+  m_catalogue.reset();
+}
+
+//------------------------------------------------------------------------------
+// tapeListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_CatalogueTest::tapeListToMap(
+  const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
+
+    for (auto &&tape: listOfTapes) {
+      if(vidToTape.end() != vidToTape.find(tape.vid)) {
+        throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
+      }
+      vidToTape[tape.vid] = tape;
+    }
+
+    return vidToTape;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// archiveFileItorToMap
+//------------------------------------------------------------------------------
+std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_CatalogueTest::archiveFileItorToMap(
+  cta::catalogue::ArchiveFileItor &itor) {
+  using namespace cta;
+
+  try {
+    std::map<uint64_t, common::dataStructures::ArchiveFile> m;
+    while(itor.hasMore()) {
+      const common::dataStructures::ArchiveFile archiveFile = itor.next();
+      if(m.end() != m.find(archiveFile.archiveFileID)) {
+        exception::Exception ex;
+        ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
+        throw ex;
+      }
+      m[archiveFile.archiveFileID] = archiveFile;
+    }
+    return m;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
