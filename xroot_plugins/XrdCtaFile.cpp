@@ -915,7 +915,7 @@ int XrdCtaFile::xCom_tape() {
        << "\t        [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">] [--comment/-m <\"comment\">]" << std::endl
        << "\trm      --vid/-v <vid>" << std::endl
        << "\treclaim --vid/-v <vid>" << std::endl
-       << "\tls      [--header/-h] [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
+       << "\tls      [--header/-h] [--all/-a] or any of: [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
        << "\t        [--lbp/-p <\"true\" or \"false\">] [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl;  
   if(m_requestTokens.size() < 3) {
@@ -984,18 +984,20 @@ int XrdCtaFile::xCom_tape() {
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false, false);
-    searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
-    searchCriteria.full = getOptionBoolValue("-f", "--full", false, false, false);
-    searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false, false);
-    searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
-    searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
-    searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
+    if(!hasOption("-a","--all")) {
+      searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false, false);
+      searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
+      searchCriteria.full = getOptionBoolValue("-f", "--full", false, false, false);
+      searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false, false);
+      searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
+      searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
+      searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
+    }
     if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
     std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","busy","full","disabled","lpb","label drive","label time",
+      std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","full","disabled","lpb","label drive","label time",
                                          "last w drive","last w time","last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
@@ -1007,7 +1009,6 @@ int XrdCtaFile::xCom_tape() {
         currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));
-        if(it->busy) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");

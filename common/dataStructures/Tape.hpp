@@ -50,7 +50,6 @@ struct Tape {
   uint64_t dataOnTapeInBytes;
   std::string encryptionKey;
   bool lbp;
-  bool busy;
   bool full;
   bool disabled;
   EntryLog creationLog;
