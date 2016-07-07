@@ -53,3 +53,17 @@ target_link_libraries (ctardbms
   ${SQLITE_LIBRARIES})
 
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
+  DbLoginFactory.cpp
+  DbLoginTest.cpp
+  ParamNameToIdxTest.cpp
+  SqliteStmtTest.cpp)
+
+add_library (ctardbmsunittests SHARED
+  ${RDBMS_UNIT_TESTS_LIB_SRC_FILES})
+
+target_link_libraries (ctardbmsunittests
+  ctacatalogue)
+
+install(TARGETS ctardbmsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
