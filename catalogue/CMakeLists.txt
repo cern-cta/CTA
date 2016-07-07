@@ -85,8 +85,7 @@ install(TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LI
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
-  DbConfigCatalogueTest.cpp
-  ../rdbms/DbLoginFactory.cpp)
+  DbConfigCatalogueTest.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

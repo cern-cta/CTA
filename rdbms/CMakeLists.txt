@@ -28,6 +28,7 @@ set (RDBMS_LIB_SRC_FILES
   DbConnFactory.cpp
   DbConnPool.cpp
   DbLogin.cpp
+  DbLoginFactory.cpp
   DbRset.cpp
   DbStmt.cpp
   NullDbValue.cpp
@@ -55,7 +56,6 @@ target_link_libraries (ctardbms
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
-  DbLoginFactory.cpp
   DbLoginTest.cpp
   ParamNameToIdxTest.cpp
   SqliteStmtTest.cpp)
