@@ -805,7 +805,7 @@ int XrdCtaFile::xCom_archiveroute() {
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
       if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      m_catalogue->createArchiveRoute(m_cliIdentity, scn.value(), in.value(), cn.value(), tapepool.value(), comment.value());
+      m_catalogue->createArchiveRoute(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
@@ -1310,7 +1310,7 @@ int XrdCtaFile::xCom_mountpolicy() {
     std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue->getMountPolicies();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"cta group","a.priority","a.minFiles","a.minBytes","a.minAge","r.priority","r.minFiles","r.minBytes","r.minAge","MaxDrives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {"mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
