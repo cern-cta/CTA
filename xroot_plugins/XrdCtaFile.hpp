@@ -284,9 +284,11 @@ protected:
   int logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
   
   /**
-   * Returns true if all needed options are present. False otherwise.
+   * Checks if all needed options are present. Throws UserError otherwise.
+   * 
+   * @param  helpString The help string to be included in the exception message
    */
-  bool optionsOk();
+  void checkOptions(const std::string &helpString);
 };
 
 }}

@@ -53,12 +53,12 @@ void XrdCtaFile::checkClient(const XrdSecEntity *client) {
 }
 
 //------------------------------------------------------------------------------
-// optionsOk
+// checkOptions
 //------------------------------------------------------------------------------
-bool XrdCtaFile::optionsOk() {
-  if(!m_missingRequiredOptions.empty()) return false;
-  if(!m_missingOptionalOptions.empty() && m_optionalOptions.empty()) return false;
-  return true;
+void XrdCtaFile::checkOptions(const std::string &helpString) {
+  if(!m_missingRequiredOptions.empty()||(!m_missingOptionalOptions.empty() && m_optionalOptions.empty())) {
+    throw cta::exception::UserError(helpString);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ int XrdCtaFile::dispatchCommand() {
   else if("lsc"  == command || "liststorageclass"       == command) {return xCom_liststorageclass();}
   
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_requestTokens.at(0)));
+    throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
   }
 }
 
@@ -175,7 +175,7 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
   try {
     checkClient(client);
     if(!strlen(fileName)) { //this should never happen
-      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(""));
+      throw cta::exception::UserError(getGenericHelp(""));
     }
     
     std::stringstream ss(fileName+1); //let's skip the first slash which is always prepended since we are asking for an absolute path
@@ -191,10 +191,10 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     }
 
     if(m_requestTokens.size() == 0) { //this should never happen
-      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(""));
+      throw cta::exception::UserError(getGenericHelp(""));
     }
     if(m_requestTokens.size() < 2) {
-      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_requestTokens.at(0)));
+      throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
     }    
     return dispatchCommand();
   } catch (cta::exception::UserError &ex) {
@@ -612,7 +612,7 @@ int XrdCtaFile::xCom_bootstrap() {
   optional<std::string> username = getOptionStringValue("-u", "--username", false, true, false);
   optional<std::string> hostname = getOptionStringValue("-h", "--hostname", false, true, false);
   optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username.value(), hostname.value(), comment.value());
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -629,23 +629,23 @@ int XrdCtaFile::xCom_admin() {
        << "\trm  --username/-u <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> username = getOptionStringValue("-u", "--username", false, true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->createAdminUser(m_cliIdentity, username.value(), comment.value());
       }
       else { //ch
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->modifyAdminUserComment(m_cliIdentity, username.value(), comment.value());
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteAdminUser(username.value());
     }
   }
@@ -666,7 +666,7 @@ int XrdCtaFile::xCom_admin() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -683,23 +683,23 @@ int XrdCtaFile::xCom_adminhost() {
        << "\trm  --name/-n <host_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> hostname = getOptionStringValue("-n", "--name", false, true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->createAdminHost(m_cliIdentity, hostname.value(), comment.value());
       }
       else { //ch
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->modifyAdminHostComment(m_cliIdentity, hostname.value(), comment.value());
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteAdminHost(hostname.value());
     }
   }
@@ -720,7 +720,7 @@ int XrdCtaFile::xCom_adminhost() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -737,7 +737,7 @@ int XrdCtaFile::xCom_tapepool() {
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
@@ -745,14 +745,14 @@ int XrdCtaFile::xCom_tapepool() {
       optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
       optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->createTapePool(m_cliIdentity, name.value(), ptn.value(), encrypted.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
       optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyTapePoolComment(m_cliIdentity, name.value(), comment.value());
       }
@@ -764,7 +764,7 @@ int XrdCtaFile::xCom_tapepool() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteTapePool(name.value());
     }
   }
@@ -787,7 +787,7 @@ int XrdCtaFile::xCom_tapepool() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -804,7 +804,7 @@ int XrdCtaFile::xCom_archiveroute() {
        << "\trm  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> scn = getOptionStringValue("-s", "--storageclass", false, true, false);
@@ -813,13 +813,13 @@ int XrdCtaFile::xCom_archiveroute() {
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->createArchiveRoute(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyArchiveRouteComment(m_cliIdentity, in.value(), scn.value(), cn.value(), comment.value());
       }
@@ -828,7 +828,7 @@ int XrdCtaFile::xCom_archiveroute() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteArchiveRoute(in.value(), scn.value(), cn.value());
     }
   }
@@ -852,7 +852,7 @@ int XrdCtaFile::xCom_archiveroute() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -869,23 +869,23 @@ int XrdCtaFile::xCom_logicallibrary() {
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
       if("add" == m_requestTokens.at(2)) { //add
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->createLogicalLibrary(m_cliIdentity, name.value(), comment.value());
       }
       else { //ch
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->modifyLogicalLibraryComment(m_cliIdentity, name.value(), comment.value());
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteLogicalLibrary(name.value());
     }
   }
@@ -906,7 +906,7 @@ int XrdCtaFile::xCom_logicallibrary() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -928,7 +928,7 @@ int XrdCtaFile::xCom_tape() {
        << "\t        [--lbp/-p <\"true\" or \"false\">] [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">]" << std::endl
        << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
     optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
@@ -940,7 +940,7 @@ int XrdCtaFile::xCom_tape() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, true, "-");
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, true, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey.value(), capacity.value(), disabled.value(), full.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
@@ -951,7 +951,7 @@ int XrdCtaFile::xCom_tape() {
       optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(logicallibrary) {
         m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, vid.value(), logicallibrary.value());
       }
@@ -975,7 +975,7 @@ int XrdCtaFile::xCom_tape() {
       }
     }
     else if("reclaim" == m_requestTokens.at(2)) { //reclaim
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->reclaimTape(m_cliIdentity, vid.value());
     }
     else if("label" == m_requestTokens.at(2)) { //label
@@ -983,11 +983,11 @@ int XrdCtaFile::xCom_tape() {
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, true, "-"); 
       optional<bool> force = getOptionBoolValue("-f", "--force", false, false, true, "false");
       optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, false, true, "true");
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_scheduler->labelTape(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag.value());
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteTape(vid.value());
     }
   }
@@ -1002,7 +1002,7 @@ int XrdCtaFile::xCom_tape() {
       searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
       searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
     }
-    if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    checkOptions(help.str());
     std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1053,7 +1053,7 @@ int XrdCtaFile::xCom_tape() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1070,7 +1070,7 @@ int XrdCtaFile::xCom_storageclass() {
        << "\trm  --instance/-i <instance_name> --name/-n <storage_class_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> scn = getOptionStringValue("-n", "--name", false, true, false);
@@ -1078,7 +1078,7 @@ int XrdCtaFile::xCom_storageclass() {
     if("add" == m_requestTokens.at(2)) { //add
       optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       common::dataStructures::StorageClass storageClass;
       storageClass.diskInstance = in.value();
       storageClass.name = scn.value();
@@ -1089,7 +1089,7 @@ int XrdCtaFile::xCom_storageclass() {
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyStorageClassComment(m_cliIdentity, in.value(), scn.value(), comment.value());
       }
@@ -1098,7 +1098,7 @@ int XrdCtaFile::xCom_storageclass() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteStorageClass(in.value(), scn.value());
     }
   }
@@ -1121,7 +1121,7 @@ int XrdCtaFile::xCom_storageclass() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1138,7 +1138,7 @@ int XrdCtaFile::xCom_requestermountrule() {
        << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
@@ -1146,14 +1146,14 @@ int XrdCtaFile::xCom_requestermountrule() {
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyRequesterComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
@@ -1162,7 +1162,7 @@ int XrdCtaFile::xCom_requestermountrule() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteRequesterMountRule(in.value(), name.value());
     }
   }
@@ -1185,7 +1185,7 @@ int XrdCtaFile::xCom_requestermountrule() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1202,7 +1202,7 @@ int XrdCtaFile::xCom_groupmountrule() {
        << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
@@ -1210,14 +1210,14 @@ int XrdCtaFile::xCom_groupmountrule() {
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyRequesterGroupComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
@@ -1226,7 +1226,7 @@ int XrdCtaFile::xCom_groupmountrule() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteRequesterGroupMountRule(in.value(), name.value());
     }
   }
@@ -1249,7 +1249,7 @@ int XrdCtaFile::xCom_groupmountrule() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1268,7 +1268,7 @@ int XrdCtaFile::xCom_mountpolicy() {
        << "\trm  --name/-n <mountpolicy_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> group = getOptionStringValue("-n", "--name", false, true, false);
@@ -1280,7 +1280,7 @@ int XrdCtaFile::xCom_mountpolicy() {
         optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, true, false);
         optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, true, false);
         optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         m_catalogue->createMountPolicy(m_cliIdentity, group.value(), archivepriority.value(), minarchiverequestage.value(), retrievepriority.value(), minretrieverequestage.value(), maxdrivesallowed.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch      
@@ -1290,7 +1290,7 @@ int XrdCtaFile::xCom_mountpolicy() {
         optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, false, false);
         optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, false, false);
         optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-        if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
         if(archivepriority) {
           m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, group.value(), archivepriority.value());
         }
@@ -1337,7 +1337,7 @@ int XrdCtaFile::xCom_mountpolicy() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1354,7 +1354,7 @@ int XrdCtaFile::xCom_dedication() {
        << "\trm  --name/-n <drive_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> drive = getOptionStringValue("-n", "--name", false, true, false);
@@ -1367,7 +1367,10 @@ int XrdCtaFile::xCom_dedication() {
         optional<time_t> from = getOptionTimeValue("-f", "--from", false, true, false);
         optional<time_t> until = getOptionTimeValue("-u", "--until", false, true, false);
         optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-        if(!optionsOk()||(!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
+        if((!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
+          throw cta::exception::UserError(help.str());
+        }
         cta::common::dataStructures::DedicationType type=cta::common::dataStructures::DedicationType::readwrite;
         if(readonly) {
           type=cta::common::dataStructures::DedicationType::readonly;
@@ -1383,7 +1386,10 @@ int XrdCtaFile::xCom_dedication() {
         optional<time_t> from = getOptionTimeValue("-f", "--from", false, false, false);
         optional<time_t> until = getOptionTimeValue("-u", "--until", false, false, false);
         optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-        if((!optionsOk()&&!readonly&&!writeonly)||(readonly&&writeonly)) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+        checkOptions(help.str());
+        if((!readonly&&!writeonly)||(readonly&&writeonly)) {
+          throw cta::exception::UserError(help.str());
+        }
         if(comment) {
           m_catalogue->modifyDedicationComment(m_cliIdentity, drive.value(), comment.value());
         }
@@ -1408,7 +1414,7 @@ int XrdCtaFile::xCom_dedication() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_catalogue->deleteDedication(drive.value());
     }
   }
@@ -1446,7 +1452,7 @@ int XrdCtaFile::xCom_dedication() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1463,12 +1469,12 @@ int XrdCtaFile::xCom_repack() {
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
     if(!vid) {
-      return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      throw cta::exception::UserError(help.str());
     }  
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
@@ -1482,7 +1488,10 @@ int XrdCtaFile::xCom_repack() {
       if(justrepack) {
         type=cta::common::dataStructures::RepackType::justrepack;
       }
-      if(!optionsOk()||(justexpand&&justrepack)) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      if(justexpand&&justrepack) {
+        throw cta::exception::UserError(help.str());
+      }
+      checkOptions(help.str());
       m_scheduler->repack(m_cliIdentity, vid.value(), tag_value, type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
@@ -1501,7 +1510,7 @@ int XrdCtaFile::xCom_repack() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_scheduler->cancelRepack(m_cliIdentity, vid.value());
     }
   }
@@ -1551,7 +1560,7 @@ int XrdCtaFile::xCom_repack() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1564,7 +1573,7 @@ int XrdCtaFile::xCom_shrink() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   m_scheduler->shrink(m_cliIdentity, tapepool.value());
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1576,27 +1585,25 @@ int XrdCtaFile::xCom_verify() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ve/verify add/rm/ls/err:" << std::endl
-       << "\tadd --vid/-v <vid> [--complete/-c or --partial/-p <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
+       << "\tadd --vid/-v <vid> [--nbfiles <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
     optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
       std::string tag_value = tag? tag.value():"-";
-      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false, false);
-      uint64_t numberOfFiles_value = numberOfFiles? numberOfFiles.value():0;
+      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, true, true, "0");
       //0 means do a complete verification
-      bool complete = hasOption("-c", "--complete");
-      if(!optionsOk()||(complete&&numberOfFiles)) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
-      m_scheduler->verify(m_cliIdentity, vid.value(), tag.value(), numberOfFiles_value);
+      checkOptions(help.str());
+      m_scheduler->verify(m_cliIdentity, vid.value(), tag.value(), numberOfFiles.value());
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
@@ -1612,7 +1619,7 @@ int XrdCtaFile::xCom_verify() {
       }
     }
     else { //rm
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       m_scheduler->cancelVerify(m_cliIdentity, vid.value());
     }
   }
@@ -1648,7 +1655,7 @@ int XrdCtaFile::xCom_verify() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1662,7 +1669,7 @@ int XrdCtaFile::xCom_archivefile() {
   help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--diskid/-d <disk_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--instance/-i <instance>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   if("ls" == m_requestTokens.at(2)) { //ls
     bool summary = hasOption("-S", "--summary");
@@ -1678,7 +1685,9 @@ int XrdCtaFile::xCom_archivefile() {
     searchCriteria.tapeFileCopyNb = getOptionUint64Value("-c", "--copynb", false, false, false);
     searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
     searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
-    if(!all && !optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    if(!all) {
+      checkOptions(help.str());
+    }
     if(!summary) {
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
@@ -1721,7 +1730,7 @@ int XrdCtaFile::xCom_archivefile() {
     }
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1737,7 +1746,7 @@ int XrdCtaFile::xCom_test() {
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
        << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   optional<std::string> drive = getOptionStringValue("-d", "--drive", false, true, false);
   optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
@@ -1746,7 +1755,7 @@ int XrdCtaFile::xCom_test() {
     optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", false, true, false);
     optional<std::string> output = getOptionStringValue("-o", "--output", false, true, false);        
     bool checkchecksum = hasOption("-c", "--checkchecksum");
-    if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    checkOptions(help.str());
     optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
     std::string tag_value = tag? tag.value():"-";
     cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
@@ -1774,7 +1783,7 @@ int XrdCtaFile::xCom_test() {
     cta::common::dataStructures::WriteTestResult res;
     if("write" == m_requestTokens.at(2)) { //write
       optional<std::string> file = getOptionStringValue("-f", "--file", false, true, false);
-      if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      checkOptions(help.str());
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
       std::string tag_value = tag? tag.value():"-";
       res = m_scheduler->writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
@@ -1783,7 +1792,10 @@ int XrdCtaFile::xCom_test() {
       optional<uint64_t> number = getOptionUint64Value("-n", "--number", false, true, false);
       optional<uint64_t> size = getOptionUint64Value("-s", "--size", false, true, false);
       optional<std::string> input = getOptionStringValue("-i", "--input", false, true, false);
-      if(!optionsOk()||(input.value()!="zero"&&input.value()!="urandom")) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+      if(input.value()!="zero"&&input.value()!="urandom") {
+        m_missingRequiredOptions.push_back("--input value must be either \"zero\" or \"urandom\"");
+      }
+      checkOptions(help.str());
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
       std::string tag_value = tag? tag.value():"-";
       cta::common::dataStructures::TestSourceType type;
@@ -1816,7 +1828,7 @@ int XrdCtaFile::xCom_test() {
            << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesWritten/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -1831,10 +1843,10 @@ int XrdCtaFile::xCom_drive() {
        << "\tup   --drive/-d <drive_name>" << std::endl
        << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;  
   if(m_requestTokens.size() < 3) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   optional<std::string> drive = getOptionStringValue("-d", "--drive", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   if("up" == m_requestTokens.at(2)) {
     m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), true, false);
   }
@@ -1842,7 +1854,7 @@ int XrdCtaFile::xCom_drive() {
     m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), false, hasOption("-f", "--force"));
   }
   else {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+    throw cta::exception::UserError(help.str());
   }
   return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2061,7 +2073,7 @@ int XrdCtaFile::xCom_archive() {
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
                     << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
@@ -2078,7 +2090,7 @@ int XrdCtaFile::xCom_archive() {
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
   optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded, true, false);
   optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
@@ -2113,7 +2125,7 @@ int XrdCtaFile::xCom_retrieve() {
   help << m_requestTokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
@@ -2125,7 +2137,7 @@ int XrdCtaFile::xCom_retrieve() {
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
   optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded, true, false);
   optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
@@ -2153,12 +2165,12 @@ int XrdCtaFile::xCom_deletearchive() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
@@ -2178,7 +2190,7 @@ int XrdCtaFile::xCom_cancelretrieve() {
   help << m_requestTokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
@@ -2188,7 +2200,7 @@ int XrdCtaFile::xCom_cancelretrieve() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
@@ -2215,7 +2227,7 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
   help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
@@ -2225,7 +2237,7 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
@@ -2252,14 +2264,14 @@ int XrdCtaFile::xCom_updatefileinfo() {
   help << m_requestTokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
                     << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
   optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
   diskFileInfo.recoveryBlob=recoveryblob.value();
   diskFileInfo.group=diskfilegroup.value();
@@ -2280,11 +2292,11 @@ int XrdCtaFile::xCom_liststorageclass() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   bool encoded = encoded_s.value();
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  if(!optionsOk()) return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, help.str());
+  checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
   originator.group=group.value();
