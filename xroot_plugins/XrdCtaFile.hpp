@@ -142,7 +142,7 @@ protected:
    * @param requester  The requester identity
    * @return           SFS_OK in case command succeeded, SFS_ERROR otherwise
    */
-  int dispatchCommand();
+  void dispatchCommand();
   
   /**
    * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
@@ -183,35 +183,35 @@ protected:
    */
   bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
   
-  int xCom_bootstrap();
-  int xCom_admin();
-  int xCom_adminhost();
-  int xCom_tapepool();
-  int xCom_archiveroute();
-  int xCom_logicallibrary();
-  int xCom_tape();
-  int xCom_storageclass();
-  int xCom_requestermountrule();
-  int xCom_groupmountrule();
-  int xCom_mountpolicy();
-  int xCom_dedication();
-  int xCom_repack();
-  int xCom_shrink();
-  int xCom_verify();
-  int xCom_archivefile();
-  int xCom_test();
-  int xCom_drive();
-  int xCom_reconcile();
-  int xCom_listpendingarchives();
-  int xCom_listpendingretrieves();
-  int xCom_listdrivestates();
-  int xCom_archive();
-  int xCom_retrieve();
-  int xCom_deletearchive();
-  int xCom_cancelretrieve();
-  int xCom_updatefileinfo();
-  int xCom_updatefilestorageclass();
-  int xCom_liststorageclass();
+  void xCom_bootstrap();
+  void xCom_admin();
+  void xCom_adminhost();
+  void xCom_tapepool();
+  void xCom_archiveroute();
+  void xCom_logicallibrary();
+  void xCom_tape();
+  void xCom_storageclass();
+  void xCom_requestermountrule();
+  void xCom_groupmountrule();
+  void xCom_mountpolicy();
+  void xCom_dedication();
+  void xCom_repack();
+  void xCom_shrink();
+  void xCom_verify();
+  void xCom_archivefile();
+  void xCom_test();
+  void xCom_drive();
+  void xCom_reconcile();
+  void xCom_listpendingarchives();
+  void xCom_listpendingretrieves();
+  void xCom_listdrivestates();
+  void xCom_archive();
+  void xCom_retrieve();
+  void xCom_deletearchive();
+  void xCom_cancelretrieve();
+  void xCom_updatefileinfo();
+  void xCom_updatefilestorageclass();
+  void xCom_liststorageclass();
   
   /**
    * Returns the response string properly formatted in a table

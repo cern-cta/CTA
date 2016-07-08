@@ -150,7 +150,7 @@ public:
 
   virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
   
-  virtual void authorizeCliIdentity(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  virtual void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
 
 private:
 

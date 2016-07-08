@@ -113,46 +113,49 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
 //------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
-int XrdCtaFile::dispatchCommand() {
+void XrdCtaFile::dispatchCommand() {
   std::string command(m_requestTokens.at(1));
   
-  std::vector<std::string> adminCommands = {"bs","bootstrap","ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll","logicallibrary",
-          "ta","tape","sc","storageclass","us","user","mp","mountpolicy","de","dedication","re","repack","sh","shrink","ve","verify",
-          "af","archivefile","te","test","dr","drive","rc","reconcile","lpa","listpendingarchives","lpr","listpendingretrieves","lds","listdrivestates"};
+  std::vector<std::string> adminCommands = {"ad","admin","ah","adminhost","tp","tapepool","ar","archiveroute","ll",
+  "logicallibrary","ta","tape","sc","storageclass","rmr","requestermountrule","gmr","groupmountrule","mp","mountpolicy",
+  "de","dedication","re","repack","sh","shrink","ve","verify","af","archivefile","te","test","dr","drive","rc","reconcile","lpa",
+  "listpendingarchives","lpr","listpendingretrieves","lds","listdrivestates"};
   
   if (std::find(adminCommands.begin(), adminCommands.end(), command) != adminCommands.end()) {
-    m_scheduler->authorizeCliIdentity(m_cliIdentity);
+    m_scheduler->authorizeAdmin(m_cliIdentity);
   }
   
-  if     ("bs"   == command || "bootstrap"              == command) {return xCom_bootstrap();}
-  else if("ad"   == command || "admin"                  == command) {return xCom_admin();}
-  else if("ah"   == command || "adminhost"              == command) {return xCom_adminhost();}
-  else if("tp"   == command || "tapepool"               == command) {return xCom_tapepool();}
-  else if("ar"   == command || "archiveroute"           == command) {return xCom_archiveroute();}
-  else if("ll"   == command || "logicallibrary"         == command) {return xCom_logicallibrary();}
-  else if("ta"   == command || "tape"                   == command) {return xCom_tape();}
-  else if("sc"   == command || "storageclass"           == command) {return xCom_storageclass();}
-  else if("rmr"  == command || "requestermountrule"     == command) {return xCom_requestermountrule();}
-  else if("gmr"  == command || "groupmountrule"         == command) {return xCom_groupmountrule();}
-  else if("mp"   == command || "mountpolicy"            == command) {return xCom_mountpolicy();}
-  else if("de"   == command || "dedication"             == command) {return xCom_dedication();}
-  else if("re"   == command || "repack"                 == command) {return xCom_repack();}
-  else if("sh"   == command || "shrink"                 == command) {return xCom_shrink();}
-  else if("ve"   == command || "verify"                 == command) {return xCom_verify();}
-  else if("af"   == command || "archivefile"            == command) {return xCom_archivefile();}
-  else if("te"   == command || "test"                   == command) {return xCom_test();}
-  else if("dr"   == command || "drive"                  == command) {return xCom_drive();}
-  else if("rc"   == command || "reconcile"              == command) {return xCom_reconcile();}
-  else if("lpa"  == command || "listpendingarchives"    == command) {return xCom_listpendingarchives();}
-  else if("lpr"  == command || "listpendingretrieves"   == command) {return xCom_listpendingretrieves();}
-  else if("lds"  == command || "listdrivestates"        == command) {return xCom_listdrivestates();}
-  else if("a"    == command || "archive"                == command) {return xCom_archive();}
-  else if("r"    == command || "retrieve"               == command) {return xCom_retrieve();}
-  else if("da"   == command || "deletearchive"          == command) {return xCom_deletearchive();}
-  else if("cr"   == command || "cancelretrieve"         == command) {return xCom_cancelretrieve();}
-  else if("ufi"  == command || "updatefileinfo"         == command) {return xCom_updatefileinfo();}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {return xCom_updatefilestorageclass();}
-  else if("lsc"  == command || "liststorageclass"       == command) {return xCom_liststorageclass();}
+  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap();} //this command will eventually disappear
+  
+  else if("ad"   == command || "admin"                  == command) {xCom_admin();}
+  else if("ah"   == command || "adminhost"              == command) {xCom_adminhost();}
+  else if("tp"   == command || "tapepool"               == command) {xCom_tapepool();}
+  else if("ar"   == command || "archiveroute"           == command) {xCom_archiveroute();}
+  else if("ll"   == command || "logicallibrary"         == command) {xCom_logicallibrary();}
+  else if("ta"   == command || "tape"                   == command) {xCom_tape();}
+  else if("sc"   == command || "storageclass"           == command) {xCom_storageclass();}
+  else if("rmr"  == command || "requestermountrule"     == command) {xCom_requestermountrule();}
+  else if("gmr"  == command || "groupmountrule"         == command) {xCom_groupmountrule();}
+  else if("mp"   == command || "mountpolicy"            == command) {xCom_mountpolicy();}
+  else if("de"   == command || "dedication"             == command) {xCom_dedication();}
+  else if("re"   == command || "repack"                 == command) {xCom_repack();}
+  else if("sh"   == command || "shrink"                 == command) {xCom_shrink();}
+  else if("ve"   == command || "verify"                 == command) {xCom_verify();}
+  else if("af"   == command || "archivefile"            == command) {xCom_archivefile();}
+  else if("te"   == command || "test"                   == command) {xCom_test();}
+  else if("dr"   == command || "drive"                  == command) {xCom_drive();}
+  else if("rc"   == command || "reconcile"              == command) {xCom_reconcile();}
+  else if("lpa"  == command || "listpendingarchives"    == command) {xCom_listpendingarchives();}
+  else if("lpr"  == command || "listpendingretrieves"   == command) {xCom_listpendingretrieves();}
+  else if("lds"  == command || "listdrivestates"        == command) {xCom_listdrivestates();}
+  
+  else if("a"    == command || "archive"                == command) {xCom_archive();}
+  else if("r"    == command || "retrieve"               == command) {xCom_retrieve();}
+  else if("da"   == command || "deletearchive"          == command) {xCom_deletearchive();}
+  else if("cr"   == command || "cancelretrieve"         == command) {xCom_cancelretrieve();}
+  else if("ufi"  == command || "updatefileinfo"         == command) {xCom_updatefileinfo();}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {xCom_updatefilestorageclass();}
+  else if("lsc"  == command || "liststorageclass"       == command) {xCom_liststorageclass();}
   
   else {
     throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
@@ -196,20 +199,21 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
     if(m_requestTokens.size() < 2) {
       throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
     }    
-    return dispatchCommand();
+    dispatchCommand();
   } catch (cta::exception::UserError &ex) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, ex.getMessageValue()+"\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, ex.getMessageValue()+"\n");
   } catch (cta::exception::NonRetryableError &ex) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
   } catch (cta::exception::RetryableError &ex) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorRetry, ex.getMessageValue()+"\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorRetry, ex.getMessageValue()+"\n");
   } catch (cta::exception::Exception &ex) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
   } catch (std::exception &ex) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, std::string(ex.what())+"\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, std::string(ex.what())+"\n");
   } catch (...) {
-    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, "Unknown exception caught!\n");
+    logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, "Unknown exception caught!\n");
   }
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
@@ -605,7 +609,7 @@ time_t XrdCtaFile::stringParameterToTime(const std::string &parameterName, const
 //------------------------------------------------------------------------------
 // xCom_bootstrap
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_bootstrap() {
+void XrdCtaFile::xCom_bootstrap() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
@@ -614,13 +618,13 @@ int XrdCtaFile::xCom_bootstrap() {
   optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
   checkOptions(help.str());
   m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username.value(), hostname.value(), comment.value());
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_admin
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_admin() {
+void XrdCtaFile::xCom_admin() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ad/admin add/ch/rm/ls:" << std::endl
@@ -668,13 +672,13 @@ int XrdCtaFile::xCom_admin() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_adminhost
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_adminhost() {
+void XrdCtaFile::xCom_adminhost() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ah/adminhost add/ch/rm/ls:" << std::endl
@@ -722,13 +726,13 @@ int XrdCtaFile::xCom_adminhost() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_tapepool
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_tapepool() {
+void XrdCtaFile::xCom_tapepool() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " tp/tapepool add/ch/rm/ls:" << std::endl
@@ -789,13 +793,13 @@ int XrdCtaFile::xCom_tapepool() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_archiveroute
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_archiveroute() {
+void XrdCtaFile::xCom_archiveroute() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ar/archiveroute add/ch/rm/ls:" << std::endl
@@ -854,13 +858,13 @@ int XrdCtaFile::xCom_archiveroute() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_logicallibrary
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_logicallibrary() {
+void XrdCtaFile::xCom_logicallibrary() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ll/logicallibrary add/ch/rm/ls:" << std::endl
@@ -908,13 +912,13 @@ int XrdCtaFile::xCom_logicallibrary() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_tape
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_tape() {
+void XrdCtaFile::xCom_tape() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
@@ -1055,13 +1059,13 @@ int XrdCtaFile::xCom_tape() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_storageclass
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_storageclass() {
+void XrdCtaFile::xCom_storageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sc/storageclass add/ch/rm/ls:" << std::endl
@@ -1123,13 +1127,13 @@ int XrdCtaFile::xCom_storageclass() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_requestermountrule
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_requestermountrule() {
+void XrdCtaFile::xCom_requestermountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " rmr/requestermountrule add/ch/rm/ls:" << std::endl
@@ -1187,13 +1191,13 @@ int XrdCtaFile::xCom_requestermountrule() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_groupmountrule
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_groupmountrule() {
+void XrdCtaFile::xCom_groupmountrule() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " gmr/groupmountrule add/ch/rm/ls:" << std::endl
@@ -1251,13 +1255,13 @@ int XrdCtaFile::xCom_groupmountrule() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_mountpolicy
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_mountpolicy() {
+void XrdCtaFile::xCom_mountpolicy() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " mp/mountpolicy add/ch/rm/ls:" << std::endl
@@ -1339,13 +1343,13 @@ int XrdCtaFile::xCom_mountpolicy() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_dedication
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_dedication() {
+void XrdCtaFile::xCom_dedication() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " de/dedication add/ch/rm/ls:" << std::endl
@@ -1454,13 +1458,13 @@ int XrdCtaFile::xCom_dedication() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_repack
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_repack() {
+void XrdCtaFile::xCom_repack() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " re/repack add/rm/ls/err:" << std::endl
@@ -1562,26 +1566,26 @@ int XrdCtaFile::xCom_repack() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_shrink
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_shrink() {
+void XrdCtaFile::xCom_shrink() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
   checkOptions(help.str());
   m_scheduler->shrink(m_cliIdentity, tapepool.value());
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_verify
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_verify() {
+void XrdCtaFile::xCom_verify() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ve/verify add/rm/ls/err:" << std::endl
@@ -1657,13 +1661,13 @@ int XrdCtaFile::xCom_verify() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_archivefile
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_archivefile() {
+void XrdCtaFile::xCom_archivefile() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--diskid/-d <disk_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
@@ -1732,13 +1736,13 @@ int XrdCtaFile::xCom_archivefile() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_test
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_test() {
+void XrdCtaFile::xCom_test() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
@@ -1830,13 +1834,13 @@ int XrdCtaFile::xCom_test() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_drive
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_drive() {
+void XrdCtaFile::xCom_drive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " dr/drive up/down (it is a synchronous command):" << std::endl
@@ -1856,13 +1860,13 @@ int XrdCtaFile::xCom_drive() {
   else {
     throw cta::exception::UserError(help.str());
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_reconcile
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_reconcile() {
+void XrdCtaFile::xCom_reconcile() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
@@ -1893,13 +1897,13 @@ int XrdCtaFile::xCom_reconcile() {
     }
     cmdlineOutput << formatResponse(responseTable, true);
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_listpendingarchives
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_listpendingarchives() {
+void XrdCtaFile::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
@@ -1960,13 +1964,13 @@ int XrdCtaFile::xCom_listpendingarchives() {
       cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
     }
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_listpendingretrieves
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_listpendingretrieves() {
+void XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
@@ -2026,13 +2030,13 @@ int XrdCtaFile::xCom_listpendingretrieves() {
       cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
     }
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_listdrivestates
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_listdrivestates() {
+void XrdCtaFile::xCom_listdrivestates() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lds/listdrivestates [--header/-h]" << std::endl;
@@ -2060,13 +2064,13 @@ int XrdCtaFile::xCom_listdrivestates() {
     }
     cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
   }
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_archive
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_archive() {
+void XrdCtaFile::xCom_archive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
@@ -2113,13 +2117,13 @@ int XrdCtaFile::xCom_archive() {
   request.storageClass=storageclass.value();
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity, request);
   cmdlineOutput << archiveFileId << std::endl;
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_retrieve
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_retrieve() {
+void XrdCtaFile::xCom_retrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
@@ -2154,13 +2158,13 @@ int XrdCtaFile::xCom_retrieve() {
   request.requester=originator;
   request.dstURL=dsturl.value();
   m_scheduler->queueRetrieve(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_deletearchive
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_deletearchive() {
+void XrdCtaFile::xCom_deletearchive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
@@ -2178,13 +2182,13 @@ int XrdCtaFile::xCom_deletearchive() {
   request.archiveFileID=id.value();
   request.requester=originator;
   m_scheduler->deleteArchive(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_cancelretrieve
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_cancelretrieve() {
+void XrdCtaFile::xCom_cancelretrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
@@ -2215,13 +2219,13 @@ int XrdCtaFile::xCom_cancelretrieve() {
   request.requester=originator;
   request.dstURL=dsturl.value();
   m_scheduler->cancelRetrieve(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_updatefilestorageclass
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_updatefilestorageclass() {
+void XrdCtaFile::xCom_updatefilestorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
@@ -2252,13 +2256,13 @@ int XrdCtaFile::xCom_updatefilestorageclass() {
   request.requester=originator;
   request.storageClass=storageclass.value();
   m_scheduler->updateFileStorageClass(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_updatefileinfo
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_updatefileinfo() {
+void XrdCtaFile::xCom_updatefileinfo() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
@@ -2281,13 +2285,13 @@ int XrdCtaFile::xCom_updatefileinfo() {
   request.diskFileInfo=diskFileInfo;
   request.archiveFileID=id.value();
   m_scheduler->updateFileInfo(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
 // xCom_liststorageclass
 //------------------------------------------------------------------------------
-int XrdCtaFile::xCom_liststorageclass() {
+void XrdCtaFile::xCom_liststorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
@@ -2303,7 +2307,7 @@ int XrdCtaFile::xCom_liststorageclass() {
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
   m_scheduler->listStorageClass(m_cliIdentity, request);
-  return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
+  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
   
 //------------------------------------------------------------------------------

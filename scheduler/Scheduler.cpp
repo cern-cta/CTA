@@ -24,6 +24,7 @@
 #include "RetrieveMount.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/NonRetryableError.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -33,6 +34,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <c++/4.8.2/iosfwd>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -50,10 +52,14 @@ cta::Scheduler::~Scheduler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// authorizeCliIdentity
+// authorizeAdmin
 //------------------------------------------------------------------------------
-void cta::Scheduler::authorizeCliIdentity(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
-  m_catalogue.isAdmin(cliIdentity);
+void cta::Scheduler::authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
+  if(!(m_catalogue.isAdmin(cliIdentity))) {
+    std::stringstream msg;
+    msg << "User: " << cliIdentity.username << " on host: " << cliIdentity.host << " is not authorized to execute CTA admin commands";
+    throw cta::exception::UserError(msg.str());
+  }
 }
 
 //------------------------------------------------------------------------------
