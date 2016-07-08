@@ -95,39 +95,39 @@ namespace {
 
 std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, Agent& agent) {
   checkPayloadWritable();
-  // Check the tape pool does not already exist
+  // Check the archive queue does not already exist
   try {
     return serializers::findElement(m_payload.archivequeuepointers(), tapePool).address();
   } catch (serializers::NotFound &) {}
-  // Insert the tape pool, then its pointer, with agent intent log update
+  // Insert the archive queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string tapePoolQueueAddress = agent.nextId("tapePoolQueue");
+  std::string archiveQueueAddress = agent.nextId("archiveQueue");
   // TODO Do we expect the agent to be passed locked or not: to be clarified.
   ScopedExclusiveLock agl(agent);
   agent.fetch();
-  agent.addToOwnership(tapePoolQueueAddress);
+  agent.addToOwnership(archiveQueueAddress);
   agent.commit();
   // Then create the tape pool queue object
-  ArchiveQueue tpq(tapePoolQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  tpq.initialize(tapePool);
-  tpq.setOwner(agent.getAddressIfSet());
-  tpq.setBackupOwner("root");
-  tpq.insert();
-  ScopedExclusiveLock tpl(tpq);
+  ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  aq.initialize(tapePool);
+  aq.setOwner(agent.getAddressIfSet());
+  aq.setBackupOwner("root");
+  aq.insert();
+  ScopedExclusiveLock tpl(aq);
   // Now move the tape pool's ownership to the root entry
   auto * tpp = m_payload.mutable_archivequeuepointers()->Add();
-  tpp->set_address(tapePoolQueueAddress);
+  tpp->set_address(archiveQueueAddress);
   tpp->set_name(tapePool);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Now update the tape pool's ownership.
-  tpq.setOwner(getAddressIfSet());
-  tpq.setBackupOwner(getAddressIfSet());
-  tpq.commit();
+  aq.setOwner(getAddressIfSet());
+  aq.setBackupOwner(getAddressIfSet());
+  aq.commit();
   // ... and clean up the agent
-  agent.removeFromOwnership(tapePoolQueueAddress);
+  agent.removeFromOwnership(archiveQueueAddress);
   agent.commit();
-  return tapePoolQueueAddress;
+  return archiveQueueAddress;
 }
 
 void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
@@ -205,7 +205,40 @@ auto RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
 // =============================================================================
 
 std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Agent& agent) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  checkPayloadWritable();
+  // Check the retrieve queue does not already exist
+  try {
+    return serializers::findElement(m_payload.archivequeuepointers(), vid).address();
+  } catch (serializers::NotFound &) {}
+  // Insert the retrieve queue, then its pointer, with agent intent log update
+  // First generate the intent. We expect the agent to be passed locked.
+  std::string retrieveQueueAddress = agent.nextId("retriveQueue");
+  // TODO Do we expect the agent to be passed locked or not: to be clarified.
+  ScopedExclusiveLock agl(agent);
+  agent.fetch();
+  agent.addToOwnership(retrieveQueueAddress);
+  agent.commit();
+  // Then create the tape pool queue object
+  RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  rq.initialize(vid);
+  rq.setOwner(agent.getAddressIfSet());
+  rq.setBackupOwner("root");
+  rq.insert();
+  ScopedExclusiveLock tpl(rq);
+  // Now move the tape pool's ownership to the root entry
+  auto * rqp = m_payload.mutable_archivequeuepointers()->Add();
+  rqp->set_address(retrieveQueueAddress);
+  rqp->set_name(vid);
+  // We must commit here to ensure the tape pool object is referenced.
+  commit();
+  // Now update the tape pool's ownership.
+  rq.setOwner(getAddressIfSet());
+  rq.setBackupOwner(getAddressIfSet());
+  rq.commit();
+  // ... and clean up the agent
+  agent.removeFromOwnership(retrieveQueueAddress);
+  agent.commit();
+  return retrieveQueueAddress;
 }
 
 std::string RootEntry::getRetrieveQueue(const std::string& vid) {

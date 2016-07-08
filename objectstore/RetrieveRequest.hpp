@@ -87,6 +87,9 @@ public:
   
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
+  
+  void setEntryLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getEntryLog();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

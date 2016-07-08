@@ -262,7 +262,7 @@ std::string ArchiveRequest::getSrcURL() {
 //------------------------------------------------------------------------------
 // setCreationLog
 //------------------------------------------------------------------------------
-void ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog &creationLog) {
+void ArchiveRequest::setEntryLog(const cta::common::dataStructures::EntryLog &creationLog) {
   checkPayloadWritable();
   auto payloadCreationLog = m_payload.mutable_creationlog();
   payloadCreationLog->set_time(creationLog.time);
@@ -273,15 +273,11 @@ void ArchiveRequest::setCreationLog(const cta::common::dataStructures::EntryLog 
 //------------------------------------------------------------------------------
 // getCreationLog
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog ArchiveRequest::getCreationLog() {
+cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
   checkPayloadReadable();
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::UserIdentity user;
-  auto payloadCreationLog = m_payload.creationlog();
-  creationLog.username=payloadCreationLog.username();
-  creationLog.host=payloadCreationLog.host();
-  creationLog.time=payloadCreationLog.time();
-  return creationLog;  
+  EntryLogSerDeser el;
+  el.deserialize(m_payload.creationlog());
+  return el;
 }
 
 auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {

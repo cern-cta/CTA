@@ -328,7 +328,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setDiskpoolThroughput(666);
     ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setCreationLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }

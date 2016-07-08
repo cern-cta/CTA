@@ -290,9 +290,10 @@ void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &r
   aReq.setDiskpoolThroughput(request.diskpoolThroughput);
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
-  aReq.setCreationLog(request.creationLog);
+  aReq.setEntryLog(request.creationLog);
   // We will need to identity tapepools is order to construct the request
   RootEntry re(m_objectStore);
+  // TODO: need a softer locking, and a conbined usage of addOrGetArchiveQueueAndCommit and getArchiveQueue.
   ScopedExclusiveLock rel(re);
   re.fetch();
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
@@ -331,7 +332,7 @@ void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &r
               "(dangling pointer): canceling request creation.");
       aq.addJob(j, aReq.getAddressIfSet(), aReq.getArchiveFile().archiveFileID, 
         aReq.getArchiveFile().fileSize, aReq.getMountPolicy(),
-        aReq.getCreationLog().time);
+        aReq.getEntryLog().time);
       // Now that we have the tape pool handy, get the retry limits from it and 
       // assign them to the job
       aq.commit();
@@ -578,7 +579,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().tapePool = tpp.tapePool;
       ret.back().request.checksumType = osar.getArchiveFile().checksumType;
       ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
-      ret.back().request.creationLog = osar.getCreationLog();
+      ret.back().request.creationLog = osar.getEntryLog();
       ret.back().request.diskFileID = osar.getArchiveFile().diskFileId;
       ret.back().request.diskpoolName = osar.getDiskpoolName();
       ret.back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
@@ -630,7 +631,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
       ret[tpp.tapePool].back().tapePool = tpp.tapePool;
       ret[tpp.tapePool].back().request.checksumType = osar.getArchiveFile().checksumType;
       ret[tpp.tapePool].back().request.checksumValue = osar.getArchiveFile().checksumValue;
-      ret[tpp.tapePool].back().request.creationLog = osar.getCreationLog();
+      ret[tpp.tapePool].back().request.creationLog = osar.getEntryLog();
       ret[tpp.tapePool].back().request.diskFileID = osar.getArchiveFile().diskFileId;
       ret[tpp.tapePool].back().request.diskpoolName = osar.getDiskpoolName();
       ret[tpp.tapePool].back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
@@ -666,6 +667,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
       ret.back().bytesQueued=0;
       ret.back().currentPriority=0;
       ret.back().filesQueued=0;
+      continue;
     }
     RetrieveQueue rq(rqAddr, m_objectStore);
     ScopedSharedLock rql(rq);
@@ -686,117 +688,64 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
   const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
   assertAgentSet();
   // Check that the requested retrieve job (for the provided vid) exists.
   if (!std::count_if(criteria.archiveFile.tapeFiles.cbegin(), 
                      criteria.archiveFile.tapeFiles.end(),
                      [vid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == vid; }))
     throw RetrieveRequestHasNoCopies("In OStoreDB::queueRetrieve(): no tape file for requested vid.");
-  // 
   // In order to post the job, construct it first in memory.
   objectstore::RetrieveRequest rReq(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
   rReq.initialize();
   rReq.setSchedulerRequest(rqst);
   rReq.setRetrieveFileQueueCriteria(criteria);
+  // Point to the request in the agent
+  {
+    ScopedExclusiveLock agl(*m_agent);
+    m_agent->fetch();
+    m_agent->addToOwnership(rReq.getAddressIfSet());
+    m_agent->commit();
+  }
+  // Set an arbitrary copy number so we can serialize. Garbage collection we re-choose 
+  // the tape file number and override it in case of problem (and we will set it further).
+  rReq.setActiveCopyNumber(1);
+  rReq.insert();
+  ScopedExclusiveLock rrl(rReq);
   // Find the retrieve queue (or create it if necessary)
   RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
+  ScopedExclusiveLock rel(re);
   re.fetch();
   auto rqAddr=re.addOrGetRetrieveQueueAndCommit(vid, *m_agent);
-  // TODO: complete implementation.
-//  
-//  
-//  
-//  std::map<std::string, std::string> vidToAddress;
-//  RootEntry re(m_objectStore);
-//  ScopedSharedLock rel(re);
-//  re.fetch();
-//  auto archiveQueues = re.dumpArchiveQueues();
-//  for(auto pool=archiveQueues.begin(); pool!=archiveQueues.end(); pool++) {
-//    objectstore::ArchiveQueue aq(pool->address, m_objectStore);
-//    objectstore::ScopedSharedLock tpl(aq);
-//    aq.fetch();
-//    auto tapes = aq.dumpTapesAndFetchStatus();
-//    for(auto tape=tapes.begin(); tape!=tapes.end(); tape++)
-//      vidToAddress[tape->vid] = tape->address;
-//  }
-//  // Now add all the candidate tape copies to the request. With validation
-//  for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
-//    // Check the tape copy copynumber (range = [1 - copyCount] )
-//    if (tc->copyNb > rqst.getTapeCopies().size() || tc->copyNb < 1) {
-//      throw TapeCopyNumberOutOfRange("In OStoreDB::OStoreDB::queueRetrieve(): copy number out of range");
-//    }
-//  }
-//  // Add all the tape copies to the request
-//  try {
-//    for (auto tc=rqst.getTapeCopies().begin(); tc!=rqst.getTapeCopies().end(); tc++) {
-//      rReq.addJob(*tc, vidToAddress.at(tc->vid));
-//    }
-//  } catch (std::out_of_range &) {
-//    throw NoSuchTape("In OStoreDB::OStoreDB::queueRetrieve(): tape not found");
-//  }
-//  // We now need to select the tape from which we will migrate next. This should
-//  // be the tape with the most jobs already queued.
-//  // TODO: this will have to look at tape statuses on the long run as well
-//  uint16_t selectedCopyNumber;
-//  uint64_t bestTapeQueuedBytes;
-//  std::string selectedVid;
-//  uint64_t selectedFseq;
-//  uint64_t selectedBlockid;
-//  {
-//    // First tape copy is always better than nothing. 
-//    auto tc=rqst.getTapeCopies().begin();
-//    selectedCopyNumber = tc->copyNb;
-//    selectedVid = tc->vid;
-//    selectedFseq = tc->fSeq;
-//    selectedBlockid = tc->blockId;
-//    // Get info for the tape.
-//    {
-//      objectstore::Tape t(vidToAddress.at(tc->vid), m_objectStore);
-//      objectstore::ScopedSharedLock tl(t);
-//      t.fetch();
-//      bestTapeQueuedBytes = t.getJobsSummary().bytes;
-//    }
-//    tc++;
-//    // Compare with the next ones
-//    for (;tc!=rqst.getTapeCopies().end(); tc++) {
-//      objectstore::Tape t(vidToAddress.at(tc->vid), m_objectStore);
-//      objectstore::ScopedSharedLock tl(t);
-//      t.fetch();
-//      if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
-//        bestTapeQueuedBytes = t.getJobsSummary().bytes;
-//        selectedCopyNumber = tc->copyNb;
-//        selectedVid = tc->vid;
-//        selectedFseq = tc->fSeq;
-//        selectedBlockid = tc->blockId;
-//      }
-//    }
-//  }
-//  // We now can enqueue the request on this most promising tape.
-//  {
-//    objectstore::Tape tp(vidToAddress.at(selectedVid), m_objectStore);
-//    ScopedExclusiveLock tpl(tp);
-//    tp.fetch();
-//    objectstore::RetrieveToFileRequest::JobDump jd;
-//    jd.copyNb = selectedCopyNumber;
-//    jd.tape = selectedVid;
-//    jd.tapeAddress = vidToAddress.at(selectedVid);
-//    jd.fseq = selectedFseq;
-//    jd.blockid = selectedBlockid;
-//    tp.addJob(jd, rReq.getAddressIfSet(), rqst.getArchiveFile().size, rqst.priority, rqst.entryLog.time);
-//    tp.commit();
-//  }
-//  // The request is now fully set. It belongs to the tape.
-//  rReq.setOwner(vidToAddress.at(selectedVid));
-//  rReq.insert();
-//  // And remove reference from the agent
-//  {
-//    objectstore::ScopedExclusiveLock al(*m_agent);
-//    m_agent->fetch();
-//    m_agent->removeFromOwnership(rReq.getAddressIfSet());
-//    m_agent->commit();
-//  }
+  // Create the request.
+  rel.release();
+  RetrieveQueue rq(rqAddr, m_objectStore);
+  ScopedExclusiveLock rql(rq);
+  rq.fetch();
+  // We need to find the job corresponding to the vid
+  for (auto & j: rReq.dumpJobs()) {
+    if (j.tapeFile.vid == vid) {
+      rq.addJob(j, rReq.getAddressIfSet(), criteria.archiveFile.fileSize, criteria.mountPolicy, rReq.getEntryLog().time);
+      rReq.setActiveCopyNumber(j.tapeFile.copyNb);
+      goto jobAdded;
+    }
+  }
+  // Getting here means the expected job was not found. This is an internal error.
+  throw cta::exception::Exception("In OStoreDB::queueRetrieve(): job not found for this vid");
+  jobAdded:;
+  // We can now commit the queue.
+  rq.commit();
+  rql.release();
+  // Set the request ownership.
+  rReq.setOwner(rqAddr);
+  rReq.commit();
+  rrl.release();
+  // And relinquish ownership form agent
+  {
+    ScopedExclusiveLock agl(*m_agent);
+    m_agent->fetch();
+    m_agent->removeFromOwnership(rReq.getAddressIfSet());
+    m_agent->commit();
+  }
 }
 
 std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByVid(const std::string& vid) const {
@@ -852,6 +801,14 @@ std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequ
 void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
+}
+
+std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(const std::string& tapePoolName) const {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB::getRetrieveJobs() const {
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {

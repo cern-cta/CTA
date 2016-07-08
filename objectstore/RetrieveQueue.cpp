@@ -19,6 +19,7 @@
 #include "RetrieveQueue.hpp"
 #include "GenericObject.hpp"
 #include "EntryLogSerDeser.hpp"
+#include "ValueCountMap.hpp"
 #include <json-c/json.h>
 
 cta::objectstore::RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
@@ -32,16 +33,14 @@ cta::objectstore::RetrieveQueue::RetrieveQueue(GenericObject& go):
   getPayloadFromHeader();
 }
 
-void cta::objectstore::RetrieveQueue::initialize(const std::string &name, 
-    const std::string &logicallibrary, const cta::common::dataStructures::EntryLog & entryLog) {
+void cta::objectstore::RetrieveQueue::initialize(const std::string &vid) {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields
-  m_payload.set_oldestjobtime(0);
+  m_payload.set_oldestjobcreationtime(0);
   m_payload.set_retrievejobstotalsize(0);
-  m_payload.set_vid(name);
+  m_payload.set_vid(vid);
   m_payloadInterpreted = true;
 }
-
 
 bool cta::objectstore::RetrieveQueue::isEmpty() {
   checkPayloadReadable();
@@ -69,7 +68,7 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   
   json_object_object_add(jo, "vid", json_object_new_string(m_payload.vid().c_str()));
   json_object_object_add(jo, "retrievejobstotalsize", json_object_new_int64(m_payload.retrievejobstotalsize()));
-  json_object_object_add(jo, "oldestjobtime", json_object_new_int64(m_payload.oldestjobtime()));
+  json_object_object_add(jo, "oldestjobcreationtime", json_object_new_int64(m_payload.oldestjobcreationtime()));
   
   {
     json_object * array = json_object_new_array();
@@ -89,21 +88,22 @@ std::string cta::objectstore::RetrieveQueue::dump() {
 }
 
 void cta::objectstore::RetrieveQueue::addJob(const RetrieveRequest::JobDump& job,
-  const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
-  time_t startTime) {
+  const std::string & retrieveRequestAddress, uint64_t size, 
+  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
-  // Manage the cumulative properties
+  // Keep track of the mounting criteria
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   if (m_payload.retrievejobs_size()) {
-    if (m_payload.oldestjobtime() > (uint64_t)startTime) {
-      m_payload.set_oldestjobtime(startTime);
+    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
+      m_payload.set_oldestjobcreationtime(startTime);
     }
     m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
   } else {
-    m_payload.set_oldestjobtime(startTime);
+    m_payload.set_oldestjobcreationtime(startTime);
     m_payload.set_retrievejobstotalsize(size);
   }
   auto * j = m_payload.add_retrievejobs();
-  j->set_address(retrieveToFileAddress);
+  j->set_address(retrieveRequestAddress);
   j->set_size(size);
   j->set_copynb(job.tapeFile.copyNb);
 }
@@ -113,7 +113,7 @@ cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::ge
   JobsSummary ret;
   ret.bytes = m_payload.retrievejobstotalsize();
   ret.files = m_payload.retrievejobs_size();
-  ret.oldestJobStartTime = m_payload.oldestjobtime();
+  ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
   return ret;
 }
 

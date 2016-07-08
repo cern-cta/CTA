@@ -32,6 +32,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "tests/TempFile.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -82,6 +83,7 @@ public:
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
     rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+    //rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_SQLITE, "", "", m_tempSqliteFile.path());
     m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
 
     m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
@@ -199,6 +201,7 @@ protected:
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TestVid";
+  //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
 
@@ -350,7 +353,7 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
-    request.instance="cms";
+    request.instance="disk_instance";
     request.fileSize=100*1000*1000;
     cta::common::dataStructures::UserIdentity requester;
     requester.name = s_userName;

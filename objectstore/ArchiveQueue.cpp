@@ -153,7 +153,7 @@ std::string ArchiveQueue::getTapePool() {
 }
 
 void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
-  const std::string & archiveToFileAddress, uint64_t fileid,
+  const std::string & archiveRequestAddress, uint64_t fileid,
   uint64_t size, const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
   // Keep track of the mounting criteria
@@ -172,7 +172,7 @@ void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
     m_payload.set_oldestjobcreationtime(startTime);
   }
   auto * j = m_payload.add_pendingarchivejobs();
-  j->set_address(archiveToFileAddress);
+  j->set_address(archiveRequestAddress);
   j->set_size(size);
   j->set_fileid(fileid);
   j->set_copynb(job.copyNb);

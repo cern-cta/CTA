@@ -409,6 +409,9 @@ message ArchiveQueue {
 message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveJobPointer retrievejobs = 10110;
-  required uint64 retrievejobstotalsize = 10120;
-  required uint64 oldestjobtime = 10130;
+  repeated ValueCountPair prioritymap = 10131;
+  repeated ValueCountPair minretrievequestagemap = 10132;
+  repeated ValueCountPair maxdrivesallowedmap = 10133;
+  required uint64 retrievejobstotalsize = 10140;
+  required uint64 oldestjobcreationtime = 10150;
 }

@@ -83,9 +83,8 @@ public:
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL();
 
-  // TODO: rename
-  void setCreationLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getCreationLog();
+  void setEntryLog(const cta::common::dataStructures::EntryLog &creationLog);
+  cta::common::dataStructures::EntryLog getEntryLog();
   
   void setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy);
   cta::common::dataStructures::MountPolicy getMountPolicy();

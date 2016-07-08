@@ -67,6 +67,14 @@ public:
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
+  
+  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {
+    return m_OStoreDB.getRetrieveJobs(tapePoolName);
+  }
+
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > getRetrieveJobs() const override {
+    return m_OStoreDB.getRetrieveJobs();
+  }
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
     return m_OStoreDB.getArchiveJobs();

@@ -19,6 +19,7 @@
 #include "RetrieveRequest.hpp"
 #include "GenericObject.hpp"
 #include "EntryLogSerDeser.hpp"
+#include "MountPolicySerDeser.hpp"
 #include "DiskFileInfoSerDeser.hpp"
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
@@ -119,7 +120,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
 void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   checkPayloadWritable();
   for (auto &tf: criteria.archiveFile.tapeFiles) {
-    // TODO add mount criteria
+    MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
     addJob(tf.second, hardcodedRetriesWithinMount, hardcodedTotalRetries);
@@ -175,6 +176,11 @@ void RetrieveRequest::finish() {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
+void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
+  checkPayloadWritable();
+  m_payload.set_activecopynb(activeCopyNb);
+}
+
 uint32_t RetrieveRequest::getActiveCopyNumber() {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -183,6 +189,12 @@ cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetri
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
+cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
+  checkPayloadReadable();
+  EntryLogSerDeser el;
+  el.deserialize(m_payload.schedulerrequest().entrylog());
+  return el;
+}
 
 
 

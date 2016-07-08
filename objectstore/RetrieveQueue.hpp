@@ -33,8 +33,7 @@ class RetrieveQueue: public ObjectOps<serializers::RetrieveQueue, serializers::R
 public:
   RetrieveQueue(const std::string & address, Backend & os);
   RetrieveQueue(GenericObject & go);
-  void initialize(const std::string & vid, const std::string &logicalLibrary, 
-    const cta::common::dataStructures::EntryLog & entryLog);
+  void initialize(const std::string & vid);
   void garbageCollect();
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
@@ -43,8 +42,8 @@ public:
   
   // Retrieve jobs management ==================================================
   void addJob(const RetrieveRequest::JobDump & job,
-    const std::string & retrieveToFileAddress, uint64_t size, uint64_t priority,
-    time_t startTime);
+    const std::string & retrieveRequestAddress, uint64_t size,
+    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;

@@ -29,6 +29,7 @@
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
@@ -275,6 +276,26 @@ public:
   virtual void deleteRetrieveRequest(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
+  
+  /**
+   * Returns all of the queued archive jobs.  The returned jobs are
+   * grouped by tape pool and then sorted by creation time, oldest first.
+   *
+   * @return The queued jobs.
+   */
+  virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob> >
+    getRetrieveJobs() const = 0;
+
+  /**
+   * Returns the list of queued jobs queued on the specified tape pool.
+   * The returned requests are sorted by creation time, oldest first.
+   *
+   * @param tapePoolName The name of the tape pool.
+   * @return The queued requests.
+   */
+  virtual std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(
+    const std::string &tapePoolName) const = 0;
+  
   
   /*============ Retrieve management: tape server side ======================*/
 

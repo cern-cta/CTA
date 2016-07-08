@@ -306,7 +306,7 @@ std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArc
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs() const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  return m_db.getRetrieveJobs();
 }
 
 //------------------------------------------------------------------------------

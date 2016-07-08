@@ -58,6 +58,7 @@ C1 & findElement(::google::protobuf::RepeatedPtrField<C1>* field, const C2 & val
   throw NotFound("In cta::objectsotre::serializers::findElement(non-const): element not found");
 }
 
+// TODO Replace usage with c++ algorithms and lambdas.
 template <class C1, class C2>
 const C1 & findElement(const ::google::protobuf::RepeatedPtrField<C1>& field, const C2 & value) {
   for (auto i=field.begin(); i!= field.end(); i++) {
