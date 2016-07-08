@@ -24,6 +24,9 @@
 #include "catalogue/ArchiveFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/exception/NonRetryableError.hpp"
+#include "common/exception/RetryableError.hpp"
 
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
@@ -194,6 +197,12 @@ int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t c
       return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, getGenericHelp(m_requestTokens.at(0)));
     }    
     return dispatchCommand();
+  } catch (cta::exception::UserError &ex) {
+    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::userErrorNoRetry, ex.getMessageValue()+"\n");
+  } catch (cta::exception::NonRetryableError &ex) {
+    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
+  } catch (cta::exception::RetryableError &ex) {
+    return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorRetry, ex.getMessageValue()+"\n");
   } catch (cta::exception::Exception &ex) {
     return logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry, ex.getMessageValue()+"\n");
   } catch (std::exception &ex) {
