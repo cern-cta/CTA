@@ -214,6 +214,16 @@ protected:
   void xCom_liststorageclass();
   
   /**
+   * Checks whether the user that issued the admin command is an authorized admin (throws a UserError if it's not).
+   */
+  void authorizeAdmin();
+  
+  /**
+   * Checks whether the user that issued the user command is an authorized user (throws a UserError if it's not).
+   */
+  void authorizeUser();
+  
+  /**
    * Returns the response string properly formatted in a table
    * 
    * @param  responseTable The response 2-D matrix

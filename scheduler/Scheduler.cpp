@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
-#include <c++/4.8.2/iosfwd>
 
 //------------------------------------------------------------------------------
 // constructor

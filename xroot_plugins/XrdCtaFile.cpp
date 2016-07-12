@@ -111,42 +111,57 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
 }
 
 //------------------------------------------------------------------------------
+// authorizeAdmin
+//------------------------------------------------------------------------------
+void XrdCtaFile::authorizeAdmin(){
+  m_scheduler->authorizeAdmin(m_cliIdentity);
+}
+
+//------------------------------------------------------------------------------
+// authorizeUser
+//------------------------------------------------------------------------------
+void XrdCtaFile::authorizeUser(){
+  
+}
+
+//------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
 void XrdCtaFile::dispatchCommand() {
   std::string command(m_requestTokens.at(1));
   
-  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap();} //this command will eventually disappear
+  //this "bootstrap" command, which is not checked for authorization, will eventually disappear
+  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap();}
   
-  else if("ad"   == command || "admin"                  == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_admin();}
-  else if("ah"   == command || "adminhost"              == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_adminhost();}
-  else if("tp"   == command || "tapepool"               == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_tapepool();}
-  else if("ar"   == command || "archiveroute"           == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_archiveroute();}
-  else if("ll"   == command || "logicallibrary"         == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_logicallibrary();}
-  else if("ta"   == command || "tape"                   == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_tape();}
-  else if("sc"   == command || "storageclass"           == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_storageclass();}
-  else if("rmr"  == command || "requestermountrule"     == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_requestermountrule();}
-  else if("gmr"  == command || "groupmountrule"         == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_groupmountrule();}
-  else if("mp"   == command || "mountpolicy"            == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_mountpolicy();}
-  else if("de"   == command || "dedication"             == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_dedication();}
-  else if("re"   == command || "repack"                 == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_repack();}
-  else if("sh"   == command || "shrink"                 == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_shrink();}
-  else if("ve"   == command || "verify"                 == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_verify();}
-  else if("af"   == command || "archivefile"            == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_archivefile();}
-  else if("te"   == command || "test"                   == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_test();}
-  else if("dr"   == command || "drive"                  == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_drive();}
-  else if("rc"   == command || "reconcile"              == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_reconcile();}
-  else if("lpa"  == command || "listpendingarchives"    == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_listpendingarchives();}
-  else if("lpr"  == command || "listpendingretrieves"   == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_listpendingretrieves();}
-  else if("lds"  == command || "listdrivestates"        == command) {m_scheduler->authorizeAdmin(m_cliIdentity); xCom_listdrivestates();}
+  else if("ad"   == command || "admin"                  == command) {authorizeAdmin(); xCom_admin();}
+  else if("ah"   == command || "adminhost"              == command) {authorizeAdmin(); xCom_adminhost();}
+  else if("tp"   == command || "tapepool"               == command) {authorizeAdmin(); xCom_tapepool();}
+  else if("ar"   == command || "archiveroute"           == command) {authorizeAdmin(); xCom_archiveroute();}
+  else if("ll"   == command || "logicallibrary"         == command) {authorizeAdmin(); xCom_logicallibrary();}
+  else if("ta"   == command || "tape"                   == command) {authorizeAdmin(); xCom_tape();}
+  else if("sc"   == command || "storageclass"           == command) {authorizeAdmin(); xCom_storageclass();}
+  else if("rmr"  == command || "requestermountrule"     == command) {authorizeAdmin(); xCom_requestermountrule();}
+  else if("gmr"  == command || "groupmountrule"         == command) {authorizeAdmin(); xCom_groupmountrule();}
+  else if("mp"   == command || "mountpolicy"            == command) {authorizeAdmin(); xCom_mountpolicy();}
+  else if("de"   == command || "dedication"             == command) {authorizeAdmin(); xCom_dedication();}
+  else if("re"   == command || "repack"                 == command) {authorizeAdmin(); xCom_repack();}
+  else if("sh"   == command || "shrink"                 == command) {authorizeAdmin(); xCom_shrink();}
+  else if("ve"   == command || "verify"                 == command) {authorizeAdmin(); xCom_verify();}
+  else if("af"   == command || "archivefile"            == command) {authorizeAdmin(); xCom_archivefile();}
+  else if("te"   == command || "test"                   == command) {authorizeAdmin(); xCom_test();}
+  else if("dr"   == command || "drive"                  == command) {authorizeAdmin(); xCom_drive();}
+  else if("rc"   == command || "reconcile"              == command) {authorizeAdmin(); xCom_reconcile();}
+  else if("lpa"  == command || "listpendingarchives"    == command) {authorizeAdmin(); xCom_listpendingarchives();}
+  else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); xCom_listpendingretrieves();}
+  else if("lds"  == command || "listdrivestates"        == command) {authorizeAdmin(); xCom_listdrivestates();}
   
-  else if("a"    == command || "archive"                == command) {xCom_archive();}
-  else if("r"    == command || "retrieve"               == command) {xCom_retrieve();}
-  else if("da"   == command || "deletearchive"          == command) {xCom_deletearchive();}
-  else if("cr"   == command || "cancelretrieve"         == command) {xCom_cancelretrieve();}
-  else if("ufi"  == command || "updatefileinfo"         == command) {xCom_updatefileinfo();}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {xCom_updatefilestorageclass();}
-  else if("lsc"  == command || "liststorageclass"       == command) {xCom_liststorageclass();}
+  else if("a"    == command || "archive"                == command) {authorizeUser(); xCom_archive();}
+  else if("r"    == command || "retrieve"               == command) {authorizeUser(); xCom_retrieve();}
+  else if("da"   == command || "deletearchive"          == command) {authorizeUser(); xCom_deletearchive();}
+  else if("cr"   == command || "cancelretrieve"         == command) {authorizeUser(); xCom_cancelretrieve();}
+  else if("ufi"  == command || "updatefileinfo"         == command) {authorizeUser(); xCom_updatefileinfo();}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {authorizeUser(); xCom_updatefilestorageclass();}
+  else if("lsc"  == command || "liststorageclass"       == command) {authorizeUser(); xCom_liststorageclass();}
   
   else {
     throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));

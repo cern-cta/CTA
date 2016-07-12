@@ -4,11 +4,13 @@ xrootd.fslib libXrdCtaOfs.so
 # Use the Kerberos 5 security module
 xrootd.seclib libXrdSec.so
 
+# Protocol specification
 # The xroot server process needs to be able to read the keytab file
 sec.protocol krb5 /etc/krb5.keytab.cta host/<host>@CERN.CH
+sec.protocol sss 
 
-# Only Kerberos 5 is allowed
-sec.protbind * only krb5
+# Only Kerberos 5 and sss are allowed
+sec.protbind * only krb5 sss
 
 # Allow copying from absolute paths
 all.export /
