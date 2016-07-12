@@ -16,24 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/RdbmsCatalogueSchema.hpp"
-#include "rdbms/SqliteConn.hpp"
+#pragma once
+
+#include "catalogue/SqliteCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(): SchemaCreatingSqliteCatalogue(":memory:") {
-}
+class CatalogueFactory;
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
-}
+/**
+ * Asbtract CTA catalogue class to be used for unit testing.
+ */
+class SchemaCreatingSqliteCatalogue: public SqliteCatalogue {
+public:
+
+  /**
+   * Constructor.
+   *
+   * @param filename The filename of teh SQLite database file.
+   */
+  SchemaCreatingSqliteCatalogue(const std::string &filename);
+
+  /**
+   * Destructor.
+   */
+  virtual ~SchemaCreatingSqliteCatalogue();
+
+private:
+
+  /**
+   * Creates the database schema.
+   */
+  void createCatalogueSchema();
+
+}; // class SchemaCreatingSqliteCatalogue
 
 } // namespace catalogue
 } // namespace cta

@@ -26,10 +26,11 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   CatalogueFactory.cpp
   InMemoryCatalogue.cpp
+  OracleCatalogue.cpp
   RdbmsCatalogueSchema.cpp
   TapeFileWritten.cpp
-  OracleCatalogue.cpp
   RdbmsCatalogue.cpp
+  SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   TapeForWriting.cpp)
 

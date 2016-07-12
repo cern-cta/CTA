@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "rdbms/SqliteConn.hpp"
 
@@ -26,13 +26,33 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(): SchemaCreatingSqliteCatalogue(":memory:") {
+SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &filename) {
+  std::unique_ptr<rdbms::SqliteConn> sqliteConn(new rdbms::SqliteConn(filename));
+  m_conn.reset(sqliteConn.release());
+  createCatalogueSchema();
+}
+
+//------------------------------------------------------------------------------
+// createCatalogueSchema
+//------------------------------------------------------------------------------
+void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
+  const RdbmsCatalogueSchema schema;
+  std::string::size_type searchPos = 0;
+  std::string::size_type findResult = std::string::npos;
+
+  while(std::string::npos != (findResult = schema.sql.find(';', searchPos))) {
+    const std::string::size_type length = findResult - searchPos + 1;
+    const std::string sql = schema.sql.substr(searchPos, length);
+    searchPos = findResult + 1;
+    std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->executeNonQuery();
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
+SchemaCreatingSqliteCatalogue::~SchemaCreatingSqliteCatalogue() {
 }
 
 } // namespace catalogue

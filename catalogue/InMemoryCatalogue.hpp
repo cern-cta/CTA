@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -28,7 +28,7 @@ class CatalogueFactory;
 /**
  * CTA catalogue class to be used for unit testing.
  */
-class InMemoryCatalogue: public SqliteCatalogue {
+class InMemoryCatalogue: public SchemaCreatingSqliteCatalogue {
 
   /**
    * The CatalogueFactory is a friend so that it can call the private
@@ -50,25 +50,6 @@ public:
    * Destructor.
    */
   virtual ~InMemoryCatalogue();
-
-private:
-
-  /**
-   * This is an InMemoryCatalogue specific method that creates the catalogue
-   * database schema.
-   */
-  void createCatalogueSchema();
-
-  /**
-   * This is an InMemoryCatalogue specific method that executes the specified
-   * non-query multi-line SQL statement.
-   *
-   * Please note that each statement must end with a semicolon.  If the last
-   * statement is missing a semicolon then it will not be executed.
-   *
-   * @param multiStmt Non-query multi-line SQL statement.
-   */
-  void executeNonQueryMultiStmt(const std::string &multiStmt);
 
 }; // class InMemoryCatalogue
 
