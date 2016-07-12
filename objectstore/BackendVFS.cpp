@@ -224,7 +224,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
   if(0 > ret->m_fd) {
     const std::string errnoStr = utils::errnoToString(errno);
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << ": Failed to open file " << path <<
+    ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
       ": " << errnoStr;
     throw ex;
   }
@@ -232,7 +232,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
   if(::flock(ret->m_fd, LOCK_EX)) {
     const std::string errnoStr = utils::errnoToString(errno);
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << ": Failed to flock file " << path <<
+    ex.getMessage() << "In BackendVFS::lockHelper(): Failed to flock file " << path <<
       ": " << errnoStr;
     throw ex;
   }

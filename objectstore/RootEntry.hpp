@@ -62,8 +62,7 @@ public:
   void removeArchiveQueueAndCommit(const std::string & tapePool);
   void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress);
   std::string getArchiveQueueAddress(const std::string & tapePool);
-  class ArchiveQueueDump {
-  public:
+  struct ArchiveQueueDump {
     std::string tapePool;
     std::string address;
   };
@@ -75,7 +74,11 @@ public:
   std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, Agent & agent);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
   std::string getRetrieveQueue(const std::string & vid);
-  
+  struct RetrieveQueueDump {
+    std::string vid;
+    std::string address;
+  };
+  std::list<RetrieveQueueDump> dumpRetrieveQueues();
   
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);

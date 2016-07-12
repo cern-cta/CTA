@@ -461,17 +461,17 @@ TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::RETRIEVE, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
-    ASSERT_NO_THROW(retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release())));
+    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    ASSERT_NO_THROW(retrieveJob.reset(retrieveMount->getNextJob().release()));
+    retrieveJob.reset(retrieveMount->getNextJob().release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
-    ASSERT_NO_THROW(retrieveJob->complete());
-    ASSERT_NO_THROW(retrieveJob.reset(retrieveMount->getNextJob().release()));
+    retrieveJob->complete();
+    retrieveJob.reset(retrieveMount->getNextJob().release());
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
   }
 }

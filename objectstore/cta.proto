@@ -111,7 +111,7 @@ message ArchiveQueuePointer {
 }
 
 // Pointer to the tape queue
-message TapeQueuePointer {
+message RetrieveQueuePointer {
   required string address = 130;
   required string vid = 131;
 }
@@ -120,7 +120,7 @@ message TapeQueuePointer {
 // the admin handled configuration information
 message RootEntry {
   repeated ArchiveQueuePointer archivequeuepointers = 1050;
-  repeated TapeQueuePointer tapequeuepointers = 1060; //new queues by tape vid that will replace the old retrieve queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
+  repeated RetrieveQueuePointer retrievequeuepointers = 1060; //new queues by tape vid that will replace the old retrieve queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
   optional string agentregisterintent = 1090;

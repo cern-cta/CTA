@@ -66,7 +66,7 @@ bool RootEntry::isEmpty() {
     return false;
   if (m_payload.archivequeuepointers().size())
     return false;
-  if (m_payload.tapequeuepointers().size())
+  if (m_payload.retrievequeuepointers().size())
     return false;
   return true;
 }
@@ -204,11 +204,20 @@ auto RootEntry::dumpArchiveQueues() -> std::list<ArchiveQueueDump> {
 // ========== Retrieve queues manipulations ====================================
 // =============================================================================
 
+// This operator will be used in the following usage of the findElement
+// removeOccurences
+namespace {
+  bool operator==(const std::string &vid,
+    const serializers::RetrieveQueuePointer & tpp) {
+    return tpp.vid() == vid;
+  }
+}
+
 std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Agent& agent) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
-    return serializers::findElement(m_payload.archivequeuepointers(), vid).address();
+    return serializers::findElement(m_payload.retrievequeuepointers(), vid).address();
   } catch (serializers::NotFound &) {}
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
@@ -226,9 +235,9 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   rq.insert();
   ScopedExclusiveLock tpl(rq);
   // Now move the tape pool's ownership to the root entry
-  auto * rqp = m_payload.mutable_archivequeuepointers()->Add();
+  auto * rqp = m_payload.mutable_retrievequeuepointers()->Add();
   rqp->set_address(retrieveQueueAddress);
-  rqp->set_name(vid);
+  rqp->set_vid(vid);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
   // Now update the tape pool's ownership.
@@ -247,6 +256,18 @@ std::string RootEntry::getRetrieveQueue(const std::string& vid) {
 
 void RootEntry::removeArchiveQueueIfAddressMatchesAndCommit(const std::string& tapePool, const std::string& archiveQueueAddress) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+}
+
+auto RootEntry::dumpRetrieveQueues() -> std::list<RetrieveQueueDump> {
+  checkPayloadReadable();
+  std::list<RetrieveQueueDump> ret;
+  auto & tpl = m_payload.retrievequeuepointers();
+  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
+    ret.push_back(RetrieveQueueDump());
+    ret.back().address = i->address();
+    ret.back().vid = i->vid();
+  }
+  return ret;
 }
 
 // =============================================================================

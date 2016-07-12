@@ -168,6 +168,22 @@ auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   throw NoSuchJob("In objectstore::RetrieveRequest::getJob(): job not found for this copyNb");
 }
 
+auto RetrieveRequest::getJobs() -> std::list<JobDump> {
+  checkPayloadReadable();
+  std::list<JobDump> ret;
+  for (auto & j: m_payload.jobs()) {
+    ret.push_back(JobDump());
+    TapeFileSerDeser tf;
+    tf.deserialize(j.tapefile());
+    ret.back().tapeFile=tf;
+    ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
+    ret.back().maxTotalRetries=j.maxtotalretries();
+    ret.back().retriesWithinMount=j.retrieswithinmount();
+    ret.back().totalRetries=j.totalretries();
+  }
+  return ret;
+}
+
 RetrieveRequest::FailuresCount RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t sessionId) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

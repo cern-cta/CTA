@@ -78,13 +78,13 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
-  auto tpl = re.dumpArchiveQueues();
-  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
+  auto tplist = re.dumpArchiveQueues();
+  for (auto tpp=tplist.begin(); tpp!=tplist.end(); tpp++) {
     // Get the tape pool object
     objectstore::ArchiveQueue aqueue(tpp->address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = tpp->tapePool;
-    objectstore::ScopedSharedLock tpl(aqueue);
+    objectstore::ScopedSharedLock tplock(aqueue);
     aqueue.fetch();
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
@@ -100,7 +100,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
       m.minArchiveRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
       m.logicalLibrary = "";
-
     }
     // TODO TODO: cover the retrieve mounts as well
     // For each tape in the pool, list the tapes with work
@@ -808,7 +807,40 @@ std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(co
 }
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB::getRetrieveJobs() const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  // We will walk all the tapes to get the jobs.
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > ret;
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto rql=re.dumpRetrieveQueues();
+  rel.release();
+  for (auto & rqp: rql) {
+    // This implementation gives imperfect consistency. Do we need better? (If so, TODO: improve).
+    // This implementation is racy, so we tolerate that the queue is gone.
+    try {
+      RetrieveQueue rq(rqp.address, m_objectStore);
+      ScopedSharedLock rql(rq);
+      rq.fetch();
+      for (auto & j: rq.dumpJobs()) {
+        ret[rqp.vid].push_back(common::dataStructures::RetrieveJob());
+        try {
+          auto & jd=ret[rqp.vid].back();
+          RetrieveRequest rr(j.address, m_objectStore);
+          ScopedSharedLock rrl(rr);
+          rr.fetch();
+          jd.request=rr.getSchedulerRequest();
+          for (auto & tc: rr.getJobs()) {
+            jd.tapeCopies[tc.tapeFile.vid].first=tc.tapeFile.copyNb;
+            jd.tapeCopies[tc.tapeFile.vid].second=tc.tapeFile;
+          }
+        } catch (...) {
+          ret[rqp.vid].pop_back();
+        }
+            
+      }
+    } catch (...) {}
+  }
+  return ret;
 }
 
 std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {
@@ -1093,6 +1125,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
     aq.remove();
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedExclusiveLock rel (re);
+    re.fetch();
     re.removeArchiveQueueAndCommit(mountInfo.tapePool);
     return std::unique_ptr<SchedulerDatabase::ArchiveJob>();
   } catch (cta::exception::Exception & ex){

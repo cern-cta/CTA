@@ -59,6 +59,7 @@ public:
     // TODO: status
   };
   JobDump getJob(uint16_t copyNb);
+  std::list<JobDump> getJobs();
   struct FailuresCount {
     uint16_t failuresWithinMount;
     uint16_t totalFailures;
