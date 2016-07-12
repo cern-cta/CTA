@@ -29,18 +29,10 @@ class CatalogueFactory;
  * An SQLite implementation of the CTA catalogue.
  */
 class SqliteCatalogue: public RdbmsCatalogue {
+public:
 
   /**
-   * The CatalogueFactory is a friend so that it can call the private
-   * constructor of this class.
-   */
-  friend CatalogueFactory;
-
-private:
-
-  /**
-   * Private constructor only to be called by the CatalogueFactory class (a
-   * friend).
+   * Constructor.
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
    */

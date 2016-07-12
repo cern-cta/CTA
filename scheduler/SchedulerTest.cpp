@@ -16,12 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "rdbms/DbConn.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -82,9 +81,8 @@ public:
 
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
-    //rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_SQLITE, "", "", m_tempSqliteFile.path());
-    m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin));
+    //m_catalogue.reset(new catalogue::SchemaCreatingSqliteCatalogue(m_tempSqliteFile.path()));
+    m_catalogue.reset(new catalogue::InMemoryCatalogue());
 
     m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
   }

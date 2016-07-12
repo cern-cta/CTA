@@ -29,18 +29,10 @@ class CatalogueFactory;
  * An Oracle based implementation of the CTA catalogue.
  */
 class OracleCatalogue: public RdbmsCatalogue {
+public:
 
   /**
-   * The CatalogueFactory is a friend so that it can call the private
-   * constructor of this class.
-   */
-  friend CatalogueFactory;
-
-private:
-
-  /**
-   * Private constructor only to be called by the CatalogueFactory class (a
-   * friend).
+   * Constructor.
    *
    * @param username The database username.
    * @param password The database password.
@@ -50,8 +42,6 @@ private:
     const std::string &username,
     const std::string &password,
     const std::string &database);
-
-public:
 
   /**
    * Destructor.

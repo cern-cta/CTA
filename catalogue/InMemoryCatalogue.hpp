@@ -29,22 +29,12 @@ class CatalogueFactory;
  * CTA catalogue class to be used for unit testing.
  */
 class InMemoryCatalogue: public SchemaCreatingSqliteCatalogue {
+public:
 
   /**
-   * The CatalogueFactory is a friend so that it can call the private
-   * constructor of this class.
-   */
-  friend CatalogueFactory;
-
-private:
-
-  /**
-   * Private constructor only to be called by the CatalogueFactory class (a
-   * friend).
+   * Constructor.
    */
   InMemoryCatalogue();
-
-public:
 
   /**
    * Destructor.
