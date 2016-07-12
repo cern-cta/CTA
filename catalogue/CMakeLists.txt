@@ -26,7 +26,7 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   CatalogueFactory.cpp
   InMemoryCatalogue.cpp
-  InMemoryCatalogueSchema.cpp
+  RdbmsCatalogueSchema.cpp
   TapeFileWritten.cpp
   OracleCatalogue.cpp
   RdbmsCatalogue.cpp
@@ -66,9 +66,9 @@ add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' create_sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
   DEPENDS create_sqlite_catalogue_schema.sql)
 
-add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp > InMemoryCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
+add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp > RdbmsCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
