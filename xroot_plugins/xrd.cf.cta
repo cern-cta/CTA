@@ -1,7 +1,7 @@
 # Load the plugin XrdCtaOfs
 xrootd.fslib libXrdCtaOfs.so
 
-# Use the Kerberos 5 security module
+# Use the security module
 xrootd.seclib libXrdSec.so
 
 # Protocol specification
@@ -10,7 +10,8 @@ sec.protocol krb5 /etc/krb5.keytab.cta host/<host>@CERN.CH
 sec.protocol sss 
 
 # Only Kerberos 5 and sss are allowed
-sec.protbind * only krb5 sss
+sec.protbind tpsrv* only sss
+sec.protbind * only krb5
 
 # Allow copying from absolute paths
 all.export /

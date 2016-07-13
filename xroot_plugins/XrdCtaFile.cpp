@@ -44,12 +44,13 @@ namespace cta { namespace xrootPlugins {
 // checkClient
 //------------------------------------------------------------------------------
 void XrdCtaFile::checkClient(const XrdSecEntity *client) {
-  if(client==NULL || client->name==NULL || client->host==NULL) {
+  if(client==NULL || client->name==NULL || client->host==NULL || client->prot==NULL) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (NULL pointer detected!)");
   }
-  std::cout << "FILE Request received from client. Username: " << client->name << " Host: " << client->host << std::endl;
+  std::cerr << "Client request-> Username: " << client->name << " Host: " << client->host << " Prot: " << client->prot << std::endl;
   m_cliIdentity.username=client->name;
   m_cliIdentity.host=client->host;
+  m_protocol=client->prot;
 }
 
 //------------------------------------------------------------------------------
@@ -183,6 +184,7 @@ std::string XrdCtaFile::decode(const std::string msg) const {
 int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
   try {
     checkClient(client);
+    authorizeUser();
     if(!strlen(fileName)) { //this should never happen
       throw cta::exception::UserError(getGenericHelp(""));
     }
