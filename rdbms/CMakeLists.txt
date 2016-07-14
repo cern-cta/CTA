@@ -31,7 +31,6 @@ endif (CMAKE_COMPILER_IS_GNUCC)
 if(OCCI_SUPPORT)
   find_package (oracle-instantclient REQUIRED)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-  add_definitions(-DOCCI_SUPPORT=1)
 endif(OCCI_SUPPORT)
 
 set (RDBMS_LIB_SRC_FILES
