@@ -21,6 +21,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "MountPolicySerDeser.hpp"
 #include "DiskFileInfoSerDeser.hpp"
+#include "ArchiveFileSerDeser.hpp"
 #include "objectstore/cta.pb.h"
 #include <json-c/json.h>
 
@@ -45,10 +46,10 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void RetrieveRequest::addJob(const cta::common::dataStructures::TapeFile & tapeFile, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
+void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
-  TapeFileSerDeser(tapeFile).serialize(*tf->mutable_tapefile());
+  tf->set_copynb(copyNb);
   tf->set_maxretrieswithinmount(maxRetiesWithinMount);
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
@@ -60,7 +61,7 @@ bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->tapefile().copynb() == copyNumber) {
+    if (j->copynb() == copyNumber) {
       j->set_status(serializers::RetrieveJobStatus::RJS_Complete);
       for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
         if (j2->status()!= serializers::RetrieveJobStatus::RJS_Complete &&
@@ -114,16 +115,28 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
 }
 
 //------------------------------------------------------------------------------
+// getArchiveFile
+//------------------------------------------------------------------------------
+
+cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
+  objectstore::ArchiveFileSerDeser af;
+  af.deserialize(m_payload.archivefile());
+  return af;
+}
+
+
+//------------------------------------------------------------------------------
 // setRetrieveFileQueueCriteria
 //------------------------------------------------------------------------------
 
 void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   checkPayloadWritable();
+  ArchiveFileSerDeser(criteria.archiveFile).serialize(*m_payload.mutable_archivefile());
   for (auto &tf: criteria.archiveFile.tapeFiles) {
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    addJob(tf.second, hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries);
   }
 }
 
@@ -135,9 +148,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   std::list<JobDump> ret;
   for (auto & j: m_payload.jobs()) {
     ret.push_back(JobDump());
-    TapeFileSerDeser tf;
-    tf.deserialize(j.tapefile());
-    ret.back().tapeFile=tf;
+    ret.back().copyNb=j.copynb();
     ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
     ret.back().maxTotalRetries=j.maxtotalretries();
     ret.back().retriesWithinMount=j.retrieswithinmount();
@@ -154,15 +165,14 @@ auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   checkPayloadReadable();
   // find the job
   for (auto & j: m_payload.jobs()) {
-    if (j.tapefile().copynb()==copyNb) {
+    if (j.copynb()==copyNb) {
       JobDump ret;
-      TapeFileSerDeser tf;
-      tf.deserialize(j.tapefile());
-      ret.tapeFile=tf;
+      ret.copyNb=copyNb;
       ret.maxRetriesWithinMount=j.maxretrieswithinmount();
       ret.maxTotalRetries=j.maxtotalretries();
       ret.retriesWithinMount=j.retrieswithinmount();
       ret.totalRetries=j.totalretries();
+      return ret;
     }
   }
   throw NoSuchJob("In objectstore::RetrieveRequest::getJob(): job not found for this copyNb");
@@ -173,9 +183,7 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   std::list<JobDump> ret;
   for (auto & j: m_payload.jobs()) {
     ret.push_back(JobDump());
-    TapeFileSerDeser tf;
-    tf.deserialize(j.tapefile());
-    ret.back().tapeFile=tf;
+    ret.back().copyNb=j.copynb();
     ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
     ret.back().maxTotalRetries=j.maxtotalretries();
     ret.back().retriesWithinMount=j.retrieswithinmount();

@@ -88,7 +88,8 @@ void ValueCountMap::incCount(uint64_t value) {
 }
 
 uint64_t ValueCountMap::maxValue() {
-  if (!m_valueCountMap.size()) throw  cta::exception::Exception("In ValueCountMap::maxValue: empty map");
+  if (!m_valueCountMap.size())
+    throw  cta::exception::Exception("In ValueCountMap::maxValue: empty map");
   uint64_t ret = std::numeric_limits<uint64_t>::min();
   std::for_each(m_valueCountMap.begin(), m_valueCountMap.end(),
       [&](decltype(*m_valueCountMap.begin()) pair) {

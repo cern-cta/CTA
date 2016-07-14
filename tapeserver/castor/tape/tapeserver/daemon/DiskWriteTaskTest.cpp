@@ -33,6 +33,7 @@
 
 #include "scheduler/Scheduler.hpp"
 #include "remotens/MockRemoteNS.hpp"
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 #include <memory>
 #include <gtest/gtest.h>
@@ -53,9 +54,9 @@ namespace unitTests{
   
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
-    cta::common::dataStructures::ArchiveFile(), 
-    std::string(), cta::common::dataStructures::TapeFile(),
+    TestingRetrieveJob(cta::RetrieveMount & rm): cta::RetrieveJob(rm,
+    cta::common::dataStructures::RetrieveRequest(), 
+    cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}
   };
   
@@ -102,8 +103,11 @@ namespace unitTests{
     RecallMemoryManager mm(10,100,lc);
     DiskFileFactory fileFactory("RFIO","");
     
-    std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
-    fileToRecall->archiveFile.archiveFileID = 0;
+    cta::MockRetrieveMount mrm;
+    std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));
+    fileToRecall->retrieveRequest.archiveFileID = 1;
+    fileToRecall->selectedCopyNb=1;
+    fileToRecall->archiveFile.tapeFiles[1];
     DiskWriteTask t(fileToRecall.release(),mm);
     for(int i=0;i<6;++i){
       MemBlock* mb=mm.getFreeBlock();

@@ -132,11 +132,11 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
 
 void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
   checkPayloadWritable();
-  // find the address of the tape pool object
+  // find the address of the archive queue object
   try {
-    auto tpp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
+    auto aqp = serializers::findElement(m_payload.archivequeuepointers(), tapePool);
     // Open the tape pool object
-    ArchiveQueue aq (tpp.address(), ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+    ArchiveQueue aq (aqp.address(), m_objectStore);
     ScopedExclusiveLock aql;
     try {
       aql.lock(aq);
@@ -156,16 +156,16 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     // Verify this is the archive queue we're looking for.
     if (aq.getTapePool() != tapePool) {
       std::stringstream err;
-      err << "Unexpected tape pool name found in archive queue pointed to for tape pool: "
+      err << "In RootEntry::removeArchiveQueueAndCommit(): Unexpected tape pool name found in archive queue pointed to for tape pool: "
           << tapePool << " found: " << aq.getTapePool();
       throw WrongArchiveQueue(err.str());
     }
     // Check the archive queue is empty
     if (!aq.isEmpty()) {
-      throw ArchivelQueueNotEmpty ("In RootEntry::removeTapePoolQueueAndCommit: trying to "
+      throw ArchivelQueueNotEmpty ("In RootEntry::removeArchiveQueueAndCommit(): trying to "
           "remove a non-empty tape pool");
     }
-    // We can delete the pool
+    // We can delete the queue
     aq.remove();
   deleteFromRootEntry:
     // ... and remove it from our entry
@@ -174,7 +174,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     commit();
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
-    throw NoSuchArchiveQueue("In RootEntry::removeTapePoolQueueAndCommit: trying to remove non-existing tape pool");
+    throw NoSuchArchiveQueue("In RootEntry::removeArchiveQueueAndCommit(): trying to remove non-existing archive queue");
   }
 }
 
@@ -249,6 +249,55 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   agent.commit();
   return retrieveQueueAddress;
 }
+
+void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
+  checkPayloadWritable();
+  // find the address of the retrieve queue object
+  try {
+    auto rqp=serializers::findElement(m_payload.retrievequeuepointers(), vid);
+    // Open the retrieve queue object
+    RetrieveQueue rq(rqp.address(), m_objectStore);
+    ScopedExclusiveLock rql;
+    try {
+      rql.lock(rq);
+      rq.fetch();
+    } catch (cta::exception::Exception & ex) {
+      // The archive queue seems to not be there. Make sure this is the case:
+      if (rq.exists()) {
+        // We failed to access the queue, yet it is present. This is an error.
+        // Let the exception pass through.
+        throw;
+      } else {
+        // The queue object is already gone. We can skip to removing the 
+        // reference from the RootEntry
+        goto deleteFromRootEntry;
+      }
+    }
+    // Verify this is the retrieve queue we're looking for.
+    if (rq.getVid() != vid) {
+      std::stringstream err;
+      err << "Unexpected vid found in retrieve queue pointed to for vid: "
+          << vid << " found: " << rq.getVid();
+      throw WrongArchiveQueue(err.str());
+    }
+    // Check the retrieve queue is empty
+    if (!rq.isEmpty()) {
+      throw RetrieveQueueNotEmpty("In RootEntry::removeTapePoolQueueAndCommit: trying to "
+          "remove a non-empty tape pool");
+    }
+    // We can now delete the queue
+    rq.remove();
+  deleteFromRootEntry:
+    // ... and remove it from our entry
+    serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
+    // We commit for safety and symmetry with the add operation
+    commit();
+  } catch (serializers::NotFound &) {
+    // No such tape pool. Nothing to to.
+    throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
+  }
+}
+
 
 std::string RootEntry::getRetrieveQueue(const std::string& vid) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);

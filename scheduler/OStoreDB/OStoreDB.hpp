@@ -127,7 +127,7 @@ public:
   
   /* === Retrieve Job handling ============================================== */
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
-    friend class RetrieveMount;
+    friend class OStoreDB::RetrieveMount;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
@@ -135,14 +135,14 @@ public:
     virtual void fail() override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, objectstore::Agent &);
+    RetrieveJob(const std::string &, objectstore::Backend &, 
+      objectstore::Agent &, RetrieveMount &);
     bool m_jobOwned;
-    uint16_t m_copyNb;
+    uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
     objectstore::Agent & m_agent;
     objectstore::RetrieveRequest m_retrieveRequest;
-    std::map<std::string, std::string> m_vidToAddress; /**< Cache of tape objects
-                                                        *  addresses filled up at queuing time */
+    RetrieveMount & m_retrieveMount;
   };
   
   /* === Archive requests handling  ========================================= */

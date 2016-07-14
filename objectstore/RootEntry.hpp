@@ -69,10 +69,12 @@ public:
   std::list<ArchiveQueueDump> dumpArchiveQueues();
   
   // RetrieveQueue handling ====================================================
+  CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotEmpty);
   /** This function implicitly creates the retrieve queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
   std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, Agent & agent);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
+  void removeRetrieveQueueAndCommit(const std::string & vid);
   std::string getRetrieveQueue(const std::string & vid);
   struct RetrieveQueueDump {
     std::string vid;

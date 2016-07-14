@@ -28,14 +28,14 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
-  const common::dataStructures::ArchiveFile &archiveFile,
-  const std::string &remotePath,
-  const common::dataStructures::TapeFile &tapeFile,
+  const common::dataStructures::RetrieveRequest &retrieveRequest,
+  const common::dataStructures::ArchiveFile & archiveFile,
+  const uint64_t selectedCopyNb,
   const PositioningMethod positioningMethod):
   m_mount(mount),
+  retrieveRequest(retrieveRequest),
   archiveFile(archiveFile),
-  remotePath(remotePath),
-  tapeFile(tapeFile),
+  selectedCopyNb(selectedCopyNb),
   positioningMethod(positioningMethod),
   transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
@@ -59,3 +59,28 @@ void cta::RetrieveJob::failed() {
 void cta::RetrieveJob::retry() {
   throw std::runtime_error("cta::RetrieveJob::retry(): not implemented");
 }
+
+//------------------------------------------------------------------------------
+// selectedTapeFile
+//------------------------------------------------------------------------------
+cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile() {
+  try {
+    return archiveFile.tapeFiles.at(selectedCopyNb);
+  } catch (std::out_of_range &ex) {
+    auto __attribute__((__unused__)) & debug=ex;
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// selectedTapeFile
+//------------------------------------------------------------------------------
+const cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile() const {
+  try {
+    return archiveFile.tapeFiles.at(selectedCopyNb);
+  } catch (std::out_of_range &ex) {
+    auto __attribute__((__unused__)) & debug=ex;
+    throw;
+  }
+}
+

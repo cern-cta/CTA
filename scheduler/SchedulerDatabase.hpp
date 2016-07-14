@@ -320,9 +320,9 @@ public:
   class RetrieveJob {
     friend class RetrieveMount;
   public:
-    std::string remoteFile;
+    cta::common::dataStructures::RetrieveRequest retrieveRequest;
     cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::common::dataStructures::TapeFile tapeFile;
+    uint64_t selectedCopyNb;
     virtual void succeed() = 0;
     virtual void fail() = 0;
     virtual ~RetrieveJob() {}

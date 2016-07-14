@@ -145,13 +145,13 @@ namespace castor {
         const cta::RetrieveJob &filetoRecall,
         const tape::tapeserver::daemon::VolumeInfo &volInfo)  {
         const std::string &volId = volInfo.vid;
-        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.archiveFile.archiveFileID, hexadecimal)) { 
+        if(!checkHeaderNumericalField(hdr1.getFileId(), filetoRecall.retrieveRequest.archiveFileID, hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkHDR1] - Invalid fileid detected: (0x)\"" 
               << hdr1.getFileId() << "\". Wanted: 0x" << std::hex 
-              << filetoRecall.archiveFile.archiveFileID << std::endl;
+              << filetoRecall.retrieveRequest.archiveFileID << std::endl;
           throw TapeFormatError(ex_str.str());
         }
 
@@ -167,11 +167,11 @@ namespace castor {
       void HeaderChecker::checkUHL1(const UHL1 &uhl1,
         const cta::RetrieveJob &fileToRecall)  {
         if(!checkHeaderNumericalField(uhl1.getfSeq(),
-          fileToRecall.tapeFile.fSeq, decimal)) {
+          fileToRecall.selectedTapeFile().fSeq, decimal)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: \"" 
               << uhl1.getfSeq() << "\". Wanted: "
-              << fileToRecall.tapeFile.fSeq;
+              << fileToRecall.selectedTapeFile().fSeq;
           throw TapeFormatError(ex_str.str());
         }
       }
@@ -214,16 +214,16 @@ namespace castor {
         m_session->release();
       }
       void ReadFile::positionByFseq(const cta::RetrieveJob &fileToRecall) {
-        if(fileToRecall.tapeFile.fSeq<1) {
+        if(fileToRecall.selectedTapeFile().fSeq<1) {
           std::stringstream err;
           err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
-                  << fileToRecall.tapeFile.fSeq << ")";
+                  << fileToRecall.selectedTapeFile().fSeq << ")";
           throw castor::exception::InvalidArgument(err.str());
         }
         
-        int64_t fSeq_delta = fileToRecall.tapeFile.fSeq 
+        int64_t fSeq_delta = fileToRecall.selectedTapeFile().fSeq 
             - m_session->getCurrentFseq();
-        if(fileToRecall.tapeFile.fSeq == 1) { 
+        if(fileToRecall.selectedTapeFile().fSeq == 1) { 
           // special case: we can rewind the tape to be faster 
           //(TODO: in the future we could also think of a threshold above 
           //which we rewind the tape anyway and then space forward)       
@@ -253,15 +253,16 @@ namespace castor {
       }
         
       void ReadFile::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
-        if(fileToRecall.tapeFile.blockId > 
-          std::numeric_limits<decltype(fileToRecall.tapeFile.blockId)>::max()){
+        if(fileToRecall.selectedTapeFile().blockId > 
+          std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()){
           std::stringstream ex_str;
-          ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " << fileToRecall.tapeFile.blockId;
+          ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " 
+                 << fileToRecall.selectedTapeFile().blockId;
           throw castor::exception::Exception(ex_str.str());
         }
        // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-        const uint32_t destination_block = fileToRecall.tapeFile.blockId ? 
-          fileToRecall.tapeFile.blockId : 1;
+        const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId ? 
+          fileToRecall.selectedTapeFile().blockId : 1;
         /* 
         we position using the sg locate because it is supposed to do the 
         right thing possibly in a more optimized way (better than st's 
@@ -305,7 +306,7 @@ namespace castor {
         }
 
         //save the current fSeq into the read session
-        m_session->setCurrentFseq(fileToRecall.tapeFile.fSeq);
+        m_session->setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
         HDR1 hdr1;
         HDR2 hdr2;

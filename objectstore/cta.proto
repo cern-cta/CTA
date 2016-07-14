@@ -180,13 +180,36 @@ message MountCriteria {
   required uint32 quota = 3203;
 }
 
+message TapeFile {
+  required string vid = 9120;
+  required uint64 fseq = 9121;
+  required uint64 blockid = 9122;
+  required uint64 compressedsize = 9123;
+  required uint64 copynb = 9124;
+  required uint64 creationtime = 9125;
+  required string checksumtype = 9126;
+  required string checksumvalue = 9127;
+}
+
+message DiskFileInfo {
+  required string recoveryBlob = 8900;
+  required string group = 8910;
+  required string owner = 8930;
+  required string path = 8940;
+}
+
 message ArchiveFile {
-  required uint64 fileId = 4351;
-  required uint64 size = 4352;
+  required uint64 archivefileid = 4351;
+  required uint64 filesize = 4352;
   required string diskfileid = 4353;
-  required string checksumtype = 4354;
-  required string checksumvalue = 4355;
-  required uint64 creationtime = 4356;
+  required string diskinstance= 4354;
+  required DiskFileInfo diskfileinfo= 4355;
+  required string checksumtype = 4356;
+  required string checksumvalue = 4357;
+  required uint64 creationtime = 4358;
+  repeated TapeFile tapefiles = 4359;
+  required uint64 reconciliationtime = 4360;
+  required string storageclass = 4361;
 }
 
 // ------------- Archive Jobs --------------------------------------------------
@@ -307,13 +330,6 @@ message User {
   required string group = 8810;
 }
 
-message DiskFileInfo {
-  required string recoveryBlob = 8900;
-  required string group = 8910;
-  required string owner = 8930;
-  required string path = 8940;
-}
-
 message EntryLog {
   required string username = 8950;
   required string host = 8960;
@@ -362,19 +378,8 @@ message SchedulerRetrieveRequest {
   required EntryLog entrylog = 9106;
 }
 
-message TapeFile {
-  required string vid = 9120;
-  required uint64 fseq = 9121;
-  required uint64 blockid = 9122;
-  required uint64 compressedsize = 9123;
-  required uint64 copynb = 9124;
-  required uint64 creationtime = 9125;
-  required string checksumtype = 9126;
-  required string checksumvalue = 9127;
-}
-
 message RetrieveJob {
-  required TapeFile tapefile = 9200;
+  required uint64 copynb = 9200;
   required uint32 maxtotalretries = 9201;
   required uint32 maxretrieswithinmount = 9202;
   required uint32 retrieswithinmount = 9203;
@@ -385,8 +390,9 @@ message RetrieveJob {
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
-  required uint32 activecopynb = 9152;
-  repeated RetrieveJob jobs = 9153;
+  required ArchiveFile archivefile = 9152;
+  required uint32 activecopynb = 9153;
+  repeated RetrieveJob jobs = 9154;
 }
 
 message ValueCountPair {
@@ -410,7 +416,7 @@ message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveJobPointer retrievejobs = 10110;
   repeated ValueCountPair prioritymap = 10131;
-  repeated ValueCountPair minretrievequestagemap = 10132;
+  repeated ValueCountPair minretrieverequestagemap = 10132;
   repeated ValueCountPair maxdrivesallowedmap = 10133;
   required uint64 retrievejobstotalsize = 10140;
   required uint64 oldestjobcreationtime = 10150;

@@ -53,9 +53,9 @@ public:
    * @param positioningMethod the positioning method
    */
   RetrieveJob(RetrieveMount &mount,
-  const common::dataStructures::ArchiveFile &archiveFile,
-  const std::string &remotePath,
-  const common::dataStructures::TapeFile &tapeFileLocation,
+  const common::dataStructures::RetrieveRequest &retrieveRequest,
+  const common::dataStructures::ArchiveFile & archiveFile,
+  const uint64_t selectedCopyNb,
   const PositioningMethod positioningMethod);
   
 private:
@@ -94,6 +94,16 @@ public:
   void retry();
   
   /**
+   * Helper function returning a reference to the currently selected tape file.
+   */
+  common::dataStructures::TapeFile & selectedTapeFile();
+
+  /**
+   * Helper function returning a reference to the currently selected tape file (const variant).
+   */
+  const common::dataStructures::TapeFile & selectedTapeFile() const;
+  
+  /**
    * The mount to which the job belongs.
    */
   //RetrieveMount &mount;  
@@ -101,17 +111,17 @@ public:
   /**
    * The NS archive file information
    */
-  common::dataStructures::ArchiveFile archiveFile;
+  common::dataStructures::RetrieveRequest retrieveRequest;
   
   /**
-   * The remote file path
+   * The full information about the file
    */
-  std::string remotePath; 
+  common::dataStructures::ArchiveFile archiveFile;
                 
   /**
-   * The location of the tape file
+   * CopyNb of the selected tape file
    */
-  common::dataStructures::TapeFile tapeFile;
+  uint64_t selectedCopyNb;
   
   /**
    * The positioning method

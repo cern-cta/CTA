@@ -41,7 +41,7 @@ public:
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  void addJob(const RetrieveRequest::JobDump & job,
+  void addJob(uint64_t copyNb,
     const std::string & retrieveRequestAddress, uint64_t size,
     const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   struct JobsSummary {
@@ -49,6 +49,8 @@ public:
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
+    uint64_t minArchiveRequestAge;
+    uint64_t maxDrivesAllowed;
   };
   JobsSummary getJobsSummary();
   std::list<RetrieveRequestDump> dumpAndFetchRetrieveRequests();

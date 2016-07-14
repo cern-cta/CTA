@@ -281,7 +281,7 @@ TEST_P(SchedulerTest, DISABLED_delete_archive_request) {
   request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
-  request.instance="cms";
+  request.instance="disk_instance";
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = s_userName;
@@ -323,7 +323,7 @@ TEST_P(SchedulerTest, DISABLED_delete_archive_request) {
   ASSERT_FALSE(found);
 }
 
-TEST_P(SchedulerTest, DISABLED_archive_and_retrieve_new_file) {
+TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -501,7 +501,7 @@ TEST_P(SchedulerTest, DISABLED_retry_archive_until_max_reached) {
     request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
-    request.instance="cms";
+    request.instance="disk_instance";
     request.fileSize=100*1000*1000;
     cta::common::dataStructures::UserIdentity requester;
     requester.name = s_userName;

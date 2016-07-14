@@ -354,6 +354,23 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   mountInfo = m_db.getMountInfo();
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
+  // The library information is not know for the tapes involved in retrieves. We 
+  // need to query the catalogue now about all those tapes.
+  // Build the list of tapes.
+  std::set<std::string> tapeSet;
+  for (auto &m:mountInfo->potentialMounts) {
+    if (m.type==cta::MountType::RETRIEVE) tapeSet.insert(m.vid);
+  }
+  if (tapeSet.size()) {
+    auto tapesInfo=m_catalogue.getTapesByVid(tapeSet);
+    for (auto &m:mountInfo->potentialMounts) {
+      if (m.type==cta::MountType::RETRIEVE) {
+        m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
+        m.tapePool=tapesInfo[m.vid].tapePoolName;
+      }
+    }
+  }
+  
   // We should now filter the potential mounts to keep only the ones we are
   // compatible with (match the logical library for retrieves).
   // We also only want the potential mounts for which we still have 

@@ -226,9 +226,9 @@ namespace daemon {
             || mb->isFailed()
             || mb->isCanceled()) {
       LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-        LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", memBlockId)),
-        LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+        LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
+        LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", memBlockId)),
+        LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
         LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
       };
       tape::utils::suppresUnusedVariable(sp);
@@ -319,7 +319,7 @@ namespace daemon {
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_archiveFile.fileSize)
-           .add("NSFILEID",m_archiveFile.archiveFileID)
+           .add("archiveFileID",m_archiveFile.archiveFileID)
            .add("fSeq",m_tapeFile.fSeq)
            .add("reconciliationTime",m_archiveFile.reconciliationTime)
            .add("LBPMode", m_LBPMode);

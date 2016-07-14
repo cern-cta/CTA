@@ -87,12 +87,17 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   return ret.str();
 }
 
-void cta::objectstore::RetrieveQueue::addJob(const RetrieveRequest::JobDump& job,
+void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,
   const std::string & retrieveRequestAddress, uint64_t size, 
   const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
   // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.incCount(policy.retrievePriority);
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
   if (m_payload.retrievejobs_size()) {
     if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
       m_payload.set_oldestjobcreationtime(startTime);
@@ -105,7 +110,7 @@ void cta::objectstore::RetrieveQueue::addJob(const RetrieveRequest::JobDump& job
   auto * j = m_payload.add_retrievejobs();
   j->set_address(retrieveRequestAddress);
   j->set_size(size);
-  j->set_copynb(job.tapeFile.copyNb);
+  j->set_copynb(copyNb);
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
@@ -114,6 +119,18 @@ cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::ge
   ret.bytes = m_payload.retrievejobstotalsize();
   ret.files = m_payload.retrievejobs_size();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
+  if (ret.files) {
+    ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+    ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
+    ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+    ret.priority = priorityMap.maxValue();
+    ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+    ret.minArchiveRequestAge = minArchiveRequestAgeMap.minValue();
+  } else {
+    ret.maxDrivesAllowed = 0;
+    ret.priority = 0;
+    ret.minArchiveRequestAge = 0;
+  }
   return ret;
 }
 

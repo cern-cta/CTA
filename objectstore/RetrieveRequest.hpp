@@ -43,15 +43,13 @@ public:
   RetrieveRequest(GenericObject & go);
   void initialize();
   // Job management ============================================================
-  void addJob(const cta::common::dataStructures::TapeFile & tapeFile, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
-  void setJobFailureLimits(uint16_t copyNumber,
-    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+  void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   class JobDump {
   public:
-    common::dataStructures::TapeFile tapeFile;
+    uint64_t copyNb;
     uint32_t maxTotalRetries;
     uint32_t maxRetriesWithinMount;
     uint32_t retriesWithinMount;
@@ -82,6 +80,9 @@ public:
   // ===========================================================================
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
+  
+  void setArchiveFile(const cta::common::dataStructures::ArchiveFile & archiveFile);
+  cta::common::dataStructures::ArchiveFile getArchiveFile();
   
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
