@@ -17,7 +17,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "OcciConn.hpp"
 #include "OcciConnFactory.hpp"
 #include "OcciEnvSingleton.hpp"
 

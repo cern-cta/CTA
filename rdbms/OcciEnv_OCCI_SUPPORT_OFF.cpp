@@ -16,11 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OcciConn.hpp"
 #include "OcciEnv.hpp"
 #include "common/exception/Exception.hpp"
-
-#include <occi.h>
 
 namespace cta {
 namespace rdbms {
@@ -32,64 +29,11 @@ class OcciEnv::Impl {
 public:
 
   /**
-   * Constructor.
-   *
-   * Creates an OCCI environment with a THREADED_MUTEXED mode.
+   * Throws an exception because OCCI support not enabled at compile time.
    */
-  Impl() {
-    using namespace oracle::occi;
-    m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
-    if(NULL == m_env) {
-      throw exception::Exception(std::string(__FUNCTION__) + "failed"
-        ": oracle::occi::createEnvironment() returned a NULL pointer");
-    }
+  DbConn *createConn( const std::string &username, const std::string &password, const std::string &database) {
+    throw exception::Exception(std::string(__FUNCTION__) + ": OCCI support not enabled at compile time");
   }
-
-  /**
-   * Destructor.
-   *
-   * Terminates the underlying OCCI environment.
-   */
-  ~Impl() throw() {
-    using namespace oracle::occi;
-    Environment::terminateEnvironment(m_env);
-  }
-
-  /**
-   * Creates an OCCI connection.
-   *
-   * This method will throw an exception if either the username, password ori
-   * database parameters are NULL pointers.
-   *
-   * @param username The name of the database user.
-   * @param password The database password.
-   * @param database The name of the database.
-   * @return The newly created OCCI connection.
-   */
-  DbConn *createConn(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database) {
-    try {
-      oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
-      if (NULL == conn) {
-        throw exception::Exception("oracle::occi::createConnection() returned a NULL pointer");
-      }
-
-      return new OcciConn(m_env, conn);
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    } catch(std::exception &se) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
-    }
-  }
-
-private:
-
-  /**
-   * The OCCI environment.
-   */
-  oracle::occi::Environment *m_env;
 
 }; // class Impl
 

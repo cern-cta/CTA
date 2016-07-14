@@ -15,10 +15,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-find_package (oracle-instantclient REQUIRED)
 find_package (sqlite REQUIRED)
 
-include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+# OCCI support is on by default
+set (OCCI_SUPPORT ON)
+
+# Switch OCCI support off if using gcc 5.1 or higher
+if (CMAKE_COMPILER_IS_GNUCC)
+  if (GCC_VERSION VERSION_GREATER 5.0)
+    message(STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
+    set (OCCI_SUPPORT OFF)
+  endif (GCC_VERSION VERSION_GREATER 5.0)
+endif (CMAKE_COMPILER_IS_GNUCC)
+
+if(OCCI_SUPPORT)
+  find_package (oracle-instantclient REQUIRED)
+  include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+  add_definitions(-DOCCI_SUPPORT=1)
+endif(OCCI_SUPPORT)
 
 set (RDBMS_LIB_SRC_FILES
   AutoRollback.cpp
@@ -32,12 +46,8 @@ set (RDBMS_LIB_SRC_FILES
   DbRset.cpp
   DbStmt.cpp
   NullDbValue.cpp
-  OcciConn.cpp
-  OcciConnFactory.cpp
-  OcciEnv.cpp
-  OcciEnvSingleton.cpp
-  OcciRset.cpp
-  OcciStmt.cpp
+  OcciConnFactory.cpp # Compiles without OCCI
+  OcciEnvSingleton.cpp # Compiles without OCCI
   ParamNameToIdx.cpp
   Sqlite.cpp
   SqliteConn.cpp
@@ -45,13 +55,34 @@ set (RDBMS_LIB_SRC_FILES
   SqliteRset.cpp
   SqliteStmt.cpp)
 
+if (OCCI_SUPPORT)
+  set (RDBMS_LIB_SRC_FILES
+    ${RDBMS_LIB_SRC_FILES}
+    OcciConn.cpp
+    OcciEnv.cpp
+    OcciRset.cpp
+    OcciStmt.cpp)
+else (OCCI_SUPPORT)
+  set (RDBMS_LIB_SRC_FILES
+    ${RDBMS_LIB_SRC_FILES}
+    OcciEnv_OCCI_SUPPORT_OFF.cpp) # Throws a OCCI_SUPPORT OFF exception
+endif (OCCI_SUPPORT)
+
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})
 
-target_link_libraries (ctardbms
+set (CTARDBMS_LINK_LIBRARIES
   ctacommon
-  ${ORACLE-INSTANTCLIENT_LIBRARIES}
   ${SQLITE_LIBRARIES})
+
+if (OCCI_SUPPORT)
+  set (CTARDBMS_LINK_LIBRARIES
+    ${CTARDBMS_LINK_LIBRARIES}
+    ${ORACLE-INSTANTCLIENT_LIBRARIES})
+endif (OCCI_SUPPORT)
+
+target_link_libraries (ctardbms
+  ${CTARDBMS_LINK_LIBRARIES})
 
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

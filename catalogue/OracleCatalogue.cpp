@@ -20,7 +20,6 @@
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/OcciConn.hpp"
 #include "rdbms/OcciEnvSingleton.hpp"
 
 namespace cta {

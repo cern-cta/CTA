@@ -30,7 +30,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciConn::OcciConn(OcciEnv &env, oracle::occi::Connection *const conn):
+OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
   m_env(env),
   m_conn(conn) {
   if(NULL == conn) {

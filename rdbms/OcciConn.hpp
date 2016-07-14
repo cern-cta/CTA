@@ -28,12 +28,6 @@ namespace rdbms {
 
 /**
  * Forward declaraion to avoid a circular dependency beween OcciConn and
- * OcciEnv.
- */
-class OcciEnv;
-
-/**
- * Forward declaraion to avoid a circular dependency beween OcciConn and
  * OcciStmt.
  */
 class OcciStmt;
@@ -53,7 +47,7 @@ public:
    * @param env The OCCI environment.
    * @param conn The OCCI connection.
    */
-  OcciConn(OcciEnv &env, oracle::occi::Connection *const conn);
+  OcciConn(oracle::occi::Environment *env, oracle::occi::Connection *const conn);
 
   /**
    * Destructor.
@@ -109,7 +103,7 @@ private:
   /**
    * The OCCI environment.
    */
-  OcciEnv &m_env;
+  oracle::occi::Environment *m_env;
 
   /**
    * The OCCI connection.

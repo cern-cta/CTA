@@ -18,12 +18,12 @@
 
 #pragma once
 
-#include <occi.h>
+#include <memory>
 
 namespace cta {
 namespace rdbms {
 
-class OcciConn;
+class DbConn;
 
 /**
  * A convenience wrapper around an OCCI environment.
@@ -46,41 +46,28 @@ public:
   ~OcciEnv() throw();
 
   /**
-   * Returns the underlying OCCI environment.
-   *
-   * @return The underlying OCCI environment.
-   */
-  oracle::occi::Environment *get() const;
-
-  /**
-   * An alias for the get() method.
-   *
-   * @return The underlying OCCI environment.
-   */
-  oracle::occi::Environment *operator->() const;
-
-  /**
    * Creates an OCCI connection.
-   *
-   * This method will throw an exception if either the username, password ori
-   * database parameters are NULL pointers.
    *
    * @param username The name of the database user.
    * @param password The database password.
    * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  OcciConn *createConn(
+  DbConn *createConn(
     const std::string &username,
     const std::string &password,
     const std::string &database);
 
 private:
 
+  class Impl;
+
   /**
-   * The OCCI environment.
+   * Pointer to the implementation (Pimple idiom).
+   *
+   * The Pimple idiom is being used to facilitate building CTA without OCCI support enabled.
    */
-  oracle::occi::Environment *m_env;
+  std::unique_ptr<Impl> m_impl;
 
 }; // class OcciEnv
 

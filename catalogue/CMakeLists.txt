@@ -15,11 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-find_package (oracle-instantclient REQUIRED)
-find_package (sqlite REQUIRED)
-
-include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileItor.cpp
@@ -41,9 +36,7 @@ install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
   ctacommon
-  ctardbms
-  ${ORACLE-INSTANTCLIENT_LIBRARIES}
-  ${SQLITE_LIBRARIES})
+  ctardbms)
 
 add_custom_command (OUTPUT create_sqlite_catalogue_schema.sql create_oracle_catalogue_schema.sql
   COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql > create_sqlite_catalogue_schema.sql

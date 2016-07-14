@@ -17,13 +17,7 @@
  */
 
 #include "OcciEnvSingleton.hpp"
-#include "OcciConn.hpp"
-#include "OcciEnv.hpp"
-#include "catalogue/RdbmsCatalogue.hpp"
-#include "SqliteConn.hpp"
 #include "common/exception/Exception.hpp"
-
-#include <memory>
 
 namespace cta {
 namespace rdbms {
