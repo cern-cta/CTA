@@ -33,7 +33,7 @@ DbConnFactory *DbConnFactoryFactory::create(const DbLogin &dbLogin) {
     case rdbms::DbLogin::DBTYPE_IN_MEMORY:
       return new SqliteConnFactory(":memory:");
     case rdbms::DbLogin::DBTYPE_ORACLE:
-      throw OcciConnFactory(dbLogin.username, dbLogin.password, dbLogin.database);
+      return new OcciConnFactory(dbLogin.username, dbLogin.password, dbLogin.database);
     case rdbms::DbLogin::DBTYPE_SQLITE:
       return new SqliteConnFactory(dbLogin.database);
     case rdbms::DbLogin::DBTYPE_NONE:
