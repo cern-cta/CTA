@@ -21,6 +21,8 @@
 #include "ArchiveQueue.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "MountPolicySerDeser.hpp"
+
+#include <algorithm>
 #include <json-c/json.h>
 
 namespace cta { namespace objectstore {

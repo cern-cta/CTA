@@ -19,6 +19,8 @@
 #include "ValueCountMap.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <algorithm>
+
 namespace cta { namespace objectstore {
 
 ValueCountMap::ValueCountMap(google::protobuf::RepeatedPtrField<serializers::ValueCountPair>* valueCountMap): 
