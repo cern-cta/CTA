@@ -24,5 +24,6 @@ include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE
 add_executable (cta CTACmdMain.cpp)
 target_link_libraries (cta ${XROOTD_XRDCL_LIB} ctacommon cryptopp ctautils)
 install (TARGETS cta DESTINATION usr/bin)
+INSTALL (FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
 
 include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
