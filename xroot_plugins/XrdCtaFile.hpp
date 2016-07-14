@@ -219,14 +219,14 @@ protected:
   void xCom_liststorageclass();
   
   /**
-   * Checks whether the user that issued the admin command is an authorized admin (throws a UserError if it's not).
+   * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
    */
   void authorizeAdmin();
   
   /**
-   * Checks whether the user that issued the user command is an authorized user (throws a UserError if it's not).
+   * Checks whether the instance that issued the user command is an authorized instance (throws an exception if it's not).
    */
-  void authorizeUser();
+  void authorizeInstance();
   
   /**
    * Returns the response string properly formatted in a table

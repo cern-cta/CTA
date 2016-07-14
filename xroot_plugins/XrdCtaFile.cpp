@@ -115,14 +115,20 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
 // authorizeAdmin
 //------------------------------------------------------------------------------
 void XrdCtaFile::authorizeAdmin(){
+  if(m_protocol!="krb5") {
+    throw cta::exception::Exception(std::string("[ERROR] Admin commands are possible only through Kerberos 5 protocol authentication. Protocol used for this connection: ")+m_protocol);
+  }
   m_scheduler->authorizeAdmin(m_cliIdentity);
 }
 
 //------------------------------------------------------------------------------
 // authorizeUser
 //------------------------------------------------------------------------------
-void XrdCtaFile::authorizeUser(){
-  
+void XrdCtaFile::authorizeInstance(){
+  if(m_protocol!="sss") {
+    throw cta::exception::Exception(std::string("[ERROR] User commands are possible only through Simple Shared Secret protocol authentication. Protocol used for this connection: ")+m_protocol);
+  }
+  m_scheduler->authorizeInstance(m_cliIdentity);
 }
 
 //------------------------------------------------------------------------------
@@ -156,13 +162,13 @@ void XrdCtaFile::dispatchCommand() {
   else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); xCom_listpendingretrieves();}
   else if("lds"  == command || "listdrivestates"        == command) {authorizeAdmin(); xCom_listdrivestates();}
   
-  else if("a"    == command || "archive"                == command) {authorizeUser(); xCom_archive();}
-  else if("r"    == command || "retrieve"               == command) {authorizeUser(); xCom_retrieve();}
-  else if("da"   == command || "deletearchive"          == command) {authorizeUser(); xCom_deletearchive();}
-  else if("cr"   == command || "cancelretrieve"         == command) {authorizeUser(); xCom_cancelretrieve();}
-  else if("ufi"  == command || "updatefileinfo"         == command) {authorizeUser(); xCom_updatefileinfo();}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {authorizeUser(); xCom_updatefilestorageclass();}
-  else if("lsc"  == command || "liststorageclass"       == command) {authorizeUser(); xCom_liststorageclass();}
+  else if("a"    == command || "archive"                == command) {authorizeInstance(); xCom_archive();}
+  else if("r"    == command || "retrieve"               == command) {authorizeInstance(); xCom_retrieve();}
+  else if("da"   == command || "deletearchive"          == command) {authorizeInstance(); xCom_deletearchive();}
+  else if("cr"   == command || "cancelretrieve"         == command) {authorizeInstance(); xCom_cancelretrieve();}
+  else if("ufi"  == command || "updatefileinfo"         == command) {authorizeInstance(); xCom_updatefileinfo();}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {authorizeInstance(); xCom_updatefilestorageclass();}
+  else if("lsc"  == command || "liststorageclass"       == command) {authorizeInstance(); xCom_liststorageclass();}
   
   else {
     throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
@@ -184,7 +190,6 @@ std::string XrdCtaFile::decode(const std::string msg) const {
 int XrdCtaFile::open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client, const char *opaque) {
   try {
     checkClient(client);
-    authorizeUser();
     if(!strlen(fileName)) { //this should never happen
       throw cta::exception::UserError(getGenericHelp(""));
     }

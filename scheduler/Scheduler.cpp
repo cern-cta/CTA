@@ -62,6 +62,18 @@ void cta::Scheduler::authorizeAdmin(const cta::common::dataStructures::SecurityI
 }
 
 //------------------------------------------------------------------------------
+// authorizeInstance
+//------------------------------------------------------------------------------
+void cta::Scheduler::authorizeInstance(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
+//  if(!(m_catalogue.isAuthorizedInstance(cliIdentity.username))) {
+  if(!true) {
+    std::stringstream msg;
+    msg << "Instance: " << cliIdentity.username << " on host: " << cliIdentity.host << " is not authorized to execute CTA user commands";
+    throw cta::exception::UserError(msg.str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {
