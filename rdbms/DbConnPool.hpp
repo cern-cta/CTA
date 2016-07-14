@@ -70,11 +70,6 @@ public:
 private:
 
   /**
-   * The database login details to be used to create new connections.
-   */
-  DbLogin m_dbLogin;
-
-  /**
    * The database connection factory for the pool.
    */
   std::unique_ptr<DbConnFactory> m_dbConnFactory;

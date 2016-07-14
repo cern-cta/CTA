@@ -45,8 +45,6 @@ set (RDBMS_LIB_SRC_FILES
   DbRset.cpp
   DbStmt.cpp
   NullDbValue.cpp
-  OcciConnFactory.cpp # Compiles without OCCI
-  OcciEnvSingleton.cpp # Compiles without OCCI
   ParamNameToIdx.cpp
   Sqlite.cpp
   SqliteConn.cpp
@@ -57,14 +55,17 @@ set (RDBMS_LIB_SRC_FILES
 if (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES
     ${RDBMS_LIB_SRC_FILES}
+    DbConnFactoryFactory.cpp
     OcciConn.cpp
+    OcciConnFactory.cpp
     OcciEnv.cpp
+    OcciEnvSingleton.cpp
     OcciRset.cpp
     OcciStmt.cpp)
 else (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES
     ${RDBMS_LIB_SRC_FILES}
-    OcciEnv_OCCI_SUPPORT_OFF.cpp) # Throws a OCCI_SUPPORT OFF exception
+    DbConnFactoryFactory_OCCI_SUPPORT_OFF.cpp)
 endif (OCCI_SUPPORT)
 
 add_library (ctardbms SHARED

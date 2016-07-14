@@ -18,36 +18,28 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-#include "rdbms/DbLogin.hpp"
-
-#include <memory>
-#include <mutex>
+#include "DbConnFactory.hpp"
+#include "DbLogin.hpp"
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
 
 /**
- * Factory for creating CTA catalogue objects.  This class is a singleton.
+ * Abstract class that specifies the interface to a factory of DbConn factories.
  */
-class CatalogueFactory {
+class DbConnFactoryFactory {
 public:
 
   /**
-   * Prevent objects of this class from being instantiated.
-   */
-  CatalogueFactory() = delete;
-
-  /**
-   * Creates a CTA catalogue object using the specified database login details.
+   * Returns a newly created DbConn factory.
    *
-   * @param dbLogin The database connection details.
-   * @return The newly created CTA catalogue object.  Please note that it is the
-   * responsibility of the caller to delete the returned CTA catalogue object.
+   * @param dbLogin The database login details to be used to create new
+   * connections.
+   * @return A newly created DbConn factory.
    */
-  static Catalogue *create(const rdbms::DbLogin &dbLogin);
+  static DbConnFactory *create(const DbLogin &dbLogin);
 
-}; // class CatalogueFactory
+}; // class DbConnFactoryFactory
 
-} // namespace catalogue
+} // namespace rdbms
 } // namespace cta

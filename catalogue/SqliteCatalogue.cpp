@@ -22,7 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
-#include "rdbms/SqliteConn.hpp"
+#include "rdbms/DbConnFactoryFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -31,8 +31,9 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 SqliteCatalogue::SqliteCatalogue(const std::string &filename) {
-  std::unique_ptr<rdbms::SqliteConn> sqliteConn(new rdbms::SqliteConn(filename));
-  m_conn.reset(sqliteConn.release());
+  using namespace rdbms;
+  const DbLogin dbLogin(DbLogin::DBTYPE_SQLITE, "", "", filename);
+  m_conn.reset(DbConnFactoryFactory::create(dbLogin)->create());
 }
 
 //------------------------------------------------------------------------------

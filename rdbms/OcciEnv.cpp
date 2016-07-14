@@ -20,89 +20,29 @@
 #include "OcciEnv.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <occi.h>
-
 namespace cta {
 namespace rdbms {
-
-/**
- * Following the pimpl idiom, this is the class actually implementing OcciEnv.
- */
-class OcciEnv::Impl {
-public:
-
-  /**
-   * Constructor.
-   *
-   * Creates an OCCI environment with a THREADED_MUTEXED mode.
-   */
-  Impl() {
-    using namespace oracle::occi;
-    m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
-    if(NULL == m_env) {
-      throw exception::Exception(std::string(__FUNCTION__) + "failed"
-        ": oracle::occi::createEnvironment() returned a NULL pointer");
-    }
-  }
-
-  /**
-   * Destructor.
-   *
-   * Terminates the underlying OCCI environment.
-   */
-  ~Impl() throw() {
-    using namespace oracle::occi;
-    Environment::terminateEnvironment(m_env);
-  }
-
-  /**
-   * Creates an OCCI connection.
-   *
-   * This method will throw an exception if either the username, password ori
-   * database parameters are NULL pointers.
-   *
-   * @param username The name of the database user.
-   * @param password The database password.
-   * @param database The name of the database.
-   * @return The newly created OCCI connection.
-   */
-  DbConn *createConn(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database) {
-    try {
-      oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
-      if (NULL == conn) {
-        throw exception::Exception("oracle::occi::createConnection() returned a NULL pointer");
-      }
-
-      return new OcciConn(m_env, conn);
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    } catch(std::exception &se) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
-    }
-  }
-
-private:
-
-  /**
-   * The OCCI environment.
-   */
-  oracle::occi::Environment *m_env;
-
-}; // class Impl
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciEnv::OcciEnv(): m_impl(new Impl()) {
+OcciEnv::OcciEnv() {
+  using namespace oracle::occi;
+  m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
+  if(NULL == m_env) {
+    throw exception::Exception(std::string(__FUNCTION__) + "failed"
+      ": oracle::occi::createEnvironment() returned a NULL pointer");
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciEnv::~OcciEnv() = default;
+OcciEnv::~OcciEnv() throw() {
+  using namespace oracle::occi;
+
+  Environment::terminateEnvironment(m_env);
+}
 
 //------------------------------------------------------------------------------
 // createConn
@@ -111,7 +51,18 @@ DbConn *OcciEnv::createConn(
   const std::string &username,
   const std::string &password,
   const std::string &database) {
-  return m_impl->createConn(username, password, database);
+  try {
+    oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
+    if (NULL == conn) {
+      throw exception::Exception("oracle::occi::createConnection() returned a NULL pointer");
+    }
+
+    return new OcciConn(m_env, conn);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
 }
 
 } // namespace rdbms

@@ -20,7 +20,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/OcciEnvSingleton.hpp"
+#include "rdbms/DbConnFactoryFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -32,7 +32,9 @@ OracleCatalogue::OracleCatalogue(
   const std::string &username,
   const std::string &password,
   const std::string &database) {
-  m_conn.reset(rdbms::OcciEnvSingleton::instance().createConn(username, password, database));
+  using namespace rdbms;
+  const DbLogin dbLogin(DbLogin::DBTYPE_ORACLE, username, password, database);
+  m_conn.reset(DbConnFactoryFactory::create(dbLogin)->create());
 }
 
 //------------------------------------------------------------------------------

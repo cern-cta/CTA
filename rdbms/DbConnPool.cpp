@@ -17,9 +17,8 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "DbConnPool.hpp"
-#include "OcciConnFactory.hpp"
-#include "SqliteConnFactory.hpp"
+#include "rdbms/DbConnFactoryFactory.hpp"
+#include "rdbms/DbConnPool.hpp"
 
 #include <memory>
 
@@ -30,38 +29,10 @@ namespace rdbms {
 // constructor
 //------------------------------------------------------------------------------
 DbConnPool::DbConnPool(const DbLogin &dbLogin, const uint64_t nbDbConns):
-  m_dbLogin(dbLogin),
+  m_dbConnFactory(rdbms::DbConnFactoryFactory::create(dbLogin)),
   m_nbDbConns(nbDbConns) {
   try {
-    createDbConnFactory(dbLogin);
     createDbConns(m_nbDbConns);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// createDbConnFactory
-//------------------------------------------------------------------------------
-void DbConnPool::createDbConnFactory(const DbLogin &dbLogin) {
-  try {
-    switch(dbLogin.dbType) {
-    case rdbms::DbLogin::DBTYPE_IN_MEMORY:
-      m_dbConnFactory.reset(new SqliteConnFactory(":memory:"));
-      break;
-    case rdbms::DbLogin::DBTYPE_ORACLE:
-      m_dbConnFactory.reset(new OcciConnFactory(dbLogin.username, dbLogin.password, dbLogin.database));
-      break;
-    case rdbms::DbLogin::DBTYPE_SQLITE:
-      m_dbConnFactory.reset(new SqliteConnFactory(dbLogin.database));
-      break;
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
-        throw ex;
-      }
-    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
