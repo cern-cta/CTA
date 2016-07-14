@@ -360,42 +360,48 @@ void OStoreDB::deleteArchiveRequest(const common::dataStructures::SecurityIdenti
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
-  auto tpl = re.dumpArchiveQueues();
+  auto aql = re.dumpArchiveQueues();
   rel.release();
-  for (auto tpp=tpl.begin(); tpp!= tpl.end(); tpp++) {
-    objectstore::ArchiveQueue aq(tpp->address, m_objectStore);
-    ScopedSharedLock tplock(aq);
+  for (auto & aqp: aql) {
+    objectstore::ArchiveQueue aq(aqp.address, m_objectStore);
+    ScopedSharedLock aqlock(aq);
     aq.fetch();
     auto ajl=aq.dumpJobs();
-    tplock.release();
-    for (auto ajp=ajl.begin(); ajp!=ajl.end(); ajp++) {
-      objectstore::ArchiveRequest ar(ajp->address, m_objectStore);
-      ScopedSharedLock atfrl(ar);
+    aqlock.release();
+    for (auto & ajp: ajl) {
+      objectstore::ArchiveRequest ar(ajp.address, m_objectStore);
+      ScopedSharedLock arl(ar);
       ar.fetch();
       if (ar.getArchiveFile().archiveFileID == fileId) {
-        atfrl.release();
+        // We found a job for the right file Id.
+        // We now need to dequeue it from all it archive queues (one per job).
+        // Upgrade the lock to an exclusive one.
+        arl.release();
+        ScopedExclusiveLock arxl(ar);
         objectstore::ScopedExclusiveLock al(*m_agent);
         m_agent->fetch();
         m_agent->addToOwnership(ar.getAddressIfSet());
         m_agent->commit();
-        ScopedExclusiveLock atfrxl(ar);
         ar.fetch();
         ar.setAllJobsFailed();
-        ar.setOwner(m_agent->getAddressIfSet());
-        ar.commit();
-        auto jl = ar.dumpJobs();
-        for (auto j=jl.begin(); j!=jl.end(); j++) {
+        for (auto j:ar.dumpJobs()) {
+          // Dequeue the job from the queue.
+          // The owner might not be a queue, in which case the fetch will fail (and it's fine)
           try {
-            objectstore::ArchiveQueue aq(j->ArchiveQueueAddress, m_objectStore);
-            ScopedExclusiveLock tpl(aq);
-            aq.fetch();
-            aq.removeJob(ar.getAddressIfSet());
-            aq.commit();
+            // The queue on which we found the job is not locked anymore, so we can re-lock it.
+            ArchiveQueue aq2(j.ArchiveQueueAddress, m_objectStore);
+            ScopedExclusiveLock aq2xl(aq2);
+            aq2.fetch();
+            aq2.removeJob(ar.getAddressIfSet());
+            aq2.commit();
           } catch (...) {}
+          ar.setJobOwner(j.copyNb, m_agent->getAddressIfSet());
         }
         ar.remove();
         m_agent->removeFromOwnership(ar.getAddressIfSet());
         m_agent->commit();
+        // We found and deleted the job: return.
+        return;
       }
     }
   }

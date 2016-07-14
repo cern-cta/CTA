@@ -257,7 +257,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 }
 
-TEST_P(SchedulerTest, DISABLED_delete_archive_request) {
+TEST_P(SchedulerTest, delete_archive_request) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
