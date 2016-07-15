@@ -77,6 +77,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
     foreach(CTATAPESERVERDAEMON_LIBRARY_SRC
        ${CTATAPESERVERDAEMON_LIBRARY_SRCS}
        CatalogueTest.cpp
+       DataTransferSessionTest.cpp
        DiskReadTaskTest.cpp
        DiskWriteTaskTest.cpp
        DiskWriteTaskTest.cpp
@@ -113,7 +114,7 @@ install(TARGETS ctatapeserverdaemonutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR}
 add_library(ctatapeserverdaemonunittests SHARED
   CatalogueDriveStateTest.cpp
   CatalogueTest.cpp
-#  DataTransferSessionTest.cpp
+  DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp

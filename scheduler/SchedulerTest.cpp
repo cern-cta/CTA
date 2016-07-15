@@ -40,6 +40,8 @@
 
 namespace unitTests {
 
+namespace {
+
 /**
  * This structure is used to parameterize scheduler tests.
  */
@@ -52,6 +54,8 @@ struct SchedulerTestParam {
  }
 }; // struct SchedulerTestParam
 
+}
+
 /**
  * The scheduler test is a parameterized test.  It takes a pair of name server
  * and scheduler database factories as a parameter.
@@ -59,7 +63,7 @@ struct SchedulerTestParam {
 class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
-  SchedulerTest() throw() {
+  SchedulerTest() {
   }
 
   class FailedToGetCatalogue: public std::exception {
