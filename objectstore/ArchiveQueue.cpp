@@ -153,8 +153,9 @@ std::string ArchiveQueue::getTapePool() {
 }
 
 void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
-  const std::string & archiveRequestAddress, uint64_t fileid,
-  uint64_t size, const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+  const std::string & archiveRequestAddress, uint64_t archiveFileId,
+  uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy,
+  time_t startTime) {
   checkPayloadWritable();
   // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
@@ -166,15 +167,15 @@ void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
   if (m_payload.pendingarchivejobs_size()) {
     if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
       m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + size);
+    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + fileSize);
   } else {
-    m_payload.set_archivejobstotalsize(size);
+    m_payload.set_archivejobstotalsize(fileSize);
     m_payload.set_oldestjobcreationtime(startTime);
   }
   auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveRequestAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
+  j->set_size(fileSize);
+  j->set_fileid(archiveFileId);
   j->set_copynb(job.copyNb);
 }
 
@@ -200,19 +201,20 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
 }
 
 bool ArchiveQueue::addJobIfNecessary(
-  const ArchiveRequest::JobDump& job, 
-  const std::string& archiveToFileAddress,
-  uint64_t fileid, uint64_t size) {
+  const ArchiveRequest::JobDump& job,
+  const std::string & archiveRequestAddress, uint64_t archiveFileId,
+  uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy,
+  time_t startTime) {
   checkPayloadWritable();
   auto & jl=m_payload.pendingarchivejobs();
   for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveToFileAddress)
+    if (j->address() == archiveRequestAddress)
       return false;
   }
   auto * j = m_payload.add_pendingarchivejobs();
-  j->set_address(archiveToFileAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
+  j->set_address(archiveRequestAddress);
+  j->set_size(fileSize);
+  j->set_fileid(archiveFileId);
   j->set_copynb(job.copyNb);
   return true;
 }

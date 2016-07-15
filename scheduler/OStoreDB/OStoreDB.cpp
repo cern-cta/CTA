@@ -1331,59 +1331,59 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::DriveStatus status, tim
 }
 
 void OStoreDB::ArchiveJob::fail() {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-//  if (!m_jobOwned)
-//    throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
-//  // Lock the archive request. Fail the job.
-//  objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
-//  m_archiveRequest.fetch();
-//  // Add a job failure. If the job is failed, we will delete it.
-//  if (m_archiveRequest.addJobFailure(m_copyNb, m_mountId)) {
-//    // The job will not be retried. Either another jobs for the same request is 
-//    // queued and keeps the request referenced or the request has been deleted.
-//    // In any case, we can forget it.
-//    objectstore::ScopedExclusiveLock al(m_agent);
-//    m_agent.fetch();
-//    m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-//    m_agent.commit();
-//    m_jobOwned = false;
-//    return;
-//  }
-//  // The job still has a chance, return it to its original tape pool's queue
-//  objectstore::RootEntry re(m_objectStore);
-//  objectstore::ScopedSharedLock rel(re);
-//  re.fetch();
-//  auto tpl = re.dumpTapePools();
-//  rel.release();
-//  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
-//    if (tpp->tapePool == m_tapePool) {
-//      objectstore::TapePool tp(tpp->address, m_objectStore);
-//      objectstore::ScopedExclusiveLock tplock(tp);
-//      tp.fetch();
-//      // Find the right job
-//      auto jl = m_archiveRequest.dumpJobs();
-//      for (auto j=jl.begin(); j!=jl.end(); j++) {
-//        if (j->copyNb == m_copyNb) {
-//          tp.addJobIfNecessary(*j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().fileId, m_archiveRequest.getRemoteFile().status.size);
-//          tp.commit();
-//          tplock.release();
-//          // We have a pointer to the job, we can change the job ownership
-//          m_archiveRequest.setJobOwner(m_copyNb, tpp->address);
-//          m_archiveRequest.commit();
-//          atfrl.release();
-//          // We just have to remove the ownership from the agent and we're done.
-//          objectstore::ScopedExclusiveLock al(m_agent);
-//          m_agent.fetch();
-//          m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-//          m_agent.commit();
-//          m_jobOwned = false;
-//          return;
-//        }
-//      }
-//      throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");
-//    }
-//  }
-//  throw NoSuchArchiveQueue("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
+  if (!m_jobOwned)
+    throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
+  // Lock the archive request. Fail the job.
+  objectstore::ScopedExclusiveLock arl(m_archiveRequest);
+  m_archiveRequest.fetch();
+  // Add a job failure. If the job is failed, we will delete it.
+  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId)) {
+    // The job will not be retried. Either another jobs for the same request is 
+    // queued and keeps the request referenced or the request has been deleted.
+    // In any case, we can forget it.
+    objectstore::ScopedExclusiveLock al(m_agent);
+    m_agent.fetch();
+    m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
+    m_agent.commit();
+    m_jobOwned = false;
+    return;
+  }
+  // The job still has a chance, return it to its original tape pool's queue
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto aql = re.dumpArchiveQueues();
+  rel.release();
+  for (auto & aqp: aql) {
+    if (aqp.tapePool == m_tapePool) {
+      objectstore::ArchiveQueue aq(aqp.address, m_objectStore);
+      objectstore::ScopedExclusiveLock aqlock(aq);
+      aq.fetch();
+      // Find the right job
+      auto jl = m_archiveRequest.dumpJobs();
+      for (auto & j:jl) {
+        if (j.copyNb == tapeFile.copyNb) {
+          aq.addJobIfNecessary(j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
+              m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time);
+          aq.commit();
+          aqlock.release();
+          // We have a pointer to the job, we can change the job ownership
+          m_archiveRequest.setJobOwner(tapeFile.copyNb, aqp.address);
+          m_archiveRequest.commit();
+          arl.release();
+          // We just have to remove the ownership from the agent and we're done.
+          objectstore::ScopedExclusiveLock al(m_agent);
+          m_agent.fetch();
+          m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
+          m_agent.commit();
+          m_jobOwned = false;
+          return;
+        }
+      }
+      throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");
+    }
+  }
+  throw NoSuchArchiveQueue("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
 }
 
 void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {

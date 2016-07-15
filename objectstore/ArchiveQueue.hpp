@@ -52,13 +52,13 @@ public:
   
   // Archive jobs management ===================================================  
   void addJob(const ArchiveRequest::JobDump & job,
-    const std::string & archiveToFileAddress, uint64_t fileid,
-    uint64_t size, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
+    const std::string & archiveRequestAddress, uint64_t archiveFileId,
+    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
-    const std::string & archiveToFileAddress, 
-    uint64_t fileid, uint64_t size);
+    const std::string & archiveRequestAddress, uint64_t archiveFileId,
+    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,

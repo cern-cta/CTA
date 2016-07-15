@@ -321,8 +321,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
         jd.ArchiveQueueAddress = j->archivequeueaddress();
-        if (aq.addJobIfNecessary(jd, getAddressIfSet(), m_payload.archivefileid(),
-          m_payload.filesize()))
+        if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
+          getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
         j->set_status(serializers::AJS_PendingMount);
         commit();

@@ -474,12 +474,13 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   }
 }
 
-TEST_P(SchedulerTest, DISABLED_retry_archive_until_max_reached) {
+TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   using namespace cta;
   
   setupDefaultCatalogue();
 
   auto &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
   
   uint64_t archiveFileId;
   {
@@ -512,27 +513,46 @@ TEST_P(SchedulerTest, DISABLED_retry_archive_until_max_reached) {
     archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
   }
   
+  // Create the environment for the migration to happen (library + tape) 
+    const std::string libraryComment = "Library comment";
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
+    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment);
+  
   {
     // Emulate a tape server by asking for a mount and then a file
     std::unique_ptr<cta::TapeMount> mount;
-    ASSERT_NO_THROW(mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release()));
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
-    ASSERT_NO_THROW(archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release())));
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     // The file should be retried 10 times
-    for (int i=0; i<5; i++) {
-      std::unique_ptr<cta::ArchiveJob> archiveJob;
+    for (int i=0; i<=5; i++) {
+      std::unique_ptr<cta::ArchiveJob> archiveJob(archiveMount->getNextJob());
+      if (!archiveJob.get()) {
+        int __attribute__((__unused__)) debugI=i;
+      }
+      ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
       // Validate we got the right file
       ASSERT_EQ(archiveFileId, archiveJob->archiveFile.archiveFileID);
-      ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
-      ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
-      ASSERT_NO_THROW(archiveJob->failed(cta::exception::Exception("Archive failed")));
+      archiveJob->failed(cta::exception::Exception("Archive failed"));
     }
     // Then the request should be gone
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    ASSERT_NO_THROW(archiveJob.reset(archiveMount->getNextJob().release()));
+    archiveJob.reset(archiveMount->getNextJob().release());
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
   }
 }
