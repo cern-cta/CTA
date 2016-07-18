@@ -2980,7 +2980,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
       exception::UserError ue;
-      ue.getMessage() << "Cannot prepare to retrieve the file with archive file ID because  no mount policy exists "
+      ue.getMessage() << "Cannot prepare to retrieve the file with archive file ID because no mount policy exists "
         "for " + user.name + ":" + user.group;
       throw ue;
     }

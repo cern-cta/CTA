@@ -46,9 +46,18 @@ set (UTILS_LIB_SRC_FILES
   ../BaseObject.cpp
   ../Services.cpp
   ../Factories.cpp
-  ../System.cpp)
+  ../System.cpp
+  ../server/ProcessCapDummy.cpp
+  ../server/Semaphores.cpp
+  ../server/Mutex.cpp
+  ../server/Threading.cpp
+  ../server/ProcessCap.cpp
+  ../server/SmartCap.cpp
+  ../server/Daemon.cpp)
 
-add_library (ctautils ${UTILS_LIB_SRC_FILES})
+add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
+
+target_link_libraries(ctautils castorlog)
 
 add_library (ctautilsunittests SHARED
   SmartArrayPtrTest.cpp

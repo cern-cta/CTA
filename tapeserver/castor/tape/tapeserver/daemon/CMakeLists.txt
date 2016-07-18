@@ -97,13 +97,13 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 add_library(ctaTapeServerDaemon 
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctaserverutils ctacatalogue)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_executable(cta-tapeserverd TapeDaemon.cpp)
 target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
   File TapeDrive ctacommon ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} 
-  ctamessages zmq ctaio ctautils ctaserverutils)
+  ctamessages zmq ctaio ctautils)
 #install (TARGETS cta-tapeserverd DESTINATION usr/bin)
 
 add_library(ctatapeserverdaemonutils SHARED
@@ -131,7 +131,6 @@ add_library(ctatapeserverdaemonunittests SHARED
 target_link_libraries(ctatapeserverdaemonunittests
   ctamediachangerutils
   ctamessagesutils
-  ctaserverutils
   ctatapeserverdaemonutils)
   #ctaschedulerutils
 

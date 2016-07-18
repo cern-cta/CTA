@@ -291,7 +291,7 @@ protected:
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
-  const std::string s_vid = "TestVid";
+  const std::string s_vid = "TstVid"; // We really need size <= 6 characters due to tape label format.
   //TempFile m_tempSqliteFile;
   /**
    * Temporary directory created with mkdtemp that will be used to contain the
@@ -337,21 +337,24 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
   
-  // 5) Create the tapepool, library and tape for the scheduler.
-  // Make mounts immediate.
-//  scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), "");
-//  scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), "");
-//  scheduler.createTapePool(requester, "TapePool", 1, "");
-//  cta::MountCriteria immediateMount;
-//  immediateMount.maxAge = 0;
-//  immediateMount.maxBytesQueued = 1;
-//  immediateMount.maxFilesQueued = 1;
-//  immediateMount.quota = 10;
-//  scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount));                   
-//  scheduler.createLogicalLibrary(requester, "T10KD6", "");
-//  scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, "");
+  // 5) Create the environment for the migration to happen (library + tape) 
+    const std::string libraryComment = "Library comment";
+  ASSERT_NO_THROW(catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryComment));
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
+    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment);
   
-  // 5) Prepare files for reading by writing them to the mock system
+  // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
@@ -396,17 +399,26 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
       tapeFileWritten.checksumType="ADLER32";
       tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
       tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.blockId=0;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
       tapeFileWritten.compressedSize=archiveFileSize; // No compression
+      tapeFileWritten.diskInstance = s_diskInstance;
+      tapeFileWritten.diskFileId = fseq;
+      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      tapeFileWritten.diskFileUser = s_userName;
+      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileRecoveryBlob = "B106";
+      tapeFileWritten.storageClassName = s_storageClassName;
+      tapeFileWritten.tapeDrive = "drive0";
       catalogue.fileWrittenToTape(tapeFileWritten);
 
       // Schedule the retrieval of the file
       cta::common::dataStructures::SecurityIdentity sid;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID=fseq;
+      rReq.requester.name = s_userName;
+      rReq.requester.group = "someGroup";
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
       scheduler.queueRetrieve(sid, rReq);
@@ -414,7 +426,7 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   }
 
   // 6) Create the data transfer session
-  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
+  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
@@ -427,14 +439,16 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys,
+  castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  
+  std::cout << typeid(sess).name() << std::endl;
 
   // 7) Run the data transfer session
-  ASSERT_NO_THROW(sess.execute());
+  sess.execute();
 
   // 8) Check the session git the correct VID
-  ASSERT_EQ("V12345", sess.getVid());
+  ASSERT_EQ(s_vid, sess.getVid());
 
   // 9) Check the remote files exist and have the correct size
   for(auto pathItor = remoteFilePaths.cbegin(); pathItor !=
