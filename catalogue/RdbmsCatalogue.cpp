@@ -2961,8 +2961,8 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 //------------------------------------------------------------------------------
 // prepareToRetrieveFile
 //------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(const uint64_t archiveFileId,
-  const common::dataStructures::UserIdentity &user) {
+common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(const std::string &diskInstanceName, 
+        const uint64_t archiveFileId, const common::dataStructures::UserIdentity &user) {
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(archiveFileId);
     if(NULL == archiveFile.get()) {

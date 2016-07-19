@@ -239,7 +239,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  scheduler.queueArchive(s_adminOnAdminHost, request);
+  scheduler.queueArchive("disk_instance", request);
 
   {
     auto rqsts = scheduler.getPendingArchiveJobs();
@@ -294,7 +294,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  auto archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
+  auto archiveFileId = scheduler.queueArchive("disk_instance", request);
   
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
@@ -314,7 +314,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   dar.archiveFileID = archiveFileId;
   dar.requester.group = "group1";
   dar.requester.name = "user1";
-  scheduler.deleteArchive(s_adminOnAdminHost, dar);
+  scheduler.deleteArchive("disk_instance", dar);
   
   // Validate that the request is gone.
   found=false;
@@ -363,7 +363,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
+    archiveFileId = scheduler.queueArchive("disk_instance", request);
   }
   
   // Check that we have the file in the queues
@@ -438,7 +438,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
-    scheduler.queueRetrieve(s_adminOnAdminHost, request);
+    scheduler.queueRetrieve("disk_instance", request);
   }
 
   // Check that the retrieve request is queued
@@ -514,7 +514,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive(s_adminOnAdminHost, request);
+    archiveFileId = scheduler.queueArchive("disk_instance", request);
   }
   
   // Create the environment for the migration to happen (library + tape) 
@@ -587,7 +587,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
-    ASSERT_THROW(scheduler.queueRetrieve(s_adminOnAdminHost, request), cta::exception::Exception);
+    ASSERT_THROW(scheduler.queueRetrieve("disk_instance", request), cta::exception::Exception);
   }
 }
 

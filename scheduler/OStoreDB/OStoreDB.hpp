@@ -155,7 +155,7 @@ public:
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
-  virtual void deleteArchiveRequest(const common::dataStructures::SecurityIdentity& requester, uint64_t fileId) override;
+  virtual void deleteArchiveRequest(const std::string &diskInstanceName, uint64_t fileId) override;
   class ArchiveToFileRequestCancelation:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:

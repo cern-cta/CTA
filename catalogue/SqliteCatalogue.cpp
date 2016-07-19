@@ -51,7 +51,7 @@ SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const uint64_t archiveFileId) {
+common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 

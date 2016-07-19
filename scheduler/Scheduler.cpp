@@ -62,21 +62,9 @@ void cta::Scheduler::authorizeAdmin(const cta::common::dataStructures::SecurityI
 }
 
 //------------------------------------------------------------------------------
-// authorizeInstance
-//------------------------------------------------------------------------------
-void cta::Scheduler::authorizeInstance(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
-//  if(!(m_catalogue.isAuthorizedInstance(cliIdentity.username))) {
-  if(!true) {
-    std::stringstream msg;
-    msg << "Instance: " << cliIdentity.username << " on host: " << cliIdentity.host << " is not authorized to execute CTA user commands";
-    throw cta::exception::UserError(msg.str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
-uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request) {
+uint64_t cta::Scheduler::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request) {
   auto catalogueInfo = m_catalogue.prepareForNewFile(request.instance, request.storageClass, request.requester);
   m_db.queueArchive(request, catalogueInfo);
   return catalogueInfo.fileId;
@@ -86,11 +74,11 @@ uint64_t cta::Scheduler::queueArchive(const cta::common::dataStructures::Securit
 // queueRetrieve
 //------------------------------------------------------------------------------
 void cta::Scheduler::queueRetrieve(
-  const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &instanceName,
   const cta::common::dataStructures::RetrieveRequest &request) {
   // Get the 
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(request.archiveFileID, request.requester);
+    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
   // Get the statuses of the tapes on which we have files.
   std::set<std::string> vids;
   for (auto & tf: queueCriteria.archiveFile.tapeFiles) {
@@ -130,48 +118,48 @@ void cta::Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request) {
+void cta::Scheduler::deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
   try {
-    m_db.deleteArchiveRequest(cliIdentity, request.archiveFileID);
+    m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
   } catch (cta::exception::Exception &dbEx) {
     // The file was apparently not queued. If we fail to remove it from the catalogue, then it is an error.
-    m_catalogue.deleteArchiveFile(request.archiveFileID);
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   }
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).
   try {
-    m_catalogue.deleteArchiveFile(request.archiveFileID);
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   } catch (cta::exception::UserError &) {}
 }
 
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
-void cta::Scheduler::cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity,  const cta::common::dataStructures::CancelRetrieveRequest &request) {
+void cta::Scheduler::cancelRetrieve(const std::string &instanceName, const cta::common::dataStructures::CancelRetrieveRequest &request) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileInfo
 //------------------------------------------------------------------------------
-void cta::Scheduler::updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request) {
+void cta::Scheduler::updateFileInfo(const std::string &instanceName, const cta::common::dataStructures::UpdateFileInfoRequest &request) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileStorageClass
 //------------------------------------------------------------------------------
-void cta::Scheduler::updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request) {
+void cta::Scheduler::updateFileStorageClass(const std::string &instanceName, const cta::common::dataStructures::UpdateFileStorageClassRequest &request) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // listStorageClass
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request) {
+std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClass(const std::string &instanceName, const cta::common::dataStructures::ListStorageClassRequest &request) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

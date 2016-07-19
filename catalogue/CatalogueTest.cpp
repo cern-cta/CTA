@@ -90,7 +90,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
   {
     std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
     while(itor->hasMore()) {
-      m_catalogue->deleteArchiveFile(itor->next().archiveFileID);
+      m_catalogue->deleteArchiveFile(itor->next().diskInstance, itor->next().archiveFileID);
     }
   }
   {
@@ -2305,7 +2305,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(archiveFileId, userIdentity);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, userIdentity);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -3403,7 +3403,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   }
 
   {
-    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->deleteArchiveFile(archiveFileId);
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->deleteArchiveFile("disk_instance", archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -3450,7 +3450,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
-  ASSERT_THROW(m_catalogue->deleteArchiveFile(12345678), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteArchiveFile("disk_instance", 12345678), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {

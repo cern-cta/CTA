@@ -354,7 +354,7 @@ void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &r
   }
 }
 
-void OStoreDB::deleteArchiveRequest(const common::dataStructures::SecurityIdentity& requester, 
+void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName, 
   uint64_t fileId) {
   // First of, find the archive request form all the tape pools.
   objectstore::RootEntry re(m_objectStore);

@@ -394,6 +394,7 @@ public:
    * Prepares for a file retrieval by returning the information required to
    * queue the associated retrieve request(s).
    *
+   * @param instanceName The name of the instance from where the retrieval request originated
    * @param archiveFileId The unique identifier of the archived file that is
    * to be retrieved.
    * @param user The user for whom the file is to be retrieved.  This will be
@@ -403,6 +404,7 @@ public:
    * @return The information required to queue the associated retrieve request(s).
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const std::string &instanceName, 
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user);
 

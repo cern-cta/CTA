@@ -224,11 +224,6 @@ protected:
   void authorizeAdmin();
   
   /**
-   * Checks whether the instance that issued the user command is an authorized instance (throws an exception if it's not).
-   */
-  void authorizeInstance();
-  
-  /**
    * Returns the response string properly formatted in a table
    * 
    * @param  responseTable The response 2-D matrix

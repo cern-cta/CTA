@@ -122,16 +122,6 @@ void XrdCtaFile::authorizeAdmin(){
 }
 
 //------------------------------------------------------------------------------
-// authorizeUser
-//------------------------------------------------------------------------------
-void XrdCtaFile::authorizeInstance(){
-  if(m_protocol!="sss") {
-    throw cta::exception::Exception(std::string("[ERROR] User commands are possible only through Simple Shared Secret protocol authentication. Protocol used for this connection: ")+m_protocol);
-  }
-  m_scheduler->authorizeInstance(m_cliIdentity);
-}
-
-//------------------------------------------------------------------------------
 // commandDispatcher
 //------------------------------------------------------------------------------
 void XrdCtaFile::dispatchCommand() {
@@ -162,13 +152,13 @@ void XrdCtaFile::dispatchCommand() {
   else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); xCom_listpendingretrieves();}
   else if("lds"  == command || "listdrivestates"        == command) {authorizeAdmin(); xCom_listdrivestates();}
   
-  else if("a"    == command || "archive"                == command) {authorizeInstance(); xCom_archive();}
-  else if("r"    == command || "retrieve"               == command) {authorizeInstance(); xCom_retrieve();}
-  else if("da"   == command || "deletearchive"          == command) {authorizeInstance(); xCom_deletearchive();}
-  else if("cr"   == command || "cancelretrieve"         == command) {authorizeInstance(); xCom_cancelretrieve();}
-  else if("ufi"  == command || "updatefileinfo"         == command) {authorizeInstance(); xCom_updatefileinfo();}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {authorizeInstance(); xCom_updatefilestorageclass();}
-  else if("lsc"  == command || "liststorageclass"       == command) {authorizeInstance(); xCom_liststorageclass();}
+  else if("a"    == command || "archive"                == command) {xCom_archive();}
+  else if("r"    == command || "retrieve"               == command) {xCom_retrieve();}
+  else if("da"   == command || "deletearchive"          == command) {xCom_deletearchive();}
+  else if("cr"   == command || "cancelretrieve"         == command) {xCom_cancelretrieve();}
+  else if("ufi"  == command || "updatefileinfo"         == command) {xCom_updatefileinfo();}
+  else if("ufsc" == command || "updatefilestorageclass" == command) {xCom_updatefilestorageclass();}
+  else if("lsc"  == command || "liststorageclass"       == command) {xCom_liststorageclass();}
   
   else {
     throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
@@ -2128,7 +2118,7 @@ void XrdCtaFile::xCom_archive() {
   request.requester=originator;
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
-  uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity, request);
+  uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request);
   cmdlineOutput << archiveFileId << std::endl;
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2170,7 +2160,7 @@ void XrdCtaFile::xCom_retrieve() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.dstURL=dsturl.value();
-  m_scheduler->queueRetrieve(m_cliIdentity, request);
+  m_scheduler->queueRetrieve(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -2194,7 +2184,7 @@ void XrdCtaFile::xCom_deletearchive() {
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id.value();
   request.requester=originator;
-  m_scheduler->deleteArchive(m_cliIdentity, request);
+  m_scheduler->deleteArchive(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -2231,7 +2221,7 @@ void XrdCtaFile::xCom_cancelretrieve() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.dstURL=dsturl.value();
-  m_scheduler->cancelRetrieve(m_cliIdentity, request);
+  m_scheduler->cancelRetrieve(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -2268,7 +2258,7 @@ void XrdCtaFile::xCom_updatefilestorageclass() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.storageClass=storageclass.value();
-  m_scheduler->updateFileStorageClass(m_cliIdentity, request);
+  m_scheduler->updateFileStorageClass(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -2297,7 +2287,7 @@ void XrdCtaFile::xCom_updatefileinfo() {
   cta::common::dataStructures::UpdateFileInfoRequest request;
   request.diskFileInfo=diskFileInfo;
   request.archiveFileID=id.value();
-  m_scheduler->updateFileInfo(m_cliIdentity, request);
+  m_scheduler->updateFileInfo(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
@@ -2319,7 +2309,7 @@ void XrdCtaFile::xCom_liststorageclass() {
   originator.group=group.value();
   cta::common::dataStructures::ListStorageClassRequest request;
   request.requester=originator;
-  m_scheduler->listStorageClass(m_cliIdentity, request);
+  m_scheduler->listStorageClass(m_cliIdentity.username, request);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
   

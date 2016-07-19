@@ -121,7 +121,7 @@ public:
    * archive catalogue.
    */
   virtual void deleteArchiveRequest(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &diskInstanceName, 
     uint64_t archiveFileId) = 0;
   
   /*

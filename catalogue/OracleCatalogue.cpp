@@ -46,7 +46,7 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const uint64_t archiveFileId) {
+common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 

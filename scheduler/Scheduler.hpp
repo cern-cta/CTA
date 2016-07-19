@@ -76,49 +76,49 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual uint64_t queueArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ArchiveRequest &request);
+  virtual uint64_t queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request);
   
   /**
    * Queue a retrieve request. 
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void queueRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::RetrieveRequest &request);
+  virtual void queueRetrieve(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request);
   
   /** 
    * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void deleteArchive(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::DeleteArchiveRequest &request);
+  virtual void deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request);
   
   /** 
    * Cancel an ongoing retrieval.
    * Throws a UserError exception in case of wrong request parameters (ex. file not being retrieved)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void cancelRetrieve(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::CancelRetrieveRequest &request);
+  virtual void cancelRetrieve(const std::string &instanceName, const cta::common::dataStructures::CancelRetrieveRequest &request);
   
   /** 
    * Update the file information of an archived file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void updateFileInfo(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileInfoRequest &request);
+  virtual void updateFileInfo(const std::string &instanceName, const cta::common::dataStructures::UpdateFileInfoRequest &request);
   
   /** 
    * Update the storage class of an archived file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown storage class)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void updateFileStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
+  virtual void updateFileStorageClass(const std::string &instanceName, const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
   
   /** 
    * List the storage classes that a specific user is allowed to use (the ones belonging to the instance from where
    * the command was issued)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const cta::common::dataStructures::ListStorageClassRequest &request);
+  virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const std::string &instanceName, const cta::common::dataStructures::ListStorageClassRequest &request);
 
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const std::string &tag);
   virtual void setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue); // internal function not exposed to the Admin CLI
@@ -158,8 +158,6 @@ public:
   virtual std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
   
   virtual void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  
-  virtual void authorizeInstance(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
 
 private:
 

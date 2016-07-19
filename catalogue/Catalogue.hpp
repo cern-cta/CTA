@@ -414,16 +414,19 @@ public:
    * Deletes the specified archive file and its associated tape copies from the
    * catalogue.
    *
+   * @param instanceName The name of the instance from where the deletion request originated
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const uint64_t archiveFileId) = 0;
+  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
+    const uint64_t archiveFileId) = 0;
 
   /**
    * Prepares for a file retrieval by returning the information required to
    * queue the associated retrieve request(s).
    *
+   * @param instanceName The name of the instance from where the retrieval request originated
    * @param archiveFileId The unique identifier of the archived file that is
    * to be retrieved.
    * @param user The user for whom the file is to be retrieved.  This will be
@@ -433,6 +436,7 @@ public:
    * @return The information required to queue the associated retrieve request(s).
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const std::string &instanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user) = 0;
 
