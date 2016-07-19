@@ -218,11 +218,20 @@ void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.log(LOG_DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
   try{
-    while(1) {    
+    while(1) {
+      std::string debugType;
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
+      {
+        log::ScopedParamContainer spc(m_parent.m_lc);
+        spc.add("ReportType", debugType=typeid(*rep).name());
+        if (rep->goingToEnd())
+          spc.add("goingToEnd", "true");
+        m_parent.m_lc.log(LOG_DEBUG, "Popping report");
+      }
       // Record whether we found end before calling the potentially exception
       // throwing execute().)
-      if (rep->goingToEnd()) endFound=true;
+      if (rep->goingToEnd())
+        endFound=true;
       rep->execute(m_parent);
       if (endFound) break;
     }
@@ -274,6 +283,16 @@ void RecallReportPacker::WorkerThread::run(){
       if (report->goingToEnd())
         break;
     }
+  }
+  // Cross check that the queue is indeed empty.
+  while (m_parent.m_fifo.size()) {
+    // There is at least one extra report we missed.
+    log::ScopedParamContainer spc(m_parent.m_lc);
+    std::unique_ptr<Report> missedReport(m_parent.m_fifo.pop());
+    spc.add("ReportType", typeid(*missedReport).name());
+    if (missedReport->goingToEnd())
+      spc.add("goingToEnd", "true");
+    m_parent.m_lc.log(LOG_ERR, "Popping missed report (memory leak)");
   }
   m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallReportPacker thread");
 }
