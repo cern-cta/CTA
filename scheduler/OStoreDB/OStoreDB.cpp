@@ -1263,37 +1263,22 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
 }
 
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-//  // When the session is complete, we can reset the status of the tape and the
-//  // drive
-//  // Reset the drive
-//  objectstore::RootEntry re(m_objectStore);
-//  objectstore::ScopedSharedLock rel(re);
-//  re.fetch();
-//  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-//  objectstore::ScopedExclusiveLock drl(dr);
-//  dr.fetch();
-//  // Reset the drive state.
-//  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-//    cta::common::DriveStatus::Up, completionTime, 
-//    cta::MountType::NONE, 0,
-//    0, 0, 0, "", "");
-//  dr.commit();
-//  // Find the tape and unbusy it.
-//  objectstore::TapePool tp (re.getTapePoolAddress(mountInfo.tapePool), m_objectStore);
-//  rel.release();
-//  objectstore::ScopedSharedLock tpl(tp);
-//  tp.fetch();
-//  objectstore::Tape t(tp.getTapeAddress(mountInfo.vid), m_objectStore);
-//  objectstore::ScopedExclusiveLock tl(t);
-//  tpl.release();
-//  t.fetch();
-//  t.releaseBusy();
-//  t.commit();
-//  objectstore::ScopedExclusiveLock agl(m_agent);
-//  m_agent.fetch();
-//  m_agent.removeFromOwnership(t.getAddressIfSet());
-//  m_agent.commit();
+  // When the session is complete, we can reset the status of the tape and the
+  // drive
+  // Reset the drive
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
+    cta::common::DriveStatus::Up, completionTime, 
+    cta::MountType::NONE, 0,
+    0, 0, 0, "", "");
+  dr.commit();
+  rel.release();
 }
 
 void OStoreDB::RetrieveMount::setDriveStatus(cta::common::DriveStatus status, time_t completionTime) {

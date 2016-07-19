@@ -125,15 +125,15 @@ private:
   public:
     virtual ~Report(){}
     virtual void execute(RecallReportPacker& packer)=0;
-    virtual bool goingToEnd(RecallReportPacker& packer) {return false;}
+    virtual bool goingToEnd() {return false;}
   };
   class ReportTestGoingToEnd :  public Report {
   public:
     ReportTestGoingToEnd() {}
-    virtual void execute(RecallReportPacker& reportPacker) {
+    void execute(RecallReportPacker& reportPacker) override {
     reportPacker.m_retrieveMount->diskComplete();
     reportPacker.m_retrieveMount->tapeComplete();}
-    virtual bool goingToEnd(RecallReportPacker& packer) {return true;}
+    bool goingToEnd() override {return true;}
   };
   class ReportSuccessful :  public Report {
     /**
@@ -143,7 +143,7 @@ private:
   public:
     ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob): 
     m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
-    virtual void execute(RecallReportPacker& reportPacker);
+    void execute(RecallReportPacker& reportPacker) override;
   };
   class ReportError : public Report {
     /**
@@ -155,22 +155,22 @@ private:
     m_failedRetrieveJob(std::move(failedRetrieveJob)) {
     }
 
-    virtual void execute(RecallReportPacker& reportPacker);
+    void execute(RecallReportPacker& reportPacker) override;
   };
   
   class ReportDriveStatus : public Report {
     cta::common::DriveStatus m_status;
   public:
     ReportDriveStatus(cta::common::DriveStatus status): m_status(status) {}
-    virtual void execute(RecallReportPacker& reportPacker);
-    virtual bool goingToEnd(RecallReportPacker& packer);
+    void execute(RecallReportPacker& reportPacker) override;
+    bool goingToEnd() override;
   };
   
   class ReportEndofSession : public Report {
   public:
     ReportEndofSession(){}
-    virtual void execute(RecallReportPacker& reportPacker);
-    virtual bool goingToEnd(RecallReportPacker& packer);
+    void execute(RecallReportPacker& reportPacker) override;
+    bool goingToEnd() override;
 
   };
   class ReportEndofSessionWithErrors : public Report {
@@ -180,15 +180,15 @@ private:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
     m_message(msg),m_error_code(error_code){}
   
-    virtual void execute(RecallReportPacker& reportPacker);
-    virtual bool goingToEnd(RecallReportPacker& packer);
+    void execute(RecallReportPacker& reportPacker) override;
+    bool goingToEnd() override;
   };
   
   class WorkerThread: public castor::server::Thread {
     RecallReportPacker & m_parent;
   public:
     WorkerThread(RecallReportPacker& parent);
-    virtual void run();
+    void run() override;
   } m_workerThread;
   
   castor::server::Mutex m_producterProtection;

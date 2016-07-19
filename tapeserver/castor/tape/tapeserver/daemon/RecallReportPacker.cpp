@@ -144,7 +144,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //------------------------------------------------------------------------------
 //ReportEndofSession::goingToEnd
 //------------------------------------------------------------------------------
-bool RecallReportPacker::ReportEndofSession::goingToEnd(RecallReportPacker& packer) {
+bool RecallReportPacker::ReportEndofSession::goingToEnd() {
   return false;
 }
 
@@ -162,7 +162,7 @@ void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
 //------------------------------------------------------------------------------
 //ReportDriveStatus::goingToEnd
 //------------------------------------------------------------------------------
-bool RecallReportPacker::ReportDriveStatus::goingToEnd(RecallReportPacker& packer) {
+bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
   if(m_status==cta::common::DriveStatus::Unmounting) return true;
   return false;
 }
@@ -191,7 +191,7 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //------------------------------------------------------------------------------
 //ReportEndofSessionWithErrors::goingToEnd
 //------------------------------------------------------------------------------
-bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd(RecallReportPacker& packer) {
+bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
   return false;
 }
 
@@ -220,12 +220,11 @@ void RecallReportPacker::WorkerThread::run(){
   try{
     while(1) {    
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
+      // Record whether we found end before calling the potentially exception
+      // throwing execute().)
+      if (rep->goingToEnd()) endFound=true;
       rep->execute(m_parent);
-
-      if(rep->goingToEnd(m_parent)) {
-        endFound = true;
-        break;
-      }
+      if (endFound) break;
     }
   } catch(const castor::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
@@ -272,7 +271,7 @@ void RecallReportPacker::WorkerThread::run(){
   if (!endFound) {
     while (1) {
       std::unique_ptr<Report> report(m_parent.m_fifo.pop());
-      if (report->goingToEnd(m_parent))
+      if (report->goingToEnd())
         break;
     }
   }

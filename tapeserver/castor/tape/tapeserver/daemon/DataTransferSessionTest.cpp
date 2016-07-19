@@ -304,7 +304,7 @@ protected:
 
 }; // class DataTransferSessionTest
 
-TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
+TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
@@ -419,6 +419,7 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
       rReq.archiveFileID=fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
+      rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
       scheduler.queueRetrieve(sid, rReq);
@@ -441,8 +442,6 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  
-  std::cout << typeid(sess).name() << std::endl;
 
   // 7) Run the data transfer session
   sess.execute();
@@ -451,11 +450,10 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 9) Check the remote files exist and have the correct size
-  for(auto pathItor = remoteFilePaths.cbegin(); pathItor !=
-    remoteFilePaths.cend(); pathItor++) {
+  for(auto & path: remoteFilePaths) {
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
-    const int statRc = stat(pathItor->substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
+    const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
   }
