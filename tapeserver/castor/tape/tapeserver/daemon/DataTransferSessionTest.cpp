@@ -304,7 +304,7 @@ protected:
 
 }; // class DataTransferSessionTest
 
-TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
+TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
   castor::log::StringLogger logger("tapeServerUnitTest");
   
