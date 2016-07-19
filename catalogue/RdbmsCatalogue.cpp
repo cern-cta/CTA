@@ -438,7 +438,8 @@ void RdbmsCatalogue::createStorageClass(
 //------------------------------------------------------------------------------
 // storageClassExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::storageClassExists(const std::string &diskInstance, const std::string &storageClass) const {
+bool RdbmsCatalogue::storageClassExists(const std::string &diskInstanceName, const std::string &storageClassName)
+  const {
   try {
     const char *const sql =
       "SELECT "
@@ -450,8 +451,8 @@ bool RdbmsCatalogue::storageClassExists(const std::string &diskInstance, const s
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":DISK_INSTANCE_NAME", diskInstance);
-    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     return rset->next();
   } catch (exception::Exception &ex) {
@@ -2729,7 +2730,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     throw ex;
   }
 
-  const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(user.name, user.group);
+  const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(diskInstanceName, user.name, user.group);
   // Requester mount policies overrule requester group mount policies
   common::dataStructures::MountPolicy mountPolicy;
   if(!mountPolicies.requesterMountPolicies.empty()) {
@@ -2738,7 +2739,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
   } else {
     throw exception::UserError(std::string("Cannot prepare for a new archive file because no mount policy exists for " +
-      user.name + ":" + user.group));
+      diskInstanceName + ":" + user.name + ":" + user.group));
   }
 
   // Now that we have both the archive routes and the mount policy it's safe to
@@ -2971,7 +2972,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       throw ex;
     }
 
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(user.name, user.group);
+    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(diskInstanceName, user.name, user.group);
     // Requester mount policies overrule requester group mount policies
     common::dataStructures::MountPolicy mountPolicy;
     if(!mountPolicies.requesterMountPolicies.empty()) {
@@ -2999,8 +3000,10 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 //------------------------------------------------------------------------------
 // getMountPolicies
 //------------------------------------------------------------------------------
-RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::string &requesterName,
-  const std::string &requesterGroupName) {
+RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
+  const std::string &diskInstanceName,
+  const std::string &requesterName,
+  const std::string &requesterGroupName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -3027,6 +3030,7 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::strin
       "ON "
         "REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
       "WHERE "
+        "REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND "
         "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME "
       "UNION "
       "SELECT "
@@ -3053,9 +3057,12 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(const std::strin
       "ON "
         "REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
       "WHERE "
+        "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
 
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
+    stmt->bindString(":REQUESTER_DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":GROUP_DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());

@@ -1796,7 +1796,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "create storage class";
