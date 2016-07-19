@@ -33,7 +33,7 @@ namespace cta {
     ~MockRetrieveMount() throw() {
     }
 
-    std::unique_ptr<cta::RetrieveJob> getNextJob() {
+    std::unique_ptr<cta::RetrieveJob> getNextJob() override {
       getJobs++;
       if(m_jobs.empty()) {
         return std::unique_ptr<cta::RetrieveJob>();
@@ -44,19 +44,20 @@ namespace cta {
       }
     }
 
-    virtual std::string getMountTransactionId() const {
+    virtual std::string getMountTransactionId() const override {
       return "1234567890";
     }
 
-    virtual void complete() { completes ++;  }
+    void abort() override { completes ++; }
 
-    virtual void abort() { completes ++; }
+    void diskComplete() override { completes ++;}
 
-    void diskComplete() { completes ++;};
+    void tapeComplete() override {};
 
-    void tapeComplete() {};
+    bool bothSidesComplete() override { return false; }
+    
+    void setDriveStatus(cta::common::DriveStatus status) override {};
 
-    bool bothSidesComplete() { return false; }
 
   private:
 

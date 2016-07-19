@@ -145,7 +145,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
 //ReportEndofSession::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSession::goingToEnd() {
-  return false;
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +163,6 @@ void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
 //ReportDriveStatus::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
-  if(m_status==cta::common::DriveStatus::Unmounting) return true;
   return false;
 }
 
@@ -192,7 +191,7 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
 //ReportEndofSessionWithErrors::goingToEnd
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
-  return false;
+  return true;
 }
 
 //------------------------------------------------------------------------------

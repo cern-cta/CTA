@@ -98,9 +98,11 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
   
   rrp.setDiskDone();
   rrp.setTapeDone();
-
+  
+  rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
+  
   rrp.reportEndOfSession();
-  rrp.reportTestGoingToEnd();
+//  rrp.reportTestGoingToEnd();
   rrp.waitThread();
   
   std::string temp = log.getLog();
@@ -153,9 +155,11 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   
   rrp.setDiskDone();
   rrp.setTapeDone();
+  
+  rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
 
   rrp.reportEndOfSession();
-  rrp.reportTestGoingToEnd();
+//  rrp.reportTestGoingToEnd();
   rrp.waitThread();
 
   const std::string temp = log.getLog();
