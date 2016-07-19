@@ -414,7 +414,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       catalogue.fileWrittenToTape(tapeFileWritten);
 
       // Schedule the retrieval of the file
-      cta::common::dataStructures::SecurityIdentity sid;
+      std::string diskInstance="disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID=fseq;
       rReq.requester.name = s_userName;
@@ -422,7 +422,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
       archiveFilePaths.push_back(archiveFilePath.str());
-      scheduler.queueRetrieve(sid, rReq);
+      scheduler.queueRetrieve(diskInstance, rReq);
     }
   }
 
