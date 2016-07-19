@@ -129,6 +129,8 @@ The shared libraries
 %defattr(-,root,root)
 %attr(0755,root,root) %{_libdir}/libctacatalogue.so
 %attr(0755,root,root) %{_libdir}/libctacommon.so
+#TODO: merge util and common
+%attr(0755,root,root) %{_libdir}/libctautils.so
 %attr(0755,root,root) %{_libdir}/libctaremotens.so
 %attr(0755,root,root) %{_libdir}/libctascheduler.so
 %attr(0755,root,root) %{_libdir}/libctaobjectstore.so
