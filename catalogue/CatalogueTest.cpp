@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <limits>
 #include <map>
@@ -565,6 +566,38 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   storageClass.comment = "create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
   ASSERT_THROW(m_catalogue->createStorageClass(m_cliSI, storageClass), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_name_different_disk_instance) {
+  using namespace cta;
+
+  common::dataStructures::StorageClass storageClass1;
+  storageClass1.diskInstance = "disk_instance_1";
+  storageClass1.name = "storage_class";
+  storageClass1.nbCopies = 2;
+  storageClass1.comment = "create storage class";
+
+  common::dataStructures::StorageClass storageClass2 = storageClass1;
+  storageClass2.diskInstance = "disk_instance_2";
+
+  ASSERT_NE(storageClass1, storageClass2);
+
+  m_catalogue->createStorageClass(m_cliSI, storageClass1);
+  m_catalogue->createStorageClass(m_cliSI, storageClass2);
+
+  const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+  ASSERT_EQ(2, storageClasses.size());
+
+  {
+    auto itor = std::find(storageClasses.begin(), storageClasses.end(), storageClass1);
+    ASSERT_FALSE(itor == storageClasses.end());
+  }
+
+  {
+    auto itor = std::find(storageClasses.begin(), storageClasses.end(), storageClass2);
+    ASSERT_FALSE(itor == storageClasses.end());
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
