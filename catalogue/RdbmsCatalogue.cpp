@@ -2715,7 +2715,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(diskInstanceName,
     storageClassName);
-  const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(storageClassName);
+  const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(diskInstanceName, storageClassName);
 
   // Check that the number of archive routes is correct
   if(copyToPoolMap.empty()) {
@@ -2784,23 +2784,25 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(c
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &storageClass) const {
+uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(const std::string &diskInstanceName,
+  const std::string &storageClassName) const {
   try {
-    uint64_t nbRoutes = 0;
     const char *const sql =
       "SELECT "
         "COUNT(*) AS NB_ROUTES "
       "FROM "
         "ARCHIVE_ROUTE "
       "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));
-    stmt->bindString(":STORAGE_CLASS_NAME", storageClass);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
-    while (rset->next()) {
-      nbRoutes = rset->columnUint64("NB_ROUTES");
+    if(!rset->next()) {
+      throw exception::Exception("Result set of SELECT COUNT(*) is empty");
     }
-    return nbRoutes;
+    return rset->columnUint64("NB_ROUTES");
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3305,7 +3307,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       "FROM "
         "ARCHIVE_FILE "
       "LEFT OUTER JOIN TAPE_FILE ON "
-          "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     std::unique_ptr<rdbms::DbStmt> stmt(m_conn->createStmt(sql));

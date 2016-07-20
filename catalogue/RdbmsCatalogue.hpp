@@ -595,9 +595,13 @@ protected:
    * opposed to the actual number entered so far using the createArchiveRoute()
    * method.
    *
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storagleClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
    * @return The expected number of archive routes.
    */
-  uint64_t getExpectedNbArchiveRoutes(const std::string &storageClass) const;
+  uint64_t getExpectedNbArchiveRoutes(const std::string &diskInstanceName, const std::string &storageClassNAme) const;
 
   /**
    * Inserts the specified tape file into the Tape table.
