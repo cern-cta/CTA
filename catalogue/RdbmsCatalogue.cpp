@@ -2972,6 +2972,14 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       throw ex;
     }
 
+    if(diskInstanceName != archiveFile->diskInstance) {
+      exception::UserError ue;
+      ue.getMessage() << "Disk instance of request does not match that of the archived file: archiveFileId=" <<
+        archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName <<
+        " archiveFileDiskInstance=" << archiveFile->diskInstance;
+      throw ue;
+    }
+
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(diskInstanceName, user.name, user.group);
     // Requester mount policies overrule requester group mount policies
     common::dataStructures::MountPolicy mountPolicy;
