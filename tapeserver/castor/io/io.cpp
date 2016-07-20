@@ -34,9 +34,9 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <poll.h>
 #include <sstream>
 #include <string.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -304,33 +304,29 @@ int castor::io::acceptConnection(const int listenSocketFd,
     throw ex;
   }
 
-  const time_t   startTime = time(NULL);
-  fd_set         fdSet;
-  struct timeval selectTimeout;
+  const time_t startTime = time(NULL);
 
-  FD_ZERO(&fdSet);
-  FD_SET(listenSocketFd, &fdSet);
+  pollfd pollFd;
+  pollFd.fd = listenSocketFd;
+  pollFd.events = POLLIN;
+  pollFd.revents = 0;
 
-  selectTimeout.tv_sec  = timeout;
-  selectTimeout.tv_usec = 0;
+  const int pollRc = poll(&pollFd, 1, 1000 * timeout);
+  const int pollErrno = errno;
 
-  const int selectRc = select(listenSocketFd + 1, &fdSet, NULL, NULL,
-    &selectTimeout);
-  const int selectErrno = errno;
-
-  switch(selectRc) {
-  case 0: // Select timed out
+  switch(pollRc) {
+  case 0: // poll() timed out
     {
       castor::exception::TimeOut ex;
       ex.getMessage() <<
-           "Failed to accept connection: Timed out after " << timeout
+           "Failed to accept connection: poll() timed out after " << timeout
         << " seconds whilst trying to accept a connection";
       throw ex;
     }
     break;
-  case -1: // Select encountered an error
-    // If select was interrupted
-    if(selectErrno == EINTR) {
+  case -1: // poll() encountered an error
+    // If poll() was interrupted
+    if(pollErrno == EINTR) {
       const time_t remainingTime = timeout - (time(NULL) - startTime);
 
       castor::exception::AcceptConnectionInterrupted ex(remainingTime);
@@ -338,17 +334,17 @@ int castor::io::acceptConnection(const int listenSocketFd,
       throw ex;
     } else {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to accept connection: Select failed: " <<
-        cta::utils::errnoToString(selectErrno);
+      ex.getMessage() << "Failed to accept connection: poll() failed: " <<
+        cta::utils::errnoToString(pollErrno);
       throw ex;
     }
     break;
-  default: // Select found a file descriptor awaiting attention
+  default: // poll() found a file descriptor awaiting attention
     // If it is not the expected connection request
-    if(!FD_ISSET(listenSocketFd, &fdSet)) {
+    if(!(pollFd.revents & POLLIN)) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection "
-        ": Invalid file descriptor set";
+        ": POLLIN event not set";
       throw ex;
     }
   }
@@ -929,41 +925,33 @@ int castor::io::connectWithTimeout(
     throw ex;
   }
 
-  // Create a read set and a write set for select() putting the
-  // socket in both sets
-  fd_set readFds, writeFds;
-  FD_ZERO(&readFds);
-  FD_SET(smartSock.get(), &readFds);
-  writeFds = readFds;
+  pollfd pollFd;
+  pollFd.fd = smartSock.get();
+  pollFd.events = POLLIN & POLLOUT;
 
-  // Wait for the connection to complete using select with a timeout
-  struct timeval selectTimeout;
-  selectTimeout.tv_sec = timeout;
-  selectTimeout.tv_usec = 0;
-  const int selectRc = select(smartSock.get() + 1, &readFds, &writeFds, NULL,
-    &selectTimeout);
-  if(-1 == selectRc) {
+  // Wait for the connection to complete using poll() with a timeout
+  const int pollRc = poll(&pollFd, 1, 1000 * timeout);
+  if(-1 == pollRc) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Call to select() failed: "
+    ex.getMessage() << "Call to poll()() failed: "
       << cta::utils::errnoToString(errno);
     throw ex;
   }
 
-  // Throw a timed-out exception if select timed-out
-  if(0 == selectRc) {
+  // Throw a timed-out exception if poll() timed-out
+  if(0 == pollRc) {
     castor::exception::TimeOut ex;
     ex.getMessage() <<
       "Failed to connect"
-      ": Timed out after " << timeout << " seconds";
+      ": poll() timed out after " << timeout << " seconds";
     throw ex;
   }
 
   // Throw an exception if no file descriptor was set
-  if(!FD_ISSET(smartSock.get(), &readFds) &&
-    !FD_ISSET(smartSock.get(), &writeFds)) {
+  if(!(pollFd.revents & POLLIN) && !(pollFd.revents & POLLOUT)) {
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() << "Failed to connect"
-      ": select() returned with no timneout or any descriptors set";
+      ": poll() returned without an event";
     throw ex;
   }
 
