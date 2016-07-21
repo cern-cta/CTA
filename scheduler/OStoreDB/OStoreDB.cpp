@@ -254,7 +254,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 }
 */
 
-void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
+void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
   assertAgentSet();
   // Construct the return value immediately
@@ -270,7 +270,7 @@ void OStoreDB::queueArchive(const cta::common::dataStructures::ArchiveRequest &r
   aFile.reconciliationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
   aFile.diskFileId = request.diskFileID;
   aFile.diskFileInfo = request.diskFileInfo;
-  aFile.diskInstance = request.instance;
+  aFile.diskInstance = instanceName;
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
   aReq.setArchiveFile(aFile);
@@ -580,7 +580,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
       ret.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
       ret.back().request.fileSize = osar.getArchiveFile().fileSize;
-      ret.back().request.instance = osar.getArchiveFile().diskInstance;
+      ret.back().instanceName = osar.getArchiveFile().diskInstance;
       ret.back().request.requester = osar.getRequester();
       ret.back().request.srcURL = osar.getSrcURL();
       ret.back().request.storageClass = osar.getArchiveFile().storageClass;
@@ -632,7 +632,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
       ret[tpp.tapePool].back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
       ret[tpp.tapePool].back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
       ret[tpp.tapePool].back().request.fileSize = osar.getArchiveFile().fileSize;
-      ret[tpp.tapePool].back().request.instance = osar.getArchiveFile().diskInstance;
+      ret[tpp.tapePool].back().instanceName = osar.getArchiveFile().diskInstance;
       ret[tpp.tapePool].back().request.requester = osar.getRequester();
       ret[tpp.tapePool].back().request.srcURL = osar.getSrcURL();
       ret[tpp.tapePool].back().request.storageClass = osar.getArchiveFile().storageClass;

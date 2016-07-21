@@ -51,8 +51,8 @@ public:
   
   ~OStoreDBWrapper() throw () {}
 
-  void queueArchive(const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
-    return m_OStoreDB.queueArchive(request, criteria);
+  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
+    return m_OStoreDB.queueArchive(instanceName, request, criteria);
   }
 
   

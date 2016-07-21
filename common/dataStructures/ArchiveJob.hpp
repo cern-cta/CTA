@@ -43,6 +43,7 @@ struct ArchiveJob {
 
   ArchiveRequest request;
   std::string tapePool;
+  std::string instanceName;
   uint64_t copyNumber;
   uint64_t archiveFileID;
 

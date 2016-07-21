@@ -92,7 +92,7 @@ public:
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to queue the request.
    */
-  virtual void queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
+  virtual void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
 
   /**

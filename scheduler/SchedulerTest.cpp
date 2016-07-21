@@ -230,7 +230,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
-  request.instance=s_diskInstance;
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = s_userName;
@@ -239,7 +238,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  scheduler.queueArchive("disk_instance", request);
+  scheduler.queueArchive(s_diskInstance, request);
 
   {
     auto rqsts = scheduler.getPendingArchiveJobs();
@@ -285,7 +284,6 @@ TEST_P(SchedulerTest, delete_archive_request) {
   request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
-  request.instance="disk_instance";
   request.fileSize=100*1000*1000;
   cta::common::dataStructures::UserIdentity requester;
   requester.name = s_userName;
@@ -294,7 +292,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  auto archiveFileId = scheduler.queueArchive("disk_instance", request);
+  auto archiveFileId = scheduler.queueArchive(s_diskInstance, request);
   
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
@@ -355,7 +353,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
-    request.instance="disk_instance";
     request.fileSize=100*1000*1000;
     cta::common::dataStructures::UserIdentity requester;
     requester.name = s_userName;
@@ -363,7 +360,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive("disk_instance", request);
+    archiveFileId = scheduler.queueArchive(s_diskInstance, request);
   }
   
   // Check that we have the file in the queues
@@ -506,7 +503,6 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
-    request.instance="disk_instance";
     request.fileSize=100*1000*1000;
     cta::common::dataStructures::UserIdentity requester;
     requester.name = s_userName;
@@ -514,7 +510,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive("disk_instance", request);
+    archiveFileId = scheduler.queueArchive(s_diskInstance, request);
   }
   
   // Create the environment for the migration to happen (library + tape) 

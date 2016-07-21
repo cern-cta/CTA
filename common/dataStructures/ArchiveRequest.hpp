@@ -45,11 +45,6 @@ struct ArchiveRequest {
   UserIdentity requester;
   std::string diskFileID;
 
-  /**
-   * The name of the disk instance.
-   */
-  std::string instance;
-
   std::string srcURL;
   uint64_t fileSize;
   /**

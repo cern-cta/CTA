@@ -1935,7 +1935,7 @@ void XrdCtaFile::xCom_listpendingarchives() {
           currentRow.push_back(jt->request.storageClass);
           currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
           currentRow.push_back(jt->request.diskFileID);
-          currentRow.push_back(jt->request.instance);
+          currentRow.push_back(jt->instanceName);
           currentRow.push_back(jt->request.checksumType);
           currentRow.push_back(jt->request.checksumValue);         
           currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
@@ -2076,7 +2076,7 @@ void XrdCtaFile::xCom_listdrivestates() {
 void XrdCtaFile::xCom_archive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --instance <instance> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
+  help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
                     << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
                     << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
   optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
@@ -2085,7 +2085,6 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
   optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
   optional<std::string> diskid = getOptionStringValue("", "--diskid", encoded, true, false);
-  optional<std::string> instance = getOptionStringValue("", "--instance", encoded, true, false);
   optional<std::string> srcurl = getOptionStringValue("", "--srcurl", encoded, true, false);
   optional<uint64_t> size = getOptionUint64Value("", "--size", encoded, true, false);
   optional<std::string> checksumtype = getOptionStringValue("", "--checksumtype", encoded, true, false);
@@ -2113,7 +2112,6 @@ void XrdCtaFile::xCom_archive() {
   request.diskpoolThroughput=throughput.value();
   request.diskFileInfo=diskFileInfo;
   request.diskFileID=diskid.value();
-  request.instance=instance.value();
   request.fileSize=size.value();
   request.requester=originator;
   request.srcURL=srcurl.value();

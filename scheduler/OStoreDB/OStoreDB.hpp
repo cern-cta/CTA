@@ -150,7 +150,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   
-  void queueArchive(const cta::common::dataStructures::ArchiveRequest &request, 
+  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);

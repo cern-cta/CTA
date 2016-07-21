@@ -65,8 +65,8 @@ void cta::Scheduler::authorizeAdmin(const cta::common::dataStructures::SecurityI
 // queueArchive
 //------------------------------------------------------------------------------
 uint64_t cta::Scheduler::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request) {
-  auto catalogueInfo = m_catalogue.prepareForNewFile(request.instance, request.storageClass, request.requester);
-  m_db.queueArchive(request, catalogueInfo);
+  auto catalogueInfo = m_catalogue.prepareForNewFile(instanceName, request.storageClass, request.requester);
+  m_db.queueArchive(instanceName, request, catalogueInfo);
   return catalogueInfo.fileId;
 }
 

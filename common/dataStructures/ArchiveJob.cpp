@@ -37,6 +37,7 @@ ArchiveJob::ArchiveJob():
 bool ArchiveJob::operator==(const ArchiveJob &rhs) const {
   return request==rhs.request
       && tapePool==rhs.tapePool
+      && instanceName==rhs.instanceName
       && copyNumber==rhs.copyNumber
       && archiveFileID==rhs.archiveFileID;
 }
@@ -54,6 +55,7 @@ bool ArchiveJob::operator!=(const ArchiveJob &rhs) const {
 std::ostream &operator<<(std::ostream &os, const ArchiveJob &obj) {
   os << "(request=" << obj.request
      << " tapePool=" << obj.tapePool
+     << " instanceName=" << obj.instanceName
      << " copyNumber=" << obj.copyNumber
      << " archiveFileID=" << obj.archiveFileID << ")";
   return os;
