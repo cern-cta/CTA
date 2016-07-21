@@ -580,8 +580,6 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_name_different_disk_
   common::dataStructures::StorageClass storageClass2 = storageClass1;
   storageClass2.diskInstance = "disk_instance_2";
 
-  ASSERT_NE(storageClass1, storageClass2);
-
   m_catalogue->createStorageClass(m_cliSI, storageClass1);
   m_catalogue->createStorageClass(m_cliSI, storageClass2);
 
@@ -590,12 +588,18 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_name_different_disk_
   ASSERT_EQ(2, storageClasses.size());
 
   {
-    auto itor = std::find(storageClasses.begin(), storageClasses.end(), storageClass1);
+    auto eqStorageClass1 = [&storageClass1](const common::dataStructures::StorageClass &obj) {
+      return obj.diskInstance == storageClass1.diskInstance && obj.name == storageClass1.name;
+    };
+    auto itor = std::find_if(storageClasses.begin(), storageClasses.end(), eqStorageClass1);
     ASSERT_FALSE(itor == storageClasses.end());
   }
 
   {
-    auto itor = std::find(storageClasses.begin(), storageClasses.end(), storageClass2);
+    auto eqStorageClass2 = [&storageClass2](const common::dataStructures::StorageClass &obj) {
+      return obj.diskInstance == storageClass2.diskInstance && obj.name == storageClass2.name;
+    };
+    auto itor = std::find_if(storageClasses.begin(), storageClasses.end(), eqStorageClass2);
     ASSERT_FALSE(itor == storageClasses.end());
   }
 }
