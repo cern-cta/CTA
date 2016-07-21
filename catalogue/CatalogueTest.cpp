@@ -2110,6 +2110,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   using namespace cta;
 
+  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName2 = "disk_instance_2";
+
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid1 = "VID123";
@@ -2184,7 +2187,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "create storage class";
@@ -2321,16 +2324,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     "create mount policy");
 
   const std::string comment = "create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName1, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const common::dataStructures::RequesterMountRule rule = rules.front();
 
-  ASSERT_EQ(diskInstanceName, rule.diskInstance);
+  ASSERT_EQ(diskInstanceName1, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
   ASSERT_EQ(mountPolicyName, rule.mountPolicy);
   ASSERT_EQ(comment, rule.comment);
@@ -2342,12 +2344,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, userIdentity);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
+
+  // Check that the diskInstanceName mismatch detection works
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
