@@ -774,6 +774,65 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_instance) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass1DiskInstance1;
+  storageClass1DiskInstance1.diskInstance = "disk_instance_1";
+  storageClass1DiskInstance1.name = "storage_class_1";
+  storageClass1DiskInstance1.nbCopies = 2;
+  storageClass1DiskInstance1.comment = "create storage class";
+
+  common::dataStructures::StorageClass storageClass1DiskInstance2;
+  storageClass1DiskInstance1.diskInstance = "disk_instance_2";
+  storageClass1DiskInstance1.name = "storage_class_1";
+  storageClass1DiskInstance1.nbCopies = 2;
+  storageClass1DiskInstance1.comment = "create storage class";
+
+  m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance1);
+  m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance2);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "create archive route";
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass1DiskInstance1.diskInstance, storageClass1DiskInstance1.name,
+    copyNb, tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass1DiskInstance2.diskInstance, storageClass1DiskInstance2.name,
+    copyNb, tapePoolName, comment);
+      
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+      
+  ASSERT_EQ(2, routes.size());
+
+  {
+    auto routeForStorageClass1DiskInstance1 =
+      [&storageClass1DiskInstance1](const common::dataStructures::ArchiveRoute &ar) {
+      return ar.diskInstanceName == storageClass1DiskInstance1.diskInstance &&
+        ar.storageClassName == storageClass1DiskInstance1.name;
+    };
+    auto itor = std::find_if(routes.begin(), routes.end(), routeForStorageClass1DiskInstance1);
+    ASSERT_FALSE(itor == routes.end());
+  }
+
+  {
+    auto routeForStorageClass1DiskInstance2 =
+      [&storageClass1DiskInstance2](const common::dataStructures::ArchiveRoute &ar) {
+      return ar.diskInstanceName == storageClass1DiskInstance2.diskInstance &&
+        ar.storageClassName == storageClass1DiskInstance2.name;
+    };
+    auto itor = std::find_if(routes.begin(), routes.end(), routeForStorageClass1DiskInstance2);
+    ASSERT_FALSE(itor == routes.end());
+  }
+}
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
   using namespace cta;
