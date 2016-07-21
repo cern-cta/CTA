@@ -36,10 +36,38 @@ namespace dataStructures {
  */
 struct StorageClass {
 
+  /**
+   * Constructor that sets all integer member-variables to zero and all string
+   * member-variables to the empty string.
+   */
   StorageClass();
 
+  /**
+   * Returns true if the specified StorageClass object is considered equal to
+   * this one.
+   *
+   * Please note that two StorageClass objects are considered equal if and only
+   * if both their diskInstance and name member-variables match, i.e.
+   *
+   *    diskInstance==rhs.diskInstance && name==rhs.name;
+   *
+   * All other member-variables are intentionally ignored by this equality
+   * operator.
+   *
+   * @param rhs The other StorageClass object on the right-hand side of the
+   * equality operator.
+   * @return True if the specified StorageClass object is considered equal to
+   * this one.
+   */
   bool operator==(const StorageClass &rhs) const;
 
+  /**
+   * Returns the logical negation of operator==().
+   *
+   * @param rhs The other StorageClass object on the right-hand side of the
+   * inequality operator.
+   * @return The logical negation of operator==().
+   */
   bool operator!=(const StorageClass &rhs) const;
 
   /**
