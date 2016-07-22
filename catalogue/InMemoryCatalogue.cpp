@@ -27,7 +27,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(): SchemaCreatingSqliteCatalogue(":memory:") {
+InMemoryCatalogue::InMemoryCatalogue(): SchemaCreatingSqliteCatalogue(":memory:", 1) {
 }
 
 //------------------------------------------------------------------------------

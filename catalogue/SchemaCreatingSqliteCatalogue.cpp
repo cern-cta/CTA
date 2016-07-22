@@ -19,6 +19,7 @@
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "rdbms/SqliteConn.hpp"
+#include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -26,9 +27,8 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &filename) {
-  std::unique_ptr<rdbms::SqliteConn> sqliteConn(new rdbms::SqliteConn(filename));
-  m_conn.reset(sqliteConn.release());
+SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &filename, const uint64_t nbConns):
+  SqliteCatalogue(filename, nbConns) {
   createCatalogueSchema();
 }
 
@@ -39,12 +39,13 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
   const RdbmsCatalogueSchema schema;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
+  auto conn = m_connPool->getPooledConn();
 
   while(std::string::npos != (findResult = schema.sql.find(';', searchPos))) {
     const std::string::size_type length = findResult - searchPos + 1;
     const std::string sql = schema.sql.substr(searchPos, length);
     searchPos = findResult + 1;
-    std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
     stmt->executeNonQuery();
   }
 }

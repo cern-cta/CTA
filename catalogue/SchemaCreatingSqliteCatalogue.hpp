@@ -34,9 +34,10 @@ public:
   /**
    * Constructor.
    *
-   * @param filename The filename of teh SQLite database file.
+   * @param filename The filename to be passed to the sqlite3_open() function.
+   * @param nbConns The maximum number of concurrent connections to the underyling database.
    */
-  SchemaCreatingSqliteCatalogue(const std::string &filename);
+  SchemaCreatingSqliteCatalogue(const std::string &filename, const uint64_t nbConns);
 
   /**
    * Destructor.

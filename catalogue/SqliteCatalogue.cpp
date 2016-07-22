@@ -41,12 +41,6 @@ SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbC
 }
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue() {
-}
-
-//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 SqliteCatalogue::~SqliteCatalogue() {
@@ -59,7 +53,8 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 
-    m_conn->executeNonQuery("BEGIN EXCLUSIVE;");
+    auto conn = m_connPool->getPooledConn();
+    conn->executeNonQuery("BEGIN EXCLUSIVE;");
     const char *selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
@@ -87,7 +82,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    std::unique_ptr<rdbms::Stmt> selectStmt(m_conn->createStmt(selectSql));
+    std::unique_ptr<rdbms::Stmt> selectStmt(conn->createStmt(selectSql));
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
@@ -134,19 +129,19 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
-    m_conn->commit();
+    conn->commit();
 
     return *archiveFile;
   } catch(exception::UserError &) {
@@ -159,12 +154,12 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getNextArchiveFileId() {
+uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
-    m_conn->executeNonQuery("BEGIN EXCLUSIVE;");
-    rdbms::AutoRollback autoRollback(m_conn.get());
+    conn.executeNonQuery("BEGIN EXCLUSIVE;");
+    rdbms::AutoRollback autoRollback(&conn);
 
-    m_conn->executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1;");
+    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1;");
     uint64_t archiveFileId = 0;
     {
       const char *const sql =
@@ -172,7 +167,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId() {
           "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
       std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
       if(!rset->next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
@@ -182,7 +177,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId() {
         throw exception::Exception("Found more than one ID counter in the ARCHIVE_FILE_ID table");
       }
     }
-    m_conn->commit();
+    conn.commit();
 
     return archiveFileId;
   } catch(exception::Exception &ex) {
@@ -193,11 +188,11 @@ uint64_t SqliteCatalogue::getNextArchiveFileId() {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
   try {
     // SQLite does not support SELECT FOR UPDATE
     // Emulate SELECT FOR UPDATE by taking an exclusive lock on the database
-    m_conn->executeNonQuery("BEGIN EXCLUSIVE;");
+    conn.executeNonQuery("BEGIN EXCLUSIVE;");
 
     const char *const sql =
       "SELECT "
@@ -235,7 +230,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(const std::str
       "WHERE "
         "VID = :VID;";
 
-    std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
     std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
     if (!rset->next()) {

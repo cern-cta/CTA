@@ -1179,37 +1179,39 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       full, comment);
   }
 
-  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
-  ASSERT_EQ(nbTapes, tapes.size());
-  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
-  ASSERT_EQ(nbTapes, vidToTape.size());
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
 
-  for(uint64_t i = 1; i <= nbTapes; i++) {
-    std::ostringstream vid;
-    vid << "vid" << i;
+    for(uint64_t i = 1; i <= nbTapes; i++) {
+      std::ostringstream vid;
+      vid << "vid" << i;
 
-    auto vidAndTapeItor = vidToTape.find(vid.str());
-    ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
+      auto vidAndTapeItor = vidToTape.find(vid.str());
+      ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
 
-    const common::dataStructures::Tape tape = vidAndTapeItor->second;
-    ASSERT_EQ(vid.str(), tape.vid);
-    ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
-    ASSERT_EQ(tapePool, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabled == tape.disabled);
-    ASSERT_TRUE(full == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+      const common::dataStructures::Tape tape = vidAndTapeItor->second;
+      ASSERT_EQ(vid.str(), tape.vid);
+      ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
+      ASSERT_EQ(tapePool, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabled == tape.disabled);
+      ASSERT_TRUE(full == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
   }
 
   {
@@ -1245,7 +1247,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.capacityInBytes = 10000000000000;
+    searchCriteria.capacityInBytes = capacityInBytes;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -1285,11 +1287,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     searchCriteria.vid = "vid1";
     searchCriteria.logicalLibrary = logicalLibrary;
     searchCriteria.tapePool = tapePool;
-    searchCriteria.capacityInBytes = 10000000000000;
+    searchCriteria.capacityInBytes = capacityInBytes;
     searchCriteria.disabled = true;
     searchCriteria.full = false;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
-    ASSERT_EQ(nbTapes, vidToTape.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("vid1", vidToTape.begin()->first);
     ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
     ASSERT_EQ(logicalLibrary, vidToTape.begin()->second.logicalLibraryName);
@@ -2439,33 +2442,35 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
-  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
-
-  ASSERT_EQ(1, tapes.size());
-
-  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(1, tapes.size());
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(vid);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
   }
 
   common::dataStructures::StorageClass storageClass;
@@ -2720,57 +2725,58 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
                           encryptionKey, capacityInBytes, disabledValue, fullValue,
                           comment);
 
-  const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes();
-
-  ASSERT_EQ(2, tapes.size());
-
-  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid1);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(2, tapes.size());
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-  {
-    auto it = vidToTape.find(vid2);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid2, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(vid1);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid1, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+    {
+      auto it = vidToTape.find(vid2);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid2, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
   }
 
   const uint64_t archiveFileId = 1234;
@@ -2939,34 +2945,35 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
                           encryptionKey, capacityInBytes, disabledValue, fullValue,
                           comment);
 
-  const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes();
-
-  ASSERT_EQ(1, tapes.size());
-
-  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(1, tapes.size());
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(vid);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
   }
 
   const uint64_t archiveFileId = 1234;
@@ -3221,57 +3228,58 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     encryptionKey, capacityInBytes, disabledValue, fullValue,
     comment);
 
-  const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes();
-
-  ASSERT_EQ(2, tapes.size());
-
-  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid1);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(2, tapes.size());
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-  {
-    auto it = vidToTape.find(vid2);
-    const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid2, tape.vid);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_EQ(comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(vid1);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid1, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
 
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+    {
+      auto it = vidToTape.find(vid2);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid2, tape.vid);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(encryptionKey, tape.encryptionKey);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_cliSI.username, creationLog.username);
+      ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
   }
 
   const uint64_t archiveFileId = 1234;

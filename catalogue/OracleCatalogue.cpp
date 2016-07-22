@@ -53,8 +53,6 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-
     const char *selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
@@ -83,9 +81,11 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
-    std::unique_ptr<rdbms::Stmt> selectStmt(m_conn->createStmt(selectSql));
+    auto conn = m_connPool->getPooledConn();
+    std::unique_ptr<rdbms::Stmt> selectStmt(conn->createStmt(selectSql));
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset->next()) {
       if(nullptr == archiveFile.get()) {
         archiveFile.reset(new common::dataStructures::ArchiveFile);
@@ -130,19 +130,19 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
-    m_conn->commit();
+    conn->commit();
 
     return *archiveFile;
   } catch(exception::UserError &) {
@@ -155,15 +155,14 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t OracleCatalogue::getNextArchiveFileId() {
+uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
     const char *const sql =
       "SELECT "
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-
-    std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
     if (!rset->next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
@@ -178,7 +177,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId() {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::string &vid) {
+common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -216,8 +215,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(const std::str
       "WHERE "
         "VID = :VID "
       "FOR UPDATE";
-
-    std::unique_ptr<rdbms::Stmt> stmt(m_conn->createStmt(sql));
+    std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
     std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
     if (!rset->next()) {

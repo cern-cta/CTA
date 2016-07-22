@@ -60,7 +60,8 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) override;
+  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
+    const uint64_t archiveFileId) override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within
@@ -69,8 +70,12 @@ public:
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return A unique archive ID that can be used by a new archive file within
+   * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId() override;
+  virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Selects the specified tape within the Tape table for update.
@@ -79,9 +84,10 @@ public:
    * because some database technologies directly support SELECT FOR UPDATE
    * whilst others do not.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) override;
+  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
 
 }; // class OracleCatalogue
 

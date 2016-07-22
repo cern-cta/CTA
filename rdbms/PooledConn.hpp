@@ -110,9 +110,9 @@ public:
     ConnAndPool() noexcept: conn(nullptr), pool(nullptr) {
     }
 
-    ConnAndPool(Conn *conn, ConnPool *pool) noexcept:
-      conn(conn),
-      pool(pool) {
+    ConnAndPool(Conn *c, ConnPool *p) noexcept:
+      conn(c),
+      pool(p) {
     }
   };
 

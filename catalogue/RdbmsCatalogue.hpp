@@ -432,62 +432,79 @@ public:
 protected:
 
   /**
+   * Mutex to be used to a take a global lock on the database.
+   */
+  std::mutex m_mutex;
+
+  /**
+   * The pool of connections to the underlying relational database.
+   */
+  std::unique_ptr<rdbms::ConnPool> m_connPool;
+
+  /**
    * Returns true if the specified admin user exists.
    *
+   * @param conn The database connection.
    * @param adminUsername The name of the admin user.
    * @return True if the admin user exists.
    */
-  bool adminUserExists(const std::string adminUsername) const;
+  bool adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const;
 
   /**
    * Returns true if the specified admin host exists.
    *
+   * @param conn The database connection.
    * @param adminHost The name of the admin host.
    * @return True if the admin host exists.
    */
-  bool adminHostExists(const std::string adminHost) const;
+  bool adminHostExists(rdbms::Conn &conn, const std::string adminHost) const;
 
   /**
    * Returns true if the specified storage class exists.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the storage
    * class belongs.
    * @param storageClassName The name of the storage class.
    * @return True if the storage class exists.
    */
-  bool storageClassExists(const std::string &diskInstanceName, const std::string &storageClassName) const;
+  bool storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName) const;
 
   /**
    * Returns true if the specified tape pool exists.
    *
+   * @param conn The database connection.
    * @param tapePoolName The name of the tape pool.
    * @return True if the tape pool exists.
    */
-  bool tapePoolExists(const std::string &tapePoolName) const;
+  bool tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) const;
 
   /**
    * Returns true if the specified tape exists.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    * @return True if the tape exists.
    */
-  bool tapeExists(const std::string &vid) const;
+  bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
 
   /**
    * Returns true if the specified logical library exists.
    *
+   * @param conn The database connection.
    * @param logicalLibraryName The name of the logical library.
    * @return True if the logical library exists.
    */
-  bool logicalLibraryExists(const std::string &logicalLibraryName) const;
+  bool logicalLibraryExists(rdbms::Conn &conn, const std::string &logicalLibraryName) const;
 
   /**
    * Returns true if the specified mount policy exists.
    *
+   * @param conn The database connection.
    * @param mountPolicyName The name of the mount policy
    * @return True if the mount policy exists.
    */
-  bool mountPolicyExists(const std::string &mountPolicyName) const;
+  bool mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName) const;
 
   /**
    * Returns true if the specified requester mount-rule exists.
@@ -498,50 +515,57 @@ protected:
    * to be unique within its disk instance.
    * @return True if the requester mount-rule exists.
    */
-  bool requesterMountRuleExists(const std::string &diskInstanceName, const std::string &requesterName) const;
+  bool requesterMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+    const std::string &requesterName) const;
 
   /**
    * Returns the specified requester mount-policy or nullptr if one does not exist.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the
    * requester belongs.
    * @param requesterName The name of the requester which is only guaranteed to
    * be unique within its disk instance.
    * @return The mount policy or nullptr if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &diskInstanceName,
+  common::dataStructures::MountPolicy *getRequesterMountPolicy(
+    rdbms::Conn &conn,
+    const std::string &diskInstanceName,
     const std::string &requesterName) const;
 
   /**
    * Returns true if the specified requester-group mount-rule exists.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the
    * requester group belongs.
    * @param requesterGroupName The name of the requester group which is only
    * guaranteed to be unique within its disk instance.
    * @return True if the requester-group mount-rule exists.
    */
-  bool requesterGroupMountRuleExists(const std::string &diskInstanceName, const std::string &requesterGroupName) const;
+  bool requesterGroupMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+    const std::string &requesterGroupName) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does not
    * exist.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the
    * requester group belongs.
    * @param requesterGroupName The name of the requester group which is only
    * guaranteed to be unique within its disk instance.
    * @return The mount policy or nullptr if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &diskInstanceName,
-    const std::string &requesterGroupName) const;
+  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(rdbms::Conn &conn,
+    const std::string &diskInstanceName, const std::string &requesterGroupName) const;
 
   /**
    * Returns the specified tape log information from the specified database
    * result set.
    *
    * @param rset The result set.
-   * @param driveColNAme The name of the database column that contains the name
+   * @param driveColName The name of the database column that contains the name
    * of the tape drive.
    * @param timeColNAme The name of the database column that contains the time
    * stamp.
@@ -553,24 +577,10 @@ protected:
    * An RdbmsCatalogue specific method that inserts the specified row into the
    * ArchiveFile table.
    *
+   * @param conn The database connection.
    * @param row The row to be inserted.
    */
-  void insertArchiveFile(const ArchiveFileRow &row);
-
-  /**
-   * Mutex to be used to a take a global lock on the in-memory database.
-   */
-  std::mutex m_mutex;
-
-  /**
-   * The connection to the underlying relational database.
-   */
-  std::unique_ptr<rdbms::Conn> m_conn;
-
-  /**
-   * The pool of connections to the underlying relational database.
-   */
-  std::unique_ptr<rdbms::ConnPool> m_connPool;
+  void insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row);
 
   /**
    * Creates the database schema.
@@ -580,20 +590,22 @@ protected:
   /**
    * Returns true if the specified user name is listed in the ADMIN_USER table.
    *
+   * @param conn The database connection.
    * @param userName The name of the user to be search for in the ADMIN_USER
    * table.
    * @return true if the specified user name is listed in the ADMIN_USER table.
    */
-  bool userIsAdmin(const std::string &userName) const;
+  bool userIsAdmin(rdbms::Conn &conn, const std::string &userName) const;
 
   /**
    * Returns true if the specified host name is listed in the ADMIN_HOST table.
    *
+   * @param conn The database connection.
    * @param userName The name of the host to be search for in the ADMIN_HOST
    * table.
    * @return true if the specified host name is listed in the ADMIN_HOST table.
    */
-  bool hostIsAdmin(const std::string &userName) const;
+  bool hostIsAdmin(rdbms::Conn &conn, const std::string &userName) const;
 
   /**
    * Returns the expected number of archive routes for the specified storage
@@ -601,54 +613,66 @@ protected:
    * opposed to the actual number entered so far using the createArchiveRoute()
    * method.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the storage
    * class belongs.
    * @param storagleClassName The name of the storage class which is only
    * guaranteed to be unique within its disk instance.
    * @return The expected number of archive routes.
    */
-  uint64_t getExpectedNbArchiveRoutes(const std::string &diskInstanceName, const std::string &storageClassNAme) const;
+  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std::string &diskInstanceName,
+    const std::string &storageClassNAme) const;
 
   /**
    * Inserts the specified tape file into the Tape table.
    *
+   * @param conn The database connection.
    * @param tapeFile The tape file.
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
-  void insertTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
+  void insertTapeFile(
+    rdbms::Conn &conn,
+    const common::dataStructures::TapeFile &tapeFile,
+    const uint64_t archiveFileId);
 
   /**
    * Sets the last FSeq of the specified tape to the specified value.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    * @param lastFseq The new value of the last FSeq.
    */
-  void setTapeLastFSeq(const std::string &vid, const uint64_t lastFSeq);
+  void setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq);
 
   /**
    * Returns the last FSeq of the specified tape.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    * @return The last FSeq.
    */
-  uint64_t getTapeLastFSeq(const std::string &vid) const;
+  uint64_t getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const;
 
   /**
-   * Updates the appropriate tape based on the ocuurence of the specified event.
+   * Updates the appropriate tape based on the occurrence of the specified
+   * event.
    *
+   * @param conn The database connection.
    * @param event
    */
-  void updateTape(const TapeFileWritten &event);
+  void updateTape(rdbms::Conn &conn, const TapeFileWritten &event);
 
   /**
-   * Returns the specified archive file or a nullptr pointer if it does not exist.
+   * Returns the specified archive file or a nullptr pointer if it does not
+   * exist.
    *
+   * @param conn The database connection.
    * @param archiveFileId The identifier of the archive file.
    * @return The archive file or nullptr.
    * an empty list.
    */
-  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFile(const uint64_t archiveFileId) const;
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFile(rdbms::Conn &conn, const uint64_t archiveFileId) const;
 
   /**
    * Throws an exception if the there is a mismatch between the expected and
@@ -663,6 +687,7 @@ protected:
   /**
    * Returns the mount policies for the specified requester and requester group.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the
    * requester and requester group belong.
    * @param requesterName The name of the requester which is only guaranteed to
@@ -672,6 +697,7 @@ protected:
    * @return The mount policies.
    */
   RequesterAndGroupMountPolicies getMountPolicies(
+    rdbms::Conn &conn,
     const std::string &diskInstanceName,
     const std::string &requesterName,
     const std::string &requesterGroupName) const;
@@ -683,19 +709,24 @@ protected:
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return A unique archive ID that can be used by a new archive file within
+   * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId() = 0;
+  virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) = 0;
 
   /**
-   * Selects the specified tape within th eTape table for update.
+   * Selects the specified tape within the Tape table for update.
    *
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because some database technologies directly support SELECT FOR UPDATE
    * whilst others do not.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) = 0;
+  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) = 0;
 
   /**
    * Nested class used to implement the getArchiveFileItor() method.
@@ -779,6 +810,7 @@ protected:
    * Returns the mapping from tape copy to tape pool for the specified storage
    * class.
    *
+   * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the storage
    * class belongs.
    * @param storageClassName The name of the storage class which is only
@@ -786,7 +818,9 @@ protected:
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
-  virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(const std::string &diskInstanceName,
+  virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(
+    rdbms::Conn &conn,
+    const std::string &diskInstanceName,
     const std::string &storageClassName) const;
 
 }; // class RdbmsCatalogue

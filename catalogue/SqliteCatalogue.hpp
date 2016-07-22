@@ -39,16 +39,6 @@ public:
    */
   SqliteCatalogue(const std::string &filename, const uint64_t nbConns);
 
-protected:
-
-  /**
-   * Protected constructor only to be called by sub-classes.
-   *
-   * Please note that it is the responsibility of the sub-class to set
-   * RdbmsCatalogue::m_conn.
-   */
-  SqliteCatalogue();
-
 public:
 
   /**
@@ -77,8 +67,12 @@ protected:
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return A unique archive ID that can be used by a new archive file within
+   * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId() override;
+  virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Selects the specified tape within th eTape table for update.
@@ -87,9 +81,10 @@ protected:
    * because some database technologies directly support SELECT FOR UPDATE
    * whilst others do not.
    *
+   * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) override;
+  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
 
 }; // class SqliteCatalogue
 
