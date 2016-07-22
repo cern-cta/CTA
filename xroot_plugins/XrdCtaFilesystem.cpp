@@ -54,13 +54,13 @@ extern "C"
       return new cta::xrootPlugins::XrdCtaFilesystem();
     } catch (cta::exception::Exception &ex) {
       std::cerr << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
-      return NULL;
+      return nullptr;
     } catch (std::exception &ex) {
       std::cerr << "[ERROR] Could not load the CTA xroot plugin. Exception caught: " << ex.what() << "\n";
-      return NULL;
+      return nullptr;
     } catch (...) {
       std::cerr << "[ERROR] Could not load the CTA xroot plugin. Unknown exception caught!" << "\n";
-      return NULL;
+      return nullptr;
     }
   }
 }
@@ -117,7 +117,7 @@ int XrdCtaFilesystem::getStats(char *buff, int blen)
 //------------------------------------------------------------------------------
 const char * XrdCtaFilesystem::getVersion()
 {
-  return NULL;
+  return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
   m_ctaConf("/etc/cta/cta-frontend.conf"),
-  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", NULL)).release()),
+  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
   m_backendPopulator(*m_backend),
   m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
   using namespace cta;

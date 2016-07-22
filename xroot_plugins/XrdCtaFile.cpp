@@ -44,8 +44,8 @@ namespace cta { namespace xrootPlugins {
 // checkClient
 //------------------------------------------------------------------------------
 void XrdCtaFile::checkClient(const XrdSecEntity *client) {
-  if(client==NULL || client->name==NULL || client->host==NULL || client->prot==NULL) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (NULL pointer detected!)");
+  if(client==nullptr || client->name==nullptr || client->host==nullptr || client->prot==nullptr) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (nullptr pointer detected!)");
   }
   std::cerr << "Client request-> Username: " << client->name << " Host: " << client->host << " Prot: " << client->prot << std::endl;
   /**
@@ -252,7 +252,7 @@ int XrdCtaFile::fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo) {
 //------------------------------------------------------------------------------
 const char* XrdCtaFile::FName() {
   error.setErrInfo(ENOTSUP, "Not supported.");
-  return NULL;
+  return nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -615,7 +615,7 @@ bool XrdCtaFile::stringParameterToBool(const std::string &parameterName, const s
 //------------------------------------------------------------------------------
 time_t XrdCtaFile::stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const {
   struct tm time;
-  if(NULL==strptime(parameterValue.c_str(), "%d/%m/%Y", &time)) {
+  if(nullptr==strptime(parameterValue.c_str(), "%d/%m/%Y", &time)) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+" - Parameter: "+parameterName+" ("+parameterValue+
             ") could not be interpreted as a time, the allowed format is: <DD/MM/YYYY>");
   }
@@ -2067,12 +2067,12 @@ void XrdCtaFile::xCom_listdrivestates() {
       currentRow.push_back(it->host);
       currentRow.push_back(it->name);
       currentRow.push_back(cta::common::dataStructures::toString(it->status));
-      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->currentStateStartTime)));
+      currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-it->currentStateStartTime)));
       currentRow.push_back(cta::common::dataStructures::toString(it->mountType));
       currentRow.push_back(it->currentVid);
       currentRow.push_back(it->currentTapePool);
       currentRow.push_back(std::to_string((unsigned long long)it->sessionId));
-      currentRow.push_back(std::to_string((unsigned long long)(time(NULL)-it->sessionStartTime)));
+      currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-it->sessionStartTime)));
       currentRow.push_back(std::to_string((unsigned long long)it->filesTransferedInSession));
       currentRow.push_back(std::to_string((unsigned long long)it->bytesTransferedInSession));
       currentRow.push_back(std::to_string((long double)it->latestBandwidth));

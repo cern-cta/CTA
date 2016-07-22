@@ -29,8 +29,8 @@ namespace cta { namespace xrootPlugins {
 // checkClient
 //------------------------------------------------------------------------------
 void XrdCtaDir::checkClient(const XrdSecEntity *client) {
-  if(client==NULL || client->name==NULL || client->host==NULL) {
-    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (NULL pointer detected!)");
+  if(client==nullptr || client->name==nullptr || client->host==nullptr) {
+    throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (nullptr pointer detected!)");
   }
   std::cout << "DIR Request received from client. Username: " << client->name << " Host: " << client->host << std::endl;
   m_cliIdentity.username=client->name;
@@ -96,7 +96,7 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
 //------------------------------------------------------------------------------
 const char* XrdCtaDir::nextEntry() {
   if(!(m_itor->hasMore())) {
-    return NULL;
+    return nullptr;
   }
   return m_itor->next().diskFileId.c_str();
 }
@@ -113,7 +113,7 @@ int XrdCtaDir::close() {
 //------------------------------------------------------------------------------
 const char* XrdCtaDir::FName() {
   error.setErrInfo(ENOTSUP, "Not supported.");
-  return NULL;
+  return nullptr;
 }
 
 //------------------------------------------------------------------------------

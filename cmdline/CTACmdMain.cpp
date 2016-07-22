@@ -85,7 +85,7 @@ std::string encode(const std::string msg) {
  */
 std::string formatCommandPath(const int argc, const char **argv) {
   cta::common::Configuration ctaConf("/etc/cta-cli.conf");  
-  std::string cmdPath = "root://"+ctaConf.getConfEntString("Frontend", "HostAndPort", NULL)+"//";
+  std::string cmdPath = "root://"+ctaConf.getConfEntString("Frontend", "HostAndPort", nullptr)+"//";
   for(int i=0; i<argc; i++) {
     if(i) cmdPath += "&";
     cmdPath += encode(std::string(argv[i]));
