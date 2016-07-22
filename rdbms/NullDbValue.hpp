@@ -24,8 +24,8 @@ namespace cta {
 namespace rdbms {
 
 /**
- * An exception class representing an unexpected encounter with a NULL database
- * value (not to be confused with a NULL C/C++ pointer).
+ * An exception class representing an unexpected encounter with a nullptr database
+ * value (not to be confused with a nullptr C/C++ pointer).
  */
 class NullDbValue: public exception::Exception {
 public:

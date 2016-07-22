@@ -36,8 +36,8 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
   m_stmt(stmt),
   m_rset(rset) {
   try {
-    if (NULL == rset) {
-      throw exception::Exception("rset is NULL");
+    if (nullptr == rset) {
+      throw exception::Exception("rset is nullptr");
     }
     populateColNameToIdxMap();
   } catch(exception::Exception &ne) {
@@ -119,9 +119,9 @@ bool OcciRset::columnIsNull(const std::string &colName) const {
 void OcciRset::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(NULL != m_rset) {
+  if(nullptr != m_rset) {
     m_stmt->closeResultSet(m_rset);
-    m_rset = NULL;
+    m_rset = nullptr;
   }
 }
 

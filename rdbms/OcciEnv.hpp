@@ -49,7 +49,7 @@ public:
    * Creates an OCCI connection.
    *
    * This method will throw an exception if either the username, password ori
-   * database parameters are NULL pointers.
+   * database parameters are nullptr pointers.
    *
    * @param username The name of the database user.
    * @param password The database password.

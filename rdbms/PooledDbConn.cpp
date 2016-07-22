@@ -57,7 +57,7 @@ void PooledDbConn::reset(const DbConnAndPool &dbConnAndPool) {
   // If the database connection is not the one already owned
   if(dbConnAndPool.conn != m_dbConnAndPool.conn) {
     // If this smart database connection currently points to a database connection then return it back to its pool
-    if(NULL != m_dbConnAndPool.conn) {
+    if(nullptr != m_dbConnAndPool.conn) {
       m_dbConnAndPool.pool->returnDbConn(m_dbConnAndPool.conn);
     }
 
@@ -84,7 +84,7 @@ DbConn *PooledDbConn::operator->() const noexcept {
 // operator*()
 //------------------------------------------------------------------------------
 DbConn &PooledDbConn::operator*() const {
-  if(NULL == m_dbConnAndPool.conn) {
+  if(nullptr == m_dbConnAndPool.conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: No database connection");
   }
   return *m_dbConnAndPool.conn;

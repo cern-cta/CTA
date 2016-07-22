@@ -37,7 +37,7 @@ std::string DbRset::columnText(const std::string &colName) const {
     if(col) {
       return col.value();
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -53,7 +53,7 @@ uint64_t DbRset::columnUint64(const std::string &colName) const {
     if(col) {
       return col.value();
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a NULL value");
+      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

@@ -41,7 +41,7 @@ public:
   /**
    * Constructor.
    *
-   * This method will throw an exception if the OCCI connection is a NULL
+   * This method will throw an exception if the OCCI connection is a nullptr
    * pointer.
    *
    * @param env The OCCI environment.

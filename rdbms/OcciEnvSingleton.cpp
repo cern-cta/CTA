@@ -39,7 +39,7 @@ OcciEnvSingleton &OcciEnvSingleton::instance() {
   try {
     std::lock_guard<std::mutex> lock(s_mutex);
 
-    if(NULL == s_instance.get()) {
+    if(nullptr == s_instance.get()) {
       s_instance.reset(new OcciEnvSingleton());
     }
     return *s_instance;

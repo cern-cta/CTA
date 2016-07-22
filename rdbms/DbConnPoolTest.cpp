@@ -43,7 +43,7 @@ TEST_F(cta_rdbms_DbConnPoolTest, getPooledDbConn) {
 
   PooledDbConn conn = pool.getPooledDbConn();
 
-  PooledDbConn conn2(NULL, NULL);
+  PooledDbConn conn2(nullptr, nullptr);
 
   conn2 = pool.getPooledDbConn();
 }

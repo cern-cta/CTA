@@ -178,7 +178,7 @@ void SqliteRset::populateColNameToIdxAndTypeMap() {
     for (int i = 0; i < nbCols; i++) {
       // Get the name of the column
       const char *colName = sqlite3_column_name(m_stmt.get(), i);
-      if (NULL == colName) {
+      if (nullptr == colName) {
         std::ostringstream msg;
         msg << "Failed to get column name for column index " << i;
         throw exception::Exception(msg.str());

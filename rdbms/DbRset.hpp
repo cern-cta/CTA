@@ -64,7 +64,7 @@ public:
    * Returns the value of the specified column as a string.
    *
    * This method will throw an exception if the value of the specified column
-   * is NULL.
+   * is nullptr.
    *
    * @param colName The name of the column.
    * @return The string value of the specified column.
@@ -74,7 +74,7 @@ public:
   /**
    * Returns the value of the specified column as a string.
    *
-   * This method will return a NULL column value as an optional with no value.
+   * This method will return a nullptr column value as an optional with no value.
    *
    * @param colName The name of the column.
    * @return The string value of the specified column.
@@ -85,7 +85,7 @@ public:
    * Returns the value of the specified column as an integer.
    *
    * This method will throw an exception if the value of the specified column
-   * is NULL.
+   * is nullptr.
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
@@ -95,7 +95,7 @@ public:
   /**
    * Returns the value of the specified column as an integer.
    *
-   * This method will return a NULL column value as an optional with no value.
+   * This method will return a nullptr column value as an optional with no value.
    *
    * @param colName The name of the column.
    * @return The value of the specified column.

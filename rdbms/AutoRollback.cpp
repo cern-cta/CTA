@@ -34,7 +34,7 @@ AutoRollback::AutoRollback(DbConn *const dbConn): m_dbConn(dbConn) {
 //------------------------------------------------------------------------------
 AutoRollback::~AutoRollback() {
   try {
-    if(NULL != m_dbConn) {
+    if(nullptr != m_dbConn) {
       m_dbConn->rollback();
     }
   } catch(...) {
@@ -46,7 +46,7 @@ AutoRollback::~AutoRollback() {
 // cancel
 //------------------------------------------------------------------------------
 void AutoRollback::cancel() {
-  m_dbConn = NULL;
+  m_dbConn = nullptr;
 }
 
 } // namespace rdbms

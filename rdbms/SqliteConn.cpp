@@ -32,18 +32,18 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 SqliteConn::SqliteConn(const std::string &filename) {
   try {
-    m_conn = NULL;
-    if(sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, NULL)) {
+    m_conn = nullptr;
+    if(sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
       std::string msg = sqlite3_errmsg(m_conn);
       sqlite3_close(m_conn);
       throw exception::Exception(msg);
     }
     {
-      char *errMsg = NULL;
-      if(SQLITE_OK != sqlite3_exec(m_conn, "PRAGMA foreign_keys = ON;", NULL, NULL, &errMsg)) {
+      char *errMsg = nullptr;
+      if(SQLITE_OK != sqlite3_exec(m_conn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
         exception::Exception ex;
         ex.getMessage() << "Failed to to set PRAGMA foreign_keys = ON";
-        if(NULL != errMsg) {
+        if(nullptr != errMsg) {
           ex.getMessage() << ": " << errMsg;
           sqlite3_free(errMsg);
         }
@@ -69,9 +69,9 @@ SqliteConn::~SqliteConn() throw() {
 void SqliteConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_conn != NULL) {
+  if(m_conn != nullptr) {
     sqlite3_close(m_conn);
-    m_conn = NULL;
+    m_conn = nullptr;
   }
 }
 
@@ -82,9 +82,9 @@ DbStmt *SqliteConn::createStmt(const std::string &sql) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    sqlite3_stmt *stmt = NULL;
+    sqlite3_stmt *stmt = nullptr;
     const int nByte = -1; // Read SQL up to first null terminator
-    const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt, NULL);
+    const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt, nullptr);
     if (SQLITE_OK != prepareRc) {
       const std::string msg = sqlite3_errmsg(m_conn);
       sqlite3_finalize(stmt);

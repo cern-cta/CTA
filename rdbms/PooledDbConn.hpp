@@ -107,7 +107,7 @@ public:
     DbConn *conn;
     DbConnPool *pool;
 
-    DbConnAndPool() noexcept: conn(NULL), pool(NULL) {
+    DbConnAndPool() noexcept: conn(nullptr), pool(nullptr) {
     }
 
     DbConnAndPool(DbConn *conn, DbConnPool *pool) noexcept:

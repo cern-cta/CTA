@@ -33,9 +33,9 @@ namespace rdbms {
 OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
   m_env(env),
   m_conn(conn) {
-  if(NULL == conn) {
+  if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
-      ": The OCCI connection is a NULL pointer");
+      ": The OCCI connection is a nullptr pointer");
   }
 }
 
@@ -56,9 +56,9 @@ OcciConn::~OcciConn() throw() {
 void OcciConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_conn != NULL) {
+  if(m_conn != nullptr) {
     m_env->terminateConnection(m_conn);
-    m_conn = NULL;
+    m_conn = nullptr;
   }
 }
 
@@ -82,8 +82,8 @@ oracle::occi::Connection *OcciConn::operator->() const {
 DbStmt *OcciConn::createStmt(const std::string &sql) {
   try {
     oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
-    if (NULL == stmt) {
-      throw exception::Exception("oracle::occi::createStatement() returned a NULL pointer");
+    if (nullptr == stmt) {
+      throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
 
     return new OcciStmt(sql, *this, stmt);

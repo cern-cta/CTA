@@ -39,8 +39,8 @@ SqliteStmt::SqliteStmt(SqliteConn &conn, const std::string &sql, sqlite3_stmt *c
   m_stmt(stmt),
   m_nbAffectedRows(0) {
 
-  if (NULL == stmt) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": stmt is NULL");
+  if (nullptr == stmt) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": stmt is nullptr");
   }
 }
 
@@ -61,9 +61,9 @@ SqliteStmt::~SqliteStmt() throw() {
 void SqliteStmt::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(NULL != m_stmt) {
+  if(nullptr != m_stmt) {
     sqlite3_finalize(m_stmt);
-    m_stmt = NULL;
+    m_stmt = nullptr;
   }
 }
 
@@ -71,9 +71,9 @@ void SqliteStmt::close() {
 // get
 //------------------------------------------------------------------------------
 sqlite3_stmt *SqliteStmt::get() const {
-  if(NULL == m_stmt) {
+  if(nullptr == m_stmt) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() +
-      ": NULL pointer");
+      ": nullptr pointer");
   }
   return m_stmt;
 }

@@ -36,7 +36,7 @@ public:
   /**
    * Constructor.
    *
-   * @param dbConn The database connection or NULL if the no rollback should
+   * @param dbConn The database connection or nullptr if the no rollback should
    * take place.
    */
   AutoRollback(DbConn *const dbConn);
@@ -66,7 +66,7 @@ public:
 private:
 
   /**
-   * The database connection or NULL if no rollback should take place.
+   * The database connection or nullptr if no rollback should take place.
    */
   DbConn *m_dbConn;
 

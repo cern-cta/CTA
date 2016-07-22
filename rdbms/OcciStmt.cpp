@@ -38,9 +38,9 @@ OcciStmt::OcciStmt(const std::string &sql, OcciConn &conn, oracle::occi::Stateme
   m_paramNameToIdx(sql),
   m_conn(conn),
   m_stmt(stmt) {
-  if(NULL == stmt) {
+  if(nullptr == stmt) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
-      ": stmt is NULL");
+      ": stmt is nullptr");
   }
 }
 
@@ -62,9 +62,9 @@ void OcciStmt::close() {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if (NULL != m_stmt) {
+    if (nullptr != m_stmt) {
       m_conn->terminateStatement(m_stmt);
-      m_stmt = NULL;
+      m_stmt = nullptr;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +

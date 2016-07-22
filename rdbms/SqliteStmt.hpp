@@ -62,7 +62,7 @@ public:
    * Returns a pointer to the underlying prepared statement.
    *
    * This method throws an exception if the pointer to the underlying prepared
-   * statement is NULL.
+   * statement is nullptr.
    *
    * @return the underlying prepared statement.
    */
