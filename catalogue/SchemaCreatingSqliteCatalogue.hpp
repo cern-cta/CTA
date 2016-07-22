@@ -41,7 +41,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SchemaCreatingSqliteCatalogue();
+  virtual ~SchemaCreatingSqliteCatalogue() override;
 
 private:
 
