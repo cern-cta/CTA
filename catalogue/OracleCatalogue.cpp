@@ -87,7 +87,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::DbRset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
-      if(NULL == archiveFile.get()) {
+      if(nullptr == archiveFile.get()) {
         archiveFile.reset(new common::dataStructures::ArchiveFile);
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
@@ -122,7 +122,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
       }
     }
 
-    if(NULL == archiveFile.get()) {
+    if(nullptr == archiveFile.get()) {
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
       throw ue;

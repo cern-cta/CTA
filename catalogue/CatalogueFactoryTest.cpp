@@ -61,7 +61,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   rdbms::DbLogin dbLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
   const uint64_t nbDbConns = 1;
   std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(dbLogin, nbDbConns));
-  ASSERT_TRUE(NULL != catalogue.get());
+  ASSERT_TRUE(nullptr != catalogue.get());
 
   ASSERT_TRUE(catalogue->getAdminUsers().empty());
   ASSERT_TRUE(catalogue->getAdminHosts().empty());

@@ -501,13 +501,13 @@ protected:
   bool requesterMountRuleExists(const std::string &diskInstanceName, const std::string &requesterName) const;
 
   /**
-   * Returns the specified requester mount-policy or NULL if one does not exist.
+   * Returns the specified requester mount-policy or nullptr if one does not exist.
    *
    * @param diskInstanceName The name of the disk instance to which the
    * requester belongs.
    * @param requesterName The name of the requester which is only guaranteed to
    * be unique within its disk instance.
-   * @return The mount policy or NULL if one does not exists.
+   * @return The mount policy or nullptr if one does not exists.
    */
   common::dataStructures::MountPolicy *getRequesterMountPolicy(const std::string &diskInstanceName,
     const std::string &requesterName) const;
@@ -524,14 +524,14 @@ protected:
   bool requesterGroupMountRuleExists(const std::string &diskInstanceName, const std::string &requesterGroupName) const;
 
   /**
-   * Returns the specified requester-group mount-policy or NULL if one does not
+   * Returns the specified requester-group mount-policy or nullptr if one does not
    * exist.
    *
    * @param diskInstanceName The name of the disk instance to which the
    * requester group belongs.
    * @param requesterGroupName The name of the requester group which is only
    * guaranteed to be unique within its disk instance.
-   * @return The mount policy or NULL if one does not exists.
+   * @return The mount policy or nullptr if one does not exists.
    */
   common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(const std::string &diskInstanceName,
     const std::string &requesterGroupName) const;
@@ -642,10 +642,10 @@ protected:
   void updateTape(const TapeFileWritten &event);
 
   /**
-   * Returns the specified archive file or a NULL pointer if it does not exist.
+   * Returns the specified archive file or a nullptr pointer if it does not exist.
    *
    * @param archiveFileId The identifier of the archive file.
-   * @return The archive file or NULL.
+   * @return The archive file or nullptr.
    * an empty list.
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFile(const uint64_t archiveFileId) const;

@@ -75,7 +75,7 @@ void RdbmsCatalogue::createAdminUser(
       throw exception::UserError(std::string("Cannot create admin user " + username +
         " because an admin user with the same name already exists"));
     }
-    const uint64_t now = time(NULL);
+    const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO ADMIN_USER("
         "ADMIN_USER_NAME,"
@@ -229,7 +229,7 @@ void RdbmsCatalogue::createAdminHost(
       throw exception::UserError(std::string("Cannot create admin host " + hostName +
         " because an admin host with the same name already exists"));
     }
-    const uint64_t now = time(NULL);
+    const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO ADMIN_HOST("
         "ADMIN_HOST_NAME,"
@@ -381,7 +381,7 @@ void RdbmsCatalogue::createStorageClass(
       throw exception::UserError(std::string("Cannot create storage class ") + storageClass.diskInstance + ":" +
         storageClass.name + " because it already exists");
     }
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO STORAGE_CLASS("
         "DISK_INSTANCE_NAME,"
@@ -565,7 +565,7 @@ void RdbmsCatalogue::createTapePool(
       throw exception::UserError(std::string("Cannot create tape pool ") + name +
         " because a tape pool with the same name already exists");
     }
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE_POOL("
         "TAPE_POOL_NAME,"
@@ -740,7 +740,7 @@ void RdbmsCatalogue::createArchiveRoute(
   const std::string &tapePoolName,
   const std::string &comment) {
   try {
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO ARCHIVE_ROUTE("
         "DISK_INSTANCE_NAME,"
@@ -903,7 +903,7 @@ void RdbmsCatalogue::createLogicalLibrary(
       throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
     }
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO LOGICAL_LIBRARY("
         "LOGICAL_LIBRARY_NAME,"
@@ -1062,7 +1062,7 @@ void RdbmsCatalogue::createTape(
       throw exception::UserError(std::string("Cannot create tape ") + vid +
         " because a tape with the same volume identifier already exists");
     }
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE("
         "VID,"
@@ -1428,12 +1428,12 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
 
     if(drive && !time) {
       throw exception::Exception(std::string("Database column ") + driveColName + " contains " + drive.value() +
-        " but column " + timeColName + " is NULL");
+        " but column " + timeColName + " is nullptr");
     }
 
     if(time && !drive) {
       throw exception::Exception(std::string("Database column ") + timeColName + " contains " +
-        std::to_string(time.value()) + " but column " + driveColName + " is NULL");
+        std::to_string(time.value()) + " but column " + driveColName + " is nullptr");
     }
 
     common::dataStructures::TapeLog tapeLog;
@@ -1582,7 +1582,7 @@ void RdbmsCatalogue::createMountPolicy(
       throw exception::UserError(std::string("Cannot create mount policy ") + name +
         " because a mount policy with the same name already exists");
     }
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO MOUNT_POLICY("
         "MOUNT_POLICY_NAME,"
@@ -1666,7 +1666,7 @@ void RdbmsCatalogue::createRequesterMountRule(
   try {
     std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterMountPolicy(diskInstanceName,
       requesterName));
-    if(NULL != mountPolicy.get()) {
+    if(nullptr != mountPolicy.get()) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName + " to requester " +
         diskInstanceName + ":" + requesterName + " because the requester is already assigned to mount-policy " +
         mountPolicy->name);
@@ -1675,7 +1675,7 @@ void RdbmsCatalogue::createRequesterMountRule(
       throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName + " to requester " +
         diskInstanceName + ":" + requesterName + " because mount-policy " + mountPolicyName + " does not exist");
     }
-    const uint64_t now = time(NULL);
+    const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_MOUNT_RULE("
         "DISK_INSTANCE_NAME,"
@@ -1816,7 +1816,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
   try {
     std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(getRequesterGroupMountPolicy(diskInstanceName,
      requesterGroupName));
-    if(NULL != mountPolicy.get()) {
+    if(nullptr != mountPolicy.get()) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
         " to requester-group " + diskInstanceName + ":" + requesterGroupName +
         " because a rule already exists assigning the requester-group to mount-policy " + mountPolicy->name);
@@ -1825,7 +1825,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
       throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
         diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
     }
-    const uint64_t now = time(NULL);
+    const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_GROUP_MOUNT_RULE("
         "DISK_INSTANCE_NAME,"
@@ -1943,7 +1943,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
 
       return policy.release();
     } else {
-      return NULL;
+      return nullptr;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2139,7 +2139,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
 
       return policy.release();
     } else {
-      return NULL;
+      return nullptr;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2398,7 +2398,7 @@ void RdbmsCatalogue::insertArchiveFile(const ArchiveFileRow &row) {
         " does not exist");
     }
 
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO ARCHIVE_FILE("
         "ARCHIVE_FILE_ID,"
@@ -2696,7 +2696,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
     std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(id));
 
     // Throw an exception if the archive file does not exist
-    if(NULL == file.get()) {
+    if(nullptr == file.get()) {
       exception::Exception ex;
       ex.getMessage() << "No such archive file with ID " << id;
       throw (ex);
@@ -2825,7 +2825,7 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
 
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     std::lock_guard<std::mutex> m_lock(m_mutex);
 
     const common::dataStructures::Tape tape = selectTapeForUpdate(event.vid);
@@ -2843,7 +2843,7 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(event.archiveFileId);
 
     // If the archive file does not already exist
-    if(NULL == archiveFile.get()) {
+    if(nullptr == archiveFile.get()) {
       // Create one
       ArchiveFileRow row;
       row.archiveFileId = event.archiveFileId;
@@ -2884,7 +2884,7 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::updateTape(const TapeFileWritten &event) {
   try {
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_FSEQ = :LAST_FSEQ,"
@@ -2968,7 +2968,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
         const uint64_t archiveFileId, const common::dataStructures::UserIdentity &user) {
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(archiveFileId);
-    if(NULL == archiveFile.get()) {
+    if(nullptr == archiveFile.get()) {
       exception::Exception ex;
       ex.getMessage() << "Archive file with ID " << archiveFileId << " does not exist";
       throw ex;
@@ -3196,7 +3196,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertTapeFile(const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId) {
   try {
-    const time_t now = time(NULL);
+    const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE_FILE("
         "VID,"
@@ -3315,7 +3315,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<rdbms::DbRset> rset(stmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset->next()) {
-      if(NULL == archiveFile.get()) {
+      if(nullptr == archiveFile.get()) {
         archiveFile.reset(new common::dataStructures::ArchiveFile);
 
         archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
