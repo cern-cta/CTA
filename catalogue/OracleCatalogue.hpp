@@ -49,7 +49,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OracleCatalogue();
+  virtual ~OracleCatalogue() override;
 
   /**
    * Deletes the specified archive file and its associated tape copies from the
@@ -60,7 +60,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId);
+  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within
@@ -70,7 +70,7 @@ public:
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
    */
-  virtual uint64_t getNextArchiveFileId();
+  virtual uint64_t getNextArchiveFileId() override;
 
   /**
    * Selects the specified tape within the Tape table for update.
@@ -81,7 +81,7 @@ public:
    *
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid);
+  virtual common::dataStructures::Tape selectTapeForUpdate(const std::string &vid) override;
 
 }; // class OracleCatalogue
 

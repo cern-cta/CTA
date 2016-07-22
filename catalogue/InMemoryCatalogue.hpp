@@ -39,7 +39,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~InMemoryCatalogue();
+  virtual ~InMemoryCatalogue() override;
 
 }; // class InMemoryCatalogue
 

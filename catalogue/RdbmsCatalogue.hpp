@@ -63,7 +63,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~RdbmsCatalogue();
+  virtual ~RdbmsCatalogue() override;
   
   virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) override;
 
@@ -718,17 +718,17 @@ protected:
     /**
      * Destructor.
      */
-    virtual ~ArchiveFileItorImpl();
+    virtual ~ArchiveFileItorImpl() override;
 
     /**
      * Returns true if a call to next would return another archive file.
      */
-    virtual bool hasMore() const;
+    virtual bool hasMore() const override;
 
     /**
      * Returns the next archive or throws an exception if there isn't one.
      */
-    virtual common::dataStructures::ArchiveFile next();
+    virtual common::dataStructures::ArchiveFile next() override;
 
   private:
 
@@ -757,7 +757,7 @@ protected:
      * The current list of prefetched archive files.
      */
     std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
-  };
+  }; // class ArchiveFileItorImpl
 
   /**
    * Returns the specified archive files.  This method is called by the nested
