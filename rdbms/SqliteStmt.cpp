@@ -110,7 +110,7 @@ void SqliteStmt::bindString(const std::string &paramName, const std::string &par
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-DbRset *SqliteStmt::executeQuery() {
+Rset *SqliteStmt::executeQuery() {
   return new SqliteRset(*this);
 }
 

@@ -24,7 +24,7 @@ namespace rdbms {
 /**
  * Forward declaration.
  */
-class DbConn;
+class Conn;
 
 /**
  * A class to automatically rollback a database connection when an instance of
@@ -36,10 +36,10 @@ public:
   /**
    * Constructor.
    *
-   * @param dbConn The database connection or nullptr if the no rollback should
+   * @param conn The database connection or nullptr if the no rollback should
    * take place.
    */
-  AutoRollback(DbConn *const dbConn);
+  AutoRollback(Conn *const conn);
 
   /**
    * Prevent copying.
@@ -68,9 +68,9 @@ private:
   /**
    * The database connection or nullptr if no rollback should take place.
    */
-  DbConn *m_dbConn;
+  Conn *m_conn;
 
-}; // class DbLogin
+}; // class Login
 
 } // namespace rdbms
 } // namespace cta

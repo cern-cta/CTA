@@ -16,16 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbStmt.hpp"
+#pragma once
+
+#include "ConnFactory.hpp"
+#include "Login.hpp"
 
 namespace cta {
 namespace rdbms {
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-DbStmt::~DbStmt() throw() {
-}
+/**
+ * Abstract class that specifies the interface to a factory of ConnFactory objects.
+ */
+class ConnFactoryFactory {
+public:
+
+  /**
+   * Returns a newly created ConnFactory object.
+   *
+   * @param login The database login details to be used to create new
+   * connections.
+   * @return A newly created ConnFactory object.
+   */
+  static ConnFactory *create(const Login &login);
+
+}; // class ConnFactoryFactory
 
 } // namespace rdbms
 } // namespace cta

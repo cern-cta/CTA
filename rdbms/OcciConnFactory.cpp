@@ -44,7 +44,7 @@ OcciConnFactory::~OcciConnFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-DbConn *OcciConnFactory::create() {
+Conn *OcciConnFactory::create() {
   try {
     return OcciEnvSingleton::instance().createConn(m_username, m_password, m_database);
   } catch(exception::Exception &ex) {

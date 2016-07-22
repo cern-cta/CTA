@@ -18,15 +18,15 @@
 
 #pragma once
 
-#include "DbConnFactory.hpp"
+#include "ConnFactory.hpp"
 
 namespace cta {
 namespace rdbms {
 
 /**
- * A concrete factory of DbConn objects.
+ * A concrete factory of Conn objects.
  */
-class SqliteConnFactory: public DbConnFactory {
+class SqliteConnFactory: public ConnFactory {
 public:
 
   /**
@@ -46,7 +46,7 @@ public:
    *
    * @return A newly created database connection.
    */
-  virtual DbConn *create();
+  virtual Conn *create();
 
 private:
 

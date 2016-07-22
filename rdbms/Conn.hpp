@@ -18,30 +18,54 @@
 
 #pragma once
 
-#include "DbConn.hpp"
+#include "Stmt.hpp"
 
 namespace cta {
 namespace rdbms {
 
 /**
- * Abstract class that specifies the interface of a factory of DbConn objects.
+ * Abstract class that specifies the interface to a database connection.
  */
-class DbConnFactory {
+class Conn {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~DbConnFactory() throw() = 0;
+  virtual ~Conn() throw() = 0;
 
   /**
-   * Returns a newly created database connection.
-   *
-   * @return A newly created database connection.
+   * Idempotent close() method.  The destructor calls this method.
    */
-  virtual DbConn *create() = 0;
+  virtual void close() = 0;
 
-}; // class DbConnFactory
+  /**
+   * Creates a prepared statement.
+   *
+   * @sql The SQL statement.
+   * @return The prepared statement.
+   */
+  virtual Stmt *createStmt(const std::string &sql) = 0;
+
+  /**
+   * Convenience function implemented in Conn around Conn::createStmt(),
+   * Stmt::executeNonQuery().
+   *
+   * @sql The SQL statement.
+   */
+  void executeNonQuery(const std::string &sql);
+
+  /**
+   * Commits the current transaction.
+   */
+  virtual void commit() = 0;
+
+  /**
+   * Rolls back the current transaction.
+   */
+  virtual void rollback() = 0;
+
+}; // class Conn
 
 } // namespace rdbms
 } // namespace cta

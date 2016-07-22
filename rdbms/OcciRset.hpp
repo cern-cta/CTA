@@ -19,7 +19,7 @@
 #pragma once
 
 #include "ColumnNameToIdx.hpp"
-#include "DbRset.hpp"
+#include "Rset.hpp"
 
 #include <memory>
 #include <mutex>
@@ -37,7 +37,7 @@ class OcciStmt;
 /**
  * A convenience wrapper around an OCCI result set.
  */
-class OcciRset: public DbRset {
+class OcciRset: public Rset {
 public:
 
   /**

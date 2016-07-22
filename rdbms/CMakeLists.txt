@@ -37,16 +37,16 @@ set (RDBMS_LIB_SRC_FILES
   AutoRollback.cpp
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
-  DbConn.cpp
-  DbConnFactory.cpp
-  DbConnPool.cpp
-  DbLogin.cpp
-  DbLoginFactory.cpp
-  DbRset.cpp
-  DbStmt.cpp
+  Conn.cpp
+  ConnFactory.cpp
+  ConnPool.cpp
+  Login.cpp
+  LoginFactory.cpp
+  Rset.cpp
+  Stmt.cpp
   NullDbValue.cpp
   ParamNameToIdx.cpp
-  PooledDbConn.cpp
+  PooledConn.cpp
   Sqlite.cpp
   SqliteConn.cpp
   SqliteConnFactory.cpp
@@ -56,7 +56,7 @@ set (RDBMS_LIB_SRC_FILES
 if (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES
     ${RDBMS_LIB_SRC_FILES}
-    DbConnFactoryFactory.cpp
+    ConnFactoryFactory.cpp
     OcciConn.cpp
     OcciConnFactory.cpp
     OcciEnv.cpp
@@ -66,7 +66,7 @@ if (OCCI_SUPPORT)
 else (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES
     ${RDBMS_LIB_SRC_FILES}
-    DbConnFactoryFactory_OCCI_SUPPORT_OFF.cpp)
+    ConnFactoryFactory_OCCI_SUPPORT_OFF.cpp)
 endif (OCCI_SUPPORT)
 
 add_library (ctardbms SHARED
@@ -88,8 +88,8 @@ target_link_libraries (ctardbms
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
-  DbConnPoolTest.cpp
-  DbLoginTest.cpp
+  ConnPoolTest.cpp
+  LoginTest.cpp
   ParamNameToIdxTest.cpp
   SqliteStmtTest.cpp)
 

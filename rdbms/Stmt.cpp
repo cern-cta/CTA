@@ -16,36 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/Exception.hpp"
-#include "rdbms/DbConnPool.hpp"
+#include "Stmt.hpp"
 
-#include <gtest/gtest.h>
-#include <sstream>
+namespace cta {
+namespace rdbms {
 
-namespace unitTests {
-
-class cta_rdbms_DbConnPoolTest : public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-};
-
-TEST_F(cta_rdbms_DbConnPoolTest, getPooledDbConn) {
-  using namespace cta::rdbms;
-
-  const DbLogin dbLogin(DbLogin::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-  const uint64_t nbConns = 2;
-  DbConnPool pool(dbLogin, nbConns);
-
-  PooledDbConn conn = pool.getPooledDbConn();
-
-  PooledDbConn conn2(nullptr, nullptr);
-
-  conn2 = pool.getPooledDbConn();
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+Stmt::~Stmt() throw() {
 }
 
-} // namespace unitTests
+} // namespace rdbms
+} // namespace cta

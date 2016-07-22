@@ -17,10 +17,12 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "rdbms/DbConnPool.hpp"
-#include "rdbms/PooledDbConn.hpp"
+#include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/PooledConn.hpp"
 
 #include <iostream>
+#include <memory>
 
 namespace cta {
 namespace rdbms {
@@ -28,83 +30,86 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PooledDbConn::PooledDbConn(DbConn *const dbConn, DbConnPool *dbConnPool) noexcept:
-  m_dbConnAndPool(dbConn, dbConnPool) {
+ConnPool::ConnPool(const Login &login, const uint64_t nbConns):
+  m_connFactory(rdbms::ConnFactoryFactory::create(login)),
+  m_nbConns(nbConns) {
+  try {
+    createConns(m_nbConns);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// createConns
+//------------------------------------------------------------------------------
+void ConnPool::createConns(const uint64_t nbConns) {
+  try {
+    for(uint64_t i = 0; i < nbConns; i++) {
+      m_conns.push_back(m_connFactory->create());
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PooledDbConn::PooledDbConn(PooledDbConn &&other) noexcept:
-  m_dbConnAndPool(other.m_dbConnAndPool) {
-  other.m_dbConnAndPool = DbConnAndPool();
+ConnPool::ConnPool(ConnFactory *const connFactory, const uint64_t nbConns):
+  m_nbConns(nbConns) {
+  try {
+    m_connFactory.reset(connFactory);
+    createConns(m_nbConns);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-PooledDbConn::~PooledDbConn() noexcept {
-  try {
-    reset();
-  } catch(...) {
+ConnPool::~ConnPool() throw() {
+  for(auto &conn: m_conns) {
+    delete conn;
   }
 }
 
 //------------------------------------------------------------------------------
-// reset
+// getConn
 //------------------------------------------------------------------------------
-void PooledDbConn::reset(const DbConnAndPool &dbConnAndPool) {
-  // If the database connection is not the one already owned
-  if(dbConnAndPool.conn != m_dbConnAndPool.conn) {
-    // If this smart database connection currently points to a database connection then return it back to its pool
-    if(nullptr != m_dbConnAndPool.conn) {
-      m_dbConnAndPool.pool->returnDbConn(m_dbConnAndPool.conn);
-    }
-
-    // Take ownership of the new database connection
-    m_dbConnAndPool = dbConnAndPool;
+Conn *ConnPool::getConn() {
+  std::unique_lock<std::mutex> lock(m_connsMutex);
+  while(m_conns.size() == 0) {
+    m_connsCv.wait(lock);
   }
+
+  Conn *const conn = m_conns.front();
+  m_conns.pop_front();
+  return conn;
 }
 
 //------------------------------------------------------------------------------
-// get()
+// getPooledConn
 //------------------------------------------------------------------------------
-DbConn *PooledDbConn::get() const noexcept {
-  return m_dbConnAndPool.conn;
-}
-
-//------------------------------------------------------------------------------
-// operator->()
-//------------------------------------------------------------------------------
-DbConn *PooledDbConn::operator->() const noexcept {
-  return m_dbConnAndPool.conn;
-}
-
-//------------------------------------------------------------------------------
-// operator*()
-//------------------------------------------------------------------------------
-DbConn &PooledDbConn::operator*() const {
-  if(nullptr == m_dbConnAndPool.conn) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: No database connection");
+PooledConn ConnPool::getPooledConn() {
+  std::unique_lock<std::mutex> lock(m_connsMutex);
+  while(m_conns.size() == 0) {
+    m_connsCv.wait(lock);
   }
-  return *m_dbConnAndPool.conn;
+
+  PooledConn pooledConn(m_conns.front(), this);
+  m_conns.pop_front();
+  return pooledConn;
 }
 
 //------------------------------------------------------------------------------
-// operator=
+// returnConn
 //------------------------------------------------------------------------------
-PooledDbConn &PooledDbConn::operator=(PooledDbConn &&rhs) {
-  reset(rhs.release());
-  return *this;
-}
-
-//------------------------------------------------------------------------------
-// release
-//------------------------------------------------------------------------------
-PooledDbConn::DbConnAndPool PooledDbConn::release() noexcept {
-  const DbConnAndPool tmp  = m_dbConnAndPool;
-  m_dbConnAndPool = DbConnAndPool();
-  return tmp;
+void ConnPool::returnConn(Conn *const conn) {
+  std::unique_lock<std::mutex> lock(m_connsMutex);
+  m_conns.push_back(conn);
+  m_connsCv.notify_one();
 }
 
 } // namespace rdbms

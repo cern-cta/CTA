@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "rdbms/DbConnFactoryFactory.hpp"
+#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
@@ -26,21 +26,21 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-DbConnFactory *DbConnFactoryFactory::create(const DbLogin &dbLogin) {
+ConnFactory *ConnFactoryFactory::create(const Login &login) {
   try {
-    switch(dbLogin.dbType) {
-    case rdbms::DbLogin::DBTYPE_IN_MEMORY:
+    switch(login.dbType) {
+    case rdbms::Login::DBTYPE_IN_MEMORY:
       return new SqliteConnFactory(":memory:");
-    case rdbms::DbLogin::DBTYPE_ORACLE:
+    case rdbms::Login::DBTYPE_ORACLE:
       throw exception::Exception("OCCI support disabled at compile time");
-    case rdbms::DbLogin::DBTYPE_SQLITE:
-      return new SqliteConnFactory(dbLogin.database);
-    case rdbms::DbLogin::DBTYPE_NONE:
+    case rdbms::Login::DBTYPE_SQLITE:
+      return new SqliteConnFactory(login.database);
+    case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:
       {
         exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
+        ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;
       }
     }

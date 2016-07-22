@@ -16,32 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "common/exception/Exception.hpp"
+#include "rdbms/ConnPool.hpp"
 
-#include "DbLogin.hpp"
+#include <gtest/gtest.h>
+#include <sstream>
 
-namespace cta {
-namespace rdbms {
+namespace unitTests {
 
-/**
- * Abstract class specifying the interface to a factory of DbLogin objects.
- */
-class DbLoginFactory {
-public:
+class cta_rdbms_ConnPoolTest : public ::testing::Test {
+protected:
 
-  /**
-   * Destructor.
-   */
-  virtual ~DbLoginFactory() = 0;
+  virtual void SetUp() {
+  }
 
-  /**
-   * Returns a newly created DbLogin object.
-   *
-   * @return A newly created DbLogin object.
-   */
-  virtual DbLogin create() = 0;
+  virtual void TearDown() {
+  }
+};
 
-}; // class DbLogin
+TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
+  using namespace cta::rdbms;
 
-} // namespace rdbms
-} // namespace cta
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const uint64_t nbConns = 2;
+  ConnPool pool(login, nbConns);
+
+  PooledConn conn = pool.getPooledConn();
+
+  PooledConn conn2(nullptr, nullptr);
+
+  conn2 = pool.getPooledConn();
+}
+
+} // namespace unitTests

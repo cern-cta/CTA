@@ -19,7 +19,7 @@
 #pragma once
 
 #include "ColumnNameToIdxAndType.hpp"
-#include "DbRset.hpp"
+#include "Rset.hpp"
 
 #include <memory>
 #include <stdint.h>
@@ -36,7 +36,7 @@ class SqliteStmt;
 /**
  * The result set of an sql query.
  */
-class SqliteRset: public DbRset {
+class SqliteRset: public Rset {
 public:
 
   /**

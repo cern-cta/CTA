@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "DbStmt.hpp"
+#include "Stmt.hpp"
 #include "ParamNameToIdx.hpp"
 
 #include <map>
@@ -36,7 +36,7 @@ class SqliteRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class SqliteStmt: public DbStmt {
+class SqliteStmt: public Stmt {
 public:
 
   /**
@@ -97,7 +97,7 @@ public:
    * @return The result set.  Please note that it is the responsibility of the
    * caller to free the memory associated with the result set.
    */
-  virtual DbRset *executeQuery();
+  virtual Rset *executeQuery();
 
   /**
    * Executes the statement.

@@ -78,7 +78,7 @@ void SqliteConn::close() {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-DbStmt *SqliteConn::createStmt(const std::string &sql) {
+Stmt *SqliteConn::createStmt(const std::string &sql) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -134,8 +134,8 @@ void SqliteConn::printSchema(std::ostream &os) {
       "ORDER BY "
         "TYPE, "
         "NAME;";
-    std::unique_ptr<DbStmt> stmt(createStmt(sql));
-    std::unique_ptr<DbRset> rset(stmt->executeQuery());
+    std::unique_ptr<Stmt> stmt(createStmt(sql));
+    std::unique_ptr<Rset> rset(stmt->executeQuery());
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
     while (rset->next()) {

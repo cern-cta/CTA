@@ -16,7 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbLoginFactory.hpp"
+#include "Conn.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <memory>
 
 namespace cta {
 namespace rdbms {
@@ -24,7 +27,19 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DbLoginFactory::~DbLoginFactory() {
+Conn::~Conn() throw() {
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void Conn::executeNonQuery(const std::string &sql) {
+  try {
+    std::unique_ptr<Stmt> stmt(createStmt(sql));
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  }
 }
 
 } // namespace rdbms

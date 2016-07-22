@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbConnFactory.hpp"
+#include "LoginFactory.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -24,7 +24,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DbConnFactory::~DbConnFactory() throw() {
+LoginFactory::~LoginFactory() {
 }
 
 } // namespace rdbms

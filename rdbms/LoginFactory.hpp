@@ -18,28 +18,30 @@
 
 #pragma once
 
-#include "DbConnFactory.hpp"
-#include "DbLogin.hpp"
+#include "Login.hpp"
 
 namespace cta {
 namespace rdbms {
 
 /**
- * Abstract class that specifies the interface to a factory of DbConn factories.
+ * Abstract class specifying the interface to a factory of Login objects.
  */
-class DbConnFactoryFactory {
+class LoginFactory {
 public:
 
   /**
-   * Returns a newly created DbConn factory.
-   *
-   * @param dbLogin The database login details to be used to create new
-   * connections.
-   * @return A newly created DbConn factory.
+   * Destructor.
    */
-  static DbConnFactory *create(const DbLogin &dbLogin);
+  virtual ~LoginFactory() = 0;
 
-}; // class DbConnFactoryFactory
+  /**
+   * Returns a newly created Login object.
+   *
+   * @return A newly created Login object.
+   */
+  virtual Login create() = 0;
+
+}; // class Login
 
 } // namespace rdbms
 } // namespace cta

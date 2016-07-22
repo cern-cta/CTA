@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbRset.hpp"
+#include "Rset.hpp"
 #include "NullDbValue.hpp"
 
 namespace cta {
@@ -25,13 +25,13 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DbRset::~DbRset() throw() {
+Rset::~Rset() throw() {
 }
 
 //------------------------------------------------------------------------------
 // columnText
 //------------------------------------------------------------------------------
-std::string DbRset::columnText(const std::string &colName) const {
+std::string Rset::columnText(const std::string &colName) const {
   try {
     const optional<std::string> col = columnOptionalText(colName);
     if(col) {
@@ -47,7 +47,7 @@ std::string DbRset::columnText(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
-uint64_t DbRset::columnUint64(const std::string &colName) const {
+uint64_t Rset::columnUint64(const std::string &colName) const {
   try {
     const optional<uint64_t> col = columnOptionalUint64(colName);
     if(col) {

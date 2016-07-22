@@ -18,64 +18,64 @@
 
 #pragma once
 
-#include "rdbms/DbConn.hpp"
+#include "rdbms/Conn.hpp"
 
 namespace cta {
 namespace rdbms {
 
 /**
  * Forward declaration to avoid circular dependency between PooledDbCon and
- * DbConnPool.
+ * ConnPool.
  */
-class DbConnPool;
+class ConnPool;
 
 /**
  * A smart database connection that will automatically return itself to its
  * parent connection pool when it goes out of scope.
  */
-class PooledDbConn {
+class PooledConn {
 public:
 
   /**
    * Constructor.
    *
-   * @param dbConn The database connection.
-   * @param dbConnPool The database connection pool to which the connection
+   * @param conn The database connection.
+   * @param connPool The database connection pool to which the connection
    * should be returned.
    */
-  PooledDbConn(DbConn *const dbConn, DbConnPool *const dbConnPool) noexcept;
+  PooledConn(Conn *const conn, ConnPool *const connPool) noexcept;
 
   /**
    * Deletion of the copy constructor.
    */
-  PooledDbConn(PooledDbConn &) = delete;
+  PooledConn(PooledConn &) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object.
    */
-  PooledDbConn(PooledDbConn &&other) noexcept;
+  PooledConn(PooledConn &&other) noexcept;
 
   /**
    * Destructor.
    *
    * Returns the database connection back to its pool.
    */
-  ~PooledDbConn() noexcept;
+  ~PooledConn() noexcept;
 
   /**
    * Returns the owned database connection.
    *
    * @return The owned database connection.
    */
-  DbConn *get() const noexcept;
+  Conn *get() const noexcept;
   /**
    * Returns the owned database connection.
    *
    * @return The owned database connection.
    */
-  DbConn *operator->() const noexcept;
+  Conn *operator->() const noexcept;
 
   /**
    * Returns the owned database connection.
@@ -85,12 +85,12 @@ public:
    *
    * @return The owned database connection.
    */
-  DbConn &operator*() const;
+  Conn &operator*() const;
 
   /**
    * Deletion of the copy assignment operator.
    */
-  PooledDbConn &operator=(const PooledDbConn &) = delete;
+  PooledConn &operator=(const PooledConn &) = delete;
 
   /**
    * Move assignment operator.
@@ -98,19 +98,19 @@ public:
    * @param rhs The object on the right-hand side of the operator.
    * @return This object.
    */
-  PooledDbConn &operator=(PooledDbConn &&rhs);
+  PooledConn &operator=(PooledConn &&rhs);
 
   /**
    * Structure to store a database connection and the pool to which it belongs.
    */
-  struct DbConnAndPool {
-    DbConn *conn;
-    DbConnPool *pool;
+  struct ConnAndPool {
+    Conn *conn;
+    ConnPool *pool;
 
-    DbConnAndPool() noexcept: conn(nullptr), pool(nullptr) {
+    ConnAndPool() noexcept: conn(nullptr), pool(nullptr) {
     }
 
-    DbConnAndPool(DbConn *conn, DbConnPool *pool) noexcept:
+    ConnAndPool(Conn *conn, ConnPool *pool) noexcept:
       conn(conn),
       pool(pool) {
     }
@@ -121,17 +121,17 @@ public:
    * connection already owns a connection that is not the same as the one
    * specified then the already owned connection will be returned to its pool.
    *
-   * @param dbConnAndPool The database connection to be owned and the pool to
+   * @param connAndPool The database connection to be owned and the pool to
    * which it belongs.
    */
-  void reset(const DbConnAndPool &dbConnAndPool = DbConnAndPool());
+  void reset(const ConnAndPool &connAndPool = ConnAndPool());
 
   /**
    * Releases the owned database connection.
    *
    * @return The released database connection and the pool to which it belongs.
    */
-  DbConnAndPool release() noexcept;
+  ConnAndPool release() noexcept;
 
 private:
 
@@ -139,9 +139,9 @@ private:
    * The database connection owned by this smart connection and the pool to
    * which the connection belongs.
    */
-  DbConnAndPool m_dbConnAndPool;
+  ConnAndPool m_connAndPool;
 
-}; // class PooledDbConn
+}; // class PooledConn
 
 } // namespace rdbms
 } // namespace cta

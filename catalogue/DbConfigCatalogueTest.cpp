@@ -22,11 +22,11 @@
 namespace {
 
 /**
- * Creates DbLogin objects for the test catalogue database whose database login
+ * Creates Login objects for the test catalogue database whose database login
  * details are specified in a database configuration file passed on the
  * command-line to the catalogue unit-tests program.
  */
-class DbConfigFileLoginFactory: public cta::rdbms::DbLoginFactory {
+class DbConfigFileLoginFactory: public cta::rdbms::LoginFactory {
 public:
 
   /**
@@ -36,15 +36,15 @@ public:
   }
 
   /**
-   * Returns a newly created DbLogin object.
+   * Returns a newly created Login object.
    *
-   * @return A newly created DbLogin object.
+   * @return A newly created Login object.
    */
-  virtual cta::rdbms::DbLogin create() {
+  virtual cta::rdbms::Login create() {
     using namespace cta::catalogue;
-    return cta::rdbms::DbLogin::parseFile(g_cmdLineArgs.dbConfigPath);
+    return cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
   }
-}; // class OracleDbLoginFactory
+}; // class OracleLoginFactory
 
 DbConfigFileLoginFactory g_dbConfigLoginFactory;
 
@@ -53,6 +53,6 @@ DbConfigFileLoginFactory g_dbConfigLoginFactory;
 namespace unitTests {
 
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::DbLoginFactory*>(&g_dbConfigLoginFactory)));
+  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_dbConfigLoginFactory)));
 
 } // namespace unitTests

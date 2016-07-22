@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "DbStmt.hpp"
+#include "Stmt.hpp"
 #include "ParamNameToIdx.hpp"
 
 #include <memory>
@@ -44,7 +44,7 @@ class OcciRset;
 /**
  * A convenience wrapper around an OCCI prepared statement.
  */
-class OcciStmt: public DbStmt {
+class OcciStmt: public Stmt {
 public:
 
   /**
@@ -100,7 +100,7 @@ public:
    *  @return The result set.  Please note that it is the responsibility of the
    *  caller to free the memory associated with the result set.
    */
-  virtual DbRset *executeQuery();
+  virtual Rset *executeQuery();
 
   /**
    * Executes the statement.

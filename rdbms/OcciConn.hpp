@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "DbConn.hpp"
+#include "Conn.hpp"
 
 #include <occi.h>
 #include <mutex>
@@ -35,7 +35,7 @@ class OcciStmt;
 /**
  * A convenience wrapper around a connection to an OCCI database.
  */
-class OcciConn: public DbConn {
+class OcciConn: public Conn {
 public:
 
   /**
@@ -81,7 +81,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual DbStmt *createStmt(const std::string &sql);
+  virtual Stmt *createStmt(const std::string &sql);
 
   /**
    * Commits the current transaction.

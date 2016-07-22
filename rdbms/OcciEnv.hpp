@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "rdbms/DbConn.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <occi.h>
 
@@ -56,7 +56,7 @@ public:
    * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  DbConn *createConn(
+  Conn *createConn(
     const std::string &username,
     const std::string &password,
     const std::string &database);

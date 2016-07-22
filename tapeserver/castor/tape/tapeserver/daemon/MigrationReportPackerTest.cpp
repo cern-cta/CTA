@@ -42,9 +42,9 @@ namespace unitTests {
       using namespace cta;
       using namespace cta::catalogue;
 
-      rdbms::DbLogin catalogueLogin(rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
-      const uint64_t nbDbConns = 2;
-      m_catalogue.reset(CatalogueFactory::create(catalogueLogin, nbDbConns));
+      rdbms::Login catalogueLogin(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
+      const uint64_t nbConns = 2;
+      m_catalogue.reset(CatalogueFactory::create(catalogueLogin, nbConns));
     }
 
     void TearDown() {

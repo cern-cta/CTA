@@ -23,33 +23,33 @@ namespace unitTests {
 namespace {
 
 /**
- * Creates DbLogin objects for in-memory catalogue databases.
+ * Creates Login objects for in-memory catalogue databases.
  */
-class InMemoryDbLoginFactory: public cta::rdbms::DbLoginFactory {
+class InMemoryLoginFactory: public cta::rdbms::LoginFactory {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~InMemoryDbLoginFactory() {
+  virtual ~InMemoryLoginFactory() {
   }
 
   /**
-   * Returns a newly created DbLogin object.
+   * Returns a newly created Login object.
    *
-   * @return A newly created DbLogin object.
+   * @return A newly created Login object.
    */
-  virtual cta::rdbms::DbLogin create() {
+  virtual cta::rdbms::Login create() {
     using namespace cta::catalogue;
-    return cta::rdbms::DbLogin(cta::rdbms::DbLogin::DBTYPE_IN_MEMORY, "", "", "");
+    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
   }
-}; // class InMemoryDbLoginFactory
+}; // class InMemoryLoginFactory
 
-InMemoryDbLoginFactory g_inMemoryDbLoginFactory;
+InMemoryLoginFactory g_inMemoryLoginFactory;
 
 } // anonymous namespace
 
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::DbLoginFactory*>(&g_inMemoryDbLoginFactory)));
+  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_inMemoryLoginFactory)));
 
 } // namespace unitTests

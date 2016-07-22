@@ -17,7 +17,7 @@
  */
 
 #include "AutoRollback.hpp"
-#include "DbConn.hpp"
+#include "Conn.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
@@ -26,7 +26,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(DbConn *const dbConn): m_dbConn(dbConn) {
+AutoRollback::AutoRollback(Conn *const conn): m_conn(conn) {
 }
 
 //------------------------------------------------------------------------------
@@ -34,8 +34,8 @@ AutoRollback::AutoRollback(DbConn *const dbConn): m_dbConn(dbConn) {
 //------------------------------------------------------------------------------
 AutoRollback::~AutoRollback() {
   try {
-    if(nullptr != m_dbConn) {
-      m_dbConn->rollback();
+    if(nullptr != m_conn) {
+      m_conn->rollback();
     }
   } catch(...) {
     // Prevent destructor from throwing
@@ -46,7 +46,7 @@ AutoRollback::~AutoRollback() {
 // cancel
 //------------------------------------------------------------------------------
 void AutoRollback::cancel() {
-  m_dbConn = nullptr;
+  m_conn = nullptr;
 }
 
 } // namespace rdbms

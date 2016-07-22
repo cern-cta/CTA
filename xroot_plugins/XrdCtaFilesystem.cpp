@@ -267,9 +267,9 @@ XrdCtaFilesystem::XrdCtaFilesystem():
     throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
   }
   
-  const rdbms::DbLogin catalogueLogin = rdbms::DbLogin::parseFile("/etc/cta/cta_catalogue_db.conf");
-  const uint64_t nbDbConns = 2;
-  m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin, nbDbConns));
+  const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+  const uint64_t nbConns = 2;
+  m_catalogue.reset(catalogue::CatalogueFactory::create(catalogueLogin, nbConns));
 
   m_scheduler.reset(new cta::Scheduler(*m_catalogue, m_scheddb, 5, 2*1000*1000));
 

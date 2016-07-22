@@ -47,7 +47,7 @@ OcciEnv::~OcciEnv() throw() {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-DbConn *OcciEnv::createConn(
+Conn *OcciEnv::createConn(
   const std::string &username,
   const std::string &password,
   const std::string &database) {

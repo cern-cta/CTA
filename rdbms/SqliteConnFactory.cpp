@@ -39,7 +39,7 @@ SqliteConnFactory::~SqliteConnFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-DbConn *SqliteConnFactory::create() {
+Conn *SqliteConnFactory::create() {
   try {
     return new SqliteConn(m_filename);
   } catch(exception::Exception &ex) {

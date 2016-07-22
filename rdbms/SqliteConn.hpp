@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "DbConn.hpp"
+#include "Conn.hpp"
 
 #include <mutex>
 #include <sqlite3.h>
@@ -35,7 +35,7 @@ class SqliteStmt;
 /**
  * A convenience wrapper around a connection to an SQLite database.
  */
-class SqliteConn: public DbConn {
+class SqliteConn: public Conn {
 public:
 
   /**
@@ -67,7 +67,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual DbStmt *createStmt(const std::string &sql);
+  virtual Stmt *createStmt(const std::string &sql);
 
   /**
    * Commits the current transaction.

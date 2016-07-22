@@ -114,7 +114,7 @@ void OcciStmt::bindString(const std::string &paramName, const std::string &param
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-DbRset *OcciStmt::executeQuery() {
+Rset *OcciStmt::executeQuery() {
   using namespace oracle;
 
   try {

@@ -28,21 +28,21 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-Catalogue *CatalogueFactory::create(const rdbms::DbLogin &dbLogin, const uint64_t nbDbConns) {
+Catalogue *CatalogueFactory::create(const rdbms::Login &login, const uint64_t nbConns) {
   try {
-    switch(dbLogin.dbType) {
-    case rdbms::DbLogin::DBTYPE_IN_MEMORY:
+    switch(login.dbType) {
+    case rdbms::Login::DBTYPE_IN_MEMORY:
       return new InMemoryCatalogue();
-    case rdbms::DbLogin::DBTYPE_ORACLE:
-      return new OracleCatalogue(dbLogin.username, dbLogin.password, dbLogin.database, nbDbConns);
-    case rdbms::DbLogin::DBTYPE_SQLITE:
-      return new SqliteCatalogue(dbLogin.database, nbDbConns);
-    case rdbms::DbLogin::DBTYPE_NONE:
+    case rdbms::Login::DBTYPE_ORACLE:
+      return new OracleCatalogue(login.username, login.password, login.database, nbConns);
+    case rdbms::Login::DBTYPE_SQLITE:
+      return new SqliteCatalogue(login.database, nbConns);
+    case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:
       {
         exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
+        ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;
       }
     }

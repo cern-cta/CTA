@@ -37,14 +37,14 @@ public:
    * @param username The database username.
    * @param password The database password.
    * @param database The database name.
-   * @param nbDbConns The maximum number of concurrent connections to the
+   * @param nbConns The maximum number of concurrent connections to the
    * underlying relational database.
    */
   OracleCatalogue(
     const std::string &username,
     const std::string &password,
     const std::string &database,
-    const uint64_t nbDbConns);
+    const uint64_t nbConns);
 
   /**
    * Destructor.

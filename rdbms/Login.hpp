@@ -28,7 +28,7 @@ namespace rdbms {
 /**
  * A set of database login details.
  */
-struct DbLogin {
+struct Login {
 
   /**
    * Enumeration of the supported database types.
@@ -48,7 +48,7 @@ struct DbLogin {
    * @param password The password.
    * @param database The database name.
    */
-  DbLogin(
+  Login(
     const DbType dbType,
     const std::string &username,
     const std::string &password,
@@ -92,7 +92,7 @@ struct DbLogin {
    * information.
    * @return The database login information.
    */
-  static DbLogin parseFile(const std::string &filename);
+  static Login parseFile(const std::string &filename);
 
   /**
    * Reads and parses the database login information from the specified input
@@ -112,7 +112,7 @@ struct DbLogin {
    * @param inputStream The input stream to be read from.
    * @return The database login information.
    */
-  static DbLogin parseStream(std::istream &inputStream);
+  static Login parseStream(std::istream &inputStream);
 
   /**
    * Reads the entire contents of the specified stream and returns a list of the
@@ -132,7 +132,7 @@ struct DbLogin {
    * @param userPassAndDb The Oracle database connection details in the form
    * username/password@database
    */
-  static DbLogin parseOracleUserPassAndDb(const std::string &userPassAndDb);
+  static Login parseOracleUserPassAndDb(const std::string &userPassAndDb);
 
   /**
    * Human readable description of the format of the database
@@ -140,7 +140,7 @@ struct DbLogin {
    */
   static const char *s_fileFormat;
 
-}; // class DbLogin
+}; // class Login
 
 } // namespace rdbms
 } // namespace cta

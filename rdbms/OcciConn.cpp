@@ -79,7 +79,7 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-DbStmt *OcciConn::createStmt(const std::string &sql) {
+Stmt *OcciConn::createStmt(const std::string &sql) {
   try {
     oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
     if (nullptr == stmt) {

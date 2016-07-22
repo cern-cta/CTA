@@ -35,9 +35,9 @@ public:
    * Constructor.
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
-   * @param nbDbConns The maximum number of concurrent connections to the underyling database.
+   * @param nbConns The maximum number of concurrent connections to the underyling database.
    */
-  SqliteCatalogue(const std::string &filename, const uint64_t nbDbConns);
+  SqliteCatalogue(const std::string &filename, const uint64_t nbConns);
 
 protected:
 

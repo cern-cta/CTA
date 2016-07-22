@@ -16,10 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbConn.hpp"
-#include "common/exception/Exception.hpp"
-
-#include <memory>
+#include "ConnFactory.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -27,19 +24,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DbConn::~DbConn() throw() {
-}
-
-//------------------------------------------------------------------------------
-// executeNonQuery
-//------------------------------------------------------------------------------
-void DbConn::executeNonQuery(const std::string &sql) {
-  try {
-    std::unique_ptr<DbStmt> stmt(createStmt(sql));
-    stmt->executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
-  }
+ConnFactory::~ConnFactory() throw() {
 }
 
 } // namespace rdbms

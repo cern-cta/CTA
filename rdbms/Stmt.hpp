@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "DbRset.hpp"
+#include "Rset.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -29,13 +29,13 @@ namespace rdbms {
 /**
  * Abstract class specifying the interface to a database statement.
  */
-class DbStmt {
+class Stmt {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~DbStmt() throw() = 0;
+  virtual ~Stmt() throw() = 0;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -71,7 +71,7 @@ public:
    *  @return The result set.  Please note that it is the responsibility of the
    *  caller to free the memory associated with the result set.
    */
-  virtual DbRset *executeQuery() = 0;
+  virtual Rset *executeQuery() = 0;
 
   /**
    * Executes the statement.
@@ -86,7 +86,7 @@ public:
    */
   virtual uint64_t getNbAffectedRows() const = 0;
 
-}; // class DbStmt
+}; // class Stmt
 
 } // namespace rdbms
 } // namespace cta

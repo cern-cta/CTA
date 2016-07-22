@@ -29,13 +29,13 @@ namespace rdbms {
 /**
  * Abstract class specificing the interface to the result set of an sql query.
  */
-class DbRset {
+class Rset {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~DbRset() throw() = 0;
+  virtual ~Rset() throw() = 0;
 
   /**
    * Returns the SQL statement.
@@ -102,7 +102,7 @@ public:
    */
   virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
 
-}; // class DbRset
+}; // class Rset
 
 } // namespace rdbms
 } // namespace cta
