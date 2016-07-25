@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
+
 find_package (sqlite REQUIRED)
 
 # OCCI support is on by default

@@ -43,16 +43,16 @@ struct Login {
   /**
    * Constructor.
    *
-   * @param dbType The type of the database.
-   * @param username The username.
-   * @param password The password.
-   * @param database The database name.
+   * @param type The type of the database.
+   * @param user The username.
+   * @param passwd The password.
+   * @param db The database name.
    */
   Login(
-    const DbType dbType,
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+    const DbType type,
+    const std::string &user,
+    const std::string &passwd,
+    const std::string &db);
 
   /**
    * The type of the database.

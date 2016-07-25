@@ -34,14 +34,14 @@ const char *Login::s_fileFormat = "either in_memory or oracle:username/password@
 // constructor
 //------------------------------------------------------------------------------
 Login::Login(
-  const DbType dbType,
-  const std::string &username,
-  const std::string &password,
-  const std::string &database):
-  dbType(dbType),
-  username(username),
-  password(password),
-  database(database) {
+  const DbType type,
+  const std::string &user,
+  const std::string &passwd,
+  const std::string &db):
+  dbType(type),
+  username(user),
+  password(passwd),
+  database(db) {
 }
 
 //------------------------------------------------------------------------------
