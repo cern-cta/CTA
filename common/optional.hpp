@@ -92,9 +92,9 @@ template <class T> optional<T>::optional(optional&& other) {
     is_set=false;
   }
 }
-template <class T> optional<T>::optional(const T& value): is_set(true), val(value) {
+template <class T> optional<T>::optional(const T& v): is_set(true), val(v) {
 }
-template <class T> optional<T>::optional(T&& value): is_set(true), val(std::move(value)) {
+template <class T> optional<T>::optional(T&& v): is_set(true), val(std::move(v)) {
 }
 //destructor
 template <class T> optional<T>::~optional() {
@@ -142,13 +142,13 @@ template <class T> optional<T>& optional<T>::operator=(optional&& other) {
   }
   return *this;
 }
-template <class T> template<class U> optional<T>& optional<T>::operator=(U&& value) {
+template <class T> template<class U> optional<T>& optional<T>::operator=(U&& v) {
   if(!is_set) {
     is_set=true;
-    val=value;
+    val=v;
   }
   else {
-    val=value;
+    val=v;
   }
   return *this;
 }
