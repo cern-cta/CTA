@@ -32,14 +32,15 @@ OracleCatalogue::OracleCatalogue(
   const std::string &username,
   const std::string &password,
   const std::string &database,
-  const uint64_t nbConns) {
-  using namespace rdbms;
-  try {
-    const Login login(Login::DBTYPE_ORACLE, username, password, database);
-    m_connPool.reset(new rdbms::ConnPool(ConnFactoryFactory::create(login), nbConns));
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  const uint64_t nbConns):
+  RdbmsCatalogue(
+    std::unique_ptr<rdbms::ConnPool>(
+      new rdbms::ConnPool(
+        rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database)),
+        nbConns
+      )
+    )
+  ) {
 }
 
 //------------------------------------------------------------------------------

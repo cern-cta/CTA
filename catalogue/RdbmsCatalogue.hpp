@@ -55,8 +55,10 @@ protected:
 
   /**
    * Protected constructor only to be called by sub-classes.
+   *
+   * @param connPool The pool of connections to the underlying relational database.
    */
-  RdbmsCatalogue();
+  RdbmsCatalogue(std::unique_ptr<rdbms::ConnPool> connPool);
 
 public:
 

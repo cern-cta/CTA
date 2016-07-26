@@ -36,7 +36,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue() {
+RdbmsCatalogue::RdbmsCatalogue(std::unique_ptr<rdbms::ConnPool> connPool):m_connPool(std::move(connPool)) {
 }
 
 //------------------------------------------------------------------------------

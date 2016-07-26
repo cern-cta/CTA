@@ -30,14 +30,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns) {
-  using namespace rdbms;
-  try {
-    const Login login(Login::DBTYPE_SQLITE, "", "", filename);
-    m_connPool.reset(new rdbms::ConnPool(ConnFactoryFactory::create(login), nbConns));
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns):
+  RdbmsCatalogue(
+    std::unique_ptr<rdbms::ConnPool>(
+      new rdbms::ConnPool(
+        rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
+        nbConns
+      )
+    )
+  ) {
 }
 
 //------------------------------------------------------------------------------
