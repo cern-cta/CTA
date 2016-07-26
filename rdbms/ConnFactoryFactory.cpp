@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/OcciConnFactory.hpp"
 #include "rdbms/SqliteConnFactory.hpp"
@@ -31,11 +32,11 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return std::unique_ptr<SqliteConnFactory>(new SqliteConnFactory(":memory:"));
+      return make_unique<SqliteConnFactory>(":memory:");
     case rdbms::Login::DBTYPE_ORACLE:
-      return std::unique_ptr<OcciConnFactory>(new OcciConnFactory(login.username, login.password, login.database));
+      return make_unique<OcciConnFactory>(login.username, login.password, login.database);
     case rdbms::Login::DBTYPE_SQLITE:
-      return std::unique_ptr<SqliteConnFactory>(new SqliteConnFactory(login.database));
+      return make_unique<SqliteConnFactory>(login.database);
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

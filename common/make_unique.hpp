@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include<memory>
+
 namespace cta {
 
 /**
@@ -28,8 +30,8 @@ namespace cta {
  * created on the heap and wrapped by an std::unique_ptr.
  * @return The std::unique_ptr.
  */
-template<typename T, typename... Ts> std::unique_ptr<T> make_unique(Tss&&... params) {
-  return std::unique_ptr<T>(new T(std::foward<Ts>(params)...));
+template<typename T, typename... Ts> std::unique_ptr<T> make_unique(Ts&&... params) {
+  return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
 
 } // namespace cta
