@@ -30,8 +30,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConnPool::ConnPool(const Login &login, const uint64_t nbConns):
-  m_connFactory(rdbms::ConnFactoryFactory::create(login)),
+ConnPool::ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbConns):
+  m_connFactory(std::move(connFactory)),
   m_nbConns(nbConns) {
   try {
     createConns(m_nbConns);
@@ -48,19 +48,6 @@ void ConnPool::createConns(const uint64_t nbConns) {
     for(uint64_t i = 0; i < nbConns; i++) {
       m_conns.push_back(m_connFactory->create());
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ConnPool::ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbConns):
-  m_connFactory(std::move(connFactory)),
-  m_nbConns(nbConns) {
-  try {
-    createConns(m_nbConns);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

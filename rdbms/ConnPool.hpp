@@ -39,15 +39,6 @@ public:
   /**
    * Constructor.
    *
-   * @param login The database login details to be used to create new
-   * connections.
-   * @param nbConns The number of database connections within the pool.
-   */
-  ConnPool(const Login &login, const uint64_t nbConns);
-
-  /**
-   * Constructor.
-   *
    * @param connFactory Factory to be used to create new database connections.
    * Please note that the ConnPool will take ownership of the factory and
    * therefore the destructor of ConnPool will delete the factory.
