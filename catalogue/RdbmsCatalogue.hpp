@@ -60,6 +60,13 @@ protected:
    */
   RdbmsCatalogue(std::unique_ptr<rdbms::ConnPool> connPool);
 
+  /**
+   * Protected constructor only to be called by sub-classes.
+   *
+   * @param connFactory The factory for creating new database connections.
+   */
+  //RdbmsCatalogue(std::unique_ptr<rdbms::Factory> connFactory);
+
 public:
 
   /**

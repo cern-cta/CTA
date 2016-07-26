@@ -18,8 +18,10 @@
 
 #pragma once
 
-#include "ConnFactory.hpp"
-#include "Login.hpp"
+#include "rdbms/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
+
+#include <memory>
 
 namespace cta {
 namespace rdbms {
@@ -37,7 +39,7 @@ public:
    * connections.
    * @return A newly created ConnFactory object.
    */
-  static ConnFactory *create(const Login &login);
+  static std::unique_ptr<ConnFactory> create(const Login &login);
 
 }; // class ConnFactoryFactory
 

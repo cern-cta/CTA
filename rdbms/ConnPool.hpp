@@ -53,7 +53,7 @@ public:
    * therefore the destructor of ConnPool will delete the factory.
    * @param nbConns The number of database connections within the pool.
    */
-  ConnPool(ConnFactory *const connFactory, const uint64_t nbConns);
+  ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbConns);
 
   /**
    * Destructor.
