@@ -32,13 +32,8 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns):
   RdbmsCatalogue(
-    std::unique_ptr<rdbms::ConnPool>(
-      new rdbms::ConnPool(
-        rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
-        nbConns
-      )
-    )
-  ) {
+    rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
+    nbConns) {
 }
 
 //------------------------------------------------------------------------------
@@ -54,7 +49,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 
-    auto conn = m_connPool->getConn();
+    auto conn = m_connPool.getConn();
     conn->executeNonQuery("BEGIN EXCLUSIVE;");
     const char *selectSql =
       "SELECT "

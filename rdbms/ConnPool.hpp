@@ -39,12 +39,10 @@ public:
   /**
    * Constructor.
    *
-   * @param connFactory Factory to be used to create new database connections.
-   * Please note that the ConnPool will take ownership of the factory and
-   * therefore the destructor of ConnPool will delete the factory.
+   * @param connFactory The database connection factory.
    * @param nbConns The number of database connections within the pool.
    */
-  ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbConns);
+  ConnPool(ConnFactory &connFactory, const uint64_t nbConns);
 
   /**
    * Destructor.
@@ -72,9 +70,9 @@ public:
 private:
 
   /**
-   * The database connection factory for the pool.
+   * The database connection factory.
    */
-  std::unique_ptr<ConnFactory> m_connFactory;
+  ConnFactory &m_connFactory;
 
   /**
    * The number of database connections within the pool.

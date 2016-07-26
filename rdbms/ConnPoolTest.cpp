@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <gtest/gtest.h>
@@ -38,8 +39,9 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  auto connFactory = ConnFactoryFactory::create(login);
   const uint64_t nbConns = 2;
-  ConnPool pool(login, nbConns);
+  ConnPool pool(*connFactory, nbConns);
 
   PooledConn conn = pool.getConn();
 

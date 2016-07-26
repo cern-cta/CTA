@@ -56,16 +56,11 @@ protected:
   /**
    * Protected constructor only to be called by sub-classes.
    *
-   * @param connPool The pool of connections to the underlying relational database.
-   */
-  RdbmsCatalogue(std::unique_ptr<rdbms::ConnPool> connPool);
-
-  /**
-   * Protected constructor only to be called by sub-classes.
-   *
    * @param connFactory The factory for creating new database connections.
+   * @param nbConns The maximum number of concurrent connections to be
+   * created by the catalogue.
    */
-  //RdbmsCatalogue(std::unique_ptr<rdbms::Factory> connFactory);
+  RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns);
 
 public:
 
@@ -446,9 +441,14 @@ protected:
   std::mutex m_mutex;
 
   /**
+   * The database connection factory.
+   */
+  std::unique_ptr<rdbms::ConnFactory> m_connFactory;
+
+  /**
    * The pool of connections to the underlying relational database.
    */
-  std::unique_ptr<rdbms::ConnPool> m_connPool;
+  mutable rdbms::ConnPool m_connPool;
 
   /**
    * Returns true if the specified admin user exists.

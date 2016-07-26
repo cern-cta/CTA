@@ -30,8 +30,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConnPool::ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbConns):
-  m_connFactory(std::move(connFactory)),
+ConnPool::ConnPool(ConnFactory &connFactory, const uint64_t nbConns):
+  m_connFactory(connFactory),
   m_nbConns(nbConns) {
   try {
     createConns(m_nbConns);
@@ -46,7 +46,7 @@ ConnPool::ConnPool(std::unique_ptr<ConnFactory> connFactory, const uint64_t nbCo
 void ConnPool::createConns(const uint64_t nbConns) {
   try {
     for(uint64_t i = 0; i < nbConns; i++) {
-      m_conns.push_back(m_connFactory->create());
+      m_conns.push_back(m_connFactory.create());
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
