@@ -45,11 +45,6 @@ public:
   ConnPool(ConnFactory &connFactory, const uint64_t nbConns);
 
   /**
-   * Destructor.
-   */
-  ~ConnPool() throw();
-
-  /**
    * Takes a connection from the pool.
    *
    * Please note that this method will block if the pool is empty.  In such a
@@ -93,7 +88,7 @@ private:
   /**
    * The database connections within the pool.
    */
-  std::list<Conn *> m_conns;
+  std::list< std::unique_ptr<Conn> > m_conns;
 
   /**
    * Creates the specified number of database connections with the pool.

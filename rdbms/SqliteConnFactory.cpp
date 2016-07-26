@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "SqliteConn.hpp"
 #include "SqliteConnFactory.hpp"
 
@@ -39,9 +40,9 @@ SqliteConnFactory::~SqliteConnFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-Conn *SqliteConnFactory::create() {
+std::unique_ptr<Conn> SqliteConnFactory::create() {
   try {
-    return new SqliteConn(m_filename);
+    return make_unique<SqliteConn>(m_filename);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

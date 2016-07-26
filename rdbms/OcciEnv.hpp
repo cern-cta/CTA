@@ -20,6 +20,7 @@
 
 #include "rdbms/Conn.hpp"
 
+#include <memory>
 #include <occi.h>
 
 namespace cta {
@@ -56,7 +57,7 @@ public:
    * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  Conn *createConn(
+  std::unique_ptr<Conn> createConn(
     const std::string &username,
     const std::string &password,
     const std::string &database);

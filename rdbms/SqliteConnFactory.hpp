@@ -46,7 +46,7 @@ public:
    *
    * @return A newly created database connection.
    */
-  virtual Conn *create() override;
+  virtual std::unique_ptr<Conn> create() override;
 
 private:
 

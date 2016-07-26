@@ -19,6 +19,7 @@
 #include "OcciConn.hpp"
 #include "OcciEnv.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -47,7 +48,7 @@ OcciEnv::~OcciEnv() throw() {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-Conn *OcciEnv::createConn(
+std::unique_ptr<Conn> OcciEnv::createConn(
   const std::string &username,
   const std::string &password,
   const std::string &database) {
@@ -57,7 +58,7 @@ Conn *OcciEnv::createConn(
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }
 
-    return new OcciConn(m_env, conn);
+    return make_unique<OcciConn>(m_env, conn);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {

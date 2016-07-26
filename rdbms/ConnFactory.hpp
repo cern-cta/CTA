@@ -20,6 +20,8 @@
 
 #include "Conn.hpp"
 
+#include <memory>
+
 namespace cta {
 namespace rdbms {
 
@@ -39,7 +41,7 @@ public:
    *
    * @return A newly created database connection.
    */
-  virtual Conn *create() = 0;
+  virtual std::unique_ptr<Conn> create() = 0;
 
 }; // class ConnFactory
 

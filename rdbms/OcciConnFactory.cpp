@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "OcciConnFactory.hpp"
 #include "OcciEnvSingleton.hpp"
 
@@ -44,7 +45,7 @@ OcciConnFactory::~OcciConnFactory() throw() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-Conn *OcciConnFactory::create() {
+std::unique_ptr<Conn> OcciConnFactory::create() {
   try {
     return OcciEnvSingleton::instance().createConn(m_username, m_password, m_database);
   } catch(exception::Exception &ex) {

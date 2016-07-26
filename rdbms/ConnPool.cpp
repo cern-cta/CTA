@@ -52,15 +52,6 @@ void ConnPool::createConns(const uint64_t nbConns) {
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-ConnPool::~ConnPool() throw() {
-  for(auto &conn: m_conns) {
-    delete conn;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getConn
 //------------------------------------------------------------------------------
 PooledConn ConnPool::getConn() {
@@ -69,7 +60,7 @@ PooledConn ConnPool::getConn() {
     m_connsCv.wait(lock);
   }
 
-  PooledConn pooledConn(m_conns.front(), this);
+  PooledConn pooledConn(m_conns.front().release(), this);
   m_conns.pop_front();
   return pooledConn;
 }
@@ -79,7 +70,7 @@ PooledConn ConnPool::getConn() {
 //------------------------------------------------------------------------------
 void ConnPool::returnConn(Conn *const conn) {
   std::unique_lock<std::mutex> lock(m_connsMutex);
-  m_conns.push_back(conn);
+  m_conns.emplace_back(conn);
   m_connsCv.notify_one();
 }
 
