@@ -17,9 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/PooledConn.hpp"
 
 #include <iostream>
 #include <memory>

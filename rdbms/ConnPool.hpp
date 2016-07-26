@@ -20,10 +20,10 @@
 
 #include "Conn.hpp"
 #include "ConnFactory.hpp"
-#include "Login.hpp"
 #include "PooledConn.hpp"
 
 #include <condition_variable>
+#include <list>
 #include <memory>
 #include <mutex>
 
@@ -94,15 +94,6 @@ private:
    * The database connections within the pool.
    */
   std::list<Conn *> m_conns;
-
-  /**
-   * Creates the database connection factory for the pool based on the specified
-   * login details.
-   *
-   * @param login The database login details to be used to create new
-   * connections.
-   */
-  void createConnFactory(const Login &login);
 
   /**
    * Creates the specified number of database connections with the pool.
