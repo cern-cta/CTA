@@ -39,14 +39,14 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SqliteConnFactory() throw();
+  virtual ~SqliteConnFactory() throw() override;
 
   /**
    * Returns a newly created database connection.
    *
    * @return A newly created database connection.
    */
-  virtual Conn *create();
+  virtual Conn *create() override;
 
 private:
 
