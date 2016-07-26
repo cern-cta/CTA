@@ -76,20 +76,6 @@ ConnPool::~ConnPool() throw() {
 }
 
 //------------------------------------------------------------------------------
-// getConn
-//------------------------------------------------------------------------------
-Conn *ConnPool::getConn() {
-  std::unique_lock<std::mutex> lock(m_connsMutex);
-  while(m_conns.size() == 0) {
-    m_connsCv.wait(lock);
-  }
-
-  Conn *const conn = m_conns.front();
-  m_conns.pop_front();
-  return conn;
-}
-
-//------------------------------------------------------------------------------
 // getPooledConn
 //------------------------------------------------------------------------------
 PooledConn ConnPool::getPooledConn() {

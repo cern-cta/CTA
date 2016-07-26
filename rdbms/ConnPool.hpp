@@ -69,17 +69,6 @@ public:
    *
    * @return A connection from the pool.
    */
-  Conn *getConn();
-
-  /**
-   * Takes a connection from the pool.
-   *
-   * Please note that this method will block if the pool is empty.  In such a
-   * situation this method will unblock when a connection is returned to the
-   * pool.
-   *
-   * @return A connection from the pool.
-   */
   PooledConn getPooledConn();
 
   /**
