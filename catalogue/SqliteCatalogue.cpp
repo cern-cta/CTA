@@ -53,7 +53,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
   try {
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 
-    auto conn = m_connPool->getPooledConn();
+    auto conn = m_connPool->getConn();
     conn->executeNonQuery("BEGIN EXCLUSIVE;");
     const char *selectSql =
       "SELECT "

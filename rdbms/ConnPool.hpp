@@ -69,7 +69,7 @@ public:
    *
    * @return A connection from the pool.
    */
-  PooledConn getPooledConn();
+  PooledConn getConn();
 
   /**
    * Returns the specified database connection to the pool.

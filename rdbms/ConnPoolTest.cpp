@@ -41,11 +41,11 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   const uint64_t nbConns = 2;
   ConnPool pool(login, nbConns);
 
-  PooledConn conn = pool.getPooledConn();
+  PooledConn conn = pool.getConn();
 
   PooledConn conn2(nullptr, nullptr);
 
-  conn2 = pool.getPooledConn();
+  conn2 = pool.getConn();
 }
 
 } // namespace unitTests

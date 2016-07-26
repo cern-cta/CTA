@@ -39,7 +39,7 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
   const RdbmsCatalogueSchema schema;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
-  auto conn = m_connPool->getPooledConn();
+  auto conn = m_connPool->getConn();
 
   while(std::string::npos != (findResult = schema.sql.find(';', searchPos))) {
     const std::string::size_type length = findResult - searchPos + 1;

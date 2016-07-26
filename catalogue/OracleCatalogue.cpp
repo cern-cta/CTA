@@ -81,7 +81,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
-    auto conn = m_connPool->getPooledConn();
+    auto conn = m_connPool->getConn();
     std::unique_ptr<rdbms::Stmt> selectStmt(conn->createStmt(selectSql));
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());

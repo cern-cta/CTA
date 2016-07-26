@@ -76,9 +76,9 @@ ConnPool::~ConnPool() throw() {
 }
 
 //------------------------------------------------------------------------------
-// getPooledConn
+// getConn
 //------------------------------------------------------------------------------
-PooledConn ConnPool::getPooledConn() {
+PooledConn ConnPool::getConn() {
   std::unique_lock<std::mutex> lock(m_connsMutex);
   while(m_conns.size() == 0) {
     m_connsCv.wait(lock);
