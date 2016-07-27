@@ -50,7 +50,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
       "WHERE "
         "TYPE = 'table';";
     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
     ASSERT_EQ(0, nbTables);
@@ -78,7 +78,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "NAME = 'TEST' AND "
         "TYPE = 'table';";
     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
     ASSERT_EQ(1, nbTables);
@@ -112,7 +112,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
       "FROM "
         "TEST;";
     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_FALSE(rset->next());
   }
 }
@@ -158,7 +158,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
       "FROM "
         "TEST;";
     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const std::string col1 = rset->columnText("COL1");
@@ -218,7 +218,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
       "FROM "
         "TEST;";
     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const std::string col1 = rset->columnText("COL1");
@@ -275,7 +275,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
       "FROM "
         "TEST;";
     std::unique_ptr<Stmt> stmt(connForSelect.createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const uint64_t nbRows = rset->columnUint64("NB_ROWS");

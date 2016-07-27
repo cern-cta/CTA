@@ -136,7 +136,7 @@ void SqliteConn::printSchema(std::ostream &os) {
         "TYPE, "
         "NAME;";
     std::unique_ptr<Stmt> stmt(createStmt(sql));
-    std::unique_ptr<Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
     while (rset->next()) {
