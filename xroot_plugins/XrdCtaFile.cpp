@@ -2200,30 +2200,30 @@ void XrdCtaFile::xCom_deletearchive() {
   params.push_back(log::Param("USERNAME", m_cliIdentity.username));
   params.push_back(log::Param("HOST", m_cliIdentity.host));
   params.push_back(log::Param("archiveFileID", std::to_string(archiveFile.archiveFileID)));
+  params.push_back(log::Param("diskInstance", archiveFile.diskInstance));
+  params.push_back(log::Param("diskFileId", archiveFile.diskFileId));
+  params.push_back(log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
+  params.push_back(log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
+  params.push_back(log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
+  params.push_back(log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
+  params.push_back(log::Param("fileSize", std::to_string(archiveFile.fileSize)));
   params.push_back(log::Param("checksumType", archiveFile.checksumType));
   params.push_back(log::Param("checksumValue", archiveFile.checksumValue));
   params.push_back(log::Param("creationTime", std::to_string(archiveFile.creationTime)));
-  params.push_back(log::Param("diskFileId", archiveFile.diskFileId));
-  params.push_back(log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
-  params.push_back(log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
-  params.push_back(log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
-  params.push_back(log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
-  params.push_back(log::Param("diskInstance", archiveFile.diskInstance));
-  params.push_back(log::Param("fileSize", std::to_string(archiveFile.fileSize)));
   params.push_back(log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
   params.push_back(log::Param("storageClass", archiveFile.storageClass));
   for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
     std::stringstream tapeCopyLogStream;
-    tapeCopyLogStream << "number: " << it->first
-            << " blockId: " << it->second.blockId
-            << " checksumType: " << it->second.checksumType
-            << " checksumValue: " << it->second.checksumValue
-            << " compressedSize: " << it->second.compressedSize
-            << " copyNb: " << it->second.copyNb
-            << " creationTime: " << it->second.creationTime
+    tapeCopyLogStream << "copy number: " << it->first
+            << " vid: " << it->second.vid
             << " fSeq: " << it->second.fSeq
-            << " vid: " << it->second.vid;
-    params.push_back(log::Param("TAPE COPY", tapeCopyLogStream.str()));
+            << " blockId: " << it->second.blockId
+            << " creationTime: " << it->second.creationTime
+            << " compressedSize: " << it->second.compressedSize
+            << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+            << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+            << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+    params.push_back(log::Param("TAPE FILE", tapeCopyLogStream.str()));
   }  
   m_log(log::INFO, "Archive File Deleted", params);  
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
