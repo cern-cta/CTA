@@ -47,7 +47,7 @@ public:
    * @return The newly created CTA catalogue object.  Please note that it is the
    * responsibility of the caller to delete the returned CTA catalogue object.
    */
-  static Catalogue *create(const rdbms::Login &login, const uint64_t nbConns);
+  static std::unique_ptr<Catalogue> create(const rdbms::Login &login, const uint64_t nbConns);
 
 }; // class CatalogueFactory
 

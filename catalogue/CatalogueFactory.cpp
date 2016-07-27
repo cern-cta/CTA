@@ -21,6 +21,7 @@
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -28,15 +29,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-Catalogue *CatalogueFactory::create(const rdbms::Login &login, const uint64_t nbConns) {
+std::unique_ptr<Catalogue> CatalogueFactory::create(const rdbms::Login &login, const uint64_t nbConns) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return new InMemoryCatalogue();
+      return make_unique<InMemoryCatalogue>();
     case rdbms::Login::DBTYPE_ORACLE:
-      return new OracleCatalogue(login.username, login.password, login.database, nbConns);
+      return make_unique<OracleCatalogue>(login.username, login.password, login.database, nbConns);
     case rdbms::Login::DBTYPE_SQLITE:
-      return new SqliteCatalogue(login.database, nbConns);
+      return make_unique<SqliteCatalogue>(login.database, nbConns);
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

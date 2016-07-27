@@ -55,7 +55,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
   using namespace cta::catalogue;
 
   const uint64_t nbConns = 2;
-  m_catalogue.reset(CatalogueFactory::create(GetParam()->create(), nbConns));
+  m_catalogue = CatalogueFactory::create(GetParam()->create(), nbConns);
 
   {
     const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
