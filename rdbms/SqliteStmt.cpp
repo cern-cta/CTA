@@ -101,7 +101,9 @@ void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramVa
 //------------------------------------------------------------------------------
 void SqliteStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
-  const int bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1, SQLITE_TRANSIENT);
+  const int bindRc = paramValue.empty() ?
+    sqlite3_bind_text(m_stmt, paramIdx, nullptr, 0, SQLITE_TRANSIENT) :
+    sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1, SQLITE_TRANSIENT);
   if(SQLITE_OK != bindRc) {
     throw exception::Exception(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
   }
