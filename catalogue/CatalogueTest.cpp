@@ -795,10 +795,10 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_
   storageClass1DiskInstance1.comment = "create storage class";
 
   common::dataStructures::StorageClass storageClass1DiskInstance2;
-  storageClass1DiskInstance1.diskInstance = "disk_instance_2";
-  storageClass1DiskInstance1.name = "storage_class_1";
-  storageClass1DiskInstance1.nbCopies = 2;
-  storageClass1DiskInstance1.comment = "create storage class";
+  storageClass1DiskInstance2.diskInstance = "disk_instance_2";
+  storageClass1DiskInstance2.name = "storage_class_1";
+  storageClass1DiskInstance2.nbCopies = 2;
+  storageClass1DiskInstance2.comment = "create storage class";
 
   m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance1);
   m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance2);
