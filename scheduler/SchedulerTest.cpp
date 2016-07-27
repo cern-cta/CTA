@@ -21,6 +21,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/make_unique.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -85,9 +86,10 @@ public:
 
     const SchedulerTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    //m_catalogue.reset(new catalogue::SchemaCreatingSqliteCatalogue(m_tempSqliteFile.path()));
-    m_catalogue.reset(new catalogue::InMemoryCatalogue());
-    m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
+    const uint64_t nbConns = 1;
+    //m_catalogue = make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+    m_catalogue = make_unique<catalogue::InMemoryCatalogue>(nbConns);
+    m_scheduler = make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
 
   virtual void TearDown() {

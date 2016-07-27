@@ -23,6 +23,7 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "common/TapePool.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendFactory.hpp"
@@ -268,10 +269,9 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   }
   
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
-  const uint64_t nbConns = 2;
+  const uint64_t nbConns = 1;
   m_catalogue = catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
-
-  m_scheduler.reset(new cta::Scheduler(*m_catalogue, m_scheddb, 5, 2*1000*1000));
+  m_scheduler = make_unique<cta::Scheduler>(*m_catalogue, m_scheddb, 5, 2*1000*1000);
 
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.

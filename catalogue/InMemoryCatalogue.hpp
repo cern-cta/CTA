@@ -33,8 +33,10 @@ public:
 
   /**
    * Constructor.
+   *
+   * @param nbConns The maximum number of concurrent connections to the underyling database.
    */
-  InMemoryCatalogue();
+  InMemoryCatalogue(const uint64_t nbConns);
 
   /**
    * Destructor.

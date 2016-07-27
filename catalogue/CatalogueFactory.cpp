@@ -33,7 +33,7 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(const rdbms::Login &login, c
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return make_unique<InMemoryCatalogue>();
+      return make_unique<InMemoryCatalogue>(nbConns);
     case rdbms::Login::DBTYPE_ORACLE:
       return make_unique<OracleCatalogue>(login.username, login.password, login.database, nbConns);
     case rdbms::Login::DBTYPE_SQLITE:

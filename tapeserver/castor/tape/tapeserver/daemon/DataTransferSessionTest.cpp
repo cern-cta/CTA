@@ -41,6 +41,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
 //#include "smc_struct.h"
@@ -114,10 +115,10 @@ public:
 
     const DataTransferSessionTestParam &param = GetParam();
     m_db = param.dbFactory.create();
-    //m_catalogue.reset(new catalogue::SchemaCreatingSqliteCatalogue(m_tempSqliteFile.path()));
-    m_catalogue.reset(new catalogue::InMemoryCatalogue());
-
-    m_scheduler.reset(new cta::Scheduler(*m_catalogue, *m_db, 5, 2*1000*1000));
+    const uint64_t nbConns = 1;
+    //m_catalogue = make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+    m_catalogue = make_unique<catalogue::InMemoryCatalogue>(nbConns);
+    m_scheduler = make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
     
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if(!mkdtemp(m_tmpDir)) {
