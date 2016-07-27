@@ -54,76 +54,81 @@ void cta_catalogue_CatalogueTest::SetUp() {
   using namespace cta;
   using namespace cta::catalogue;
 
-  const uint64_t nbConns = 1;
-  m_catalogue = CatalogueFactory::create(GetParam()->create(), nbConns);
+  try {
+    const uint64_t nbConns = 1;
+    m_catalogue = CatalogueFactory::create(GetParam()->create(), nbConns);
 
-  {
-    const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
-    for(auto &adminUser: adminUsers) {
-      m_catalogue->deleteAdminUser(adminUser.name);
+    {
+      const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
+      for(auto &adminUser: adminUsers) {
+        m_catalogue->deleteAdminUser(adminUser.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::AdminHost> adminHosts = m_catalogue->getAdminHosts();
-    for(auto &adminHost: adminHosts) {
-    m_catalogue->deleteAdminHost(adminHost.name);
+    {
+      const std::list<common::dataStructures::AdminHost> adminHosts = m_catalogue->getAdminHosts();
+      for(auto &adminHost: adminHosts) {
+        m_catalogue->deleteAdminHost(adminHost.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
-    for(auto &archiveRoute: archiveRoutes) {
-      m_catalogue->deleteArchiveRoute(archiveRoute.diskInstanceName, archiveRoute.storageClassName,
-        archiveRoute.copyNb);
+    {
+      const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
+      for(auto &archiveRoute: archiveRoutes) {
+        m_catalogue->deleteArchiveRoute(archiveRoute.diskInstanceName, archiveRoute.storageClassName,
+          archiveRoute.copyNb);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
-    for(auto &rule: rules) {
-      m_catalogue->deleteRequesterMountRule(rule.diskInstance, rule.name);
+    {
+      const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+      for(auto &rule: rules) {
+        m_catalogue->deleteRequesterMountRule(rule.diskInstance, rule.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::RequesterGroupMountRule> rules =
-      m_catalogue->getRequesterGroupMountRules();
-    for(auto &rule: rules) {
-      m_catalogue->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
+    {
+      const std::list<common::dataStructures::RequesterGroupMountRule> rules =
+        m_catalogue->getRequesterGroupMountRules();
+      for(auto &rule: rules) {
+        m_catalogue->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
+      }
     }
-  }
-  {
-    std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
-    while(itor->hasMore()) {
-      m_catalogue->deleteArchiveFile(itor->next().diskInstance, itor->next().archiveFileID);
+    {
+      std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
+      while(itor->hasMore()) {
+        const auto archiveFile = itor->next();
+        m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
-    for(auto &tape: tapes) {
-      m_catalogue->deleteTape(tape.vid);
+    {
+      const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+      for(auto &tape: tapes) {
+        m_catalogue->deleteTape(tape.vid);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
-    for(auto &storageClass: storageClasses) {
-      m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name);
+    {
+      const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+      for(auto &storageClass: storageClasses) {
+        m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::TapePool> tapePools = m_catalogue->getTapePools();
-    for(auto &tapePool: tapePools) {
-      m_catalogue->deleteTapePool(tapePool.name);
+    {
+      const std::list<common::dataStructures::TapePool> tapePools = m_catalogue->getTapePools();
+      for(auto &tapePool: tapePools) {
+        m_catalogue->deleteTapePool(tapePool.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::LogicalLibrary> logicalLibraries = m_catalogue->getLogicalLibraries();
-    for(auto &logicalLibrary: logicalLibraries) {
-      m_catalogue->deleteLogicalLibrary(logicalLibrary.name);
+    {
+      const std::list<common::dataStructures::LogicalLibrary> logicalLibraries = m_catalogue->getLogicalLibraries();
+      for(auto &logicalLibrary: logicalLibraries) {
+        m_catalogue->deleteLogicalLibrary(logicalLibrary.name);
+      }
     }
-  }
-  {
-    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
-    for(auto &mountPolicy: mountPolicies) {
-      m_catalogue->deleteMountPolicy(mountPolicy.name);
+    {
+      const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+      for(auto &mountPolicy: mountPolicies) {
+        m_catalogue->deleteMountPolicy(mountPolicy.name);
+      }
     }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -167,7 +172,7 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_Catal
   try {
     std::map<uint64_t, common::dataStructures::ArchiveFile> m;
     while(itor.hasMore()) {
-      const common::dataStructures::ArchiveFile archiveFile = itor.next();
+      const auto archiveFile = itor.next();
       if(m.end() != m.find(archiveFile.archiveFileID)) {
         exception::Exception ex;
         ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
