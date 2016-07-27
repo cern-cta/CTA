@@ -175,8 +175,8 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName,
-      nbPartialTapes, tapePoolEncryption, tapePoolComment));
+    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName,
+      nbPartialTapes, tapePoolEncryption, tapePoolComment);
     const uint16_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,
@@ -379,8 +379,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   // Create the environment for the migration to happen (library + tape) 
     const std::string libraryComment = "Library comment";
-  ASSERT_NO_THROW(catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment));
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -391,8 +391,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  ASSERT_NO_THROW(catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
-    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment));
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
+    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed
