@@ -118,7 +118,7 @@ void cta::Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void cta::Scheduler::deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request) {
+cta::common::dataStructures::ArchiveFile cta::Scheduler::deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
@@ -126,13 +126,14 @@ void cta::Scheduler::deleteArchive(const std::string &instanceName, const cta::c
     m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
   } catch (cta::exception::Exception &dbEx) {
     // The file was apparently not queued. If we fail to remove it from the catalogue, then it is an error.
-    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   }
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).
   try {
-    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   } catch (cta::exception::UserError &) {}
+  return cta::common::dataStructures::ArchiveFile();
 }
 
 //------------------------------------------------------------------------------

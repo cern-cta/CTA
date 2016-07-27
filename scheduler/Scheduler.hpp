@@ -86,11 +86,11 @@ public:
   virtual void queueRetrieve(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request);
   
   /** 
-   * Delete an archived file or a file which is in the process of being archived.
+   * Delete an archived file or a file which is in the process of being archived. Returns the information about the deleted file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  virtual void deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request);
+  virtual cta::common::dataStructures::ArchiveFile deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request);
   
   /** 
    * Cancel an ongoing retrieval.
