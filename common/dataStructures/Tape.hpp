@@ -48,7 +48,7 @@ struct Tape {
   std::string tapePoolName;
   uint64_t capacityInBytes;
   uint64_t dataOnTapeInBytes;
-  std::string encryptionKey;
+  optional<std::string> encryptionKey;
   bool lbp;
   bool full;
   bool disabled;

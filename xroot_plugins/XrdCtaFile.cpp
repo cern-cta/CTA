@@ -1034,7 +1034,7 @@ void XrdCtaFile::xCom_tape() {
         currentRow.push_back(it->vid);
         currentRow.push_back(it->logicalLibraryName);
         currentRow.push_back(it->tapePoolName);
-        currentRow.push_back(it->encryptionKey);
+        currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "null");
         currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
         currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));

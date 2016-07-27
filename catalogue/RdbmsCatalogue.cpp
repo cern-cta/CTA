@@ -1305,7 +1305,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       tape.vid = rset->columnText("VID");
       tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
+      tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
@@ -1405,7 +1405,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.vid = rset->columnText("VID");
       tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnText("ENCRYPTION_KEY");
+      tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
