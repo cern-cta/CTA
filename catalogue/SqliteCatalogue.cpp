@@ -164,7 +164,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         "FROM "
           "ARCHIVE_FILE_ID";
       std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
-      std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+      auto rset = stmt->executeQuery();
       if(!rset->next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
@@ -228,7 +228,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &c
 
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if (!rset->next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }

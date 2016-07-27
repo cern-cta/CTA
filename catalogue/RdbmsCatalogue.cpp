@@ -140,7 +140,7 @@ bool RdbmsCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminU
         "ADMIN_USER_NAME = :ADMIN_USER_NAME";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":ADMIN_USER_NAME", adminUsername);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -192,7 +192,7 @@ RdbmsCatalogue::getAdminUsers() const {
         "ADMIN_USER";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::AdminUser admin;
 
@@ -297,7 +297,7 @@ bool RdbmsCatalogue::adminHostExists(rdbms::Conn &conn, const std::string adminH
         "ADMIN_HOST_NAME = :ADMIN_HOST_NAME";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":ADMIN_HOST_NAME", adminHost);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -348,7 +348,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "ADMIN_HOST";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::AdminHost host;
 
@@ -462,7 +462,7 @@ bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &di
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -524,7 +524,7 @@ std::list<common::dataStructures::StorageClass>
         "STORAGE_CLASS";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::StorageClass storageClass;
 
@@ -646,7 +646,7 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -699,7 +699,7 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
         "TAPE_POOL";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::TapePool pool;
 
@@ -870,7 +870,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
         "ARCHIVE_ROUTE";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::ArchiveRoute route;
 
@@ -984,7 +984,7 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1036,7 +1036,7 @@ std::list<common::dataStructures::LogicalLibrary>
         "LOGICAL_LIBRARY";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::LogicalLibrary lib;
 
@@ -1173,7 +1173,7 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
         "VID = :VID";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1298,7 +1298,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(searchCriteria.full) stmt->bindUint64(":IS_FULL", searchCriteria.full.value() ? 1 : 0);
     if(searchCriteria.lbp) stmt->bindUint64(":LBP_IS_ON", searchCriteria.lbp.value() ? 1 : 0);
 
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::Tape tape;
 
@@ -1398,7 +1398,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       }
     }
 
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::Tape tape;
 
@@ -1782,7 +1782,7 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
         "REQUESTER_MOUNT_RULE";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while(rset->next()) {
       common::dataStructures::RequesterMountRule rule;
 
@@ -1951,7 +1951,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if(rset->next()) {
       std::unique_ptr<common::dataStructures::MountPolicy> policy(new common::dataStructures::MountPolicy);
 
@@ -2007,7 +2007,7 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
         "REQUESTER_GROUP_MOUNT_RULE";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while(rset->next()) {
       common::dataStructures::RequesterGroupMountRule rule;
 
@@ -2075,7 +2075,7 @@ bool RdbmsCatalogue::mountPolicyExists(rdbms::Conn &conn, const std::string &mou
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2099,7 +2099,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2147,7 +2147,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if(rset->next()) {
       std::unique_ptr<common::dataStructures::MountPolicy> policy(new common::dataStructures::MountPolicy);
 
@@ -2199,7 +2199,7 @@ bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::Conn &conn, const std:
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     return rset->next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -2258,7 +2258,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       common::dataStructures::MountPolicy policy;
 
@@ -2669,7 +2669,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
     if(searchCriteria.tapePool) {
       stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
     while (rset->next() && archiveFiles.size() < maxNbArchiveFiles ) {
       const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
@@ -2816,7 +2816,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       const uint64_t copyNb = rset->columnUint64("COPY_NB");
       const std::string tapePoolName = rset->columnText("TAPE_POOL_NAME");
@@ -2846,7 +2846,7 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if(!rset->next()) {
       throw exception::Exception("Result set of SELECT COUNT(*) is empty");
     }
@@ -3129,7 +3129,7 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
     stmt->bindString(":GROUP_DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
 
     RequesterAndGroupMountPolicies policies;
     while(rset->next()) {
@@ -3183,7 +3183,7 @@ bool RdbmsCatalogue::userIsAdmin(rdbms::Conn &conn, const std::string &userName)
       "ADMIN_USER_NAME = :ADMIN_USER_NAME";
   std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
   stmt->bindString(":ADMIN_USER_NAME", userName);
-  std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+  auto rset = stmt->executeQuery();
   return rset->next();
 }
 
@@ -3200,7 +3200,7 @@ bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName)
       "ADMIN_HOST_NAME = :ADMIN_HOST_NAME";
   std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
   stmt->bindString(":ADMIN_HOST_NAME", hostName);
-  std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+  auto rset = stmt->executeQuery();
   return rset->next();
 }
 
@@ -3227,7 +3227,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       TapeForWriting tape;
 
@@ -3331,7 +3331,7 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &v
         "VID = :VID";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if(rset->next()) {
       return rset->columnUint64("LAST_FSEQ");
     } else {
@@ -3377,7 +3377,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset->next()) {
       if(nullptr == archiveFile.get()) {

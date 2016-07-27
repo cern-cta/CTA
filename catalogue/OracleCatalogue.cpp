@@ -160,7 +160,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
       "FROM "
         "DUAL";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if (!rset->next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
@@ -214,7 +214,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
       "FOR UPDATE";
     std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
     stmt->bindString(":VID", vid);
-    std::unique_ptr<rdbms::Rset> rset(stmt->executeQuery());
+    auto rset = stmt->executeQuery();
     if (!rset->next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
