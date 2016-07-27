@@ -20,6 +20,7 @@
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -83,7 +84,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile.reset(new common::dataStructures::ArchiveFile);
+        archiveFile = make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE_NAME");

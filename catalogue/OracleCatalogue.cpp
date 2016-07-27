@@ -19,6 +19,7 @@
 #include "catalogue/OracleCatalogue.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 
@@ -85,7 +86,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset->next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile.reset(new common::dataStructures::ArchiveFile);
+        archiveFile = make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE_NAME");
