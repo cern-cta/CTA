@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/SqliteConnFactory.hpp"
 
@@ -26,15 +27,15 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-ConnFactory *ConnFactoryFactory::create(const Login &login) {
+std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return new SqliteConnFactory(":memory:");
+      return make_unique<SqliteConnFactory>(":memory:");
     case rdbms::Login::DBTYPE_ORACLE:
       throw exception::Exception("OCCI support disabled at compile time");
     case rdbms::Login::DBTYPE_SQLITE:
-      return new SqliteConnFactory(login.database);
+      return make_unique<SqliteConnFactory>(login.database);
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:
