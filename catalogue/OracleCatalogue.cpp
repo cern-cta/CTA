@@ -79,7 +79,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
     auto conn = m_connPool.getConn();
-    std::unique_ptr<rdbms::Stmt> selectStmt(conn->createStmt(selectSql));
+    auto selectStmt = conn->createStmt(selectSql);
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
@@ -127,14 +127,14 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
+      auto stmt = conn->createStmt(sql);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(conn->createStmt(sql));
+      auto stmt = conn->createStmt(sql);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
