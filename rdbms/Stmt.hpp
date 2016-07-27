@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/optional.hpp"
 #include "rdbms/Rset.hpp"
 
 #include <memory>
@@ -59,12 +60,28 @@ public:
   virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) = 0;
 
   /** 
-   * Binds an SQL parameter.
+   * Binds an SQL parameter of type string.
+   *
+   * Please note that this method will throw an exception if the string
+   * parameter is empty.  If a null value is to be bound then the
+   * bindOptionalString() method should be used.
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
   virtual void bindString(const std::string &paramName, const std::string &paramValue) = 0;
+
+  /** 
+   * Binds an SQL parameter of type optional-string.
+   *
+   * Please note that this method will throw an exception if the optional string
+   * parameter has the empty string as its value.  An optional string parameter
+   * should either have a non-empty string value or no value at all.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */ 
+  virtual void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) = 0;
 
   /**
    *  Executes the statement and returns the result set.

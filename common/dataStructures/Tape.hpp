@@ -48,7 +48,15 @@ struct Tape {
   std::string tapePoolName;
   uint64_t capacityInBytes;
   uint64_t dataOnTapeInBytes;
+
+  /**
+   * The optional identifier of the encrption key.
+   *
+   * This optional should either have a non-empty string value or no value at
+   * all.  Empty strings are prohibited.
+   */
   optional<std::string> encryptionKey;
+
   bool lbp;
   bool full;
   bool disabled;

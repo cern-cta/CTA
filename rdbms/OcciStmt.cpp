@@ -102,8 +102,28 @@ void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValu
 //------------------------------------------------------------------------------
 void OcciStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   try {
+    bindOptionalString(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalString
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+  try {
+    if(paramValue && paramValue.value().empty()) {
+      throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
+        " An optional string parameter should either have a non-empty string value or no value at all."); 
+    }
+
     const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
-    m_stmt->setString(paramIdx, paramValue);
+    if(paramValue) {
+      m_stmt->setString(paramIdx, paramValue.value());
+    } else {
+      m_stmt->setString(paramIdx, nullptr);
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
       ex.getMessage().str());

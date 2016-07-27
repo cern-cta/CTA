@@ -352,8 +352,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName,
-    s_tapePoolName, "", capacityInBytes, notDisabled, notFull, tapeComment);
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+    notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
   {

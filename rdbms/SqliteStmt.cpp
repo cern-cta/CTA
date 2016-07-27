@@ -101,12 +101,36 @@ void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramVa
 // bind
 //------------------------------------------------------------------------------
 void SqliteStmt::bindString(const std::string &paramName, const std::string &paramValue) {
-  const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
-  const int bindRc = paramValue.empty() ?
-    sqlite3_bind_text(m_stmt, paramIdx, nullptr, 0, SQLITE_TRANSIENT) :
-    sqlite3_bind_text(m_stmt, paramIdx, paramValue.c_str(), -1, SQLITE_TRANSIENT);
-  if(SQLITE_OK != bindRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
+  try {
+    bindOptionalString(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str()); 
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalString
+//------------------------------------------------------------------------------
+void SqliteStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+  try {
+    if(paramValue && paramValue.value().empty()) {
+      throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
+        " An optional string parameter should either have a non-empty string value or no value at all.");
+    }
+    const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
+    int bindRc = 0;
+    if(paramValue) {
+      bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.value().c_str(), -1, SQLITE_TRANSIENT);
+    } else {    
+      bindRc = sqlite3_bind_text(m_stmt, paramIdx, nullptr, 0, SQLITE_TRANSIENT);
+    }
+    if(SQLITE_OK != bindRc) {
+      throw exception::Exception(getSql());
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str()); 
   }
 }
 
