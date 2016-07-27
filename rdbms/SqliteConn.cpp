@@ -17,9 +17,10 @@
  */
 
 #include "catalogue/RdbmsCatalogueSchema.hpp"
-#include "SqliteConn.hpp"
-#include "SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
+#include "rdbms/SqliteConn.hpp"
+#include "rdbms/SqliteStmt.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -78,7 +79,7 @@ void SqliteConn::close() {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-Stmt *SqliteConn::createStmt(const std::string &sql) {
+std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -91,7 +92,7 @@ Stmt *SqliteConn::createStmt(const std::string &sql) {
       throw exception::Exception(msg);
     }
 
-    return new SqliteStmt(*this, sql, stmt);
+    return make_unique<SqliteStmt>(*this, sql, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

@@ -52,12 +52,12 @@ public:
   /**
    * Destructor.
    */
-  ~OcciConn() throw();
+  ~OcciConn() throw() override;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  virtual void close();
+  virtual void close() override;
 
   /**
    * Returns the underlying OCCI connection.
@@ -81,17 +81,17 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual Stmt *createStmt(const std::string &sql);
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.
    */
-  virtual void commit();
+  virtual void commit() override;
 
   /**
    * Rolls back the current transaction.
    */
-  virtual void rollback();
+  virtual void rollback() override;
 
 private:
 

@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OcciConn.hpp"
-#include "OcciEnv.hpp"
-#include "OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
+#include "rdbms/OcciConn.hpp"
+#include "rdbms/OcciEnv.hpp"
+#include "rdbms/OcciStmt.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -79,14 +80,14 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-Stmt *OcciConn::createStmt(const std::string &sql) {
+std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
   try {
     oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
     if (nullptr == stmt) {
       throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
 
-    return new OcciStmt(sql, *this, stmt);
+    return make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

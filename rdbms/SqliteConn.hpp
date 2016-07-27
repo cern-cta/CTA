@@ -54,7 +54,7 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteConn() throw();
+  ~SqliteConn() throw() override;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -67,17 +67,17 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual Stmt *createStmt(const std::string &sql);
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.
    */
-  virtual void commit();
+  virtual void commit() override;
 
   /**
    * Rolls back the current transaction.
    */
-  virtual void rollback();
+  virtual void rollback() override;
 
   /**
    * This ia an SqliteConn specific method that prints the database schema to

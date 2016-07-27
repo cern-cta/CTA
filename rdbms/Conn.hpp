@@ -20,6 +20,8 @@
 
 #include "Stmt.hpp"
 
+#include <memory>
+
 namespace cta {
 namespace rdbms {
 
@@ -45,7 +47,7 @@ public:
    * @sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual Stmt *createStmt(const std::string &sql) = 0;
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) = 0;
 
   /**
    * Convenience function implemented in Conn around Conn::createStmt(),
