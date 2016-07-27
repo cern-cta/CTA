@@ -87,7 +87,7 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
       throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
 
-    return make_unique<OcciStmt>(sql, *this, stmt);
+    return cta::make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

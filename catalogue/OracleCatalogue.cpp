@@ -86,7 +86,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset->next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE_NAME");

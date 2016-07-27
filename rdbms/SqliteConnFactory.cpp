@@ -42,7 +42,7 @@ SqliteConnFactory::~SqliteConnFactory() throw() {
 //------------------------------------------------------------------------------
 std::unique_ptr<Conn> SqliteConnFactory::create() {
   try {
-    return make_unique<SqliteConn>(m_filename);
+    return cta::make_unique<SqliteConn>(m_filename);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

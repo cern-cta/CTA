@@ -1954,7 +1954,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt->executeQuery();
     if(rset->next()) {
-      auto policy = make_unique<common::dataStructures::MountPolicy>();
+      auto policy = cta::make_unique<common::dataStructures::MountPolicy>();
 
       policy->name = rset->columnText("MOUNT_POLICY_NAME");
 
@@ -2150,7 +2150,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
     stmt->bindString(":REQUESTER_NAME", requesterName);
     auto rset = stmt->executeQuery();
     if(rset->next()) {
-      auto policy = make_unique<common::dataStructures::MountPolicy>();
+      auto policy = cta::make_unique<common::dataStructures::MountPolicy>();
 
       policy->name = rset->columnText("MOUNT_POLICY_NAME");
 
@@ -2494,7 +2494,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
   try {
-    return make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
+    return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3382,7 +3382,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset->next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset->columnText("DISK_INSTANCE_NAME");

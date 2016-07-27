@@ -31,11 +31,11 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return make_unique<SqliteConnFactory>(":memory:");
+      return cta::make_unique<SqliteConnFactory>(":memory:");
     case rdbms::Login::DBTYPE_ORACLE:
       throw exception::Exception("OCCI support disabled at compile time");
     case rdbms::Login::DBTYPE_SQLITE:
-      return make_unique<SqliteConnFactory>(login.database);
+      return cta::make_unique<SqliteConnFactory>(login.database);
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

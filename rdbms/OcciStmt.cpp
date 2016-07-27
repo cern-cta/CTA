@@ -119,7 +119,7 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
   using namespace oracle;
 
   try {
-    return make_unique<OcciRset>(*this, m_stmt->executeQuery());
+    return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
       ex.getMessage().str());

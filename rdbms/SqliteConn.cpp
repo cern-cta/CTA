@@ -92,7 +92,7 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
       throw exception::Exception(msg);
     }
 
-    return make_unique<SqliteStmt>(*this, sql, stmt);
+    return cta::make_unique<SqliteStmt>(*this, sql, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

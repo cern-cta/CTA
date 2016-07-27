@@ -114,7 +114,7 @@ void SqliteStmt::bindString(const std::string &paramName, const std::string &par
 // executeQuery
 //------------------------------------------------------------------------------
 std::unique_ptr<Rset> SqliteStmt::executeQuery() {
-  return make_unique<SqliteRset>(*this);
+  return cta::make_unique<SqliteRset>(*this);
 }
 
 //------------------------------------------------------------------------------
