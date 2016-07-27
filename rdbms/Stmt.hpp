@@ -18,8 +18,9 @@
 
 #pragma once
 
-#include "Rset.hpp"
+#include "rdbms/Rset.hpp"
 
+#include <memory>
 #include <stdint.h>
 #include <string>
 
@@ -71,7 +72,7 @@ public:
    *  @return The result set.  Please note that it is the responsibility of the
    *  caller to free the memory associated with the result set.
    */
-  virtual Rset *executeQuery() = 0;
+  virtual std::unique_ptr<Rset> executeQuery() = 0;
 
   /**
    * Executes the statement.

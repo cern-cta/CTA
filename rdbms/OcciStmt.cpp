@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OcciConn.hpp"
-#include "OcciRset.hpp"
-#include "OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
+#include "rdbms/OcciConn.hpp"
+#include "rdbms/OcciRset.hpp"
+#include "rdbms/OcciStmt.hpp"
 
 #include <cstring>
 #include <iostream>
@@ -114,11 +115,11 @@ void OcciStmt::bindString(const std::string &paramName, const std::string &param
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-Rset *OcciStmt::executeQuery() {
+std::unique_ptr<Rset> OcciStmt::executeQuery() {
   using namespace oracle;
 
   try {
-    return new OcciRset(*this, m_stmt->executeQuery());
+    return make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
       ex.getMessage().str());

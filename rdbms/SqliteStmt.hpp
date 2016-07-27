@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "Stmt.hpp"
-#include "ParamNameToIdx.hpp"
+#include "rdbms/ParamNameToIdx.hpp"
+#include "rdbms/Stmt.hpp"
 
 #include <map>
 #include <memory>
@@ -51,12 +51,12 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SqliteStmt() throw();
+  virtual ~SqliteStmt() throw() override;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  virtual void close();
+  virtual void close() override;
 
   /**
    * Returns a pointer to the underlying prepared statement.
@@ -73,7 +73,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const;
+  virtual const std::string &getSql() const override;
 
   /**
    * Binds an SQL parameter.
@@ -81,7 +81,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue);
+  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) override;
 
   /** 
    * Binds an SQL parameter.
@@ -89,7 +89,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bindString(const std::string &paramName, const std::string &paramValue);
+  virtual void bindString(const std::string &paramName, const std::string &paramValue) override;
 
   /**
    * Executes the statement and returns the result set.
@@ -97,12 +97,12 @@ public:
    * @return The result set.  Please note that it is the responsibility of the
    * caller to free the memory associated with the result set.
    */
-  virtual Rset *executeQuery();
+  virtual std::unique_ptr<Rset> executeQuery() override;
 
   /**
    * Executes the statement.
    */
-  virtual void executeNonQuery();
+  virtual void executeNonQuery() override;
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -110,7 +110,7 @@ public:
    *
    * @return The number of affected rows.
    */
-  virtual uint64_t getNbAffectedRows() const;
+  virtual uint64_t getNbAffectedRows() const override;
 
 private:
 

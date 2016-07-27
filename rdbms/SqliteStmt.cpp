@@ -16,11 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Sqlite.hpp"
-#include "SqliteConn.hpp"
-#include "SqliteRset.hpp"
-#include "SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
+#include "rdbms/Sqlite.hpp"
+#include "rdbms/SqliteConn.hpp"
+#include "rdbms/SqliteRset.hpp"
+#include "rdbms/SqliteStmt.hpp"
 
 #include <cstring>
 #include <stdexcept>
@@ -112,8 +113,8 @@ void SqliteStmt::bindString(const std::string &paramName, const std::string &par
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-Rset *SqliteStmt::executeQuery() {
-  return new SqliteRset(*this);
+std::unique_ptr<Rset> SqliteStmt::executeQuery() {
+  return make_unique<SqliteRset>(*this);
 }
 
 //------------------------------------------------------------------------------
