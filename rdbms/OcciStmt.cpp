@@ -122,7 +122,7 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
     if(paramValue) {
       m_stmt->setString(paramIdx, paramValue.value());
     } else {
-      m_stmt->setString(paramIdx, nullptr);
+      m_stmt->setNull(paramIdx, oracle::occi::OCCISTRING);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
