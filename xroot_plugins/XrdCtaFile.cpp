@@ -956,19 +956,19 @@ void XrdCtaFile::xCom_tape() {
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, true, false);
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
       optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, true, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, true, true, "-");
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, true, "-");
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, true, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", false, true, false);
       checkOptions(help.str());
-      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey.value(), capacity.value(), disabled.value(), full.value(), comment.value());
+      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey, capacity.value(), disabled.value(), full.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
       optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
       optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", false, false, false);
       checkOptions(help.str());
@@ -1000,11 +1000,11 @@ void XrdCtaFile::xCom_tape() {
     }
     else if("label" == m_requestTokens.at(2)) { //label
       //the tag will be set to "-" in case it's missing from the cmdline; which means no tagging
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, true, "-"); 
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false); 
       optional<bool> force = getOptionBoolValue("-f", "--force", false, false, true, "false");
       optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, false, true, "true");
       checkOptions(help.str());
-      m_scheduler->labelTape(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag.value());
+      m_scheduler->labelTape(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
     }
     else { //rm
       checkOptions(help.str());
@@ -1398,7 +1398,7 @@ void XrdCtaFile::xCom_dedication() {
         else if(writeonly) {
           type=cta::common::dataStructures::DedicationType::writeonly;
         }
-        m_catalogue->createDedication(m_cliIdentity, drive.value(), type, tag.value(), vid.value(), from.value(), until.value(), comment.value());
+        m_catalogue->createDedication(m_cliIdentity, drive.value(), type, tag, vid, from.value(), until.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
         optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false, false);
@@ -1420,10 +1420,10 @@ void XrdCtaFile::xCom_dedication() {
           m_catalogue->modifyDedicationUntil(m_cliIdentity, drive.value(), until.value());
         }
         if(vid) {
-          m_catalogue->modifyDedicationVid(m_cliIdentity, drive.value(), vid.value());
+          m_catalogue->modifyDedicationVid(m_cliIdentity, drive.value(), vid);
         }
         if(tag) {
-          m_catalogue->modifyDedicationTag(m_cliIdentity, drive.value(), tag.value());
+          m_catalogue->modifyDedicationTag(m_cliIdentity, drive.value(), tag);
         }
         if(readonly) {
           m_catalogue->modifyDedicationType(m_cliIdentity, drive.value(), cta::common::dataStructures::DedicationType::readonly);          
@@ -1498,7 +1498,6 @@ void XrdCtaFile::xCom_repack() {
     }  
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
-      std::string tag_value = tag? tag.value():"-";
       bool justexpand = hasOption("-e", "--justexpand");
       bool justrepack = hasOption("-r", "--justrepack");
       cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
@@ -1512,7 +1511,7 @@ void XrdCtaFile::xCom_repack() {
         throw cta::exception::UserError(help.str());
       }
       checkOptions(help.str());
-      m_scheduler->repack(m_cliIdentity, vid.value(), tag_value, type);
+      m_scheduler->repack(m_cliIdentity, vid.value(), tag, type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
       cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid.value());
@@ -1616,11 +1615,9 @@ void XrdCtaFile::xCom_verify() {
     optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
     if("add" == m_requestTokens.at(2)) { //add
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
-      std::string tag_value = tag? tag.value():"-";
-      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, true, true, "0");
-      //0 means do a complete verification
+      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false, false); //nullopt means do a complete verification      
       checkOptions(help.str());
-      m_scheduler->verify(m_cliIdentity, vid.value(), tag.value(), numberOfFiles.value());
+      m_scheduler->verify(m_cliIdentity, vid.value(), tag, numberOfFiles);
     }
     else if("err" == m_requestTokens.at(2)) { //err
       checkOptions(help.str());

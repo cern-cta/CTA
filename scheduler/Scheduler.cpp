@@ -167,7 +167,7 @@ std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorage
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const std::string &tag) {
+void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -202,7 +202,7 @@ void cta::Scheduler::setTapeLbp(const cta::common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tag, const cta::common::dataStructures::RepackType) {
+void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -237,7 +237,7 @@ void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tag, const uint64_t numberOfFiles) {
+void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

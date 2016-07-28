@@ -2371,7 +2371,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 // createDedication
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
- const std::string &tag, const std::string &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
+ const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -2399,14 +2399,14 @@ void RdbmsCatalogue::modifyDedicationType(const common::dataStructures::Security
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &tag) {
+void RdbmsCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &vid) {
+void RdbmsCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
