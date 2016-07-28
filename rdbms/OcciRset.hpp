@@ -100,11 +100,6 @@ public:
   virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
 
   /**
-   * Idempotent close() method.  The destructor calls this method.
-   */
-  void close();
-
-  /**
    * Returns the underlying OCCI result set.
    *
    * This method will always return a valid pointer.
@@ -141,6 +136,11 @@ private:
    * Map from column name to column index.
    */
   ColumnNameToIdx m_colNameToIdx;
+
+  /**
+   * Idempotent close() method.  The destructor calls this method.
+   */
+  void close();
 
   /**
    * Populates the map from column name to column index.
