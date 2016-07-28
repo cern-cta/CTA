@@ -99,22 +99,6 @@ public:
    */
   virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
 
-  /**
-   * Returns the underlying OCCI result set.
-   *
-   * This method will always return a valid pointer.
-   *
-   * @return The underlying OCCI result set.
-   */
-  oracle::occi::ResultSet *get() const;
-
-  /**
-   * An alias for the get() method.
-   *
-   * @return The underlying OCCI result set.
-   */
-  oracle::occi::ResultSet *operator->() const;
-
 private:
 
   /**
