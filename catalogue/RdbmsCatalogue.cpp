@@ -1311,7 +1311,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       tape.vid = rset->columnString("VID");
       tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
+      tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
@@ -1411,7 +1411,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.vid = rset->columnString("VID");
       tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
+      tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
@@ -1450,7 +1450,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const rdbms::Rset &rset,
   const std::string &driveColName, const std::string &timeColName) const {
   try {
-    const optional<std::string> drive = rset.columnOptionalText(driveColName);
+    const optional<std::string> drive = rset.columnOptionalString(driveColName);
     const optional<uint64_t> time = rset.columnOptionalUint64(timeColName);
 
     if(!drive && !time) {

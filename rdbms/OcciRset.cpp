@@ -140,9 +140,9 @@ oracle::occi::ResultSet *OcciRset::operator->() const {
 }
 
 //------------------------------------------------------------------------------
-// columnOptionalText
+// columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> OcciRset::columnOptionalText(const std::string &colName) const {
+optional<std::string> OcciRset::columnOptionalString(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);

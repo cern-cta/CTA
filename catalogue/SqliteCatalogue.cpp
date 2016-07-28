@@ -239,7 +239,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &c
     tape.vid = rset->columnString("VID");
     tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
     tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-    tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
+    tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
     tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset->columnUint64("LAST_FSEQ");

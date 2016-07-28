@@ -33,7 +33,7 @@ Rset::~Rset() throw() {
 //------------------------------------------------------------------------------
 std::string Rset::columnString(const std::string &colName) const {
   try {
-    const optional<std::string> col = columnOptionalText(colName);
+    const optional<std::string> col = columnOptionalString(colName);
     if(col) {
       return col.value();
     } else {

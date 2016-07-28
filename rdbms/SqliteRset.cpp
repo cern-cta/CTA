@@ -210,9 +210,9 @@ bool SqliteRset::columnIsNull(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
-// columnOptionalText
+// columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> SqliteRset::columnOptionalText(const std::string &colName) const {
+optional<std::string> SqliteRset::columnOptionalString(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {

@@ -79,7 +79,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual optional<std::string> columnOptionalText(const std::string &colName) const = 0;
+  virtual optional<std::string> columnOptionalString(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
