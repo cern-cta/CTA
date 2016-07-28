@@ -87,25 +87,45 @@ const std::string &SqliteStmt::getSql() const {
 }
 
 //------------------------------------------------------------------------------
-// bind
+// bindUint64
 //------------------------------------------------------------------------------
 void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
-  const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
-  const int bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64)paramValue);
-  if(SQLITE_OK != bindRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + "failed for SQL statement " + getSql());
+  try {
+    bindOptionalUint64(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
-// bind
+// bindOptionalUint64
+//------------------------------------------------------------------------------
+void SqliteStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+  try {
+    const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
+    int bindRc = 0;
+    if(paramValue) {
+      bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64) paramValue.value());
+    } else {
+      bindRc = sqlite3_bind_null(m_stmt, paramIdx);
+    }
+    if(SQLITE_OK != bindRc) {
+      throw exception::Exception("sqlite3_bind_int64() failed");
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
+      ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindString
 //------------------------------------------------------------------------------
 void SqliteStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   try {
     bindOptionalString(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ex.getMessage().str()); 
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -123,10 +143,10 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
     if(paramValue) {
       bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.value().c_str(), -1, SQLITE_TRANSIENT);
     } else {    
-      bindRc = sqlite3_bind_text(m_stmt, paramIdx, nullptr, 0, SQLITE_TRANSIENT);
+      bindRc = sqlite3_bind_null(m_stmt, paramIdx);
     }
     if(SQLITE_OK != bindRc) {
-      throw exception::Exception(getSql());
+      throw exception::Exception("sqlite3_bind_text() failed");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +

@@ -59,6 +59,14 @@ public:
    */
   virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) = 0;
 
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  virtual void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) = 0;
+
   /** 
    * Binds an SQL parameter of type string.
    *

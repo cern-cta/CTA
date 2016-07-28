@@ -83,12 +83,28 @@ const std::string &OcciStmt::getSql() const {
 }
 
 //------------------------------------------------------------------------------
-// bind
+// bindUint64
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
+    bindOptionalUint64(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint64
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+  try {
     const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
-    m_stmt->setString(paramIdx, std::to_string(paramValue));
+    if(paramValue) {
+      // Bind integer as a string in order to support 64-bit integers
+      m_stmt->setString(paramIdx, std::to_string(paramValue.value()));
+    } else {
+      m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
       ex.getMessage().str());
