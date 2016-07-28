@@ -27,7 +27,8 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(const uint64_t nbConns): SchemaCreatingSqliteCatalogue(":memory:", nbConns) {
+InMemoryCatalogue::InMemoryCatalogue(const uint64_t nbConns):
+  SchemaCreatingSqliteCatalogue("file::memory:?cache=shared", nbConns) {
 }
 
 //------------------------------------------------------------------------------
