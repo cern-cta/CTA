@@ -161,8 +161,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
-    const std::string col1 = rset->columnText("COL1");
-    const std::string col2 = rset->columnText("COL2");
+    const std::string col1 = rset->columnString("COL1");
+    const std::string col2 = rset->columnString("COL2");
     const uint64_t col3 = rset->columnUint64("COL3");
 
     ASSERT_EQ("one", col1);
@@ -221,8 +221,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
-    const std::string col1 = rset->columnText("COL1");
-    const std::string col2 = rset->columnText("COL2");
+    const std::string col1 = rset->columnString("COL1");
+    const std::string col2 = rset->columnString("COL2");
     const uint64_t col3 = rset->columnUint64("COL3");
 
     ASSERT_EQ("one", col1);

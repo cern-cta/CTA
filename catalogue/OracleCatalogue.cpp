@@ -89,16 +89,16 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
         archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset->columnText("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset->columnText("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset->columnText("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset->columnText("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset->columnText("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnText("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->diskInstance = selectRset->columnString("DISK_INSTANCE_NAME");
+        archiveFile->diskFileId = selectRset->columnString("DISK_FILE_ID");
+        archiveFile->diskFileInfo.path = selectRset->columnString("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = selectRset->columnString("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = selectRset->columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = selectRset->columnUint64("FILE_SIZE");
-        archiveFile->checksumType = selectRset->columnText("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset->columnText("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset->columnText("STORAGE_CLASS_NAME");
+        archiveFile->checksumType = selectRset->columnString("CHECKSUM_TYPE");
+        archiveFile->checksumValue = selectRset->columnString("CHECKSUM_VALUE");
+        archiveFile->storageClass = selectRset->columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset->columnUint64("RECONCILIATION_TIME");
       }
@@ -107,7 +107,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(const std
       if(!selectRset->columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset->columnText("VID");
+        tapeFile.vid = selectRset->columnString("VID");
         tapeFile.fSeq = selectRset->columnUint64("FSEQ");
         tapeFile.blockId = selectRset->columnUint64("BLOCK_ID");
         tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE");
@@ -222,9 +222,9 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 
     common::dataStructures::Tape tape;
 
-    tape.vid = rset->columnText("VID");
-    tape.logicalLibraryName = rset->columnText("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset->columnText("TAPE_POOL_NAME");
+    tape.vid = rset->columnString("VID");
+    tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
+    tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
     tape.encryptionKey = rset->columnOptionalText("ENCRYPTION_KEY");
     tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
@@ -237,24 +237,24 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
     tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
     tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-    tape.comment = rset->columnText("USER_COMMENT");
+    tape.comment = rset->columnString("USER_COMMENT");
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnText("CREATION_LOG_USER_NAME");
+    creatorUI.name = rset->columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnText("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnText("CREATION_LOG_HOST_NAME");
+    creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
+    creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
     creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
 
     tape.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnText("LAST_UPDATE_USER_NAME");
+    updaterUI.name = rset->columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnText("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnText("LAST_UPDATE_HOST_NAME");
+    updateLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
+    updateLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
     updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
 
     tape.lastModificationLog = updateLog;

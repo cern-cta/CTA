@@ -140,8 +140,8 @@ void SqliteConn::printSchema(std::ostream &os) {
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
     while (rset->next()) {
-      const std::string name = rset->columnText("NAME");
-      const std::string type = rset->columnText("TYPE");
+      const std::string name = rset->columnString("NAME");
+      const std::string type = rset->columnString("TYPE");
       os << name << ", " << type << std::endl;
     }
   } catch(exception::Exception &ex) {

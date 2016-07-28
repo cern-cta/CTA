@@ -29,9 +29,9 @@ Rset::~Rset() throw() {
 }
 
 //------------------------------------------------------------------------------
-// columnText
+// columnString
 //------------------------------------------------------------------------------
-std::string Rset::columnText(const std::string &colName) const {
+std::string Rset::columnString(const std::string &colName) const {
   try {
     const optional<std::string> col = columnOptionalText(colName);
     if(col) {

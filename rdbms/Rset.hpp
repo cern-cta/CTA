@@ -69,7 +69,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::string columnText(const std::string &colName) const;
+  std::string columnString(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a string.
