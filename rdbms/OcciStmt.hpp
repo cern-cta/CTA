@@ -50,11 +50,11 @@ public:
   /**
    * Constructor.
    *
+   * @param autocommitMode The autocommit mode of the statement.
    * @param sql The SQL statement.
    * @param conn The database connection.
-   * @param stmt The prepared statement.
    */
-  OcciStmt(const std::string &sql, OcciConn &conn, oracle::occi::Statement *const stmt);
+  OcciStmt(const AutocommitMode autocommitMode, const std::string &sql, OcciConn &conn);
 
   /**
    * Destructor.

@@ -51,12 +51,12 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
 
     auto conn = m_connPool.getConn();
-    conn->executeNonQuery("BEGIN EXCLUSIVE;");
+    rdbms::AutoRollback autoRollback(conn.get());
     const char *selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-       "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
@@ -79,7 +79,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    auto selectStmt = conn->createStmt(selectSql);
+    auto selectStmt = conn->createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
     while(selectRset->next()) {
@@ -126,14 +126,14 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn->createStmt(sql);
+      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn->createStmt(sql);
+      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
@@ -153,10 +153,9 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
-    conn.executeNonQuery("BEGIN EXCLUSIVE;");
     rdbms::AutoRollback autoRollback(&conn);
 
-    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1;");
+    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::Stmt::AutocommitMode::OFF);
     uint64_t archiveFileId = 0;
     {
       const char *const sql =
@@ -164,7 +163,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
           "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       auto rset = stmt->executeQuery();
       if(!rset->next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
@@ -187,10 +186,6 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
   try {
-    // SQLite does not support SELECT FOR UPDATE
-    // Emulate SELECT FOR UPDATE by taking an exclusive lock on the database
-    conn.executeNonQuery("BEGIN EXCLUSIVE;");
-
     const char *const sql =
       "SELECT "
         "VID AS VID,"
@@ -227,7 +222,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &c
       "WHERE "
         "VID = :VID;";
 
-    std::unique_ptr<rdbms::Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
     if (!rset->next()) {

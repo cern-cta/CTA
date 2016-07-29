@@ -80,14 +80,9 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
+std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::AutocommitMode autocommitMode) {
   try {
-    oracle::occi::Statement *const stmt = m_conn->createStatement(sql);
-    if (nullptr == stmt) {
-      throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
-    }
-
-    return cta::make_unique<OcciStmt>(sql, *this, stmt);
+    return cta::make_unique<OcciStmt>(autocommitMode, sql, *this);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());

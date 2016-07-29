@@ -35,9 +35,51 @@ class Stmt {
 public:
 
   /**
+   * A statement can either have auto commiting mode turned on or off.
+   */
+  enum class AutocommitMode {
+    ON,
+    OFF
+  };
+
+  /**
+   * Constructor.
+   *
+   * @param autocommitMode The autocommit mode of the statement.
+   */
+  Stmt(const AutocommitMode autocommitMode);
+
+  /**
+   * Returns the autocommit mode of teh statement.
+   *
+   * @return The autocommit mode of teh statement.
+   */
+  AutocommitMode getAutoCommitMode() const noexcept;
+
+  /**
    * Destructor.
    */
   virtual ~Stmt() throw() = 0;
+
+  /**
+   * Deletion of the copy constructor.
+   */
+  Stmt(Stmt &) = delete;
+
+  /**
+   * Deletion of the move constructor.
+   */
+  Stmt(Stmt &&) = delete;
+
+  /**
+   * Deletion of the copy assignment operator.
+   */
+  Stmt &operator=(const Stmt &) = delete;
+
+  /**
+   * Deletion of the move assignment operator.
+   */
+  Stmt &operator=(Stmt &&) = delete;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -111,6 +153,13 @@ public:
    * @return The number of affected rows.
    */
   virtual uint64_t getNbAffectedRows() const = 0;
+
+protected:
+
+  /**
+   * The autocommit mode of the statement.
+   */
+  AutocommitMode m_autoCommitMode;
 
 }; // class Stmt
 

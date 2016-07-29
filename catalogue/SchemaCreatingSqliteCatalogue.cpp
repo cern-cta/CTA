@@ -45,7 +45,7 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
     const std::string::size_type length = findResult - searchPos + 1;
     const std::string sql = schema.sql.substr(searchPos, length);
     searchPos = findResult + 1;
-    auto stmt = conn->createStmt(sql);
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 }

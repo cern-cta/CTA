@@ -34,14 +34,39 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciStmt::OcciStmt(const std::string &sql, OcciConn &conn, oracle::occi::Statement *const stmt) :
+OcciStmt::OcciStmt(
+  const AutocommitMode autocommitMode,
+  const std::string &sql,
+  OcciConn &conn) :
+  Stmt(autocommitMode),
   m_sql(sql),
   m_paramNameToIdx(sql),
-  m_conn(conn),
-  m_stmt(stmt) {
-  if(nullptr == stmt) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql +
-      ": stmt is nullptr");
+  m_conn(conn) {
+  m_stmt = m_conn->createStatement(sql);
+  if (nullptr == m_stmt) {
+    throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
+  }
+
+  // m_conn and m_stmt have been set and m_stmt is not nullptr so it is safe to
+  // call close() from now on
+  try {
+    switch(autocommitMode) {
+    case AutocommitMode::ON:
+      m_stmt->setAutoCommit(true);
+      break;
+    case AutocommitMode::OFF:
+      // Do nothing because an occi::Statement has autocommit turned off by default
+      break;
+    default:
+      throw exception::Exception("Unknown autocommit mode");
+    }
+  } catch(exception::Exception &ex) {
+    close();
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    close();
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + se.what());
   }
 }
 

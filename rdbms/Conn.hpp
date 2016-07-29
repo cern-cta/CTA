@@ -44,18 +44,20 @@ public:
   /**
    * Creates a prepared statement.
    *
-   * @sql The SQL statement.
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) = 0;
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) = 0;
 
   /**
    * Convenience function implemented in Conn around Conn::createStmt(),
    * Stmt::executeNonQuery().
    *
-   * @sql The SQL statement.
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql);
+  void executeNonQuery(const std::string &sql, const Stmt::AutocommitMode autocommitMode);
 
   /**
    * Commits the current transaction.

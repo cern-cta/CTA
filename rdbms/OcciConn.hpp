@@ -78,10 +78,11 @@ public:
   /**
    * Creates a prepared statement.
    *
-   * @sql The SQL statement.
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) override;
 
   /**
    * Commits the current transaction.

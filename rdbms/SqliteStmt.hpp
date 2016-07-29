@@ -42,11 +42,14 @@ public:
   /**
    * Constructor.
    *
+   * This method is called by the SqliteStmt::createStmt() method and assumes
+   * that a lock has already been taken on SqliteStmt::m_mutex;
+   *
+   * @param autocommitMode The autocommit mode of the statement.
    * @param conn The database connection.
    * @param sql The SQL statement.
-   * @param stmt The prepared statement.
    */
-  SqliteStmt(SqliteConn &conn, const std::string &sql, sqlite3_stmt *const stmt);
+  SqliteStmt(const AutocommitMode autocommitMode, SqliteConn &conn, const std::string &sql);
 
   /**
    * Destructor.
@@ -167,6 +170,15 @@ private:
    * The number of rows affected by the last execution of this statement.
    */
   uint64_t m_nbAffectedRows;
+
+  /**
+   * Begins an SQLite exclusive transaction.
+   *
+   * This method is called by the constructor which in turn was called by the
+   * SqliteStmt::createStmt() method and assumes that a lock has already been
+   * taken on SqliteStmt::m_mutex;
+   */
+  void beginExclusiveTransaction();
 
 }; // class SqlLiteStmt
 

@@ -49,7 +49,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "SQLITE_MASTER "
       "WHERE "
         "TYPE = 'table';";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
@@ -64,7 +64,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 
@@ -77,7 +77,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
       "WHERE "
         "NAME = 'TEST' AND "
         "TYPE = 'table';";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
@@ -98,7 +98,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 
@@ -111,7 +111,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
         "COL3 "
       "FROM "
         "TEST;";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_FALSE(rset->next());
   }
@@ -129,7 +129,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
      stmt->executeNonQuery();
   }
 
@@ -144,7 +144,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
         "'one',"
         "'two',"
         "3);";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 
@@ -157,7 +157,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
         "COL3 AS COL3 "
       "FROM "
         "TEST;";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
@@ -186,7 +186,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
      stmt->executeNonQuery();
   }
 
@@ -201,7 +201,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
         ":COL1,"
         ":COL2,"
         ":COL3);";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->bindString(":COL1", "one");
     stmt->bindString(":COL2", "two");
     stmt->bindUint64(":COL3", 3);
@@ -217,7 +217,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
         "COL3 AS COL3 "
       "FROM "
         "TEST;";
-    std::unique_ptr<Stmt> stmt(conn.createStmt(sql));
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
@@ -246,7 +246,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    std::unique_ptr<Stmt> stmt(connForCreate.createStmt(sql));
+    auto stmt = connForCreate.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 
@@ -262,7 +262,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
         "'one',"
         "'two',"
         "3);";
-    std::unique_ptr<Stmt> stmt(connForInsert.createStmt(sql));
+    auto stmt = connForInsert.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
   }
 
@@ -274,7 +274,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
         "COUNT(*) AS NB_ROWS "
       "FROM "
         "TEST;";
-    std::unique_ptr<Stmt> stmt(connForSelect.createStmt(sql));
+    auto stmt = connForSelect.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 

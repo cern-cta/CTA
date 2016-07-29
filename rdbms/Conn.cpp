@@ -33,9 +33,9 @@ Conn::~Conn() throw() {
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void Conn::executeNonQuery(const std::string &sql) {
+void Conn::executeNonQuery(const std::string &sql, const Stmt::AutocommitMode autocommitMode) {
   try {
-    std::unique_ptr<Stmt> stmt(createStmt(sql));
+    auto stmt = createStmt(sql, autocommitMode);
     stmt->executeNonQuery();
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());

@@ -31,7 +31,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename) {
+SqliteConn::SqliteConn(const std::string &filename):
+  m_transactionInProgress(false) {
   try {
     m_conn = nullptr;
     if(sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
@@ -79,20 +80,11 @@ void SqliteConn::close() {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
+std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    sqlite3_stmt *stmt = nullptr;
-    const int nByte = -1; // Read SQL up to first null terminator
-    const int prepareRc = sqlite3_prepare_v2(m_conn, sql.c_str(), nByte, &stmt, nullptr);
-    if (SQLITE_OK != prepareRc) {
-      const std::string msg = sqlite3_errmsg(m_conn);
-      sqlite3_finalize(stmt);
-      throw exception::Exception(msg);
-    }
-
-    return cta::make_unique<SqliteStmt>(*this, sql, stmt);
+    return cta::make_unique<SqliteStmt>(autocommitMode , *this, sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
@@ -104,18 +96,44 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
 //------------------------------------------------------------------------------
 void SqliteConn::commit() {
   try {
-    executeNonQuery("COMMIT;");
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_transactionInProgress) {
+      char *errMsg = nullptr;
+      if(SQLITE_OK != sqlite3_exec(m_conn, "COMMIT", nullptr, nullptr, &errMsg)) {
+        exception::Exception ex;
+        ex.getMessage() << "sqlite3_exec failed";
+        if(nullptr != errMsg) {
+          ex.getMessage() << ": " << errMsg;
+          sqlite3_free(errMsg);
+        }
+        throw ex;
+      }
+      m_transactionInProgress = false;
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
-// commit
+// rollback
 //------------------------------------------------------------------------------
 void SqliteConn::rollback() {
   try {
-    executeNonQuery("ROLLBACK;");
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_transactionInProgress) {
+      char *errMsg = nullptr;
+      if(SQLITE_OK != sqlite3_exec(m_conn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
+        exception::Exception ex;
+        ex.getMessage() << "sqlite3_exec failed";
+        if(nullptr != errMsg) {
+          ex.getMessage() << ": " << errMsg;
+          sqlite3_free(errMsg);
+        }
+        throw ex;
+      }
+      m_transactionInProgress = false;
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -135,7 +153,7 @@ void SqliteConn::printSchema(std::ostream &os) {
       "ORDER BY "
         "TYPE, "
         "NAME;";
-    std::unique_ptr<Stmt> stmt(createStmt(sql));
+    auto stmt = createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;

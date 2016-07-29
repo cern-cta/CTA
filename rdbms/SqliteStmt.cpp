@@ -33,15 +33,47 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteStmt::SqliteStmt(SqliteConn &conn, const std::string &sql, sqlite3_stmt *const stmt):
+SqliteStmt::SqliteStmt(
+  const AutocommitMode autocommitMode,
+  SqliteConn &conn,
+  const std::string &sql):
+  Stmt(autocommitMode),
   m_conn(conn),
   m_sql(sql),
   m_paramNameToIdx(sql),
-  m_stmt(stmt),
   m_nbAffectedRows(0) {
+  m_stmt = nullptr;
+  const int nByte = -1; // Read SQL up to first null terminator
+  const int prepareRc = sqlite3_prepare_v2(m_conn.m_conn, sql.c_str(), nByte, &m_stmt, nullptr);
+  if (SQLITE_OK != prepareRc) {
+    const std::string msg = sqlite3_errmsg(m_conn.m_conn);
+    sqlite3_finalize(m_stmt);
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 failed: " + msg);
+  }
 
-  if (nullptr == stmt) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": stmt is nullptr");
+  // m_stmt has been set so it is safe to call close() from now on
+  try {
+    switch(autocommitMode) {
+    case AutocommitMode::ON:
+      // Do nothing because SQLite statements autocommit be default
+      break;
+    case AutocommitMode::OFF: {
+      if(!m_conn.m_transactionInProgress) {
+        beginExclusiveTransaction();
+        m_conn.m_transactionInProgress = true;
+      }
+      break;
+    }
+    default:
+      throw exception::Exception("Unknown autocommit mode");
+    }
+  } catch(exception::Exception &ex) {
+    close();
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
+      ex.getMessage().str());
+  } catch(std::exception &se) {
+    close();
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + se.what());
   }
 }
 
@@ -189,6 +221,26 @@ void SqliteStmt::executeNonQuery() {
 //------------------------------------------------------------------------------
 uint64_t SqliteStmt::getNbAffectedRows() const {
   return m_nbAffectedRows;
+}
+
+//------------------------------------------------------------------------------
+// beginExclusiveTransaction
+//------------------------------------------------------------------------------
+void SqliteStmt::beginExclusiveTransaction() {
+  try {
+    char *errMsg = nullptr;
+    if(SQLITE_OK != sqlite3_exec(m_conn.m_conn, "BEGIN EXCLUSIVE", nullptr, nullptr, &errMsg)) {
+      exception::Exception ex;
+      ex.getMessage() << "sqlite3_exec failed";
+      if(nullptr != errMsg) {
+        ex.getMessage() << ": " << errMsg;
+        sqlite3_free(errMsg);
+      }
+      throw ex;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 } // namespace rdbms
