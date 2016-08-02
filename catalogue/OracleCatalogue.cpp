@@ -161,7 +161,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
     if (!rset->next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
