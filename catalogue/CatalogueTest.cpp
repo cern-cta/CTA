@@ -55,7 +55,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
   using namespace cta::catalogue;
 
   try {
-    const uint64_t nbConns = 1;
+    const uint64_t nbConns = 2;
     m_catalogue = CatalogueFactory::create(GetParam()->create(), nbConns);
 
     {
