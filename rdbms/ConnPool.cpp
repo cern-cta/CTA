@@ -69,6 +69,7 @@ PooledConn ConnPool::getConn() {
 // returnConn
 //------------------------------------------------------------------------------
 void ConnPool::returnConn(Conn *const conn) {
+  conn->commit();
   std::unique_lock<std::mutex> lock(m_connsMutex);
   m_conns.emplace_back(conn);
   m_connsCv.notify_one();
