@@ -269,7 +269,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   }
   
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
-  const uint64_t nbConns = 1;
+  const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
   m_catalogue = catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
   m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, m_scheddb, 5, 2*1000*1000);
 

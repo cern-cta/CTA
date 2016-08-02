@@ -185,8 +185,7 @@ namespace cta { namespace common {
         const std::string strValue = getConfEntString(category, key);
 
         if (!utils::isValidUInt(strValue.c_str())) {
-          InvalidConfigEntry ex(category.c_str(),
-            key.c_str(), strValue.c_str());
+          InvalidConfigEntry ex;
           ex.getMessage() << "Failed to get configuration entry " << category <<
             ":" << key << ": Value is not a valid unsigned integer: value=" <<
             strValue;
