@@ -907,9 +907,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
+  const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
       
   const std::list<common::dataStructures::TapePool> pools =
@@ -920,7 +920,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   const common::dataStructures::TapePool pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-  ASSERT_EQ(is_encrypted, pool.encryption);
+  ASSERT_EQ(isEncrypted, pool.encryption);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -937,11 +937,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
+  const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
-  ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment),
+  ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, comment),
     exception::UserError);
 }
 
@@ -952,9 +952,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
+  const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
 
   const std::list<common::dataStructures::TapePool> pools =
@@ -965,7 +965,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const common::dataStructures::TapePool pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-  ASSERT_EQ(is_encrypted, pool.encryption);
+  ASSERT_EQ(isEncrypted, pool.encryption);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -994,9 +994,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
+  const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment);
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
     const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
@@ -1006,7 +1006,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     const common::dataStructures::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1028,7 +1028,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     const common::dataStructures::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1047,19 +1047,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
       
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
+  const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment);
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
     const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
-      
+
     const common::dataStructures::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1081,7 +1081,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     const common::dataStructures::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(modifiedComment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1090,6 +1090,56 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::string comment = "Create tape pool";
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, comment);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const bool modifiedIsEncrypted = !isEncrypted;
+  m_catalogue->setTapePoolEncryption(m_cliSI, tapePoolName, modifiedIsEncrypted);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(modifiedIsEncrypted, pool.encryption);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
   }
 }
   
@@ -1109,8 +1159,8 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -1160,8 +1210,8 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -1211,8 +1261,8 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted,
     "Create tape pool");
 
   const uint64_t copyNb = 1;
@@ -1239,8 +1289,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -1292,8 +1342,8 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -2311,8 +2361,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -2410,8 +2460,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -2528,8 +2578,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
