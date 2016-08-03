@@ -591,8 +591,31 @@ std::list<common::dataStructures::StorageClass>
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &instanceName, const std::string &name, const uint64_t nbCopies) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE STORAGE_CLASS SET "
+        "NB_COPIES = :NB_COPIES,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindUint64(":NB_COPIES", nbCopies);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", name);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

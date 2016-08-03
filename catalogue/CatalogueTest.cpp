@@ -802,6 +802,58 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass_non_existant) {
     exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  {
+    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+    ASSERT_EQ(1, storageClasses.size());
+
+    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    ASSERT_EQ(storageClass.name, storageClasses.front().name);
+    ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedNbCopies = 5;
+  m_catalogue->modifyStorageClassNbCopies(m_cliSI, storageClass.diskInstance, storageClass.name, modifiedNbCopies);
+
+  {
+    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+    ASSERT_EQ(1, storageClasses.size());
+
+    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    ASSERT_EQ(storageClass.name, storageClasses.front().name);
+    ASSERT_EQ(modifiedNbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
       
