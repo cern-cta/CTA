@@ -210,6 +210,30 @@ std::map<std::string, cta::common::dataStructures::AdminUser> cta_catalogue_Cata
   }
 }
 
+//------------------------------------------------------------------------------
+// adminHostListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::common::dataStructures::AdminHost> cta_catalogue_CatalogueTest::adminHostListToMap(
+  const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, common::dataStructures::AdminHost> m;
+
+    for(auto &adminHost: listOfAdminHosts) {
+      if(m.end() != m.find(adminHost.name)) {
+        exception::Exception ex;
+        ex.getMessage() << "Admin host " << adminHost.name << " is a duplicate";
+        throw ex;
+      }
+      m[adminHost.name] = adminHost;
+    }
+    return m;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createBootstrapAdminAndHostNoAuth) {
   using namespace cta;
 
@@ -591,6 +615,57 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost_non_existant) {
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
   ASSERT_THROW(m_catalogue->deleteAdminHost("non_exstant_admin_host"), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyAdminHostComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+
+  m_catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+
+  {
+    const std::list<common::dataStructures::AdminHost> hosts = m_catalogue->getAdminHosts();
+    ASSERT_EQ(1, hosts.size());
+
+    const common::dataStructures::AdminHost host = hosts.front();
+    ASSERT_EQ(m_bootstrapComment, host.comment);
+
+    const common::dataStructures::EntryLog creationLog = host.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = host.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string createAdminHostComment = "Create host user";
+  const std::string anotherAdminHost = "another_admin_host";
+  m_catalogue->createAdminHost(m_bootstrapAdminSI, anotherAdminHost, createAdminHostComment);
+
+  {
+    std::map<std::string, common::dataStructures::AdminHost> hosts = adminHostListToMap(m_catalogue->getAdminHosts());
+    ASSERT_EQ(2, hosts.size());
+
+    const auto itor = hosts.find(anotherAdminHost);
+    ASSERT_FALSE(hosts.end() == itor);
+
+    ASSERT_EQ(createAdminHostComment, itor->second.comment);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyAdminHostComment(m_bootstrapAdminSI, anotherAdminHost, modifiedComment);
+
+  {
+    std::map<std::string, common::dataStructures::AdminHost> hosts = adminHostListToMap(m_catalogue->getAdminHosts());
+    ASSERT_EQ(2, hosts.size());
+
+    const auto itor = hosts.find(anotherAdminHost);
+    ASSERT_FALSE(hosts.end() == itor);
+
+    ASSERT_EQ(modifiedComment, itor->second.comment);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, isAdmin_false) {

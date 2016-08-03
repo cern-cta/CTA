@@ -70,11 +70,21 @@ protected:
    * Creates a map from admin username to admin user from the specified list of
    * admin users.
    *
-   * @param itor Iterator over archive files.
-   * @return Map from archive file ID to archive file.
+   * @param listOfAdminUsers The list of admin users.
+   * @return Map from username to admin user.
    */
   std::map<std::string, cta::common::dataStructures::AdminUser> adminUserListToMap(
     const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers);
+
+  /**
+   * Creates a map from admin host name to admin user from the specified list of
+   * admin users.
+   *
+   * @param listOfAdminHosts The list of admin hosts.
+   * @return Map from host name to admin host.
+   */
+  std::map<std::string, cta::common::dataStructures::AdminHost> adminHostListToMap(
+    const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests
