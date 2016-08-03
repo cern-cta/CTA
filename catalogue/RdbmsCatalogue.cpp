@@ -2017,13 +2017,6 @@ void RdbmsCatalogue::modifyTapeLastReadLog(const common::dataStructures::Securit
 }
 
 //------------------------------------------------------------------------------
-// setTapeBusy
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapeBusy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {

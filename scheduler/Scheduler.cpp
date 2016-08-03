@@ -175,7 +175,7 @@ void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdenti
 // setTapeBusy
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
-  m_catalogue.setTapeBusy(cliIdentity, vid, busyValue);
+  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
