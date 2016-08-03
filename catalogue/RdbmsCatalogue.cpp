@@ -1877,8 +1877,35 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // modifyTapeEncryptionKey
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid, const std::string &encryptionKey) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "ENCRYPTION_KEY = :ENCRYPTION_KEY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":ENCRYPTION_KEY", encryptionKey);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1959,7 +1986,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountPolicy(const common::dataStructure
 }
 
 //------------------------------------------------------------------------------
-// modifyRequesterComment
+// modifyRequesterGroupComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
