@@ -227,7 +227,7 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
+        "WHERE "
         "ADMIN_USER_NAME = :ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
@@ -237,6 +237,12 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":ADMIN_USER_NAME", username);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -394,7 +400,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity,
-                                            const std::string &hostName, const std::string &comment) {
+  const std::string &hostName, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -413,6 +419,12 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":ADMIN_HOST_NAME", hostName);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify admin host ") + hostName + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -601,7 +613,7 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
+        "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
@@ -613,6 +625,13 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", name);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -631,7 +650,7 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-        "WHERE "
+      "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
@@ -643,6 +662,13 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", name);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -832,6 +858,12 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -859,6 +891,12 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
@@ -887,6 +925,12 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }

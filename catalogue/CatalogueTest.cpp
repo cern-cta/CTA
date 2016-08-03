@@ -471,6 +471,16 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_nonExtistentAdminUser) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  const std::string modifiedComment = "Modified comment";
+  ASSERT_THROW(m_catalogue->modifyAdminUserComment(m_bootstrapAdminSI, m_adminSI.username, modifiedComment),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
   using namespace cta;
 
@@ -851,6 +861,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies_nonExistentStorageClass) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  const std::string diskInstance = "disk_instance";
+  const std::string storageClassName = "storage_class";
+  const uint64_t nbCopies = 5;
+  ASSERT_THROW(m_catalogue->modifyStorageClassNbCopies(m_cliSI, diskInstance, storageClassName, nbCopies),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   using namespace cta;
 
@@ -898,6 +920,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment_nonExistentStorageClass) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  const std::string diskInstance = "disk_instance";
+  const std::string storageClassName = "storage_class";
+  const std::string comment = "Comment";
+  ASSERT_THROW(m_catalogue->modifyStorageClassComment(m_cliSI, diskInstance, storageClassName, comment),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
@@ -1040,6 +1074,17 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes_nonExistentTapePool) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 5;
+  ASSERT_THROW(m_catalogue->modifyTapePoolNbPartialTapes(m_cliSI, tapePoolName, nbPartialTapes),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   using namespace cta;
       
@@ -1093,6 +1138,16 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_nonExistentTapePool) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const std::string comment = "Comment";
+  ASSERT_THROW(m_catalogue->modifyTapePoolComment(m_cliSI, tapePoolName, comment), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   using namespace cta;
       
@@ -1141,6 +1196,16 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption_nonExistentTapePool) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const bool isEncrypted = false;
+  ASSERT_THROW(m_catalogue->setTapePoolEncryption(m_cliSI, tapePoolName, isEncrypted), exception::UserError);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
@@ -1443,6 +1508,30 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentArchiveRoute) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_cliSI, storageClass.diskInstance, storageClass.name,
+    copyNb, tapePoolName), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   using namespace cta;
       
@@ -1510,6 +1599,31 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchiveRoute) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "Comment";
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteComment(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb,
+    comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
