@@ -1045,6 +1045,59 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  const std::string comment = "Create tape pool";
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyTapePoolComment(m_cliSI, tapePoolName, modifiedComment);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(modifiedComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;

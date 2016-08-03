@@ -841,7 +841,27 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE_POOL SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":USER_COMMENT", comment);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":TAPE_POOL_NAME", name);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
