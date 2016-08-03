@@ -1699,6 +1699,63 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existant) {
   ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+      
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
+
+  {
+    const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
+      
+    ASSERT_EQ(1, libs.size());
+      
+    const common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(logicalLibraryName, lib.name);
+    ASSERT_EQ(comment, lib.comment);
+
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyLogicalLibraryComment(m_cliSI, logicalLibraryName, modifiedComment);
+
+  {
+    const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
+      
+    ASSERT_EQ(1, libs.size());
+      
+    const common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(logicalLibraryName, lib.name);
+    ASSERT_EQ(modifiedComment, lib.comment);
+
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment_nonExisentLogicalLibrary) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  ASSERT_THROW(m_catalogue->modifyLogicalLibraryComment(m_cliSI, logicalLibraryName, comment), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTape) {
   using namespace cta;
 
