@@ -993,6 +993,59 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existant) {
   ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool is_encrypted = true;
+  const std::string comment = "Create tape pool";
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedNbPartialTapes = 5;
+  m_catalogue->modifyTapePoolNbPartialTapes(m_cliSI, tapePoolName, modifiedNbPartialTapes);
+
+  {
+    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const common::dataStructures::TapePool pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(is_encrypted, pool.encryption);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+  
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
       
