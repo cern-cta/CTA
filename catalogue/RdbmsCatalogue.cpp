@@ -1911,21 +1911,52 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 //------------------------------------------------------------------------------
 // modifyTapeLabelLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid, const std::string &drive) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "LABEL_DRIVE = :LABEL_DRIVE,"
+        "LABEL_TIME = :LABEL_TIME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":LABEL_DRIVE", drive);
+    stmt->bindUint64(":LABEL_TIME", now);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastWrittenLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void RdbmsCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid, const std::string &drive) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyTapeLastReadLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive, const uint64_t timestamp) {
+void RdbmsCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid, const std::string &drive) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
