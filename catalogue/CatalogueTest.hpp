@@ -57,7 +57,8 @@ protected:
     const std::list<cta::common::dataStructures::Tape> &listOfTapes);
 
   /**
-   * Creates a map from archive file ID to archive file from the specified iterator.
+   * Creates a map from archive file ID to archive file from the specified
+   * iterator.
    *
    * @param itor Iterator over archive files.
    * @return Map from archive file ID to archive file.
@@ -65,6 +66,15 @@ protected:
   std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileItorToMap(
     cta::catalogue::ArchiveFileItor &itor);
 
+  /**
+   * Creates a map from admin username to admin user from the specified list of
+   * admin users.
+   *
+   * @param itor Iterator over archive files.
+   * @return Map from archive file ID to archive file.
+   */
+  std::map<std::string, cta::common::dataStructures::AdminUser> adminUserListToMap(
+    const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests

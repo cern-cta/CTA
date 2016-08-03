@@ -218,8 +218,28 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity,
-                                            const std::string &username, const std::string &comment) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  const std::string &username, const std::string &comment) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE ADMIN_USER SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":USER_COMMENT", comment);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":ADMIN_USER_NAME", username);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -2945,7 +2965,7 @@ void RdbmsCatalogue::updateTape(rdbms::Conn &conn, const TapeFileWritten &event)
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
         "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
-        "VID=:VID";
+        "VID = :VID";
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":VID", event.vid);
     stmt->bindUint64(":LAST_FSEQ", event.fSeq);

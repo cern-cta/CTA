@@ -149,7 +149,7 @@ std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_Catalogue
   try {
     std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
-    for (auto &&tape: listOfTapes) {
+    for (auto &tape: listOfTapes) {
       if(vidToTape.end() != vidToTape.find(tape.vid)) {
         throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
       }
@@ -179,6 +179,30 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_Catal
         throw ex;
       }
       m[archiveFile.archiveFileID] = archiveFile;
+    }
+    return m;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// adminUserListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::common::dataStructures::AdminUser> cta_catalogue_CatalogueTest::adminUserListToMap(
+  const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, common::dataStructures::AdminUser> m;
+
+    for(auto &adminUser: listOfAdminUsers) {
+      if(m.end() != m.find(adminUser.name)) {
+        exception::Exception ex;
+        ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";
+        throw ex;
+      }
+      m[adminUser.name] = adminUser;
     }
     return m;
   } catch(exception::Exception &ex) {
@@ -255,7 +279,7 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminUser) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminUserComment = "create admin user";
+  const std::string createAdminUserComment = "Create admin user";
   m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, createAdminUserComment);
 
   {
@@ -371,6 +395,58 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existant) {
   ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_sdmin_user"), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  m_catalogue->createBootstrapAdminAndHostNoAuth(
+    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser admin = admins.front();
+    ASSERT_EQ(m_bootstrapComment, admin.comment);
+
+    const common::dataStructures::EntryLog creationLog = admin.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      admin.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_bootstrapAdminSI, m_adminSI.username, createAdminUserComment);
+
+  {
+    std::map<std::string, common::dataStructures::AdminUser> admins = adminUserListToMap(m_catalogue->getAdminUsers());
+    ASSERT_EQ(2, admins.size());
+
+    const auto itor = admins.find(m_adminSI.username);
+    ASSERT_FALSE(admins.end() == itor);
+
+    ASSERT_EQ(createAdminUserComment, itor->second.comment);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyAdminUserComment(m_bootstrapAdminSI, m_adminSI.username, modifiedComment);
+
+  {
+    std::map<std::string, common::dataStructures::AdminUser> admins = adminUserListToMap(m_catalogue->getAdminUsers());
+    ASSERT_EQ(2, admins.size());
+
+    const auto itor = admins.find(m_adminSI.username);
+    ASSERT_FALSE(admins.end() == itor);
+
+    ASSERT_EQ(modifiedComment, itor->second.comment);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
   using namespace cta;
 
@@ -396,7 +472,7 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string createAdminHostComment = "create host user";
+  const std::string createAdminHostComment = "Create host user";
   const std::string anotherAdminHost = "another_admin_host";
   m_catalogue->createAdminHost(m_bootstrapAdminSI,
     anotherAdminHost, createAdminHostComment);
@@ -541,7 +617,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
@@ -569,7 +645,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
   ASSERT_THROW(m_catalogue->createStorageClass(m_cliSI, storageClass), exception::UserError);
 }
@@ -581,7 +657,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_name_different_disk_
   storageClass1.diskInstance = "disk_instance_1";
   storageClass1.name = "storage_class";
   storageClass1.nbCopies = 2;
-  storageClass1.comment = "create storage class";
+  storageClass1.comment = "Create storage class";
 
   common::dataStructures::StorageClass storageClass2 = storageClass1;
   storageClass2.diskInstance = "disk_instance_2";
@@ -619,7 +695,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
@@ -659,7 +735,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  const std::string comment = "create tape pool";
+  const std::string comment = "Create tape pool";
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
     comment);
       
@@ -689,7 +765,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  const std::string comment = "create tape pool";
+  const std::string comment = "Create tape pool";
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
     comment);
   ASSERT_THROW(m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, comment),
@@ -704,7 +780,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  const std::string comment = "create tape pool";
+  const std::string comment = "Create tape pool";
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
     comment);
 
@@ -749,16 +825,16 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string comment = "create archive route";
+  const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
       
@@ -792,13 +868,13 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_
   storageClass1DiskInstance1.diskInstance = "disk_instance_1";
   storageClass1DiskInstance1.name = "storage_class_1";
   storageClass1DiskInstance1.nbCopies = 2;
-  storageClass1DiskInstance1.comment = "create storage class";
+  storageClass1DiskInstance1.comment = "Create storage class";
 
   common::dataStructures::StorageClass storageClass1DiskInstance2;
   storageClass1DiskInstance2.diskInstance = "disk_instance_2";
   storageClass1DiskInstance2.name = "storage_class_1";
   storageClass1DiskInstance2.nbCopies = 2;
-  storageClass1DiskInstance2.comment = "create storage class";
+  storageClass1DiskInstance2.comment = "Create storage class";
 
   m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance1);
   m_catalogue->createStorageClass(m_cliSI, storageClass1DiskInstance2);
@@ -806,10 +882,10 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string comment = "create archive route";
+  const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass1DiskInstance1.diskInstance, storageClass1DiskInstance1.name,
     copyNb, tapePoolName, comment);
   m_catalogue->createArchiveRoute(m_cliSI, storageClass1DiskInstance2.diskInstance, storageClass1DiskInstance2.name,
@@ -851,17 +927,17 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
   m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted,
-    "create tape pool");
+    "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string comment = "create archive route";
+  const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb,
@@ -879,16 +955,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string comment = "create archive route";
+  const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
 
@@ -932,16 +1008,16 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string comment = "create archive route";
+  const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     comment);
 
@@ -973,7 +1049,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
       
   const std::string logicalLibraryName = "logical_library";
-  const std::string comment = "create logical library";
+  const std::string comment = "Create logical library";
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
@@ -998,7 +1074,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
   using namespace cta;
   
   const std::string logicalLibraryName = "logical_library";
-  const std::string comment = "create logical library";
+  const std::string comment = "Create logical library";
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
   ASSERT_THROW(m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment), exception::UserError);
 }
@@ -1009,7 +1085,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
       
   const std::string logicalLibraryName = "logical_library";
-  const std::string comment = "create logical library";
+  const std::string comment = "Create logical library";
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
@@ -1052,11 +1128,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
@@ -1099,11 +1175,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_no_encryption_key) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
@@ -1146,11 +1222,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_16_exabytes_capacity) {
   const uint64_t capacityInBytes = std::numeric_limits<uint64_t>::max();
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
@@ -1191,11 +1267,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
     encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
   ASSERT_THROW(m_catalogue->createTape(m_cliSI, vid, logicalLibraryName,
@@ -1212,13 +1288,13 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const uint64_t capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
   const bool disabled = true;
   const bool full = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibrary, "create logical library");
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibrary, "Create logical library");
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
-  m_catalogue->createTapePool(m_cliSI, tapePool, 2, true, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePool, 2, true, "Create tape pool");
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
   const uint64_t nbTapes = 10;
@@ -1407,11 +1483,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
     encryptionKey, capacityInBytes, disabledValue, fullValue,
     comment);
@@ -1465,11 +1541,11 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
     encryptionKey, capacityInBytes, disabledValue, fullValue,
     comment);
@@ -1498,7 +1574,7 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {
   const uint64_t retrievePriority = 3;
   const uint64_t minRetrieveRequestAge = 4;
   const uint64_t maxDrivesAllowed = 5;
-  const std::string &comment = "create mount policy";
+  const std::string &comment = "Create mount policy";
 
   m_catalogue->createMountPolicy(
     m_cliSI,
@@ -1549,7 +1625,7 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy_same_twice) {
   const uint64_t retrievePriority = 5;
   const uint64_t minRetrieveRequestAge = 8;
   const uint64_t maxDrivesAllowed = 9;
-  const std::string &comment = "create mount policy";
+  const std::string &comment = "Create mount policy";
 
   m_catalogue->createMountPolicy(
     m_cliSI,
@@ -1583,7 +1659,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy) {
   const uint64_t retrievePriority = 3;
   const uint64_t minRetrieveRequestAge = 4;
   const uint64_t maxDrivesAllowed = 5;
-  const std::string &comment = "create mount policy";
+  const std::string &comment = "Create mount policy";
 
   m_catalogue->createMountPolicy(
     m_cliSI,
@@ -1654,9 +1730,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
@@ -1694,9 +1770,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_same_twice) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
@@ -1709,7 +1785,7 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existant_mount_
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string mountPolicyName = "non_existant_mount_policy";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
@@ -1737,9 +1813,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
@@ -1789,9 +1865,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester group";
+  const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = "disk_instance_name";
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
@@ -1830,9 +1906,9 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_same_twice) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester group";
+  const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
@@ -1845,7 +1921,7 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existant_m
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
 
-  const std::string comment = "create mount rule for requester group";
+  const std::string comment = "Create mount rule for requester group";
   const std::string mountPolicyName = "non_existant_mount_policy";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group";
@@ -1873,9 +1949,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester group";
+  const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
@@ -1925,9 +2001,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = "disk_instance_name";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
@@ -1951,16 +2027,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string archiveRouteComment = "create archive route";
+  const std::string archiveRouteComment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     archiveRouteComment);
 
@@ -2025,9 +2101,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester group";
+  const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterGroupName, comment);
@@ -2050,16 +2126,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string archiveRouteComment = "create archive route";
+  const std::string archiveRouteComment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     archiveRouteComment);
 
@@ -2124,9 +2200,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string requesterRuleComment = "create mount rule for requester";
+  const std::string requesterRuleComment = "Create mount rule for requester";
   const std::string diskInstanceName = "disk_instance_name";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
@@ -2144,7 +2220,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   ASSERT_EQ(m_cliSI.host, requesterRule.creationLog.host);
   ASSERT_EQ(requesterRule.creationLog, requesterRule.lastModificationLog);
 
-  const std::string requesterGroupRuleComment = "create mount rule for requester group";
+  const std::string requesterGroupRuleComment = "Create mount rule for requester group";
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName,
     requesterGroupRuleComment);
@@ -2168,16 +2244,16 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool is_encrypted = true;
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "create tape pool");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, is_encrypted, "Create tape pool");
 
   const uint64_t copyNb = 1;
-  const std::string archiveRouteComment = "create archive route";
+  const std::string archiveRouteComment = "Create archive route";
   m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
     archiveRouteComment);
 
@@ -2238,10 +2314,10 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string createTapeComment = "create tape";
+  const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
   m_catalogue->createTape(m_cliSI, vid2, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
@@ -2305,7 +2381,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -2436,9 +2512,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     retrievePriority,
     minRetrieveRequestAge,
     maxDrivesAllowed,
-    "create mount policy");
+    "Create mount policy");
 
-  const std::string comment = "create mount rule for requester";
+  const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName1, requesterName, comment);
 
@@ -2487,10 +2563,10 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
 
@@ -2529,7 +2605,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const std::string checksumType = "checksum_type";
@@ -2765,11 +2841,11 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-                                    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+                                    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName,
                           encryptionKey, capacityInBytes, disabledValue, fullValue,
                           comment);
@@ -2840,7 +2916,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -2988,11 +3064,11 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-                                    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+                                    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
                           encryptionKey, capacityInBytes, disabledValue, fullValue,
                           comment);
@@ -3040,7 +3116,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -3134,11 +3210,11 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-                                    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+                                    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName,
                           encryptionKey, capacityInBytes, disabledValue, fullValue,
                           comment);
@@ -3178,7 +3254,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -3268,11 +3344,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const std::string comment = "create tape";
+  const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
-    "create logical library");
-  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "create tape pool");
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName,
     encryptionKey, capacityInBytes, disabledValue, fullValue,
     comment);
@@ -3343,7 +3419,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
-  storageClass.comment = "create storage class";
+  storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_cliSI, storageClass);
 
   const uint64_t archiveFileSize = 1;
