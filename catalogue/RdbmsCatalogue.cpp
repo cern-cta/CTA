@@ -1046,8 +1046,39 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb,
+  const std::string &tapePoolName) {
+  try {
+    const char *const sql =
+      "UPDATE ARCHIVE_ROUTE SET "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "COPY_NB = :COPY_NB";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
+    stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt->bindUint64(":COPY_NB", copyNb);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot modify archive route for storage-class " << instanceName + ":" + storageClassName +
+        " and copy number " << copyNb << " because it does not exist";
+      throw ue;
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -1372,6 +1372,75 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name), exception::Exception);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    comment);
+
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+    ASSERT_EQ(storageClass.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedTapePoolName = "modified_tape_pool";
+  m_catalogue->modifyArchiveRouteTapePoolName(m_cliSI, storageClass.diskInstance, storageClass.name, copyNb,
+    modifiedTapePoolName);
+
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+    ASSERT_EQ(storageClass.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(modifiedTapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
   using namespace cta;
       
