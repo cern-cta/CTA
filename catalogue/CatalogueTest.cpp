@@ -848,9 +848,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
@@ -900,9 +897,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
