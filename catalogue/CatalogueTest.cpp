@@ -1595,9 +1595,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
-  
-    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
