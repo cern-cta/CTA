@@ -3061,6 +3061,8 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
    fullValue, comment);
+  m_catalogue->modifyTapeLabelLog(vid, "tape_drive");
+  m_catalogue->setTapeLbp(vid, true);
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
 
