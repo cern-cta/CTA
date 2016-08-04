@@ -1004,7 +1004,7 @@ void XrdCtaFile::xCom_tape() {
       optional<bool> force = getOptionBoolValue("-f", "--force", false, false, true, "false");
       optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, false, true, "true");
       checkOptions(help.str());
-      m_scheduler->labelTape(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
+      m_scheduler->queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
     }
     else { //rm
       checkOptions(help.str());

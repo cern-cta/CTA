@@ -120,7 +120,12 @@ public:
    */
   virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const std::string &instanceName, const cta::common::dataStructures::ListStorageClassRequest &request);
 
-  virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag);
+  /**
+   * Labeling is treated just like archivals and retrievals (no drive dedication is required). When an admin issues a 
+   * labeling command, the operation gets queued just like a normal user operation, and the first drive that can 
+   * accomplish it will dequeue it.
+   */
+  virtual void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag);
   virtual void setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue);
   virtual void setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue);
   virtual void setTapeLbp(const std::string &vid, const bool lbpValue); // internal function (noCLI)

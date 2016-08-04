@@ -167,7 +167,7 @@ std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorage
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
+void cta::Scheduler::queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
