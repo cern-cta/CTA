@@ -174,7 +174,7 @@ void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdenti
 //------------------------------------------------------------------------------
 // setTapeBusy
 //------------------------------------------------------------------------------
-void cta::Scheduler::setTapeBusy(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool busyValue) {
+void cta::Scheduler::setTapeBusy(const std::string &vid, const bool busyValue) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -195,8 +195,8 @@ void cta::Scheduler::setTapeDisabled(const cta::common::dataStructures::Security
 //------------------------------------------------------------------------------
 // setTapeLbp
 //------------------------------------------------------------------------------
-void cta::Scheduler::setTapeLbp(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
-  m_catalogue.setTapeLbp(cliIdentity, vid, lbpValue);
+void cta::Scheduler::setTapeLbp(const std::string &vid, const bool lbpValue) {
+  m_catalogue.setTapeLbp(vid, lbpValue);
 }
 
 //------------------------------------------------------------------------------

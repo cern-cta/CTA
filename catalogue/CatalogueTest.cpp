@@ -2561,7 +2561,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLabelLog) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->modifyTapeLabelLog(m_cliSI, vid, modifiedDrive);
+  m_catalogue->modifyTapeLabelLog(vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -2596,7 +2596,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLabelLog_nonExistentTape) {
   const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->modifyTapeLabelLog(m_cliSI, vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeLabelLog(vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastWrittenLog) {
@@ -2647,7 +2647,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastWrittenLog) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->modifyTapeLastWrittenLog(m_cliSI, vid, modifiedDrive);
+  m_catalogue->modifyTapeLastWrittenLog(vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -2682,7 +2682,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastWrittenLog_nonExistentTape) {
   const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->modifyTapeLastWrittenLog(m_cliSI, vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeLastWrittenLog(vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog) {
@@ -2733,7 +2733,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->modifyTapeLastReadLog(m_cliSI, vid, modifiedDrive);
+  m_catalogue->modifyTapeLastReadLog(vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -2768,7 +2768,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog_nonExistentTape) {
   const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->modifyTapeLastReadLog(m_cliSI, vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeLastReadLog(vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {

@@ -1911,26 +1911,19 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 //------------------------------------------------------------------------------
 // modifyTapeLabelLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &vid, const std::string &drive) {
+void RdbmsCatalogue::modifyTapeLabelLog(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LABEL_DRIVE = :LABEL_DRIVE,"
-        "LABEL_TIME = :LABEL_TIME,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+        "LABEL_TIME = :LABEL_TIME "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":LABEL_DRIVE", drive);
     stmt->bindUint64(":LABEL_TIME", now);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
-    stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
 
@@ -1947,26 +1940,19 @@ void RdbmsCatalogue::modifyTapeLabelLog(const common::dataStructures::SecurityId
 //------------------------------------------------------------------------------
 // modifyTapeLastWrittenLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &vid, const std::string &drive) {
+void RdbmsCatalogue::modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME = :LAST_WRITE_TIME,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":LAST_WRITE_DRIVE", drive);
     stmt->bindUint64(":LAST_WRITE_TIME", now);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
-    stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
 
@@ -1983,26 +1969,19 @@ void RdbmsCatalogue::modifyTapeLastWrittenLog(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // modifyTapeLastReadLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity,
-  const std::string &vid, const std::string &drive) {
+void RdbmsCatalogue::modifyTapeLastReadLog(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_READ_DRIVE = :LAST_READ_DRIVE,"
-        "LAST_READ_TIME = :LAST_READ_TIME,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+        "LAST_READ_TIME = :LAST_READ_TIME "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":LAST_READ_DRIVE", drive);
     stmt->bindUint64(":LAST_READ_TIME", now);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
-    stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
 
@@ -2060,7 +2039,7 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // setTapeLbp
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) {
+void RdbmsCatalogue::setTapeLbp(const std::string &vid, const bool lbpValue) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 

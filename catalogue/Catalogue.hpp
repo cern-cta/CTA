@@ -201,12 +201,12 @@ public:
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) = 0;
   virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) = 0;
-  virtual void modifyTapeLabelLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
-  virtual void modifyTapeLastWrittenLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
-  virtual void modifyTapeLastReadLog(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void modifyTapeLabelLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) = 0;
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) = 0;
-  virtual void setTapeLbp(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
+  virtual void setTapeLbp(const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
