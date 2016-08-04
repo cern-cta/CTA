@@ -2067,7 +2067,26 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
 // setTapeLbp
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeLbp(const std::string &vid, const bool lbpValue) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "LBP_IS_ON = :LBP_IS_ON "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindUint64(":LBP_IS_ON", lbpValue ? 1 : 0);
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
