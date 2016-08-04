@@ -172,27 +172,6 @@ void cta::Scheduler::queueLabel(const cta::common::dataStructures::SecurityIdent
 }
 
 //------------------------------------------------------------------------------
-// setTapeFull
-//------------------------------------------------------------------------------
-void cta::Scheduler::setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {
-  m_catalogue.setTapeFull(cliIdentity, vid, fullValue);
-}
-
-//------------------------------------------------------------------------------
-// setTapeDisabled
-//------------------------------------------------------------------------------
-void cta::Scheduler::setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) {
-  m_catalogue.setTapeDisabled(cliIdentity, vid, disabledValue);
-}
-
-//------------------------------------------------------------------------------
-// setTapeLbp
-//------------------------------------------------------------------------------
-void cta::Scheduler::setTapeLbp(const std::string &vid, const bool lbpValue) {
-  m_catalogue.setTapeLbp(vid, lbpValue);
-}
-
-//------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
 void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType) {

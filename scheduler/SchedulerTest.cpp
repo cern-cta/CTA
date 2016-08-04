@@ -394,8 +394,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, nullopt, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  catalogue.modifyTapeLabelLog(s_vid, "tape_drive");
-  catalogue.setTapeLbp(s_vid, true);
+  const bool lbpIsOn = true;
+  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed
@@ -534,8 +534,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, nullopt, capacityInBytes, notDisabled,
     notFull, tapeComment);
 
-  catalogue.modifyTapeLabelLog(s_vid, "tape_drive");
-  catalogue.setTapeLbp(s_vid, true);
+  const bool lbpIsOn = true;
+  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
 
   {
     // Emulate a tape server by asking for a mount and then a file

@@ -988,10 +988,10 @@ void XrdCtaFile::xCom_tape() {
         m_catalogue->modifyTapeEncryptionKey(m_cliIdentity, vid.value(), encryptionkey.value());
       }
       if(disabled) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, vid.value(), disabled.value());
+        m_catalogue->setTapeDisabled(m_cliIdentity, vid.value(), disabled.value());
       }
       if(full) {
-        m_scheduler->setTapeDisabled(m_cliIdentity, vid.value(), full.value());
+        m_catalogue->setTapeFull(m_cliIdentity, vid.value(), full.value());
       }
     }
     else if("reclaim" == m_requestTokens.at(2)) { //reclaim

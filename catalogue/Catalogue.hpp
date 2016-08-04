@@ -201,12 +201,10 @@ public:
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) = 0;
   virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) = 0;
-  virtual void modifyTapeLabelLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
   virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
   virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) = 0;
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) = 0;
-  virtual void setTapeLbp(const std::string &vid, const bool lbpValue) = 0; // internal function (noCLI)
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
   virtual void modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
@@ -383,6 +381,15 @@ public:
    * @return The archive file.
    */
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
+
+  /**
+   * Notifies the catalogue that the specified tape was labelled.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of tape drive that was used to label the tape.
+   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
+   */
+  virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) = 0;
 
   /**
    * Prepares the catalogue for a new archive file and returns the information

@@ -126,9 +126,6 @@ public:
    * accomplish it will dequeue it.
    */
   virtual void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag);
-  virtual void setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue);
-  virtual void setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue);
-  virtual void setTapeLbp(const std::string &vid, const bool lbpValue); // internal function (noCLI)
 
   virtual void repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType);
   virtual void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
