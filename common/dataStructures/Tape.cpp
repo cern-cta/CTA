@@ -71,8 +71,8 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " tapePoolName=" << obj.tapePoolName
      << " capacityInBytes=" << obj.capacityInBytes
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
-     << " encryptionKey=" << ((bool)obj.encryptionKey ? obj.encryptionKey.value() : "null")
-     << " lbp=" << obj.lbp
+     << " encryptionKey=" << (obj.encryptionKey ? obj.encryptionKey.value() : "null")
+     << " lbp=" << (obj.lbp ? (obj.lbp.value() ? "true" : "false") : "null")
      << " full=" << obj.full
      << " disabled=" << obj.disabled
      << " creationLog=" << obj.creationLog

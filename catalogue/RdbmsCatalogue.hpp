@@ -145,8 +145,7 @@ public:
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
 
   /**
-   * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled.
+   * Creates a tape.
    *
    * @param encryptionKey The optional identifier of the encrption key.  This
    * optional parameter should either have a non-empty string value or no value
@@ -429,8 +428,8 @@ public:
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
-   * specified logical library, in other words tapes that are not disabled, not
-   * full and are in the specified logical library.
+   * specified logical library, in other words tapes that are labelled, not
+   * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
    */

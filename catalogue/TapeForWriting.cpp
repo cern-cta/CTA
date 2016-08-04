@@ -27,8 +27,7 @@ namespace catalogue {
 TapeForWriting::TapeForWriting():
   lastFSeq(0),
   capacityInBytes(0),
-  dataOnTapeInBytes(0),
-  lbp(false) {
+  dataOnTapeInBytes(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -44,11 +43,10 @@ bool TapeForWriting::operator==(const TapeForWriting &rhs) const {
 std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj) {
   os <<
     "{"                  <<
-    "vid="               << obj.vid                      << "," <<
-    "lastFseq="          << obj.lastFSeq                 << "," <<
-    "capacityInBytes="   << obj.capacityInBytes          << "," <<
-    "dataOnTapeInBytes=" << obj.dataOnTapeInBytes        << "," <<
-    "lbp="               << (obj.lbp ? "true" : "false") <<
+    "vid="               << obj.vid << "," <<
+    "lastFseq="          << obj.lastFSeq << "," <<
+    "capacityInBytes="   << obj.capacityInBytes << "," <<
+    "dataOnTapeInBytes=" << obj.dataOnTapeInBytes <<
     "}";
 
   return os;

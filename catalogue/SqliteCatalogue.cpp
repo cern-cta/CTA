@@ -238,9 +238,9 @@ common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &c
     tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-    tape.disabled = rset->columnUint64("IS_DISABLED");
-    tape.full = rset->columnUint64("IS_FULL");
-    tape.lbp = rset->columnUint64("LBP_IS_ON");
+    tape.disabled = rset->columnBool("IS_DISABLED");
+    tape.full = rset->columnBool("IS_FULL");
+    tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
 
     tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");

@@ -454,8 +454,8 @@ public:
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
-   * specified logical library, in other words tapes that are not disabled, not
-   * full and are in the specified logical library.
+   * specified logical library, in other words tapes that are labelled, not
+   * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
    */

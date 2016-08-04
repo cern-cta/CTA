@@ -724,7 +724,7 @@ void RdbmsCatalogue::createTapePool(
 
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
-    stmt->bindUint64(":IS_ENCRYPTED", encryptionValue ? 1 : 0);
+    stmt->bindBool(":IS_ENCRYPTED", encryptionValue);
 
     stmt->bindString(":USER_COMMENT", comment);
 
@@ -817,7 +817,7 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
 
       pool.name = rset->columnString("TAPE_POOL_NAME");
       pool.nbPartialTapes = rset->columnUint64("NB_PARTIAL_TAPES");
-      pool.encryption = rset->columnUint64("IS_ENCRYPTED");
+      pool.encryption = rset->columnBool("IS_ENCRYPTED");
       pool.comment = rset->columnString("USER_COMMENT");
       pool.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
       pool.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
@@ -919,7 +919,7 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindUint64(":IS_ENCRYPTED", encryptionValue ? 1 : 0);
+    stmt->bindBool(":IS_ENCRYPTED", encryptionValue);
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
@@ -1390,7 +1390,6 @@ void RdbmsCatalogue::createTape(
         "LAST_FSEQ,"
         "IS_DISABLED,"
         "IS_FULL,"
-        "LBP_IS_ON,"
 
         "USER_COMMENT,"
 
@@ -1411,7 +1410,6 @@ void RdbmsCatalogue::createTape(
         ":LAST_FSEQ,"
         ":IS_DISABLED,"
         ":IS_FULL,"
-        ":LBP_IS_ON,"
 
         ":USER_COMMENT,"
 
@@ -1431,9 +1429,8 @@ void RdbmsCatalogue::createTape(
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
-    stmt->bindUint64(":IS_DISABLED", disabled ? 1 : 0);
-    stmt->bindUint64(":IS_FULL", full ? 1 : 0);
-    stmt->bindUint64(":LBP_IS_ON", 1);
+    stmt->bindBool(":IS_DISABLED", disabled);
+    stmt->bindBool(":IS_FULL", full);
 
     stmt->bindString(":USER_COMMENT", comment);
 
@@ -1588,9 +1585,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     if(searchCriteria.logicalLibrary) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.capacityInBytes) stmt->bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
-    if(searchCriteria.disabled) stmt->bindUint64(":IS_DISABLED", searchCriteria.disabled.value() ? 1 : 0);
-    if(searchCriteria.full) stmt->bindUint64(":IS_FULL", searchCriteria.full.value() ? 1 : 0);
-    if(searchCriteria.lbp) stmt->bindUint64(":LBP_IS_ON", searchCriteria.lbp.value() ? 1 : 0);
+    if(searchCriteria.disabled) stmt->bindBool(":IS_DISABLED", searchCriteria.disabled.value());
+    if(searchCriteria.full) stmt->bindBool(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.lbp) stmt->bindBool(":LBP_IS_ON", searchCriteria.lbp.value());
 
     auto rset = stmt->executeQuery();
     while (rset->next()) {
@@ -1603,9 +1600,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-      tape.disabled = rset->columnUint64("IS_DISABLED");
-      tape.full = rset->columnUint64("IS_FULL");
-      tape.lbp = rset->columnUint64("LBP_IS_ON");
+      tape.disabled = rset->columnBool("IS_DISABLED");
+      tape.full = rset->columnBool("IS_FULL");
+      tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
 
       tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -1703,9 +1700,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-      tape.disabled = rset->columnUint64("IS_DISABLED");
-      tape.full = rset->columnUint64("IS_FULL");
-      tape.lbp = rset->columnUint64("LBP_IS_ON");
+      tape.disabled = rset->columnBool("IS_DISABLED");
+      tape.full = rset->columnBool("IS_FULL");
+      tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
 
       tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2012,7 +2009,7 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindUint64(":IS_FULL", fullValue ? 1 : 0);
+    stmt->bindBool(":IS_FULL", fullValue);
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
@@ -2046,7 +2043,7 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindUint64(":IS_DISABLED", disabledValue ? 1 : 0);
+    stmt->bindBool(":IS_DISABLED", disabledValue);
     stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
     stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
@@ -2075,7 +2072,7 @@ void RdbmsCatalogue::setTapeLbp(const std::string &vid, const bool lbpValue) {
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindUint64(":LBP_IS_ON", lbpValue ? 1 : 0);
+    stmt->bindBool(":LBP_IS_ON", lbpValue);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
 
@@ -2092,8 +2089,35 @@ void RdbmsCatalogue::setTapeLbp(const std::string &vid, const bool lbpValue) {
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &vid, const std::string &comment) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":USER_COMMENT", comment);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3749,11 +3773,13 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "LBP_IS_ON AS LBP_IS_ON "
+        "LAST_FSEQ AS LAST_FSEQ "
       "FROM "
         "TAPE "
       "WHERE "
+        "LBP_IS_ON IS NOT NULL AND "
+        "LABEL_DRIVE IS NOT NULL AND "
+        "LABEL_TIME IS NOT NULL AND "
         "IS_DISABLED = 0 AND "
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
@@ -3763,13 +3789,11 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       TapeForWriting tape;
-
       tape.vid = rset->columnString("VID");
       tape.tapePool = rset->columnString("TAPE_POOL_NAME");
       tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-      tape.lbp = rset->columnUint64("LBP_IS_ON");
 
       tapes.push_back(tape);
     }

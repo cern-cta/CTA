@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "common/optional.hpp"
+
 #include <ostream>
 #include <stdint.h>
 #include <string>
@@ -73,11 +75,6 @@ struct TapeForWriting {
    * The total amount of data written to the tape in bytes.
    */
   uint64_t dataOnTapeInBytes;
-
-  /**
-   * True if the tape uses logical block protection.
-   */
-  bool lbp;
 
 }; // struct TapeForWriting
 

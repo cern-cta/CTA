@@ -60,5 +60,37 @@ uint64_t Rset::columnUint64(const std::string &colName) const {
   }
 }
 
+//------------------------------------------------------------------------------
+// columnBool
+//------------------------------------------------------------------------------
+bool Rset::columnBool(const std::string &colName) const {
+  try {
+    const optional<bool> col = columnOptionalBool(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnOptionalBool
+//------------------------------------------------------------------------------
+optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
+  try {
+    const auto column = columnOptionalUint64(colName);
+    if(column) {
+      return optional<bool>(column.value() != 0 ? true : false);
+    } else {
+      return nullopt;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 } // namespace rdbms
 } // namespace cta

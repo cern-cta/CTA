@@ -86,7 +86,7 @@ CREATE TABLE TAPE(
   LAST_FSEQ               INTEGER        NOT NULL,
   IS_DISABLED             INTEGER        NOT NULL,
   IS_FULL                 INTEGER        NOT NULL,
-  LBP_IS_ON               INTEGER        NOT NULL,
+  LBP_IS_ON               INTEGER,
   LABEL_DRIVE             VARCHAR2(100),
   LABEL_TIME              INTEGER,
   LAST_READ_DRIVE         VARCHAR2(100),
