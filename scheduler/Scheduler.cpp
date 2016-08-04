@@ -172,13 +172,6 @@ void cta::Scheduler::labelTape(const cta::common::dataStructures::SecurityIdenti
 }
 
 //------------------------------------------------------------------------------
-// setTapeBusy
-//------------------------------------------------------------------------------
-void cta::Scheduler::setTapeBusy(const std::string &vid, const bool busyValue) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
 void cta::Scheduler::setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) {

@@ -121,7 +121,6 @@ public:
   virtual std::list<cta::common::dataStructures::StorageClass> listStorageClass(const std::string &instanceName, const cta::common::dataStructures::ListStorageClassRequest &request);
 
   virtual void labelTape(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag);
-  virtual void setTapeBusy(const std::string &vid, const bool busyValue); // internal function not exposed to the Admin CLI
   virtual void setTapeFull(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue);
   virtual void setTapeDisabled(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue);
   virtual void setTapeLbp(const std::string &vid, const bool lbpValue); // internal function (noCLI)
