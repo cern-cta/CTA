@@ -2972,13 +2972,6 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
 }
 
 //------------------------------------------------------------------------------
-// modifyMountPolicyArchiveMinBytesQueued
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyArchiveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archiveMinBytesQueued) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
 // modifyMountPolicyArchiveMinRequestAge
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) {
