@@ -174,7 +174,7 @@ void cta::Scheduler::queueLabel(const cta::common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void cta::Scheduler::repack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType) {
+void cta::Scheduler::queueRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -209,7 +209,7 @@ void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void cta::Scheduler::verify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
+void cta::Scheduler::queueVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

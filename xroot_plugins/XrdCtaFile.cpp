@@ -1511,7 +1511,7 @@ void XrdCtaFile::xCom_repack() {
         throw cta::exception::UserError(help.str());
       }
       checkOptions(help.str());
-      m_scheduler->repack(m_cliIdentity, vid.value(), tag, type);
+      m_scheduler->queueRepack(m_cliIdentity, vid.value(), tag, type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
       cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid.value());
@@ -1617,7 +1617,7 @@ void XrdCtaFile::xCom_verify() {
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
       checkOptions(help.str());
-      m_scheduler->verify(m_cliIdentity, vid.value(), tag, numberOfFiles);
+      m_scheduler->queueVerify(m_cliIdentity, vid.value(), tag, numberOfFiles);
     }
     else if("err" == m_requestTokens.at(2)) { //err
       checkOptions(help.str());
