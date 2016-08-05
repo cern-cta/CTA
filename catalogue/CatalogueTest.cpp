@@ -3429,7 +3429,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment) {
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
@@ -3471,7 +3471,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment) {
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyRequesterComment(m_cliSI, diskInstanceName, requesterName, modifiedComment);
+  m_catalogue->modifyRequesteMountRuleComment(m_cliSI, diskInstanceName, requesterName, modifiedComment);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -3488,7 +3488,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment_nonExistentRequester) {
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment_nonExistentRequester) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
@@ -3497,7 +3497,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment_nonExistentRequester)
   const std::string requesterName = "requester_name";
   const std::string comment = "Comment";
 
-  ASSERT_THROW(m_catalogue->modifyRequesterComment(m_cliSI, diskInstanceName, requesterName, comment),
+  ASSERT_THROW(m_catalogue->modifyRequesteMountRuleComment(m_cliSI, diskInstanceName, requesterName, comment),
     exception::UserError);
 }
 

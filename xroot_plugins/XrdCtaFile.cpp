@@ -1175,7 +1175,7 @@ void XrdCtaFile::xCom_requestermountrule() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
       checkOptions(help.str());
       if(comment) {
-        m_catalogue->modifyRequesterComment(m_cliIdentity, in.value(), name.value(), comment.value());
+        m_catalogue->modifyRequesteMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
         m_catalogue->modifyRequesterMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());

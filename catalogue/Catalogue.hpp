@@ -277,7 +277,7 @@ public:
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
   virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
-  virtual void modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
+  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
   virtual void modifyRequesterGroupMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterGroupComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
 

@@ -2126,9 +2126,9 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
 }
 
 //------------------------------------------------------------------------------
-// modifyRequesterComment
+// modifyRequesteMountRuleComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &instanceName, const std::string &requesterName, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
