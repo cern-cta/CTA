@@ -79,10 +79,54 @@ class Catalogue {
 public:
 
   /**
- * Destructor.
- */
+   * Destructor.
+   */
   virtual ~Catalogue() = 0;
-  
+
+  ////////////////////////////////////////////////////////////////
+  // METHODS TO BE CALLED BY THE CTA TAPE SERVER DAEMON START HERE
+  ////////////////////////////////////////////////////////////////
+
+  /**
+   * Notifies the catalogue that the specified tape was labelled.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of tape drive that was used to label the tape.
+   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
+   */
+  virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) = 0;
+
+  /**
+   * Returns the list of tapes that can be written to by a tape drive in the
+   * specified logical library, in other words tapes that are labelled, not
+   * disabled, not full and are in the specified logical library.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   */
+  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
+
+  /**
+   * Notifies the catalogue that a file has been written to tape.
+   *
+   * @param event The tape file written event.
+   */
+  virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
+
+  virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+
+  /**
+   * This method notifies the CTA catalogue that there is no more free space on
+   * the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual void noSpaceLeftOnTape(const std::string &vid) = 0;
+
+  ////////////////////////////////////////////////////////////////
+  // METHODS TO BE CALLED BY THE CTA TAPE SERVER DAEMON END HERE
+  ////////////////////////////////////////////////////////////////
+
   virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
   virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) = 0;
   virtual void deleteAdminUser(const std::string &username) = 0;
@@ -201,9 +245,19 @@ public:
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) = 0;
   virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) = 0;
-  virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
-  virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+
+  /**
+   * Sets the full status of the specified tape.
+   *
+   * Please note that this method is to be called by the CTA front-end in
+   * response to a command from the CTA command-line interface (CLI).
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param vid The volume identifier of the tape to be marked as full.
+   * @param fullValue Set to true if the tape is full.
+   */
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) = 0;
+
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) = 0;
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
 
@@ -383,15 +437,6 @@ public:
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
 
   /**
-   * Notifies the catalogue that the specified tape was labelled.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param drive The name of tape drive that was used to label the tape.
-   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
-   */
-  virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) = 0;
-
-  /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
    *
@@ -410,13 +455,6 @@ public:
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const common::dataStructures::UserIdentity &user) = 0;
-
-  /**
-   * Notifies the catalogue that a file has been written to tape.
-   *
-   * @param event The tape file written event.
-   */
-  virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
 
   /**
    * Deletes the specified archive file and its associated tape copies from the
@@ -458,15 +496,6 @@ public:
    * the specified host has administrator privileges.
    */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
-
-  /**
-   * Returns the list of tapes that can be written to by a tape drive in the
-   * specified logical library, in other words tapes that are labelled, not
-   * disabled, not full and are in the specified logical library.
-   *
-   * @param logicalLibraryName The name of the logical library.
-   */
-  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
 }; // class Catalogue
 

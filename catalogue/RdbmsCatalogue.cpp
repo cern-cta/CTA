@@ -1998,6 +1998,29 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
 }
 
 //------------------------------------------------------------------------------
+// noSpaceLeftOnTape
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
+  try {
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_FULL = 1 "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":VID", vid);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::Exception(std::string("Tape ") + vid + " does not exist");
+    }
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity,
