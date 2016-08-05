@@ -2986,13 +2986,6 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
 }
 
 //------------------------------------------------------------------------------
-// modifyMountPolicyRetrieveMinFilesQueued
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyRetrieveMinFilesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveFilesQueued) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
 // modifyMountPolicyRetrieveMinBytesQueued
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyMountPolicyRetrieveMinBytesQueued(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrieveMinBytesQueued) {
