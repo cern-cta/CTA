@@ -3359,6 +3359,105 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule_non_existant) {
     exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string anotherMountPolicyName = "another_mount_policy";
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    anotherMountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create another mount policy");
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_cliSI, mountPolicyName, diskInstanceName, requesterName, comment);
+
+  {
+    const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(comment, rule.comment);
+    ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+    ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+    ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  }
+
+  m_catalogue->modifyRequesterMountPolicy(m_cliSI, diskInstanceName, requesterName, anotherMountPolicyName);
+
+  {
+    const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(anotherMountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(comment, rule.comment);
+    ASSERT_EQ(m_cliSI.username, rule.creationLog.username);
+    ASSERT_EQ(m_cliSI.host, rule.creationLog.host);
+    ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy_nonExistentRequester) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 4;
+  const uint64_t retrievePriority = 5;
+  const uint64_t minRetrieveRequestAge = 8;
+  const uint64_t maxDrivesAllowed = 9;
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+
+  ASSERT_THROW(m_catalogue->modifyRequesterMountPolicy(m_cliSI, diskInstanceName, requesterName, mountPolicyName),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
   using namespace cta;
 

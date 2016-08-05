@@ -2091,8 +2091,38 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 //------------------------------------------------------------------------------
 // modifyRequesterMountPolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE REQUESTER_MOUNT_RULE SET "
+        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt->bindString(":REQUESTER_NAME", requesterName);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" +
+        requesterName + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
