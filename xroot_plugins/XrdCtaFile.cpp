@@ -391,9 +391,13 @@ void XrdCtaFile::replaceAll(std::string& str, const std::string& from, const std
 //------------------------------------------------------------------------------
 // getOption
 //------------------------------------------------------------------------------
-std::string XrdCtaFile::getOption(const std::string& optionShortName, const std::string& optionLongName, const bool encoded) {
+std::string XrdCtaFile::getOption(const std::string& optionShortName, const std::string& optionLongName) {
+  bool encoded = false;
   for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
-    if(optionShortName == *it || optionLongName == *it) {
+    if(optionShortName == *it || optionLongName == *it || optionLongName+":base64" == *it) {
+      if(optionLongName+":base64" == *it) {
+        encoded = true;
+      }
       auto it_next=it+1;
       if(it_next!=m_requestTokens.cend()) {
         if(!encoded) return *it_next;
@@ -411,12 +415,11 @@ std::string XrdCtaFile::getOption(const std::string& optionShortName, const std:
 // getOptionStringValue
 //------------------------------------------------------------------------------
 optional<std::string> XrdCtaFile::getOptionStringValue(const std::string& optionShortName, 
-        const std::string& optionLongName, 
-        const bool encoded, 
+        const std::string& optionLongName,
         const bool required, 
         const bool useDefaultIfMissing, 
         const std::string& defaultValue) {
-  std::string option = getOption(optionShortName, optionLongName, encoded);
+  std::string option = getOption(optionShortName, optionLongName);
   if(option.empty()&&useDefaultIfMissing) {
     option = defaultValue;
   }
@@ -439,12 +442,11 @@ optional<std::string> XrdCtaFile::getOptionStringValue(const std::string& option
 // getOptionUint64Value
 //------------------------------------------------------------------------------
 optional<uint64_t> XrdCtaFile::getOptionUint64Value(const std::string& optionShortName, 
-        const std::string& optionLongName, 
-        const bool encoded, 
+        const std::string& optionLongName,
         const bool required, 
         const bool useDefaultIfMissing, 
         const std::string& defaultValue) {
-  std::string option = getOption(optionShortName, optionLongName, encoded);
+  std::string option = getOption(optionShortName, optionLongName);
   if(option.empty()&&useDefaultIfMissing) {
     option = defaultValue;
   }
@@ -467,12 +469,11 @@ optional<uint64_t> XrdCtaFile::getOptionUint64Value(const std::string& optionSho
 // getOptionBoolValue
 //------------------------------------------------------------------------------
 optional<bool> XrdCtaFile::getOptionBoolValue(const std::string& optionShortName, 
-        const std::string& optionLongName, 
-        const bool encoded, 
+        const std::string& optionLongName,
         const bool required, 
         const bool useDefaultIfMissing, 
         const std::string& defaultValue) {
-  std::string option = getOption(optionShortName, optionLongName, encoded);
+  std::string option = getOption(optionShortName, optionLongName);
   if(option.empty()&&useDefaultIfMissing) {
     option = defaultValue;
   }
@@ -495,12 +496,11 @@ optional<bool> XrdCtaFile::getOptionBoolValue(const std::string& optionShortName
 // getOptionTimeValue
 //------------------------------------------------------------------------------
 optional<time_t> XrdCtaFile::getOptionTimeValue(const std::string& optionShortName, 
-        const std::string& optionLongName, 
-        const bool encoded, 
+        const std::string& optionLongName,
         const bool required, 
         const bool useDefaultIfMissing, 
         const std::string& defaultValue) {
-  std::string option = getOption(optionShortName, optionLongName, encoded);
+  std::string option = getOption(optionShortName, optionLongName);
   if(option.empty()&&useDefaultIfMissing) {
     option = defaultValue;
   }
@@ -629,9 +629,9 @@ void XrdCtaFile::xCom_bootstrap() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  optional<std::string> username = getOptionStringValue("-u", "--username", false, true, false);
-  optional<std::string> hostname = getOptionStringValue("-h", "--hostname", false, true, false);
-  optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+  optional<std::string> username = getOptionStringValue("-u", "--username", true, false);
+  optional<std::string> hostname = getOptionStringValue("-h", "--hostname", true, false);
+  optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
   checkOptions(help.str());
   m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username.value(), hostname.value(), comment.value());
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -647,14 +647,14 @@ void XrdCtaFile::xCom_admin() {
        << "\tadd --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --username/-u <user_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;  
+       << "\tls  [--header/-h]" << std::endl;
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> username = getOptionStringValue("-u", "--username", false, true, false);
+    optional<std::string> username = getOptionStringValue("-u", "--username", true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       if("add" == m_requestTokens.at(2)) { //add
         checkOptions(help.str());
         m_catalogue->createAdminUser(m_cliIdentity, username.value(), comment.value());
@@ -706,9 +706,9 @@ void XrdCtaFile::xCom_adminhost() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> hostname = getOptionStringValue("-n", "--name", false, true, false);
+    optional<std::string> hostname = getOptionStringValue("-n", "--name", true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       if("add" == m_requestTokens.at(2)) { //add
         checkOptions(help.str());
         m_catalogue->createAdminHost(m_cliIdentity, hostname.value(), comment.value());
@@ -760,18 +760,18 @@ void XrdCtaFile::xCom_tapepool() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
-      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, true, false);
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", true, false);
       checkOptions(help.str());
       m_catalogue->createTapePool(m_cliIdentity, name.value(), ptn.value(), encrypted.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, false, false);
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, false);
       checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyTapePoolComment(m_cliIdentity, name.value(), comment.value());
@@ -827,18 +827,18 @@ void XrdCtaFile::xCom_archiveroute() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> scn = getOptionStringValue("-s", "--storageclass", false, true, false);
-    optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true, false);
+    optional<std::string> scn = getOptionStringValue("-s", "--storageclass", true, false);
+    optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       checkOptions(help.str());
       m_catalogue->createArchiveRoute(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyArchiveRouteComment(m_cliIdentity, in.value(), scn.value(), cn.value(), comment.value());
@@ -892,9 +892,9 @@ void XrdCtaFile::xCom_logicallibrary() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       if("add" == m_requestTokens.at(2)) { //add
         checkOptions(help.str());
         m_catalogue->createLogicalLibrary(m_cliIdentity, name.value(), comment.value());
@@ -951,26 +951,26 @@ void XrdCtaFile::xCom_tape() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, true, false);
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
-      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, true, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, true, "-");
-      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, true, false);
-      optional<bool> full = getOptionBoolValue("-f", "--full", false, true, false);
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", true, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", true, false);
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, true, "-");
+      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", true, false);
+      optional<bool> full = getOptionBoolValue("-f", "--full", true, false);
       checkOptions(help.str());
       m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey, capacity.value(), disabled.value(), full.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
-      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, false, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
-      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
-      optional<bool> full = getOptionBoolValue("-f", "--full", false, false, false);
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, false);
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false);
+      optional<bool> full = getOptionBoolValue("-f", "--full", false, false);
       checkOptions(help.str());
       if(logicallibrary) {
         m_catalogue->modifyTapeLogicalLibraryName(m_cliIdentity, vid.value(), logicallibrary.value());
@@ -1000,9 +1000,9 @@ void XrdCtaFile::xCom_tape() {
     }
     else if("label" == m_requestTokens.at(2)) { //label
       //the tag will be set to "-" in case it's missing from the cmdline; which means no tagging
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false); 
-      optional<bool> force = getOptionBoolValue("-f", "--force", false, false, true, "false");
-      optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, false, true, "true");
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false); 
+      optional<bool> force = getOptionBoolValue("-f", "--force", false, true, "false");
+      optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, true, "true");
       checkOptions(help.str());
       m_scheduler->queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
     }
@@ -1014,13 +1014,13 @@ void XrdCtaFile::xCom_tape() {
   else if("ls" == m_requestTokens.at(2)) { //ls
     cta::catalogue::TapeSearchCriteria searchCriteria;
     if(!hasOption("-a","--all")) {
-      searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false, false);
-      searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false, false);
-      searchCriteria.full = getOptionBoolValue("-f", "--full", false, false, false);
-      searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false, false);
-      searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false, false);
-      searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
-      searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
+      searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false);
+      searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false);
+      searchCriteria.full = getOptionBoolValue("-f", "--full", false, false);
+      searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false);
+      searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
+      searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false);
+      searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false);
     }
     checkOptions(help.str());
     std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
@@ -1093,11 +1093,11 @@ void XrdCtaFile::xCom_storageclass() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> scn = getOptionStringValue("-n", "--name", false, true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true, false);
+    optional<std::string> scn = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       checkOptions(help.str());
       common::dataStructures::StorageClass storageClass;
       storageClass.diskInstance = in.value();
@@ -1107,8 +1107,8 @@ void XrdCtaFile::xCom_storageclass() {
       m_catalogue->createStorageClass(m_cliIdentity, storageClass);
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyStorageClassComment(m_cliIdentity, in.value(), scn.value(), comment.value());
@@ -1161,18 +1161,18 @@ void XrdCtaFile::xCom_requestermountrule() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true, false);
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       checkOptions(help.str());
       m_catalogue->createRequesterMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyRequesteMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
@@ -1225,18 +1225,18 @@ void XrdCtaFile::xCom_groupmountrule() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", false, true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", false, true, false);
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       checkOptions(help.str());
       m_catalogue->createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
         comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
       checkOptions(help.str());
       if(comment) {
         m_catalogue->modifyRequesterGroupMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
@@ -1291,25 +1291,25 @@ void XrdCtaFile::xCom_mountpolicy() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> group = getOptionStringValue("-n", "--name", false, true, false);
+    optional<std::string> group = getOptionStringValue("-n", "--name", true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) { 
       if("add" == m_requestTokens.at(2)) { //add     
-        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false, true, false);
-        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false, true, false);
-        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false, true, false);
-        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, true, false);
-        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, true, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", true, false);
+        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", true, false);
+        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", true, false);
+        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", true, false);
+        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", true, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
         checkOptions(help.str());
         m_catalogue->createMountPolicy(m_cliIdentity, group.value(), archivepriority.value(), minarchiverequestage.value(), retrievepriority.value(), minretrieverequestage.value(), maxdrivesallowed.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch      
-        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false, false, false);
-        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false, false, false);
-        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false, false, false);
-        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, false, false);
-        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, false, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false, false);
+        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false, false);
+        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false, false);
+        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, false);
+        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
         checkOptions(help.str());
         if(archivepriority) {
           m_catalogue->modifyMountPolicyArchivePriority(m_cliIdentity, group.value(), archivepriority.value());
@@ -1377,16 +1377,16 @@ void XrdCtaFile::xCom_dedication() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> drive = getOptionStringValue("-n", "--name", false, true, false);
+    optional<std::string> drive = getOptionStringValue("-n", "--name", true, false);
     if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
       bool readonly = hasOption("-r", "--readonly");
       bool writeonly = hasOption("-w", "--writeonly");
       if("add" == m_requestTokens.at(2)) { //add
-        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false, false);
-        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
-        optional<time_t> from = getOptionTimeValue("-f", "--from", false, true, false);
-        optional<time_t> until = getOptionTimeValue("-u", "--until", false, true, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, true, false);
+        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
+        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+        optional<time_t> from = getOptionTimeValue("-f", "--from", true, false);
+        optional<time_t> until = getOptionTimeValue("-u", "--until", true, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
         checkOptions(help.str());
         if((!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
           throw cta::exception::UserError(help.str());
@@ -1401,11 +1401,11 @@ void XrdCtaFile::xCom_dedication() {
         m_catalogue->createDedication(m_cliIdentity, drive.value(), type, tag, vid, from.value(), until.value(), comment.value());
       }
       else if("ch" == m_requestTokens.at(2)) { //ch
-        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false, false);
-        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
-        optional<time_t> from = getOptionTimeValue("-f", "--from", false, false, false);
-        optional<time_t> until = getOptionTimeValue("-u", "--until", false, false, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
+        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
+        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+        optional<time_t> from = getOptionTimeValue("-f", "--from", false, false);
+        optional<time_t> until = getOptionTimeValue("-u", "--until", false, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
         checkOptions(help.str());
         if((!readonly&&!writeonly)||(readonly&&writeonly)) {
           throw cta::exception::UserError(help.str());
@@ -1492,12 +1492,12 @@ void XrdCtaFile::xCom_repack() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
     if(!vid) {
       throw cta::exception::UserError(help.str());
     }  
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       bool justexpand = hasOption("-e", "--justexpand");
       bool justrepack = hasOption("-r", "--justrepack");
       cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
@@ -1535,7 +1535,7 @@ void XrdCtaFile::xCom_repack() {
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RepackInfo> list;
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false, false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
     if(!vid) {      
       list = m_scheduler->getRepacks(m_cliIdentity);
     }
@@ -1591,7 +1591,7 @@ void XrdCtaFile::xCom_shrink() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
-  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, true, false);
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
   checkOptions(help.str());
   m_scheduler->shrink(m_cliIdentity, tapepool.value());
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
@@ -1612,10 +1612,10 @@ void XrdCtaFile::xCom_verify() {
     throw cta::exception::UserError(help.str());
   }
   if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
     if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
-      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false, false); //nullopt means do a complete verification      
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
       checkOptions(help.str());
       m_scheduler->verify(m_cliIdentity, vid.value(), tag, numberOfFiles);
     }
@@ -1642,7 +1642,7 @@ void XrdCtaFile::xCom_verify() {
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::VerifyInfo> list;
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
     if(!vid) {      
       list = m_scheduler->getVerifys(m_cliIdentity);
     }
@@ -1692,16 +1692,16 @@ void XrdCtaFile::xCom_archivefile() {
     bool summary = hasOption("-S", "--summary");
     bool all = hasOption("-a", "--all");
     cta::catalogue::ArchiveFileSearchCriteria searchCriteria;
-    searchCriteria.archiveFileId = getOptionUint64Value("-I", "--id", false, false, false);
-    searchCriteria.diskFileGroup = getOptionStringValue("-g", "--group", false, false, false);
-    searchCriteria.diskFileId = getOptionStringValue("-d", "--diskid", false, false, false);
-    searchCriteria.diskFilePath = getOptionStringValue("-p", "--path", false, false, false);
-    searchCriteria.diskFileUser = getOptionStringValue("-o", "--owner", false, false, false);
-    searchCriteria.diskInstance = getOptionStringValue("-i", "--instance", false, false, false);
-    searchCriteria.storageClass = getOptionStringValue("-s", "--storageclass", false, false, false);
-    searchCriteria.tapeFileCopyNb = getOptionUint64Value("-c", "--copynb", false, false, false);
-    searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false, false);
-    searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false, false);
+    searchCriteria.archiveFileId = getOptionUint64Value("-I", "--id", false, false);
+    searchCriteria.diskFileGroup = getOptionStringValue("-g", "--group", false, false);
+    searchCriteria.diskFileId = getOptionStringValue("-d", "--diskid", false, false);
+    searchCriteria.diskFilePath = getOptionStringValue("-p", "--path", false, false);
+    searchCriteria.diskFileUser = getOptionStringValue("-o", "--owner", false, false);
+    searchCriteria.diskInstance = getOptionStringValue("-i", "--instance", false, false);
+    searchCriteria.storageClass = getOptionStringValue("-s", "--storageclass", false, false);
+    searchCriteria.tapeFileCopyNb = getOptionUint64Value("-c", "--copynb", false, false);
+    searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false);
+    searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false);
     if(!all) {
       checkOptions(help.str());
     }
@@ -1765,15 +1765,15 @@ void XrdCtaFile::xCom_test() {
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
-  optional<std::string> drive = getOptionStringValue("-d", "--drive", false, true, false);
-  optional<std::string> vid = getOptionStringValue("-v", "--vid", false, true, false);
+  optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
+  optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
   if("read" == m_requestTokens.at(2)) {
-    optional<uint64_t> firstfseq = getOptionUint64Value("-f", "--firstfseq", false, true, false);
-    optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", false, true, false);
-    optional<std::string> output = getOptionStringValue("-o", "--output", false, true, false);        
+    optional<uint64_t> firstfseq = getOptionUint64Value("-f", "--firstfseq", true, false);
+    optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", true, false);
+    optional<std::string> output = getOptionStringValue("-o", "--output", true, false);        
     bool checkchecksum = hasOption("-c", "--checkchecksum");
     checkOptions(help.str());
-    optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
+    optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
     std::string tag_value = tag? tag.value():"-";
     cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
     std::vector<std::vector<std::string>> responseTable;
@@ -1799,21 +1799,21 @@ void XrdCtaFile::xCom_test() {
   else if("write" == m_requestTokens.at(2) || "write_auto" == m_requestTokens.at(2)) {
     cta::common::dataStructures::WriteTestResult res;
     if("write" == m_requestTokens.at(2)) { //write
-      optional<std::string> file = getOptionStringValue("-f", "--file", false, true, false);
+      optional<std::string> file = getOptionStringValue("-f", "--file", true, false);
       checkOptions(help.str());
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       std::string tag_value = tag? tag.value():"-";
       res = m_scheduler->writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
     }
     else { //write_auto
-      optional<uint64_t> number = getOptionUint64Value("-n", "--number", false, true, false);
-      optional<uint64_t> size = getOptionUint64Value("-s", "--size", false, true, false);
-      optional<std::string> input = getOptionStringValue("-i", "--input", false, true, false);
+      optional<uint64_t> number = getOptionUint64Value("-n", "--number", true, false);
+      optional<uint64_t> size = getOptionUint64Value("-s", "--size", true, false);
+      optional<std::string> input = getOptionStringValue("-i", "--input", true, false);
       if(input.value()!="zero"&&input.value()!="urandom") {
         m_missingRequiredOptions.push_back("--input value must be either \"zero\" or \"urandom\"");
       }
       checkOptions(help.str());
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false, false);
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       std::string tag_value = tag? tag.value():"-";
       cta::common::dataStructures::TestSourceType type;
       if(input.value()=="zero") { //zero
@@ -1862,7 +1862,7 @@ void XrdCtaFile::xCom_drive() {
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
-  optional<std::string> drive = getOptionStringValue("-d", "--drive", false, true, false);
+  optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
   checkOptions(help.str());
   if("up" == m_requestTokens.at(2)) {
     m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), true, false);
@@ -1920,7 +1920,7 @@ void XrdCtaFile::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
-  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false, false);
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
   if(!tapepool) {
@@ -1987,7 +1987,7 @@ void XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
-  optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false, false);
+  optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
   if(!vid) {
@@ -2086,26 +2086,24 @@ void XrdCtaFile::xCom_listdrivestates() {
 void XrdCtaFile::xCom_archive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " a/archive --encoded <\"true\" or \"false\"> --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
-                    << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
-                    << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  optional<std::string> diskid = getOptionStringValue("", "--diskid", encoded, true, false);
-  optional<std::string> srcurl = getOptionStringValue("", "--srcurl", encoded, true, false);
-  optional<uint64_t> size = getOptionUint64Value("", "--size", encoded, true, false);
-  optional<std::string> checksumtype = getOptionStringValue("", "--checksumtype", encoded, true, false);
-  optional<std::string> checksumvalue = getOptionStringValue("", "--checksumvalue", encoded, true, false);
-  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", encoded, true, false);
-  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
-  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
-  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
-  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
-  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded, true, false);
-  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded, true, false);
+  help << m_requestTokens.at(0) << " a/archive --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
+       << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
+       << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+  optional<std::string> diskid = getOptionStringValue("", "--diskid", true, false);
+  optional<std::string> srcurl = getOptionStringValue("", "--srcurl", true, false);
+  optional<uint64_t> size = getOptionUint64Value("", "--size", true, false);
+  optional<std::string> checksumtype = getOptionStringValue("", "--checksumtype", true, false);
+  optional<std::string> checksumvalue = getOptionStringValue("", "--checksumvalue", true, false);
+  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", true, false);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
+  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", true, false);
+  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2137,21 +2135,19 @@ void XrdCtaFile::xCom_archive() {
 void XrdCtaFile::xCom_retrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " r/retrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
-                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
-  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", encoded, true, false);
-  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
-  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
-  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
-  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
-  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", encoded, true, false);
-  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", encoded, true, false);
+  help << m_requestTokens.at(0) << " r/retrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
+  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", true, false);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
+  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", true, false);
+  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2178,13 +2174,11 @@ void XrdCtaFile::xCom_retrieve() {
 void XrdCtaFile::xCom_deletearchive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " da/deletearchive --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
+  help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2232,19 +2226,17 @@ void XrdCtaFile::xCom_deletearchive() {
 void XrdCtaFile::xCom_cancelretrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " cr/cancelretrieve --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
-                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
-  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", encoded, true, false);
-  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
-  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
-  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
-  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
+  help << m_requestTokens.at(0) << " cr/cancelretrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
+       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
+  optional<std::string> dsturl = getOptionStringValue("", "--dsturl", true, false);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2269,19 +2261,17 @@ void XrdCtaFile::xCom_cancelretrieve() {
 void XrdCtaFile::xCom_updatefilestorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
-                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
-  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
-  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", encoded, true, false);
-  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
-  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
-  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
-  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
+  help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
+       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
+  optional<std::string> storageclass = getOptionStringValue("", "--storageclass", true, false);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2306,16 +2296,14 @@ void XrdCtaFile::xCom_updatefilestorageclass() {
 void XrdCtaFile::xCom_updatefileinfo() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " ufi/updatefileinfo --encoded <\"true\" or \"false\"> --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
-                    << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<uint64_t> id = getOptionUint64Value("", "--id", encoded, true, false);
-  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", encoded, true, false);
-  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", encoded, true, false);
-  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", encoded, true, false);
-  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", encoded, true, false);
+  help << m_requestTokens.at(0) << " ufi/updatefileinfo --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
+       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
+  optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
+  optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
+  optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
+  optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
   diskFileInfo.recoveryBlob=recoveryblob.value();
@@ -2335,12 +2323,10 @@ void XrdCtaFile::xCom_updatefileinfo() {
 void XrdCtaFile::xCom_liststorageclass() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " lsc/liststorageclass --encoded <\"true\" or \"false\"> --user <user> --group <group>" << std::endl;
-  optional<bool> encoded_s = getOptionBoolValue("", "--encoded", false, true, false);
-  checkOptions(help.str());
-  bool encoded = encoded_s.value();
-  optional<std::string> user = getOptionStringValue("", "--user", encoded, true, false);
-  optional<std::string> group = getOptionStringValue("", "--group", encoded, true, false);
+  help << m_requestTokens.at(0) << " lsc/liststorageclass --user <user> --group <group>" << std::endl
+       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+  optional<std::string> group = getOptionStringValue("", "--group", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
