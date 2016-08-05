@@ -1178,7 +1178,7 @@ void XrdCtaFile::xCom_requestermountrule() {
         m_catalogue->modifyRequesterComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterMountPolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
+        m_catalogue->modifyRequesterMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
       }
     }
     else { //rm

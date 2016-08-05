@@ -3359,7 +3359,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule_non_existant) {
     exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy) {
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
@@ -3412,7 +3412,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy) {
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
   }
 
-  m_catalogue->modifyRequesterMountPolicy(m_cliSI, diskInstanceName, requesterName, anotherMountPolicyName);
+  m_catalogue->modifyRequesterMountRulePolicy(m_cliSI, diskInstanceName, requesterName, anotherMountPolicyName);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -3501,7 +3501,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterComment_nonExistentRequester)
     exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy_nonExistentRequester) {
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy_nonExistentRequester) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
@@ -3526,7 +3526,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountPolicy_nonExistentReques
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
 
-  ASSERT_THROW(m_catalogue->modifyRequesterMountPolicy(m_cliSI, diskInstanceName, requesterName, mountPolicyName),
+  ASSERT_THROW(m_catalogue->modifyRequesterMountRulePolicy(m_cliSI, diskInstanceName, requesterName, mountPolicyName),
     exception::UserError);
 }
 

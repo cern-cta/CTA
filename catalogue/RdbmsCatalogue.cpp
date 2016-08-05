@@ -2089,9 +2089,9 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 }
 
 //------------------------------------------------------------------------------
-// modifyRequesterMountPolicy
+// modifyRequesterMountRulePolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterMountPolicy(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) {
   try {
     const time_t now = time(nullptr);
