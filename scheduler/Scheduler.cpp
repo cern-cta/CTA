@@ -266,13 +266,6 @@ void cta::Scheduler::setDriveStatus(const cta::common::dataStructures::SecurityI
 }
 
 //------------------------------------------------------------------------------
-// reconcile
-//------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveFile> cta::Scheduler::reconcile(const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs() const {

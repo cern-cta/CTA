@@ -160,7 +160,6 @@ void XrdCtaFile::dispatchCommand() {
   else if("af"   == command || "archivefile"            == command) {authorizeAdmin(); xCom_archivefile();}
   else if("te"   == command || "test"                   == command) {authorizeAdmin(); xCom_test();}
   else if("dr"   == command || "drive"                  == command) {authorizeAdmin(); xCom_drive();}
-  else if("rc"   == command || "reconcile"              == command) {authorizeAdmin(); xCom_reconcile();}
   else if("lpa"  == command || "listpendingarchives"    == command) {authorizeAdmin(); xCom_listpendingarchives();}
   else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); xCom_listpendingretrieves();}
   else if("lds"  == command || "listdrivestates"        == command) {authorizeAdmin(); xCom_listdrivestates();}
@@ -1877,43 +1876,6 @@ void XrdCtaFile::xCom_drive() {
 }
 
 //------------------------------------------------------------------------------
-// xCom_reconcile
-//------------------------------------------------------------------------------
-void XrdCtaFile::xCom_reconcile() {
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  help << m_requestTokens.at(0) << " rc/reconcile (it is a synchronous command, with a possibly long execution time, returns the list of files unknown to EOS, to be deleted manually by the admin after proper checks)" << std::endl;
-  std::list<cta::common::dataStructures::ArchiveFile> list = m_scheduler->reconcile(m_cliIdentity);  
-  if(list.size()>0) {
-    std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","instance","size","checksum type","checksum value","storage class","owner","group","path"};
-    responseTable.push_back(header);    
-    for(auto it = list.cbegin(); it != list.cend(); it++) {
-      for(auto jt = it->tapeFiles.cbegin(); jt != it->tapeFiles.cend(); jt++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(std::to_string((unsigned long long)it->archiveFileID));
-        currentRow.push_back(std::to_string((unsigned long long)jt->first));
-        currentRow.push_back(jt->second.vid);
-        currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
-        currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-        currentRow.push_back(it->diskFileId);
-        currentRow.push_back(it->diskInstance);
-        currentRow.push_back(std::to_string((unsigned long long)it->fileSize));
-        currentRow.push_back(it->checksumType);
-        currentRow.push_back(it->checksumValue);
-        currentRow.push_back(it->storageClass);
-        currentRow.push_back(it->diskFileInfo.owner);
-        currentRow.push_back(it->diskFileInfo.group);
-        currentRow.push_back(it->diskFileInfo.path);          
-        responseTable.push_back(currentRow);
-      }
-    }
-    cmdlineOutput << formatResponse(responseTable, true);
-  }
-  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
-}
-
-//------------------------------------------------------------------------------
 // xCom_listpendingarchives
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_listpendingarchives() {
@@ -2359,7 +2321,6 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " listpendingretrieves/lpr"                            << std::endl;
   help << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl;
   help << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl;
-  help << programName << " reconcile/rc"                                        << std::endl;
   help << programName << " repack/re                add/rm/ls/err"              << std::endl;
   help << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl;
   help << programName << " shrink/sh"                                           << std::endl;

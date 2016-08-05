@@ -204,7 +204,6 @@ protected:
   void xCom_archivefile();
   void xCom_test();
   void xCom_drive();
-  void xCom_reconcile();
   void xCom_listpendingarchives();
   void xCom_listpendingretrieves();
   void xCom_listdrivestates();
