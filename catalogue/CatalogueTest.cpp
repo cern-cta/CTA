@@ -3396,6 +3396,93 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchiveMinRequestAge_nonExi
   ASSERT_THROW(m_catalogue->modifyMountPolicyArchiveMinRequestAge(m_cliSI, name, minArchiveRequestAge), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyRetreivePriority) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  const std::string name = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+  const std::string &comment = "Create mount policy";
+
+  m_catalogue->createMountPolicy(
+    m_cliSI,
+    name,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    comment);
+
+  {
+    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+    ASSERT_EQ(1, mountPolicies.size());
+
+    const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
+
+    ASSERT_EQ(name, mountPolicy.name);
+
+    ASSERT_EQ(archivePriority, mountPolicy.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, mountPolicy.archiveMinRequestAge);
+
+    ASSERT_EQ(retrievePriority, mountPolicy.retrievePriority);
+    ASSERT_EQ(minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
+
+    ASSERT_EQ(maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
+
+    ASSERT_EQ(comment, mountPolicy.comment);
+
+    const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mountPolicy.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedRetrievePriority = retrievePriority + 10;
+  m_catalogue->modifyMountPolicyRetrievePriority(m_cliSI, name, modifiedRetrievePriority);
+
+  {
+    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+    ASSERT_EQ(1, mountPolicies.size());
+
+    const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
+
+    ASSERT_EQ(name, mountPolicy.name);
+
+    ASSERT_EQ(archivePriority, mountPolicy.archivePriority);
+    ASSERT_EQ(minArchiveRequestAge, mountPolicy.archiveMinRequestAge);
+
+    ASSERT_EQ(modifiedRetrievePriority, mountPolicy.retrievePriority);
+    ASSERT_EQ(minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
+
+    ASSERT_EQ(maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
+
+    ASSERT_EQ(comment, mountPolicy.comment);
+
+    const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyRetrievePriority_nonExistentMountPolicy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  const std::string name = "mount_policy";
+  const uint64_t retrievePriority = 1;
+
+  ASSERT_THROW(m_catalogue->modifyMountPolicyRetrievePriority(m_cliSI, name, retrievePriority), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
   using namespace cta;
 
