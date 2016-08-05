@@ -2940,8 +2940,35 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchivePriority
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity,
+  const std::string &name, const uint64_t archivePriority) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE MOUNT_POLICY SET "
+        "ARCHIVE_PRIORITY = :ARCHIVE_PRIORITY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindUint64(":ARCHIVE_PRIORITY", archivePriority);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":MOUNT_POLICY_NAME", name);
+    stmt->executeNonQuery();
+
+    if(0 == stmt->getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
