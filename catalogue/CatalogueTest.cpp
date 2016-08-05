@@ -3294,9 +3294,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchivePriority) {
     const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = mountPolicy.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
