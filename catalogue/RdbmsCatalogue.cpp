@@ -1935,9 +1935,9 @@ void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::st
 }
 
 //------------------------------------------------------------------------------
-// modifyTapeLastReadLog
+// tapeMountedForRetrieve
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastReadLog(const std::string &vid, const std::string &drive) {
+void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =

@@ -121,7 +121,14 @@ public:
    */
   virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
 
-  virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to retrieve files.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
 
   /**
    * This method notifies the CTA catalogue that there is no more free space on

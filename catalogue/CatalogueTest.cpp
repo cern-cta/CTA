@@ -2704,7 +2704,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive_nonExistentTape) {
   ASSERT_THROW(m_catalogue->tapeMountedForArchive(vid, drive), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog) {
+TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -2753,7 +2753,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->modifyTapeLastReadLog(vid, modifiedDrive);
+  m_catalogue->tapeMountedForRetrieve(vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -2781,7 +2781,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog_nonExistentTape) {
+TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve_nonExistentTape) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -2789,7 +2789,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLastReadLog_nonExistentTape) {
   const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->modifyTapeLastReadLog(vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->tapeMountedForRetrieve(vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {

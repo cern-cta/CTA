@@ -106,8 +106,23 @@ public:
    */
   virtual void noSpaceLeftOnTape(const std::string &vid) override;
 
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to archive files.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
   virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
-  virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
+
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to retrieve files.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
 
   ////////////////////////////////////////////////////////////////
   // METHODS TO BE CALLED BY THE CTA TAPE SERVER DAEMON END HERE
