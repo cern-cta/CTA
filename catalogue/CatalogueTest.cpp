@@ -1739,7 +1739,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
     ASSERT_EQ(m_cliSI.host, creationLog.host);
   
     const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
