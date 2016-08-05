@@ -1906,9 +1906,9 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 }
 
 //------------------------------------------------------------------------------
-// modifyTapeLastWrittenLog
+// tapeMountedForArchive
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) {
+void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =

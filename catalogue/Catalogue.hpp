@@ -112,7 +112,15 @@ public:
    */
   virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
 
-  virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to archive files.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+
   virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
 
   /**

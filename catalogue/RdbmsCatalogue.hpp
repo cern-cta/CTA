@@ -106,7 +106,7 @@ public:
    */
   virtual void noSpaceLeftOnTape(const std::string &vid) override;
 
-  virtual void modifyTapeLastWrittenLog(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
+  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
   virtual void modifyTapeLastReadLog(const std::string &vid, const std::string &drive) override; // internal function (noCLI)
 
   ////////////////////////////////////////////////////////////////
