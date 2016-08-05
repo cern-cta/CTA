@@ -1242,7 +1242,7 @@ void XrdCtaFile::xCom_groupmountrule() {
         m_catalogue->modifyRequesterGroupComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
-        m_catalogue->modifyRequesterGroupMountPolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
+        m_catalogue->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
       }
     }
     else { //rm
