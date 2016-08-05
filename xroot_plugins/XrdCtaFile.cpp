@@ -1239,7 +1239,7 @@ void XrdCtaFile::xCom_groupmountrule() {
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false, false);
       checkOptions(help.str());
       if(comment) {
-        m_catalogue->modifyRequesterGroupComment(m_cliIdentity, in.value(), name.value(), comment.value());
+        m_catalogue->modifyRequesterGroupMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
       }
       if(mountpolicy) {
         m_catalogue->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
