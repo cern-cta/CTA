@@ -1068,9 +1068,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_cliSI.username, creationLog.username);
     ASSERT_EQ(m_cliSI.host, creationLog.host);
-  
-    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
