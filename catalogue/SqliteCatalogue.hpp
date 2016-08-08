@@ -44,7 +44,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SqliteCatalogue() override;
+  ~SqliteCatalogue() override;
 
   /**
    * Deletes the specified archive file and its associated tape copies from the
@@ -59,7 +59,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
+  common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
     const uint64_t archiveFileId) override;
 
 protected:

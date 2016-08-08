@@ -67,7 +67,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~RdbmsCatalogue() override;
+  ~RdbmsCatalogue() override;
 
   /////////////////////////////////////////////////////////////////////
   // START OF METHODS DIRECTLY INVOLVED IN DATA TRANSFER AND SCHEDULING
@@ -80,7 +80,7 @@ public:
    * @param drive The name of tape drive that was used to label the tape.
    * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
    */
-  virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) override;
+  void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) override;
 
   /**
    * Prepares the catalogue for a new archive file and returns the information
@@ -97,7 +97,7 @@ public:
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
-  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+  common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const common::dataStructures::UserIdentity &user) override;
@@ -109,14 +109,14 @@ public:
    *
    * @param logicalLibraryName The name of the logical library.
    */
-  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
+  std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
   /**
    * Notifies the catalogue that a file has been written to tape.
    *
    * @param event The tape file written event.
    */
-  virtual void fileWrittenToTape(const TapeFileWritten &event) override;
+  void fileWrittenToTape(const TapeFileWritten &event) override;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -128,7 +128,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) override;
+  void tapeMountedForArchive(const std::string &vid, const std::string &drive) override;
 
   /**
    * Prepares for a file retrieval by returning the information required to
@@ -143,7 +143,7 @@ public:
    *
    * @return The information required to queue the associated retrieve request(s).
    */
-  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &instanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user) override;
@@ -158,7 +158,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override;
+  void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override;
 
   /**
    * This method notifies the CTA catalogue that there is no more free space on
@@ -166,23 +166,23 @@ public:
    *
    * @param vid The volume identifier of the tape.
    */
-  virtual void noSpaceLeftOnTape(const std::string &vid) override;
+  void noSpaceLeftOnTape(const std::string &vid) override;
 
   ///////////////////////////////////////////////////////////////////
   // END OF METHODS DIRECTLY INVOLVED IN DATA TRANSFER AND SCHEDULING
   ///////////////////////////////////////////////////////////////////
 
-  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) override;
+  void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) override;
 
-  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
-  virtual void deleteAdminUser(const std::string &username) override;
-  virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
-  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
+  void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
+  void deleteAdminUser(const std::string &username) override;
+  std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
+  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
 
-  virtual void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
-  virtual void deleteAdminHost(const std::string &hostName) override;
-  virtual std::list<common::dataStructures::AdminHost> getAdminHosts() const override;
-  virtual void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
+  void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
+  void deleteAdminHost(const std::string &hostName) override;
+  std::list<common::dataStructures::AdminHost> getAdminHosts() const override;
+  void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
 
   /**
    * Creates the specified storage class.
@@ -190,7 +190,7 @@ public:
    * @param cliIdentity The identity of the command-line interface.
    * @param storageClass The storage class.
    */
-  virtual void createStorageClass(
+  void createStorageClass(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const common::dataStructures::StorageClass &storageClass) override;
 
@@ -202,20 +202,20 @@ public:
    * @param stoargeClassName The name of the storage class which is only
    * guaranteed to be unique within its disk isntance.
    */
-  virtual void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) override;
+  void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) override;
 
-  virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
-  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
-  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) override;
+  std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
+  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
+  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) override;
 
-  virtual void createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override;
-  virtual void deleteTapePool(const std::string &name) override;
-  virtual std::list<common::dataStructures::TapePool> getTapePools() const override;
-  virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) override;
-  virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
-  virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override;
+  void deleteTapePool(const std::string &name) override;
+  std::list<common::dataStructures::TapePool> getTapePools() const override;
+  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) override;
+  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) override;
 
-  virtual void createArchiveRoute(
+  void createArchiveRoute(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &diskInstanceName,
     const std::string &storageClassName,
@@ -233,19 +233,19 @@ public:
    * guaranteed to be unique within its disk instance.
    * @param copyNb The copy number of the tape file.
    */
-  virtual void deleteArchiveRoute(
+  void deleteArchiveRoute(
     const std::string &diskInstanceName,
     const std::string &storageClassName, 
     const uint64_t copyNb) override;
 
-  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) override;
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) override;
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) override;
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) override;
 
-  virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
-  virtual void deleteLogicalLibrary(const std::string &name) override;
-  virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
-  virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void deleteLogicalLibrary(const std::string &name) override;
+  std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
+  void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
 
   /**
    * Creates a tape.
@@ -254,7 +254,7 @@ public:
    * optional parameter should either have a non-empty string value or no value
    * at all.  Empty strings are prohibited.
    */
-  virtual void createTape(
+  void createTape(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &vid,
     const std::string &logicalLibraryName,
@@ -265,7 +265,7 @@ public:
     const bool full,
     const std::string &comment) override;
 
-  virtual void deleteTape(const std::string &vid) override;
+  void deleteTape(const std::string &vid) override;
 
   /**
    * Returns the list of tapes that meet the specified search criteria.
@@ -273,7 +273,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The list of tapes.
    */
-  virtual std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria) const override;
+  std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns the tapes with the specified volume identifiers.
@@ -284,13 +284,27 @@ public:
    * @param vids The tape volume identifiers (VIDs).
    * @return Map from tape volume identifier to tape.
    */
-  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
 
-  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) override;
-  virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) override;
-  virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) override;
-  virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) override;
-  virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) override;
+  /**
+   * Reclaims the specified tape.
+   *
+   * This method will throw an exception if the specified tape does not exist.
+   *
+   * This method will throw an exception if the specified tape is not FULL.
+   *
+   * This method will throw an exception if there is still at least one tape
+   * file recorded in the cataligue as being on the specified tape.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param vid The volume identifier of the tape to be reclaimed.
+   */
+  void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) override;
+
+  void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) override;
+  void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) override;
+  void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) override;
+  void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) override;
 
   /**
    * Sets the full status of the specified tape.
@@ -302,17 +316,17 @@ public:
    * @param vid The volume identifier of the tape to be marked as full.
    * @param fullValue Set to true if the tape is full.
    */
-  virtual void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) override;
+  void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) override;
 
-  virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) override;
-  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) override;
+  void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) override;
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) override;
 
-  virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
-  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
-  virtual void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
-  virtual void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
+  void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
+  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
+  void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
+  void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
 
-  virtual void createMountPolicy(
+  void createMountPolicy(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &name,
     const uint64_t archivePriority,
@@ -327,14 +341,14 @@ public:
    *
    * @return the list of all existing mount policies.
    */
-  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
+  std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
 
   /**
    * Deletes the specified mount policy.
    *
    * @param name The name of the mount policy.
    */
-  virtual void deleteMountPolicy(const std::string &name) override;
+  void deleteMountPolicy(const std::string &name) override;
 
   /**
    * Creates the rule that the specified mount policy will be used for the
@@ -351,7 +365,7 @@ public:
    * be unique within its disk instance.
    * @param comment Comment.
    */
-  virtual void createRequesterMountRule(
+  void createRequesterMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
     const std::string &diskInstance,
@@ -365,7 +379,7 @@ public:
    * @return the rules that specify which mount policy is be used for which
    * requester.
    */
-  virtual std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const override;
+  std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const override;
 
   /**
    * Deletes the specified mount rule.
@@ -375,7 +389,7 @@ public:
    * @param requesterName The name of the requester which is only guaranteed to
    * be unique within its disk instance.
    */
-  virtual void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) override;
+  void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) override;
 
   /**
    * Creates the rule that the specified mount policy will be used for the
@@ -392,7 +406,7 @@ public:
    * guarantted to be unique within its disk instance.
    * @param comment Comment.
    */
-  virtual void createRequesterGroupMountRule(
+  void createRequesterGroupMountRule(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &mountPolicyName,
     const std::string &diskInstanceName,
@@ -406,7 +420,7 @@ public:
    * @return the rules that specify which mount policy is be used for which
    * requester group.
    */
-  virtual std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const override;
+  std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const override;
 
   /**
    * Deletes the specified mount rule.
@@ -416,27 +430,27 @@ public:
    * @param requesterGroupName The name of the requester group which is only
    * guaranteed to be unique within its disk instance.
    */
-  virtual void deleteRequesterGroupMountRule(
+  void deleteRequesterGroupMountRule(
     const std::string &diskInstanceName,
     const std::string &requesterGroupName) override;
 
-  virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) override;
-  virtual void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) override;
-  virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) override;
-  virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) override;
-  virtual void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) override;
-  virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) override;
+  void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) override;
+  void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) override;
+  void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) override;
+  void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) override;
+  void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
 
-  virtual void createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
-   const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) override;
-  virtual void deleteDedication(const std::string &drivename) override;
-  virtual std::list<common::dataStructures::Dedication> getDedications() const override;
-  virtual void modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) override;
-  virtual void modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) override;
-  virtual void modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) override;
-  virtual void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) override;
-  virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) override;
-  virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) override;
+  void createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
+    const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) override;
+  void deleteDedication(const std::string &drivename) override;
+  std::list<common::dataStructures::Dedication> getDedications() const override;
+  void modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) override;
+  void modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) override;
+  void modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) override;
+  void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) override;
+  void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) override;
+  void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) override;
 
   /**
    * Returns an iterator over the list of archive files that meet the specified
@@ -453,7 +467,7 @@ public:
    * This parameter must be set to a value equal to or greater than 1.
    * @return An iterator over the list of archive files.
    */
-  virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
+  std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
     const uint64_t nbArchiveFilesToPrefetch) const override;
 
   /**
@@ -463,7 +477,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The summary.
    */
-  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
+  common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
     const ArchiveFileSearchCriteria &searchCriteria) const override;
 
   /**
@@ -475,7 +489,7 @@ public:
    * @param id The unique identifier of the archive file.
    * @return The archive file.
    */
-  virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
+  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
@@ -486,7 +500,7 @@ public:
    * @return True if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    */
-  virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const override;
+  bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const override;
 
 protected:
 
@@ -551,6 +565,15 @@ protected:
    * @return True if the tape exists.
    */
   bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
+
+  /**
+   * Returns the list of tapes that meet the specified search criteria.
+   *
+   * @param conn The database connection.
+   * @param searchCriteria The search criteria.
+   * @return The list of tapes.
+   */
+  std::list<common::dataStructures::Tape> getTapes(rdbms::Conn &conn, const TapeSearchCriteria &searchCriteria) const;
 
   /**
    * Returns true if the specified logical library exists.
@@ -813,17 +836,17 @@ protected:
     /**
      * Destructor.
      */
-    virtual ~ArchiveFileItorImpl() override;
+    ~ArchiveFileItorImpl() override;
 
     /**
      * Returns true if a call to next would return another archive file.
      */
-    virtual bool hasMore() const override;
+    bool hasMore() const override;
 
     /**
      * Returns the next archive or throws an exception if there isn't one.
      */
-    virtual common::dataStructures::ArchiveFile next() override;
+    common::dataStructures::ArchiveFile next() override;
 
   private:
 
@@ -882,7 +905,7 @@ protected:
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
-  virtual common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(
+  common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(
     rdbms::Conn &conn,
     const std::string &diskInstanceName,
     const std::string &storageClassName) const;

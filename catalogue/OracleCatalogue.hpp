@@ -49,7 +49,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OracleCatalogue() override;
+  ~OracleCatalogue() override;
 
   /**
    * Deletes the specified archive file and its associated tape copies from the
@@ -64,7 +64,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
+  common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
     const uint64_t archiveFileId) override;
 
   /**
@@ -79,7 +79,7 @@ public:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Selects the specified tape within the Tape table for update.
@@ -91,7 +91,7 @@ public:
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
+  common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
 
 }; // class OracleCatalogue
 

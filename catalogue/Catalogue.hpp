@@ -299,7 +299,21 @@ public:
    */
   virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
 
+  /**
+   * Reclaims the specified tape.
+   *
+   * This method will throw an exception if the specified tape does not exist.
+   *
+   * This method will throw an exception if the specified tape is not FULL.
+   *
+   * This method will throw an exception if there is still at least one tape
+   * file recorded in the cataligue as being on the specified tape.
+   *
+   * @param cliIdentity The user of the command-line tool.
+   * @param vid The volume identifier of the tape to be reclaimed.
+   */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
+
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) = 0;

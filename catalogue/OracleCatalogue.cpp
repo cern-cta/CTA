@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 
 namespace cta {

@@ -1497,6 +1497,19 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearchCriteria &searchCriteria) const {
   try {
+    auto conn = m_connPool.getConn();
+    return getTapes(*conn, searchCriteria);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTapes
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &conn,
+  const TapeSearchCriteria &searchCriteria) const {
+  try {
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "
@@ -1578,8 +1591,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
       sql += " LBP_IS_ON = :LBP_IS_ON";
     }
 
-    auto conn = m_connPool.getConn();
-    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
 
     if(searchCriteria.vid) stmt->bindString(":VID", searchCriteria.vid.value());
     if(searchCriteria.logicalLibrary) stmt->bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
@@ -1730,6 +1742,63 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 }
 
 //------------------------------------------------------------------------------
+// reclaimTape
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "LAST_FSEQ = 0, "
+        "IS_FULL = 0,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :UPDATE_VID AND "
+        "IS_FULL != 0 AND "
+        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindUint64(":LAST_UPDATE_TIME", now);
+    stmt->bindString(":UPDATE_VID", vid);
+    stmt->bindString(":SELECT_VID", vid);
+    stmt->executeNonQuery();
+
+    // If the update failed due to a user error
+    if(0 == stmt->getNbAffectedRows()) {
+      // Try to determine the user error
+      //
+      // Please note that this is a best effort diagnosis because there is no
+      // lock on the database to prevent other concurrent updates from taking
+      // place on the TAPE and TAPE_FILE tables
+      TapeSearchCriteria searchCriteria;
+      searchCriteria.vid = vid;
+      const auto tapes = getTapes(*conn, searchCriteria);
+
+      if(tapes.empty()) {
+        throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
+      } else {
+        if(!tapes.front().full) {
+          throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
+        } else {
+          throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
+            " file in the catalogue that is on the tape");
+        }
+      }
+    }
+
+    conn->commit();
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // getTapeLogFromRset
 //------------------------------------------------------------------------------
 optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const rdbms::Rset &rset,
@@ -1760,13 +1829,6 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-}
-
-//------------------------------------------------------------------------------
-// reclaimTape
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------

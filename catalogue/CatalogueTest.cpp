@@ -6398,4 +6398,495 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_no_vids) {
   ASSERT_TRUE(m_catalogue->getTapesByVid(vids).empty());
 }
 
+TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+    fullValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeFull(m_cliSI, vid, true);
+  m_catalogue->reclaimTape(m_cliSI, vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_FALSE(tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName,
+    "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTape(m_cliSI, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+    fullValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  ASSERT_THROW(m_catalogue->reclaimTape(m_cliSI, vid), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+    disabledValue, fullValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+
+  catalogue::TapeFileWritten file1Written;
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileUser         = "public_disk_user";
+  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.compressedSize       = 1;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->fileWrittenToTape(file1Written);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(1, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->deleteArchiveFile(diskInstanceName1, file1Written.archiveFileId);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(1, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeFull(m_cliSI, vid1, true);
+  m_catalogue->reclaimTape(m_cliSI, vid1);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_cliSI, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_cliSI, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTape(m_cliSI, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+    disabledValue, fullValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_cliSI, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+
+  catalogue::TapeFileWritten file1Written;
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileUser         = "public_disk_user";
+  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumType         = checksumType;
+  file1Written.checksumValue        = checksumValue;
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.compressedSize       = 1;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->fileWrittenToTape(file1Written);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
+    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
+    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
+    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(1, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(encryptionKey, tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.lbp);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_cliSI.username, creationLog.username);
+    ASSERT_EQ(m_cliSI.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeFull(m_cliSI, vid1, true);
+  ASSERT_THROW(m_catalogue->reclaimTape(m_cliSI, vid1), exception::UserError);
+}
+
 } // namespace unitTests
