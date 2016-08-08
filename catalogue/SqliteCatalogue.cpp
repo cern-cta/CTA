@@ -48,79 +48,22 @@ SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-
     auto conn = m_connPool.getConn();
     rdbms::AutoRollback autoRollback(conn.get());
-    const char *selectSql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.FILE_SIZE AS FILE_SIZE,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    auto selectStmt = conn->createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
-    selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
-    while(selectRset->next()) {
-      if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
-
-        archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset->columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset->columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset->columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset->columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset->columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset->columnUint64("FILE_SIZE");
-        archiveFile->checksumType = selectRset->columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset->columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset->columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = selectRset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = selectRset->columnUint64("RECONCILIATION_TIME");
-      }
-
-      // If there is a tape file
-      if(!selectRset->columnIsNull("VID")) {
-        // Add the tape file to the archive file's in-memory structure
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset->columnString("VID");
-        tapeFile.fSeq = selectRset->columnUint64("FSEQ");
-        tapeFile.blockId = selectRset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE");
-        tapeFile.copyNb = selectRset->columnUint64("COPY_NB");
-        tapeFile.creationTime = selectRset->columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[selectRset->columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
+    const auto archiveFile = getArchiveFile(*conn, archiveFileId);
 
     if(nullptr == archiveFile.get()) {
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
+      throw ue;
+    }
+
+    if(diskInstanceName != archiveFile->diskInstance) {
+      exception::UserError ue;
+      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
+        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
+        archiveFile->diskInstance;
       throw ue;
     }
 

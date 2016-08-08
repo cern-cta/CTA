@@ -127,6 +127,15 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
       throw ue;
     }
 
+    if(diskInstanceName != archiveFile->diskInstance) {
+      exception::UserError ue;
+      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
+        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
+        archiveFile->diskInstance;
+      throw ue;
+    }
+
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
       auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);

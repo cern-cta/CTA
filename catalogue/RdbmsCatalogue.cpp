@@ -3512,16 +3512,16 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getArchiveFileSummary
 common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uint64_t id) {
   try {
     auto conn = m_connPool.getConn();
-    std::unique_ptr<common::dataStructures::ArchiveFile> file(getArchiveFile(*conn, id));
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile(getArchiveFile(*conn, id));
 
     // Throw an exception if the archive file does not exist
-    if(nullptr == file.get()) {
+    if(nullptr == archiveFile.get()) {
       exception::Exception ex;
       ex.getMessage() << "No such archive file with ID " << id;
       throw (ex);
     }
 
-    return *file;
+    return *archiveFile;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

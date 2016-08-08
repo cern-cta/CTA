@@ -495,6 +495,10 @@ public:
    * Deletes the specified archive file and its associated tape copies from the
    * catalogue.
    *
+   * Please note that the name of the disk instance is specified in order to
+   * prevent a disk instance deleting an archive file that belongs to another
+   * disk instance.
+   *
    * @param instanceName The name of the instance from where the deletion request originated
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
