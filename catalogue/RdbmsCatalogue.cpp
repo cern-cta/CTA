@@ -3838,9 +3838,9 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 
     if(diskInstanceName != archiveFile->diskInstance) {
       exception::UserError ue;
-      ue.getMessage() << "Disk instance of request does not match that of the archived file: archiveFileId=" <<
-        archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName <<
-        " archiveFileDiskInstance=" << archiveFile->diskInstance;
+      ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
+        " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
+        " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
       throw ue;
     }
 
@@ -3854,8 +3854,9 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
       exception::UserError ue;
-      ue.getMessage() << "Cannot prepare to retrieve the file with archive file ID because no mount policy exists "
-        "for " + user.name + ":" + user.group;
+      ue.getMessage() << "Cannot retrieve file because no mount policy exists for the requester:" <<
+        " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" << user.name
+        << ":" << user.group;
       throw ue;
     }
 
