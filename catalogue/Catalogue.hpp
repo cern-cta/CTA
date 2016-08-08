@@ -83,9 +83,9 @@ public:
    */
   virtual ~Catalogue() = 0;
 
-  ////////////////////////////////////////////////////////////////
-  // METHODS TO BE CALLED BY THE CTA TAPE SERVER DAEMON START HERE
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////
+  // START OF METHODS DIRECTLY INVOLVED DATA TRANSFER AND SCHEDULING
+  //////////////////////////////////////////////////////////////////
 
   /**
    * Notifies the catalogue that the specified tape was labelled.
@@ -95,6 +95,26 @@ public:
    * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
    */
   virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) = 0;
+
+  /**
+   * Prepares the catalogue for a new archive file and returns the information
+   * required to queue the associated archive request.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return The information required to queue the associated archive request.
+   */
+  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const common::dataStructures::UserIdentity &user) = 0;
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
@@ -116,14 +136,38 @@ public:
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to archive files.
    *
+   * The purpose of this method is to keep track of which drive mounted a given
+   * tape for archiving files last.
+   *
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
   virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
 
   /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * @param instanceName The name of the instance from where the retrieval request originated
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const std::string &instanceName,
+    const uint64_t archiveFileId,
+    const common::dataStructures::UserIdentity &user) = 0;
+
+  /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to retrieve files.
+   *
+   * The purpose of this method is to keep track of which drive mounted a given
+   * tape for retrieving files last.
    *
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
@@ -139,7 +183,7 @@ public:
   virtual void noSpaceLeftOnTape(const std::string &vid) = 0;
 
   ////////////////////////////////////////////////////////////////
-  // METHODS TO BE CALLED BY THE CTA TAPE SERVER DAEMON END HERE
+  // END OF METHODS DIRECTLY INVOLVED DATA TRANSFER AND SCHEDULING
   ////////////////////////////////////////////////////////////////
 
   virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
@@ -448,26 +492,6 @@ public:
   virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
 
   /**
-   * Prepares the catalogue for a new archive file and returns the information
-   * required to queue the associated archive request.
-   *
-   * @param diskInstanceName The name of the disk instance to which the
-   * storage class belongs.
-   * @param storageClassName The name of the storage class of the file to be
-   * archived.  The storage class name is only guaranteed to be unique within
-   * its disk instance.  The storage class name will be used by the Catalogue
-   * to determine the destination tape pool for each tape copy.
-   * @param user The user for whom the file is to be archived.  This will be
-   * used by the Catalogue to determine the mount policy to be used when
-   * archiving the file.
-   * @return The information required to queue the associated archive request.
-   */
-  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
-    const std::string &diskInstanceName,
-    const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) = 0;
-
-  /**
    * Deletes the specified archive file and its associated tape copies from the
    * catalogue.
    *
@@ -478,24 +502,6 @@ public:
    */
   virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
     const uint64_t archiveFileId) = 0;
-
-  /**
-   * Prepares for a file retrieval by returning the information required to
-   * queue the associated retrieve request(s).
-   *
-   * @param instanceName The name of the instance from where the retrieval request originated
-   * @param archiveFileId The unique identifier of the archived file that is
-   * to be retrieved.
-   * @param user The user for whom the file is to be retrieved.  This will be
-   * used by the Catalogue to determine the mount policy to be used when
-   * retrieving the file.
-   *
-   * @return The information required to queue the associated retrieve request(s).
-   */
-  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
-    const std::string &instanceName,
-    const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user) = 0;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
