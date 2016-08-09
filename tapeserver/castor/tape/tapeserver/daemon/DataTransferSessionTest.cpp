@@ -756,152 +756,145 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   ASSERT_NE(std::string::npos, logger.getLog().find("Could not stat path: /dev/noSuchDrive"));
 }
 
-//TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
-//  
-//  // 0) Prepare the logger for everyone
-//  castor::log::StringLogger logger("tapeServerUnitTest");
-//  
-//  // 1) prepare the fake scheduler
-//  std::string vid = "V12345";
-//  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-//
-//  // 3) Prepare the necessary environment (logger, plus system wrapper), 
-//  castor::tape::System::mockWrapper mockSys;
-//  mockSys.delegateToFake();
-//  mockSys.disableGMockCallsCounting();
-//  mockSys.fake.setupForVirtualDriveSLC6();
-//
-//  // 4) Create the scheduler
-//  cta::catalogue::SqliteCatalogue sqliteCatalogue;
-//  cta::MockRemoteNS rns;
-//  cta::OStoreDBWrapper<cta::objectstore::BackendVFS> db("Unittest");
-//  cta::Scheduler scheduler(ns, db, rns);
-//
-//  // Always use the same requester
-//  const cta::SecurityIdentity requester;
-//  
-//  // List to remember the path of each remote file so that the existance of the
-//  // files can be tested for at the end of the test
-//  std::list<std::string> remoteFilePaths;
-//  
-//  // 5) Create the tapepool, library and tape for the scheduler.
-//  // Make mounts immediate.
-//  ASSERT_NO_THROW(scheduler.createAdminUserWithoutAuthorizingRequester(requester, requester.getUser(), ""));
-//  ASSERT_NO_THROW(scheduler.createAdminHostWithoutAuthorizingRequester(requester, requester.getHost(), ""));
-//  ASSERT_NO_THROW(scheduler.createTapePool(requester, "TapePool", 1, ""));
-//  cta::MountCriteria immediateMount;
-//  immediateMount.maxAge = 0;
-//  immediateMount.maxBytesQueued = 1;
-//  immediateMount.maxFilesQueued = 1;
-//  immediateMount.quota = 10;
-//  ASSERT_NO_THROW(scheduler.setTapePoolMountCriteria("TapePool", cta::MountCriteriaByDirection(immediateMount, immediateMount)));                   
-//  ASSERT_NO_THROW(scheduler.createLogicalLibrary(requester, "T10KD6", ""));
-//  ASSERT_NO_THROW(scheduler.createTape(requester, "V12345", "T10KD6", "TapePool", 10*1000*1000, ""));
-//
-//  //delete is unnecessary
-//  //pointer with ownership will be passed to the application,
-//  //which will do the delete 
-//  const bool failOnMount=true;
-//  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
-//  
-//  // We can prepare files for reading on the drive
-//  {
-//    
-//    // Label the tape
-//    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
-//        "V12345");
-//    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
-//    // And write to it
-//    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-//    volInfo.vid="V12345";
-//    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-//       volInfo , 0, true);
-//
-//    // Write a few files on the virtual tape and modify the archive name space
-//    // so that it is in sync
-//    uint8_t data[1000];
-//    castor::tape::SCSI::Structures::zeroStruct(&data);
-//    for (int fseq=1; fseq <= 10 ; fseq ++) {
-//      // Create a path to a remote destination file
-//      std::ostringstream remoteFilePath;
-//      remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
-//      remoteFilePaths.push_back(remoteFilePath.str());
-//
-//      // Create an archive file entry in the archive namespace
-//      std::ostringstream archiveFilePath;
-//      archiveFilePath << "/test" << fseq;
-//      const mode_t archiveFileMode = 0655;
-//      const uint64_t archiveFileSize = 1000;
-//      ASSERT_NO_THROW(ns.createFile(
-//        requester,
-//        archiveFilePath.str(),
-//        archiveFileMode,
-//        cta::Checksum(),
-//        archiveFileSize));
-//
-//      // Write the file to tape
-//      cta::MockNameServer  mns;
-//      cta::MockArchiveMount mam(mns);
-//      cta::MockRetrieveMount mrm;
-//      std::unique_ptr<cta::RetrieveJob> ftr(new cta::MockRetrieveJob(mrm));
-//      std::unique_ptr<cta::ArchiveJob> ftm_temp(new cta::MockArchiveJob(mam, mns));
-//      ftr->tapeFile.tapeFileLocation.fSeq = fseq;
-//      ftm_temp->tapeFile.tapeFileLocation.fSeq = fseq;
-//      ftr->archiveFile.fileId = 1000 + fseq;
-//      ftm_temp->archiveFile.fileId = 1000 + fseq;
-//      castor::tape::tapeFile::WriteFile wf(&ws, *ftm_temp, archiveFileSize);
-//      ftr->tapeFile.tapeFileLocation.blockId = wf.getPosition();
-//      ftr->remotePath = remoteFilePath.str();
-//      // Write the data (one block)
-//      wf.write(data, sizeof(data));
-//      // Close the file
-//      wf.close();
-//
-//      // Create tape file entry in the archive namespace
-//      cta::NameServerTapeFile tapeFile;
-//      tapeFile.copyNb = 1;
-//      tapeFile.tapeFileLocation.fSeq = fseq;
-//      tapeFile.tapeFileLocation.blockId = wf.getPosition();
-//      tapeFile.tapeFileLocation.vid = volInfo.vid;
-//      tapeFile.tapeFileLocation.copyNb = 1;
-//      tapeFile.size = archiveFileSize;
-//      tapeFile.compressedSize = archiveFileSize; // No compression
-//      cta::Checksum tapeFileChecksum(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32(data, sizeof data));
-//      tapeFile.checksum = tapeFileChecksum;
-//      ASSERT_NO_THROW(ns.addTapeFile(
-//        requester,
-//        archiveFilePath.str(),
-//        tapeFile));
-//
-//      // Schedule the retrieval of the file
-//      std::list<std::string> archiveFilePaths;
-//      archiveFilePaths.push_back(archiveFilePath.str());
-//      ASSERT_NO_THROW(scheduler.queueRetrieveRequest(
-//        requester,
-//        archiveFilePaths,
-//        remoteFilePath.str()));
-//    }
-//  }
-//  DriveConfig driveConfig("T10D6116", "T10KD6", "/dev/tape_T10D6116", "manual");
-//  DataTransferConfig castorConf;
-//  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
-//  castorConf.nbBufs = 10;
-//  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
-//  castorConf.bulkRequestRecallMaxFiles = 1000;
-//  castorConf.nbDiskThreads = 3;
-//  castor::messages::AcsProxyDummy acs;
-//  castor::mediachanger::MmcProxyDummy mmc;
-//  castor::legacymsg::RmcProxyDummy rmc;
-//  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-//  castor::server::ProcessCap capUtils;
-//  castor::messages::TapeserverProxyDummy initialProcess;
-//  DataTransferSession sess("tapeHost", logger, mockSys,
-//    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-//  ASSERT_NO_THROW(sess.execute());
-//  std::string temp = logger.getLog();
-//  ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
-//}
-//
+TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
+  
+  // 0) Prepare the logger for everyone
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  
+  setupDefaultCatalogue();
+  // 1) prepare the fake scheduler
+  std::string vid = s_vid;
+  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
+
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  const bool failOnMount=true;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
+  
+  // 4) Create the scheduler
+  auto & catalogue = getCatalogue();
+  auto & scheduler = getScheduler();
+  
+  // Always use the same requester
+  const cta::common::dataStructures::SecurityIdentity requester;
+  
+  // List to remember the path of each remote file so that the existance of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+  
+  // 5) Create the environment for the migration to happen (library + tape) 
+    const std::string libraryComment = "Library comment";
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+    notDisabled, notFull, tapeComment);
+  
+  // 6) Prepare files for reading by writing them to the mock system
+  {
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
+        s_vid, false);
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    // And write to it
+    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    volInfo.vid=s_vid;
+    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+       volInfo , 0, true, false);
+
+    // Write a few files on the virtual tape and modify the archive name space
+    // so that it is in sync
+    uint8_t data[1000];
+    size_t archiveFileSize=sizeof(data);
+    castor::tape::SCSI::Structures::zeroStruct(&data);
+    for (int fseq=1; fseq <= 10 ; fseq ++) {
+      // Create a path to a remote destination file
+      std::ostringstream remoteFilePath;
+      remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
+      remoteFilePaths.push_back(remoteFilePath.str());
+
+      // Create an archive file entry in the archive namespace
+      cta::catalogue::TapeFileWritten tapeFileWritten;
+      
+      // Write the file to tape
+      cta::MockArchiveMount mam(catalogue);
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      aj->tapeFile.fSeq = fseq;
+      aj->archiveFile.archiveFileID = fseq;
+      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
+      tapeFileWritten.blockId = wf.getBlockId();
+      // Write the data (one block)
+      wf.write(data, archiveFileSize);
+      // Close the file
+      wf.close();
+
+      // Create file entry in the archive namespace
+      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.checksumType="ADLER32";
+      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.vid=volInfo.vid;
+      tapeFileWritten.size=archiveFileSize;
+      tapeFileWritten.fSeq=fseq;
+      tapeFileWritten.copyNb=1;
+      tapeFileWritten.compressedSize=archiveFileSize; // No compression
+      tapeFileWritten.diskInstance = s_diskInstance;
+      tapeFileWritten.diskFileId = fseq;
+      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      tapeFileWritten.diskFileUser = s_userName;
+      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileRecoveryBlob = "B106";
+      tapeFileWritten.storageClassName = s_storageClassName;
+      tapeFileWritten.tapeDrive = "drive0";
+      catalogue.fileWrittenToTape(tapeFileWritten);
+
+      // Schedule the retrieval of the file
+      std::string diskInstance="disk_instance";
+      cta::common::dataStructures::RetrieveRequest rReq;
+      rReq.archiveFileID=fseq;
+      rReq.requester.name = s_userName;
+      rReq.requester.group = "someGroup";
+      rReq.dstURL = remoteFilePaths.back();
+      std::list<std::string> archiveFilePaths;
+      scheduler.queueRetrieve(diskInstance, rReq);
+    }
+  }
+
+  // 7) try to run the session.
+  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.nbDiskThreads = 3;
+  castor::messages::AcsProxyDummy acs;
+  castor::mediachanger::MmcProxyDummy mmc;
+  castor::legacymsg::RmcProxyDummy rmc;
+  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  castor::server::ProcessCap capUtils;
+  castor::messages::TapeserverProxyDummy initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys,
+    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+  ASSERT_NO_THROW(sess.execute());
+  std::string temp = logger.getLog();
+  ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
+}
+
 //TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
 //  
 //  // 0) Prepare the logger for everyone
