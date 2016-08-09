@@ -37,7 +37,7 @@ std::string Rset::columnString(const std::string &colName) const {
     if(col) {
       return col.value();
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -53,7 +53,7 @@ uint64_t Rset::columnUint64(const std::string &colName) const {
     if(col) {
       return col.value();
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -69,7 +69,7 @@ bool Rset::columnBool(const std::string &colName) const {
     if(col) {
       return col.value();
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a nullptr value");
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
