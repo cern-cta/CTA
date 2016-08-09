@@ -39,9 +39,8 @@ protected:
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   const std::string m_bootstrapComment;
-  cta::common::dataStructures::SecurityIdentity m_cliSI;
-  cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
-  cta::common::dataStructures::SecurityIdentity m_adminSI;
+  cta::common::dataStructures::SecurityIdentity m_bootstrapAdmin;
+  cta::common::dataStructures::SecurityIdentity m_admin;
 
   virtual void SetUp();
 

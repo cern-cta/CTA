@@ -30,14 +30,11 @@ public:
   cta_catalogue_CatalogueFactoryTest():
     m_bootstrapComment("bootstrap") {
 
-    m_cliSI.username = "cli_user_name";
-    m_cliSI.host = "cli_host";
-
     m_bootstrapAdminSI.username = "bootstrap_admin_user_name";
     m_bootstrapAdminSI.host = "bootstrap_host";
 
-    m_adminSI.username = "admin_user_name";
-    m_adminSI.host = "admin_host";
+    m_admin.username = "admin_user_name";
+    m_admin.host = "admin_host";
   }
 
 protected:
@@ -49,9 +46,8 @@ protected:
   }
 
   const std::string m_bootstrapComment;
-  cta::common::dataStructures::SecurityIdentity m_cliSI;
   cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
-  cta::common::dataStructures::SecurityIdentity m_adminSI;
+  cta::common::dataStructures::SecurityIdentity m_admin;
 };
 
 TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
@@ -67,7 +63,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   ASSERT_TRUE(catalogue->getAdminHosts().empty());
 
   catalogue->createBootstrapAdminAndHostNoAuth(
-    m_cliSI, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+    m_admin, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -78,8 +74,8 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(m_bootstrapComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
       admin.lastModificationLog;
@@ -95,8 +91,8 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(m_bootstrapComment, host.comment);
 
     const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_cliSI.username, creationLog.username);
-    ASSERT_EQ(m_cliSI.host, creationLog.host);
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog =
       host.lastModificationLog;

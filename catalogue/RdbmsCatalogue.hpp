@@ -172,26 +172,26 @@ public:
   // END OF METHODS DIRECTLY INVOLVED IN DATA TRANSFER AND SCHEDULING
   ///////////////////////////////////////////////////////////////////
 
-  void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) override;
+  void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &hostName, const std::string &comment) override;
 
-  void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
+  void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
   void deleteAdminUser(const std::string &username) override;
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
-  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) override;
+  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
 
-  void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
+  void createAdminHost(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override;
   void deleteAdminHost(const std::string &hostName) override;
   std::list<common::dataStructures::AdminHost> getAdminHosts() const override;
-  void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) override;
+  void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override;
 
   /**
    * Creates the specified storage class.
    *
-   * @param cliIdentity The identity of the command-line interface.
+   * @param admin The administrator.
    * @param storageClass The storage class.
    */
   void createStorageClass(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const common::dataStructures::StorageClass &storageClass) override;
 
   /**
@@ -205,18 +205,18 @@ public:
   void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) override;
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
-  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
-  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) override;
+  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
+  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) override;
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
   std::list<common::dataStructures::TapePool> getTapePools() const override;
-  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) override;
-  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
-  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) override;
+  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) override;
+  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
+  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) override;
 
   void createArchiveRoute(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const uint64_t copyNb,
@@ -239,13 +239,13 @@ public:
     const uint64_t copyNb) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
-  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) override;
-  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) override;
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) override;
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) override;
 
-  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
   void deleteLogicalLibrary(const std::string &name) override;
   std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
-  void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
   /**
    * Creates a tape.
@@ -255,7 +255,7 @@ public:
    * at all.  Empty strings are prohibited.
    */
   void createTape(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
@@ -296,15 +296,15 @@ public:
    * This method will throw an exception if there is still at least one tape
    * file recorded in the cataligue as being on the specified tape.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.
    */
-  void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) override;
+  void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
 
-  void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) override;
-  void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) override;
-  void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) override;
-  void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) override;
+  void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
+  void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
+  void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) override;
+  void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKey) override;
 
   /**
    * Sets the full status of the specified tape.
@@ -312,22 +312,22 @@ public:
    * Please note that this method is to be called by the CTA front-end in
    * response to a command from the CTA command-line interface (CLI).
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param vid The volume identifier of the tape to be marked as full.
    * @param fullValue Set to true if the tape is full.
    */
-  void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) override;
+  void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override;
 
-  void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) override;
-  void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) override;
+  void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override;
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override;
 
-  void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
-  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
-  void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
-  void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
+  void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
+  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
+  void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
+  void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
 
   void createMountPolicy(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
     const uint64_t archivePriority,
     const uint64_t minArchiveRequestAge,
@@ -357,7 +357,7 @@ public:
    * Please note that requester mount-rules overrule requester-group
    * mount-rules.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param mountPolicyName The name of the mount policy.
    * @param diskInstance The name of the disk instance to which the requester
    * belongs.
@@ -366,7 +366,7 @@ public:
    * @param comment Comment.
    */
   void createRequesterMountRule(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &mountPolicyName,
     const std::string &diskInstance,
     const std::string &requesterName,
@@ -398,7 +398,7 @@ public:
    * Please note that requester mount-rules overrule requester-group
    * mount-rules.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param mountPolicyName The name of the mount policy.
    * @param diskInstanceName The name of the disk instance to which the
    * requester group belongs.
@@ -407,7 +407,7 @@ public:
    * @param comment Comment.
    */
   void createRequesterGroupMountRule(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &mountPolicyName,
     const std::string &diskInstanceName,
     const std::string &requesterGroupName,
@@ -434,23 +434,23 @@ public:
     const std::string &diskInstanceName,
     const std::string &requesterGroupName) override;
 
-  void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) override;
-  void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) override;
-  void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) override;
-  void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) override;
-  void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) override;
-  void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) override;
+  void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t archivePriority) override;
+  void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minArchiveRequestAge) override;
+  void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t retrievePriority) override;
+  void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) override;
+  void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) override;
+  void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
-  void createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
+  void createDedication(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
     const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) override;
   void deleteDedication(const std::string &drivename) override;
   std::list<common::dataStructures::Dedication> getDedications() const override;
-  void modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) override;
-  void modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) override;
-  void modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) override;
-  void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) override;
-  void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) override;
-  void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) override;
+  void modifyDedicationType(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) override;
+  void modifyDedicationTag(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &tag) override;
+  void modifyDedicationVid(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &vid) override;
+  void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t fromTimestamp) override;
+  void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t untilTimestamp) override;
+  void modifyDedicationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const std::string &comment) override;
 
   /**
    * Returns an iterator over the list of archive files that meet the specified
@@ -495,12 +495,11 @@ public:
    * Returns true if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    *
-   * @param cliIdentity The name of the user and the host on which they are
-   * running the CTA command-line tool.
+   * @param admin The administrator.
    * @return True if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    */
-  bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const override;
+  bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
 
 protected:
 

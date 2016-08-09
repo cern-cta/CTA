@@ -186,25 +186,25 @@ public:
   // END OF METHODS DIRECTLY INVOLVED DATA TRANSFER AND SCHEDULING
   ////////////////////////////////////////////////////////////////
 
-  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
-  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) = 0;
+  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
+  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) = 0;
   virtual void deleteAdminUser(const std::string &username) = 0;
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
-  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &username, const std::string &comment) = 0;
+  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) = 0;
 
-  virtual void createAdminHost(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) = 0;
+  virtual void createAdminHost(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) = 0;
   virtual void deleteAdminHost(const std::string &hostName) = 0;
   virtual std::list<common::dataStructures::AdminHost> getAdminHosts() const = 0;
-  virtual void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &hostName, const std::string &comment) = 0;
+  virtual void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) = 0;
 
   /**
    * Creates the specified storage class.
    *
-   * @param cliIdentity The identity of the command-line interface.
+   * @param admin The administrator.
    * @param storageClass The storage class.
    */
   virtual void createStorageClass(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const common::dataStructures::StorageClass &storageClass) = 0;
 
   /**
@@ -218,18 +218,18 @@ public:
   virtual void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) = 0;
 
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
-  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) = 0;
-  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) = 0;
+  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createTapePool(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
+  virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
   virtual void deleteTapePool(const std::string &name) = 0;
   virtual std::list<common::dataStructures::TapePool> getTapePools() const = 0;
-  virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t nbPartialTapes) = 0;
-  virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
-  virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const bool encryptionValue) = 0;
+  virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
+  virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
+  virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) = 0;
 
   virtual void createArchiveRoute(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const uint64_t copyNb,
@@ -251,13 +251,13 @@ public:
     const uint64_t copyNb) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
+  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
 
-  virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
+  virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
-  virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
@@ -268,7 +268,7 @@ public:
    * at all.  Empty strings are prohibited.
    */
   virtual void createTape(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
@@ -309,15 +309,15 @@ public:
    * This method will throw an exception if there is still at least one tape
    * file recorded in the cataligue as being on the specified tape.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.
    */
-  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) = 0;
+  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
 
-  virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &logicalLibraryName) = 0;
-  virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &tapePoolName) = 0;
-  virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const uint64_t capacityInBytes) = 0;
-  virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &encryptionKey) = 0;
+  virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) = 0;
+  virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
+  virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) = 0;
+  virtual void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKey) = 0;
 
   /**
    * Sets the full status of the specified tape.
@@ -325,22 +325,22 @@ public:
    * Please note that this method is to be called by the CTA front-end in
    * response to a command from the CTA command-line interface (CLI).
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param vid The volume identifier of the tape to be marked as full.
    * @param fullValue Set to true if the tape is full.
    */
-  virtual void setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool fullValue) = 0;
+  virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) = 0;
 
-  virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool disabledValue) = 0;
-  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const std::string &comment) = 0;
+  virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) = 0;
+  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) = 0;
 
-  virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
-  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
-  virtual void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
-  virtual void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
+  virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
+  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
+  virtual void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
+  virtual void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
 
    virtual void createMountPolicy(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, 
     const uint64_t archivePriority, 
     const uint64_t minArchiveRequestAge, 
@@ -370,7 +370,7 @@ public:
    * Please note that requester mount-rules overrule requester-group
    * mount-rules.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param mountPolicyName The name of the mount policy.
    * @param diskInstance The name of the disk instance to which the requester
    * belongs.
@@ -379,7 +379,7 @@ public:
    * @param comment Comment.
    */
   virtual void createRequesterMountRule(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &mountPolicyName,
     const std::string &diskInstance,
     const std::string &requesterName,
@@ -411,7 +411,7 @@ public:
    * Please note that requester mount-rules overrule requester-group
    * mount-rules.
    *
-   * @param cliIdentity The user of the command-line tool.
+   * @param admin The administrator.
    * @param mountPolicyName The name of the mount policy.
    * @param diskInstanceName The name of the disk instance to which the
    * requester group belongs.
@@ -420,7 +420,7 @@ public:
    * @param comment Comment.
    */
   virtual void createRequesterGroupMountRule(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
+    const common::dataStructures::SecurityIdentity &admin,
     const std::string &mountPolicyName,
     const std::string &diskInstanceName,
     const std::string &requesterGroupName,
@@ -447,23 +447,23 @@ public:
     const std::string &diskInstanceName,
     const std::string &requesterGroupName) = 0;
 
-  virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t archivePriority) = 0;
-  virtual void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
-  virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t retrievePriority) = 0;
-  virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
-  virtual void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
-  virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t archivePriority) = 0;
+  virtual void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minArchiveRequestAge) = 0;
+  virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t retrievePriority) = 0;
+  virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
+  virtual void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
+  virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
+  virtual void createDedication(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
  const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) = 0;
   virtual void deleteDedication(const std::string &drivename) = 0;
   virtual std::list<common::dataStructures::Dedication> getDedications() const = 0;
-  virtual void modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) = 0;
-  virtual void modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) = 0;
-  virtual void modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) = 0;
-  virtual void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) = 0;
-  virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) = 0;
-  virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) = 0;
+  virtual void modifyDedicationType(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) = 0;
+  virtual void modifyDedicationTag(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &tag) = 0;
+  virtual void modifyDedicationVid(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &vid) = 0;
+  virtual void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t fromTimestamp) = 0;
+  virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t untilTimestamp) = 0;
+  virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const std::string &comment) = 0;
 
   /**
    * Returns an iterator over the list of archive files that meet the specified
@@ -525,12 +525,11 @@ public:
    * Returns true if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    *
-   * @param cliIdentity The name of the user and the host on which they are
-   * running the CTA command-line tool.
+   * @param admin The administrator.
    * @return True if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    */
-  virtual bool isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const = 0;
+  virtual bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const = 0;
 
 }; // class Catalogue
 

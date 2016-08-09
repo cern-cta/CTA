@@ -52,13 +52,13 @@ RdbmsCatalogue::~RdbmsCatalogue() {
 // createBootstrapAdminAndHostNoAuth
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &username,
   const std::string &hostName,
   const std::string &comment) {
   try {
-    createAdminUser(cliIdentity, username, comment);
-    createAdminHost(cliIdentity, hostName, comment);
+    createAdminUser(admin, username, comment);
+    createAdminHost(admin, hostName, comment);
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -70,7 +70,7 @@ void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
 // createAdminUser
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createAdminUser(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &username,
   const std::string &comment) {
   try {
@@ -111,12 +111,12 @@ void RdbmsCatalogue::createAdminUser(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -217,7 +217,7 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
 //------------------------------------------------------------------------------
 // modifyAdminUserComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -232,8 +232,8 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":ADMIN_USER_NAME", username);
     stmt->executeNonQuery();
@@ -252,7 +252,7 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
 // createAdminHost
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createAdminHost(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &hostName,
   const std::string &comment) {
   try {
@@ -293,12 +293,12 @@ void RdbmsCatalogue::createAdminHost(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -399,7 +399,7 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
 //------------------------------------------------------------------------------
 // modifyAdminHostComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &hostName, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -414,8 +414,8 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":ADMIN_HOST_NAME", hostName);
     stmt->executeNonQuery();
@@ -434,7 +434,7 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
 // createStorageClass
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createStorageClass(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::StorageClass &storageClass) {
   try {
     auto conn = m_connPool.getConn();
@@ -480,12 +480,12 @@ void RdbmsCatalogue::createStorageClass(
 
     stmt->bindString(":USER_COMMENT", storageClass.comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -603,7 +603,7 @@ std::list<common::dataStructures::StorageClass>
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &name, const uint64_t nbCopies) {
   try {
     const time_t now = time(nullptr);
@@ -619,8 +619,8 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":NB_COPIES", nbCopies);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", name);
@@ -640,7 +640,7 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
 //------------------------------------------------------------------------------
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -656,8 +656,8 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", name);
@@ -678,7 +678,7 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
 // createTapePool
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTapePool(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
@@ -728,12 +728,12 @@ void RdbmsCatalogue::createTapePool(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -838,7 +838,7 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
 //------------------------------------------------------------------------------
 // modifyTapePoolNbPartialTapes
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t nbPartialTapes) {
   try {
     const time_t now = time(nullptr);
@@ -853,8 +853,8 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
@@ -872,7 +872,7 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -886,8 +886,8 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
@@ -905,7 +905,7 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
 //------------------------------------------------------------------------------
 // setTapePoolEncryption
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool encryptionValue) {
   try {
     const time_t now = time(nullptr);
@@ -920,8 +920,8 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindBool(":IS_ENCRYPTED", encryptionValue);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":TAPE_POOL_NAME", name);
     stmt->executeNonQuery();
@@ -940,7 +940,7 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
 // createArchiveRoute
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createArchiveRoute(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &diskInstanceName,
   const std::string &storageClassName,
   const uint64_t copyNb,
@@ -989,12 +989,12 @@ void RdbmsCatalogue::createArchiveRoute(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -1090,7 +1090,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 //------------------------------------------------------------------------------
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb,
   const std::string &tapePoolName) {
   try {
@@ -1108,8 +1108,8 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -1132,7 +1132,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
 //------------------------------------------------------------------------------
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb,
   const std::string &comment) {
   try {
@@ -1150,8 +1150,8 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -1175,7 +1175,7 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
 // createLogicalLibrary
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createLogicalLibrary(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
   const std::string &comment) {
   try {
@@ -1216,12 +1216,12 @@ void RdbmsCatalogue::createLogicalLibrary(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -1323,7 +1323,7 @@ std::list<common::dataStructures::LogicalLibrary>
 //------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -1338,8 +1338,8 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt->executeNonQuery();
@@ -1358,7 +1358,7 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
 // createTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTape(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -1434,12 +1434,12 @@ void RdbmsCatalogue::createTape(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -1744,7 +1744,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 //------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -1760,8 +1760,8 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
         "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":UPDATE_VID", vid);
     stmt->bindString(":SELECT_VID", vid);
@@ -1834,7 +1834,7 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
 //------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &logicalLibraryName) {
   try {
     const time_t now = time(nullptr);
@@ -1849,8 +1849,8 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -1868,7 +1868,7 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapeTapePoolName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &tapePoolName) {
   try {
     const time_t now = time(nullptr);
@@ -1883,8 +1883,8 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -1902,7 +1902,7 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
 //------------------------------------------------------------------------------
 // modifyTapeCapacityInBytes
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const uint64_t capacityInBytes) {
   try {
     const time_t now = time(nullptr);
@@ -1917,8 +1917,8 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -1936,7 +1936,7 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // modifyTapeEncryptionKey
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &encryptionKey) {
   try {
     const time_t now = time(nullptr);
@@ -1951,8 +1951,8 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":ENCRYPTION_KEY", encryptionKey);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -2028,7 +2028,7 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
 //------------------------------------------------------------------------------
 // setTapeFull
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
+void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool fullValue) {
   try {
     const time_t now = time(nullptr);
@@ -2043,8 +2043,8 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindBool(":IS_FULL", fullValue);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -2085,7 +2085,7 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
 //------------------------------------------------------------------------------
 // setTapeDisabled
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const bool disabledValue) {
   try {
     const time_t now = time(nullptr);
@@ -2100,8 +2100,8 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindBool(":IS_DISABLED", disabledValue);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -2119,7 +2119,7 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -2134,8 +2134,8 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":VID", vid);
     stmt->executeNonQuery();
@@ -2153,7 +2153,7 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 //------------------------------------------------------------------------------
 // modifyRequesterMountRulePolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) {
   try {
     const time_t now = time(nullptr);
@@ -2169,8 +2169,8 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
@@ -2190,7 +2190,7 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
 //------------------------------------------------------------------------------
 // modifyRequesteMountRuleComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterName, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -2206,8 +2206,8 @@ void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
@@ -2227,7 +2227,7 @@ void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures
 //------------------------------------------------------------------------------
 // modifyRequesterGroupMountRulePolicy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) {
   try {
     const time_t now = time(nullptr);
@@ -2243,8 +2243,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicy);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
@@ -2264,7 +2264,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
 //------------------------------------------------------------------------------
 // modifyRequesterGroupMountRuleComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -2280,8 +2280,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
@@ -2302,7 +2302,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
 // createMountPolicy
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createMountPolicy(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
   const uint64_t archivePriority,
   const uint64_t minArchiveRequestAge,
@@ -2372,12 +2372,12 @@ void RdbmsCatalogue::createMountPolicy(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -2392,7 +2392,7 @@ void RdbmsCatalogue::createMountPolicy(
 // createRequesterMountRule
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createRequesterMountRule(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &mountPolicyName,
   const std::string &diskInstanceName,
   const std::string &requesterName,
@@ -2449,12 +2449,12 @@ void RdbmsCatalogue::createRequesterMountRule(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -2546,7 +2546,7 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceNam
 // createRequesterGroupMountRule
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createRequesterGroupMountRule(
-  const common::dataStructures::SecurityIdentity &cliIdentity,
+  const common::dataStructures::SecurityIdentity &admin,
   const std::string &mountPolicyName,
   const std::string &diskInstanceName,
   const std::string &requesterGroupName,
@@ -2602,12 +2602,12 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 
     stmt->bindString(":USER_COMMENT", comment);
 
-    stmt->bindString(":CREATION_LOG_USER_NAME", cliIdentity.username);
-    stmt->bindString(":CREATION_LOG_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt->bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt->bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
@@ -3002,7 +3002,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchivePriority
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t archivePriority) {
   try {
     const time_t now = time(nullptr);
@@ -3017,8 +3017,8 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":ARCHIVE_PRIORITY", archivePriority);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3036,7 +3036,7 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchiveMinRequestAge
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t minArchiveRequestAge) {
   try {
     const time_t now = time(nullptr);
@@ -3051,8 +3051,8 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":ARCHIVE_MIN_REQUEST_AGE", minArchiveRequestAge);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3070,7 +3070,7 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrievePriority
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t retrievePriority) {
   try {
     const time_t now = time(nullptr);
@@ -3085,8 +3085,8 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":RETRIEVE_PRIORITY", retrievePriority);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3104,7 +3104,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
 //------------------------------------------------------------------------------
 // modifyMountPolicyRetrieveMinRequestAge
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t minRetrieveRequestAge) {
   try {
     const time_t now = time(nullptr);
@@ -3119,8 +3119,8 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":RETRIEVE_MIN_REQUEST_AGE", minRetrieveRequestAge);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3138,7 +3138,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
 //------------------------------------------------------------------------------
 // modifyMountPolicyMaxDrivesAllowed
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t maxDrivesAllowed) {
   try {
     const time_t now = time(nullptr);
@@ -3153,8 +3153,8 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindUint64(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3172,7 +3172,7 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
 //------------------------------------------------------------------------------
 // modifyMountPolicyComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &cliIdentity,
+void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -3187,8 +3187,8 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
     auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
     stmt->bindString(":USER_COMMENT", comment);
-    stmt->bindString(":LAST_UPDATE_USER_NAME", cliIdentity.username);
-    stmt->bindString(":LAST_UPDATE_HOST_NAME", cliIdentity.host);
+    stmt->bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt->bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
     stmt->bindString(":MOUNT_POLICY_NAME", name);
     stmt->executeNonQuery();
@@ -3206,7 +3206,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // createDedication
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::createDedication(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
+void RdbmsCatalogue::createDedication(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
  const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
@@ -3228,42 +3228,42 @@ std::list<common::dataStructures::Dedication> RdbmsCatalogue::getDedications() c
 //------------------------------------------------------------------------------
 // modifyDedicationType
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) {
+void RdbmsCatalogue::modifyDedicationType(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationTag
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &tag) {
+void RdbmsCatalogue::modifyDedicationTag(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &tag) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationVid
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const optional<std::string> &vid) {
+void RdbmsCatalogue::modifyDedicationVid(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &vid) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationFrom
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationFrom(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t fromTimestamp) {
+void RdbmsCatalogue::modifyDedicationFrom(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t fromTimestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationUntil
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationUntil(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const uint64_t untilTimestamp) {
+void RdbmsCatalogue::modifyDedicationUntil(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t untilTimestamp) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 //------------------------------------------------------------------------------
 // modifyDedicationComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &drivename, const std::string &comment) {
+void RdbmsCatalogue::modifyDedicationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const std::string &comment) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
@@ -4038,9 +4038,9 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
 //------------------------------------------------------------------------------
 // isAdmin
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &cliIdentity) const {
+bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
   auto conn = m_connPool.getConn();
-  return userIsAdmin(*conn, cliIdentity.username) && hostIsAdmin(*conn, cliIdentity.host);
+  return userIsAdmin(*conn, admin.username) && hostIsAdmin(*conn, admin.host);
 }
 
 //------------------------------------------------------------------------------
