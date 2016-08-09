@@ -3571,9 +3571,27 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
     }
     auto rset = stmt->executeQuery();
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
-    while (rset->next() && archiveFiles.size() < maxNbArchiveFiles ) {
+
+    // While the prefetch limit has not been exceeded
+    while(archiveFiles.size() <= maxNbArchiveFiles) {
+
+      // Break the archive file loop if there are no more tape files
+      if(!rset->next()) {
+        break;
+      }
+
       const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
 
+      // Break the archive file loop if there are no more tape files for the
+      // current archive file and adding another would exceed the prefetch limit
+      if(
+        archiveFiles.size() == maxNbArchiveFiles &&            // Prefetch limit reached
+        !archiveFiles.empty() &&                               // There is a previous archive file
+        archiveFiles.back().archiveFileID != archiveFileId) { // This tape file is not for the prevous archive file
+        break;
+      }
+
+      // Create a new archive file result entry if necessary
       if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
         common::dataStructures::ArchiveFile archiveFile;
 
@@ -3623,7 +3641,129 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
   const ArchiveFileSearchCriteria &searchCriteria) const {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    std::string sql =
+      "SELECT "
+        "COALESCE(SUM(ARCHIVE_FILE.FILE_SIZE), 0) AS TOTAL_BYTES,"
+        "COALESCE(SUM(TAPE_FILE.COMPRESSED_SIZE), 0) AS TOTAL_COMPRESSED_BYTES,"
+        "COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID";
+
+    if(
+      searchCriteria.archiveFileId  ||
+      searchCriteria.diskInstance   ||
+      searchCriteria.diskFileId     ||
+      searchCriteria.diskFilePath   ||
+      searchCriteria.diskFileUser   ||
+      searchCriteria.diskFileGroup  ||
+      searchCriteria.storageClass   ||
+      searchCriteria.vid            ||
+      searchCriteria.tapeFileCopyNb ||
+      searchCriteria.tapePool) {
+      sql += " WHERE ";
+    }
+
+    bool addedAWhereConstraint = false;
+
+    if(searchCriteria.archiveFileId) {
+      sql += " ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskInstance) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskFileId) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskFilePath) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskFileUser) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskFileGroup) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.storageClass) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.vid) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_FILE.VID = :VID";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.tapeFileCopyNb) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.tapePool) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    }
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    if(searchCriteria.archiveFileId) {
+      stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
+    }
+    if(searchCriteria.diskInstance) {
+      stmt->bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
+    }
+    if(searchCriteria.diskFileId) {
+      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
+    }
+    if(searchCriteria.diskFilePath) {
+      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
+    }
+    if(searchCriteria.diskFileUser) {
+      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
+    }
+    if(searchCriteria.diskFileGroup) {
+      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
+    }
+    if(searchCriteria.storageClass) {
+      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
+    }
+    if(searchCriteria.vid) {
+      stmt->bindString(":VID", searchCriteria.vid.value());
+    }
+    if(searchCriteria.tapeFileCopyNb) {
+      stmt->bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
+    }
+    if(searchCriteria.tapePool) {
+      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+    }
+    auto rset = stmt->executeQuery();
+    if(!rset->next()) {
+      throw exception::Exception("SELECT COUNT statement did not returned a row");
+    }
+
+    common::dataStructures::ArchiveFileSummary summary;
+    summary.totalBytes = rset->columnUint64("TOTAL_BYTES");
+    summary.totalCompressedBytes = rset->columnUint64("TOTAL_COMPRESSED_BYTES");
+    summary.totalFiles = rset->columnUint64("TOTAL_FILES");
+    return summary;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
