@@ -471,13 +471,13 @@ public:
     const uint64_t nbArchiveFilesToPrefetch) const override;
 
   /**
-   * Returns a summary of the archive files that meet the specified search
+   * Returns a summary of the tape files that meet the specified search
    * criteria.
    *
    * @param searchCriteria The search criteria.
    * @return The summary.
    */
-  common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
+  common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const ArchiveFileSearchCriteria &searchCriteria) const override;
 
   /**

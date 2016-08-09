@@ -1736,7 +1736,7 @@ void XrdCtaFile::xCom_archivefile() {
       }
     }
     else { //summary
-      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getArchiveFileSummary(searchCriteria);
+      cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
       std::vector<std::string> row = {std::to_string((unsigned long long)summary.totalFiles),std::to_string((unsigned long long)summary.totalBytes)};

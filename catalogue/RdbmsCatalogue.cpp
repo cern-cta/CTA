@@ -3619,9 +3619,9 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileSummary
+// getTapeFileSummary
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getArchiveFileSummary(
+common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
   const ArchiveFileSearchCriteria &searchCriteria) const {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }

@@ -485,13 +485,13 @@ public:
     const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
 
   /**
-   * Returns a summary of the archive files that meet the specified search
+   * Returns a summary of the tape files that meet the specified search
    * criteria.
    *
    * @param searchCriteria The search criteria.
    * @return The summary.
    */
-  virtual common::dataStructures::ArchiveFileSummary getArchiveFileSummary(
+  virtual common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const ArchiveFileSearchCriteria &searchCriteria = ArchiveFileSearchCriteria()) const = 0;
 
   /**
