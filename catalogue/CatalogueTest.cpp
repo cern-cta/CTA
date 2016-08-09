@@ -1810,6 +1810,26 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
     disabledValue, fullValue, comment), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+    disabledValue, fullValue, comment), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTape_no_encryption_key) {
   using namespace cta;
 
