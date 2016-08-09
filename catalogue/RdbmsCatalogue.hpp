@@ -545,7 +545,8 @@ protected:
    * @param storageClassName The name of the storage class.
    * @return True if the storage class exists.
    */
-  bool storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName) const;
+  bool storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName)
+    const;
 
   /**
    * Returns true if the specified tape pool exists.
@@ -555,6 +556,20 @@ protected:
    * @return True if the tape pool exists.
    */
   bool tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) const;
+
+  /**
+   * Returns true if the specified archive route exists.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @param copyNb The copy number of the tape file.
+   * @return True if the archive route exists.
+   */
+  bool archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName,
+    const uint64_t copyNb) const;
 
   /**
    * Returns true if the specified tape exists.

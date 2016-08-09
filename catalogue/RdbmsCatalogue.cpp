@@ -766,6 +766,34 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
 }
 
 //------------------------------------------------------------------------------
+// archiveRouteExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+  const std::string &storageClassName, const uint64_t copyNb) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "COPY_NB AS COPY_NB "
+      "FROM "
+        "ARCHIVE_ROUTE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "COPY_NB = :COPY_NB";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt->bindUint64(":COPY_NB", copyNb);
+    auto rset = stmt->executeQuery();
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // deleteTapePool
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapePool(const std::string &name) {
@@ -948,6 +976,27 @@ void RdbmsCatalogue::createArchiveRoute(
   const std::string &comment) {
   try {
     const time_t now = time(nullptr);
+    auto conn = m_connPool.getConn();
+    if(archiveRouteExists(*conn, diskInstanceName, storageClassName, copyNb)) {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+        << "->" << tapePoolName << " because it already exists";
+      throw ue;
+    }
+    if(!storageClassExists(*conn, diskInstanceName, storageClassName)) {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+        << "->" << tapePoolName << " because storage class " << diskInstanceName << ":" << storageClassName <<
+        " does not exist";
+      throw ue;
+    }
+    if(!tapePoolExists(*conn, tapePoolName)) {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+        << "->" << tapePoolName << " because tape pool " << tapePoolName + " does not exist";
+      throw ue;
+    }
+
     const char *const sql =
       "INSERT INTO ARCHIVE_ROUTE("
         "DISK_INSTANCE_NAME,"
@@ -979,7 +1028,6 @@ void RdbmsCatalogue::createArchiveRoute(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto conn = m_connPool.getConn();
     auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
 
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -998,6 +1046,8 @@ void RdbmsCatalogue::createArchiveRoute(
     stmt->bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt->executeNonQuery();
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

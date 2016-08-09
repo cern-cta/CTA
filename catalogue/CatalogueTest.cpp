@@ -1241,6 +1241,50 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
+  
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_class) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  const std::string diskInstanceName = "disk_instance";
+  const std::string storageClassName = "storage_class";
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, diskInstanceName, storageClassName, copyNb, tapePoolName,
+    comment), exception::UserError);
+}
+  
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb,
+    tapePoolName, comment), exception::UserError);
+}
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_instance) {
   using namespace cta;
@@ -1301,7 +1345,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_name_different_disk_
   }
 }
   
-TEST_P(cta_catalogue_CatalogueTest, createArchiveRouteTapePool_same_twice) {
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
