@@ -1126,9 +1126,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
-    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
