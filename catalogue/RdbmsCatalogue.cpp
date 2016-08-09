@@ -1378,6 +1378,14 @@ void RdbmsCatalogue::createTape(
       throw exception::UserError(std::string("Cannot create tape ") + vid +
         " because a tape with the same volume identifier already exists");
     }
+    if(!logicalLibraryExists(*conn, logicalLibraryName)) {
+      throw exception::UserError(std::string("Cannot create tape ") + vid + " because logical library " +
+        logicalLibraryName + " does not exist");
+    }
+    if(!tapePoolExists(*conn, tapePoolName)) {
+      throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
+        tapePoolName + " does not exist");
+    }
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE("
