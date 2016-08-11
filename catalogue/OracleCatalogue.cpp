@@ -62,7 +62,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
         "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.FILE_SIZE AS FILE_SIZE,"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
         "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
@@ -71,7 +71,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE AS COMPRESSED_SIZE,"
+        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
@@ -97,7 +97,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
         archiveFile->diskFileInfo.owner = selectRset->columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = selectRset->columnString("DISK_FILE_GROUP");
         archiveFile->diskFileInfo.recoveryBlob = selectRset->columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset->columnUint64("FILE_SIZE");
+        archiveFile->fileSize = selectRset->columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = selectRset->columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset->columnString("CHECKSUM_VALUE");
         archiveFile->storageClass = selectRset->columnString("STORAGE_CLASS_NAME");
@@ -112,7 +112,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
         tapeFile.vid = selectRset->columnString("VID");
         tapeFile.fSeq = selectRset->columnUint64("FSEQ");
         tapeFile.blockId = selectRset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE");
+        tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset->columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset->columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
