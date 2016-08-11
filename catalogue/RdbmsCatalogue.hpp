@@ -441,17 +441,6 @@ public:
   void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) override;
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
-  void createDedication(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
-    const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) override;
-  void deleteDedication(const std::string &drivename) override;
-  std::list<common::dataStructures::Dedication> getDedications() const override;
-  void modifyDedicationType(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) override;
-  void modifyDedicationTag(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &tag) override;
-  void modifyDedicationVid(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &vid) override;
-  void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t fromTimestamp) override;
-  void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t untilTimestamp) override;
-  void modifyDedicationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const std::string &comment) override;
-
   /**
    * Returns an iterator over the list of archive files that meet the specified
    * search criteria.

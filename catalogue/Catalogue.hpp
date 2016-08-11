@@ -31,8 +31,6 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
-#include "common/dataStructures/Dedication.hpp"
-#include "common/dataStructures/DedicationType.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -453,17 +451,6 @@ public:
   virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
   virtual void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
   virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
-
-  virtual void createDedication(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType,
- const optional<std::string> &tag, const optional<std::string> &vid, const uint64_t fromTimestamp, const uint64_t untilTimestamp,const std::string &comment) = 0;
-  virtual void deleteDedication(const std::string &drivename) = 0;
-  virtual std::list<common::dataStructures::Dedication> getDedications() const = 0;
-  virtual void modifyDedicationType(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const common::dataStructures::DedicationType dedicationType) = 0;
-  virtual void modifyDedicationTag(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &tag) = 0;
-  virtual void modifyDedicationVid(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const optional<std::string> &vid) = 0;
-  virtual void modifyDedicationFrom(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t fromTimestamp) = 0;
-  virtual void modifyDedicationUntil(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const uint64_t untilTimestamp) = 0;
-  virtual void modifyDedicationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &drivename, const std::string &comment) = 0;
 
   /**
    * Returns an iterator over the list of archive files that meet the specified

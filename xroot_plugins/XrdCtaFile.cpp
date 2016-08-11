@@ -153,7 +153,6 @@ void XrdCtaFile::dispatchCommand() {
   else if("rmr"  == command || "requestermountrule"     == command) {authorizeAdmin(); xCom_requestermountrule();}
   else if("gmr"  == command || "groupmountrule"         == command) {authorizeAdmin(); xCom_groupmountrule();}
   else if("mp"   == command || "mountpolicy"            == command) {authorizeAdmin(); xCom_mountpolicy();}
-  else if("de"   == command || "dedication"             == command) {authorizeAdmin(); xCom_dedication();}
   else if("re"   == command || "repack"                 == command) {authorizeAdmin(); xCom_repack();}
   else if("sh"   == command || "shrink"                 == command) {authorizeAdmin(); xCom_shrink();}
   else if("ve"   == command || "verify"                 == command) {authorizeAdmin(); xCom_verify();}
@@ -1362,121 +1361,6 @@ void XrdCtaFile::xCom_mountpolicy() {
 }
 
 //------------------------------------------------------------------------------
-// xCom_dedication
-//------------------------------------------------------------------------------
-void XrdCtaFile::xCom_dedication() {
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  help << m_requestTokens.at(0) << " de/dedication add/ch/rm/ls:" << std::endl
-       << "\tadd --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] --from/-f <DD/MM/YYYY> --until/-u <DD/MM/YYYY> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --name/-n <drive_name> [--readonly/-r or --writeonly/-w] [--vid/-v <tape_vid>] [--tag/-t <tag_name>] [--from/-f <DD/MM/YYYY>] [--until/-u <DD/MM/YYYY>] [--comment/-m <\"comment\">]" << std::endl
-       << "\trm  --name/-n <drive_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;  
-  if(m_requestTokens.size() < 3) {
-    throw cta::exception::UserError(help.str());
-  }
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> drive = getOptionStringValue("-n", "--name", true, false);
-    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      bool readonly = hasOption("-r", "--readonly");
-      bool writeonly = hasOption("-w", "--writeonly");
-      if("add" == m_requestTokens.at(2)) { //add
-        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
-        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-        optional<time_t> from = getOptionTimeValue("-f", "--from", true, false);
-        optional<time_t> until = getOptionTimeValue("-u", "--until", true, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-        checkOptions(help.str());
-        if((!vid&&!tag&&!readonly&&!writeonly)||(readonly&&writeonly)) {
-          throw cta::exception::UserError(help.str());
-        }
-        cta::common::dataStructures::DedicationType type=cta::common::dataStructures::DedicationType::readwrite;
-        if(readonly) {
-          type=cta::common::dataStructures::DedicationType::readonly;
-        }
-        else if(writeonly) {
-          type=cta::common::dataStructures::DedicationType::writeonly;
-        }
-        m_catalogue->createDedication(m_cliIdentity, drive.value(), type, tag, vid, from.value(), until.value(), comment.value());
-      }
-      else if("ch" == m_requestTokens.at(2)) { //ch
-        optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
-        optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-        optional<time_t> from = getOptionTimeValue("-f", "--from", false, false);
-        optional<time_t> until = getOptionTimeValue("-u", "--until", false, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-        checkOptions(help.str());
-        if((!readonly&&!writeonly)||(readonly&&writeonly)) {
-          throw cta::exception::UserError(help.str());
-        }
-        if(comment) {
-          m_catalogue->modifyDedicationComment(m_cliIdentity, drive.value(), comment.value());
-        }
-        if(from) {
-          m_catalogue->modifyDedicationFrom(m_cliIdentity, drive.value(), from.value());
-        }
-        if(until) {
-          m_catalogue->modifyDedicationUntil(m_cliIdentity, drive.value(), until.value());
-        }
-        if(vid) {
-          m_catalogue->modifyDedicationVid(m_cliIdentity, drive.value(), vid);
-        }
-        if(tag) {
-          m_catalogue->modifyDedicationTag(m_cliIdentity, drive.value(), tag);
-        }
-        if(readonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, drive.value(), cta::common::dataStructures::DedicationType::readonly);          
-        }
-        if(writeonly) {
-          m_catalogue->modifyDedicationType(m_cliIdentity, drive.value(), cta::common::dataStructures::DedicationType::writeonly);
-        }
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue->deleteDedication(drive.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::Dedication> list= m_catalogue->getDedications();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"drive","type","vid","tag","from","until","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        std::string type_s;
-        switch(it->dedicationType) {
-          case cta::common::dataStructures::DedicationType::readonly:
-            type_s = "readonly";
-            break;
-          case cta::common::dataStructures::DedicationType::writeonly:
-            type_s = "writeonly";
-            break;
-          default:
-            type_s = "readwrite";
-            break;
-        }     
-        currentRow.push_back(it->driveName);
-        currentRow.push_back(type_s);
-        currentRow.push_back(it->vid);
-        currentRow.push_back(it->tag);
-        currentRow.push_back(timeToString(it->fromTimestamp));
-        currentRow.push_back(timeToString(it->untilTimestamp));
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
-    }
-  }
-  else {
-    throw cta::exception::UserError(help.str());
-  }
-  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
-}
-
-//------------------------------------------------------------------------------
 // xCom_repack
 //------------------------------------------------------------------------------
 void XrdCtaFile::xCom_repack() {
@@ -2313,7 +2197,6 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " archivefile/af           ls"                         << std::endl;
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
   help << programName << " bootstrap/bs"                                        << std::endl;
-  help << programName << " dedication/de            add/ch/rm/ls"               << std::endl;
   help << programName << " drive/dr                 up/down"                    << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
   help << programName << " listdrivestates/lds"                                 << std::endl;

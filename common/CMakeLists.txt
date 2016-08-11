@@ -31,8 +31,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/ArchiveRequest.cpp
   dataStructures/ArchiveRoute.cpp
   dataStructures/CancelRetrieveRequest.cpp
-  dataStructures/Dedication.cpp
-  dataStructures/DedicationType.cpp
   dataStructures/DeleteArchiveRequest.cpp
   dataStructures/DiskFileInfo.cpp
   dataStructures/DriveState.cpp

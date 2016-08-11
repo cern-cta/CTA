@@ -197,7 +197,6 @@ protected:
   void xCom_requestermountrule();
   void xCom_groupmountrule();
   void xCom_mountpolicy();
-  void xCom_dedication();
   void xCom_repack();
   void xCom_shrink();
   void xCom_verify();
