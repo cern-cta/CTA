@@ -403,7 +403,17 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
         [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == cta::MountType::ARCHIVE; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
   }
-  
+       
+  auto fullTapeList=m_catalogue.getTapes(cta::catalogue::TapeSearchCriteria());
+  for (auto & ftle: fullTapeList) {
+    ftle.capacityInBytes++;
+  }
+        
+  for (auto & t:tapeList) {
+    auto const & tc=t;
+    uint64_t cap = tc.capacityInBytes+1;
+    cap++;
+  }  
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {

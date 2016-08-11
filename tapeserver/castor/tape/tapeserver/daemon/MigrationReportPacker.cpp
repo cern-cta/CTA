@@ -159,16 +159,23 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         reportPacker.m_successfulArchiveJobs.pop();
       }
       reportPacker.m_lc.log(LOG_INFO,"Reported to the client that a batch of files was written on tape");
-    }
-    catch(const castor::exception::Exception& e){
+    } catch(const cta::exception::Exception& e){
       LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionCode",e.code())),
         LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
         LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionWhat",e.what()))
       };
       tape::utils::suppresUnusedVariable(sp);
       
       const std::string msg_error="An exception was caught trying to call reportMigrationResults";
+      reportPacker.m_lc.log(LOG_ERR,msg_error);
+      throw failedMigrationRecallResult(msg_error);
+    } catch(const std::exception& e){
+      LogContext::ScopedParam sp[]={
+        LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionWhat",e.what()))
+      };
+      tape::utils::suppresUnusedVariable(sp);
+      
+      const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
       reportPacker.m_lc.log(LOG_ERR,msg_error);
       throw failedMigrationRecallResult(msg_error);
     }

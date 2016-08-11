@@ -202,8 +202,8 @@ private:
   /** a shared flag among the all tasks related to migration, set as true 
    * as soon a single task encounters a failure. That way we go into a degraded mode
    * where we only circulate memory without writing anything on tape
-   */
-  castor::server::AtomicFlag m_errorFlag;
+   */ 
+ castor::server::AtomicFlag m_errorFlag;
 
   /// The maximum number of files we ask per request. 
   const uint64_t m_maxFiles;
@@ -226,4 +226,3 @@ private:
 } //end namespace tapeserver
 } //end namespace tape
 } //end namespace castor
-

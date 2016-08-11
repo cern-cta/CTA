@@ -224,7 +224,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   diskFileInfo.owner="cms_user";
   diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType="Adler32";
+  request.checksumType="ADLER32";
   request.checksumValue="1111";
   request.creationLog=creationLog;
   request.diskpoolName="diskpool1";
@@ -278,7 +278,7 @@ TEST_P(SchedulerTest, delete_archive_request) {
   diskFileInfo.owner="cms_user";
   diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType="Adler32";
+  request.checksumType="ADLER32";
   request.checksumValue="1111";
   request.creationLog=creationLog;
   request.diskpoolName="diskpool1";
@@ -347,7 +347,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="adler32";
+    request.checksumType="ADLER32";
     request.checksumValue="1234abcd";
     request.creationLog=creationLog;
     request.diskpoolName="diskpool1";
@@ -412,7 +412,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumType = "adler32";
+    archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
     archiveJob->complete();
     archiveJob.reset(archiveMount->getNextJob().release());
@@ -500,7 +500,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="Adler32";
+    request.checksumType="ADLER32";
     request.checksumValue="1111";
     request.creationLog=creationLog;
     request.diskpoolName="diskpool1";

@@ -127,10 +127,10 @@ namespace daemon {
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
       session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-      m_archiveJob->tapeFile.checksumType = "adler32";
+      m_archiveJob->tapeFile.checksumType = "ADLER32";
       { 
         std::stringstream cs;
-        cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
+        cs << std::hex << std::showbase << std::uppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
         m_archiveJob->tapeFile.checksumValue = cs.str();
       }
       m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;

@@ -120,7 +120,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     } //end of while(1)
     logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
     m_retrieveJob->transferredSize = m_stats.dataVolume;
-    m_retrieveJob->transferredChecksumType = "adler32";
+    m_retrieveJob->transferredChecksumType = "ADLER32";
     { 
       std::stringstream cs;
       cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)checksum;

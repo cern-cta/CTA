@@ -31,6 +31,7 @@ public:
   TempFile(const std::string& path);
   std::string path();
   void randomFill(size_t size);
+  std::string adler32();
   void stringFill(const std::string &string);
   void stringAppend(const std::string &string);
   ~TempFile();
