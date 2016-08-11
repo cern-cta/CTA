@@ -3582,17 +3582,14 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
 
       const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
 
-      // Break the archive file loop if there are no more tape files for the
-      // current archive file and adding another would exceed the prefetch limit
-      if(
-        archiveFiles.size() == maxNbArchiveFiles &&            // Prefetch limit reached
-        !archiveFiles.empty() &&                               // There is a previous archive file
-        archiveFiles.back().archiveFileID != archiveFileId) { // This tape file is not for the prevous archive file
-        break;
-      }
-
-      // Create a new archive file result entry if necessary
+      // If the current tape file is for the next archive file
       if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
+
+        // Break the archive file loop if creating the next archive file would exceed the prefetch limit
+        if(archiveFiles.size() == maxNbArchiveFiles) {
+          break;
+        }
+
         common::dataStructures::ArchiveFile archiveFile;
 
         archiveFile.archiveFileID = archiveFileId;
