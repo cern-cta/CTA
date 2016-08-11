@@ -94,6 +94,11 @@ namespace cta {
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::DriveStatus status);
+    
+    /**
+     * Report that the tape is full.
+     */
+    virtual void setTapeFull();
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**

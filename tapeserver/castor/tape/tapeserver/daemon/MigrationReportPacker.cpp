@@ -82,6 +82,13 @@ void MigrationReportPacker::reportFlush(drive::compressionStats compressStats){
   m_fifo.push(new ReportFlush(compressStats));
 }
 //------------------------------------------------------------------------------
+//reportTapeFull
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportTapeFull(){
+  castor::server::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportTapeFull());
+}
+//------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSession() {
@@ -183,6 +190,13 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(LOG_ALERT,"Received a flush after an error: sending file errors to client");
   }
+}
+
+//------------------------------------------------------------------------------
+//reportTapeFull()::execute
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportTapeFull::execute(MigrationReportPacker& reportPacker){
+  reportPacker.m_archiveMount->setTapeFull();
 }
 
 //------------------------------------------------------------------------------

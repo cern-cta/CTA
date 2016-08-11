@@ -132,3 +132,11 @@ cta::ArchiveMount::~ArchiveMount() throw() {
 void cta::ArchiveMount::setDriveStatus(cta::common::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
 }
+
+//------------------------------------------------------------------------------
+// setTapeFull()
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::setTapeFull() {
+  m_catalogue.noSpaceLeftOnTape(m_dbMount->getMountInfo().vid);
+}
+

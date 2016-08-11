@@ -70,7 +70,12 @@ public:
     * @param compressStats 
     * 
     */
-  virtual void reportFlush(drive::compressionStats compressStats); 
+  virtual void reportFlush(drive::compressionStats compressStats);
+  
+  /**
+   * Create into the MigrationReportPacker a report of reaching the end of the tape.
+   */
+  virtual void reportTapeFull();
   
   /**
    * Report the drive state and set it in the central drive register. This
@@ -146,6 +151,11 @@ private:
      *  */
       ReportFlush(drive::compressionStats compressStats):m_compressStats(compressStats){}
       
+      void execute(MigrationReportPacker& reportPacker);
+  };
+  class ReportTapeFull: public Report {
+    public:
+      ReportTapeFull() {}
       void execute(MigrationReportPacker& reportPacker);
   };
   class ReportError : public Report {
