@@ -3150,6 +3150,30 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tapes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string encryptionKey = "encryption_key";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+   fullValue, comment);
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+
+  ASSERT_TRUE(tapes.empty());
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {
   using namespace cta;
 

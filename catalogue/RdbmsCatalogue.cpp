@@ -4151,9 +4151,9 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       "FROM "
         "TAPE "
       "WHERE "
-        "LBP_IS_ON IS NOT NULL AND "
-        "LABEL_DRIVE IS NOT NULL AND "
-        "LABEL_TIME IS NOT NULL AND "
+//      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
+//      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
+//      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
         "IS_DISABLED = 0 AND "
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
