@@ -21,7 +21,7 @@
 
 #include "XrdSec/XrdSecEntity.hh"
 
-#include "catalogue/ArchiveFileSearchCriteria.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/UserError.hpp"
@@ -1690,7 +1690,7 @@ void XrdCtaFile::xCom_archivefile() {
   if("ls" == m_requestTokens.at(2)) { //ls
     bool summary = hasOption("-S", "--summary");
     bool all = hasOption("-a", "--all");
-    cta::catalogue::ArchiveFileSearchCriteria searchCriteria;
+    cta::catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = getOptionUint64Value("-I", "--id", false, false);
     searchCriteria.diskFileGroup = getOptionStringValue("-g", "--group", false, false);
     searchCriteria.diskFileId = getOptionStringValue("-d", "--diskid", false, false);

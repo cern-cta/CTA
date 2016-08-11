@@ -19,7 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileItor.hpp"
-#include "catalogue/ArchiveFileSearchCriteria.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
@@ -481,7 +481,7 @@ public:
    * @return An iterator over the list of archive files.
    */
   virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(
-    const ArchiveFileSearchCriteria &searchCriteria = ArchiveFileSearchCriteria(),
+    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria(),
     const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
 
   /**
@@ -492,7 +492,7 @@ public:
    * @return The summary.
    */
   virtual common::dataStructures::ArchiveFileSummary getTapeFileSummary(
-    const ArchiveFileSearchCriteria &searchCriteria = ArchiveFileSearchCriteria()) const = 0;
+    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns the archive file with the specified unique identifier.

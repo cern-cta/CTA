@@ -26,15 +26,15 @@ namespace cta {
 namespace catalogue {
 
 /**
- * The collection of criteria used to select a set of archive files.
+ * The collection of criteria used to select a set of tape files.
  *
- * An archive file is selected if it meets all of the specified criteria.
+ * An tape file is selected if it meets all of the specified criteria.
  *
  * A criterion is only considered specified if it has been set.
  *
  * Please note that no wild cards, for example '*' or '%', are supported.
  */
-struct ArchiveFileSearchCriteria {
+struct TapeFileSearchCriteria {
 
   /**
    * The unique identifier of an archive file.
@@ -89,7 +89,7 @@ struct ArchiveFileSearchCriteria {
    */
   optional<std::string> tapePool;
 
-}; // struct ArchiveFileSearchCriteria
+}; // struct TapeFileSearchCriteria
 
 } // namespace catalogue
 } // namespace cta

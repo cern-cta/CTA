@@ -467,7 +467,7 @@ public:
    * This parameter must be set to a value equal to or greater than 1.
    * @return An iterator over the list of archive files.
    */
-  std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
+  std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
     const uint64_t nbArchiveFilesToPrefetch) const override;
 
   /**
@@ -478,7 +478,7 @@ public:
    * @return The summary.
    */
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(
-    const ArchiveFileSearchCriteria &searchCriteria) const override;
+    const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns the archive file with the specified unique identifier.
@@ -840,12 +840,12 @@ protected:
      *
      * @param catalogue The RdbmsCatalogue.
      * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-     * @param searchCriteria The criteria used to select the archive files.
+     * @param searchCriteria The search criteria.
      */
     ArchiveFileItorImpl(
       const RdbmsCatalogue &catalogue,
       const uint64_t nbArchiveFilesToPrefetch,
-      const ArchiveFileSearchCriteria &searchCriteria);
+      const TapeFileSearchCriteria &searchCriteria);
 
     /**
      * Destructor.
@@ -875,9 +875,9 @@ protected:
     const uint64_t m_nbArchiveFilesToPrefetch;
 
     /**
-     * The criteria used to select the archive files.
+     * The search criteria.
      */
-    ArchiveFileSearchCriteria m_searchCriteria;
+    TapeFileSearchCriteria m_searchCriteria;
 
     /**
      * The current offset into the list of archive files in the form of an
@@ -899,13 +899,13 @@ protected:
    * @param startingArchiveFileId The unique identifier of the first archive
    * file to be returned.
    * @param nbArchiveFiles The maximum number of archive files to be returned.
-   * @param searchCriteria The criteria used to select the archive files.
+   * @param searchCriteria The search criteria.
    * @return The archive files.
    */
   std::list<common::dataStructures::ArchiveFile> getArchiveFilesForItor(
     const uint64_t startingArchiveFileId,
     const uint64_t maxNbArchiveFiles,
-    const ArchiveFileSearchCriteria &searchCriteria) const;
+    const TapeFileSearchCriteria &searchCriteria) const;
 
   /**
    * Returns the mapping from tape copy to tape pool for the specified storage

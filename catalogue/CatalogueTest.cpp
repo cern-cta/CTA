@@ -5021,7 +5021,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
   using namespace cta;
 
-  ASSERT_THROW(m_catalogue->getArchiveFileItor(catalogue::ArchiveFileSearchCriteria(), 0), exception::Exception);
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), 0), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
@@ -5169,7 +5169,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   std::list<uint64_t> prefetches = {1, 2, 3, nbArchiveFiles - 1, nbArchiveFiles, nbArchiveFiles+1, nbArchiveFiles*2};
   for(auto prefetch: prefetches) {
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = 1;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileId = std::to_string(12345678);
@@ -5201,7 +5201,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(catalogue::ArchiveFileSearchCriteria(), prefetch);
+      const auto archiveFileItor = m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), prefetch);
       std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
@@ -5280,7 +5280,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = 10;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5295,7 +5295,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5308,7 +5308,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskFileId = "12345687";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5322,7 +5322,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskFilePath = "/public_dir/public_file_10";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5336,7 +5336,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskFileUser = "public_disk_user";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5349,7 +5349,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskFileGroup = "public_disk_group";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5362,7 +5362,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.storageClass = "storage_class";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5375,7 +5375,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
@@ -5387,7 +5387,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.vid = vid1;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5400,7 +5400,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.tapeFileCopyNb = 1;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5413,7 +5413,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.tapePool = "tape_pool_name";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5426,7 +5426,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      catalogue::ArchiveFileSearchCriteria searchCriteria;
+      catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = nbArchiveFiles + 1234;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);

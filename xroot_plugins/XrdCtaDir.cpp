@@ -20,7 +20,7 @@
 
 #include "XrdSec/XrdSecEntity.hh"
 
-#include "catalogue/ArchiveFileSearchCriteria.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "xroot_plugins/XrdCtaDir.hpp"
 
 namespace cta { namespace xrootPlugins {
@@ -46,7 +46,7 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
     if(!path || strlen(path)<1){
       throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] invalid virtual directory path");
     }
-    cta::catalogue::ArchiveFileSearchCriteria searchCriteria;    
+    cta::catalogue::TapeFileSearchCriteria searchCriteria;    
     searchCriteria.diskInstance = path; //the path will be the disk instance that we want the disk id's of
     m_itor = m_catalogue->getArchiveFileItor(searchCriteria);
     std::list<log::Param> params;

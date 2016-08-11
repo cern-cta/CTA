@@ -3390,7 +3390,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 //------------------------------------------------------------------------------
 // getArchiveFileItor
 //------------------------------------------------------------------------------
-std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const ArchiveFileSearchCriteria &searchCriteria,
+std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
   try {
     return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
@@ -3405,7 +3405,7 @@ std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const Archiv
 RdbmsCatalogue::ArchiveFileItorImpl::ArchiveFileItorImpl(
   const RdbmsCatalogue &catalogue,
   const uint64_t nbArchiveFilesToPrefetch,
-  const ArchiveFileSearchCriteria &searchCriteria):
+  const TapeFileSearchCriteria &searchCriteria):
   m_catalogue(catalogue),
   m_nbArchiveFilesToPrefetch(nbArchiveFilesToPrefetch),
   m_searchCriteria(searchCriteria),
@@ -3472,7 +3472,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::ArchiveFileItorImpl::next() 
 std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesForItor(
   const uint64_t startingArchiveFileId,
   const uint64_t maxNbArchiveFiles,
-  const ArchiveFileSearchCriteria &searchCriteria) const {
+  const TapeFileSearchCriteria &searchCriteria) const {
   try {
     std::string sql =
       "SELECT "
@@ -3637,7 +3637,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesFo
 // getTapeFileSummary
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
-  const ArchiveFileSearchCriteria &searchCriteria) const {
+  const TapeFileSearchCriteria &searchCriteria) const {
   try {
     std::string sql =
       "SELECT "
