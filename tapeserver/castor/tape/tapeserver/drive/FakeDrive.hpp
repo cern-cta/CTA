@@ -24,7 +24,6 @@
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-
 namespace castor {
 namespace tape {
 namespace tapeserver {

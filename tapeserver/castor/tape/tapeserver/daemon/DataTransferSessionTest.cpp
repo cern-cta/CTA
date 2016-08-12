@@ -961,11 +961,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  //delete is unnecessary
-  //pointer with ownership will be passed to the application,
-  //which will do the delete 
-  const bool failOnMount=true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
   
   // 4) Create the scheduler
   auto & catalogue = getCatalogue();
@@ -1084,11 +1079,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  //delete is unnecessary
-  //pointer with ownership will be passed to the application,
-  //which will do the delete 
-  const bool failOnMount=true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
   
   // 4) Create the scheduler
   auto & catalogue = getCatalogue();
@@ -1203,11 +1193,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  //delete is unnecessary
-  //pointer with ownership will be passed to the application,
-  //which will do the delete 
-  const bool failOnMount=true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
   
   // 4) Create the scheduler
   auto & catalogue = getCatalogue();
