@@ -25,6 +25,7 @@
 #include "catalogue/Catalogue.hpp"
 
 #include <memory>
+#include <atomic>
 
 namespace cta {
   /**
@@ -143,7 +144,7 @@ namespace cta {
     /**
      * Internal tracking of the session completion
      */
-    bool m_sessionRunning;
+    std::atomic<bool> m_sessionRunning;
     
   }; // class ArchiveMount
 
