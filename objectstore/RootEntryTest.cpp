@@ -22,6 +22,7 @@
 #include "objectstore/SerializersExceptions.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
+#include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
 
@@ -49,12 +50,12 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock (re);
     // Create an agent
-    cta::objectstore::Agent agent(be);
-    agent.generateName("unitTest");
+    cta::objectstore::AgentReference agentRef("unitTest");
+    cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-    re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
     //agent.registerSelf();
@@ -72,16 +73,16 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::Agent ag(be);
+  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  ag.generateName("UnitTests");
   { 
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     re.initialize();
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
-    re.addOrGetAgentRegisterPointerAndCommit(ag, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
   }
   ag.insertAndRegisterSelf();
   std::string tpAddr1, tpAddr2;
@@ -92,7 +93,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     re.fetch();
     ASSERT_THROW(re.getArchiveQueueAddress("tapePool1"),
       cta::objectstore::RootEntry::NoSuchArchiveQueue);
-    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", ag);
+    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
@@ -103,7 +104,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", ag);
+    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {
@@ -138,15 +139,15 @@ TEST (ObjectStore, RootEntryDriveRegister) {
   }
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::Agent ag(be);
+  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  ag.generateName("UnitTests");
   { 
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.addOrGetAgentRegisterPointerAndCommit(ag, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
   }
   ag.insertAndRegisterSelf();
   std::string driveRegisterAddress;
@@ -158,7 +159,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     ASSERT_THROW(re.getDriveRegisterAddress(),
       cta::objectstore::RootEntry::NotAllocated);
     ASSERT_NO_THROW(
-      driveRegisterAddress = re.addOrGetDriveRegisterPointerAndCommit(ag, el));
+      driveRegisterAddress = re.addOrGetDriveRegisterPointerAndCommit(agr, el));
     ASSERT_TRUE(be.exists(driveRegisterAddress));
   }
   {
@@ -192,8 +193,9 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   }
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::Agent ag(be);
-  ag.generateName("UnitTests");
+  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::Agent ag(agr.getAgentAddress(), be);
+  ag.initialize();
   std::string arAddr;
   {
     // Create the agent register
@@ -202,7 +204,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.fetch();
     ASSERT_THROW(re.getAgentRegisterAddress(),
       cta::objectstore::RootEntry::NotAllocated);
-    arAddr = re.addOrGetAgentRegisterPointerAndCommit(ag, el);
+    arAddr = re.addOrGetAgentRegisterPointerAndCommit(agr, el);
     // Check that we car read it
     cta::objectstore::AgentRegister ar(arAddr, be);
     cta::objectstore::ScopedSharedLock arl(ar);
@@ -215,7 +217,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.fetch();
     // Check that we still get the same agent register
     ASSERT_EQ(arAddr, re.getAgentRegisterAddress());
-    ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(ag, el));
+    ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(agr, el));
     // Remove it
     ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
     // Check that the object is gone
@@ -239,15 +241,15 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   }
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::Agent ag(be);
+  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  ag.generateName("UnitTests");
   { 
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.addOrGetAgentRegisterPointerAndCommit(ag, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
   }
   ag.insertAndRegisterSelf();
   std::string schedulerGlobalLockAddress;
@@ -259,7 +261,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     ASSERT_THROW(re.getDriveRegisterAddress(),
       cta::objectstore::RootEntry::NotAllocated);
     ASSERT_NO_THROW(
-      schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(ag, el));
+      schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(agr, el));
     ASSERT_TRUE(be.exists(schedulerGlobalLockAddress));
   }
   {

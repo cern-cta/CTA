@@ -20,6 +20,7 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
@@ -39,10 +40,10 @@ public:
   virtual ~OStoreDB() throw();
   
   /* === Object store and agent handling ==================================== */
-  void setAgent(objectstore::Agent &agent);
+  void setAgentReference(objectstore::AgentReference *agentReference);
   CTA_GENERATE_EXCEPTION_CLASS(AgentNotSet);
 private:
-  void assertAgentSet();
+  void assertAgentAddressSet();
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
@@ -64,12 +65,12 @@ public:
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
-    TapeMountDecisionInfo (objectstore::Backend &, objectstore::Agent &);
+    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
     objectstore::Backend & m_objectStore;
-    objectstore::Agent & m_agent;
+    objectstore::AgentReference & m_agentReference;
   };
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
@@ -78,9 +79,9 @@ public:
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(objectstore::Backend &, objectstore::Agent &);
+    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &);
     objectstore::Backend & m_objectStore;
-    objectstore::Agent & m_agent;
+    objectstore::AgentReference & m_agentReference;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
@@ -101,12 +102,12 @@ public:
     ~ArchiveJob() override;
   private:
     ArchiveJob(const std::string &, objectstore::Backend &,
-      objectstore::Agent &, ArchiveMount &);
+      objectstore::AgentReference &, ArchiveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     std::string m_tapePool;
     objectstore::Backend & m_objectStore;
-    objectstore::Agent & m_agent;
+    objectstore::AgentReference & m_agentReference;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
   };
@@ -115,9 +116,9 @@ public:
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::Agent &);
+    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &);
     objectstore::Backend & m_objectStore;
-    objectstore::Agent & m_agent;
+    objectstore::AgentReference & m_agentReference;
   public:
     const MountInfo & getMountInfo() override;
     std::unique_ptr<RetrieveJob> getNextJob() override;
@@ -136,11 +137,11 @@ public:
     virtual ~RetrieveJob() override;
   private:
     RetrieveJob(const std::string &, objectstore::Backend &, 
-      objectstore::Agent &, RetrieveMount &);
+      objectstore::AgentReference &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
-    objectstore::Agent & m_agent;
+    objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
     RetrieveMount & m_retrieveMount;
   };
@@ -159,16 +160,16 @@ public:
   class ArchiveToFileRequestCancelation:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
-    ArchiveToFileRequestCancelation(objectstore::Agent * agent, 
+    ArchiveToFileRequestCancelation(objectstore::AgentReference & agentReference, 
       objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
-      m_agent(agent), m_closed(false) {} 
+      m_agentReference(agentReference), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
     void complete() override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;
     objectstore::Backend & m_objectStore;
-    objectstore::Agent * m_agent;
+    objectstore::AgentReference &m_agentReference;
     bool m_closed;
     friend class OStoreDB;
   };
@@ -205,7 +206,7 @@ public:
   std::list<cta::common::DriveState> getDriveStates() const override;
 private:
   objectstore::Backend & m_objectStore;
-  objectstore::Agent * m_agent;
+  objectstore::AgentReference *m_agentReference = nullptr;
 };
   
 }

@@ -47,26 +47,26 @@ namespace cta {
 using namespace objectstore;
 
 OStoreDB::OStoreDB(objectstore::Backend& be):
-  m_objectStore(be), m_agent(NULL) {}
+  m_objectStore(be) {}
 
 
 OStoreDB::~OStoreDB() throw() {}
 
-void OStoreDB::setAgent(objectstore::Agent& agent) {
-  m_agent = & agent;
-  }
+void OStoreDB::setAgentReference(objectstore::AgentReference *agentReference) {
+  m_agentReference = agentReference;
+}
 
-void OStoreDB::assertAgentSet() {
-  if (!m_agent)
-    throw AgentNotSet("In OStoreDB::assertAgentSet: Agent pointer not set");
+void OStoreDB::assertAgentAddressSet() {
+  if (!m_agentReference)
+    throw AgentNotSet("In OStoreDB::assertAgentSet: Agent address not set");
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
   //Allocate the getMountInfostructure to return.
-  assertAgentSet();
+  assertAgentAddressSet();
   std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
-    m_objectStore, *m_agent));
+    m_objectStore, *m_agentReference));
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
@@ -256,9 +256,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
-  assertAgentSet();
+  assertAgentAddressSet();
   // Construct the return value immediately
-  cta::objectstore::ArchiveRequest aReq(m_agent->nextId("ArchiveRequest"), m_objectStore);
+  cta::objectstore::ArchiveRequest aReq(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
   aReq.initialize();
   // Summarize all as an archiveFile
   cta::common::dataStructures::ArchiveFile aFile;
@@ -287,7 +287,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   re.fetch();
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto & copy:criteria.copyToPoolMap) {
-    std::string aqaddr = re.addOrGetArchiveQueueAndCommit(copy.second, *m_agent);
+    std::string aqaddr = re.addOrGetArchiveQueueAndCommit(copy.second, *m_agentReference);
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
     aReq.addJob(copy.first, copy.second, aqaddr, hardcodedRetriesWithinMount, hardcodedTotalRetries);
@@ -301,12 +301,13 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   }
   // We create the object here
   {
-    objectstore::ScopedExclusiveLock al(*m_agent);
-    m_agent->fetch();
-    m_agent->addToOwnership(aReq.getAddressIfSet());
-    m_agent->commit();
+    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+    objectstore::ScopedExclusiveLock agl(ag);
+    ag.fetch();
+    ag.addToOwnership(aReq.getAddressIfSet());
+    ag.commit();
   }
-  aReq.setOwner(m_agent->getAddressIfSet());
+  aReq.setOwner(m_agentReference->getAgentAddress());
   aReq.insert();
   ScopedExclusiveLock arl(aReq);
   // We can now enqueue the requests
@@ -347,10 +348,11 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   arl.release();
   // And remove reference from the agent
   {
-    objectstore::ScopedExclusiveLock al(*m_agent);
-    m_agent->fetch();
-    m_agent->removeFromOwnership(aReq.getAddressIfSet());
-    m_agent->commit();
+    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+    objectstore::ScopedExclusiveLock al(ag);
+    ag.fetch();
+    ag.removeFromOwnership(aReq.getAddressIfSet());
+    ag.commit();
   }
 }
 
@@ -378,10 +380,11 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
         // Upgrade the lock to an exclusive one.
         arl.release();
         ScopedExclusiveLock arxl(ar);
-        objectstore::ScopedExclusiveLock al(*m_agent);
-        m_agent->fetch();
-        m_agent->addToOwnership(ar.getAddressIfSet());
-        m_agent->commit();
+        objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+        objectstore::ScopedExclusiveLock agl(ag);
+        ag.fetch();
+        ag.addToOwnership(ar.getAddressIfSet());
+        ag.commit();
         ar.fetch();
         ar.setAllJobsFailed();
         for (auto j:ar.dumpJobs()) {
@@ -395,11 +398,11 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
             aq2.removeJob(ar.getAddressIfSet());
             aq2.commit();
           } catch (...) {}
-          ar.setJobOwner(j.copyNb, m_agent->getAddressIfSet());
+          ar.setJobOwner(j.copyNb, ag.getAddressIfSet());
         }
         ar.remove();
-        m_agent->removeFromOwnership(ar.getAddressIfSet());
-        m_agent->commit();
+        ag.removeFromOwnership(ar.getAddressIfSet());
+        ag.commit();
         // We found and deleted the job: return.
         return;
       }
@@ -411,10 +414,10 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
 std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
   OStoreDB::markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity& requester,
   uint64_t fileId) {
-  assertAgentSet();
+  assertAgentAddressSet();
   // Construct the return value immediately
   std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCancelation>
-    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(m_agent, m_objectStore));
+    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(*m_agentReference, m_objectStore));
   cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
   cta::objectstore::ScopedExclusiveLock & atfrl = internalRet->m_lock;
   // Attempt to find the request
@@ -436,10 +439,11 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
         tar.fetch();
         if (tar.getArchiveFile().archiveFileID == fileId) {
           // Point the agent to the request
-          ScopedExclusiveLock agl(*m_agent);
-          m_agent->fetch();
-          m_agent->addToOwnership(arp->address);
-          m_agent->commit();
+          cta::objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+          ScopedExclusiveLock agl(ag);
+          ag.fetch();
+          ag.addToOwnership(arp->address);
+          ag.commit();
           agl.release();
           // Mark all jobs are being pending NS deletion (for being deleted them selves) 
           tatfrl.release();
@@ -473,21 +477,23 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
     throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
   // We just need to delete the object and forget it
   m_request.remove();
-  objectstore::ScopedExclusiveLock al (*m_agent);
-  m_agent->fetch();
-  m_agent->removeFromOwnership(m_request.getAddressIfSet());
-  m_agent->commit();
+  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock al (ag);
+  ag.fetch();
+  ag.removeFromOwnership(m_request.getAddressIfSet());
+  ag.commit();
   m_closed = true;
   }
 
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
     try {
-      m_request.garbageCollect(m_agent->getAddressIfSet());
-      objectstore::ScopedExclusiveLock al (*m_agent);
-      m_agent->fetch();
-      m_agent->removeFromOwnership(m_request.getAddressIfSet());
-      m_agent->commit();
+      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+      m_request.garbageCollect(ag.getAddressIfSet());
+      objectstore::ScopedExclusiveLock al (ag);
+      ag.fetch();
+      ag.removeFromOwnership(m_request.getAddressIfSet());
+      ag.commit();
     } catch (...) {}
   }
 }
@@ -683,23 +689,24 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
   const std::string &vid) {
-  assertAgentSet();
+  assertAgentAddressSet();
   // Check that the requested retrieve job (for the provided vid) exists.
   if (!std::count_if(criteria.archiveFile.tapeFiles.cbegin(), 
                      criteria.archiveFile.tapeFiles.end(),
                      [vid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == vid; }))
     throw RetrieveRequestHasNoCopies("In OStoreDB::queueRetrieve(): no tape file for requested vid.");
   // In order to post the job, construct it first in memory.
-  objectstore::RetrieveRequest rReq(m_agent->nextId("RetrieveToFileRequest"), m_objectStore);
+  objectstore::RetrieveRequest rReq(m_agentReference->nextId("RetrieveToFileRequest"), m_objectStore);
   rReq.initialize();
   rReq.setSchedulerRequest(rqst);
   rReq.setRetrieveFileQueueCriteria(criteria);
   // Point to the request in the agent
   {
-    ScopedExclusiveLock agl(*m_agent);
-    m_agent->fetch();
-    m_agent->addToOwnership(rReq.getAddressIfSet());
-    m_agent->commit();
+    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+    ScopedExclusiveLock agl(ag);
+    ag.fetch();
+    ag.addToOwnership(rReq.getAddressIfSet());
+    ag.commit();
   }
   // Set an arbitrary copy number so we can serialize. Garbage collection we re-choose 
   // the tape file number and override it in case of problem (and we will set it further).
@@ -710,7 +717,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(vid, *m_agent);
+  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference);
   // Create the request.
   rel.release();
   RetrieveQueue rq(rqAddr, m_objectStore);
@@ -736,10 +743,11 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   rrl.release();
   // And relinquish ownership form agent
   {
-    ScopedExclusiveLock agl(*m_agent);
-    m_agent->fetch();
-    m_agent->removeFromOwnership(rReq.getAddressIfSet());
-    m_agent->commit();
+    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
+    ScopedExclusiveLock agl(ag);
+    ag.fetch();
+    ag.removeFromOwnership(rReq.getAddressIfSet());
+    ag.commit();
   }
 }
 
@@ -858,7 +866,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
   std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
-    new OStoreDB::ArchiveMount(m_objectStore, m_agent));
+    new OStoreDB::ArchiveMount(m_objectStore, m_agentReference));
   auto &am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -901,8 +909,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 }
 
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
-  objectstore::Backend& os, objectstore::Agent& a):
-   m_lockTaken(false), m_objectStore(os), m_agent(a) {}
+  objectstore::Backend& os, objectstore::AgentReference& a):
+   m_lockTaken(false), m_objectStore(os), m_agentReference(a) {}
 
 
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
@@ -918,7 +926,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
   std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
-    new OStoreDB::RetrieveMount(m_objectStore, m_agent));
+    new OStoreDB::RetrieveMount(m_objectStore, m_agentReference));
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -969,8 +977,8 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   m_schedulerGlobalLock.reset(NULL);
 }
 
-OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::Agent& a):
-  m_objectStore(os), m_agent(a) {}
+OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::AgentReference& a):
+  m_objectStore(os), m_agentReference(a) {}
 
 const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
   return mountInfo;
@@ -1024,7 +1032,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       // Prepare the return value
       auto job=aq.dumpJobs().front();
       std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
-        job.address, m_objectStore, m_agent, *this));
+        job.address, m_objectStore, m_agentReference, *this));
       privateRet->tapeFile.copyNb = job.copyNb;
       objectstore::ScopedExclusiveLock arl;
       try {
@@ -1045,13 +1053,14 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       }
       // Take ownership of the job
       // Add to ownership
-      objectstore::ScopedExclusiveLock al(m_agent);
-      m_agent.fetch();
-      m_agent.addToOwnership(privateRet->m_archiveRequest.getAddressIfSet());
-      m_agent.commit();
+      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+      objectstore::ScopedExclusiveLock al(ag);
+      ag.fetch();
+      ag.addToOwnership(privateRet->m_archiveRequest.getAddressIfSet());
+      ag.commit();
       al.release();
       // Make the ownership official (for this job within the request)
-      privateRet->m_archiveRequest.setJobOwner(job.copyNb, m_agent.getAddressIfSet());
+      privateRet->m_archiveRequest.setJobOwner(job.copyNb, ag.getAddressIfSet());
       privateRet->m_archiveRequest.commit();
       // Remove the job from the archive queue
       aq.removeJob(privateRet->m_archiveRequest.getAddressIfSet());
@@ -1158,11 +1167,11 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 }
 
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
-  objectstore::Backend& os, objectstore::Agent& ag, ArchiveMount & am): m_jobOwned(false),
-  m_objectStore(os), m_agent(ag), m_archiveRequest(jobAddress, os), m_archiveMount(am) {}
+  objectstore::Backend& os, objectstore::AgentReference& ar, ArchiveMount & am): m_jobOwned(false),
+  m_objectStore(os), m_agentReference(ar), m_archiveRequest(jobAddress, os), m_archiveMount(am) {}
 
-OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::Agent& a):
-  m_objectStore(os), m_agent(a) { }
+OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::AgentReference& ar):
+  m_objectStore(os), m_agentReference(ar) { }
 
 const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo() {
   return mountInfo;
@@ -1216,7 +1225,7 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
       // Prepare the return value
       auto job=rq.dumpJobs().front();
       std::unique_ptr<OStoreDB::RetrieveJob> privateRet(new OStoreDB::RetrieveJob(
-        job.address, m_objectStore, m_agent, *this));
+        job.address, m_objectStore, m_agentReference, *this));
       privateRet->selectedCopyNb = job.copyNb;
       objectstore::ScopedExclusiveLock rrl;
       try {
@@ -1236,13 +1245,14 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
       }
       // Take ownership of the job
       // Add to ownership
-      objectstore::ScopedExclusiveLock al(m_agent);
-      m_agent.fetch();
-      m_agent.addToOwnership(privateRet->m_retrieveRequest.getAddressIfSet());
-      m_agent.commit();
+      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+      objectstore::ScopedExclusiveLock al(ag);
+      ag.fetch();
+      ag.addToOwnership(privateRet->m_retrieveRequest.getAddressIfSet());
+      ag.commit();
       al.release();
       // Make the ownership official
-      privateRet->m_retrieveRequest.setOwner(m_agent.getAddressIfSet());
+      privateRet->m_retrieveRequest.setOwner(ag.getAddressIfSet());
       privateRet->m_retrieveRequest.commit();
       // Remove the job from the archive queue
       rq.removeJob(privateRet->m_retrieveRequest.getAddressIfSet());
@@ -1326,10 +1336,11 @@ void OStoreDB::ArchiveJob::fail() {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
-    objectstore::ScopedExclusiveLock al(m_agent);
-    m_agent.fetch();
-    m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-    m_agent.commit();
+    objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+    objectstore::ScopedExclusiveLock al(ag);
+    ag.fetch();
+    ag.removeFromOwnership(m_archiveRequest.getAddressIfSet());
+    ag.commit();
     m_jobOwned = false;
     return;
   }
@@ -1357,10 +1368,11 @@ void OStoreDB::ArchiveJob::fail() {
           m_archiveRequest.commit();
           arl.release();
           // We just have to remove the ownership from the agent and we're done.
-          objectstore::ScopedExclusiveLock al(m_agent);
-          m_agent.fetch();
-          m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-          m_agent.commit();
+          objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+          objectstore::ScopedExclusiveLock al(ag);
+          ag.fetch();
+          ag.removeFromOwnership(ag.getAddressIfSet());
+          ag.commit();
           m_jobOwned = false;
           return;
         }
@@ -1390,10 +1402,11 @@ void OStoreDB::ArchiveJob::succeed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership from agent
-  objectstore::ScopedExclusiveLock al(m_agent);
-  m_agent.fetch();
-  m_agent.removeFromOwnership(atfrAddress);
-  m_agent.commit();
+  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock al(ag);
+  ag.fetch();
+  ag.removeFromOwnership(atfrAddress);
+  ag.commit();
 }
 
 OStoreDB::ArchiveJob::~ArchiveJob() {
@@ -1401,20 +1414,21 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     // Return the job to the pot if we failed to handle it.
     objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
     m_archiveRequest.fetch();
-    m_archiveRequest.garbageCollect(m_agent.getAddressIfSet());
+    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress());
     atfrl.release();
     // Remove ownership from agent
-    objectstore::ScopedExclusiveLock al(m_agent);
-    m_agent.fetch();
-    m_agent.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-    m_agent.commit();
+    objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+    objectstore::ScopedExclusiveLock al(ag);
+    ag.fetch();
+    ag.removeFromOwnership(m_archiveRequest.getAddressIfSet());
+    ag.commit();
   }
 }
 
 OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, 
-    objectstore::Backend& os, objectstore::Agent& ag, 
+    objectstore::Backend& os, objectstore::AgentReference& ar, 
     OStoreDB::RetrieveMount& rm): m_jobOwned(false),
-  m_objectStore(os), m_agent(ag), m_retrieveRequest(jobAddress, os), 
+  m_objectStore(os), m_agentReference(ar), m_retrieveRequest(jobAddress, os), 
   m_retrieveMount(rm) { }
 
 void OStoreDB::RetrieveJob::fail() {
@@ -1505,10 +1519,11 @@ void OStoreDB::RetrieveJob::succeed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership form the agent
-  objectstore::ScopedExclusiveLock al(m_agent);
-  m_agent.fetch();
-  m_agent.removeFromOwnership(rtfrAddress);
-  m_agent.commit();
+  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock al(ag);
+  ag.fetch();
+  ag.removeFromOwnership(rtfrAddress);
+  ag.commit();
 }
 
 

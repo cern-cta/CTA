@@ -19,6 +19,7 @@
 #pragma once
 
 #include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
 #include "objectstore/Backend.hpp"
 
 namespace cta { namespace objectstore { 
@@ -43,7 +44,7 @@ public:
    * 
    * @return the agent
    */
-  cta::objectstore::Agent & getAgent();
+  cta::objectstore::AgentReference & getAgentReference();
   
 private:
   /**
@@ -54,7 +55,7 @@ private:
   /**
    * The agent
    */
-  cta::objectstore::Agent m_agent;
+  cta::objectstore::AgentReference m_agentReference;
 };
 
 }}

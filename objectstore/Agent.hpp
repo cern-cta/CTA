@@ -40,17 +40,12 @@ class GenericObject;
 class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
-  Agent(Backend & os);
   Agent(GenericObject & go);
   
   Agent(const std::string & name, Backend & os);
 
   void initialize();
 
-  void generateName(const std::string & typeName);
-  
-  std::string nextId(const std::string & childType);
-  
   void insertAndRegisterSelf();
   
   void removeAndUnregisterSelf();

@@ -25,18 +25,18 @@ namespace cta { namespace objectstore {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be), m_agent(m_backend) {
+BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be), m_agentReference("OStoreDBFactory") {
   cta::objectstore::RootEntry re(m_backend);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  m_agent.generateName("OStoreDBFactory");
-  m_agent.initialize();
+  Agent agent(m_agentReference.getAgentAddress(), m_backend);
+  agent.initialize();
   cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agent,cl);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
   rel.release();
-  m_agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf();
   rel.lock(re);
-  re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
   rel.release();
 }
 
@@ -44,16 +44,17 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be
 // Destructor
 //------------------------------------------------------------------------------
 BackendPopulator::~BackendPopulator() throw() {
-  cta::objectstore::ScopedExclusiveLock agl(m_agent);
-  m_agent.fetch();
-  m_agent.removeAndUnregisterSelf();
+  Agent agent(m_agentReference.getAgentAddress(), m_backend);
+  cta::objectstore::ScopedExclusiveLock agl(agent);
+  agent.fetch();
+  agent.removeAndUnregisterSelf();
 }
 
 //------------------------------------------------------------------------------
 // getAgent
 //------------------------------------------------------------------------------
-cta::objectstore::Agent & BackendPopulator::getAgent() {
-  return m_agent;
+cta::objectstore::AgentReference & BackendPopulator::getAgentReference() {
+  return m_agentReference;
 }
 
 }}

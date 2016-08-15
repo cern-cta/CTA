@@ -19,15 +19,14 @@
 #include <gtest/gtest.h>
 #include "RetrieveQueue.hpp"
 #include "BackendVFS.hpp"
-#include "Agent.hpp"
+#include "AgentReference.hpp"
 
 namespace unitTests {
   
 TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTest");
-  std::string retrieveQueueAddress = agent.nextId("RetrieveQueue");
+  cta::objectstore::AgentReference agentRef("unitTest");
+  std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   { 
     // Try to create the tape entry
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);

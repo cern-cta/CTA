@@ -19,6 +19,7 @@
 #include "RootEntry.hpp"
 #include "AgentRegister.hpp"
 #include "Agent.hpp"
+#include "AgentReference.hpp"
 #include "ArchiveQueue.hpp"
 #include "RetrieveQueue.hpp"
 #include "DriveRegister.hpp"
@@ -93,7 +94,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, Agent& agent) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -101,8 +102,9 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   } catch (serializers::NotFound &) {}
   // Insert the archive queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string archiveQueueAddress = agent.nextId("archiveQueue");
+  std::string archiveQueueAddress = agentRef.nextId("archiveQueue");
   // TODO Do we expect the agent to be passed locked or not: to be clarified.
+  Agent agent(agentRef.getAgentAddress(), m_objectStore);
   ScopedExclusiveLock agl(agent);
   agent.fetch();
   agent.addToOwnership(archiveQueueAddress);
@@ -213,7 +215,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Agent& agent) {
+std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
@@ -221,8 +223,9 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   } catch (serializers::NotFound &) {}
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string retrieveQueueAddress = agent.nextId("retriveQueue");
+  std::string retrieveQueueAddress = agentRef.nextId("retriveQueue");
   // TODO Do we expect the agent to be passed locked or not: to be clarified.
+  Agent agent(agentRef.getAgentAddress(), m_objectStore);
   ScopedExclusiveLock agl(agent);
   agent.fetch();
   agent.addToOwnership(retrieveQueueAddress);
@@ -324,7 +327,7 @@ auto RootEntry::dumpRetrieveQueues() -> std::list<RetrieveQueueDump> {
 // =============================================================================
 
 std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
-  Agent & agent, const EntryLogSerDeser & log) {
+  AgentReference& agentRef, const EntryLogSerDeser & log) {
   checkPayloadWritable();
   // Check if the drive register exists
   try {
@@ -332,7 +335,8 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent. We expect the
     // agent to be passed locked.
-    std::string drAddress (agent.nextId("driveRegister"));
+    std::string drAddress (agentRef.nextId("driveRegister"));
+    Agent agent(agentRef.getAgentAddress(), m_objectStore);
     ScopedExclusiveLock agl(agent);
     agent.fetch();
     agent.addToOwnership(drAddress);
@@ -408,7 +412,7 @@ std::string RootEntry::getAgentRegisterAddress() {
 }
 
 // Get the name of a (possibly freshly created) agent register
-std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
+std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& agentRef,
   const EntryLogSerDeser & log) {
   // Check if the agent register exists
   try {
@@ -424,7 +428,7 @@ std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(Agent & agent,
       return m_payload.agentregisterpointer().address();
     }
     // decide on the object's name
-    std::string arAddress (agent.nextId("agentRegister"));
+    std::string arAddress (agentRef.nextId("agentRegister"));
     // Record the agent registry in our own intent
     addIntendedAgentRegistry(arAddress);
     commit();
@@ -535,7 +539,7 @@ std::string RootEntry::getSchedulerGlobalLock() {
 }
 
 // Get the name of a (possibly freshly created) scheduler global lock
-std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
+std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agentRef,
   const EntryLogSerDeser & log) {
   checkPayloadWritable();
   // Check if the drive register exists
@@ -544,7 +548,8 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(Agent & agent,
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent. We expect the
     // agent to be passed locked.
-    std::string sglAddress (agent.nextId("schedulerGlobalLock"));
+    std::string sglAddress (agentRef.nextId("schedulerGlobalLock"));
+    Agent agent(agentRef.getAgentAddress(), m_objectStore);
     ScopedExclusiveLock agl(agent);
     agent.fetch();
     agent.addToOwnership(sglAddress);

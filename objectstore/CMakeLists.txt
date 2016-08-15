@@ -51,6 +51,7 @@ add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
   RootEntry.cpp
   Agent.cpp
+  AgentReference.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
   ArchiveQueue.cpp

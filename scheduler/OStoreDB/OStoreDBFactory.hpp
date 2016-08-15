@@ -26,6 +26,7 @@
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendFactory.hpp"
@@ -119,38 +120,38 @@ public:
 private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
   cta::OStoreDB m_OStoreDB;
-  objectstore::Agent m_agent;
+  objectstore::AgentReference m_agentReference;
 };
 
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_backend(new cta::objectstore::BackendVFS()),
-m_OStoreDB(*m_backend), m_agent(*m_backend) {
+m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  m_agent.generateName("OStoreDBFactory");
-  m_agent.initialize();
+  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
   rel.release();
-  m_agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf();
   rel.lock(re);
-  re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
   rel.release();
-  m_OStoreDB.setAgent(m_agent);
+  m_OStoreDB.setAgentReference(&m_agentReference);
 }
 
 template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()),
-m_OStoreDB(*m_backend), m_agent(*m_backend) {
+m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {
@@ -164,17 +165,17 @@ m_OStoreDB(*m_backend), m_agent(*m_backend) {
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  m_agent.generateName("OStoreDBFactory");
-  m_agent.initialize();
+  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agent, cl);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
   rel.release();
-  m_agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf();
   rel.lock(re);
-  re.addOrGetDriveRegisterPointerAndCommit(m_agent, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agent, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
   rel.release();
-  m_OStoreDB.setAgent(m_agent);
+  m_OStoreDB.setAgentReference(&m_agentReference);
 }
 
 }

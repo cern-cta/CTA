@@ -23,6 +23,7 @@
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
+#include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "DriveRegister.hpp"
 #include "ArchiveRequest.hpp"
@@ -35,8 +36,8 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -45,24 +46,23 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create 2 agents, A and B and register them
   // The agents are set with a timeout of 0, so they will be delclared
   // dead immediately.
-  cta::objectstore::Agent agA(be), agB(be);
+  cta::objectstore::AgentReference agrA("unitTestAgentA"), agrB("unitTestAgentB");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be), agB(agrB.getAgentAddress(), be);
   agA.initialize();
-  agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   agB.initialize();
-  agB.generateName("unitTestAgentB");
   agB.setTimeout_us(0);
   agB.insertAndRegisterSelf();
   // Create the garbage colletor and run it twice.
-  cta::objectstore::Agent gcAgent(be);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
-  gcAgent.generateName("unitTestGarbageCollector");
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
@@ -83,8 +83,8 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
 TEST(ObjectStore, GarbageCollectorRegister) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -93,19 +93,19 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::Agent agA(be);
+  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
-  agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string arName;
   {
-    arName = agA.nextId("AgentRegister");
+    arName = agrA.nextId("AgentRegister");
     cta::objectstore::AgentRegister ar(arName, be);
     ar.initialize();
     ar.setOwner(agA.getAddressIfSet());
@@ -116,9 +116,9 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     ar.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::Agent gcAgent(be);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
-  gcAgent.generateName("unitTestGarbageCollector");
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
@@ -140,8 +140,8 @@ TEST(ObjectStore, GarbageCollectorRegister) {
 TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -150,19 +150,19 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::Agent agA(be);
+  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
-  agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
   {
-    tpName = agA.nextId("ArchiveQueue");
+    tpName = agrA.nextId("ArchiveQueue");
     cta::objectstore::ArchiveQueue aq(tpName, be);
     aq.initialize("SomeTP");
     aq.setOwner(agA.getAddressIfSet());
@@ -173,9 +173,9 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     aq.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::Agent gcAgent(be);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
-  gcAgent.generateName("unitTestGarbageCollector");
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
@@ -197,8 +197,8 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
 TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -207,19 +207,19 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add the drive register to it as an owned object
-  cta::objectstore::Agent agA(be);
+  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
-  agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   // Create a new drive register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
   {
-    tpName = agA.nextId("ArchiveQueue");
+    tpName = agrA.nextId("ArchiveQueue");
     cta::objectstore::DriveRegister dr(tpName, be);
     dr.initialize();
     dr.setOwner(agA.getAddressIfSet());
@@ -230,9 +230,9 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     dr.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::Agent gcAgent(be);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
-  gcAgent.generateName("unitTestGarbageCollector");
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
@@ -254,8 +254,8 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
 TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::Agent agent(be);
-  agent.generateName("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -264,12 +264,12 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agent, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent
-  cta::objectstore::Agent agA(be);
+  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
-  agA.generateName("unitTestAgentA");
   agA.setTimeout_us(0);
   agA.insertAndRegisterSelf();
   // Several use cases are present for the ArchiveRequests:
@@ -286,7 +286,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   {
     std::stringstream aqid;
     aqid << "ArchiveQueue" << i;
-    tpAddr[i] = agent.nextId(aqid.str());
+    tpAddr[i] = agentRef.nextId(aqid.str());
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
     aq.initialize(aqid.str());
     aq.setOwner("");
@@ -297,7 +297,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   while (true)
   {
     // -just referenced
-    std::string atfrAddr = agA.nextId("ArchiveRequest");
+    std::string atfrAddr = agrA.nextId("ArchiveRequest");
     cta::objectstore::ScopedExclusiveLock agl(agA);
     agA.fetch();
     agA.addToOwnership(atfrAddr);
@@ -383,9 +383,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     break;
   }
   // Create the garbage collector and run it twice.
-  cta::objectstore::Agent gcAgent(be);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
-  gcAgent.generateName("unitTestGarbageCollector");
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {

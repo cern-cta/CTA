@@ -24,15 +24,9 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <string>
 #include <sstream>
-#include <iomanip>
-#include <sys/syscall.h>
 #include <ctime>
 #include <cxxabi.h>
-#include <unistd.h>
 #include <json-c/json.h>
-
-cta::objectstore::Agent::Agent(Backend & os): 
-  ObjectOps<serializers::Agent, serializers::Agent_t>(os), m_nextId(0) {}
 
 cta::objectstore::Agent::Agent(GenericObject& go):
   ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
@@ -51,28 +45,6 @@ void cta::objectstore::Agent::initialize() {
   m_payload.set_timeout_us(60*1000*1000);
   m_payload.set_description("");
   m_payloadInterpreted = true;
-}
-
-void cta::objectstore::Agent::generateName(const std::string & typeName) {
-  std::stringstream aid;
-  // Get time
-  time_t now = time(0);
-  struct tm localNow;
-  localtime_r(&now, &localNow);
-  // Get hostname
-  char host[200];
-  cta::exception::Errnum::throwOnMinusOne(gethostname(host, sizeof(host)),
-    "In AgentId::AgentId:  failed to gethostname");
-  // gettid is a safe system call (never fails)
-  aid << typeName << "-" << host << "-" << syscall(SYS_gettid) << "-"
-    << 1900 + localNow.tm_year
-    << std::setfill('0') << std::setw(2) 
-    << 1 + localNow.tm_mon
-    << std::setw(2) << localNow.tm_mday << "-"
-    << std::setw(2) << localNow.tm_hour << ":"
-    << std::setw(2) << localNow.tm_min << ":"
-    << std::setw(2) << localNow.tm_sec;
-  setAddress(aid.str());
 }
 
 void cta::objectstore::Agent::insertAndRegisterSelf() {
@@ -148,12 +120,6 @@ bool cta::objectstore::Agent::isEmpty() {
   ar.upgradeIntendedElementToActual(selfName(), *this);
   m_creationDone = true;
 }*/
-
-std::string cta::objectstore::Agent::nextId(const std::string & childType) {
-  std::stringstream id;
-  id << childType << "-" << getAddressIfSet() << "-" << m_nextId++;
-  return id.str();
-}
 
 void cta::objectstore::Agent::addToOwnership(std::string name) {
   checkPayloadWritable();

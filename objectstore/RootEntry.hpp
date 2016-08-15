@@ -29,7 +29,7 @@
 
 namespace cta { namespace objectstore {
 
-class Agent;
+class AgentReference;
 class GenericObject;
   
 class RootEntry: public ObjectOps<serializers::RootEntry, serializers::RootEntry_t> {
@@ -55,7 +55,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, Agent & agent);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
@@ -72,7 +72,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotEmpty);
   /** This function implicitly creates the retrieve queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, Agent & agent);
+  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
   void removeRetrieveQueueAndCommit(const std::string & vid);
   std::string getRetrieveQueue(const std::string & vid);
@@ -85,7 +85,7 @@ public:
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);
   std::string getDriveRegisterAddress();  
-  std::string addOrGetDriveRegisterPointerAndCommit(Agent & agent, const EntryLogSerDeser & log);
+  std::string addOrGetDriveRegisterPointerAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
   void removeDriveRegisterAndCommit();
   
   // Agent register manipulations ==============================================
@@ -95,13 +95,13 @@ public:
    * is used to generate the object name. We have the dedicated agent intent
    * log for tracking objects being created. We already use an agent here for
    * object name generation, but not yet tracking. */
-  std::string addOrGetAgentRegisterPointerAndCommit(Agent & agent,
+  std::string addOrGetAgentRegisterPointerAndCommit(AgentReference & agentRef,
     const EntryLogSerDeser & log);
   void removeAgentRegisterAndCommit();
 
   // Agent register manipulations ==============================================
   std::string getSchedulerGlobalLock();
-  std::string addOrGetSchedulerGlobalLockAndCommit(Agent & agent, const EntryLogSerDeser & log);
+  std::string addOrGetSchedulerGlobalLockAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
   void removeSchedulerGlobalLockAndCommit();
   
 private:

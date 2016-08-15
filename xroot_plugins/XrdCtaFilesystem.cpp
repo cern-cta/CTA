@@ -258,7 +258,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_ctaConf("/etc/cta/cta-frontend.conf"),
   m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
   m_backendPopulator(*m_backend),
-  m_scheddb(*m_backend, m_backendPopulator.getAgent()) {
+  m_scheddb(*m_backend, m_backendPopulator.getAgentReference()) {
   using namespace cta;
   
   // Try to instantiate the logging system API

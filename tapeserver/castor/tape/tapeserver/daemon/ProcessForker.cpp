@@ -568,7 +568,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
   } catch (std::bad_cast &){}
   cta::objectstore::BackendPopulator backendPopulator(*backend);
-  cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgent());
+  cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgentReference());
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
   const uint64_t nbConns = 1;
   std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns));

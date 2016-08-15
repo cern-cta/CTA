@@ -26,6 +26,7 @@
 #include "BackendFactory.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
+#include "AgentReference.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -50,16 +51,16 @@ int main(int argc, char ** argv) {
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    cta::objectstore::Agent ag(*be);
-    ag.generateName("makeMinimalVFS");
+    cta::objectstore::AgentReference agr("makeMinimalVFS");
+    cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
     cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));
-    re.addOrGetAgentRegisterPointerAndCommit(ag,el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr,el);
     rel.release();
     ag.insertAndRegisterSelf();
     rel.lock(re);
-    re.addOrGetDriveRegisterPointerAndCommit(ag, el);
-    re.addOrGetSchedulerGlobalLockAndCommit(ag,el);
+    re.addOrGetDriveRegisterPointerAndCommit(agr, el);
+    re.addOrGetSchedulerGlobalLockAndCommit(agr,el);
     rel.release();
     std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
   } catch (std::exception & e) {
