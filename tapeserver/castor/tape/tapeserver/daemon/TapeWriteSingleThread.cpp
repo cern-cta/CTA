@@ -302,6 +302,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       // This is indeed the end of the tape. Not an error.
       m_watchdog.setErrorCount("Info_tapeFilledUp",1);
+      m_reportPacker.reportTapeFull();
     } catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
@@ -368,6 +369,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       // This is indeed the end of the tape. Not an error.
       m_watchdog.setErrorCount("Info_tapeFilledUp",1);
+      m_reportPacker.reportTapeFull();
     } catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,

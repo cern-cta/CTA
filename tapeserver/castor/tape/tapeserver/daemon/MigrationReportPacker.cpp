@@ -141,10 +141,6 @@ void MigrationReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
   parent.m_archiveMount->setDriveStatus(m_status);
-  if(m_status==cta::common::DriveStatus::Unmounting) {
-    parent.m_continue=false;
-    parent.m_archiveMount->complete();
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -203,6 +199,8 @@ void MigrationReportPacker::ReportTapeFull::execute(MigrationReportPacker& repor
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& reportPacker){
+  reportPacker.m_continue=false;
+  reportPacker.m_archiveMount->complete();
   if(!reportPacker.m_errorHappened){
     log::ScopedParamContainer sp(reportPacker.m_lc);
     reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
@@ -233,6 +231,8 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker){
+  reportPacker.m_continue=false;
+  reportPacker.m_archiveMount->complete();
   if(reportPacker.m_errorHappened) {
     log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", m_message)
