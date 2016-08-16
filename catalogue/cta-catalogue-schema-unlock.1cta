@@ -15,12 +15,12 @@
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .TH CTA-CATALOGUE-SCHEMA-UNLOCK 1CTA "August 2016" CTA "CTA"
 .SH NAME
-cta-catalogue-schema-lock \- Unlock the CTA catalogue schema
+cta-catalogue-schema-unlock \- Unlock the CTA catalogue schema
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-lock databaseConnectionFile"
+.BI "cta-catalogue-schema-unlock databaseConnectionFile"
 
 .SH DESCRIPTION
-\fBcta-catalogue-schema-lock\fP is a command-line tool that unlocks the CTA
+\fBcta-catalogue-schema-unlock\fP is a command-line tool that unlocks the CTA
 catalogue database schema in order to help prevent it from accidently being
 deleted.
 .P
@@ -41,6 +41,8 @@ The path to the configuration file containing the connection details of the
 CTA catalogue database.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
+.SH EXAMPLES
+cta-catalogue-schema-unlock /etc/cta/cta_catalogue_db.conf
 
 .SH AUTHOR
 \fBCTA\fP Team

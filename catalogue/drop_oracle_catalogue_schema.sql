@@ -55,9 +55,9 @@ DECLARE
   END;
 
   FUNCTION catalogueSchemaIsLocked RETURN BOOLEAN IS
-    TYPE StatusList IS TABLE OF VARCHAR(100);
+    TYPE StatusList IS TABLE OF VARCHAR2(100);
     schemaLocked INTEGER;
-    schemaStatus VARCHAR(100);
+    schemaStatus VARCHAR2(100);
   BEGIN
     EXECUTE IMMEDIATE 'SELECT SCHEMA_STATUS FROM CTA_CATALOGUE' INTO schemaStatus;
     RETURN 'LOCKED' = schemaStatus;
