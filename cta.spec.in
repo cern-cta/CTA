@@ -23,7 +23,7 @@ Name: %{name}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
 Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
-License: http://cern.ch/castor/DIST/CONDITIONS
+License: GPLv3+
 Group: Application/cta
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: cmake >= 2.6 redhat-rpm-config
