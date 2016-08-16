@@ -105,4 +105,4 @@ target_link_libraries (cta-catalogue-schema-lock
   ctacatalogue)
 
 install(TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
-CTAInstallExeManPage(cta-catalogue-schema-lock)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-lock.1cta DESTINATION /usr/share/man/man1)
