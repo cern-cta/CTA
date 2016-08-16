@@ -106,3 +106,14 @@ target_link_libraries (cta-catalogue-schema-lock
 
 install(TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-lock.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-schema-unlock
+  UnlockSchemaCmd.cpp
+  UnlockSchemaCmdLineArgs.cpp
+  UnlockSchemaCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-schema-unlock
+  ctacatalogue)
+
+install(TARGETS cta-catalogue-schema-unlock DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-unlock.1cta DESTINATION /usr/share/man/man1)
