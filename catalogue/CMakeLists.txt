@@ -105,3 +105,4 @@ target_link_libraries (cta-catalogue-schema-lock
   ctacatalogue)
 
 install(TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
+CTAInstallExeManPage(cta-catalogue-schema-lock)

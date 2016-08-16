@@ -213,3 +213,4 @@ CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
 %files -n cta-catalogueutils
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-lock
+%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-lock.1cta.gz
