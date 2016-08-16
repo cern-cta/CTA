@@ -32,7 +32,7 @@ DECLARE
     DBMS_OUTPUT.PUT_LINE('Table ' || tableName || ' dropped');
   EXCEPTION
     WHEN OTHERS THEN
-      -- ORA-00942: table or view does not exis
+      -- ORA-00942: table or view does not exist
       IF SQLCODE = -942 THEN
         DBMS_OUTPUT.PUT_LINE('Table ' || tableName || ' not dropped because it does not exist');
       ELSE
