@@ -61,7 +61,6 @@ cmake .. -DCOMPILE_PACKAGING:STRING=0
 %{__make} -s %{_smp_mflags}
 
 %install
-# define castor version (modified by maketar.sh to put the exact version)
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
