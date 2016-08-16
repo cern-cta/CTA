@@ -202,21 +202,21 @@ set (CTA_CONFIG_PERMS
 
 function (CTAInstallConfigFile _name)
   install (FILES ${_name}CONFIG
-    DESTINATION /etc/castor
+    DESTINATION /etc/cta
     PERMISSIONS ${CTA_CONFIG_PERMS}
     RENAME ${_name}CONFIG.example)
 endfunction ()
 
 function (CTAInstallConfigFileLowercase _name)
   install (FILES ${_name}
-    DESTINATION /etc/castor
+    DESTINATION /etc/cta
     PERMISSIONS ${CTA_CONFIG_PERMS}
     RENAME ${_name}.example)
 endfunction ()
 
 function (CTAInstallConfigNoRename _name)
   install (FILES ${_name}
-    DESTINATION /etc/castor
+    DESTINATION /etc/cta
     PERMISSIONS ${CTA_CONFIG_PERMS})
 endfunction ()
 
