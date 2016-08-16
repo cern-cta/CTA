@@ -6,8 +6,6 @@ set (CTA_DEST_LIB_DIR /usr/lib64)
 set (CTA_DEST_MAN_DIR /usr/share/man)
 set (CTA_DEST_INCLUDE_DIR /usr/include)
 set (CTA_DEST_PERL_LIBDIR /usr/lib/perl/CTA)
-set (CTA_DEST_C_HEADERS_DIR ${CTA_DEST_INCLUDE_DIR}/castor/h)
-set (CTA_DEST_CPP_HEADERS_DIR ${CTA_DEST_INCLUDE_DIR}/castor/castor)
 set (CTA_DEST_WWW_DIR /var/www)
 set (CTA_DEST_UDEV_RULE_DIR /etc/udev/rules.d)
 
