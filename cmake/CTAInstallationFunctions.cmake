@@ -150,7 +150,7 @@ function (CTAInstallManPage _name _section)
   install (FILES ${_name}.man
     DESTINATION ${CTA_DEST_MAN_DIR}/man${_section}
     PERMISSIONS ${CTA_MAN_PAGE_PERMS}
-    RENAME ${_name}.${_section}castor)
+    RENAME ${_name}.${_section}cta)
 endfunction ()
 
 function (CTAInstallExeManPage _name)
