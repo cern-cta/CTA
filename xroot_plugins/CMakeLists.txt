@@ -12,4 +12,4 @@ target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaremotens
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
-INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
