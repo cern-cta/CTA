@@ -199,3 +199,12 @@
    fun:main
 }
 
+{
+   pthread_destroy_castor
+   Helgrind:Race
+   fun:my_memcmp
+   fun:pthread_mutex_destroy
+   fun:_ZN6castor6server5MutexD1Ev
+   ...
+}
+

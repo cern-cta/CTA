@@ -207,6 +207,11 @@ BackendVFS::Parameters* BackendVFS::getParams() {
 
 void BackendVFS::ScopedLock::release() {
   if (!m_fdSet) return;
+#ifdef DEBUG_PRINT_LOGS
+  if (m_fd==-1) {
+    std::cout << "Warning: fd=-1!" << std::endl;
+  }
+#endif
   ::flock(m_fd, LOCK_UN);
   ::close(m_fd);
   m_fdSet = false;
@@ -226,6 +231,8 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
     exception::Exception ex;
     ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
       ": " << errnoStr;
+    // fd=-1, so there will be no need to close the file (when *ret will be destroyed).
+    ret->m_fdSet=false;
     throw ex;
   }
 
@@ -236,6 +243,12 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
       ": " << errnoStr;
     throw ex;
   }
+  
+#ifdef DEBUG_PRINT_LOGS
+  if (ret->m_fd==-1) {
+    std::cout << "Warning: fd=-1!" << std::endl;
+  }
+#endif
 
   return ret.release();
 }
