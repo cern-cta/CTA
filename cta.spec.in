@@ -205,3 +205,12 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_bindir}/cta-systemTests
 %attr(0755,root,root) %{_libdir}/libctadaemonunittests-multiprocess.so
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
+
+%package -n cta-catalogueutils
+Summary: Scripts and utilities to faciliate working with the CTA catalogue
+Group: Application/CTA
+%description -n cta-catalogueutils
+CERN Tape Archive:
+Scripts and utilities to faciliate working with the CTA catalogue
+%files -n cta-catalogueutils
+%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-lock

@@ -22,6 +22,7 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileItor.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
+  CmdLineTool.cpp
   InMemoryCatalogue.cpp
   OracleCatalogue.cpp
   RdbmsCatalogueSchema.cpp
@@ -94,3 +95,13 @@ install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install (FILES cta_catalogue_db.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+
+add_executable(cta-catalogue-schema-lock
+  LockSchemaCmd.cpp
+  LockSchemaCmdLineArgs.cpp
+  LockSchemaCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-schema-lock
+  ctacatalogue)
+
+install(TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)

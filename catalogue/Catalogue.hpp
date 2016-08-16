@@ -500,7 +500,8 @@ public:
    * prevent a disk instance deleting an archive file that belongs to another
    * disk instance.
    *
-   * @param instanceName The name of the instance from where the deletion request originated
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
@@ -517,6 +518,29 @@ public:
    * the specified host has administrator privileges.
    */
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const = 0;
+
+  /**
+   * Returns true if SCHEMA_STATUS column of the CTA_TABLE contains the value
+   * LOCKED.
+   *
+   * @return True if SCHEMA_STATUS column of the CTA_TABLE contains the value
+   * LOCKED.
+   */
+  virtual bool schemaIsLocked() const = 0;
+
+  /**
+   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to LOCKED.
+   *
+   * Please note that this method is idempotent.
+   */
+  virtual void lockSchema() = 0;
+
+  /**
+   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to UNLOCKED.
+   *
+   * Please note that this method is idempotent.
+   */
+  virtual void unlockSchema() = 0;
 
 }; // class Catalogue
 
