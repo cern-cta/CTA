@@ -15,14 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This module will set the following variables:
-#     ZEROMQ3_FOUND
-#     ZEROMQ3_INCLUDE_DIRS
+#     ZEROMQ_FOUND
+#     ZEROMQ_INCLUDE_DIRS
 
-find_path (ZEROMQ3_INCLUDE_DIRS
+find_path (ZEROMQ_INCLUDE_DIRS
   zmq.h
   PATHS /usr/include
   NO_DEFAULT_PATH)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(zeromq3 DEFAULT_MSG
-  ZEROMQ3_INCLUDE_DIRS)
+find_package_handle_standard_args(zeromq DEFAULT_MSG
+  ZEROMQ_INCLUDE_DIRS)
