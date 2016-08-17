@@ -28,11 +28,6 @@
 namespace cta {
 namespace log {
 
-/**
- * The default path of the socket to which the logging system should write.
- */
-const std::string SOCKET_NAME = "/var/run/ctalog.sock";
-
 const int EMERG   = 0; // system is unusable
 const int ALERT   = 1; // action must be taken immediately
 const int CRIT    = 2; // critical conditions

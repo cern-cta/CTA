@@ -43,101 +43,20 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::log::SyslogLogger::SyslogLogger(const std::string &socketName,
-  const std::string &programName, const int logMask):
-  Logger(programName, logMask),
-  m_socketName(_PATH_LOG),
-  m_logFile(-1) {
-  struct stat fileStatus;
-  bzero(&fileStatus, sizeof(fileStatus));
-  if(stat(m_socketName.c_str(), &fileStatus)) {
-    const std::string errMsg = cta::utils::errnoToString(errno);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to instantiate syslog logger: Failed to stat"
-      " socket \"" << m_socketName << "\"" ": " << errMsg;
-    throw ex;
-  }
+cta::log::SyslogLogger::SyslogLogger(const std::string &programName, const int logMask):
+  Logger(programName, logMask) {
 }
-
-
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::log::SyslogLogger::~SyslogLogger() {
-  closeLog();
 }
 
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
 void cta::log::SyslogLogger::prepareForFork() {
-  threading::MutexLocker lock(m_mutex);
-  closeLog();
-}
-
-//------------------------------------------------------------------------------
-// openLog
-//------------------------------------------------------------------------------
-void cta::log::SyslogLogger::openLog() {
-  if(-1 != m_logFile) {
-    return;
-  }
-
-  {
-    struct sockaddr_un syslogAddr;
-    syslogAddr.sun_family = AF_UNIX;
-    strncpy(syslogAddr.sun_path, m_socketName.c_str(),
-      sizeof(syslogAddr.sun_path));
-    m_logFile = socket(AF_UNIX, SOCK_DGRAM, 0);
-  }
-  if(-1 == m_logFile) {
-    return;
-  }
-
-  if(-1 == fcntl(m_logFile, F_SETFD, FD_CLOEXEC)) {
-    close(m_logFile);
-    m_logFile = -1;
-    return;
-  }
-
-  {
-    struct sockaddr_un syslogAddr;
-    syslogAddr.sun_family = AF_UNIX;
-    strncpy(syslogAddr.sun_path, m_socketName.c_str(),
-      sizeof(syslogAddr.sun_path));
-    if(-1 == connect(m_logFile, (struct sockaddr *)&syslogAddr,
-      sizeof(syslogAddr))) {
-      close(m_logFile);
-      m_logFile = -1;
-      return;
-    }
-  }
-
-#ifdef __APPLE__
-  {
-    // MAC has has no MSG_NOSIGNAL
-    // but >= 10.2 comes with SO_NOSIGPIPE
-    int set = 1;
-    if(0 != setsockopt(m_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
-      sizeof(int))) {
-      close(m_logFile);
-      m_logFile = -1;
-      return;
-    }
-  }
-#endif
-}
-
-//------------------------------------------------------------------------------
-// closeLog
-//------------------------------------------------------------------------------
-void cta::log::SyslogLogger::closeLog() {
-  if(-1 == m_logFile) {
-    return;
-  }
-  close(m_logFile);
-  m_logFile = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -147,30 +66,5 @@ void cta::log::SyslogLogger::reducedSyslog(const std::string& msg) {
   // Truncate the log message if it exceeds the permitted maximum
   std::string truncatedMsg = msg.substr(0, m_maxMsgLen);
 
-//  int send_flags = MSG_NOSIGNAL;
-//
-//  // enter critical section
-//  threading::MutexLocker lock(m_mutex);
-//
-//  // Try to connect if not already connected
-//  openLog();
-//
-//  // If connected
-//  if(-1 != m_logFile) {
-//    // If sending the log message fails then try to reopen the syslog
-//    // connection and try again
-//    if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
-//      closeLog();
-//      openLog();
-//      if (-1 != m_logFile) {
-//        // If the second attempt to send the log message fails then give up and
-//        // attempt re-open next time
-//        if(0 > send(m_logFile, truncatedMsg.c_str(), truncatedMsg.length(), send_flags)) {
-//          closeLog();
-//        }
-//      }
-//    }
-//  }
-  
   syslog(LOG_LOCAL3|LOG_INFO, truncatedMsg.c_str());
 }

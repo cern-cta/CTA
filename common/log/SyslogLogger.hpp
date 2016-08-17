@@ -46,18 +46,16 @@ public:
   /**
    * Constructor
    *
-   * @param socketName The socket to which the logging system should write.
    * @param programName The name of the program to be prepended to every log
    * message.
    * @param logMask The log mask.
    */
-  SyslogLogger(const std::string &socketName, const std::string &programName,
-    const int logMask);
+  SyslogLogger(const std::string &programName, const int logMask);
 
   /**
    * Destructor.
    */
-  ~SyslogLogger();
+  ~SyslogLogger() override;
 
   /**
    * Prepares the logger object for a call to fork().
@@ -65,40 +63,9 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() ;
+  void prepareForFork() override;
 
 protected:
-
-  /**
-   * The socket to which the logging system should write.
-   */
-  std::string m_socketName;
-
-  /**
-   * Mutex used to protect the critical section of the SyslogLogger
-   * object.
-   */
-  threading::Mutex m_mutex;
-
-  /**
-   * The file descriptor of the socket used to send messages to syslog.
-   */
-  int m_logFile;
-
-  /**
-   * Connects to syslog.
-   *
-   * Please note that this method must be called from within the critical
-   * section of the SyslogLogger object.
-   *
-   * If the connection with syslog is already open then this method does
-   * nothing.
-   *
-   * This method does not throw an exception if the connection cannot be made
-   * to syslog.  In this case the internal state of the SyslogLogger
-   * object reflects the fact that no connection was made.
-   */
-  void openLog();
 
   /**
    * A reduced version of syslog.  This method is able to set the message
@@ -107,18 +74,7 @@ protected:
    *
    * @param msg The message to be logged.
    */
-  void reducedSyslog(const std::string & msg);
-
-  /**
-   * Closes the connection to syslog.
-   *
-   * Please note that this method must be called from within the critical
-   * section of the SyslogLogger object.
-   *
-   * If the connection to syslog is already closed then this method does
-   * nothing.
-   */
-  void closeLog();
+  void reducedSyslog(const std::string & msg) override;
 
 }; // class SyslogLogger
 

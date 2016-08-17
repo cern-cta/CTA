@@ -105,7 +105,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  virtual void prepareForFork()  = 0;
+  virtual void prepareForFork() = 0;
 
   /**
    * Returns the name of the program that is to  be prepended to every log
@@ -130,7 +130,6 @@ public:
     const std::string &msg,
     const std::list<Param> &params = std::list<Param>());
   
-
   /**
    * Writes the header of a syslog message to teh specifed output stream.
    *

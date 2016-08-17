@@ -263,7 +263,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   
   // Try to instantiate the logging system API
   try {
-    m_log.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-frontend", log::DEBUG));
+    m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
   } catch(exception::Exception &ex) {
     throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
   }

@@ -208,8 +208,7 @@ int main(const int argc, char **const argv) {
     if (commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger("cta-taped"));
     } else {
-      logPtr.reset(new log::SyslogLogger(log::SOCKET_NAME, "cta-taped",
-        log::DEBUG));
+      logPtr.reset(new log::SyslogLogger("cta-taped", log::DEBUG));
     }
   } catch(exception::Exception &ex) {
     std::cerr <<

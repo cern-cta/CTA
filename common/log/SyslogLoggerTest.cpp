@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "common/log/SyslogLogger.hpp"
-#include "common/log/TestingSyslogLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -32,8 +31,7 @@ namespace unitTests {
 
 class cta_log_SyslogLoggerTest: public ::testing::Test {
 public:
-  cta_log_SyslogLoggerTest()/*: m_log(cta::log::SOCKET_NAME, "unitttests",
-    cta::log::DEBUG)*/ {
+  cta_log_SyslogLoggerTest() {
   }
 protected:
 
@@ -43,27 +41,7 @@ protected:
   virtual void TearDown() {
   }
 
-  //cta::log::TestingSyslogLogger m_log;
 }; // class SyslogLoggerTest
-
-//TEST_F(cta_log_SyslogLoggerTest, logMsgAndParamsList) {
-//  using namespace cta::log;
-//  std::list<Param> params;
-//  params.push_back(Param("testParam", "value of test param"));
-//
-//  ASSERT_NO_THROW(
-//    m_log(
-//      LOG_INFO,
-//      "cta_log_SyslogLoggerTest logMsgAndParamsList",
-//      params));
-//}
-//
-//TEST_F(cta_log_SyslogLoggerTest, logMsg) {
-//  using namespace cta::log;
-//
-//  ASSERT_NO_THROW(
-//    m_log(LOG_INFO, "Calling logger without parameters or time stamp"));
-//}   
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
