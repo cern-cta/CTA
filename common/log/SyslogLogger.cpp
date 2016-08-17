@@ -45,6 +45,9 @@
 //------------------------------------------------------------------------------
 cta::log::SyslogLogger::SyslogLogger(const std::string &programName, const int logMask):
   Logger(programName, logMask) {
+  const int option = 0;
+  const int facility = 0;
+  openlog(m_programName.c_str(), option, facility);
 }
 
 //------------------------------------------------------------------------------
