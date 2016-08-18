@@ -27,7 +27,7 @@
 #include "castor/server/AtomicFlag.hpp"
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/utils/Timer.hpp"
 #include "castor/utils/utils.hpp"
@@ -110,7 +110,7 @@ protected:
   /*
    *  The proxy that will receive or heartbeat notifications
    */
-  messages::TapeserverProxy& m_initialProcess;
+  cta::daemon::TapedProxy& m_initialProcess;
   
   /**
    * The drive unit name to report
@@ -265,7 +265,7 @@ protected:
    * @param lc To log the events
    */
   TaskWatchDog(double reportPeriod,double stuckPeriod,
-         messages::TapeserverProxy& initialProcess,
+         cta::daemon::TapedProxy& initialProcess,
           const std::string & driveUnitName,
          log::LogContext& lc, double pollPeriod = 0.1):
   m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
@@ -393,7 +393,7 @@ public:
   
   /** Pass through constructor */
   RecallWatchDog(double periodToReport,double stuckPeriod,
-    messages::TapeserverProxy& initialProcess,
+    cta::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
     log::LogContext& lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
@@ -444,7 +444,7 @@ public:
   
   /** Pass through constructor */
   MigrationWatchDog(double periodToReport,double stuckPeriod,
-    messages::TapeserverProxy& initialProcess,
+    cta::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
     log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 

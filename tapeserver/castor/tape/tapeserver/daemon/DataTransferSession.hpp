@@ -26,7 +26,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
@@ -64,7 +64,7 @@ namespace daemon {
       System::virtualWrapper & sysWrapper,
       const DriveConfig & driveConfig,
       castor::mediachanger::MediaChangerFacade & mc,
-      castor::messages::TapeserverProxy & initialProcess,
+      cta::daemon::TapedProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
       cta::Scheduler &scheduler);
@@ -126,7 +126,7 @@ namespace daemon {
      * by the library. It will be used exclusively by the tape thread. */
     castor::mediachanger::MediaChangerFacade & m_mc;
     /** Reference to the tape server's parent process to report detailed status */
-    castor::messages::TapeserverProxy & m_intialProcess;
+    cta::daemon::TapedProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
     castor::server::ProcessCap &m_capUtils;
     /** hostname, used to report status of the drive */

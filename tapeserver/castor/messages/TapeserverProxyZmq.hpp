@@ -24,7 +24,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/Mutex.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/messages/ZmqSocketST.hpp"
 
 namespace castor {
@@ -34,7 +34,7 @@ namespace messages {
  * A concrete implementation of the interface to the internal network
  * communications of the tapeserverd daemon.
  */
-class TapeserverProxyZmq: public TapeserverProxy {
+class TapeserverProxyZmq: public cta::daemon::TapedProxy {
 public:
 
   /**

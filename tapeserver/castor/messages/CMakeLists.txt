@@ -43,7 +43,7 @@ set(CtaMessageSrcs
   messages.cpp
   Mutex.cpp
   SmartZmqContext.cpp
-  TapeserverProxy.cpp
+  ../../../tapeserver/daemon/TapedProxy.cpp
   TapeserverProxyZmq.cpp
   ZmqMsg.cpp
   ZmqSocket.cpp

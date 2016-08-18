@@ -27,7 +27,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
@@ -70,7 +70,7 @@ public:
    */
   LabelSession(
     server::ProcessCap &capUtils,
-    messages::TapeserverProxy &tapeserver,
+    cta::daemon::TapedProxy &tapeserver,
     mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     castor::log::Logger &log,
@@ -99,7 +99,7 @@ private:
   /**
    * Proxy object representing the tapeserverd daemon.
    */
-  messages::TapeserverProxy &m_tapeserver;
+  cta::daemon::TapedProxy &m_tapeserver;
     
   /**
    * The object representing the media changer.

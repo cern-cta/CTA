@@ -18,6 +18,7 @@ add_library(ctatapedaemon
   ProcessManager.cpp
   TapedConfiguration.cpp
   TapeDaemon.cpp
+  TapedProxy.cpp
   TpconfigLine.cpp
   Tpconfig.cpp)
 

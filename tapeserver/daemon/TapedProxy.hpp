@@ -21,27 +21,27 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
-#include "castor/log/Param.hpp"
+#include "tapeserver/castor/exception/Exception.hpp"
+#include "tapeserver/castor/log/Param.hpp"
 
 #include <stdint.h>
 #include <string>
 #include <list>
 
-namespace castor {
-namespace messages {
+namespace cta {
+namespace daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
  * internal network interface of the tapeserverd daemon.
  */
-class TapeserverProxy {
+class TapedProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~TapeserverProxy()  = 0;
+  virtual ~TapedProxy()  = 0;
   
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got

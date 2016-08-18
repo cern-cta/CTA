@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 
 namespace castor {
 namespace messages {
@@ -29,7 +29,7 @@ namespace messages {
 /**
  * A dummy tapeserverd-proxy.
  */
-class TapeserverProxyDummy: public TapeserverProxy {
+class TapeserverProxyDummy: public cta::daemon::TapedProxy {
 public:
   
   /**

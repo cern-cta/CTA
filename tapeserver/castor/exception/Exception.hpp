@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/exception/Backtrace.hpp"
+#include "tapeserver/castor/exception/Backtrace.hpp"
 
 #include <exception>
 #include <sstream>

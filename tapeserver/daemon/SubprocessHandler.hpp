@@ -52,6 +52,7 @@ namespace daemon {
  * This loop allows cooperative preparation for forking, and cleanup after the 
  * fork. This could be as simple as a pre-fork noop and a closing of child
  * communication sockets post fork (child side).
+ * TODO: post-fork is not yet implemented.
  */
 class SubprocessHandler {
 public:

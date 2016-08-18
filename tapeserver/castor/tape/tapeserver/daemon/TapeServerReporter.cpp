@@ -23,7 +23,7 @@
 
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/messages/TapeserverProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 
@@ -38,7 +38,7 @@ namespace daemon {
 //constructor
 //------------------------------------------------------------------------------  
 TapeServerReporter::TapeServerReporter(
-  messages::TapeserverProxy& tapeserverProxy,
+  cta::daemon::TapedProxy& tapeserverProxy,
   const DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::daemon::VolumeInfo &volume,

@@ -52,7 +52,7 @@ public:
    * @param lc 
    */
   TapeServerReporter(
-    messages::TapeserverProxy& tapeserverProxy,
+    cta::daemon::TapedProxy& tapeserverProxy,
     const DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::daemon::VolumeInfo &volume,
@@ -145,7 +145,7 @@ private:
    A bunch of references to proxies to send messages to the 
    * outside world when we have to
    */
-  messages::TapeserverProxy& m_tapeserverProxy;
+  cta::daemon::TapedProxy& m_tapeserverProxy;
   
   /**
    * Log context, copied because it is in a separated thread
