@@ -950,8 +950,9 @@ int castor::io::connectWithTimeout(
   // Throw an exception if no file descriptor was set
   if(!(pollFd.revents & POLLIN) && !(pollFd.revents & POLLOUT)) {
     castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() << "Failed to connect"
-      ": poll() returned without an event";
+    ex.getMessage() << "Failed to connect: poll() returned without an event"
+      ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" << pollFd.events <<
+      ",pollFd.revents=" << pollFd.revents;
     throw ex;
   }
 
