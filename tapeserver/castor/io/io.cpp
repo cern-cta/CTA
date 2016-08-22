@@ -340,6 +340,24 @@ int castor::io::acceptConnection(const int listenSocketFd,
     }
     break;
   default: // poll() found a file descriptor awaiting attention
+    if(pollFd.revents & POLLERR) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to accept connection"
+        ": POLLERR - Error condition";
+
+      if(pollFd.revents & POLLHUP) {
+        ex.getMessage() << ": POLLHUP - Connection closed by peer";
+      }
+
+      if(pollFd.revents & POLLNVAL) {
+        ex.getMessage() << ": POLLNVAL - File descriptor not open";
+      }
+
+      ex.getMessage() << ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" <<
+        pollFd.events << ",pollFd.revents=" << pollFd.revents;
+      throw ex;
+    }
+
     // If it is not the expected connection request
     if(!(pollFd.revents & POLLIN)) {
       castor::exception::Exception ex;
@@ -928,6 +946,7 @@ int castor::io::connectWithTimeout(
   pollfd pollFd;
   pollFd.fd = smartSock.get();
   pollFd.events = POLLIN & POLLOUT;
+  pollFd.revents = 0;
 
   // Wait for the connection to complete using poll() with a timeout
   const int pollRc = poll(&pollFd, 1, 1000 * timeout);
@@ -947,10 +966,30 @@ int castor::io::connectWithTimeout(
     throw ex;
   }
 
+  // Throw an exception if there was an error condition on the file descriptor
+  if(pollFd.revents & POLLERR) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to accept connection"
+      ": POLLERR - Error condition";
+
+    if(pollFd.revents & POLLHUP) {
+      ex.getMessage() << ": POLLHUP - Connection closed by peer";
+    }
+
+    if(pollFd.revents & POLLNVAL) {
+      ex.getMessage() << ": POLLNVAL - File descriptor not open";
+    }
+
+    ex.getMessage() << ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" <<
+      pollFd.events << ",pollFd.revents=" << pollFd.revents;
+    throw ex;
+  }
+
   // Throw an exception if no file descriptor was set
   if(!(pollFd.revents & POLLIN) && !(pollFd.revents & POLLOUT)) {
     castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() << "Failed to connect: poll() returned without an event"
+    ex.getMessage() << "Failed to connect"
+      ": poll() returned without the POLLIN or POLLOUT set"
       ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" << pollFd.events <<
       ",pollFd.revents=" << pollFd.revents;
     throw ex;
