@@ -151,7 +151,7 @@ protected:
     m_vid("123456"),
     m_acsSlot(castor::mediachanger::LibrarySlotParser::parse("acs1,2,3,4")),
     m_mmcSlot(castor::mediachanger::LibrarySlotParser::parse("manual")),
-    m_rmcSlot(castor::mediachanger::LibrarySlotParser::parse("smc@rmc_host,1")) {
+    m_rmcSlot(castor::mediachanger::LibrarySlotParser::parse("smc1")) {
   }
 
   ~castor_mediachanger_MediaChangerFacadeTest() {

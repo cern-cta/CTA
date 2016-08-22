@@ -174,7 +174,7 @@ std::string castor::mediachanger::MountCmdLine::getUsage() throw() {
   "             DRIVE_SLOT must be in one of the following two forms:\n"
   "\n"
   "             acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER\n"
-  "             smc@rmc_host,drive_ordinal\n"
+  "             smcDRIVE_ORDINAL\n"
   "\n"
   "Options:\n"
   "\n"

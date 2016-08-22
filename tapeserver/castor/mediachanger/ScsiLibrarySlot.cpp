@@ -30,28 +30,26 @@ castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
   throw():
   LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
   m_drvOrd(0) {
-  m_str = librarySlotToString("rmcHostName", 0);
+  m_str = librarySlotToString(0);
 }
 
 //------------------------------------------------------------------------------
 // librarySlotToString
 //------------------------------------------------------------------------------
 std::string castor::mediachanger::ScsiLibrarySlot::librarySlotToString(
-  const std::string &rmcHostName, const uint16_t drvOrd) {
+  const uint16_t drvOrd) {
   std::ostringstream oss;
-  oss << "smc@" << rmcHostName << "," << drvOrd;
+  oss << "smc" << drvOrd;
   return oss.str();
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(
-  const std::string &rmcHostName, const uint16_t drvOrd):
+castor::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd):
   LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
-  m_rmcHostName(rmcHostName),
   m_drvOrd(drvOrd) {
-  m_str = librarySlotToString(rmcHostName, drvOrd);
+  m_str = librarySlotToString(drvOrd);
 }
 
 //------------------------------------------------------------------------------
@@ -66,14 +64,6 @@ castor::mediachanger::ScsiLibrarySlot::~ScsiLibrarySlot() throw() {
 castor::mediachanger::LibrarySlot *castor::mediachanger::ScsiLibrarySlot::
   clone() {
   return new ScsiLibrarySlot(*this);
-}
-
-//------------------------------------------------------------------------------
-// getRmcHostName
-//------------------------------------------------------------------------------
-const std::string &castor::mediachanger::ScsiLibrarySlot::getRmcHostName() const
-  throw() {
-  return m_rmcHostName;
 }
 
 //------------------------------------------------------------------------------

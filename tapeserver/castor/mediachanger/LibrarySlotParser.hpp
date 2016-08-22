@@ -46,7 +46,7 @@ public:
    * following three forms:
    * - acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
    * - manual
-   * - smc@rmc_host,drive_ordinal
+   * - smcDRIVE_ORDINAL
    *
    * @param str The string represetion of the library slot.
    */

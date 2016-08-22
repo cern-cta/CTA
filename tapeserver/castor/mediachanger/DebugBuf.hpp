@@ -16,74 +16,83 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/mediachanger/LibrarySlot.hpp"
-
-#include <stdint.h>
+#include <ostream>
+#include <streambuf>
 
 namespace castor {
 namespace mediachanger {
 
 /**
- * Class representing a slot in a SCSI tape-library.
+ * Stream buffer class used to prepend a standard preamble to debug
+ * message-lines.
+ *
+ * This stream buffer does not write any output if debug mode has not been
+ * turned on by calling setDebugMode(true).  Any debug message written to this
+ * stream buffer will be discarded if debug mode is off.
  */
-class ScsiLibrarySlot: public LibrarySlot {
+class DebugBuf : public std::streambuf {
 public:
 
   /**
    * Constructor.
    *
-   * Sets all integer member-variables to 0 and all strings to the empty string.
-   */
-  ScsiLibrarySlot() throw();
-
-  /**
-   * Constructor.
+   * Initialises the the debug mode to be off.
    *
-   * @param drvOrd The drive ordinal.
+   * @param os The output stream to which each debug message-line togther with
+   * its standard preamble shall be written.
    */
-  ScsiLibrarySlot(const uint16_t drvOrd);
+  DebugBuf(std::ostream &os);
 
   /**
    * Destructor.
    */
-  ~ScsiLibrarySlot() throw();
+  ~DebugBuf();
 
   /**
-   * Creates a clone of this object.
+   * Set the debug mode to be on (true) or off (false).
    *
-   * @return The clone.
+   * The default set in the constructor is off (false).
    */
-  LibrarySlot *clone();
+  void setDebug(const bool value) throw();
+
+protected:
 
   /**
-   * Gets the drive ordinal.
-   *
-   * @return The drive ordinal.
+   * Sends the specified character to the output channnel.
    */
-  uint16_t getDrvOrd() const throw();
+  int_type overflow (const int_type c);
+
+  /**
+   * Writes the standard preamble to the output stream.
+   */
+  void writePreamble() throw();
 
 private:
 
   /**
-   * The drive ordinal.
+   * True if debug mode is on.
    */
-  uint16_t m_drvOrd;
+  bool m_debug;
 
   /**
-   * Returns the string representation of the specified SCSI library slot.
-   *
-   * @param drvOrd The drive ordinal.
-   * @return The string representation.
+   * The output stream to which each debug message-line togther with its
+   * standard preamble shall be written.
    */
-  std::string librarySlotToString(const uint16_t drvOrd);
+  std::ostream &m_os;
 
-}; // class ScsiLibrarySlot
+  /**
+   * True is a preamble should be written.
+   */
+  bool m_writePreamble;
+
+}; // class DebugBuf
 
 } // namespace mediachanger
 } // namespace castor
-

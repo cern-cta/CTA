@@ -30,8 +30,8 @@
 #include "castor/utils/utils.hpp"
 #include "h/rmc_constants.h"
 
-#include <sys/types.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 /*
  *------------------------------------------------------------------------
@@ -39,17 +39,17 @@
  *------------------------------------------------------------------------
  */
 #define ERMBASEOFF      2200            /* RMC error base offset        */
-#define	ERMCNACT	ERMBASEOFF+1	/* Remote SCSI media changer server not active or service being drained */
-#define	ERMCRBTERR	(ERMBASEOFF+2)	/* Remote SCSI media changer error */
-#define	ERMCUNREC	ERMCRBTERR+1	/* Remote SCSI media changer unrec. error */
-#define	ERMCSLOWR	ERMCRBTERR+2	/* Remote SCSI media changer error (slow retry) */
-#define	ERMCFASTR	ERMCRBTERR+3	/* Remote SCSI media changer error (fast retry) */
-#define	ERMCDFORCE	ERMCRBTERR+4	/* Remote SCSI media changer error (demount force) */
-#define	ERMCDDOWN	ERMCRBTERR+5	/* Remote SCSI media changer error (drive down) */
-#define	ERMCOMSGN	ERMCRBTERR+6	/* Remote SCSI media changer error (ops message) */
-#define	ERMCOMSGS	ERMCRBTERR+7	/* Remote SCSI media changer error (ops message + retry) */
-#define	ERMCOMSGR	ERMCRBTERR+8	/* Remote SCSI media changer error (ops message + wait) */
-#define	ERMCUNLOAD	ERMCRBTERR+9	/* Remote SCSI media changer error (unload + demount) */
+#define        ERMCNACT        ERMBASEOFF+1    /* Remote SCSI media changer server not active or service being drained */
+#define        ERMCRBTERR      (ERMBASEOFF+2)  /* Remote SCSI media changer error */
+#define        ERMCUNREC       ERMCRBTERR+1    /* Remote SCSI media changer unrec. error */
+#define        ERMCSLOWR       ERMCRBTERR+2    /* Remote SCSI media changer error (slow retry) */
+#define        ERMCFASTR       ERMCRBTERR+3    /* Remote SCSI media changer error (fast retry) */
+#define        ERMCDFORCE      ERMCRBTERR+4    /* Remote SCSI media changer error (demount force) */
+#define        ERMCDDOWN       ERMCRBTERR+5    /* Remote SCSI media changer error (drive down) */
+#define        ERMCOMSGN       ERMCRBTERR+6    /* Remote SCSI media changer error (ops message) */
+#define        ERMCOMSGS       ERMCRBTERR+7    /* Remote SCSI media changer error (ops message + retry) */
+#define        ERMCOMSGR       ERMCRBTERR+8    /* Remote SCSI media changer error (ops message + wait) */
+#define        ERMCUNLOAD      ERMCRBTERR+9    /* Remote SCSI media changer error (unload + demount) */
 #define ERMMAXERR       ERMBASEOFF+11
 
 namespace castor {
@@ -153,10 +153,11 @@ protected:
   /**
    * Connects to the rmcd daemon.
    *
-   * @param rmcHost The name of the host on which the rmcd daemon is running.
+   * Please note that the rmcd daemon only listens on loopback interface.
+   *
    * @return The socket-descriptor of the connection with the rmcd daemon.
    */
-  int connectToRmc(const std::string &rmcHost) const ;
+  int connectToRmc() const ;
 
   /**
    * Writes an RMC_SCSI_MOUNT message with the specifed body to the specified
@@ -190,14 +191,13 @@ protected:
    * reached.
    *
    * @param maxAttempts The maximum number of retriable attempts.
-   * @param rmcHost The name of the host on which the rmcd daemon is running.
    * @param rqstBody The request to be sent.
    */
   template<typename T> void rmcSendRecvNbAttempts(const int maxAttempts,
-    const std::string &rmcHost, const T &rqstBody) {
+    const T &rqstBody) {
     for(int attemptNb = 1; attemptNb <= maxAttempts; attemptNb++) {
       std::ostringstream rmcErrorStream;
-      const int rmcRc = rmcSendRecv(rmcHost, rqstBody, rmcErrorStream);
+      const int rmcRc = rmcSendRecv(rqstBody, rmcErrorStream);
       switch(rmcRc) {
       case 0: // Success
         return;
@@ -232,16 +232,15 @@ protected:
   /**
    * Sends the specified request to the rmcd daemon and receives the reply.
    *
-   * @param rmcHost The name of the host on which the rmcd daemon is running.
    * @param rqstBody The request to be sent.
    * @param rmcErrorStream The error stream constructed from ERR_MSG received
    * within the reply from the rmcd daemon.
    * @param The RMC return code.
    */
-  template<typename T> int rmcSendRecv(const std::string &rmcHost,
-    const T &rqstBody, std::ostringstream &rmcErrorStream) {
+  template<typename T> int rmcSendRecv(const T &rqstBody,
+    std::ostringstream &rmcErrorStream) {
     // Connect to rmcd and send request
-    castor::utils::SmartFd fd(connectToRmc(rmcHost));
+    castor::utils::SmartFd fd(connectToRmc());
     {
       char buf[RMC_MSGBUFSIZ];
       const size_t len = marshal(buf, rqstBody);

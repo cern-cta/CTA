@@ -16,12 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/mediachanger/LibrarySlot.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/MissingOperand.hpp"
+#include "castor/exception/DismountFailed.hpp"
+#include "castor/mediachanger/CmdLineTool.hpp"
+#include "castor/mediachanger/DismountCmdLine.hpp"
 
 #include <stdint.h>
 
@@ -29,61 +35,48 @@ namespace castor {
 namespace mediachanger {
 
 /**
- * Class representing a slot in a SCSI tape-library.
+ * The class implementing the command-line tool for dismounting tapes on both
+ * ACS and SCSI tape libraries.
  */
-class ScsiLibrarySlot: public LibrarySlot {
+class DismountCmd: public CmdLineTool {
 public:
 
   /**
    * Constructor.
    *
-   * Sets all integer member-variables to 0 and all strings to the empty string.
+   * @param inStream Standard input stream.
+   * @param outStream Standard output stream.
+   * @param errStream Standard error stream.
+   * @param mc Interface to the media changer.
    */
-  ScsiLibrarySlot() throw();
-
-  /**
-   * Constructor.
-   *
-   * @param drvOrd The drive ordinal.
-   */
-  ScsiLibrarySlot(const uint16_t drvOrd);
+  DismountCmd(std::istream &inStream, std::ostream &outStream,
+    std::ostream &errStream, MediaChangerFacade &mc) throw();
 
   /**
    * Destructor.
    */
-  ~ScsiLibrarySlot() throw();
+  virtual ~DismountCmd() throw();
 
   /**
-   * Creates a clone of this object.
+   * The entry function of the command.
    *
-   * @return The clone.
+   * @param argc The number of command-line arguments.
+   * @param argv The command-line arguments.
+   * @return The exit value of the program.
    */
-  LibrarySlot *clone();
-
-  /**
-   * Gets the drive ordinal.
-   *
-   * @return The drive ordinal.
-   */
-  uint16_t getDrvOrd() const throw();
+  int exceptionThrowingMain(const int argc, char *const *const argv);
 
 private:
 
   /**
-   * The drive ordinal.
-   */
-  uint16_t m_drvOrd;
-
-  /**
-   * Returns the string representation of the specified SCSI library slot.
+   * The parsed command-line.
    *
-   * @param drvOrd The drive ordinal.
-   * @return The string representation.
+   * The value of this member variable is set within the main() method of this
+   * class.
    */
-  std::string librarySlotToString(const uint16_t drvOrd);
+  DismountCmdLine m_cmdLine;
 
-}; // class ScsiLibrarySlot
+}; // class DismountCmd
 
 } // namespace mediachanger
 } // namespace castor
-

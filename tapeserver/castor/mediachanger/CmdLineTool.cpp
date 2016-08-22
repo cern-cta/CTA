@@ -21,29 +21,34 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/CmdLine.hpp"
-#include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/MissingOperand.hpp"
-#include <getopt.h>
+#include "castor/mediachanger/CmdLineTool.hpp"
 
 //------------------------------------------------------------------------------
-// handleMissingParameter
+// constructor
 //------------------------------------------------------------------------------
-void castor::mediachanger::CmdLine::handleMissingParameter(const int opt) {
-  castor::exception::MissingOperand ex;
-  ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
- throw ex;
+castor::mediachanger::CmdLineTool::CmdLineTool(
+  std::istream &inStream,
+  std::ostream &outStream,
+  std::ostream &errStream,
+  MediaChangerFacade &mc) throw():
+  m_in(inStream),
+  m_out(outStream),
+  m_err(errStream),
+  m_mc(mc),
+  m_debugBuf(outStream),
+  m_dbg(&m_debugBuf) {
 }
 
 //------------------------------------------------------------------------------
-// handleUnknownOption
+// destructor
 //------------------------------------------------------------------------------
-void castor::mediachanger::CmdLine::handleUnknownOption(const int opt) {
-  castor::exception::InvalidArgument ex;
-  if(0 == optopt) {
-    ex.getMessage() << "Unknown command-line option";
-  } else {
-    ex.getMessage() << "Unknown command-line option: -" << (char)opt;
-  }
-  throw ex;
+castor::mediachanger::CmdLineTool::~CmdLineTool() throw() {
+}
+
+//------------------------------------------------------------------------------
+// bool2Str
+//------------------------------------------------------------------------------
+std::string castor::mediachanger::CmdLineTool::bool2Str(const bool value)
+  const throw() {
+  return value ? "TRUE" : "FALSE";
 }

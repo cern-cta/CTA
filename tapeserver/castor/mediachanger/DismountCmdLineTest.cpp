@@ -193,7 +193,7 @@ TEST_F(castor_mediachanger_DismountCmdLineTest, scsi) {
   args->argv = new char *[4]; 
   args->argv[0] = dupString("castor-tape-mediachanger-dismount");
   args->argv[1] = dupString("vid");
-  args->argv[2] = dupString("smc@rmcHostname,1");
+  args->argv[2] = dupString("smc1");
   args->argv[3] = NULL;
   
   std::unique_ptr<DismountCmdLine> cmdLine;

@@ -42,10 +42,9 @@ protected:
 TEST_F(castor_mediachanger_ScsiLibrarySlotTest, goodDay) {
   using namespace castor::mediachanger;
 
-  ScsiLibrarySlot slot("host1", 2);
+  ScsiLibrarySlot slot(2);
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot.str());
-  ASSERT_EQ(std::string("host1"), slot.getRmcHostName());
+  ASSERT_EQ(std::string("smc2"), slot.str());
   ASSERT_EQ((uint16_t)2, slot.getDrvOrd());
 }
 
@@ -53,16 +52,14 @@ TEST_F(castor_mediachanger_ScsiLibrarySlotTest, clone) {
   using namespace castor::mediachanger;
 
   std::unique_ptr<ScsiLibrarySlot> slot1;
-  ASSERT_NO_THROW(slot1.reset(new ScsiLibrarySlot("host1", 2)));
+  ASSERT_NO_THROW(slot1.reset(new ScsiLibrarySlot(2)));
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot1->getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot1->str());
-  ASSERT_EQ(std::string("host1"), slot1->getRmcHostName());
+  ASSERT_EQ(std::string("smc2"), slot1->str());
 
   std::unique_ptr<ScsiLibrarySlot> slot2;
   ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*)slot1->clone()));
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot2->getLibraryType());
-  ASSERT_EQ(std::string("smc@host1,2"), slot2->str());
-  ASSERT_EQ(std::string("host1"), slot2->getRmcHostName());
+  ASSERT_EQ(std::string("smc2"), slot2->str());
 }
 
 } // namespace unitTests

@@ -22,12 +22,11 @@
  *****************************************************************************/
 
 #include "castor/exception/MissingOperand.hpp"
-#include "serrno.h"
 
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::MissingOperand::MissingOperand():
-  castor::exception::Exception(SEMISSINGOPER) {
+  castor::exception::Exception(666) {
 }

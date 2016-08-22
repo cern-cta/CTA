@@ -61,7 +61,7 @@ TEST_F(castor_mediachanger_LibrarySlotParserTest, scsi) {
   using namespace castor::mediachanger;
 
   std::unique_ptr<LibrarySlot> slot;
-  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("smc@rmc_host,1")));
+  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("smc1")));
   ASSERT_NE((LibrarySlot*)0, slot.get());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot->getLibraryType());
 }

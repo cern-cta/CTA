@@ -21,29 +21,54 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/CmdLine.hpp"
-#include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/MissingOperand.hpp"
-#include <getopt.h>
+#include "castor/mediachanger/DebugBuf.hpp"
 
 //------------------------------------------------------------------------------
-// handleMissingParameter
+// constructor
 //------------------------------------------------------------------------------
-void castor::mediachanger::CmdLine::handleMissingParameter(const int opt) {
-  castor::exception::MissingOperand ex;
-  ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
- throw ex;
+castor::mediachanger::DebugBuf::DebugBuf(std::ostream &os):
+  m_debug(false), m_os(os), m_writePreamble(true) {
 }
 
 //------------------------------------------------------------------------------
-// handleUnknownOption
+// destructor
 //------------------------------------------------------------------------------
-void castor::mediachanger::CmdLine::handleUnknownOption(const int opt) {
-  castor::exception::InvalidArgument ex;
-  if(0 == optopt) {
-    ex.getMessage() << "Unknown command-line option";
-  } else {
-    ex.getMessage() << "Unknown command-line option: -" << (char)opt;
+castor::mediachanger::DebugBuf::~DebugBuf() {
+}
+
+//------------------------------------------------------------------------------
+// setDebug
+//------------------------------------------------------------------------------
+void castor::mediachanger::DebugBuf::setDebug(const bool value) throw() {
+  m_debug = value;
+}
+
+//------------------------------------------------------------------------------
+// overflow
+//------------------------------------------------------------------------------
+std::streambuf::int_type castor::mediachanger::DebugBuf::overflow(
+  const int_type c) {
+  // Only write something if debug mode is on
+  if(m_debug) {
+    if(m_writePreamble) {
+      writePreamble();
+      m_writePreamble = false;
+    }
+    m_os << (char)c;
   }
-  throw ex;
+
+  // If an end of line was encountered then the next write should be preceeded
+  // with a preamble
+  if('\n' == (char)c) {
+    m_writePreamble = true;
+  }
+
+  return c;
+}
+
+//------------------------------------------------------------------------------
+// writePreamble
+//------------------------------------------------------------------------------
+void castor::mediachanger::DebugBuf::writePreamble() throw() {
+  m_os << "DEBUG: ";
 }

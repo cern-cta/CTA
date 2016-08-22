@@ -38,6 +38,7 @@ set (UTILS_LIB_SRC_FILES
   ../exception/NotAnOwner.cpp
   ../exception/BadAlloc.cpp
   ../exception/InvalidConfigEntry.cpp
+  ../exception/MissingOperand.cpp
   ../exception/NoPortInRange.cpp
   ../exception/TimeOut.cpp
   ../exception/AcceptConnectionInterrupted.cpp

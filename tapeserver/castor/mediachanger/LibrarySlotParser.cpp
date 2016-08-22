@@ -85,7 +85,7 @@ bool castor::mediachanger::LibrarySlotParser::isManual(const std::string &str)
 //------------------------------------------------------------------------------
 bool castor::mediachanger::LibrarySlotParser::isScsi(const std::string &str)
   throw() {
-  return 0 == str.find("smc@");
+  return 0 == str.find("smc");
 }
 
 //------------------------------------------------------------------------------
@@ -210,49 +210,29 @@ castor::mediachanger::ManualLibrarySlot *castor::mediachanger::
 //------------------------------------------------------------------------------
 castor::mediachanger::ScsiLibrarySlot *castor::mediachanger::
   LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
-  if(str.find("smc@")) {
+  if(str.find("smc")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Library slot must start with smc@: str=" << str;
+      ": Library slot must start with smc: slot=" << str;
     throw ex;
   }
 
-  const std::string::size_type indexOfComma = str.find(',');
-  if(std::string::npos == indexOfComma) {
+  const size_t drvOrdStrLen = str.length() - 3; // length of "smc" is 3
+  const std::string drvOrdStr = str.substr(3, drvOrdStrLen);
+  if(drvOrdStr.empty()) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Failed to find comma: Library slot must start with smc@host,"
-      ": str=" << str;
+      ": Missing drive ordinal: slot=" << str;
     throw ex;
   }
 
-  const std::string::size_type indexOfAtSign = 3;  // smc@
-  const std::string::size_type hostLen = indexOfComma - indexOfAtSign - 1;
-  if(0 == hostLen) {
+  if(!utils::isValidUInt(drvOrdStr)) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing rmc host-name: str=" << str;
-    throw ex;
-  }
-
-  const std::string rmcHostName = str.substr(indexOfAtSign + 1, hostLen);
-
-  const std::string::size_type drvOrdLen = str.length() - indexOfComma;
-  if(0 == drvOrdLen) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing str ordinal: str=" << str;
-    throw ex;
-  }
-
-  const std::string drvOrdStr = str.substr(indexOfComma + 1, drvOrdLen);
-  if(!castor::utils::isValidUInt(drvOrdStr.c_str())) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Drive ordinal is not a valid unsigned integer: str=" << str;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot: Drive ordinal " <<
+      drvOrdStr << " is not a valid unsigned integer: slot=" << str;
     throw ex;
   }
 
   const uint16_t drvOrd = atoi(drvOrdStr.c_str());
-  return new ScsiLibrarySlot(rmcHostName, drvOrd);
+  return new ScsiLibrarySlot(drvOrd);
 }

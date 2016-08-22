@@ -67,8 +67,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
     castor::utils::copyString(rqstBody.vid, vid);
     rqstBody.drvOrd = librarySlot.getDrvOrd();
 
-    rmcSendRecvNbAttempts(m_maxRqstAttempts, librarySlot.getRmcHostName(),
-      rqstBody);
+    rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -92,8 +91,7 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
     rqstBody.drvOrd = librarySlot.getDrvOrd();
     rqstBody.force = 0;
 
-    rmcSendRecvNbAttempts(m_maxRqstAttempts, librarySlot.getRmcHostName(),
-      rqstBody);
+    rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -116,8 +114,9 @@ void castor::legacymsg::RmcProxyTcpIp::forceDismountTape(const std::string &vid,
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &rmcHost)
+int castor::legacymsg::RmcProxyTcpIp::connectToRmc()
   const {
+  const std::string rmcHost = "localhost";
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(rmcHost, m_rmcPort,
