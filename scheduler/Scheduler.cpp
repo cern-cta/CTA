@@ -353,11 +353,14 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // with the per tape pool existing mount statistics.
   typedef std::pair<std::string, cta::MountType::Enum> tpType;
   std::map<tpType, uint32_t> existingMountsSummary;
-  for (auto em=mountInfo->existingMounts.begin(); em!=mountInfo->existingMounts.end(); em++) {
-    try {
-      existingMountsSummary.at(tpType(em->tapePool, em->type))++;
-    } catch (std::out_of_range &) {
-      existingMountsSummary[tpType(em->tapePool, em->type)] = 1;
+  for (auto & em: mountInfo->existingMounts) {
+    // If a mount is still listed for our own drive, it is a leftover that we disregard.
+    if (em.driveName!=driveName) {
+      try {
+        existingMountsSummary.at(tpType(em.tapePool, em.type))++;
+      } catch (std::out_of_range &) {
+        existingMountsSummary[tpType(em.tapePool, em.type)] = 1;
+      }
     }
   }
   

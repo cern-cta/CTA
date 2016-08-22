@@ -142,6 +142,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.existingMounts.push_back(ExistingMount());
       tmdi.existingMounts.back().type = d->mountType;
       tmdi.existingMounts.back().tapePool = d->currentTapePool;
+      tmdi.existingMounts.back().driveName = d->name;
     }
   }
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));

@@ -366,6 +366,7 @@ public:
    * Information about the existing mounts.
    */
   struct ExistingMount {
+    std::string driveName;
     cta::MountType::Enum type;
     std::string tapePool;
   };
