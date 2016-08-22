@@ -372,7 +372,11 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
 XrootReadFile::XrootReadFile(const std::string &xrootUrl) {
   // Setup parent's variables
   m_readPosition = 0;
-  m_URL = xrootUrl;
+  m_URL = xrootUrl + "?eos.ruid=0&eos.rgid=0"; // TODO: the second part of this string has been added by Daniele
+                                               //       to temporarily circumvent EOS authorization, while plugging
+                                               //       everything together to run a full system test. When preparing
+                                               //       this code for production this line should simply be:
+                                               //       m_URL = xrootUrl;
   // and simply open
   using XrdCl::OpenFlags;
   XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),

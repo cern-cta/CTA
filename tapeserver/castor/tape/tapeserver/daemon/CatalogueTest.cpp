@@ -83,6 +83,9 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   ASSERT_EQ(std::string("DEV1"), unit1Config.getDevFilename());
   
   ASSERT_EQ(DRIVE_STATE_UP, unit1.getState());
+      // TODO: This has to be changed to DRIVE_STATE_DOWN in production which is the default for all tape drives.
+      //       Daniele changed this to DRIVE_STATE_UP while doing the full system test ,because the tpconfig command is 
+      //       not working properly.
   ASSERT_NO_THROW(unit1Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit1Config.getLibrarySlot().getLibraryType());
@@ -99,6 +102,9 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   ASSERT_EQ(std::string("DEV2"), unit2Config.getDevFilename());
 
   ASSERT_EQ(DRIVE_STATE_UP, unit2.getState());
+      // TODO: This has to be changed to DRIVE_STATE_DOWN in production which is the default for all tape drives.
+      //       Daniele changed this to DRIVE_STATE_UP while doing the full system test ,because the tpconfig command is 
+      //       not working properly.
   ASSERT_NO_THROW(unit2Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit2Config.getLibrarySlot().getLibraryType());

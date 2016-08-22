@@ -138,6 +138,9 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     m_drives[driveConfig.getUnitName()] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_hostName, driveConfig,
       DRIVE_STATE_UP, m_catalogueConfig, m_sysWrapper);
+      // TODO: This has to be changed to DRIVE_STATE_DOWN in production which is the default for all tape drives.
+      //       Daniele changed this to DRIVE_STATE_UP while doing the full system test ,because the tpconfig command is 
+      //       not working properly.
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;
