@@ -988,7 +988,7 @@ int castor::io::connectWithTimeout(
   if(!(pollFd.revents & POLLIN) && !(pollFd.revents & POLLOUT)) {
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() << "Failed to connect"
-      ": poll() returned without the POLLIN or POLLOUT set"
+      ": poll() returned without POLLIN or POLLOUT set"
       ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" << pollFd.events <<
       ",pollFd.revents=" << pollFd.revents;
     throw ex;
