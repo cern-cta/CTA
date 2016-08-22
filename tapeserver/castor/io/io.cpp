@@ -944,7 +944,7 @@ int castor::io::connectWithTimeout(
 
   pollfd pollFd;
   pollFd.fd = smartSock.get();
-  pollFd.events = POLLIN & POLLOUT;
+  pollFd.events = POLLIN | POLLOUT;
   pollFd.revents = 0;
 
   // Wait for the connection to complete using poll() with a timeout
