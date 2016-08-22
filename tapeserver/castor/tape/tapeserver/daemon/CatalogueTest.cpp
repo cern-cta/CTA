@@ -82,7 +82,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   ASSERT_EQ(std::string("DGN1"), unit1Config.getLogicalLibrary());
   ASSERT_EQ(std::string("DEV1"), unit1Config.getDevFilename());
   
-  ASSERT_EQ(DRIVE_STATE_DOWN, unit1.getState());
+  ASSERT_EQ(DRIVE_STATE_UP, unit1.getState());
   ASSERT_NO_THROW(unit1Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit1Config.getLibrarySlot().getLibraryType());
@@ -98,7 +98,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   ASSERT_EQ(std::string("DGN2"), unit2Config.getLogicalLibrary());
   ASSERT_EQ(std::string("DEV2"), unit2Config.getDevFilename());
 
-  ASSERT_EQ(DRIVE_STATE_DOWN, unit2.getState());
+  ASSERT_EQ(DRIVE_STATE_UP, unit2.getState());
   ASSERT_NO_THROW(unit2Config.getLibrarySlot());
   ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit2Config.getLibrarySlot().getLibraryType());

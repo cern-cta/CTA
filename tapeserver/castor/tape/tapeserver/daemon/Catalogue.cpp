@@ -137,7 +137,7 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
     // Insert it
     m_drives[driveConfig.getUnitName()] = new CatalogueDrive(m_netTimeout,
       m_log, m_processForker, m_hostName, driveConfig,
-      DRIVE_STATE_DOWN, m_catalogueConfig, m_sysWrapper);
+      DRIVE_STATE_UP, m_catalogueConfig, m_sysWrapper);
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;
