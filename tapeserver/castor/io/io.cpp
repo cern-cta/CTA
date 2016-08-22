@@ -358,7 +358,6 @@ int castor::io::acceptConnection(const int listenSocketFd,
       throw ex;
     }
 
-    // If it is not the expected connection request
     if(!(pollFd.revents & POLLIN)) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection "
