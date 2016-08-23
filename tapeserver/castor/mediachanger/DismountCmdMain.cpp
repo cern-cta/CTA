@@ -64,7 +64,9 @@ int main(const int argc, char *const *const argv) {
   std::string errorMessage;
 
   try {
-    return exceptionThrowingMain(argc, argv);
+    const int rc = exceptionThrowingMain(argc, argv);
+    google::protobuf::ShutdownProtobufLibrary();
+    return rc;
   } catch(castor::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -77,6 +79,7 @@ int main(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   std::cerr << "Aborting: " << errorMessage << std::endl;
+  google::protobuf::ShutdownProtobufLibrary();
   return 1;
 }
 
