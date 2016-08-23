@@ -951,7 +951,7 @@ int castor::io::connectWithTimeout(
   const int pollRc = poll(&pollFd, 1, 1000 * timeout);
   if(-1 == pollRc) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Call to poll()() failed: "
+    ex.getMessage() << "Call to poll() failed: "
       << cta::utils::errnoToString(errno);
     throw ex;
   }
@@ -962,6 +962,13 @@ int castor::io::connectWithTimeout(
     ex.getMessage() <<
       "Failed to connect"
       ": poll() timed out after " << timeout << " seconds";
+    throw ex;
+  }
+
+  if(pollFd.revents | POLLNVAL) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to connect"
+      ": File descriptor " << pollFd.fd << " is not open";
     throw ex;
   }
 
