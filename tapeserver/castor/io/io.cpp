@@ -840,38 +840,56 @@ int castor::io::connectWithTimeout(
   const unsigned short port,
   const int            timeout)
   throw(castor::exception::TimeOut, castor::exception::Exception) {
-  std::ostringstream portStream;
-  portStream << port;
-  struct addrinfo hints;
-  memset(&hints, '\0', sizeof(hints));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
+  try {
+    std::ostringstream portStream;
+    portStream << port;
+    struct addrinfo hints;
+    memset(&hints, '\0', sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
   
-  struct addrinfo *res = NULL;
-  int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
-  // If getaddrinfo() returned a negative value
-  if (0!=rc) {
-    char errBuf[100];
-    getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
-    castor::exception::Exception ex;
-    ex.getMessage() << "getaddrinfo() failed: " << errBuf;
-    throw ex;
-  }
-  struct sockaddr_in s_in;
-  if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "getaddrinfo() bad result: either ai_family or ai_socktype or ai_addrlen are wrong";
+    struct addrinfo *res = NULL;
+    {
+      const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
+      // If getaddrinfo() returned a negative value
+      if (0!=rc) {
+        char errBuf[100];
+        getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
+        castor::exception::Exception ex;
+        ex.getMessage() << "getaddrinfo() failed: " << errBuf;
+        throw ex;
+      }
+    }
+    struct sockaddr_in s_in;
+    if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "getaddrinfo() bad result: either ai_family or ai_socktype or ai_addrlen are wrong";
+      freeaddrinfo(res);
+      throw ex;
+    }
+    memcpy(&s_in, res->ai_addr, sizeof(s_in));
+    int protocol = res->ai_protocol;
+    socklen_t length = res->ai_addrlen;
     freeaddrinfo(res);
+  
+    return connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
+      (struct sockaddr *)(&s_in), length, timeout);
+  } catch(castor::exception::Exception &ce) {
+    castor::exception::Exception ex;
+    ex.getMessage() << ce.getMessage().str() <<
+      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
+    throw ex;
+  } catch(std::exception &se) {
+    castor::exception::Exception ex;
+    ex.getMessage() << se.what() <<
+      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
+    throw ex;
+  } catch(...) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to connect: Caught an unknown exception" <<
+      ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
   }
-  memcpy(&s_in, res->ai_addr, sizeof(s_in));
-  int protocol = res->ai_protocol;
-  socklen_t length = res->ai_addrlen;
-  freeaddrinfo(res);
-  
-  rc = connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
-          (struct sockaddr *)(&s_in), length, timeout);
-  return rc;
 }
 
 //------------------------------------------------------------------------------
