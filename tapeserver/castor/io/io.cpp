@@ -965,7 +965,7 @@ int castor::io::connectWithTimeout(
     throw ex;
   }
 
-  if(pollFd.revents | POLLNVAL) {
+  if(pollFd.revents & POLLNVAL) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect"
       ": File descriptor " << pollFd.fd << " is not open";
