@@ -965,35 +965,6 @@ int castor::io::connectWithTimeout(
     throw ex;
   }
 
-  // Throw an exception if there was an error condition on the file descriptor
-  if(pollFd.revents & POLLERR) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept connection"
-      ": POLLERR - Error condition";
-
-    if(pollFd.revents & POLLHUP) {
-      ex.getMessage() << ": POLLHUP - Connection closed by peer";
-    }
-
-    if(pollFd.revents & POLLNVAL) {
-      ex.getMessage() << ": POLLNVAL - File descriptor not open";
-    }
-
-    ex.getMessage() << ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" <<
-      pollFd.events << ",pollFd.revents=" << pollFd.revents;
-    throw ex;
-  }
-
-  // Throw an exception if no file descriptor was set
-  if(!(pollFd.revents & POLLIN) && !(pollFd.revents & POLLOUT)) {
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() << "Failed to connect"
-      ": poll() returned without POLLIN or POLLOUT set"
-      ": pollFd.fd=" << pollFd.fd << ",pollFd.events=" << pollFd.events <<
-      ",pollFd.revents=" << pollFd.revents;
-    throw ex;
-  }
-
   // Use getsockopt() to check whether or not the connection completed
   // successfully
   //
