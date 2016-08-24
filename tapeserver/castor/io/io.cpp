@@ -693,6 +693,10 @@ void castor::io::readBytes(
         // We did read more data...
         readPtr += recvRet;
         bytesRemaining -= recvRet;
+      } else if (0 == recvRet) {
+        throw cta::exception::Exception("In io::readBytes: recv(): connection closed.");
+      } else if (-1 == recvRet) {
+        throw cta::exception::Errnum("In io::readBytes: error calling recv():");
       } else {
         std::stringstream err;
         err << "In io::readBytes: unexpected return value from recv: " << recvRet;
