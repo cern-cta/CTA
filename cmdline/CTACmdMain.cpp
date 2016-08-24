@@ -28,8 +28,6 @@
 #include <cryptopp/osrng.h>
 
 #include <iostream>
-#include <future>
-#include <chrono>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -118,10 +116,9 @@ int sendCommand(const int argc, const char **argv) {
   XrdCl::PropertyList results;
   XrdCl::CopyProcess copyProcess;
   
-  //ConnectionWindow timeout. This is redundant now because we already have a timeout in place with std::async
-  //but may be handy in the future if we change the frontend xroot paradigm (for example to XrdSsi)
-  //XrdCl::Env *env = XrdCl::DefaultEnv::GetEnv();
-  //env->PutInt("ConnectionWindow", 1);
+  //ConnectionWindow timeout
+  XrdCl::Env *env = XrdCl::DefaultEnv::GetEnv();
+  env->PutInt("ConnectionWindow", 3); //timeout in 3 secs if frontend server does not respond
   
   XrdCl::XRootDStatus status = copyProcess.AddJob(properties, &results);
   if(!status.IsOK())
@@ -167,16 +164,7 @@ int sendCommand(const int argc, const char **argv) {
  */
 int main(const int argc, const char **argv) {
   try {    
-    std::chrono::system_clock::time_point five_secs_passed = std::chrono::system_clock::now() + std::chrono::seconds(5);
-    // call function asynchronously so we can timeout if server is unreachable:
-    std::future<int> fut = std::async(std::launch::async, sendCommand, argc, argv);
-    if(std::future_status::ready == fut.wait_until(five_secs_passed)) {
-      return fut.get();
-    }
-    else {//timeout
-      std::cerr << "Failed to execute the command. CTA front end server TIMEOUT!" << std::endl;
-      exit(cta::common::dataStructures::FrontendReturnCode::ctaFrontendTimeout);
-    }
+    return sendCommand(argc, argv);
   } catch(cta::exception::Exception &ex) {
     std::cerr << "Failed to execute the command. Reason: " << ex.getMessageValue() << std::endl;
     return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
