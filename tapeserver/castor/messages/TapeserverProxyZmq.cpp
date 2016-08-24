@@ -45,12 +45,30 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
-  const unsigned short serverPort, void *const zmqContext) throw():
+  const unsigned short serverPort, void *const zmqContext,
+  const std::string &driveName) throw():
   m_log(log),
+  m_driveName(driveName),
   m_serverPort(serverPort),
   m_serverSocket(zmqContext, ZMQ_REQ) {
   connectZmqSocketToLocalhost(m_serverSocket, serverPort);
 }
+
+//------------------------------------------------------------------------------
+// reportState
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyZmq::reportState(const cta::tape::session::SessionState state,
+  const cta::tape::session::SessionType type, const std::string& vid) {
+  if ((type == cta::tape::session::SessionType::Archive) 
+      && (state == cta::tape::session::SessionState::Mounting)) {
+    gotArchiveJobFromCTA(vid, m_driveName, 0);
+  }
+}
+
+//------------------------------------------------------------------------------
+// reportHeartbeat
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyZmq::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {}
 
 //------------------------------------------------------------------------------
 // gotArchiveJobFromCTA
@@ -270,120 +288,6 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to create TapeMountedForMigration frame: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// tapeUnmountStarted
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeUnmountStarted(
-  const std::string &vid, const std::string &unitName) {   
-  MutexLocker lock(&m_mutex);
-
-  try {
-    const Frame rqst = createTapeUnmountStartedFrame(vid, unitName);
-    sendFrame(m_serverSocket, rqst);
-  
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver of start of tape unmount: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createTapeUnmountStartedFrame
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::messages::TapeserverProxyZmq::
-  createTapeUnmountStartedFrame(const std::string &vid,
-  const std::string &unitName) {
-  try {
-    Frame frame;
-
-    frame.header = messages::protoTapePreFillHeader();
-    frame.header.set_msgtype(messages::MSG_TYPE_TAPEUNMOUNTSTARTED);
-    frame.header.set_bodysignature("PIPO");
-
-    TapeUnmountStarted body;
-    body.set_vid(vid);
-    body.set_unitname(unitName);
-    frame.serializeProtocolBufferIntoBody(body);
-
-    return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create TapeUnmountStarted frame: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// tapeUnmounted
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyZmq::tapeUnmounted(
-  const std::string &vid, const std::string &unitName) {
-  MutexLocker lock(&m_mutex);
-
-  try {
-    const Frame rqst = createTapeUnmountedFrame(vid, unitName);
-    sendFrame(m_serverSocket, rqst);
-  
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      castor::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to notify tapeserver that tape is unmounted: " <<
-      "vid=" << vid << " unitName=" << unitName << ": " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createTapeUnmountedFrame
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::messages::TapeserverProxyZmq::
-  createTapeUnmountedFrame(const std::string &vid,
-  const std::string &unitName) {
-  try {
-    Frame frame;
-
-    frame.header = messages::protoTapePreFillHeader();
-    frame.header.set_msgtype(messages::MSG_TYPE_TAPEUNMOUNTED);
-    frame.header.set_bodysignature("PIPO");
-
-    TapeUnmounted body;
-    body.set_vid(vid);
-    body.set_unitname(unitName);
-    frame.serializeProtocolBufferIntoBody(body);
-
-    return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to create TapeUnmounted frame: " <<
       ne.getMessage().str();
     throw ex;
   }

@@ -34,8 +34,11 @@ DriveHandler::DriveHandler(const TapedConfiguration & tapedConfig, const Tpconfi
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
-  
-const std::map<DriveHandler::SessionState, DriveHandler::Timeout> DriveHandler::m_timeouts = {
+
+using session::SessionState;
+using session::SessionType;
+
+const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_timeouts = {
   {SessionState::Cleaning, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
   {SessionState::Scheduling, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))},
   {SessionState::Mounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
@@ -69,8 +72,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     // Check we are in the right state (sanity check)
     if (m_sessionState != SessionState::PendingFork) {
       std::stringstream err;
-      err << "In DriveHandler::fork(): called while not in the expected state: " << toString(m_sessionState)
-          << " instead of " << toString(SessionState::PendingFork);
+      err << "In DriveHandler::fork(): called while not in the expected state: " << session::toString(m_sessionState)
+          << " instead of " << session::toString(SessionState::PendingFork);
       throw exception::Exception(err.str());
     }
     // First prepare a socket pair for this new subprocess
@@ -134,49 +137,6 @@ decltype (SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTi
   }
 }
 
-std::string DriveHandler::toString(SessionState state) {
-  switch(state) {
-  case SessionState::PendingFork:
-    return "PendingFork";
-  case SessionState::Cleaning:
-    return "Cleaning";
-  case SessionState::Scheduling:
-    return "Scheduling";
-  case SessionState::Mounting:
-    return "Mounting";
-  case SessionState::Running:
-    return "Running";
-  case SessionState::Unmounting:
-    return "Unmounting";
-  case SessionState::Shutdown:
-    return "Shutdown";
-  default:
-    {
-      std::stringstream st;
-      st << "UnknownState (" << ((uint32_t) state) << ")";
-      return st.str();
-    }
-  }
-}
-
-std::string DriveHandler::toString(SessionType type) {
-  switch(type) {
-  case SessionType::Archive:
-    return "Archive";
-  case SessionType::Retrieve:
-    return "Retrieve";
-  case SessionType::Undetermined:
-    return "Undetermined";
-  default:
-    {
-      std::stringstream st;
-      st << "UnknownType (" << ((uint32_t) type) << ")";
-      return st.str();
-    }
-  }
-}
-
-
 void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
   // track of the exit state as kill() mens we will not be called anymore.
@@ -225,7 +185,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       {
         exception::Exception ex;
         ex.getMessage() << "In DriveHandler::processEvent(): unexpected session state:" 
-            << toString((SessionState)message.sessionstate());
+            << session::toString((SessionState)message.sessionstate());
         throw ex;
       }
     }
@@ -245,7 +205,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
   std::set<SessionState> expectedStates = { SessionState::Cleaning, SessionState::Scheduling };
   if (expectedStates.find(m_sessionState)==expectedStates.end()) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processScheduling(): unexpected previous state.");
   }
@@ -267,7 +227,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
   // The only transition expected is from scheduling.
   if (SessionState::Scheduling != m_sessionState) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processMounting(): unexpected previous state.");
   }
@@ -297,7 +257,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
   if (expectedStates.end() == expectedStates.find(m_sessionState)) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processRunning(): unexpected previous state.");
   }
@@ -337,7 +297,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
   // This status transition is exclusively expected from running
   if (SessionState::Running != m_sessionState) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processUnmounting(): unexpected previous state.");
   }
@@ -365,7 +325,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializ
   // This status transition is expected from unmounting.
   if (SessionState::Unmounting != m_sessionState) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processDrainingToDisk(): unexpected previous state.");
   }
@@ -395,7 +355,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processClosingDown(serializers
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
   if (expectedStates.end() == expectedStates.find(m_sessionState)) {
     log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", toString(m_sessionState));
+    params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processClosingDown(): unexpected previous state.");
   }
@@ -433,7 +393,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       log::ScopedParamContainer params(m_processManager.logContext());
       params.add("pid", m_pid)
             .add("Message", ex.getMessageValue())
-            .add("SessionState", toString(m_sessionState))
+            .add("SessionState", session::toString(m_sessionState))
             .add("SessionType", toString(m_sessionType));
       m_processManager.logContext().log(log::WARNING,
           "In DriveHandler::processSigChild(): failed to get child process exit code. "

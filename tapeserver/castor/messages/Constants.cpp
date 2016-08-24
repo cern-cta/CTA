@@ -64,10 +64,6 @@ const char *castor::messages::msgTypeToString(const MsgType msgType) throw() {
     return "TapeMountedForMigration";
   case MSG_TYPE_TAPEMOUNTEDFORRECALL:
     return "TapeMountedForRecall";
-  case MSG_TYPE_TAPEUNMOUNTSTARTED:
-    return "TapeUnmounStarted";
-  case MSG_TYPE_TAPEUNMOUNTED:
-    return "TapeUnmounted";
   case MSG_TYPE_LABELERROR:
     return "LabelError";
   case MSG_TYPE_ACSMOUNTTAPEREADONLY:

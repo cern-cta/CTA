@@ -52,7 +52,7 @@ public:
    * @param lc 
    */
   TapeServerReporter(
-    cta::daemon::TapedProxy& tapeserverProxy,
+    cta::tape::daemon::TapedProxy& tapeserverProxy,
     const DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::daemon::VolumeInfo &volume,
@@ -89,7 +89,7 @@ public:
    * exchange return the number of files on the tape according to the VMGR
    * @return the number of files on the tape according to the VMGR
    */
-  uint32_t gotWriteMountDetailsFromClient();
+  void gotWriteMountDetailsFromClient();
   
   //start and wait for thread to finish
   void startThreads();
@@ -145,7 +145,7 @@ private:
    A bunch of references to proxies to send messages to the 
    * outside world when we have to
    */
-  cta::daemon::TapedProxy& m_tapeserverProxy;
+  cta::tape::daemon::TapedProxy& m_tapeserverProxy;
   
   /**
    * Log context, copied because it is in a separated thread

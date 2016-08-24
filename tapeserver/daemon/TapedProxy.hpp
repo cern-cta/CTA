@@ -23,17 +23,18 @@
 
 #include "tapeserver/castor/exception/Exception.hpp"
 #include "tapeserver/castor/log/Param.hpp"
+#include "tapeserver/session/SessionState.hpp"
+#include "tapeserver/session/SessionType.hpp"
 
 #include <stdint.h>
 #include <string>
 #include <list>
 
-namespace cta {
-namespace daemon {
+namespace cta { namespace tape { namespace daemon {
 
 /**
  * Abstract class defining the interface to a proxy object representing the
- * internal network interface of the tapeserverd daemon.
+ * possible notifications sent back to main tape daemon (taped)
  */
 class TapedProxy {
 public:
@@ -44,18 +45,28 @@ public:
   virtual ~TapedProxy()  = 0;
   
   /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * an archive job from CTA
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape
+   * Notifies taped of a state change. Taped will validate the transition and
+   * kill the process if it is an unexpected transition.
+   * 
+   * @param state the new state.
+   * @param type the type of the session (archive, retrieve, verify, 
+   * @param vid the vid of the tape involved
    */
-  virtual uint32_t gotArchiveJobFromCTA(const std::string &vid,
-    const std::string &unitName, const uint32_t nbFiles) = 0;
+  virtual void reportState(const cta::tape::session::SessionState state,
+    const cta::tape::session::SessionType type, 
+    const std::string & vid) = 0;
   
   /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
+   * Report a heartbeat to taped. The data counters might or might not have changed
+   * as the sending of the heartbeat itself is an information.
+   * 
+   * @param totalTapeBytesMoved cumulated data transfered to/from tape during the session.
+   * @param totalDiskBytesMoved cumulated data transfered to/from disk during the session.
+   */
+  virtual void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) = 0;
+  
+  /**
+   * Notifies taped that the mount-session child-process got
    * a retrieve job from CTA
    *
    * @param vid The tape to be mounted for recall.
@@ -65,7 +76,7 @@ public:
     const std::string &unitName) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   * Notifies taped that the specified tape has been mounted.
    *
    * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
@@ -74,7 +85,7 @@ public:
     const std::string &unitName) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   * Notifies taped that the specified tape has been mounted.
    *
    * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
@@ -83,7 +94,7 @@ public:
     const std::string &unitName) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that the specified tape is unmounting.
+   * Notifies taped that the specified tape is unmounting.
    *
    * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
@@ -92,7 +103,7 @@ public:
     const std::string &unitName) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that the specified tape has been unmounted.
+   * Notifies taped that the specified tape has been unmounted.
    *
    * @param vid The tape to be mounted for recall.
    * @param unitName The unit name of the tape drive.
@@ -101,8 +112,9 @@ public:
     const std::string &unitName) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that the data-transfer session is still
-   * alive and gives an indication of how much data has been moved.
+   * Notifies taped that the data-transfer session is still
+   * alive and gives an indication of how much data has been on the tape
+   * and disk sides, respectively.
    *
    * @param unitName The unit name of the tape drive.
    * @param nbBytesMoved Delta value giving the number of bytes moved
@@ -137,6 +149,5 @@ public:
 
 }; // class TapeserverProxy
 
-} // namespace messages
-} // namespace castor
+}}} // namespace cta::tape::daemon
 

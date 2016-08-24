@@ -52,7 +52,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     System::virtualWrapper & sysWrapper,
     const DriveConfig & driveConfig,
     castor::mediachanger::MediaChangerFacade & mc,
-    cta::daemon::TapedProxy & initialProcess,
+    cta::tape::daemon::TapedProxy & initialProcess,
     castor::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf,
     cta::Scheduler & scheduler): 
@@ -268,15 +268,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       twst.setlastFseq(firstFseqFromClient-1);
       
       //we retrieved the detail from the client in execute, so at this point 
-      //we can report. We get in exchange the number of files on the tape.
-      // This function can throw an exception (usually for permission reasons)
-      // This is not a reason to put the drive down. The error is already logged
-      // upstream.
-      // Letting the exception slip through would leave the drive down.
+      //we can report we will mount the tape.
+      // TODO: create a "StartingSession" state as the mounting will happen in
+      // the to-be-created tape thread.
       // Initialise with something obviously wrong.
-      uint64_t nbOfFileOnTape = std::numeric_limits<uint64_t>::max();
       try {
-        nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
+        tsr.gotWriteMountDetailsFromClient();
       } catch (castor::exception::Exception & e) {
         log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
         lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
@@ -288,14 +285,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         return MARK_DRIVE_AS_UP;
       }
 
-      //theses 2 numbers should match. Otherwise, it means the stager went mad 
-      if(firstFseqFromClient != nbOfFileOnTape + 1) {
-        std::stringstream ss;
-        ss << "First file to write's fseq(" << firstFseqFromClient << ")  and number of files on the tape (" << nbOfFileOnTape << " + 1) dont match";
-        lc.log(LOG_ERR, ss.str());
-       //no mount at all, drive to be kept up = return 0
-        return MARK_DRIVE_AS_UP;
-      }
       // We have something to do: start the session by starting all the 
       // threads.
       mm.startThreads();

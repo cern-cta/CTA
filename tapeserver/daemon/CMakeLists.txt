@@ -12,6 +12,7 @@ add_library(ctatapedaemon
   CommandLineParams.cpp
   ConfigurationFile.cpp
   DriveHandler.cpp
+  DriveHandlerProxy.cpp
   SignalHandler.cpp
   SourcedParameter.cpp
   SubprocessHandler.cpp
@@ -21,6 +22,9 @@ add_library(ctatapedaemon
   TapedProxy.cpp
   TpconfigLine.cpp
   Tpconfig.cpp)
+
+target_link_libraries(ctatapedaemon
+  ctatapesession)
 
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp

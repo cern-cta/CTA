@@ -27,146 +27,43 @@ namespace castor {
 namespace messages {
 
 /**
- * A dummy tapeserverd-proxy.
+ * A dummy taped-proxy.
  */
-class TapeserverProxyDummy: public cta::daemon::TapedProxy {
+class TapeserverProxyDummy: public cta::tape::daemon::TapedProxy {
 public:
   
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * an archive job from CTA
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape
-   */
-  virtual uint32_t gotArchiveJobFromCTA(const std::string &vid,
-    const std::string &unitName, const uint32_t nbFiles);
+  void reportState(const cta::tape::session::SessionState state,
+    const cta::tape::session::SessionType type, 
+    const std::string & vid) override;
+
+  void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
   
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a retrieve job from CTA
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void gotRetrieveJobFromCTA(const std::string &vid,
-    const std::string &unitName);
+  void gotRetrieveJobFromCTA(const std::string &vid,
+    const std::string &unitName) override;
 
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  void gotRecallJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a recall job from the readtp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  void gotRecallJobFromReadTp(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the tapegatewayd daemon.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  uint32_t gotMigrationJobFromTapeGateway(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the mount-session child-process got
-   * a migration job from the writetp command-line tool.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   * @return The number of files currently stored on the tape as given by the
-   * vmgrd daemon.
-   */
-  uint32_t gotMigrationJobFromWriteTp(const std::string &vid,
-    const std::string &unitName);
-
-  /**
-   * Notifies the tapeserverd daemon that the specified tape has been mounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
   void tapeMountedForRecall(const std::string &vid,
-    const std::string &unitName);
+    const std::string &unitName) override;
 
-  /**
-   * Notifies the tapeserverd daemon that the specified tape has been mounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
   void tapeMountedForMigration(const std::string &vid,
-    const std::string &unitName);
+    const std::string &unitName) override;
 
-  /**
-   * Notifies the tapeserverd daemon that the specified tape is unmounting.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
   void tapeUnmountStarted(const std::string &vid,
-    const std::string &unitName);
+    const std::string &unitName) override;
 
-  /**
-   * Notifies the tapeserverd daemon that the specified tape has been unmounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
   void tapeUnmounted(const std::string &vid,
-    const std::string &unitName);
+    const std::string &unitName) override;
 
-  /**
-   * Notifies the tapeserverd daemon that the data-transfer session is still
-   * alive and gives an indication of how much data has been moved.
-   *
-   * @param unitName The unit name of the tape drive.
-   * @param nbBlocksMoved Delta value giving the number of blocks moved
-   * since the last heartbeat message.
-   */
   void notifyHeartbeat(const std::string &unitName,
-    const uint64_t nbBlocksMoved);
+    const uint64_t nbBlocksMoved) override;
   
-  /**
-   * Sends a new set of parameters, to be logged by the mother process when the
-   * transfer session is over.
-   * @param params: a vector of log parameters
-   */
-  virtual void addLogParams(const std::string &unitName,
-    const std::list<castor::log::Param> & params);
+  void addLogParams(const std::string &unitName,
+    const std::list<castor::log::Param> & params) override;
   
-  /**
-   * Sends a list of parameters to remove from the end of session logging.
-   */
-  virtual void deleteLogParams(const std::string &unitName,
-    const std::list<std::string> & paramNames);
+  void deleteLogParams(const std::string &unitName,
+    const std::list<std::string> & paramNames) override;
   
-  /**
-   * Notifies the tapeserverd daemon that a label session has encountered the
-   * specified error.
-   *
-   * @param unitName The unit name of the tape drive.
-   * @param message The error message.
-   */
   void labelError(const std::string &unitName,
-    const std::string &message);
+    const std::string &message) override;
 
 }; // class TapeserverProxyDummy
 

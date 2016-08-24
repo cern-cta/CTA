@@ -23,8 +23,11 @@
 
 #include "tapeserver/daemon/TapedProxy.hpp"
 
+namespace cta { namespace tape { namespace daemon {
+
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::daemon::TapedProxy::~TapedProxy() {
-}
+TapedProxy::~TapedProxy() {}
+
+}}} // namespace cta::tape::daemon

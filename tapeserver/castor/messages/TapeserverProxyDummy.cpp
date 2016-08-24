@@ -22,48 +22,21 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
-// gotArchiveJobFromCTA
+// reportState
 //------------------------------------------------------------------------------
-uint32_t castor::messages::TapeserverProxyDummy::gotArchiveJobFromCTA(
-  const std::string &vid, const std::string &unitName, const uint32_t nbFiles) {
-  return 0;
-}
+void castor::messages::TapeserverProxyDummy::reportState(const cta::tape::session::SessionState state, 
+  const cta::tape::session::SessionType type, const std::string& vid) {}
+
+//------------------------------------------------------------------------------
+// reportHeartbeat
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {}
 
 //------------------------------------------------------------------------------
 // gotRetrieveJobFromCTA
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::gotRetrieveJobFromCTA(
   const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// gotRecallJobFromTapeGateway
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::gotRecallJobFromTapeGateway(
-  const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// gotRecallJobFromReadTp
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::gotRecallJobFromReadTp(
-  const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// gotMigrationJobFromTapeGateway
-//------------------------------------------------------------------------------
-uint32_t castor::messages::TapeserverProxyDummy::gotMigrationJobFromTapeGateway(
-  const std::string &vid, const std::string &unitName) {
-  return 0;
-}
-
-//------------------------------------------------------------------------------
-// gotMigrationJobFromWriteTp
-//------------------------------------------------------------------------------
-uint32_t castor::messages::TapeserverProxyDummy::gotMigrationJobFromWriteTp(
-  const std::string &vid, const std::string &unitName) {
-  return 0;
 }
 
 //------------------------------------------------------------------------------

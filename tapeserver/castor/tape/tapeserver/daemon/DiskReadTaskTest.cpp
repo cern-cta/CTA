@@ -91,7 +91,7 @@ namespace unitTests{
   class MockMigrationWatchDog: public MigrationWatchDog {
   public:
     MockMigrationWatchDog(double periodToReport,double stuckPeriod,
-    cta::daemon::TapedProxy& initialProcess,
+    cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
     castor::log::LogContext lc, double pollPeriod = 0.1): 
       MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, 

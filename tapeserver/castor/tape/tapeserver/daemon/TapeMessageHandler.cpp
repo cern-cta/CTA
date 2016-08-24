@@ -204,12 +204,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
   case messages::MSG_TYPE_TAPEMOUNTEDFORRECALL:
     return handleTapeMountedForRecall(rqst);
-
-  case messages::MSG_TYPE_TAPEUNMOUNTSTARTED:
-    return handleTapeUnmountStarted(rqst);
-
-  case messages::MSG_TYPE_TAPEUNMOUNTED:
-    return handleTapeUnmounted(rqst);
     
   case messages::MSG_TYPE_ADDLOGPARAMS:
     return handleAddLogParams(rqst);
@@ -396,48 +390,6 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleTapeUnmountStarted
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleTapeUnmountStarted(const messages::Frame& rqst) {
-  m_log(LOG_INFO, "Handling TapeUnmountStarted message");
-
-  try {
-    messages::TapeUnmountStarted rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-
-    const messages::Frame reply = createReturnValueFrame(0);
-    return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle TapeUnmountStarted message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleTapeUnmounted
-//------------------------------------------------------------------------------
-castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
-  handleTapeUnmounted(const messages::Frame& rqst) {
-  m_log(LOG_INFO, "Handling TapeUnmounted message");
-
-  try {
-    messages::TapeUnmounted rqstBody;
-    rqst.parseBodyIntoProtocolBuffer(rqstBody);
-
-    const messages::Frame reply = createReturnValueFrame(0);
-    return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle TapeUnmounted message: " <<
       ne.getMessage().str();
     throw ex;
   }

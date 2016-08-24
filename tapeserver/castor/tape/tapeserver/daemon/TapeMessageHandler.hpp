@@ -224,22 +224,6 @@ private:
    * @param rqst The request.
    * @return The reply.
    */
-  messages::Frame handleTapeUnmountStarted(const messages::Frame &rqst);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */
-  messages::Frame handleTapeUnmounted(const messages::Frame &rqst);
-
-  /**
-   * Handles the specified request.
-   *
-   * @param rqst The request.
-   * @return The reply.
-   */
   messages::Frame handleAddLogParams(const messages::Frame &rqst);
   
   /**

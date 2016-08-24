@@ -555,7 +555,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
   messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
-    zmqContext.get());
+    zmqContext.get(), driveConfig.getUnitName());
   
   cta::EosNS eosNs(castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort"));
   std::unique_ptr<cta::objectstore::Backend> backend(
@@ -842,7 +842,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::SmartZmqContext
       zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
     messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
-      zmqContext.get());
+      zmqContext.get(), driveConfig.getUnitName());
 
     messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 

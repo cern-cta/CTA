@@ -2,12 +2,12 @@ cmake_minimum_required (VERSION 2.6)
 
 # Old CASTOR's tapeserverd daemon code
 add_subdirectory (castor)
-add_subdirectory (test)
 
 # CTA's cta-taped code
 add_subdirectory (daemon)
-# The tape session's threads are in a separate directory
 add_subdirectory (session)
+# The tape session's threads are in a separate directory (session, but compiled
+# from the previous one to create a single library).
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped

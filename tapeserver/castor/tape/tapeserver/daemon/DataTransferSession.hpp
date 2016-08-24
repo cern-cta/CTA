@@ -64,7 +64,7 @@ namespace daemon {
       System::virtualWrapper & sysWrapper,
       const DriveConfig & driveConfig,
       castor::mediachanger::MediaChangerFacade & mc,
-      cta::daemon::TapedProxy & initialProcess,
+      cta::tape::daemon::TapedProxy & initialProcess,
       castor::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
       cta::Scheduler &scheduler);
@@ -126,7 +126,7 @@ namespace daemon {
      * by the library. It will be used exclusively by the tape thread. */
     castor::mediachanger::MediaChangerFacade & m_mc;
     /** Reference to the tape server's parent process to report detailed status */
-    cta::daemon::TapedProxy & m_intialProcess;
+    cta::tape::daemon::TapedProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
     castor::server::ProcessCap &m_capUtils;
     /** hostname, used to report status of the drive */

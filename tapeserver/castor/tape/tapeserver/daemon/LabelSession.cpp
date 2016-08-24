@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   server::ProcessCap &capUtils,
-  cta::daemon::TapedProxy &tapeserver,
+  cta::tape::daemon::TapedProxy &tapeserver,
   mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   castor::log::Logger &log,

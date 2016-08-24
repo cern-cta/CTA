@@ -70,7 +70,7 @@ public:
    */
   LabelSession(
     server::ProcessCap &capUtils,
-    cta::daemon::TapedProxy &tapeserver,
+    cta::tape::daemon::TapedProxy &tapeserver,
     mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     castor::log::Logger &log,
@@ -99,7 +99,7 @@ private:
   /**
    * Proxy object representing the tapeserverd daemon.
    */
-  cta::daemon::TapedProxy &m_tapeserver;
+  cta::tape::daemon::TapedProxy &m_tapeserver;
     
   /**
    * The object representing the media changer.

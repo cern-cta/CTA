@@ -16,21 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HandlerInterface.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
-#include "tapeserver/daemon/DriveHandler.hpp"
+#include "SessionType.hpp"
+#include <sstream>
 
-namespace cta { namespace tape { namespace  session {
+namespace cta { namespace tape { namespace session {
 
-BaseHandlerInterface::BaseHandlerInterface(server::SocketPair& socketPair): 
-  m_socketPair(socketPair) {}
-
-void BaseHandlerInterface::announceSchedulingRound() {
-  daemon::serializers::WatchdogMessage message;
-  message.set_sessionstate((uint32_t)daemon::DriveHandler::SessionState::Scheduling);
-  message.set_sessiontype((uint32_t)daemon::DriveHandler::SessionType::Undetermined);
-  m_socketPair.send(message.SerializeAsString());
+std::string toString(SessionType type) {
+  switch(type) {
+  case SessionType::Archive:
+    return "Archive";
+  case SessionType::Retrieve:
+    return "Retrieve";
+  case SessionType::Verify:
+    return "Verify";
+  case SessionType::Label:
+    return "Label";
+  case SessionType::Undetermined:
+    return "Undetermined";
+  default:
+    {
+      std::stringstream st;
+      st << "UnknownType (" << ((uint32_t) type) << ")";
+      return st.str();
+    }
+  }
 }
 
+}}} // namespace cta::tape::session
 
-}}}  // namespace cta::tape::session

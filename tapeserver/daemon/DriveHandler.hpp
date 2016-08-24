@@ -23,6 +23,8 @@
 #include "TapedConfiguration.hpp"
 #include "common/threading/SocketPair.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "tapeserver/session/SessionState.hpp"
+#include "tapeserver/session/SessionType.hpp"
 #include <memory>
 
 namespace cta { namespace tape { namespace  daemon {
@@ -61,24 +63,9 @@ private:
   };
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession=PreviousSession::Initiating;
-public:
-  /** Possible states for the current session. */
-  enum class SessionState: uint32_t  {
-    PendingFork, ///< The subprocess is not started yet.
-    Cleaning,   ///< The subprocess is cleaning up tape left in drive.
-    Scheduling, ///< The subprocess is determining what to do next.
-    Mounting,   ///< The subprocess is mounting the tape.
-    Running,    ///< The subprocess is running the data transfer.
-    Unmounting, ///< The subprocess is unmounting the tape.
-    DrainingToDisk, ///< The subprocess is flushing the memory to disk (retrieves only)
-    ClosingDown, ///< The subprocess completed all tasks and will exit
-    Shutdown    ///< The subprocess is finished after a shutdown was requested. 
-  };
 private:
-  /** Session state to string */
-  std::string toString(SessionState state);
   /** Representation of the status of the current process. */
-  SessionState m_sessionState=SessionState::PendingFork;
+  session::SessionState m_sessionState=session::SessionState::PendingFork;
   /** Helper function to handle Scheduling state report */
   SubprocessHandler::ProcessingStatus processScheduling(serializers::WatchdogMessage & message);
   /** Helper function to handle Mounting state report */
@@ -91,18 +78,9 @@ private:
   SubprocessHandler::ProcessingStatus processDrainingToDisk(serializers::WatchdogMessage & message);
   /** Helper function to handle ClosingDown state report */
   SubprocessHandler::ProcessingStatus processClosingDown(serializers::WatchdogMessage & message);
-public:
-  /** Representation of the session direction */
-  enum class SessionType: uint32_t {
-    Undetermined, ///< The initial direction for the session is undetermined.
-    Archive,      ///< Direction is disk to tape.
-    Retrieve      ///< Direction is tape to disk.
-  };
 private:
-  /** Session type to string */
-  std::string toString(SessionType type);
   /** Current session's type */
-  SessionType m_sessionType=SessionType::Undetermined;
+  session::SessionType m_sessionType=session::SessionType::Undetermined;
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
   log::LogContext m_sessionEndContext;
@@ -111,7 +89,7 @@ private:
   /** Convenience type */
   typedef std::chrono::milliseconds Timeout;
   /** Values for the heartbeat or completion timeouts where applicable */
-  static const std::map<SessionState, Timeout> m_timeouts;
+  static const std::map<session::SessionState, Timeout> m_timeouts;
   /** Special timeout for data movement timeout during running */
   static const Timeout m_dataMovementTimeout;
   /** When did we see the last block movement? */

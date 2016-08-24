@@ -38,7 +38,7 @@ namespace daemon {
 //constructor
 //------------------------------------------------------------------------------  
 TapeServerReporter::TapeServerReporter(
-  cta::daemon::TapedProxy& tapeserverProxy,
+  cta::tape::daemon::TapedProxy& tapeserverProxy,
   const DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::daemon::VolumeInfo &volume,
@@ -94,12 +94,9 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------
 //gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------    
-  uint32_t TapeServerReporter::gotWriteMountDetailsFromClient(){
-    if(m_threadRunnig){
-      m_lc.log(LOG_ERR,"TapeServerReporter is running but calling a synchronous operation on it"
-      "Could cause a race with the underlying  zmq sockets in the proxy");
-    }
-    return m_tapeserverProxy.gotArchiveJobFromCTA(m_volume.vid, m_unitName, m_volume.nbFiles);
+  void TapeServerReporter::gotWriteMountDetailsFromClient(){
+    m_tapeserverProxy.reportState(cta::tape::session::SessionState::Mounting, 
+      cta::tape::session::SessionType::Archive, m_volume.vid);
   }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient

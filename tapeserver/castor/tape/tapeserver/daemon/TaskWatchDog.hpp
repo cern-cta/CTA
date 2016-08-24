@@ -110,7 +110,7 @@ protected:
   /*
    *  The proxy that will receive or heartbeat notifications
    */
-  cta::daemon::TapedProxy& m_initialProcess;
+  cta::tape::daemon::TapedProxy& m_initialProcess;
   
   /**
    * The drive unit name to report
@@ -265,7 +265,7 @@ protected:
    * @param lc To log the events
    */
   TaskWatchDog(double reportPeriod,double stuckPeriod,
-         cta::daemon::TapedProxy& initialProcess,
+         cta::tape::daemon::TapedProxy& initialProcess,
           const std::string & driveUnitName,
          log::LogContext& lc, double pollPeriod = 0.1):
   m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
@@ -393,7 +393,7 @@ public:
   
   /** Pass through constructor */
   RecallWatchDog(double periodToReport,double stuckPeriod,
-    cta::daemon::TapedProxy& initialProcess,
+    cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
     log::LogContext& lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
@@ -444,7 +444,7 @@ public:
   
   /** Pass through constructor */
   MigrationWatchDog(double periodToReport,double stuckPeriod,
-    cta::daemon::TapedProxy& initialProcess,
+    cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
     log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
