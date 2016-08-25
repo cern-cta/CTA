@@ -23,7 +23,9 @@
 namespace cta {
 namespace common {
 namespace dataStructures {
-  
+  /**
+   * This is used by both CLI and Frontend so it should work for SLC6 as well
+   */  
 enum FrontendReturnCode {
   ok,
   userErrorNoRetry,

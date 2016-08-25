@@ -17,7 +17,6 @@
  */
 
 #include "common/Configuration.hpp"
-#include "common/exception/Exception.hpp"
 #include "common/dataStructures/FrontendReturnCode.hpp"
 
 #include "XrdCl/XrdClCopyProcess.hh"
@@ -34,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdexcept>
 
 /**
  * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
@@ -123,20 +123,20 @@ int sendCommand(const int argc, const char **argv) {
   XrdCl::XRootDStatus status = copyProcess.AddJob(properties, &results);
   if(!status.IsOK())
   {
-    throw cta::exception::Exception(status.ToStr());
+    throw std::runtime_error(status.ToStr());
   }
   
   status = copyProcess.Prepare();
   if(!status.IsOK())
   {
-    throw cta::exception::Exception(status.ToStr());
+    throw std::runtime_error(status.ToStr());
   }
   
   XrdCl::CopyProgressHandler copyProgressHandler;
   status = copyProcess.Run(&copyProgressHandler);
   if(!status.IsOK())
   {
-    throw cta::exception::Exception(status.ToStr());
+    throw std::runtime_error(status.ToStr());
   }
   
   dup2(saved_stdout, STDOUT_FILENO); //re-redirecting std::out to the original (everything we want is in the pipe by now)
@@ -165,9 +165,6 @@ int sendCommand(const int argc, const char **argv) {
 int main(const int argc, const char **argv) {
   try {    
     return sendCommand(argc, argv);
-  } catch(cta::exception::Exception &ex) {
-    std::cerr << "Failed to execute the command. Reason: " << ex.getMessageValue() << std::endl;
-    return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
   } catch (std::exception &ex) {
     std::cerr << "Failed to execute the command. Reason: " << ex.what() << std::endl;
     return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
