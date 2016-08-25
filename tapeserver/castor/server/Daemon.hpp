@@ -22,8 +22,8 @@
 #pragma once
 
 #include "castor/exception/CommandLineNotParsed.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <ostream>
 

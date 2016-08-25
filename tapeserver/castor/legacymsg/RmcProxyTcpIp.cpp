@@ -68,8 +68,8 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeReadWrite(
     rqstBody.drvOrd = librarySlot.getDrvOrd();
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to mount tape in SCSI tape-library for read/write access"
       ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
@@ -92,8 +92,8 @@ void castor::legacymsg::RmcProxyTcpIp::dismountTape(const std::string &vid,
     rqstBody.force = 0;
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to dismount tape in SCSI tape-library"
       ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
@@ -121,8 +121,8 @@ int castor::legacymsg::RmcProxyTcpIp::connectToRmc()
   try {
     smartConnectSock.reset(io::connectWithTimeout(rmcHost, m_rmcPort,
       m_netTimeout));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << rmcHost
       << " rmcPort=" << RMC_PORT << ": " << ne.getMessage().str();
     throw ex;
@@ -141,8 +141,8 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcMountMsg(const int fd,
 
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to write RMC_SCSI_MOUNT message: "
       << ne.getMessage().str();
     throw ex;
@@ -159,8 +159,8 @@ castor::legacymsg::MessageHeader
 
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       << ne.getMessage().str();
     throw ex;
@@ -171,7 +171,7 @@ castor::legacymsg::MessageHeader
   unmarshal(bufPtr, bufLen, header);
 
   if(RMC_MAGIC != header.magic) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       " Header contains an invalid magic number: expected=0x" << std::hex <<
       RMC_MAGIC << " actual=0x" << header.magic;
@@ -191,8 +191,8 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcUnmountMsg(const int fd,
 
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to write RMC_SCSI_UNMOUNT message: "
       << ne.getMessage().str();
     throw ex;

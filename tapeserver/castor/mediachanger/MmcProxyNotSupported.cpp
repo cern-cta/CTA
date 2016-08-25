@@ -19,15 +19,15 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MmcProxyNotSupported.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyNotSupported::mountTapeReadOnly(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Manual mounting is not supported";
   throw ex;
 }
@@ -37,7 +37,7 @@ void castor::mediachanger::MmcProxyNotSupported::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyNotSupported::mountTapeReadWrite(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Manual mounting is not supported";
   throw ex;
 }
@@ -47,7 +47,7 @@ void castor::mediachanger::MmcProxyNotSupported::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyNotSupported::dismountTape(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Manual dismounting is not supported";
   throw ex;
 }
@@ -57,7 +57,7 @@ void castor::mediachanger::MmcProxyNotSupported::dismountTape(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyNotSupported::forceDismountTape(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Manual dismounting is not supported";
   throw ex;
 } 

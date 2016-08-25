@@ -43,7 +43,7 @@ public:
    * message.
    */
   TestingSyslogLogger(const std::string &programName)
-    throw(castor::exception::Exception, castor::exception::InvalidArgument):
+    throw(cta::exception::Exception, castor::exception::InvalidArgument):
     SyslogLogger(programName)  {
   }
 

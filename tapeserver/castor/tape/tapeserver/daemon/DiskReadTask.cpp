@@ -74,7 +74,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
               .add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
     if(migratingFileSize != sourceFile->size()){
-      throw castor::exception::Exception("Mismatch between size given by the client "
+      throw cta::exception::Exception("Mismatch between size given by the client "
               "and the real one");
     }
     currentErrorToCount = "";
@@ -118,7 +118,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
         // Transmit to the tape write task, which will finish the session
         m_nextTask.pushDataBlock(mb);
         // Fail the disk side.
-        throw castor::exception::Exception(erroMsg);
+        throw cta::exception::Exception(erroMsg);
       }
       currentErrorToCount = "";
       m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
@@ -141,7 +141,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     "Do nothing except circulating blocks");
     circulateAllBlocks(blockId,mb);
   }
-  catch(const castor::exception::Exception& e){
+  catch(const cta::exception::Exception& e){
     // Send the error for counting to the watchdog
     if (currentErrorToCount.size()) {
       watchdog.addToErrorCount(currentErrorToCount);
@@ -158,13 +158,12 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       mb=m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->markAsFailed(e.getMessageValue(),e.code());
+    mb->markAsFailed(e.getMessageValue(), 666); // TODO - Drop error code
     m_nextTask.pushDataBlock(mb);
     mb=NULL;
     
     LogContext::ScopedParam sp(lc, Param("blockID",blockId));
-    LogContext::ScopedParam sp0(lc, Param("exceptionCode",e.code()));
-    LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
+    LogContext::ScopedParam sp0(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(LOG_ERR,"Exception while reading a file");
     
     //deal here the number of mem block

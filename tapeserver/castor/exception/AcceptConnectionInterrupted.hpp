@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <sys/types.h>
 
@@ -33,7 +33,7 @@ namespace exception {
 /**
  * castor::io::acceptConnection() was interrupted.
  */
-class AcceptConnectionInterrupted : public castor::exception::Exception {
+class AcceptConnectionInterrupted : public cta::exception::Exception {
       
 public:
       

@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor { namespace exception {
 
     /**
      * Not an owner.
      */
-    class NotAnOwner : public castor::exception::Exception {
+    class NotAnOwner : public cta::exception::Exception {
       
     public:
       

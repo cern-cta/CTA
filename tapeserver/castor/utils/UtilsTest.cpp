@@ -300,7 +300,7 @@ TEST_F(castor_utils, testCopyStringNullDst) {
   char dummy[6] = "Dummy";
 
   ASSERT_THROW(copyString(NULL, 0, dummy),
-    castor::exception::Exception);
+    cta::exception::Exception);
 }
 
 TEST_F(castor_utils, testCopyString) {

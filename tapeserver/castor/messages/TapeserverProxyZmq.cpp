@@ -84,8 +84,8 @@ uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
     NbFilesOnTape reply;
     recvTapeReplyOrEx(m_serverSocket, reply);
     return reply.nbfiles();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of archive job from CTA: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
@@ -109,13 +109,13 @@ void castor::messages::TapeserverProxyZmq::gotRetrieveJobFromCTA(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of retrieve job from CTA: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
@@ -143,8 +143,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create RetrieveJobFromCTA frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -171,8 +171,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create ArchiveJobFromCTA frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -194,13 +194,13 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of tape mounted for recall: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
@@ -228,8 +228,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create TapeMountedForRecall frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -251,13 +251,13 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of tape mounted for migration: " <<
       "vid=" << vid << " unitName=" << unitName << ": " <<
@@ -285,8 +285,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create TapeMountedForMigration frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -308,13 +308,13 @@ void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of heartbeat: " <<
       "unitName=" << unitName << ": " <<
@@ -342,8 +342,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create Heartbeat frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -366,13 +366,13 @@ void  castor::messages::TapeserverProxyZmq::addLogParams(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to send tapeserver addLogParams: " <<
       "unitName=" << unitName << ": " <<
@@ -405,8 +405,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create AddLogParams frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -429,13 +429,13 @@ void  castor::messages::TapeserverProxyZmq::deleteLogParams(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to send tapeserver deleteLogParams: " <<
       "unitName=" << unitName << ": " <<
@@ -466,8 +466,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create DeleteLogParams frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -489,13 +489,13 @@ void castor::messages::TapeserverProxyZmq::labelError(
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to notify tapeserver of label-session error: " <<
       "unitName=" << unitName << ": " <<
@@ -523,8 +523,8 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     frame.serializeProtocolBufferIntoBody(body);
 
     return frame;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create LabelError frame: " <<
       ne.getMessage().str();
     throw ex;

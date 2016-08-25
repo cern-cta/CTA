@@ -42,8 +42,8 @@ castor::mediachanger::LibrarySlot *castor::mediachanger::LibrarySlotParser::
     // necessary
     const TapeLibraryType libraryType = getLibrarySlotType(str);
     return parse(libraryType, str);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to parse library slot from string"
       " representation: " << ne.getMessage().str();
     throw ex;
@@ -59,7 +59,7 @@ castor::mediachanger::TapeLibraryType castor::mediachanger::LibrarySlotParser::
   if(isManual(str)) return TAPE_LIBRARY_TYPE_MANUAL;
   if(isScsi(str))   return TAPE_LIBRARY_TYPE_SCSI;
 
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Cannot determine library slot type: str=" << str;
   throw ex;
 }
@@ -101,7 +101,7 @@ castor::mediachanger::LibrarySlot *castor::mediachanger::LibrarySlotParser::
   default:
     {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Unknown tape library type: libraryType=" <<
         libraryType;
       throw ex;
@@ -211,7 +211,7 @@ castor::mediachanger::ManualLibrarySlot *castor::mediachanger::
 castor::mediachanger::ScsiLibrarySlot *castor::mediachanger::
   LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
   if(str.find("smc")) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Library slot must start with smc: slot=" << str;
     throw ex;
@@ -220,14 +220,14 @@ castor::mediachanger::ScsiLibrarySlot *castor::mediachanger::
   const size_t drvOrdStrLen = str.length() - 3; // length of "smc" is 3
   const std::string drvOrdStr = str.substr(3, drvOrdStrLen);
   if(drvOrdStr.empty()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Missing drive ordinal: slot=" << str;
     throw ex;
   }
 
   if(!utils::isValidUInt(drvOrdStr)) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot: Drive ordinal " <<
       drvOrdStr << " is not a valid unsigned integer: slot=" << str;
     throw ex;

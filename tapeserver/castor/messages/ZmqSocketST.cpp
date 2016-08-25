@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/messages/messages.hpp"
 #include "castor/messages/ZmqSocketST.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -33,7 +33,7 @@ castor::messages::ZmqSocketST::ZmqSocketST(void *const zmqContext,
   m_zmqSocket = zmq_socket (zmqContext, socketType);
   if (NULL == m_zmqSocket) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_socket() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -60,7 +60,7 @@ void castor::messages::ZmqSocketST::close() {
 
   if(zmq_close(m_zmqSocket)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_close() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -73,7 +73,7 @@ void castor::messages::ZmqSocketST::close() {
 void castor::messages::ZmqSocketST::bind (const std::string &endpoint) {
   if(zmq_bind(m_zmqSocket, endpoint.c_str())) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_bind failed(): " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -85,7 +85,7 @@ void castor::messages::ZmqSocketST::bind (const std::string &endpoint) {
 void castor::messages::ZmqSocketST::connect(const std::string &endpoint) {
   if(zmq_connect(m_zmqSocket, endpoint.c_str())) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_connect() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -104,7 +104,7 @@ void castor::messages::ZmqSocketST::send(ZmqMsg &msg, const int flags) {
 void castor::messages::ZmqSocketST::send(zmq_msg_t *const msg, const int flags) {
   if(-1 == zmq_msg_send(msg, m_zmqSocket, flags)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_msg_send() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -123,7 +123,7 @@ void castor::messages::ZmqSocketST::recv(ZmqMsg &msg, const int flags) {
 void castor::messages::ZmqSocketST::recv(zmq_msg_t *const msg, int flags) {
   if(-1 == zmq_msg_recv (msg, m_zmqSocket, flags)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_msg_recv() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }

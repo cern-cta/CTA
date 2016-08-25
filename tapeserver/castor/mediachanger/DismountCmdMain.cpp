@@ -23,7 +23,6 @@
  
 #include "castor/acs/Constants.hpp"
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/mediachanger/DismountCmd.hpp"
 #include "castor/mediachanger/DismountCmdLine.hpp"
@@ -31,6 +30,7 @@
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/SmartZmqContext.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 #include "h/rmc_constants.h"
 
 #include <exception>
@@ -67,7 +67,7 @@ int main(const int argc, char *const *const argv) {
     const int rc = exceptionThrowingMain(argc, argv);
     google::protobuf::ShutdownProtobufLibrary();
     return rc;
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
     errorMessage = se.what();
@@ -127,7 +127,7 @@ static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ) {
   void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == zmqContext) {
     const std::string message = utils::errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
     throw ex;
   }

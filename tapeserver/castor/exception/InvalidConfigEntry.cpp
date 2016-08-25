@@ -32,7 +32,7 @@
 castor::exception::InvalidConfigEntry::InvalidConfigEntry(
   const char *const entryCategory, const char *const entryName,
   const char *const entryValue) :
-  castor::exception::Exception(EINVAL), m_entryCategory(entryCategory),
+  cta::exception::Exception(), m_entryCategory(entryCategory),
   m_entryName(entryName), m_entryValue(entryValue) {
 }
 

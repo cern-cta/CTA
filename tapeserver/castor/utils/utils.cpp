@@ -210,7 +210,7 @@ void castor::utils::toUpper(std::string &str) {
 void castor::utils::getTimeOfDay(struct timeval *const tv)  {
   if(0 != gettimeofday(tv, NULL)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Call to gettimeofday() failed: " <<
       errnoToString(savedErrno);
     throw ex;
@@ -280,7 +280,7 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
   const std::string &src) {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
 
     ex.getMessage() << __FUNCTION__
       << ": Pointer to destination string is NULL";
@@ -289,7 +289,7 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
   }
 
   if(src.length() >= dstSize) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
 
     ex.getMessage() << __FUNCTION__
       << ": Source string is longer than destination.  Source length: "
@@ -369,7 +369,7 @@ bool castor::utils::getDumpableProcessAttribute() {
   case -1:
     {
       const std::string errStr = errnoToString(errno);
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to get the dumpable attribute of the process: " << errStr;
       throw ex;
@@ -379,7 +379,7 @@ bool castor::utils::getDumpableProcessAttribute() {
   case 2: return true;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to get the dumpable attribute of the process"
         ": Unknown value returned by prctl(): rc=" << rc;
@@ -397,7 +397,7 @@ bool castor::utils::getDumpableProcessAttribute() {
   case -1:
     {
       const std::string errStr = errnoToString(errno);
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to set the dumpable attribute of the process: " << errStr;
       throw ex;
@@ -405,7 +405,7 @@ bool castor::utils::getDumpableProcessAttribute() {
   case 0: return;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to set the dumpable attribute of the process"
         ": Unknown value returned by prctl(): rc=" << rc;
@@ -455,8 +455,8 @@ void castor::utils::setProcessNameAndCmdLine(char *const argv0,
   try {
     setProcessName(name);
     setCmdLine(argv0, name);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to set process name and command-line"
       ": " << ne.getMessage().str();
   }
@@ -472,7 +472,7 @@ void castor::utils::setProcessName(const std::string &name) {
 
   if(prctl(PR_SET_NAME, buf)) {
     const std::string errMsg = errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to set process name: " << errMsg;
     throw ex;
   }
@@ -495,7 +495,7 @@ std::string castor::utils::getHostName() {
   char buf[256];
   if(gethostname(buf, sizeof(buf))) {
     const std::string errnoStr = errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Call to gethostname() failed: " << errnoStr;
     throw ex;
   }

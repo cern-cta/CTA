@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/System.hpp"
@@ -38,6 +37,7 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "common/exception/Exception.hpp"
 #include "scheduler/RetrieveMount.hpp"
 
 #include <google/protobuf/stubs/common.h>
@@ -203,7 +203,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
         log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
         lc.log(LOG_ERR, "Notified client of end session with error");
-      } catch(castor::exception::Exception & ex) {
+      } catch(cta::exception::Exception & ex) {
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
         lc.log(LOG_ERR, "Failed to notified client of end session with error");
       }
@@ -274,7 +274,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       // Initialise with something obviously wrong.
       try {
         tsr.gotWriteMountDetailsFromClient();
-      } catch (castor::exception::Exception & e) {
+      } catch (cta::exception::Exception & e) {
         log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
         lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
         mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666);
@@ -315,7 +315,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         archiveMount->complete();
         log::LogContext::ScopedParam sp1(lc, log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
         lc.log(LOG_ERR, "Notified client of end session with error");
-      } catch(castor::exception::Exception & ex) {
+      } catch(cta::exception::Exception & ex) {
         log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
         lc.log(LOG_ERR, "Failed to notified client of end session with error");
       }
@@ -361,7 +361,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
-  } catch (castor::exception::Exception & e) {
+  } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
@@ -392,7 +392,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
     if (drive.get()) drive->config = driveConfig;
     return drive.release();
-  } catch (castor::exception::Exception & e) {
+  } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
     log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));

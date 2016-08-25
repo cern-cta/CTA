@@ -31,4 +31,4 @@
 // -----------------------------------------------------------------------
 castor::exception::NoEntry::NoEntry() :
   // No backtrace for this exception
-  castor::exception::Exception(ENOENT, "", false) {}
+  cta::exception::Exception("", false) {}

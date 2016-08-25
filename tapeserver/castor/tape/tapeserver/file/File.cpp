@@ -67,7 +67,7 @@ namespace castor {
         }
         
         if(m_drive.isTapeBlank()) {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
           throw ex;
         }
@@ -89,14 +89,14 @@ namespace castor {
               }
               break;
             case SCSI::logicBlockProtectionMethod::ReedSolomon:
-              throw castor::exception::Exception("In ReadSession::ReadSession(): "
+              throw cta::exception::Exception("In ReadSession::ReadSession(): "
                   "ReedSolomon LBP method not supported");
             case SCSI::logicBlockProtectionMethod::DoNotUse:
               m_drive.disableLogicalBlockProtection();
               m_detectedLbp = false;
               break;
             default:
-              throw castor::exception::Exception("In ReadSession::ReadSession(): "
+              throw cta::exception::Exception("In ReadSession::ReadSession(): "
                   "unknown LBP method");
           }
         }
@@ -258,7 +258,7 @@ namespace castor {
           std::stringstream ex_str;
           ex_str << "[ReadFile::positionByBlockID] - Block id larger than the supported uint32_t limit: " 
                  << fileToRecall.selectedTapeFile().blockId;
-          throw castor::exception::Exception(ex_str.str());
+          throw cta::exception::Exception(ex_str.str());
         }
        // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
         const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId ? 
@@ -400,7 +400,7 @@ namespace castor {
         }
         
         if(m_drive.isTapeBlank()) {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() << "[WriteSession::WriteSession()] - Tape is blank, cannot proceed with constructing the WriteSession";
           throw ex;
         }
@@ -418,7 +418,7 @@ namespace castor {
               if (m_useLbp) {
                 m_drive.enableCRC32CLogicalBlockProtectionReadWrite();
               } else {
-                castor::exception::Exception ex;
+                cta::exception::Exception ex;
                 ex.getMessage() << "[WriteSession::WriteSession()] - Tape is "
                   "labeled with crc32c logical block protection but tapserverd "
                   "started without LBP support";
@@ -426,14 +426,14 @@ namespace castor {
               }
               break;
             case SCSI::logicBlockProtectionMethod::ReedSolomon:
-              throw castor::exception::Exception("In WriteSession::WriteSession(): "
+              throw cta::exception::Exception("In WriteSession::WriteSession(): "
                   "ReedSolomon LBP method not supported");
             case SCSI::logicBlockProtectionMethod::DoNotUse:
               m_drive.disableLogicalBlockProtection();
               m_detectedLbp = false;
               break;
             default:
-              throw castor::exception::Exception("In WriteSession::WriteSession(): "
+              throw cta::exception::Exception("In WriteSession::WriteSession(): "
                   "unknown LBP method");
           }
         }
@@ -491,7 +491,7 @@ namespace castor {
             return "LBP_Off_but_present";
           else if (!m_detectedLbp)
             return "LBP_Off";
-          throw castor::exception::Exception("In WriteSession::getLBPMode(): unexpected state");
+          throw cta::exception::Exception("In WriteSession::getLBPMode(): unexpected state");
       }
       
       void WriteSession::setHostName()  {
@@ -520,7 +520,7 @@ namespace castor {
           resolv.close();
         }
         catch (const std::ifstream::failure& e) {
-          throw castor::exception::Exception(std::string("In /etc/resolv.conf : error opening/closing or can't find search domain [")+e.what()+"]");
+          throw cta::exception::Exception(std::string("In /etc/resolv.conf : error opening/closing or can't find search domain [")+e.what()+"]");
         }
       }
 

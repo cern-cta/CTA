@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -33,9 +33,9 @@ namespace daemon {
   /**
    * Used to signal an error has happened during the migration process 
    */
-  class ErrorFlag : public castor::exception::Exception {
+  class ErrorFlag : public cta::exception::Exception {
   public:
-    ErrorFlag(): castor::exception::Exception("Internal exception, should not be seen") {}
+    ErrorFlag(): cta::exception::Exception("Internal exception, should not be seen") {}
     virtual ~ErrorFlag() throw() {}
   };
 

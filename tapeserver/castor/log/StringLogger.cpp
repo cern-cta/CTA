@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 castor::log::StringLogger::StringLogger(
   const std::string &programName)
-  throw(castor::exception::Exception, castor::exception::InvalidArgument):
+  throw(cta::exception::Exception, castor::exception::InvalidArgument):
   Logger(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_priorityToText(generatePriorityToTextMap()) {
@@ -73,7 +73,7 @@ std::map<int, std::string>
     m[LOG_INFO]    = "Info";
     m[LOG_DEBUG]   = "Debug";
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<
       se.what();
     throw ex;
@@ -89,21 +89,21 @@ void castor::log::StringLogger::initMutex() {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
       utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
       utils::errnoToString(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
-     castor::exception::Exception ex;
+     cta::exception::Exception ex;
      ex.getMessage() << "Failed to initialize m_mutex: " <<
        utils::errnoToString(rc);
      throw ex;
@@ -111,7 +111,7 @@ void castor::log::StringLogger::initMutex() {
   rc = pthread_mutexattr_destroy(&attr);
   if(0 != rc) {
     pthread_mutex_destroy(&m_mutex);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
       utils::errnoToString(rc);
     throw ex;

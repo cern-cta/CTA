@@ -28,5 +28,5 @@
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::MissingOperand::MissingOperand():
-  castor::exception::Exception(666) {
+  cta::exception::Exception() {
 }

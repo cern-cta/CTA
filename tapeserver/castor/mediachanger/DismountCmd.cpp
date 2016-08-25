@@ -50,7 +50,7 @@ int castor::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
   try {
     m_cmdLine = DismountCmdLine(argc, argv);
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     m_err << ex.getMessage().str() << std::endl;
     m_err << std::endl;
     m_err << m_cmdLine.getUsage() << std::endl;

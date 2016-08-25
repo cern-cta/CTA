@@ -21,10 +21,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/messages.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // checkHashValueOfBody
@@ -32,7 +32,7 @@
 void castor::messages::Frame::checkHashValueOfBody() const {
   const std::string bodyHash = castor::messages::computeSHA1Base64(body);
   if(bodyHash != header.bodyhashvalue()){
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Hash value of frame body does match the value stored"
       " in the header: header.bodyhashvalue=" << header.bodyhashvalue() <<
       " bodyHash=" << bodyHash;
@@ -46,13 +46,13 @@ void castor::messages::Frame::checkHashValueOfBody() const {
 void castor::messages::Frame::serializeHeaderToZmqMsg(ZmqMsg &msg) const {
   try {
     if(!header.IsInitialized()) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Frame header is not initialized";
       throw ex;
     }
 
     if(header.ByteSize() != (int)msg.size()) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Size of frame header does not match that of ZMQ"
         " message: header.ByteSize()=" << header.ByteSize() << " msg.size()="
         << msg.size();
@@ -60,12 +60,12 @@ void castor::messages::Frame::serializeHeaderToZmqMsg(ZmqMsg &msg) const {
     }
 
     if(!header.SerializeToArray(msg.getData(), header.ByteSize())) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "header.SerializeToArray() returned false";
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to serialize frame header to ZMQ message: " <<
       ne.getMessage().str();
     throw ex;
@@ -77,7 +77,7 @@ void castor::messages::Frame::serializeHeaderToZmqMsg(ZmqMsg &msg) const {
 //------------------------------------------------------------------------------
 void castor::messages::Frame::parseZmqMsgIntoHeader(const ZmqMsg &msg) {
   if(!header.ParseFromArray(msg.getData(), msg.size())) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to parse ZMQ message into frame header: "
       "header.ParseFromArray() returned false";
     throw ex;
@@ -91,14 +91,14 @@ void castor::messages::Frame::serializeProtocolBufferIntoBody(
   const google::protobuf::Message &protocolBuffer) {
   try {
     if(!protocolBuffer.SerializeToString(&body)) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "SerializeToString() returned false";
       throw ex;
     }
 
     calcAndSetHashValueOfBody();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Frame failed to serialize protocol buffer " <<
       castor::utils::demangledNameOf(protocolBuffer) << " into frame body: "
       << ne.getMessage().str();
@@ -112,7 +112,7 @@ void castor::messages::Frame::serializeProtocolBufferIntoBody(
 void castor::messages::Frame::parseBodyIntoProtocolBuffer(
   google::protobuf::Message &protocolBuffer) const {
   if(!protocolBuffer.ParseFromString(body)) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Frame failed to parse contents of enclosed ZMQ"
       " message into protocol buffer " <<
       castor::utils::demangledNameOf(protocolBuffer)
@@ -127,8 +127,8 @@ void castor::messages::Frame::parseBodyIntoProtocolBuffer(
 void castor::messages::Frame::calcAndSetHashValueOfBody() {
   try {
     header.set_bodyhashvalue(messages::computeSHA1Base64(body));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Frame failed to calculate the hash value of the frame"
       "body and store it in the header: " << ne.getMessage().str();
     throw ex;

@@ -69,7 +69,7 @@ protected:
       std::string errorMessage("Call to socket() failed: ");
       errorMessage += strErrBuf;
 
-      castor::exception::Exception ex(ECANCELED);
+      cta::exception::Exception ex;
       ex.getMessage() << errorMessage;
       throw ex;
     }
@@ -100,7 +100,7 @@ protected:
         std::string errorMessage("Call to listen() failed: ");
         errorMessage += strErrBuf;
 
-        castor::exception::Exception ex(ECANCELED);
+        cta::exception::Exception ex;
         ex.getMessage() << errorMessage;
         throw ex;
       }

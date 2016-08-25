@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <time.h>
 #include <stdio.h>
 
@@ -44,25 +44,25 @@ void tapeFile::VOL1::fill(std::string VSN,
 
 void tapeFile::VOL1::verify() {
   if (cmpString(m_label, "VOL1"))
-    throw castor::exception::Exception(std::string("Failed verify for the VOL1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the VOL1: ") +
           tapeFile::toString(m_label));
   if (!cmpString(m_VSN, ""))
-    throw castor::exception::Exception(std::string("Failed verify for the VSN: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
   if (cmpString(m_lblStandard, "3"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the label standard: ") +
           tapeFile::toString(m_lblStandard));
 
   /* now we verify all other fields which must be spaces */
   if (cmpString(m_accessibility, ""))
-    throw castor::exception::Exception("accessibility is not empty");
+    throw cta::exception::Exception("accessibility is not empty");
   if (cmpString(m_reserved1, ""))
-    throw castor::exception::Exception("reserved1 is not empty");
+    throw cta::exception::Exception("reserved1 is not empty");
   if (cmpString(m_implID, ""))
-    throw castor::exception::Exception("implID is not empty");
+    throw cta::exception::Exception("implID is not empty");
   if (cmpString(m_reserved2, ""))
-    throw castor::exception::Exception("reserved2 is not empty");
+    throw cta::exception::Exception("reserved2 is not empty");
 }
 
 void tapeFile::HDR1EOF1::fillCommon(
@@ -91,44 +91,44 @@ void tapeFile::HDR1EOF1::verifyCommon()
   const  {
 
   if (!cmpString(m_fileId, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the fileId: ") +
           tapeFile::toString(m_fileId));
   if (!cmpString(m_VSN, ""))
-    throw castor::exception::Exception(std::string("Failed verify for the VSN: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
   if (cmpString(m_fSec, "0001"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the fSec: ") +
           tapeFile::toString(m_fSec));
   if (!cmpString(m_fSeq, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the fSeq: ") +
           tapeFile::toString(m_fSeq));
   if (cmpString(m_genNum, "0001"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the genNum: ") +
           tapeFile::toString(m_genNum));
   if (cmpString(m_verNumOfGen, "00"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the verNumOfGen: ") +
           tapeFile::toString(m_verNumOfGen));
   if (!cmpString(m_creationDate, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the creationDate: ") +
           tapeFile::toString(m_creationDate));
   if (!cmpString(m_expirationDate, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the expirationDate: ") +
           tapeFile::toString(m_expirationDate));
   if (cmpString(m_accessibility, ""))
-    throw castor::exception::Exception("accessibility is not empty");
+    throw cta::exception::Exception("accessibility is not empty");
   if (!cmpString(m_sysCode, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the sysCode: ") +
           tapeFile::toString(m_sysCode));
   if (cmpString(m_reserved, ""))
-    throw castor::exception::Exception("reserved is not empty");
+    throw cta::exception::Exception("reserved is not empty");
 }
 
 void tapeFile::HDR1::fill(
@@ -144,10 +144,10 @@ void tapeFile::HDR1::fill(
 
 void tapeFile::HDR1::verify() const  {
   if (cmpString(m_label, "HDR1"))
-    throw castor::exception::Exception(std::string("Failed verify for the HDR1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the HDR1: ") +
           tapeFile::toString(m_label));
   if (cmpString(m_blockCount, "000000"))
-    throw castor::exception::Exception(std::string("Failed verify for the blockCount: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the blockCount: ") +
           tapeFile::toString(m_blockCount));
 
   verifyCommon();
@@ -164,14 +164,14 @@ void tapeFile::HDR1PRELABEL::verify()
   const  {
 
   if (cmpString(m_label, "HDR1"))
-    throw castor::exception::Exception(std::string("Failed verify for the HDR1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the HDR1: ") +
           tapeFile::toString(m_label));
   if (cmpString(m_blockCount, "000000"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the blockCount: ") +
           tapeFile::toString(m_blockCount));
   if (cmpString(m_fileId, "PRELABEL"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the PRELABEL: ") +
           tapeFile::toString(m_fileId));
 
@@ -189,10 +189,10 @@ void tapeFile::EOF1::fill(
 
 void tapeFile::EOF1::verify() const  {
   if (cmpString(m_label, "EOF1"))
-    throw castor::exception::Exception(std::string("Failed verify for the EOF1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the EOF1: ") +
           tapeFile::toString(m_label));
   if (!cmpString(m_blockCount, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the blockCount: ") +
           tapeFile::toString(m_blockCount));
 
@@ -215,27 +215,27 @@ void tapeFile::HDR2EOF2::fillCommon(int blockLength, bool driveHasCompression) {
 void tapeFile::HDR2EOF2::verifyCommon() 
   const  {
   if (cmpString(m_recordFormat, "F"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the recordFormat: ") +
           tapeFile::toString(m_recordFormat));
   if (!cmpString(m_blockLength, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the blockLength: ") +
           tapeFile::toString(m_blockLength));
   if (!cmpString(m_recordLength, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the recordLength: ") +
           tapeFile::toString(m_recordLength));
   if (cmpString(m_aulId, "00"))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the aulId: ") +
           tapeFile::toString(m_aulId));
   if (cmpString(m_reserved1, ""))
-    throw castor::exception::Exception("reserved1 is not empty");
+    throw cta::exception::Exception("reserved1 is not empty");
   if (cmpString(m_reserved2, ""))
-    throw castor::exception::Exception("reserved2 is not empty");
+    throw cta::exception::Exception("reserved2 is not empty");
   if (cmpString(m_reserved3, ""))
-    throw castor::exception::Exception("reserved3 is not empty");
+    throw cta::exception::Exception("reserved3 is not empty");
 }
 
 void tapeFile::HDR2::fill(int blockLength, bool driveHasCompression) {
@@ -245,7 +245,7 @@ void tapeFile::HDR2::fill(int blockLength, bool driveHasCompression) {
 }
 void tapeFile::HDR2::verify() const  {
   if (cmpString(m_label, "HDR2"))
-    throw castor::exception::Exception(std::string("Failed verify for the HDR2: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the HDR2: ") +
           tapeFile::toString(m_label));
 
   verifyCommon();
@@ -259,7 +259,7 @@ void tapeFile::EOF2::fill(int blockLength, bool driveHasCompression) {
 
 void tapeFile::EOF2::verify() const  {
   if (cmpString(m_label, "EOF2"))
-    throw castor::exception::Exception(std::string("Failed verify for the EOF2: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the EOF2: ") +
           tapeFile::toString(m_label));
 
   verifyCommon();
@@ -284,35 +284,35 @@ void tapeFile::UHL1UTL1::fillCommon(int fSeq,
 void tapeFile::UHL1UTL1::verifyCommon() 
   const {  
   if (!cmpString(m_actualfSeq, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the actualfSeq: ") +
           tapeFile::toString(m_actualfSeq));
   if (!cmpString(m_actualBlockSize, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the actualBlockSize: ") +
           tapeFile::toString(m_actualBlockSize));
   if (!cmpString(m_actualRecordLength, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for the actualRecordLength: ") +
           tapeFile::toString(m_actualRecordLength));
   if (!cmpString(m_site, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for site: ") +
           tapeFile::toString(m_site));
   if (!cmpString(m_moverHost, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for moverHost: ") +
           tapeFile::toString(m_moverHost));
   if (!cmpString(m_driveVendor, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for driveVendor: ") +
           tapeFile::toString(m_driveVendor));
   if (!cmpString(m_driveModel, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for driveModel: ") +
           tapeFile::toString(m_driveModel));
   if (!cmpString(m_serialNumber, ""))
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
           std::string("Failed verify for serialNumber: ") +
           tapeFile::toString(m_serialNumber));
 }
@@ -330,7 +330,7 @@ void tapeFile::UHL1::fill(int fSeq,
 
 void tapeFile::UHL1::verify() const  {
   if (cmpString(m_label, "UHL1"))
-    throw castor::exception::Exception(std::string("Failed verify for the UHL1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the UHL1: ") +
           tapeFile::toString(m_label));
 
   verifyCommon();
@@ -349,7 +349,7 @@ void tapeFile::UTL1::fill(int fSeq,
 
 void tapeFile::UTL1::verify() const  {
   if (cmpString(m_label, "UTL1"))
-    throw castor::exception::Exception(std::string("Failed verify for the UTL1: ") +
+    throw cta::exception::Exception(std::string("Failed verify for the UTL1: ") +
           tapeFile::toString(m_label));
 
   verifyCommon();

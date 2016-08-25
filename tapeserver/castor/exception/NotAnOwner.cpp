@@ -28,5 +28,5 @@
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::NotAnOwner::NotAnOwner():
-  castor::exception::Exception(666) {
+  cta::exception::Exception() {
 }

@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // enterTpconfigLines
@@ -46,7 +46,7 @@ void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLine(
 
     // Enforce one TPCONFIG line per drive
     if(end() != itor) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Invalid TPCONFIG line"
         ": There should only be one TPCONFIG line per tape drive: unitName=" <<
         line.unitName;
@@ -59,8 +59,8 @@ void castor::tape::tapeserver::daemon::DriveConfigMap::enterTpconfigLine(
       line.logicalLibrary,
       line.devFilename,
       line.librarySlot);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to enter TPCONFIG line into drive map: " <<
       ne.getMessage().str();
     throw ex;

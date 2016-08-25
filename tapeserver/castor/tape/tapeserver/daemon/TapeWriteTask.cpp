@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
@@ -34,6 +33,7 @@
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -152,7 +152,7 @@ namespace daemon {
       // and go into a degraded mode operation.
       throw;
     }
-    catch(const castor::exception::Exception& e){
+    catch(const cta::exception::Exception& e){
       //we can end up there because
       //we failed to open the WriteFile
       //we received a bad block or a block written failed
@@ -189,7 +189,7 @@ namespace daemon {
       // if of type Errnum AND the errorCode is ENOSPC, we will propagate it.
       // This is how we communicate the fact that a tape is full to the client.
       // We also change the log level to INFO for the case of end of tape.
-      int errorCode = e.code();
+      int errorCode = 666; // TODO - Remove error code
       int errorLevel = LOG_ERR;
       try {
         const castor::exception::Errnum & errnum = 
@@ -234,21 +234,17 @@ namespace daemon {
       };
       tape::utils::suppresUnusedVariable(sp);
       std::string errorMsg;
-      int errorCode;
       if(mb->isFailed()){
         errorMsg=mb->errorMsg();
-        errorCode=mb->errorCode();
       } else if (mb->isCanceled()) {
         errorMsg="Received a block marked as cancelled";
-        errorCode=666;
       } else{
         errorMsg="Mismatch between expected and received file id or blockid";
-        errorCode=666;
       }
       // Set the error flag for the session (in case of mismatch)
       m_errorFlag.set();
       lc.log(LOG_ERR,errorMsg);
-      throw castor::exception::Exception(errorCode,errorMsg);
+      throw cta::exception::Exception(errorMsg);
     }
   }
 //------------------------------------------------------------------------------
@@ -276,9 +272,8 @@ namespace daemon {
        output.reset(new tape::tapeFile::WriteFile(&session, *m_archiveJob,tapeBlockSize));
        lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
      }
-     catch(const castor::exception::Exception & ex){
-       log::LogContext::ScopedParam sp(lc, log::Param("exceptionCode",ex.code()));
-       log::LogContext::ScopedParam sp1(lc, log::Param("exceptionMessage", ex.getMessageValue()));
+     catch(const cta::exception::Exception & ex){
+       log::LogContext::ScopedParam sp(lc, log::Param("exceptionMessage", ex.getMessageValue()));
        lc.log(LOG_ERR, "Failed to open tape file for writing");
        throw;
      }

@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
@@ -33,6 +32,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <memory>
 
@@ -71,7 +71,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   try {
     return exceptionThrowingExecute();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
     errorMessage = se.what();
@@ -197,7 +197,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   }
@@ -248,8 +248,8 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
   try {
     drive.waitUntilReady(timeoutSecond);
     m_log(LOG_INFO, "Label session loaded tape", params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to wait for tape to be loaded: " <<
       ne.getMessage().str();
     throw ex;
@@ -365,8 +365,8 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
     m_log(LOG_INFO, "Label session unloading tape", params);
     drive.unloadTape();
     m_log(LOG_INFO, "Label session unloaded tape", params);
-  } catch (castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch (cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Label session failed to unload tape: " <<
       ne.getMessage().str();
     throw ex;
@@ -400,8 +400,8 @@ void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
     } else {
       m_log(LOG_INFO, "Label session dismounted tape", params);
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Label session failed to dismount tape: " <<
       ne.getMessage().str();
     throw ex;

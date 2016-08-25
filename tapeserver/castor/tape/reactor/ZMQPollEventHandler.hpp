@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <zmq.h>
 

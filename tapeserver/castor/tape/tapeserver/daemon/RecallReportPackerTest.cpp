@@ -149,7 +149,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   rrp.reportCompletedJob(std::move(job2));
 
   const std::string error_msg = "ERROR_TEST_MSG";
-  const castor::exception::Exception ex(error_msg);
+  const cta::exception::Exception ex(error_msg);
   job3->failureMessage = ex.getMessageValue();
   rrp.reportFailedJob(std::move(job3));
   

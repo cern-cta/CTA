@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor { namespace exception {
 
     /**
      * BadAlloc.
      */
-    class BadAlloc : public castor::exception::Exception {
+    class BadAlloc : public cta::exception::Exception {
       
     public:
       

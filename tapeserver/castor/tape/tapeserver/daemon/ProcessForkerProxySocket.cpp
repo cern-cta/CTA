@@ -71,7 +71,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
   if(0 != reply.value()) {
     // Should never get here
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to request ProcessForker to stop gracefully: "
       "Received a non-zero return value: value=" << reply.value();
     throw ex;

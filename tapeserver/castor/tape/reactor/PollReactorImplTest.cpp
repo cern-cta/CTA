@@ -59,7 +59,7 @@ TEST_F(castor_tape_reactor_PollReactorImplTest, registerTwiceTheSameHandler) {
   castor::tape::reactor::DummyPollEventHandler *handler =
     new castor::tape::reactor::DummyPollEventHandler(1234,false);
   reactor.registerHandler(handler);
-  ASSERT_THROW(reactor.registerHandler(handler), castor::exception::Exception);
+  ASSERT_THROW(reactor.registerHandler(handler), cta::exception::Exception);
 }
 
 } // namespace unitTests

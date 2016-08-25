@@ -96,7 +96,7 @@ void DiskWriteThreadPool::waitThreads() {
 void DiskWriteThreadPool::push(DiskWriteTask *t) { 
   {
     if(NULL==t){
-      throw castor::exception::Exception("NULL task should not been directly pushed into DiskWriteThreadPool");
+      throw cta::exception::Exception("NULL task should not been directly pushed into DiskWriteThreadPool");
     }
   }
   castor::server::MutexLocker ml(&m_pusherProtection);

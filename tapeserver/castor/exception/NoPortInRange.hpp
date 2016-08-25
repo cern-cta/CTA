@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <string>
 
@@ -34,7 +34,7 @@ namespace exception {
 /**
  * No port in range exception.
  */
-class NoPortInRange : public castor::exception::Exception {
+class NoPortInRange : public cta::exception::Exception {
   
 public:
   

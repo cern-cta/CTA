@@ -24,12 +24,12 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeConstants.h"
+#include "common/exception/Exception.hpp"
 
 #include <errno.h>
 #include <stdint.h>

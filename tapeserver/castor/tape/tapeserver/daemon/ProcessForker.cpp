@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/Constants.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyLog.hpp"
@@ -48,6 +47,7 @@
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "catalogue/CatalogueFactory.hpp"
+#include "common/exception/Exception.hpp"
 #include "rdbms/Sqlite.hpp"
 #include "rdbms/SqliteConn.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -125,7 +125,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::execute() throw() {
 bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
   try {
     return handlePendingMsgs() && handlePendingSignals();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "ProcessForker failed to handle events", params);
   } catch(std::exception &se) {
@@ -203,8 +203,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
   try {
     const int timeout = 10; // Timeout in seconds
     frame = ProcessForkerUtils::readFrame(m_cmdSocket, timeout);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle message: " << ne.getMessage().str();
     throw ex;
   }
@@ -217,12 +217,12 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
   MsgHandlerResult result;
   try {
     result = dispatchMsgHandler(frame);
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     log::Param("message", ex.getMessage().str());
     m_log(LOG_ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
       params);
     messages::Exception msg;
-    msg.set_code(ex.code());
+    msg.set_code(666); // TODO - Remove error code
     msg.set_message(ex.getMessage().str());
     ProcessForkerUtils::writeFrame(m_cmdSocket, msg);
     return true; // The main event loop should continue
@@ -273,7 +273,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     return handleStopProcessForkerMsg(frame);
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
         ": Unknown message type: type=" << frame.type;
       throw ex;
@@ -325,7 +325,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
     try {
       exit(runCleanerSession(rqst));
-    } catch(castor::exception::Exception &ne) {
+    } catch(cta::exception::Exception &ne) {
       std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Cleaner session failed", params);
     } catch(std::exception &ne) {
@@ -378,7 +378,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
     try {
       exit(runDataTransferSession(rqst));
-    } catch(castor::exception::Exception &ne) {
+    } catch(cta::exception::Exception &ne) {
       std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Data-transfer session failed", params);
     } catch(std::exception &ne) {
@@ -432,7 +432,7 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
     try {
       exit(runLabelSession(rqst));
-    } catch(castor::exception::Exception &ne) {
+    } catch(cta::exception::Exception &ne) {
       std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
       m_log(LOG_ERR, "Label session failed", params);
     } catch(std::exception &ne) {
@@ -510,14 +510,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rqst.waitmediaindrive(),
       rqst.waitmediaindrivetimeout());
     return cleanerSession.execute();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << se.what();
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
@@ -590,9 +590,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       capUtils,
       m_config.dataTransfer,
       scheduler));
-  } catch (castor::exception::Exception & ex) {
+  } catch (cta::exception::Exception & ex) {
     params.push_back(log::Param("errorMessage", ex.getMessageValue()));
-    params.push_back(log::Param("errorCode", ex.code()));
     m_log(LOG_ERR, "Failed to set up the data-transfer session", params);
     throw;
   } catch (...) {
@@ -602,14 +601,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   try {
     return dataTransferSession->execute();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << se.what();
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
@@ -623,7 +622,7 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
   void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == zmqContext) {
     const std::string message = castor::utils::errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
       " context: " << message;
     throw ex;
@@ -648,8 +647,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handlePendingSignals() {
     // For now there are no signals that require a gracefully shutdown of the
     // main loop of the ProcessForker
     return true; // The main event loop should continue
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle pending signals: " <<
       ne.getMessage().str();
     throw ex;
@@ -675,18 +674,18 @@ void castor::tape::tapeserver::daemon::ProcessForker::handleReapedZombie(
   try {
     logChildProcessTerminated(pid, waitpidStat);
     notifyTapeDaemonOfTerminatedProcess(pid, waitpidStat);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
       ne.getMessage().str();
     throw ex;
   } catch(std::exception &ne) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
       ne.what();
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle reaped zombie: pid=" << pid <<
       ": Caught an unknown exception";
     throw ex;
@@ -739,12 +738,12 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     } else if(WIFSIGNALED(waitpidStat)) {
       notifyTapeDaemonOfCrashedProcess(pid, waitpidStat);
     } else {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Process died of unknown causes" << pid;
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process termination"
       ": pid=" << pid << ": " << ne.getMessage().str();
     throw ex;
@@ -769,18 +768,18 @@ void castor::tape::tapeserver::daemon::ProcessForker::
       params);
 
     ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process exit: " <<
       ne.getMessage().str();
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process exit: " <<
       se.what();
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process exit: "
       "Caught an unknown exception";
     throw ex;
@@ -803,18 +802,18 @@ void castor::tape::tapeserver::daemon::ProcessForker::
       params);
 
     ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process crash: " <<
       ne.getMessage().str();
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process crash: " <<
       se.what();
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to notify TapeDaemon of process crash: "
       "Caught an unknown exception";
     throw ex;
@@ -870,14 +869,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rqst.lbp(),
       m_config.labelSession);
     return labelsession.execute();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << se.what();
     throw ex;
   } catch(...) {
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
@@ -915,8 +914,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     ProcessForkerUtils::serializePayload(result.reply, reply);
     
     return result;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create MsgHandlerResult containing a ForkSucceeded message:"
       << ne.getMessage().str();
@@ -941,8 +940,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     ProcessForkerUtils::serializePayload(result.reply, reply);
 
     return result;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create MsgHandlerResult containing an Exception message:"
       << ne.getMessage().str();
@@ -966,8 +965,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     ProcessForkerUtils::serializePayload(result.reply, reply);
 
     return result;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create MsgHandlerResult containing ReturnValue message:"
       << ne.getMessage().str();

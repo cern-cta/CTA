@@ -29,7 +29,7 @@
 #include <iostream>
 
 namespace{
-  struct failedReportRecallResult : public castor::exception::Exception{
+  struct failedReportRecallResult : public cta::exception::Exception{
     failedReportRecallResult(const std::string& s): Exception(s){}
   };
 }
@@ -233,16 +233,6 @@ void RecallReportPacker::WorkerThread::run(){
         endFound=true;
       rep->execute(m_parent);
       if (endFound) break;
-    }
-  } catch(const castor::exception::Exception& e){
-    //we get there because to tried to close the connection and it failed
-    //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report and got a castor exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
     }
   } catch(const cta::exception::Exception& e){
     //we get there because to tried to close the connection and it failed

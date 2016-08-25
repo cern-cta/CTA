@@ -44,7 +44,7 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
   // lock
   int rc = pthread_mutex_lock(&s_globalConfigLock);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Failed to get CASTOR configuration:"
       " Failed to take a lock on s_globalConfigLock";
     throw e;
@@ -77,7 +77,7 @@ castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
   // create internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "CastorConfiguration constructor Failed"
       ": Failed to create internal r/w lock";
     throw e;
@@ -94,7 +94,7 @@ castor::common::CastorConfiguration::CastorConfiguration(
   // create a new internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "CastorConfiguration copy constructor failed"
       ": Failed to create a new internal r/w lock";
     throw e;
@@ -122,7 +122,7 @@ castor::common::CastorConfiguration &
   // create a new internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Assignment operator of CastorConfiguration object failed"
       ": Failed to create a new internal r/w lock";
     throw e;
@@ -143,7 +143,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     // get read lock
     int rc = pthread_rwlock_rdlock(&m_lock);
     if (0 != rc) {
-      castor::exception::Exception e(rc);
+      cta::exception::Exception e;
       e.getMessage() << "Failed to get configuration entry " << category << ":"
                      << key << ": Failed to get read lock";
       throw e;
@@ -178,7 +178,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     }
     // Unlock and return default
     pthread_rwlock_unlock(&m_lock);
-  } catch (castor::exception::Exception ex) {
+  } catch (cta::exception::Exception ex) {
     // exception caught : Unlock and return default
     pthread_rwlock_unlock(&m_lock);
     // log the exception
@@ -210,7 +210,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
   // get read lock
   int rc = pthread_rwlock_rdlock(&m_lock);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Failed to get configuration entry " << category << ":"
       << key << ": Failed to get read lock";
     throw e;
@@ -261,7 +261,7 @@ bool castor::common::CastorConfiguration::isStale()
   // get read lock
   int rc = pthread_rwlock_rdlock(&m_lock);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Failed to determine if CASTOR configuration is stale"
       ": Failed to get read lock";
     throw e;
@@ -288,7 +288,7 @@ void castor::common::CastorConfiguration::tryToRenewConfig()
   // we should probably renew. First take the write lock.
   int rc = pthread_rwlock_wrlock(&m_lock);
   if (0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Failed to renew configuration cache"
       ": Failed to take write lock";
     throw e;
@@ -343,7 +343,7 @@ void castor::common::CastorConfiguration::renewConfigNolock()
   // failure
   std::ifstream file(m_fileName.c_str());
   if(file.fail()) {
-    castor::exception::Exception ex(EIO);
+    cta::exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed"
       ": Failed to open file"
       ": m_fileName=" << m_fileName;

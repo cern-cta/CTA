@@ -22,8 +22,8 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueTransferSession.hpp"
+#include "common/exception/Exception.hpp"
 #include "rmc_constants.h"
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
-    } catch(castor::exception::Exception &ex) {
+    } catch(cta::exception::Exception &ex) {
       params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
@@ -141,7 +141,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::idempotentKill(
   // dead
   if(killRc && ESRCH != errno) {
     const std::string errnoStr = castor::utils::errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to kill process"
       ": pid=" << pid << " signal=" << signal << ": " << errnoStr;
     throw ex;
@@ -172,7 +172,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
-    } catch(castor::exception::Exception &ex) {
+    } catch(cta::exception::Exception &ex) {
       params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
@@ -205,7 +205,7 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
-    } catch(castor::exception::Exception &ex) {
+    } catch(cta::exception::Exception &ex) {
       params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR, "Failed to kill data-transfer session", params);
     }
@@ -270,7 +270,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const char *const task = "accept reception of recall job";
 
   if(WAIT_JOB != m_state) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Catalogue transfer-session state-mismatch: "
       "expected=" << transferStateToStr(WAIT_JOB) <<
@@ -297,7 +297,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   receivedMigrationJob(const std::string &vid) {
   if(WAIT_JOB != m_state) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept reception of recall job"
       ": Catalogue transfer-session state-mismatch: "
       "expected=" << transferStateToStr(WAIT_JOB) <<
@@ -337,7 +337,7 @@ int castor::tape::tapeserver::daemon::CatalogueTransferSession::
     return m_mode;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to get access mode from catalogue"
         " transfer-session"
         ": Catalogue transfer-session is in an incompatible state: "
@@ -361,7 +361,7 @@ pid_t castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForMigration(const std::string &vid) {
   if(WAIT_MOUNTED != m_state) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for migration"
       ": Catalogue transfer-session state-mismatch: "
       "expected=" << transferStateToStr(WAIT_MOUNTED) <<
@@ -372,7 +372,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   // If the volume identifier of the data transfer job does not match the
   // mounted tape
   if(m_vid != vid) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for migration"
       ": VID mismatch: expected=" << m_vid << " actual=" << vid;
     throw ex;
@@ -380,7 +380,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 
   // If the mount is not for migration
   if(WRITE_ENABLE != m_mode) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for migration"
       ": Data transfer job is not for migration";
     throw ex;
@@ -397,7 +397,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   tapeMountedForRecall(const std::string &vid) {
 
   if(WAIT_MOUNTED != m_state) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
       ": Catalogue transfer-session state-mismatch: "
       "expected=" << transferStateToStr(WAIT_MOUNTED) <<
@@ -408,7 +408,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   // If the volume identifier of the data transfer job does not match the
   // mounted tape
   if(m_vid != vid) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
       ": VID mismatch: expected=" << m_vid << " actual=" << vid;
     throw ex;
@@ -416,7 +416,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 
   // If the mount is not for recall
   if(WRITE_DISABLE != m_mode) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to accept tape mounted for recall"
       ": Data transfer job is not for recall";
     throw ex;

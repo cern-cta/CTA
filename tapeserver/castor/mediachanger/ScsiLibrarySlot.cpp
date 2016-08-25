@@ -19,9 +19,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

@@ -54,7 +54,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   try {
     return exceptionThrowingExecute();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
     errorMessage = se.what();
@@ -142,7 +142,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
       }
     }
     return;
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
     errorMessage = se.what();
@@ -185,7 +185,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   } 
@@ -208,7 +208,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(
     m_log(LOG_INFO, "Cleaner waiting for drive to be ready", params);
     drive.waitUntilReady(m_waitMediaInDriveTimeout);
     m_log(LOG_INFO, "Cleaner detected drive is ready", params);
-  } catch (castor::exception::Exception &ex) {
+  } catch (cta::exception::Exception &ex) {
     params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_INFO, "Cleaner caught non-fatal exception whilst waiting for"
       " drive to become ready", params);
@@ -240,7 +240,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
 
   m_log(LOG_INFO, "Cleaner checking tape contains data", params);
   if(drive.isTapeBlank()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Tape is completely blank when it should be labeled";
     throw ex;
   }
@@ -279,8 +279,8 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
     }
 
     return volumeLabelVSN;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to check volume label: " << ne.getMessage().str();
     throw ex;
   }
@@ -309,8 +309,8 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
     m_log(LOG_INFO, "Cleaner unloading tape", params);
     drive.unloadTape();
     m_log(LOG_INFO, "Cleaner unloaded tape", params);
-  } catch (castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch (cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Cleaner failed to unload tape: " <<
       ne.getMessage().str();
     throw ex;
@@ -338,8 +338,8 @@ void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
     } else {
       m_log(LOG_INFO, "Cleaner dismounted tape", params);
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Cleaner failed to dismount tape: " <<
       ne.getMessage().str();
     throw ex;

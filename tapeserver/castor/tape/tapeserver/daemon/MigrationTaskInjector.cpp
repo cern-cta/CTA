@@ -112,7 +112,7 @@ namespace daemon {
         bytes+=job->archiveFile.fileSize;
         jobs.push_back(job.release());
       }
-    } catch (castor::exception::Exception & ex) {
+    } catch (cta::exception::Exception & ex) {
       castor::log::ScopedParamContainer scoped(m_lc);
       scoped.add("transactionId", m_archiveMount.getMountTransactionId())
             .add("byteSizeThreshold",m_maxBytes)
@@ -209,12 +209,11 @@ namespace daemon {
       
       m_parent.signalEndDataMovement();
     } 
-    catch(const castor::exception::Exception& ex){
+    catch(const cta::exception::Exception& ex){
       //we end up there because we could not talk to the client
       
       log::ScopedParamContainer container( m_parent.m_lc);
-      container.add("exception code",ex.code())
-               .add("exception message",ex.getMessageValue());
+      container.add("exception message",ex.getMessageValue());
       m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
       m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): "
       "could not retrieve a list of file to migrate, indicating finish of run");

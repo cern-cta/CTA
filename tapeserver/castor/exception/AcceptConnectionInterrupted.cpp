@@ -29,7 +29,7 @@
 // -----------------------------------------------------------------------------
 castor::exception::AcceptConnectionInterrupted::AcceptConnectionInterrupted(
   const time_t remainingTime) throw() :
-  castor::exception::Exception(666),
+  cta::exception::Exception(),
   m_remainingTime(remainingTime) {
 
   // Do nothing

@@ -21,11 +21,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 #include "rmc_constants.h"
 
 #include <errno.h>
@@ -112,8 +112,8 @@ const castor::tape::tapeserver::daemon::CatalogueSession &
   try {
     checkForSession();
     return *m_session;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get tape session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -127,7 +127,7 @@ const castor::tape::tapeserver::daemon::CatalogueSession &
 void castor::tape::tapeserver::daemon::CatalogueDrive::checkForSession()
   const {
   if(NULL == m_session) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Drive is currently not running a session: state=" <<
       catalogueDriveStateToStr(m_state);
     throw ex;
@@ -146,15 +146,15 @@ const castor::tape::tapeserver::daemon::CatalogueCleanerSession &
       dynamic_cast<const CatalogueCleanerSession*>(m_session);
     if(NULL == cleanerSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to cast session to CatalogueCleanerSession";
       throw ex;
     }
 
     return *cleanerSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get cleaner session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -173,15 +173,15 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession &
       dynamic_cast<CatalogueCleanerSession*>(m_session);
     if(NULL == cleanerSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << 
         "Failed to cast session to CatalogueCleanerSession";
       throw ex;
     }
 
     return *cleanerSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get cleaner session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -197,7 +197,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForSession();
   const CatalogueSession::Type sessionType = m_session->getType();
   if(CatalogueSession::SESSION_TYPE_CLEANER != sessionType) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a cleaner session"
       ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
@@ -217,14 +217,14 @@ const castor::tape::tapeserver::daemon::CatalogueLabelSession &
       dynamic_cast<const CatalogueLabelSession*>(m_session);
     if(NULL == labelSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to cast session to CatalogueLabelSession";
       throw ex;
     }
 
     return *labelSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get label session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -243,14 +243,14 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession &
       dynamic_cast<CatalogueLabelSession*>(m_session);
     if(NULL == labelSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to cast session to CatalogueLabelSession";
       throw ex;
     }
 
     return *labelSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get label session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -266,7 +266,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForSession();
   const CatalogueSession::Type sessionType = m_session->getType();
   if(CatalogueSession::SESSION_TYPE_LABEL != sessionType) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Session associated with drive is not a label session"
       ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
     throw ex;
@@ -285,15 +285,15 @@ const castor::tape::tapeserver::daemon::CatalogueTransferSession &
       dynamic_cast<CatalogueTransferSession*>(m_session);
     if(NULL == transferSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to cast session to CatalogueTransferSession";
       throw ex;
     }
 
     return *transferSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get transfer session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -312,15 +312,15 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession &
       dynamic_cast<CatalogueTransferSession*>(m_session);
     if(NULL == transferSession) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to cast session to CatalogueTransferSession";
       throw ex;
     }
 
     return *transferSession;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get transfer session for drive " <<
       m_config.getUnitName() << " from drive catalogue: " <<
       ne.getMessage().str();
@@ -336,7 +336,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
   checkForSession();
   const CatalogueSession::Type sessionType = m_session->getType();
   if(CatalogueSession::SESSION_TYPE_TRANSFER != sessionType) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Session associated with drive is not a transfer session"
       ": actual=" << CatalogueSession::sessionTypeToStr(sessionType);
@@ -363,7 +363,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureUp() {
     break;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape-drive " <<
         m_config.getUnitName() << " up: Incompatible drive state: state=" <<
         catalogueDriveStateToStr(m_state);
@@ -388,7 +388,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::checkDriveIsEmpty() {
   EmptyDriveProbe probe(m_log, m_config, m_sysWrapper);
 
   if(!probe.driveIsEmpty()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Drive " << m_config.getUnitName() << " is not empty";
     throw ex;
   }
@@ -410,7 +410,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::configureDown() {
     break;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to configure tape drive " <<
         m_config.getUnitName() << " down: Incompatible drive state: state=" <<
         catalogueDriveStateToStr(m_state);
@@ -464,7 +464,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
   // Sanity check
   if(job.drive != m_config.getUnitName()) {
     // Should never happen
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": unit name mismatch: job.drive=" << job.drive << 
       " m_config.getUnitName()=" << m_config.getUnitName();
@@ -474,7 +474,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
   switch(m_state) {
   case DRIVE_STATE_UP:
     if(std::string(job.logicalLibrary) != m_config.getLogicalLibrary()) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": logicalLibrary mismatch: catalogueLogicalLibrary=" << m_config.getLogicalLibrary() << " labelJobDgn="
         << job.logicalLibrary;
@@ -491,7 +491,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::receivedLabelJob(
     break;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": Incompatible drive state: state=" <<
         catalogueDriveStateToStr(m_state);
@@ -518,8 +518,8 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession
       assignmentTime,
       waitMediaInDrive,
       waitMediaInDriveTimeout);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create cleaner session: " <<
       ne.getMessage().str();
     throw ex;
@@ -553,7 +553,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     break;
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session succeeded for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
@@ -577,7 +577,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     return cleanerOfShutdownFailed();
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
@@ -604,7 +604,7 @@ sessionKilled(uint32_t signal) {
     return cleanerOfShutdownFailed();
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
@@ -687,7 +687,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     return runningSessionFailedAndRequestedCleaner();
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to record tape session failed for session with pid " <<
         getSession().getPid() << ": Incompatible drive state: state=" <<
@@ -755,8 +755,8 @@ castor::legacymsg::TapeStatDriveEntry
     castor::utils::copyString(entry.vid, getVidForTapeStatDriveEntry());
     castor::utils::copyString(entry.vsn, getVsnForTapeStatDriveEntry());
     entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it set to 0
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get TapeStatDriveEntry: " <<
       ne.getMessage().str();
     throw ex;
@@ -970,7 +970,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
 
   if(kill(sessionPid, SIGKILL)) {
     const std::string errorStr = castor::utils::errnoToString(errno);
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "CatalogueDrive failed to kill session: sessionPid=" <<
      sessionPid << " sessionType=" << sessionTypeStr << ": " << errorStr;
     throw ex;

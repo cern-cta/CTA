@@ -28,4 +28,4 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::TimeOut::TimeOut() :
-  castor::exception::Exception(666) {}
+  cta::exception::Exception() {}

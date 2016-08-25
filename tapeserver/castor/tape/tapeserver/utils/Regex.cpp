@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "Regex.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <regex.h>
 
 using namespace castor::tape;
@@ -37,7 +37,7 @@ utils::Regex::Regex(const char * re_str) : m_set(false) {
       error += ": ";
       error += re_err;
     }
-    throw castor::exception::Exception(error);
+    throw cta::exception::Exception(error);
   }
   m_set = true;
 }

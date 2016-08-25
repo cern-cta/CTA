@@ -54,13 +54,13 @@ void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to mount tape for read only access: "
       << librarySlot.str() << ": " << ne.getMessage().str();
@@ -91,8 +91,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
     return frame;
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsMountTapeReadOnly frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -114,13 +114,13 @@ void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to mount tape for read/write " 
       "access: " << librarySlot.str() << ": " << ne.getMessage().str();
@@ -151,8 +151,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
     return frame;
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsMountTapeReadWrite frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -174,13 +174,13 @@ void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to dismount tape: " <<
       librarySlot.str() << ": " << ne.getMessage().str();
@@ -211,8 +211,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
     return frame;
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsDismountTape frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -234,13 +234,13 @@ void castor::messages::AcsProxyZmq::forceDismountTape(const std::string &vid,
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Received an unexpected return value"
         ": expected=0 actual=" << reply.value();
       throw ex;
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to request CASTOR ACS daemon to force dismount tape: " <<
       librarySlot.str() << ": " << ne.getMessage().str();
@@ -271,8 +271,8 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 
     return frame;
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create AcsForceDismountTape frame: " <<
       ne.getMessage().str();
     throw ex;

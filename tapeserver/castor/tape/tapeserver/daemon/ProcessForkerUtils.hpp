@@ -278,12 +278,12 @@ public:
     if(messages::MSG_TYPE_EXCEPTION == frame.type) {
       messages::Exception exMsg;
       if(!exMsg.ParseFromString(frame.payload)) {
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Failed to parse Exception message"
           ": ParseFromString() returned false";
         throw ex;
       }
-      castor::exception::Exception ex(exMsg.code());
+      cta::exception::Exception ex;
       ex.getMessage() << exMsg.message();
       throw ex;
     }

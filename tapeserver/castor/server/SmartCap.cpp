@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/server/SmartCap.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -84,7 +84,7 @@ cap_t castor::server::SmartCap::get() const throw() {
 cap_t castor::server::SmartCap::release() {
   // If this smart pointer does not own a capbility state
   if(NULL == m_cap) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Smart pointer does not own a capbility state";
     throw(ex);
   }

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClXRootDResponses.hh>
 
 namespace castor {
@@ -35,7 +35,7 @@ namespace exception {
    * A class turning the XrootCl (xroot 4 object client) error codes
    * into castor exceptions.
    */
-  class XrootCl: public castor::exception::Exception {
+  class XrootCl: public cta::exception::Exception {
   public:
     XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
     virtual ~XrootCl() throw() {};

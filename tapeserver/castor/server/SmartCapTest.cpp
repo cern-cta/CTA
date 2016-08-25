@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/server/SmartCap.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
 
@@ -82,7 +82,7 @@ TEST_F(castor_server_SmartCapTest, assignment) {
 
 TEST_F(castor_server_SmartCapTest, releaseNull) {
   castor::server::SmartCap smartPtr;
-  ASSERT_THROW(smartPtr.release(), castor::exception::Exception);
+  ASSERT_THROW(smartPtr.release(), cta::exception::Exception);
 }
 
 } // namespace unitTests

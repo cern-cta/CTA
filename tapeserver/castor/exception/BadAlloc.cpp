@@ -28,5 +28,5 @@
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::BadAlloc::BadAlloc():
-  castor::exception::Exception(666) {
+  cta::exception::Exception() {
 }

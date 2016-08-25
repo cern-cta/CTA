@@ -26,9 +26,9 @@
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/server/Mutex.hpp"
 #include "castor/server/MutexLocker.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // static values initialization
@@ -82,7 +82,7 @@ castor::Services* castor::BaseObject::services()
     const int rc = pthread_setspecific(s_servicesKey, services);
     if(0 != rc) {
       delete services;
-      castor::exception::Exception e(rc);
+      cta::exception::Exception e;
       e.getMessage() << "Error caught in call to pthread_setspecific";
       throw e;
     }
@@ -102,7 +102,7 @@ void castor::BaseObject::resetServices()
   delete services();
   const int rc = pthread_setspecific(s_servicesKey, NULL);
   if(0 != rc) {
-    castor::exception::Exception e(rc);
+    cta::exception::Exception e;
     e.getMessage() << "Failed to reset the thread's servicesKey to NULL after delete";
     throw e;
   }

@@ -62,7 +62,7 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<castor::log::SyslogLogger> logPtr;
   try {
     logPtr.reset(new castor::log::SyslogLogger("tapeserverd"));
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     std::cerr <<
       "Failed to instantiate object representing CASTOR logging system: " <<
       ex.getMessage().str() << std::endl;
@@ -73,7 +73,7 @@ int main(const int argc, char **const argv) {
   int programRc = 1; // Be pessimistic
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     std::list<castor::log::Param> params = {
       castor::log::Param("message", ex.getMessage().str())};
     log(LOG_ERR, "Caught an unexpected CASTOR exception", params);

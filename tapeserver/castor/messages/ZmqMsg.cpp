@@ -34,7 +34,7 @@
 castor::messages::ZmqMsg::ZmqMsg() throw() {
   if(zmq_msg_init(&m_zmqMsg)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_msg_init() failed: " << zmqErrnoToStr(savedErrno);
     throw ex;
   }
@@ -46,7 +46,7 @@ castor::messages::ZmqMsg::ZmqMsg() throw() {
 castor::messages::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
   if(zmq_msg_init_size(&m_zmqMsg, msgSize)) {
     const int savedErrno = errno;
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "zmq_msg_init_size() failed: " <<
       zmqErrnoToStr(savedErrno);
     throw ex;

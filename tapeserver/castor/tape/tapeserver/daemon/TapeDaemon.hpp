@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/server/Daemon.hpp"
@@ -35,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemonConfig.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <iostream>
 #include <list>

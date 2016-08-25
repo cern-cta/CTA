@@ -46,8 +46,8 @@ void castor::messages::sendFrame(ZmqSocket &socket, const Frame &frame) {
     socket.send(header, ZMQ_SNDMORE);
     socket.send(body, 0);
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to send message frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -62,15 +62,15 @@ castor::messages::Frame castor::messages::recvFrame(ZmqSocket &socket) {
     ZmqMsg header;
     try {
       socket.recv(header);
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
+    } catch(cta::exception::Exception &ne) {
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to receive header of message frame: " <<
         ne.getMessage().str();
       throw ex;
     }
 
     if(!header.more()){
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "No message body after receiving the header";
       throw ex;
     }
@@ -81,8 +81,8 @@ castor::messages::Frame castor::messages::recvFrame(ZmqSocket &socket) {
     ZmqMsg body;
     try {
       socket.recv(body);
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
+    } catch(cta::exception::Exception &ne) {
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to receive body of message frame: " <<
         ne.getMessage().str();
       throw ex;
@@ -94,8 +94,8 @@ castor::messages::Frame castor::messages::recvFrame(ZmqSocket &socket) {
 
     return frame;
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to receive message frame: " <<
       ne.getMessage().str();
     throw ex;
@@ -148,7 +148,7 @@ std::string castor::messages::computeSHA1Base64(void const* const data,
   EVP_SignInit(&ctx, EVP_sha1());
   if (!EVP_SignUpdate(&ctx,data, len)) {
     EVP_MD_CTX_cleanup(&ctx);
-    throw castor::exception::Exception("cant compute SHA1");
+    throw cta::exception::Exception("cant compute SHA1");
   }
   unsigned char md_value[EVP_MAX_MD_SIZE];
   unsigned int md_len;
@@ -160,7 +160,7 @@ std::string castor::messages::computeSHA1Base64(void const* const data,
   BIO *b64 = BIO_new(BIO_f_base64());
   BIO *bmem = BIO_new(BIO_s_mem());
   if (NULL == b64 || NULL == bmem) {
-    throw castor::exception::Exception("cant set up the environnement for computing the SHA1 in base64");
+    throw cta::exception::Exception("cant set up the environnement for computing the SHA1 in base64");
   }
   b64 = BIO_push(b64, bmem);
   BIO_write(b64, md_value, md_len);
@@ -194,7 +194,7 @@ void castor::messages::recvReplyOrEx(ZmqSocket& socket,
 
   // Check the magic number
   if(magic != frame.header.magic()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to receive message"
       ": Unexpected magic number: excpected=" << magic << " actual= " <<
       frame.header.magic();
@@ -203,7 +203,7 @@ void castor::messages::recvReplyOrEx(ZmqSocket& socket,
 
   // Check the protocol type
   if(protocolType != frame.header.protocoltype()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to receive message"
       ": Unexpected protocol type: excpected=" << protocolType << " actual= "
       << frame.header.protocoltype();
@@ -212,7 +212,7 @@ void castor::messages::recvReplyOrEx(ZmqSocket& socket,
 
   // Check the protocol version
   if(protocolVersion != frame.header.protocolversion()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to receive message"
       ": Unexpected protocol version: excpected=" << protocolVersion <<
       " actual= " << frame.header.protocolversion();
@@ -224,7 +224,7 @@ void castor::messages::recvReplyOrEx(ZmqSocket& socket,
     // Convert it into a C++ exception and throw it
     messages::Exception exMsg;
     frame.parseBodyIntoProtocolBuffer(exMsg);
-    castor::exception::Exception ex(exMsg.code());
+    cta::exception::Exception ex;
     ex.getMessage() << exMsg.message();
     throw ex;
   }

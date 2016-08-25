@@ -43,8 +43,8 @@ void castor::legacymsg::writeTapeRcReplyMsg(const int timeout, const int fd, con
     src.lenOrStatus = rc;
     const size_t len = legacymsg::marshal(dst, src);
     castor::io::writeBytes(fd, timeout, len, dst);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to write tape reply message: "
       << ne.getMessage().str();
     throw ex;
@@ -63,8 +63,8 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     castor::utils::copyString(src.errorMessage, message);
     const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_DATA, src);    
     castor::io::writeBytes(fd, timeout, len, dst);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to write tape reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -82,8 +82,8 @@ void castor::legacymsg::writeTapeReplyErrorMsg(const int timeout, const int fd, 
     castor::utils::copyString(src.errorMessage, message);
     const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_ERR, src);    
     castor::io::writeBytes(fd, timeout, len, dst);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to write error reply message with and error message=\"" << message << "\". "
       << ne.getMessage().str();
     throw ex;

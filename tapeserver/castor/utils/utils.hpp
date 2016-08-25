@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/InvalidConfiguration.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <ostream>
 #include <string>

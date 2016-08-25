@@ -2,7 +2,7 @@
 #include "castor/server/Semaphores.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <errno.h>
 #include <sys/time.h>
 

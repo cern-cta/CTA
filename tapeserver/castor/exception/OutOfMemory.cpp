@@ -30,4 +30,4 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::OutOfMemory::OutOfMemory() :
-  castor::exception::Exception(ENOMEM) {}
+  cta::exception::Exception() {}

@@ -23,7 +23,6 @@
 
 #pragma once 
 
-#include "castor/exception/Exception.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Exception.pb.h"
 #include "castor/messages/Frame.hpp"
@@ -31,6 +30,7 @@
 #include "castor/messages/ZmqMsg.hpp"
 #include "castor/messages/ZmqSocket.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>

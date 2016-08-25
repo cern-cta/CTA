@@ -19,9 +19,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/ManualLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -41,7 +41,7 @@ castor::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
   m_str = str;
 
   if(str.find("manual")) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ManualLibrarySlot"
       ": Library slot must start with manual: str=" << str;
     throw ex;

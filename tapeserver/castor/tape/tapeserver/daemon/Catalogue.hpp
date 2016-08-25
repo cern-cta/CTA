@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <map>
 #include <string>

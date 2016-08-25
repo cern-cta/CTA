@@ -63,7 +63,7 @@ public:
    * @param migratedFile the file which failled 
    * @param ex the reason for the failure 
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex);
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex);
      
    /**
     * Create into the MigrationReportPacker a report for the signaling a flusing on tape
@@ -159,14 +159,14 @@ private:
       void execute(MigrationReportPacker& reportPacker);
   };
   class ReportError : public Report {
-    const castor::exception::Exception m_ex;
+    const cta::exception::Exception m_ex;
     
     /**
      * The failed archive job to be reported immediately
      */
     std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
   public:
-    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception &ex):
+    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception &ex):
     m_ex(ex), m_failedArchiveJob(std::move(failedArchiveJob)){}
     
     virtual void execute(MigrationReportPacker& reportPacker);

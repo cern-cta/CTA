@@ -43,7 +43,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
 
     // Throw an exception if the file could not be opened
     if(file.get() == NULL) {
-      castor::exception::Exception ex(savedErrno);
+      cta::exception::Exception ex;
 
       ex.getMessage() <<
         "Failed to parse TPCONFIG file"
@@ -155,7 +155,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
 
   // Throw an exception if there was error whilst reading the file
   if(ferror(file.get())) {
-    castor::exception::Exception ex(fgetsErrno);
+    cta::exception::Exception ex;
 
     ex.getMessage() <<
       "Failed to parse TPCONFIG file"

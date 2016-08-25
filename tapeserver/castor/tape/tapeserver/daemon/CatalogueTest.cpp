@@ -122,7 +122,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, duplicateUnitName) {
 
   DriveConfigMap driveConfigs;
   ASSERT_THROW(driveConfigs.enterTpconfigLines(lines),
-    castor::exception::Exception);
+    cta::exception::Exception);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, 
@@ -138,7 +138,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
   castor::tape::System::mockWrapper sysWrapper;
   Catalogue catalogue(netTimeout, log, processForker,
     hostName, catalogueConfig, sysWrapper);
-  ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
+  ASSERT_THROW(catalogue.findDrive(unitName), cta::exception::Exception);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {

@@ -26,7 +26,7 @@
 
 // Include Files
 #include <string>
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 

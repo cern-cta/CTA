@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #pragma once
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <string>
 
 namespace castor {
@@ -30,7 +30,7 @@ namespace exception {
 /**
  * A generic exception thrown when there is something wrong with the memory
  */
-class MemException: public castor::exception::Exception {
+class MemException: public cta::exception::Exception {
   public:
     MemException(const std::string & what): Exception(what) {}
     virtual ~MemException() throw() {}

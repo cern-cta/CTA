@@ -34,7 +34,7 @@
 #include <cstdio>
 
 #include "Constants.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -78,7 +78,7 @@ namespace SCSI {
       void setSenseBuffer(T * senseBuff)  
       { 
         if (sizeof(T) > UCHAR_MAX)
-          throw castor::exception::Exception("sense structure too big in LinuxSGIO_t::setSense");
+          throw cta::exception::Exception("sense structure too big in LinuxSGIO_t::setSense");
         mx_sb_len = (unsigned char) sizeof(T);
         sbp = (unsigned char *)senseBuff;
       }
@@ -873,7 +873,7 @@ namespace SCSI {
     public:
       senseData_t() {
         if (sizeof(*this) > 255)
-          throw castor::exception::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
+          throw cta::exception::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
         zeroStruct(this);
       }
       // byte 0
@@ -954,7 +954,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASC: no ACS with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw castor::exception::Exception(err.str());
+          throw cta::exception::Exception(err.str());
         }
       }
 
@@ -967,7 +967,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASCQ: no ACSQ with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw castor::exception::Exception(err.str());
+          throw cta::exception::Exception(err.str());
         }
       }
       /**
@@ -983,7 +983,7 @@ namespace SCSI {
           err << "In senseData_t::getSenseKey: no Sense Key with this response "
             "code or response code not supported ("
             << std::hex << std::showbase << (int)responseCode << ")";
-          throw castor::exception::Exception(err.str());
+          throw cta::exception::Exception(err.str());
         }
       }
       /**
@@ -997,7 +997,7 @@ namespace SCSI {
           err << "In senseData_t::getSenseKeyString: no Sense Key with this "
             "value ("<< std::hex << std::showbase 
             << (int)getSenseKey() << ")";
-          throw castor::exception::Exception(err.str());
+          throw cta::exception::Exception(err.str());
         }
       }      
       /**

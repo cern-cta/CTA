@@ -37,7 +37,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const MessageHeader &src)  {
 
   if(dst == NULL) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal MessageHeader"
       << ": Pointer to destination buffer is NULL";
     throw ex;
@@ -48,7 +48,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message header buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal MessageHeader"
       ": Buffer too small : required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -65,7 +65,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal MessageHeader"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;

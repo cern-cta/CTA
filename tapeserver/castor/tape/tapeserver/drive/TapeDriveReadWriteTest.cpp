@@ -110,7 +110,7 @@ int main ()
            * Checks if the drive ready to use the tape installed loaded into it.
            */
           drive->waitUntilReady(5); 
-        } catch(castor::exception::Exception &ne) {
+        } catch(cta::exception::Exception &ne) {
           std::string temp=ne.getMessage().str();
           fail = 1;
           std::cout << "----------------------------------------------" << std::endl
@@ -372,7 +372,7 @@ int main ()
                     << e.what() << std::endl
                     << "----------------------------------------------" << std::endl;
         }
-      } catch(castor::exception::Exception &ne) {
+      } catch(cta::exception::Exception &ne) {
         std::string temp=ne.getMessage().str();
         fail = 1;
         std::cout << "----------------------------------------------" << std::endl

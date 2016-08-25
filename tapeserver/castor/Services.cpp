@@ -31,7 +31,7 @@
 #include "IAddress.hpp"
 #include "IObject.hpp"
 #include "ICnvSvc.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -65,7 +65,7 @@ castor::IService* castor::Services::service(const std::string name,
       const ISvcFactory* fac = castor::Factories::instance()->factory(id);
       // if no factory is available, complain
       if (0 == fac) {
-        castor::exception::Exception e;
+        cta::exception::Exception e;
         e.getMessage() << "No factory found for object type " << id;
         throw e;
       }
@@ -73,7 +73,7 @@ castor::IService* castor::Services::service(const std::string name,
       IService* svc = fac->instantiate(name);
       // if the service was not instantiated, complain
       if (0 == svc) {
-        castor::exception::Exception e;
+        cta::exception::Exception e;
         e.getMessage() << "No service found for service " << name;
         throw e;
       } else {
@@ -160,7 +160,7 @@ castor::Services::cnvSvcFromAddress(castor::IAddress* address)
    {
   // check address
   if (0 == address) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "No appropriate converter for a null address !";
     throw ex;
   }
@@ -168,7 +168,7 @@ castor::Services::cnvSvcFromAddress(castor::IAddress* address)
   castor::ICnvSvc *cnvSvc =
     cnvService(address->cnvSvcName(), address->cnvSvcType());
   if (0 == cnvSvc) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "No conversion service with name "
                     << address->cnvSvcName() << " and type "
                     << address->cnvSvcType();

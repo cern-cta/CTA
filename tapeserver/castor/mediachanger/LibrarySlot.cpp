@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/LibrarySlot.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -47,7 +47,7 @@ castor::mediachanger::TapeLibraryType castor::mediachanger::LibrarySlot::
   if(0 == slot.find("manual")) return TAPE_LIBRARY_TYPE_MANUAL;
   if(0 == slot.find("smc"))    return TAPE_LIBRARY_TYPE_SCSI;
 
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Cannot determine tape-library type of library slot"
     ": slot=" << slot;
   throw ex;

@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace exception {
-  class Errnum: public castor::exception::Exception {
+  class Errnum: public cta::exception::Exception {
   public:
     Errnum(std::string what = "");
 	  Errnum (int err, std::string what = "");

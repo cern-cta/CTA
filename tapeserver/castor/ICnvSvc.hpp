@@ -27,7 +27,7 @@
 // Include Files
 #include "castor/IService.hpp"
 #include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <vector>
 
 namespace castor {

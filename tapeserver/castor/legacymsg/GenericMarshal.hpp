@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "castor/legacymsg/GenericReplyMsgBody.hpp"
 #include "castor/legacymsg/GenericErrorReplyMsgBody.hpp"
 

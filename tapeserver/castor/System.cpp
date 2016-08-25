@@ -60,7 +60,7 @@ std::string castor::System::getHostName()
     if (EINVAL != errno &&
         ENAMETOOLONG != errno) {
       free(hostname);
-      castor::exception::Exception e(errno);
+      cta::exception::Exception e;
       e.getMessage() << "gethostname error";
       throw e;
     }
@@ -70,7 +70,7 @@ std::string castor::System::getHostName()
       char *hostnameLonger = (char*) realloc(hostname, len);
       if (0 == hostnameLonger) {
         free(hostname);
-        castor::exception::Exception e(ENOMEM);
+        cta::exception::Exception e;
         e.getMessage() << "Could not allocate memory for hostname";
         throw e;
 
@@ -83,7 +83,7 @@ std::string castor::System::getHostName()
         if (EINVAL != errno &&
             ENAMETOOLONG != errno) {
           free(hostname);
-          castor::exception::Exception e(errno);
+          cta::exception::Exception e;
           e.getMessage() << "Could not get hostname"
                          <<  strerror(errno);
           throw e;
@@ -105,12 +105,12 @@ int castor::System::porttoi(char* str)
   errno = 0;
   int iport = strtoul(str, &dp, 0);
   if (*dp != 0) {
-    castor::exception::Exception e(errno);
+    cta::exception::Exception e;
     e.getMessage() << "Bad port value." << std::endl;
     throw e;
   }
   if ((iport > 65535) || (iport < 0)) {
-    castor::exception::Exception e(errno);
+    cta::exception::Exception e;
     e.getMessage()
       << "Invalid port value : " << iport
       << ". Must be < 65535 and > 0." << std::endl;
@@ -138,27 +138,27 @@ void castor::System::switchToCastorSuperuser()
 
   // Get information on generic stage account from password file
   if ((stage_passwd = getpwnam(STAGERSUPERUSER)) == NULL) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Castor super user " << STAGERSUPERUSER
                    << " not found in password file";
     throw e;
   }
   // verify existence of its primary group id
   if (getgrgid(stage_passwd->pw_gid) == NULL) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Castor super user group does not exist";
     throw e;
   }
   // Get information on generic stage account from group file
   if ((stage_group = getgrnam(STAGERSUPERGROUP)) == NULL) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Castor super user group " << STAGERSUPERGROUP
                    << " not found in group file";
     throw e;
   }
   // Verify consistency
   if (stage_group->gr_gid != stage_passwd->pw_gid) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Inconsistent password file. The group of the "
                    << "castor superuser " << STAGERSUPERUSER
                    << " should be " << stage_group->gr_gid
@@ -168,25 +168,25 @@ void castor::System::switchToCastorSuperuser()
   }
   // Undo group privilege
   if (setregid (egid, rgid) < 0) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Unable to undo group privilege";
     throw e;
   }
   // Undo user privilege
   if (setreuid (euid, ruid) < 0) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Unable to undo user privilege";
     throw e;
   }
   // set the effective privileges to superuser
   if (setegid(stage_passwd->pw_gid) < 0) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Unable to set group privileges of Castor Superuser. "
                    << "You may want to check that the suid bit is set properly";
     throw e;
   }
   if (seteuid(stage_passwd->pw_uid) < 0) {
-    castor::exception::Exception e;
+    cta::exception::Exception e;
     e.getMessage() << "Unable to set privileges of Castor Superuser.";
     throw e;
   }

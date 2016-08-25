@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RmcMountMsgBody.hpp"
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor    {
 namespace legacymsg {

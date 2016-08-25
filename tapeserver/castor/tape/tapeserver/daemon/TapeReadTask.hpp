@@ -27,11 +27,11 @@
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/utils/Timer.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -160,7 +160,7 @@ public:
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
-    catch (const castor::exception::Exception & ex) {
+    catch (const cta::exception::Exception & ex) {
       //we end up there because :
       //-- openReadFile brought us here (cant position to the file)
       //-- m_payload.append brought us here (error while reading the file)
@@ -172,7 +172,6 @@ public:
       { 
         castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
         castor::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
-        castor::log::LogContext::ScopedParam sp2(lc, Param("ErrorCode", ex.code()));
         lc.log(LOG_ERR, "Error reading a file in TapeReadFileTask (backtrace follows)");
       }
       {
@@ -182,7 +181,7 @@ public:
       
       // mb might or might not be allocated at this point, but 
       // reportErrorToDiskTask will deal with the allocation if required.
-      reportErrorToDiskTask(ex.getMessageValue(),ex.code(),mb);
+      reportErrorToDiskTask(ex.getMessageValue(),666,mb); // TODO - Remove error code
     } //end of catch
     watchdog.fileFinished();
   }
@@ -232,10 +231,9 @@ private:
     try {
       rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_retrieveJob));
       lc.log(LOG_DEBUG, "Successfully opened the tape file");
-    } catch (castor::exception::Exception & ex) {
+    } catch (cta::exception::Exception & ex) {
       // Log the error
       ScopedParam sp0(lc, Param("ErrorMessage", ex.getMessageValue()));
-      ScopedParam sp1(lc, Param("ErrorCode", ex.code()));
       lc.log(LOG_ERR, "Failed to open tape file for reading");
       throw;
     }

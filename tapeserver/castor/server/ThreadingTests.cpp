@@ -84,7 +84,7 @@ namespace unitTests {
   class Thread_exception_throwing: public castor::server::Thread {
   private:
     void run() {
-      throw castor::exception::Exception("Exception in child thread");
+      throw cta::exception::Exception("Exception in child thread");
     }
   };
   TEST(castor_tape_threading, Thread_exception_throwing) {

@@ -62,7 +62,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   /* TODO: re-implement std::ostringstream msg;
   msg << __FUNCTION__ <<
     ": For now no users are allowed to label tapes in the CTA project";
-  throw castor::exception::Exception(msg.str()); */ 
+  throw cta::exception::Exception(msg.str()); */ 
 }
 
 //------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
       legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection,
         666, "Unknown error");
     }
-  } catch(castor::exception::Exception &we) {
+  } catch(cta::exception::Exception &we) {
     std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send failure reply-message to label command",
       params);
@@ -141,7 +141,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   sendSuccessReplyToLabelCommand() {
   try {
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
-  } catch(castor::exception::Exception &we) { 
+  } catch(cta::exception::Exception &we) { 
     std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
     m_log(LOG_ERR, "Failed to send success reply-message to label command",
       params);

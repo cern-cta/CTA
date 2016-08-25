@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.cpp"
 #include "castor/mediachanger/LibrarySlotParser.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
+#include "common/exception/Exception.cpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -113,7 +113,7 @@ const std::string &castor::tape::tapeserver::daemon::DriveConfig::
 const castor::mediachanger::LibrarySlot &castor::tape::tapeserver::daemon::
   DriveConfig::getLibrarySlot() const {
   if(0 == m_librarySlot) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get library slot: Value not set";
     throw ex;
   }

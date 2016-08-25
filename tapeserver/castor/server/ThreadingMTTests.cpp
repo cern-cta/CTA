@@ -102,7 +102,7 @@ namespace threadedUnitTests {
   private:
 
     void run() {
-      throw castor::exception::Exception("Exception in child thread");
+      throw cta::exception::Exception("Exception in child thread");
     }
   };
 

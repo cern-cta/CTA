@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/ScsiLibrarySlot.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <string>
 

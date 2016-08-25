@@ -27,7 +27,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::log::DummyLogger::DummyLogger(const std::string &programName)
-  throw(castor::exception::Exception, castor::exception::InvalidArgument):
+  throw(cta::exception::Exception, castor::exception::InvalidArgument):
   Logger(programName) {
 }
 

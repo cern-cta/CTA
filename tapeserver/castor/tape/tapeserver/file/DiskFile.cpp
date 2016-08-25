@@ -86,12 +86,12 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     size_t pos1, pos2;
     pos1 = key.find(HEADER);
     if(pos1 == std::string::npos)
-        throw castor::exception::Exception(
+        throw cta::exception::Exception(
           "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
         
     pos2 = key.find(FOOTER, pos1+1);
     if(pos2 == std::string::npos)
-        throw castor::exception::Exception(
+        throw cta::exception::Exception(
           "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
         
     // Start position and length
@@ -112,13 +112,13 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     // BERDecodePrivateKey is a void function. Here's the only check
     // we have regarding the DER bytes consumed.
     if(!queue.IsEmpty())
-      throw castor::exception::Exception(
+      throw cta::exception::Exception(
         "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
     
     CryptoPP::AutoSeededRandomPool prng;
     bool valid = m_xrootPrivateKey.Validate(prng, 3);
     if(!valid)
-      throw castor::exception::Exception(
+      throw cta::exception::Exception(
         "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
 
     m_xrootPrivateKeyLoaded = true;
@@ -169,7 +169,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
       xrootPrivateKey(), regexResult[1]);
   }
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
 }
 
@@ -216,7 +216,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
       xrootPrivateKey(), regexResult[1]);
   }
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
 }
 
@@ -333,12 +333,12 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   const std::string scheme = "root://";
   size_t schemePos = url.find(scheme);
   if (std::string::npos == schemePos) 
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
       std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not find the scheme[x]root:// in URL "+
         url));
   size_t pathPos = url.find("/", schemePos + scheme.size());
   if (std::string::npos == pathPos) 
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
       std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL "+
         url));
   // Build signature block
@@ -433,12 +433,12 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   const std::string scheme = "root://";
   size_t schemePos = url.find(scheme);
   if (std::string::npos == schemePos) 
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
       std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL "+
         url));
   size_t pathPos = url.find("//", schemePos + scheme.size());
   if (std::string::npos == pathPos) 
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
       std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL "+
         url));
   // Build signature block
@@ -582,17 +582,17 @@ EosWriteFile::~EosWriteFile() throw() {
 // RADOS STRIPER READ FILE
 //==============================================================================
 RadosStriperReadFile::RadosStriperReadFile(const std::string &url){
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperReadFile::RadosStriperReadFile is not implemented");
 }
 
 size_t RadosStriperReadFile::read(void *data, const size_t size) const {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperReadFile::read is not implemented");
 }
 
 size_t RadosStriperReadFile::size() const {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperReadFile::size is not implemented");
 }
 
@@ -603,17 +603,17 @@ RadosStriperReadFile::~RadosStriperReadFile() throw() {
 // RADOS STRIPER WRITE FILE
 //============================================================================== 
 RadosStriperWriteFile::RadosStriperWriteFile(const std::string &url){
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperWriteFile::RadosStriperWriteFile is not implemented");
 }
 
 void RadosStriperWriteFile::write(const void *data, const size_t size)  {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperWriteFile::write is not implemented");
 }
 
 void RadosStriperWriteFile::close()  {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
       "RadosStriperWriteFile::close is not implemented");
 }
 

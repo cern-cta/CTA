@@ -101,7 +101,7 @@ protected:
       log::LogContext::ScopedParam sp(m_logContext,
         log::Param("capabilities", m_capUtils.getProcText()));
       m_logContext.log(LOG_INFO, "Set process capabilities for using tape");
-    } catch(const castor::exception::Exception &ne) {
+    } catch(const cta::exception::Exception &ne) {
       m_logContext.log(LOG_ERR,
         "Failed to set process capabilities for using the tape ");
     }
@@ -124,9 +124,8 @@ protected:
           m_logContext.log(LOG_INFO, "Tape mounted for read-only access");
         }
     }
-    catch (castor::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
+    catch (cta::exception::Exception & ex) {
+      scoped.add("exception_message", ex.getMessageValue());
       m_logContext.log(LOG_ERR,
         "Failed to mount the tape for read-only access");
       throw;
@@ -147,9 +146,8 @@ protected:
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         m_logContext.log(LOG_INFO, "Tape mounted for read/write access");
     }
-    catch (castor::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
+    catch (cta::exception::Exception & ex) {
+      scoped.add("exception_message", ex.getMessageValue());
       m_logContext.log(LOG_ERR,
         "Failed to mount the tape for read/write access");
       throw;
@@ -169,9 +167,8 @@ protected:
       // wait 600 drive is ready
       m_drive.waitUntilReady(600);
       log::LogContext::ScopedParam sp0(m_logContext, log::Param("loadTime", timer.secs()));
-    }catch(const castor::exception::Exception& e){
-      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
-      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
+    }catch(const cta::exception::Exception& e){
+      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_message", e.getMessageValue()));
       m_logContext.log(LOG_INFO, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }

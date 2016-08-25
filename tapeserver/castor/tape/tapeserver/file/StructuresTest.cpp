@@ -70,9 +70,9 @@ namespace unitTests {
     ASSERT_EQ((int)LBPM::CRC32C, (int)vol1Label.getLBPMethod());
     ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'2');
     vol1Label.backdoorSetLBPMethodString("03");
-    ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
+    ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
     vol1Label.backdoorSetLBPMethodString("XY");
-    ASSERT_THROW(vol1Label.getLBPMethod(), castor::exception::Exception);
+    ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
   }
   
   class testVOL1withCRC: public castor::tape::tapeFile::VOL1withCrc {
@@ -118,9 +118,9 @@ namespace unitTests {
     ASSERT_EQ((int)LBPM::CRC32C, (int)vol1LabelWithCRC.getLBPMethod());
     ASSERT_EQ(buf[77],'0');  ASSERT_EQ(buf[78],'2');
     vol1LabelWithCRC.backdoorSetLBPMethodString("03");
-    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), castor::exception::Exception);
+    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), cta::exception::Exception);
     vol1LabelWithCRC.backdoorSetLBPMethodString("XY");
-    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), castor::exception::Exception);
+    ASSERT_THROW(vol1LabelWithCRC.getLBPMethod(), cta::exception::Exception);
     ASSERT_EQ(0U, *((uint32_t *) &buf[80]));
   }
 

@@ -204,7 +204,7 @@ protected:
       case ERMCFASTR: // Fast retry
         // If this was the last attempt
         if(maxAttempts == attemptNb) {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() <<
             "Received error from rmcd after several fast retries" <<
             ": nbAttempts=" << attemptNb << " rmcErrorStream=" <<
@@ -218,7 +218,7 @@ protected:
         continue;
       default:
         {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc;
           if(!rmcErrorStream.str().empty()) {
             ex.getMessage() << " rmcErrorStream=" << rmcErrorStream.str();
@@ -260,7 +260,7 @@ protected:
         nbERR_MSG++;
 
         if(maxERR_MSG < nbERR_MSG) {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() <<
             "Reply from rmcd contains too many ERR_MSG messages"
             ": maxERR_MSG=" << maxERR_MSG << " rmcErrorStream=" <<
@@ -276,7 +276,7 @@ protected:
         break;
       default:
         {
-          castor::exception::Exception ex;
+          cta::exception::Exception ex;
           ex.getMessage() <<
             "First part of reply from rmcd has unexpected type"
             ": expected=RMC_RC or MSG_ERR actual=" <<

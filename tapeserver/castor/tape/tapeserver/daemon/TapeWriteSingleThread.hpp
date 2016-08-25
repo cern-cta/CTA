@@ -120,7 +120,7 @@ private:
         const uint32_t waitMediaInDriveTimeout = 60;
         try {
           m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-        } catch (castor::exception::Exception &) {}
+        } catch (cta::exception::Exception &) {}
         if (!m_this.m_drive.hasTapeInPlace()) {
           m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
           goto done;
@@ -148,13 +148,12 @@ private:
         m_this.m_initialProcess.tapeUnmounted();
         m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
       }
-      catch(const castor::exception::Exception& ex){
+      catch(const cta::exception::Exception& ex){
         // Notify something failed during the cleaning 
         m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
         m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Down);
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
-        scoped.add("exception_message", ex.getMessageValue())
-        .add("exception_code",ex.code());
+        scoped.add("exception_message", ex.getMessageValue());
         m_this.m_logContext.log(LOG_ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
         // As we do not throw exceptions from here, the watchdog signalling has
         // to occur from here.

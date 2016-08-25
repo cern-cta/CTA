@@ -27,8 +27,8 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
@@ -91,7 +91,7 @@ namespace unitTests {
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     ASSERT_NE((long int)rs, 0);
     fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
+    ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, cta::exception::Exception); //cannot read a file on an empty tape
     delete rs;
   }
    
@@ -228,10 +228,10 @@ namespace unitTests {
   TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
     castor::tape::tapeFile::WriteSession ws(d, volInfo, 0, true, false);
     EXPECT_NO_THROW(ws.validateNextFSeq(1));
-    EXPECT_THROW(ws.reportWrittenFSeq(2),castor::exception::Exception);
+    EXPECT_THROW(ws.reportWrittenFSeq(2),cta::exception::Exception);
     EXPECT_NO_THROW(ws.reportWrittenFSeq(1));
     EXPECT_NO_THROW(ws.validateNextFSeq(2));
-    EXPECT_THROW(ws.validateNextFSeq(1), castor::exception::Exception);
+    EXPECT_THROW(ws.validateNextFSeq(1), cta::exception::Exception);
   }
  
   // Class creating a temporary file of 1kB and deleting it 

@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor { namespace exception {
 
     /**
      * Missing operand.
      */
-    class MissingOperand : public castor::exception::Exception {
+    class MissingOperand : public cta::exception::Exception {
       
     public:
       

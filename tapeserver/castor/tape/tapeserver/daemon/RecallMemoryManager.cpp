@@ -82,7 +82,7 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
   // When delivering a fresh block to the user, it should be empty.
   if (ret->m_payload.size()) {
     m_freeBlocks.push(ret);
-    throw castor::exception::Exception(
+    throw cta::exception::Exception(
       "Internal error: RecallMemoryManager::getFreeBlock "
       "popped a non-empty memory block");
   }

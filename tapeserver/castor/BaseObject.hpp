@@ -25,7 +25,7 @@
 #pragma once
 
 // Include Files
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <pthread.h>
 
 namespace castor {
@@ -89,7 +89,7 @@ namespace castor {
       pthreadKey()   {
         int rc = pthread_key_create(&m_key, NULL);
         if (rc != 0) {
-          castor::exception::Exception e(rc);
+          cta::exception::Exception e;
           e.getMessage() << "Error caught in call to pthread_key_create (from castor::BaseObject::pthreadKey::pthreadKey";
           throw e;
         }

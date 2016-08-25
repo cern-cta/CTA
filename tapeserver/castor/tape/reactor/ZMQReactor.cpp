@@ -86,7 +86,7 @@ void castor::tape::reactor::ZMQReactor::checkDoubleRegistration(
     ++it) {
     const std::pair<zmq_pollitem_t, ZMQPollEventHandler*> &maplet = *it;
     if(item == maplet.first) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "ZMQReactor detected a double registration: fd=" <<
         item.fd << " socket=" << std::hex << item.socket;
       throw ex;

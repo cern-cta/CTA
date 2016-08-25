@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor { namespace exception {
 
     /**
      * Failed to mount volume.
      */
-    class MountFailed : public castor::exception::Exception {
+    class MountFailed : public cta::exception::Exception {
       
     public:
       

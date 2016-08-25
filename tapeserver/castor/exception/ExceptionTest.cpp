@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "Errnum.hpp"
 #include <errno.h>
 
@@ -38,7 +38,7 @@ namespace unitTests {
   
   /* Prevent inlining: it makes this test fail! */
   void __attribute__((noinline)) Nested::f1() {
-    throw castor::exception::Exception("Throwing in Nested's constructor");
+    throw cta::exception::Exception("Throwing in Nested's constructor");
   }
   
   /* Prevent inlining: it makes this test fail!
@@ -55,7 +55,7 @@ namespace unitTests {
   TEST(castor_exceptions, stacktrace_with_demangling) {
     try {
       Nested x;
-    } catch (castor::exception::Exception & e) {
+    } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
       ASSERT_NE(std::string::npos, bt.find("castor::exception::Backtrace::Backtrace"));

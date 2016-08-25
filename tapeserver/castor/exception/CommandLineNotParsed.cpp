@@ -28,5 +28,5 @@
 // Constructor
 // -----------------------------------------------------------------------------
 castor::exception::CommandLineNotParsed::CommandLineNotParsed():
-  castor::exception::Exception(666) {
+  cta::exception::Exception() {
 }

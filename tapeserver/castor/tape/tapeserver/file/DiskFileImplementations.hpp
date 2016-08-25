@@ -25,9 +25,9 @@
 
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/exception/XrootCl.hpp"
+#include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <cryptopp/rsa.h>
 

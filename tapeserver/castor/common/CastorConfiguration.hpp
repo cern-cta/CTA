@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <string>
 #include <map>
@@ -141,7 +141,7 @@ namespace castor {
         std::string strValue;
         try {
           strValue = getConfEntString(category, key);
-        } catch(castor::exception::Exception &ex) {
+        } catch(cta::exception::Exception &ex) {
           if(NULL != log) {
             std::list<log::Param> params = {
               log::Param("category", category),

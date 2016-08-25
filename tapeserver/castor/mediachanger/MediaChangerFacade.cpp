@@ -19,8 +19,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -68,13 +68,13 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadOnly(
     default:
       {
         // Should never get here
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Library slot has an unexpected library type";
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read-only access"
       ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
@@ -104,13 +104,13 @@ void castor::mediachanger::MediaChangerFacade::mountTapeReadWrite(
     default:
       {
         // Should never get here
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Library slot has an unexpected library type";
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read/write access"
       ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
@@ -140,13 +140,13 @@ void castor::mediachanger::MediaChangerFacade::dismountTape(
     default:
       {
         // Should never get here
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Library slot has an unexpected library type";
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape"
       ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();
@@ -176,13 +176,13 @@ void castor::mediachanger::MediaChangerFacade::forceDismountTape(
     default:
       {
         // Should never get here
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Library slot has an unexpected library type";
         throw ex;
       }
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to force dismount tape"
       ": vid=" << vid << " slot=" << slot.str() << ": " <<
       ne.getMessage().str();

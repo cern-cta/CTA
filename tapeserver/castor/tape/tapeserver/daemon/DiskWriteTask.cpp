@@ -134,7 +134,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     //everything went well, return true
     return true;
   } //end of try
-  catch(const castor::exception::Exception& e){
+  catch(const cta::exception::Exception& e){
     /*
      *We might end up there because ;
      * -- WriteFile failed 
@@ -154,8 +154,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     
     m_stats.waitReportingTime+=localTime.secs(castor::utils::Timer::resetCounter);
     log::ScopedParamContainer params(lc);
-    params.add("errorMessage", e.getMessageValue())
-          .add("errorCode", e.code());
+    params.add("errorMessage", e.getMessageValue());
     logWithStat(LOG_ERR, "File writing to disk failed.", lc);
     lc.logBacktrace(LOG_ERR, e.backtrace());
     m_retrieveJob->failureMessage = e.getMessageValue();
@@ -171,7 +170,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
 // DiskWriteTask::getFreeBlock
 //------------------------------------------------------------------------------
 MemBlock *DiskWriteTask::getFreeBlock() { 
-  throw castor::exception::Exception("DiskWriteTask::getFreeBlock should mot be called");
+  throw cta::exception::Exception("DiskWriteTask::getFreeBlock should mot be called");
 }
 
 //------------------------------------------------------------------------------
@@ -228,7 +227,7 @@ void DiskWriteTask::releaseAllBlock(){
         //errCode=666;
       }
       lc.log(LOG_ERR,errorMsg);
-      throw castor::exception::Exception(errorMsg);
+      throw cta::exception::Exception(errorMsg);
     }
   }
 

@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "common/exception/Exception.hpp"
 #include <memory>
 #include "castor/tape/tapeserver/daemon/Payload.hpp"
 
@@ -93,7 +93,7 @@ public:
       return m_context->m_errorMsg;
     }
 
-    throw castor::exception::Exception("Error Context is not set ="
+    throw cta::exception::Exception("Error Context is not set ="
             " no error message to give");
   }
 
@@ -107,7 +107,7 @@ public:
       return m_context->m_errorCode;
     }
 
-    throw castor::exception::Exception("Error Context is not set ="
+    throw cta::exception::Exception("Error Context is not set ="
             " no error code to give");
   }
   

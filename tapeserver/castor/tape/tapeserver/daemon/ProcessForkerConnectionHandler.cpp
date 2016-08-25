@@ -104,7 +104,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   checkHandleEventFd(const int fd)  {
   if(m_fd != fd) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "ProcessForkerConnectionHandler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
@@ -121,7 +121,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   try {
     const int timeout = 10; // Timeout in seconds
     frame = ProcessForkerUtils::readFrame(m_fd, timeout);
-  } catch(castor::exception::Exception &ne) {
+  } catch(cta::exception::Exception &ne) {
     std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
     m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message"
       ": Failed to read frame", params);
@@ -138,7 +138,7 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 
   try {
     dispatchMsgHandler(frame);
-  } catch(castor::exception::Exception &ne) {
+  } catch(cta::exception::Exception &ne) {
     std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
     m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
       params);
@@ -170,8 +170,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
          " message handler: Unexpected message type", params);
       }
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "ProcessForkerConnectionHandler failed to dispatch message handler"
       ": " << ne.getMessage().str();
@@ -203,8 +203,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     // Notify the catalogue drive of the failed session
     drive.sessionKilled(msg.signal());
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle ProcessCrashed message: " <<
       ne.getMessage().str();
     throw ex;
@@ -239,7 +239,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     default:
       // Should never happen
       {
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() <<
           "ProcessExited message contains an unknown exit code"
           ": exitCode=" << msg.exitcode();
@@ -247,8 +247,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       }
     }
 
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle ProcessExited message: " <<
       ne.getMessage().str();
     throw ex;

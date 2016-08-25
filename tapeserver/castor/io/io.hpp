@@ -25,12 +25,12 @@
 #pragma once
 
 #include "castor/exception/AcceptConnectionInterrupted.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoPortInRange.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/io/Constants.hpp"
 #include "castor/io/IpAndPort.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <errno.h>
 #include <iostream>
@@ -191,12 +191,12 @@ int acceptConnection(const int listenSockFd)
  * is interrupted, then this method raises a
  * castor::exception::AcceptConnectionInterrupted exception which gives the
  * number of remaining seconds when the interrupt occured.  All other errors
- * result in a castor::exception::Exception being raised.  Note that both
+ * result in a cta::exception::Exception being raised.  Note that both
  * castor::exception::TimeOut and castor::exception::AcceptConnectionInterrupted
- * inherit from castor::exception::Exception so callers of the this method must
+ * inherit from cta::exception::Exception so callers of the this method must
  * catch castor::exception::TimeOut and
  * castor::exception::AcceptConnectionInterrupted before catching
- * castor::exception::Exception.
+ * cta::exception::Exception.
  *
  * @param listenSockFd The file descriptor of the listener socket.
  * @param timeout      The timeout in seconds to be used when waiting for a
@@ -209,7 +209,7 @@ int acceptConnection(
   const time_t timeout)
   throw(castor::exception::TimeOut,
     castor::exception::AcceptConnectionInterrupted,
-    castor::exception::Exception);
+    cta::exception::Exception);
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.
@@ -349,7 +349,7 @@ void writeBytes(
  * This method throws a castor::exception::TimeOut exception if a timeout
  * occurs.
  *
- * This method throws a castor::exception::Exception exception if an error
+ * This method throws a cta::exception::Exception exception if an error
  * other than a timeout occurs.
  *
  * @param hostName The name of the host to connect to.
@@ -363,7 +363,7 @@ int connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
   const int            timeout)
-  throw(castor::exception::TimeOut, castor::exception::Exception);
+  throw(castor::exception::TimeOut, cta::exception::Exception);
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -372,7 +372,7 @@ int connectWithTimeout(
  * This method throws a castor::exception::TimeOut exception if a timeout
  * occurs.
  *
- * This method throws a castor::exception::Exception exception if an error
+ * This method throws a cta::exception::Exception exception if an error
  * other than a timeout occurs.
  *
  * @param sockDomain   The communications domain of the socket, see
@@ -395,7 +395,7 @@ int connectWithTimeout(
   const struct sockaddr *address,
   const socklen_t       address_len,
   const int             timeout)
-  throw(castor::exception::TimeOut, castor::exception::Exception);
+  throw(castor::exception::TimeOut, cta::exception::Exception);
 
 /**
  * Marshals the specified src value into the specified destination buffer.

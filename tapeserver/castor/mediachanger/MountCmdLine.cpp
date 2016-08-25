@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/mediachanger/MountCmdLine.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <getopt.h>
 
@@ -149,7 +149,7 @@ void castor::mediachanger::MountCmdLine::processOption(const int opt) {
     return handleUnknownOption(optopt);
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "getopt_long returned the following unknown value: 0x" <<
         std::hex << (int)opt;
@@ -221,7 +221,7 @@ std::string castor::mediachanger::MountCmdLine::getVid() const throw() {
 const castor::mediachanger::LibrarySlot &castor::mediachanger::MountCmdLine::
   getDriveLibrarySlot() const {
   if(0 == m_driveLibrarySlot) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get drive library-slot: Value not set";
     throw ex;
   }

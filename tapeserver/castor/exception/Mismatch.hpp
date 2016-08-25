@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor { namespace exception {
 
     /**
      * Mismatch.
      */
-    class Mismatch : public castor::exception::Exception {
+    class Mismatch : public cta::exception::Exception {
       
     public:
       

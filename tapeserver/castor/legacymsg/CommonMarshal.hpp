@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <errno.h>
 #include <stdint.h>

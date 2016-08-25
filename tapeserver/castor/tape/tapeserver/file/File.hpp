@@ -25,7 +25,7 @@
 
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
@@ -46,52 +46,52 @@ namespace castor {
          Trailer
       };
 
-      class TapeFormatError: public castor::exception::Exception {
+      class TapeFormatError: public cta::exception::Exception {
       public:
         TapeFormatError(const std::string & what): Exception(what) {}
       };
       
-      class TapeMediaError: public castor::exception::Exception {
+      class TapeMediaError: public cta::exception::Exception {
       public:
         TapeMediaError(const std::string & what): Exception(what) {}
       };
       
-      class EndOfFile: public castor::exception::Exception {
+      class EndOfFile: public cta::exception::Exception {
       public:
         EndOfFile(): Exception("End Of File reached") {}
       };
       
-      class SessionAlreadyInUse: public castor::exception::Exception {
+      class SessionAlreadyInUse: public cta::exception::Exception {
       public:
         SessionAlreadyInUse(): Exception("Session already in use") {}
       };
       
-      class SessionCorrupted: public castor::exception::Exception {
+      class SessionCorrupted: public cta::exception::Exception {
       public:
         SessionCorrupted(): Exception("Session corrupted") {}
       };
       
-      class FileClosedTwice: public castor::exception::Exception {
+      class FileClosedTwice: public cta::exception::Exception {
       public:
         FileClosedTwice(): Exception("Trying to close a file twice") {}
       };
       
-      class ZeroFileWritten: public castor::exception::Exception {
+      class ZeroFileWritten: public cta::exception::Exception {
       public:
         ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
       };
       
-      class TapeNotEmpty: public castor::exception::Exception {
+      class TapeNotEmpty: public cta::exception::Exception {
       public:
         TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
       };
       
-      class UnsupportedPositioningMode: public castor::exception::Exception {
+      class UnsupportedPositioningMode: public cta::exception::Exception {
       public:
         UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
       };
       
-      class WrongBlockSize: public castor::exception::Exception {
+      class WrongBlockSize: public cta::exception::Exception {
       public:
         WrongBlockSize(): Exception("Trying to use a wrong block size") {}
       };
@@ -265,7 +265,7 @@ namespace castor {
             return "LBP_Off_but_present";
           else if (!m_detectedLbp)
             return "LBP_Off";
-          throw castor::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
+          throw cta::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
         }
         
       private:
@@ -481,7 +481,7 @@ namespace castor {
          */
         void validateNextFSeq (int nextFSeq) const {
           if (nextFSeq != m_lastWrittenFSeq + 1) {
-            castor::exception::Exception e;
+            cta::exception::Exception e;
             e.getMessage() << "In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq="
               << m_lastWrittenFSeq << " nextFSeq=" << nextFSeq;
             throw e;
@@ -496,7 +496,7 @@ namespace castor {
          */
         void reportWrittenFSeq (int writtenFSeq) {
           if (writtenFSeq != m_lastWrittenFSeq + 1) {
-            castor::exception::Exception e;
+            cta::exception::Exception e;
             e.getMessage() << "In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq="
               << m_lastWrittenFSeq << " writtenFSeq=" << writtenFSeq;
             throw e;

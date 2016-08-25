@@ -53,7 +53,7 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
       return new FakeDrive();
     }
   } else {
-    throw castor::exception::Exception(std::string("Unsupported drive type: ") + di.product);
+    throw cta::exception::Exception(std::string("Unsupported drive type: ") + di.product);
   }
 }
 
@@ -223,7 +223,7 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo()
      * obtain the current position and number of bytes in the object buffer.
      * (note) For T10000 we have only SHORT FORM.
      */
-    throw castor::exception::Exception(std::string("An overflow has occurred in getPostitionInfo"));
+    throw cta::exception::Exception(std::string("An overflow has occurred in getPostitionInfo"));
   }
   return posInfo;
 }
@@ -400,7 +400,7 @@ void drive::DriveGeneric::setLogicalBlockProtection(
       SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);    
     if (cdb.paramListLength > sizeof(controlDataProtection)) {
       // should never happen 
-      throw castor::exception::Exception(
+      throw cta::exception::Exception(
         std::string("cdb.paramListLength greater then size "
                     "of controlDataProtection in setLogicalBlockProtection"));
     }
@@ -723,7 +723,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
         break;
       }
     case lbpToUse::crc32cReadOnly:
-      throw castor::exception::Exception("In DriveGeneric::writeBlock: "
+      throw cta::exception::Exception("In DriveGeneric::writeBlock: "
           "trying to write a block in CRC-readonly mode");
     case lbpToUse::disabled:
       {
@@ -733,7 +733,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
           break;
       }
     default:
-      throw castor::exception::Exception("In DriveGeneric::writeBlock: "
+      throw cta::exception::Exception("In DriveGeneric::writeBlock: "
           "unknown LBP mode");
   }
 }
@@ -769,7 +769,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
           SCSI::logicBlockProtectionMethod::CRC32CLength;
         if ( 0>= dataLenWithoutCrc32c) {
           delete[] dataWithCrc32c;
-          throw castor::exception::Exception("In DriveGeneric::readBlock: wrong data block size, checksum cannot fit");
+          throw cta::exception::Exception("In DriveGeneric::readBlock: wrong data block size, checksum cannot fit");
         }
         if (castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
           SCSI::logicBlockProtectionMethod::CRC32CSeed,
@@ -780,7 +780,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
             return dataLenWithoutCrc32c;
         } else {
           delete[] dataWithCrc32c;
-          throw castor::exception::Exception(
+          throw cta::exception::Exception(
               "In DriveGeneric::readBlock: Failed checksum verification");
         }
         break;
@@ -793,7 +793,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
         return res;
       }
     default:
-      throw castor::exception::Exception("In DriveGeneric::readBlock: unknown LBP type");
+      throw cta::exception::Exception("In DriveGeneric::readBlock: unknown LBP type");
   }
 }
 
@@ -843,7 +843,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
             delete[] dataWithCrc32c;
         } else {
           delete[] dataWithCrc32c;
-          castor::exception::Exception(context+"Failed checksum verification for ST read"
+          cta::exception::Exception(context+"Failed checksum verification for ST read"
             " in DriveGeneric::readBlock");
         }
         break;
@@ -863,7 +863,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
         break;
       }
     default:
-      throw castor::exception::Exception("In DriveGeneric::readExactBlock: unknown LBP type");
+      throw cta::exception::Exception("In DriveGeneric::readExactBlock: unknown LBP type");
   }
 }
 
@@ -977,12 +977,12 @@ drive::compressionStats drive::DriveT10000::getCompression()  {
 void drive::DriveMHVTL::disableLogicalBlockProtection() { }
 
 void drive::DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly() {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
     "In DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly(): not supported");
 }
 
 void drive::DriveMHVTL::enableCRC32CLogicalBlockProtectionReadWrite() {
-  throw castor::exception::Exception(
+  throw cta::exception::Exception(
     "In DriveMHVTL::enableCRC32CLogicalBlockProtectionReadWrite(): not supported");
 }
 
@@ -1003,7 +1003,7 @@ void drive::DriveMHVTL::setLogicalBlockProtection(const unsigned char method,
   unsigned char methodLength, const bool enableLPBforRead, 
   const bool enableLBBforWrite) {
   if (method != 0 || methodLength != 0 || enableLBBforWrite || enableLPBforRead)
-    throw castor::exception::Exception("In DriveMHVTL::setLogicalBlockProtection:: LBP cannot be enabled");
+    throw cta::exception::Exception("In DriveMHVTL::setLogicalBlockProtection:: LBP cannot be enabled");
 }
 
 drive::compressionStats drive::DriveLTO::getCompression()  {
@@ -1178,7 +1178,7 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
   std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
 
   if(GMT_ONLINE(mtInfo.mt_gstat)==0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Tape drive empty after waiting " <<
       timeoutSecond << " seconds.";
     throw ex;
@@ -1209,7 +1209,7 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   } while(t.secs() < timeoutSecond);
 
   // Throw an exception for the last tolerated exception that exceeded the timer
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Failed to test unit ready after waiting " <<
     timeoutSecond << " seconds: " << lastTestUnitReadyExceptionMsg;
   throw ex;

@@ -24,13 +24,13 @@
 #pragma once
 
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "common/exception/Exception.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -132,7 +132,7 @@ namespace drive {
    * Exception reported by drive functions when trying to read beyond
    * end of data
    */
-  class EndOfData: public castor::exception::Exception {
+  class EndOfData: public cta::exception::Exception {
   public:
     EndOfData(const std::string w=""): Exception(w) {}
   };
@@ -141,7 +141,7 @@ namespace drive {
    * Exception reported by drive functions when trying to write beyond
    * end of medium
    */
-  class EndOfMedium: public castor::exception::Exception {
+  class EndOfMedium: public cta::exception::Exception {
   public:
     EndOfMedium(const std::string w=""): Exception(w) {}
   };
@@ -149,7 +149,7 @@ namespace drive {
   /**
    * Exception reported by ReadExactBlock when the size is not right
    */
-  class UnexpectedSize: public castor::exception::Exception {
+  class UnexpectedSize: public cta::exception::Exception {
   public:
     UnexpectedSize(const std::string w=""): Exception(w) {}
   };
@@ -157,7 +157,7 @@ namespace drive {
   /**
    * Exception reported by ReadFileMark when finding a data block
    */
-  class NotAFileMark: public castor::exception::Exception {
+  class NotAFileMark: public cta::exception::Exception {
   public:
     NotAFileMark(const std::string w=""): Exception(w) {}
   };

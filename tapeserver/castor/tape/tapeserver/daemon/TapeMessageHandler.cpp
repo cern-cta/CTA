@@ -69,8 +69,8 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
     std::list<log::Param> params = {log::Param("endpoint", endpoint.str())};
     m_log(LOG_INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
       params);
-  } catch(castor::exception::Exception &ne){
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne){
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to bind the ZMQ_REP socket of the TapeMessageHandler"
       ": endpoint=" << endpoint.str() << ": " << ne.getMessage().str();
@@ -126,7 +126,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     m_socket.recv(adress);
     m_socket.recv(empty);
     rqst = messages::recvFrame(m_socket);
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
     return false; // Give up and stay registered with the reactor
@@ -142,8 +142,8 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   messages::Frame reply;
   try {
     reply = dispatchMsgHandler(rqst);
-  } catch(castor::exception::Exception &ex) {
-    reply = createExceptionFrame(ex.code(), ex.getMessage().str());
+  } catch(cta::exception::Exception &ex) {
+    reply = createExceptionFrame(666, ex.getMessage().str()); // TODO - Remove error code
   } catch(std::exception &se) {
     reply = createExceptionFrame(666, se.what());
   } catch(...) {
@@ -158,7 +158,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     m_socket.send(empty,ZMQ_SNDMORE);
     
     messages::sendFrame(m_socket, reply);
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "TapeMessageHandler failed to send reply to client", params);
   }
@@ -173,7 +173,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
   const zmq_pollitem_t &fd) {
   void* underlyingSocket = m_socket.getZmqSocket();
   if(fd.socket != underlyingSocket){
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "TapeMessageHandler passed wrong poll item";
     throw ex;
   }
@@ -213,7 +213,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
   default:
     {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
         ": Unknown request type: msgtype=" << rqst.header.msgtype();
       throw ex;
@@ -238,8 +238,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle Heartbeat message: " <<
       ne.getMessage().str();
     throw ex;
@@ -265,8 +265,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle LabelError message: " <<
       ne.getMessage().str();
     throw ex;
@@ -288,8 +288,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
     drive.getTransferSession().receivedMigrationJob(rqstBody.vid());
     messages::Frame reply = createNbFilesOnTapeFrame(rqstBody.nbfiles());
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to handle ArchiveJobFromCTA message: " <<
       ne.getMessage().str();
@@ -332,8 +332,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to handle RetrieveJobFromCTA message: " <<
       ne.getMessage().str();
@@ -360,8 +360,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForMigration message: " <<
       ne.getMessage().str();
     throw ex;
@@ -387,8 +387,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
       ne.getMessage().str();
     throw ex;
@@ -419,8 +419,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
       ne.getMessage().str();
     throw ex;
@@ -451,8 +451,8 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 
     const messages::Frame reply = createReturnValueFrame(0);
     return reply;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to handle TapeMountedForRecall message: " <<
       ne.getMessage().str();
     throw ex;

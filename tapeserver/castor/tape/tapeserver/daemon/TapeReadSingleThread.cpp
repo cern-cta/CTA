@@ -70,7 +70,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     const uint32_t waitMediaInDriveTimeout = 60;
     try {
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-    } catch (castor::exception::Exception &) {}
+    } catch (cta::exception::Exception &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
       goto done;
@@ -97,13 +97,12 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
     m_this.m_initialProcess.tapeUnmounted();
     m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
-  } catch(const castor::exception::Exception& ex){
+  } catch(const cta::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
     castor::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add("exception_message", ex.getMessageValue())
-          .add("exception_code",ex.code());
+    scoped.add("exception_message", ex.getMessageValue());
     m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
     try {
       if (currentErrorToCount.size()) {
@@ -157,12 +156,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
     m_logContext.log(LOG_DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
-  }catch(castor::exception::Exception & ex){
+  }catch(cta::exception::Exception & ex){
       castor::log::ScopedParamContainer scoped(m_logContext); 
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
+      scoped.add("exception_message", ex.getMessageValue());
       m_logContext.log(LOG_ERR, "Failed to tapeFile::ReadSession");
-      throw castor::exception::Exception("Tape's label is either missing or not valid"); 
+      throw cta::exception::Exception("Tape's label is either missing or not valid"); 
   }  
 }
 
@@ -271,7 +269,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_watchdog.updateStats(m_stats);
         // The session could have been corrupted (failed positioning)
         if(rs->isCorrupted()) {
-          throw castor::exception::Exception ("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
+          throw cta::exception::Exception ("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
         }
       }
     }
@@ -284,7 +282,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
             params);
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStats(m_stats);
-  } catch(const castor::exception::Exception& e){
+  } catch(const cta::exception::Exception& e){
     // We can still update the session stats one last time (unmount timings
     // should have been updated by the RAII cleaner/unmounter).
     m_watchdog.updateStats(m_stats);

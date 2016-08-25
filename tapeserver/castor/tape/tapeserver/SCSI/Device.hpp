@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "../system/Wrapper.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "../utils/Regex.hpp"
 #include "Constants.hpp"
 #include <string>
@@ -99,9 +99,9 @@ namespace SCSI {
     /**
      * Exception for previous function
      */
-    class NotFound: public castor::exception::Exception {
+    class NotFound: public cta::exception::Exception {
     public:
-      NotFound(const std::string& what): castor::exception::Exception(what) {}
+      NotFound(const std::string& what): cta::exception::Exception(what) {}
     };
   private:
     castor::tape::System::virtualWrapper & m_sysWrapper;

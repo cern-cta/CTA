@@ -43,7 +43,7 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
 
   try {
     return exceptionThrowingDriveIsEmpty();
-  } catch(castor::exception::Exception &ex) {
+  } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
     errorMessage = se.what();
@@ -92,7 +92,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if(NULL == drive.get()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   } 

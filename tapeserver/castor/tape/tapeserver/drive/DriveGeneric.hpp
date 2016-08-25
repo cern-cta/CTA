@@ -132,7 +132,7 @@ namespace drive {
      * @return structure containing various booleans, and error conditions.
      */
     virtual driveStatus getDriveStatus()  {
-      throw castor::exception::Exception("Not implemented");
+      throw cta::exception::Exception("Not implemented");
     }   
     
     /**

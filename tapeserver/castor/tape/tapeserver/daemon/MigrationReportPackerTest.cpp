@@ -146,7 +146,7 @@ namespace unitTests {
     mrp.reportCompletedJob(std::move(job2));
 
     const std::string error_msg = "ERROR_TEST_MSG";
-    const castor::exception::Exception ex(error_msg);
+    const cta::exception::Exception ex(error_msg);
     mrp.reportFailedJob(std::move(job3),ex);
 
     const tapeserver::drive::compressionStats statsCompress;

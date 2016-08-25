@@ -25,8 +25,7 @@
 
 #include "castor/server/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
@@ -91,7 +90,7 @@ public:
     // When delivering a fresh block to the user, it should be empty.
     if (ret->m_payload.size()) {
       m_freeBlocks.push(ret);
-      throw castor::exception::Exception(
+      throw cta::exception::Exception(
         "Internal error: DataPipeline::getFreeBlock "
         "popped a non-empty memory block");
     }

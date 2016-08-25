@@ -109,15 +109,15 @@ void castor::tape::tapeserver::daemon::Catalogue::populate(
       // Sanity check
       if(unitName != driveConfig.getUnitName()) {
         // This should never happen
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "Unit name mismatch: expected=" << unitName <<
           " actual=" << driveConfig.getUnitName();
         throw ex;
       }
       enterDriveConfig(driveConfig);
     }
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to populate tape-drive catalogue: " <<
       ne.getMessage().str();
     throw ex;
@@ -143,7 +143,7 @@ void castor::tape::tapeserver::daemon::Catalogue::enterDriveConfig(
       //       not working properly.
   // Else the drive is already in the catalogue
   } else {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to enter tape-drive configuration into tape-drive catalogue"
       ": Duplicate drive-entry: unitName=" << driveConfig.getUnitName();
@@ -176,7 +176,7 @@ void castor::tape::tapeserver::daemon::Catalogue::shutdown() {
     CatalogueDrive *const drive = itor->second;
     try {
       drive->shutdown();
-    } catch(castor::exception::Exception &ex) {
+    } catch(cta::exception::Exception &ex) {
       std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "Failed to shutdown session", params);
     }
@@ -192,7 +192,7 @@ void castor::tape::tapeserver::daemon::Catalogue::killSessions() {
     CatalogueDrive *const drive = itor->second;
     try {
       drive->killSession();
-    } catch(castor::exception::Exception &ex) {
+    } catch(cta::exception::Exception &ex) {
       std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "Failed to kill session", params);
     }
@@ -210,14 +210,14 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
 
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
     throw ex;
   }
 
   if(NULL == itor->second) {
     // Should never get here
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Pointer to drive entry is unexpectedly NULL";
     throw ex;
@@ -229,7 +229,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
   // Sanity check
   if(unitName != driveConfig.getUnitName()) {
     // Should never get here
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: actual=" << driveConfig.getUnitName();
@@ -250,14 +250,14 @@ castor::tape::tapeserver::daemon::CatalogueDrive
 
   DriveMap::iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
     throw ex;
   }
 
   if(NULL == itor->second) {
     // Should never get here
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Pointer to drive entry is unexpectedly NULL";
     throw ex;
@@ -269,7 +269,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
   // Sanity check
   if(unitName != driveConfig.getUnitName()) {
     // This should never happen
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Found inconsistent entry in tape-drive catalogue"
       ": Unit name mismatch: expected=" << unitName <<
@@ -295,7 +295,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
 
     if(NULL == itor->second) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": Encountered NULL drive-entry pointer: unitName=" <<  itor->first;
       throw ex;
@@ -312,7 +312,7 @@ const castor::tape::tapeserver::daemon::CatalogueDrive
     }
   }
 
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
   throw ex;
 }
@@ -332,7 +332,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
 
     if(NULL == itor->second) {
       // Should never get here
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": Encountered NULL drive-entry pointer: unitName=" <<  itor->first;
       throw ex;
@@ -349,7 +349,7 @@ castor::tape::tapeserver::daemon::CatalogueDrive
     }
   }
 
-  castor::exception::Exception ex;
+  cta::exception::Exception ex;
   ex.getMessage() << "Failed to " << task.str() << ": Entry does not exist";
   throw ex;
 }

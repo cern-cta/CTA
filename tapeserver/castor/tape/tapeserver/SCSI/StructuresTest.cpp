@@ -610,29 +610,29 @@ namespace unitTests {
     ASSERT_EQ("Unknown ASC/ASCQ:00/1f", sense.getACSString());
     
     buff[1] = 0xF;
-    ASSERT_THROW(sense.getSenseKeyString(), castor::exception::Exception);
+    ASSERT_THROW(sense.getSenseKeyString(), cta::exception::Exception);
     
     buff[0] = 0x74;
-    ASSERT_THROW(sense.getASC(), castor::exception::Exception);
+    ASSERT_THROW(sense.getASC(), cta::exception::Exception);
     
-    ASSERT_THROW(sense.getACSString(), castor::exception::Exception);
+    ASSERT_THROW(sense.getACSString(), cta::exception::Exception);
     
     try { sense.getACSString(); ASSERT_TRUE(false); }
-    catch (castor::exception::Exception & ex) {
+    catch (cta::exception::Exception & ex) {
       std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
     }
     
     buff[1] = 0xA;
-    ASSERT_THROW(sense.getSenseKey(), castor::exception::Exception);
-    ASSERT_THROW(sense.getSenseKeyString(), castor::exception::Exception);
+    ASSERT_THROW(sense.getSenseKey(), cta::exception::Exception);
+    ASSERT_THROW(sense.getSenseKeyString(), cta::exception::Exception);
     try { sense.getSenseKey(); ASSERT_TRUE(false); }
-    catch (castor::exception::Exception & ex) {
+    catch (cta::exception::Exception & ex) {
       std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
     }
     try { sense.getSenseKeyString(); ASSERT_TRUE(false); }
-    catch (castor::exception::Exception & ex) {
+    catch (cta::exception::Exception & ex) {
       std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
     }

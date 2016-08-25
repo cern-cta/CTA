@@ -31,7 +31,7 @@
 #include <cstdio>
 
 namespace{
-  struct failedMigrationRecallResult : public castor::exception::Exception{
+  struct failedMigrationRecallResult : public cta::exception::Exception{
     failedMigrationRecallResult(const std::string& s): Exception(s){}
   };
 }
@@ -69,7 +69,7 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
 //reportFailedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
-        const castor::exception::Exception &ex){
+        const cta::exception::Exception &ex){
   std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),ex));
   castor::server::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
@@ -292,17 +292,6 @@ void MigrationReportPacker::WorkerThread::run(){
         }
         break;
       }
-    }
-  }
-  catch(const castor::exception::Exception& e){
-    //we get there because to tried to close the connection and it failed
-    //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a castor exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
     }
   } catch(const cta::exception::Exception& e){
     //we get there because to tried to close the connection and it failed

@@ -25,7 +25,7 @@
 #pragma once
 
 // Include Files
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 
@@ -34,7 +34,7 @@ namespace castor {
     /**
      * Invalid argument exception
      */
-    class TimeOut : public castor::exception::Exception {
+    class TimeOut : public cta::exception::Exception {
       
     public:
       

@@ -23,15 +23,15 @@
 
 #pragma once 
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include <string>
 
 namespace castor { 
 namespace exception {
   
-  class EndOfFile: public castor::exception::Exception {
+  class EndOfFile: public cta::exception::Exception {
   public:
-    EndOfFile(const std::string & w): castor::exception::Exception(w) {}
+    EndOfFile(const std::string & w): cta::exception::Exception(w) {}
     virtual ~EndOfFile() throw() {}
   };
     

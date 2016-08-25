@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor    {
 namespace exception {
@@ -31,7 +31,7 @@ namespace exception {
 /**
  * Invalid configuration
  */
-class InvalidConfiguration : public castor::exception::Exception {
+class InvalidConfiguration : public cta::exception::Exception {
       
 public:
       

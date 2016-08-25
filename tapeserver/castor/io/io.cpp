@@ -22,11 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
@@ -89,7 +89,7 @@ int castor::io::createListenerSock(
 
   const int rc = inet_pton(AF_INET, addr.c_str(), &networkAddress);
   if(0 >= rc) {
-    castor::exception::Exception ex(errno);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create listener socket:"
       " Failed to convert string to network address: value=" << addr;
     throw ex;
@@ -131,7 +131,7 @@ int castor::io::createListenerSock(
   // Create a socket
   utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
   if(sock.get() < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << ": Failed to create socket: " 
       << cta::utils::errnoToString(errno);
     throw ex;
@@ -142,7 +142,7 @@ int castor::io::createListenerSock(
     int reuseaddrOptval = 1;
     if(0 > setsockopt(sock.get(), SOL_SOCKET, SO_REUSEADDR,
       (char *)&reuseaddrOptval, sizeof(reuseaddrOptval))) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         ": Failed to set socket option"
         ": file-descriptor=" << sock.get() <<
@@ -178,7 +178,7 @@ int castor::io::createListenerSock(
 
       // Mark the socket as being a listener
       if(listen(sock.get(), LISTENBACKLOG) < 0) {
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() <<
           ": Failed to mark socket as being a listener"
           ": listenSocketFd=" << sock.get() <<
@@ -198,7 +198,7 @@ int castor::io::createListenerSock(
 
       // Else throw an exception
       } else {
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() <<
           ": Failed to bind listener socket"
           ": listenSocketFd=" << sock.get() <<
@@ -234,7 +234,7 @@ int castor::io::createLocalhostListenerSock(const unsigned short port)
   struct in_addr networkAddress;
   const int rc = inet_pton(AF_INET, addr, &networkAddress);
   if(0 >= rc) {
-    castor::exception::Exception ex(errno);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to create listener socket:"
       " Failed to convert string to network address: value=" << addr;
     throw ex;
@@ -278,7 +278,7 @@ int castor::io::acceptConnection(const int listenSocketFd)
       reason << ": " << cta::utils::errnoToString(savedErrno);
     }
 
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << reason.str();
     throw ex;
   }
@@ -293,7 +293,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
   const time_t timeout) throw(
     castor::exception::TimeOut,
     castor::exception::AcceptConnectionInterrupted,
-    castor::exception::Exception) {
+    cta::exception::Exception) {
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
@@ -333,7 +333,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
 
       throw ex;
     } else {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection: poll() failed: " <<
         cta::utils::errnoToString(pollErrno);
       throw ex;
@@ -341,7 +341,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     break;
   default: // poll() found a file descriptor awaiting attention
     if(pollFd.revents & POLLERR) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection"
         ": POLLERR - Error condition";
 
@@ -359,7 +359,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     }
 
     if(!(pollFd.revents & POLLIN)) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "Failed to accept connection "
         ": POLLIN event not set";
       throw ex;
@@ -386,7 +386,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
       reason << ": " << cta::utils::errnoToString(acceptErrno);
     }
 
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << reason.str();
     throw ex;
   }
@@ -414,7 +414,7 @@ castor::io::IpAndPort castor::io::getSockIpPort(
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get socket name: socketFd=" << socketFd <<
       ": " << cta::utils::errnoToString(errno);
     throw ex;
@@ -443,7 +443,7 @@ castor::io::IpAndPort  castor::io::getPeerIpPort(
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << ": Failed to get peer name: socketFd=" << socketFd <<
       ": " << cta::utils::errnoToString(errno);
     throw ex;
@@ -470,7 +470,7 @@ std::string castor::io::getSockHostName(const int socketFd) {
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to get socket hostname"
       ": socketFd=" << socketFd << ": " << cta::utils::errnoToString(errno);
     throw ex;
@@ -482,7 +482,7 @@ std::string castor::io::getSockHostName(const int socketFd) {
     hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
   if(error != 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       ": Failed to get host information by address"
       ": socketFd=" << socketFd <<
@@ -517,7 +517,7 @@ void castor::io::getSockIpHostnamePort(
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       ": Failed to get socket name"
       ": socketFd=" << socketFd <<
@@ -534,7 +534,7 @@ void castor::io::getSockIpHostnamePort(
       hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
 
     if(rc != 0) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         ": Failed to get host information by address"
         ": socketFd=" << socketFd <<
@@ -561,7 +561,7 @@ std::string castor::io::getPeerHostName(const int socketFd) {
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       ": Failed to get peer name"
       ": socketFd=" << socketFd <<
@@ -576,7 +576,7 @@ std::string castor::io::getPeerHostName(const int socketFd) {
       hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
     if(rc != 0) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         ": Failed to get host information by address"
         ": socketFd=" << socketFd <<
@@ -621,7 +621,7 @@ void castor::io::writeSockDescription(
   IpAndPort localIpAndPort(0, 0);
   try {
     localIpAndPort = getSockIpPort(socketFd);
-  } catch(castor::exception::Exception &e) {
+  } catch(cta::exception::Exception &e) {
     localIpAndPort.setIp(0);
     localIpAndPort.setPort(0);
   }
@@ -629,7 +629,7 @@ void castor::io::writeSockDescription(
   IpAndPort peerIpAndPort(0, 0);
   try {
     peerIpAndPort = getPeerIpPort(socketFd);
-  } catch(castor::exception::Exception &e) {
+  } catch(cta::exception::Exception &e) {
     peerIpAndPort.setIp(0);
     peerIpAndPort.setPort(0);
   }
@@ -843,7 +843,7 @@ int castor::io::connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
   const int            timeout)
-  throw(castor::exception::TimeOut, castor::exception::Exception) {
+  throw(castor::exception::TimeOut, cta::exception::Exception) {
   try {
     std::ostringstream portStream;
     portStream << port;
@@ -859,14 +859,14 @@ int castor::io::connectWithTimeout(
       if (0!=rc) {
         char errBuf[100];
         getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
-        castor::exception::Exception ex;
+        cta::exception::Exception ex;
         ex.getMessage() << "getaddrinfo() failed: " << errBuf;
         throw ex;
       }
     }
     struct sockaddr_in s_in;
     if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() << "getaddrinfo() bad result: either ai_family or ai_socktype or ai_addrlen are wrong";
       freeaddrinfo(res);
       throw ex;
@@ -878,18 +878,18 @@ int castor::io::connectWithTimeout(
   
     return connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
       (struct sockaddr *)(&s_in), length, timeout);
-  } catch(castor::exception::Exception &ce) {
-    castor::exception::Exception ex;
+  } catch(cta::exception::Exception &ce) {
+    cta::exception::Exception ex;
     ex.getMessage() << ce.getMessage().str() <<
       ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
   } catch(std::exception &se) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << se.what() <<
       ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
   } catch(...) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to connect: Caught an unknown exception" <<
       ": hostName=" << hostName << ", port=" << port << ", timeout=" << timeout;
     throw ex;
@@ -906,12 +906,12 @@ int castor::io::connectWithTimeout(
   const struct sockaddr *address,
   const socklen_t       address_len,
   const int             timeout)
-  throw(castor::exception::TimeOut, castor::exception::Exception) {
+  throw(castor::exception::TimeOut, cta::exception::Exception) {
 
   // Create the socket for the new connection
   utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
   if(-1 == smartSock.get()) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create socket for new connection"
       ": Call to socket() failed: " << cta::utils::errnoToString(errno);
@@ -921,7 +921,7 @@ int castor::io::connectWithTimeout(
   // Get the orginal file-control flags of the socket
   const int orginalFileControlFlags = fcntl(smartSock.get(), F_GETFL, 0);
   if(-1 == orginalFileControlFlags) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to get the original file-control flags of the socket"
       ": Call to fcntl() failed: " << cta::utils::errnoToString(errno);
@@ -931,7 +931,7 @@ int castor::io::connectWithTimeout(
   // Set the O_NONBLOCK file-control flag of the socket
   if(-1 == fcntl(smartSock.get(), F_SETFL,
     orginalFileControlFlags | O_NONBLOCK)) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Failed to set the O_NONBLOCK file-control flag"
       ": Call to fcntl() failed: " << cta::utils::errnoToString(errno);
@@ -946,7 +946,7 @@ int castor::io::connectWithTimeout(
   // file-control flags of the socket and return it
   if(0 == connectRc) {
     if(-1 == fcntl(smartSock.get(), F_SETFL, orginalFileControlFlags)) {
-      castor::exception::Exception ex;
+      cta::exception::Exception ex;
       ex.getMessage() <<
         "Failed to restore the file-control flags of the socket"
         ": " << cta::utils::errnoToString(errno);
@@ -958,7 +958,7 @@ int castor::io::connectWithTimeout(
   // Throw an exception if there was any other error than
   // "operation in progress" when trying to start to connect
   if(EINPROGRESS != connectErrno) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Call to connect() failed: " 
       << cta::utils::errnoToString(connectErrno);
     throw ex;
@@ -972,7 +972,7 @@ int castor::io::connectWithTimeout(
   // Wait for the connection to complete using poll() with a timeout
   const int pollRc = poll(&pollFd, 1, 1000 * timeout);
   if(-1 == pollRc) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Call to poll() failed: "
       << cta::utils::errnoToString(errno);
     throw ex;
@@ -988,7 +988,7 @@ int castor::io::connectWithTimeout(
   }
 
   if(pollFd.revents & POLLNVAL) {
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to connect"
       ": File descriptor " << pollFd.fd << " is not open";
     throw ex;
@@ -1006,7 +1006,7 @@ int castor::io::connectWithTimeout(
       &sockoptErrorLen), 
     "In io::connectWithTimeout: failed to getsockopt: ");
   if(0 != sockoptError) { // BSD
-    castor::exception::Exception ex;
+    cta::exception::Exception ex;
     ex.getMessage() 
       << "In io::connectWithTimeout: Connection did not complete successfully: " 
       << cta::utils::errnoToString(sockoptError);
@@ -1028,7 +1028,7 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint8_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1045,7 +1045,7 @@ void castor::io::marshalInt16(const int16_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal int16_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1063,7 +1063,7 @@ void castor::io::marshalUint16(const uint16_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint16_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1081,7 +1081,7 @@ void castor::io::marshalInt32(const int32_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal int32_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1099,7 +1099,7 @@ void castor::io::marshalUint32(const uint32_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint32_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1117,7 +1117,7 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint64_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1144,7 +1144,7 @@ void castor::io::marshalString(const std::string &src, char * &dst)
    {
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal string"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1162,14 +1162,14 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
   uint8_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint8_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint8_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1188,14 +1188,14 @@ void castor::io::unmarshalInt16(const char * &src, size_t &srcLen,
   int16_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int16_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int16_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1216,14 +1216,14 @@ void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
   uint16_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint16_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint16_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1244,14 +1244,14 @@ void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
   uint32_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint32_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint32_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1272,14 +1272,14 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
   int32_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int32_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int32_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1300,14 +1300,14 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
   uint64_t &dst)  {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint64_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint64_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1334,28 +1334,28 @@ void castor::io::unmarshalString(const char * &src,
    {
 
   if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
 
   if(srcLen == 0) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
       ": Source buffer length is 0";
     throw ex;
   }
 
   if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
       ": Pointer to destination buffer is NULL";
     throw ex;
   }
 
   if(dstLen == 0) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
       ": Destination buffer length is 0";
     throw ex;
@@ -1385,7 +1385,7 @@ void castor::io::unmarshalString(const char * &src,
   // If all potential bytes were copied but the string terminator was not
   // reached
   if(!strTerminatorReached) {
-    castor::exception::Exception ex(EINVAL);
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
       ": String terminator of source buffer was not reached";
     throw ex;

@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
+#include "common/exception/Exception.hpp"
 #include "h/Castor_limits.h"
 
 #define WRITE_ENABLE 1

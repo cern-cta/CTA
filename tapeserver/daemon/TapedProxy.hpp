@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "tapeserver/castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "tapeserver/castor/log/Param.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"

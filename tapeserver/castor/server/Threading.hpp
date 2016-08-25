@@ -26,8 +26,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/server/Mutex.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace castor {
 namespace server { 
@@ -37,9 +37,9 @@ namespace server {
   /**
    * An exception class thrown by the Thread class.
    */
-  class UncaughtExceptionInThread: public castor::exception::Exception {
+  class UncaughtExceptionInThread: public cta::exception::Exception {
   public:
-    UncaughtExceptionInThread(const std::string& w= ""): castor::exception::Exception(w) {}
+    UncaughtExceptionInThread(const std::string& w= ""): cta::exception::Exception(w) {}
   };
 
   /**
