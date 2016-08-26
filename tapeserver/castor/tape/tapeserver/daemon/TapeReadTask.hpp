@@ -65,7 +65,6 @@ public:
     TapeSessionStats & stats, castor::utils::Timer & timer) {
 
     using castor::log::Param;
-    typedef castor::log::LogContext::ScopedParam ScopedParam;
     
     // Set the common context for all the coming logs (file info)
     log::ScopedParamContainer params(lc);
