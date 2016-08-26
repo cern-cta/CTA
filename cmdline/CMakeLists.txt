@@ -18,8 +18,8 @@ cmake_minimum_required (VERSION 2.6)
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package (cryptopp REQUIRED)
-find_package (xrootd REQUIRED)
-include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+find_package (xrootdclient REQUIRED)
+include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 add_executable (cta CTACmdMain.cpp Configuration.cpp)
 target_link_libraries (cta ${XROOTD_XRDCL_LIB} cryptopp)
