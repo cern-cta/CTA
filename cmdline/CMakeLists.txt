@@ -21,8 +21,8 @@ find_package (cryptopp REQUIRED)
 find_package (xrootd REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_executable (cta CTACmdMain.cpp)
-target_link_libraries (cta ${XROOTD_XRDCL_LIB} ctacommon cryptopp ctautils)
+add_executable (cta CTACmdMain.cpp Configuration.cpp)
+target_link_libraries (cta ${XROOTD_XRDCL_LIB} cryptopp)
 install (TARGETS cta DESTINATION usr/bin)
 INSTALL (FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 

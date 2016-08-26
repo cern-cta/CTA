@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cmdline/Configuration.hpp"
 #include "common/Configuration.hpp"
 #include "common/dataStructures/FrontendReturnCode.hpp"
 
@@ -82,8 +83,9 @@ std::string encode(const std::string msg) {
  * @return the command string
  */
 std::string formatCommandPath(const int argc, const char **argv) {
-  cta::common::Configuration ctaConf("/etc/cta/cta-cli.conf");  
-  std::string cmdPath = "root://"+ctaConf.getConfEntString("Frontend", "HostAndPort", nullptr)+"//";
+  cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
+  std::string cmdPath = "root://"+cliConf.getFrontendHostAndPort()+"//";
+
   for(int i=0; i<argc; i++) {
     if(i) cmdPath += "&";
     cmdPath += encode(std::string(argv[i]));
