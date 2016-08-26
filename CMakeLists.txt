@@ -25,7 +25,7 @@ set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
 # following:
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -std=c++1y -fstack-protector-all")
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -fstack-protector-all -Wnon-virtual-dtor")
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
 # to be tested once we have a stable compilation on CC7:
@@ -36,28 +36,23 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wnon-virtual-dtor")
+set (BUILD_CMDLINE_ONLY FALSE)
 
-# Switch on support for c++0x if the compiler is gcc 4.4.7 or clang
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
   OUTPUT_VARIABLE GCC_VERSION)
+
 if (CMAKE_COMPILER_IS_GNUCC)
-  if (GCC_VERSION VERSION_GREATER 4.4.6)
-    message(STATUS "Detected gcc >= 4.4.7 - switching on support for c++1y")
+  if (GCC_VERSION VERSION_EQUAL 4.4.7)
+    message(STATUS "Detected gcc = 4.4.7 - build cmdline only with c++0x")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    set (BUILD_CMDLINE_ONLY TRUE)
+  endif (GCC_VERSION VERSION_EQUAL 4.4.7)
+  if (GCC_VERSION VERSION_GREATER 4.4.7)
+    message(STATUS "Detected gcc > 4.4.7 - switching on support for c++1y")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
-  endif (GCC_VERSION VERSION_GREATER 4.4.6)
+  endif (GCC_VERSION VERSION_GREATER 4.4.7)
 endif (CMAKE_COMPILER_IS_GNUCC)
-
-set (GCC_VERSION_GE_4_8_0 FALSE)
-if (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
-  set (GCC_VERSION_GE_4_8_0 TRUE)
-endif (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  message(STATUS "Detected clang - switching on support for c++0x")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 
 # Generate the compilation variables, if needed
 if (NOT DEFINED SKIP_UNIT_TESTS)
@@ -109,16 +104,21 @@ ELSE(DEFINED PackageOnly)
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})
 
-  add_subdirectory(catalogue)
-  add_subdirectory(cmdline)
-  add_subdirectory(common)
-  add_subdirectory(objectstore)
-  add_subdirectory(rdbms)
-  add_subdirectory(remotens)
-  add_subdirectory(scheduler)
-  add_subdirectory(tapeserver)
-  add_subdirectory(tests)
-  add_subdirectory(xroot_plugins)
+  if(BUILD_CMDLINE_ONLY)
+    message(STATUS "Build cmdline only")
+    add_subdirectory(cmdline)
+  else(BUILD_CMDLINE_ONLY)
+    add_subdirectory(catalogue)
+    add_subdirectory(cmdline)
+    add_subdirectory(common)
+    add_subdirectory(objectstore)
+    add_subdirectory(rdbms)
+    add_subdirectory(remotens)
+    add_subdirectory(scheduler)
+    add_subdirectory(tapeserver)
+    add_subdirectory(tests)
+    add_subdirectory(xroot_plugins)
+  endif(BUILD_CMDLINE_ONLY)
   
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

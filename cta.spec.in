@@ -82,10 +82,33 @@ cd build
 
 
 %check
+# The CTA client is the only component of CTA that can be compiled on both SLC6
+# and C77, therefore thereis no unittest for it
+%if "%{?dist}" == ".slc6" || "%{?dist}" == ".el6"
+%define skip_unit_tests 1
+%endif
+
 %if "%{skip_unit_tests}" == "0"
 cd build
 %{__make} shortunittests
 %endif
+
+
+# The CTA client is the only component of CTA that can be compiled on both SLC6
+# and C77
+%if "%{?dist}" == ".slc6" || "%{?dist}" == ".el6"
+%package -n cta-cli
+Summary: CERN Tape Archive: command line interface
+Group: Application/CTA
+requires: xrootd >= 4.3
+%description -n cta-cli
+CERN Tape Archive:
+The xroot plugin
+%files -n cta-cli
+%defattr(-,root,root)
+%attr(0755,root,root) %{_bindir}/cta
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
+%else
 
 # The packages will be cta-taped, cta-frontend, cta-cli
 
@@ -135,8 +158,6 @@ CERN Tape Archive:
 The xroot plugin
 %files -n cta-cli
 %defattr(-,root,root)
-%attr(0755,root,root) %{_libdir}/libctacommon.so
-%attr(0755,root,root) %{_libdir}/libctautils.so
 %attr(0755,root,root) %{_bindir}/cta
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
@@ -240,3 +261,4 @@ Utilities to faciliate working with the mediachangers
 %attr(0755,root,root) %{_bindir}/cta-mediachanger-mount
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-mediachanger-dismount.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-mediachanger-mount.1cta.gz
+%endif
