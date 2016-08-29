@@ -128,7 +128,7 @@ const std::string &castor::server::Daemon::getServerName() const throw() {
 bool castor::server::Daemon::getForeground() const
    {
   if(!m_commandLineHasBeenParsed) {
-    castor::exception::CommandLineNotParsed ex;
+    cta::exception::CommandLineNotParsed ex;
     ex.getMessage() <<
       "Failed to determine whether or not the daemon should run in the"
       " foreground because the command-line has not yet been parsed";

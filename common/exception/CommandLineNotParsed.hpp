@@ -16,17 +16,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/CommandLineNotParsed.hpp"
+#pragma once
 
+#include "common/exception/Exception.hpp"
 
-// -----------------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------------
-castor::exception::CommandLineNotParsed::CommandLineNotParsed():
-  cta::exception::Exception() {
-}
+namespace cta { namespace exception {
+
+    /**
+     * CommandLineNotParsed.
+     */
+    class CommandLineNotParsed : public cta::exception::Exception {
+      
+    public:
+      
+      /**
+       * Constructor
+       */
+      CommandLineNotParsed();
+
+    }; // class CommandLineNotParsed
+
+} } // namespace cta exception
+

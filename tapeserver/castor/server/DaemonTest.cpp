@@ -64,7 +64,7 @@ TEST_F(castor_server_DaemonTest, getForegroundBeforeParseCommandLine) {
   castor::log::DummyLogger log(m_programName);
   castor::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
   
-  ASSERT_THROW(daemon.getForeground(), castor::exception::CommandLineNotParsed);
+  ASSERT_THROW(daemon.getForeground(), cta::exception::CommandLineNotParsed);
 }
 
 TEST_F(castor_server_DaemonTest, parseEmptyCmdLine) {

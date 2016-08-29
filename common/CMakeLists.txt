@@ -73,6 +73,7 @@ set (COMMON_LIB_SRC_FILES
   exception/UserError.cpp
   exception/AcceptConnectionInterrupted.cpp
   exception/BadAlloc.cpp
+  exception/CommandLineNotParsed.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
