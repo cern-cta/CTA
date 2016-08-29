@@ -30,7 +30,6 @@ set (UTILS_LIB_SRC_FILES
   CRC.cpp
   utils.cpp
   ../common/CastorConfiguration.cpp
-  ../exception/Backtrace.cpp
   ../exception/NoEntry.cpp
   ../exception/InvalidArgument.cpp
   ../exception/Errnum.cpp
