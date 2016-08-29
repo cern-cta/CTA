@@ -71,6 +71,7 @@ set (COMMON_LIB_SRC_FILES
   exception/NonRetryableError.cpp
   exception/RetryableError.cpp
   exception/UserError.cpp
+  exception/AcceptConnectionInterrupted.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

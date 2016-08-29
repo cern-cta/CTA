@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/exception/AcceptConnectionInterrupted.hpp"
+#include "common/exception/AcceptConnectionInterrupted.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoPortInRange.hpp"
 #include "castor/exception/TimeOut.hpp"
@@ -208,7 +208,7 @@ int acceptConnection(
   const int    listenSockFd,
   const time_t timeout)
   throw(castor::exception::TimeOut,
-    castor::exception::AcceptConnectionInterrupted,
+    cta::exception::AcceptConnectionInterrupted,
     cta::exception::Exception);
 
 /**

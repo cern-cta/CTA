@@ -292,7 +292,7 @@ int castor::io::acceptConnection(const int listenSocketFd)
 int castor::io::acceptConnection(const int listenSocketFd,
   const time_t timeout) throw(
     castor::exception::TimeOut,
-    castor::exception::AcceptConnectionInterrupted,
+    cta::exception::AcceptConnectionInterrupted,
     cta::exception::Exception) {
 
   // Throw an exception if listenSocketFd is invalid
@@ -329,7 +329,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     if(pollErrno == EINTR) {
       const time_t remainingTime = timeout - (time(NULL) - startTime);
 
-      castor::exception::AcceptConnectionInterrupted ex(remainingTime);
+      cta::exception::AcceptConnectionInterrupted ex(remainingTime);
 
       throw ex;
     } else {

@@ -40,7 +40,6 @@ set (UTILS_LIB_SRC_FILES
   ../exception/MissingOperand.cpp
   ../exception/NoPortInRange.cpp
   ../exception/TimeOut.cpp
-  ../exception/AcceptConnectionInterrupted.cpp
   ../exception/CommandLineNotParsed.cpp
   ../exception/OutOfMemory.cpp
   ../BaseObject.cpp

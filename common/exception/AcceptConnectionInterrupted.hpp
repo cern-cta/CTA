@@ -16,29 +16,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/AcceptConnectionInterrupted.hpp"
+#pragma once
 
+#include "common/exception/Exception.hpp"
 
-// -----------------------------------------------------------------------------
-// constructor
-// -----------------------------------------------------------------------------
-castor::exception::AcceptConnectionInterrupted::AcceptConnectionInterrupted(
-  const time_t remainingTime) throw() :
-  cta::exception::Exception(),
-  m_remainingTime(remainingTime) {
+#include <sys/types.h>
 
-  // Do nothing
-}
+namespace cta    {
+namespace exception {
 
-// -----------------------------------------------------------------------------
-// remainingTime()
-// -----------------------------------------------------------------------------
-time_t castor::exception::AcceptConnectionInterrupted::remainingTime() const
-  throw() {
-  return m_remainingTime;
-}
+/**
+ * castor::io::acceptConnection() was interrupted.
+ */
+class AcceptConnectionInterrupted : public cta::exception::Exception {
+      
+public:
+      
+  /**
+   * Constructor.
+   *
+   * @param remainingTime The number of remaining seconds when
+   * castor::io::acceptConnection() was interrupted.
+   */
+  AcceptConnectionInterrupted(const time_t remainingTime) throw();
+
+  /**
+   * Returns the number of remaining seconds when
+   * castor::io::acceptConnection() was interrupted.
+   */
+  time_t remainingTime() const throw();
+
+private:
+
+  /**
+   * The number of remaining seconds when
+   * castor::io::acceptConnection() was interrupted.
+   */
+  const time_t m_remainingTime;
+
+}; // class AcceptConnectionInterrupted
+      
+} // end of namespace exception
+} // end of namespace castor
+
