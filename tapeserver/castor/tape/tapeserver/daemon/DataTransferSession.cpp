@@ -148,7 +148,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
             m_hostname, m_volInfo, lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
-    tsr.gotReadMountDetailsFromClient();
+    tsr.reportState(cta::tape::session::SessionState::Mounting,
+      cta::tape::session::SessionType::Retrieve);
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,m_castorConf.useLbp);
@@ -271,9 +272,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       //we can report we will mount the tape.
       // TODO: create a "StartingSession" state as the mounting will happen in
       // the to-be-created tape thread.
-      // Initialise with something obviously wrong.
       try {
-        tsr.gotWriteMountDetailsFromClient();
+        tsr.reportState(cta::tape::session::SessionState::Mounting, 
+          cta::tape::session::SessionType::Archive);
       } catch (cta::exception::Exception & e) {
         log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
         lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");

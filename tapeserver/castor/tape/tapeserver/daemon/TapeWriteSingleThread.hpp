@@ -145,7 +145,8 @@ private:
         m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
         m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
-        m_this.m_initialProcess.tapeUnmounted();
+        m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Shutdown,
+          cta::tape::session::SessionType::Archive);
         m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
       }
       catch(const cta::exception::Exception& ex){

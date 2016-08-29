@@ -55,25 +55,24 @@ private:
   uint32_t gotArchiveJobFromCTA(const std::string &vid,
     const std::string &unitName, const uint32_t nbFiles);
   
-public:
   void gotRetrieveJobFromCTA(const std::string &vid,
-    const std::string &unitName) override;
+    const std::string &unitName);
 
   void tapeMountedForRecall(const std::string &vid,
-    const std::string &unitName) override;
-
-  void tapeMountedForMigration(const std::string &vid, 
-    const std::string &unitName) override;
+    const std::string &unitName);
   
+  void tapeMountedForMigration(const std::string &vid, 
+    const std::string &unitName);
+
   void tapeUnmountStarted(const std::string &vid,
-    const std::string &unitName) override {}
+    const std::string &unitName) {}
  
   void tapeUnmounted(const std::string &vid,
-    const std::string &unitName)  override {}
+    const std::string &unitName)  {}
  
   void notifyHeartbeat(const std::string &unitName,
-    const uint64_t nbBlocksMoved) override;
-  
+    const uint64_t nbBlocksMoved);
+public:  
   virtual void addLogParams(const std::string &unitName,
     const std::list<castor::log::Param> & params) override;
   

@@ -40,6 +40,7 @@
 #include "castor/messages/TapeserverProxyZmq.hpp"
 #include "castor/messages/TapeUnmounted.pb.h"
 #include "castor/messages/TapeUnmountStarted.pb.h"
+#include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -62,6 +63,20 @@ void castor::messages::TapeserverProxyZmq::reportState(const cta::tape::session:
   if ((type == cta::tape::session::SessionType::Archive) 
       && (state == cta::tape::session::SessionState::Mounting)) {
     gotArchiveJobFromCTA(vid, m_driveName, 0);
+  } else if ((type == cta::tape::session::SessionType::Retrieve) 
+      && (state == cta::tape::session::SessionState::Mounting)) {
+    gotRetrieveJobFromCTA(vid, m_driveName);
+  } else if ((type == cta::tape::session::SessionType::Retrieve) 
+      && (state == cta::tape::session::SessionState::Mounting)) {
+    gotRetrieveJobFromCTA(vid, m_driveName);
+  } else {
+    std::stringstream err;
+    err << "In castor::messages::TapeserverProxyZmq::reportState(): "
+        << "unexpected session type/state combination: "
+        << "type=" << cta::tape::session::toString(state)
+        << "state=" << cta::tape::session::toString(type);
+        
+    throw cta::exception::Exception(err.str());
   }
 }
 

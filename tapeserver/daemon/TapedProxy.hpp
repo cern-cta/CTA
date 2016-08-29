@@ -66,64 +66,6 @@ public:
   virtual void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) = 0;
   
   /**
-   * Notifies taped that the mount-session child-process got
-   * a retrieve job from CTA
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void gotRetrieveJobFromCTA(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies taped that the specified tape has been mounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void tapeMountedForRecall(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies taped that the specified tape has been mounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void tapeMountedForMigration(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies taped that the specified tape is unmounting.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void tapeUnmountStarted(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies taped that the specified tape has been unmounted.
-   *
-   * @param vid The tape to be mounted for recall.
-   * @param unitName The unit name of the tape drive.
-   */
-  virtual void tapeUnmounted(const std::string &vid,
-    const std::string &unitName) = 0;
-
-  /**
-   * Notifies taped that the data-transfer session is still
-   * alive and gives an indication of how much data has been on the tape
-   * and disk sides, respectively.
-   *
-   * @param unitName The unit name of the tape drive.
-   * @param nbBytesMoved Delta value giving the number of bytes moved
-   * since the last heartbeat message.
-   */
-  virtual void notifyHeartbeat(const std::string &unitName,
-    const uint64_t nbBytesMoved) = 0;
-  
-  /**
    * Sends a new set of parameters, to be logged by the mother process when the
    * transfer session is over.
    * @param params: a vector of log parameters

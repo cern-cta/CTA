@@ -22,11 +22,12 @@
 namespace cta { namespace tape { namespace daemon {
 
 DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
-  m_socketPair.close(server::SocketPair::Side::parent);
-  
+  m_socketPair.close(server::SocketPair::Side::parent);  
 }
 
-void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<castor::log::Param>& params) {}
+void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<castor::log::Param>& params) {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
 
 
 }}} // namespace cta::tape::daemon

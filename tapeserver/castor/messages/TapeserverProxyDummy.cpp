@@ -33,48 +33,6 @@ void castor::messages::TapeserverProxyDummy::reportState(const cta::tape::sessio
 void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {}
 
 //------------------------------------------------------------------------------
-// gotRetrieveJobFromCTA
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::gotRetrieveJobFromCTA(
-  const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// tapeMountedForRecall
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeMountedForRecall(
-  const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// tapeMountedForMigration
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeMountedForMigration(
-  const std::string &vid, const std::string &unitName) {
-}
-
-//------------------------------------------------------------------------------
-// tapeUnmountStarted
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeUnmountStarted(
-  const std::string &vid, const std::string &unitName) {
-} 
-
-//------------------------------------------------------------------------------
-// tapeUnmounted
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::tapeUnmounted(
-  const std::string &vid, const std::string &unitName) {
-} 
-
-//------------------------------------------------------------------------------
-// notifyHeartbeat
-//------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::
-notifyHeartbeat(const std::string &unitName, const uint64_t nbBlocksMoved) {
-} 
-
-//------------------------------------------------------------------------------
 // addLogParams
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::

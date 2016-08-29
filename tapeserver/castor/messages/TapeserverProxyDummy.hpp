@@ -38,24 +38,6 @@ public:
 
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
   
-  void gotRetrieveJobFromCTA(const std::string &vid,
-    const std::string &unitName) override;
-
-  void tapeMountedForRecall(const std::string &vid,
-    const std::string &unitName) override;
-
-  void tapeMountedForMigration(const std::string &vid,
-    const std::string &unitName) override;
-
-  void tapeUnmountStarted(const std::string &vid,
-    const std::string &unitName) override;
-
-  void tapeUnmounted(const std::string &vid,
-    const std::string &unitName) override;
-
-  void notifyHeartbeat(const std::string &unitName,
-    const uint64_t nbBlocksMoved) override;
-  
   void addLogParams(const std::string &unitName,
     const std::list<castor::log::Param> & params) override;
   

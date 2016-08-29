@@ -95,7 +95,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
-    m_this.m_initialProcess.tapeUnmounted();
+    m_this.m_initialProcess.reportTapeUnmountedForRetrieve();
     m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
   } catch(const cta::exception::Exception& ex){
     // Something failed during the cleaning 
@@ -247,7 +247,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
             "unsupported LBP started");
         }
       }
-      m_initialProcess.tapeMountedForRead();
+      m_initialProcess.reportState(cta::tape::session::SessionState::Running,
+        cta::tape::session::SessionType::Retrieve);
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector

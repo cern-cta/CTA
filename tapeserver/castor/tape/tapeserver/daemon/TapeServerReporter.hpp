@@ -28,6 +28,8 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/log/LogContext.hpp"
+#include "tapeserver/session/SessionState.hpp"
+#include "tapeserver/session/SessionType.hpp"
 #include <memory>
 #include <string>
 #include <stdint.h>
@@ -63,34 +65,26 @@ public:
    * to stop
    */      
   void finish();
+  
+  /**
+   * Will call TapedProxy::reportState();
+   */
+  void reportState(cta::tape::session::SessionState state, 
+      cta::tape::session::SessionType type);
 
   /**
-   * Will call TapeserverProxy::gotWriteMountDetailsFromClient
-   * @param unitName The unit name of the tape drive.
-   * @param vid The Volume ID of the tape to be mounted.
+   * Special function managing the special case of retrieves, where disk and
+   * tape thread can finish in different orders (tape part)
    */
-  void gotReadMountDetailsFromClient();
+  void reportTapeUnmountedForRetrieve();
   
   /**
-   * Will call TapeserverProxy::tapeUnmounted and VdqmProx::tapeUnmounted()
+   * Special function managing the special case of retrieves, where disk and
+   * tape thread can finish in different orders (disk part)
    */
-  void tapeUnmounted();
+  void reportDiskCompleteForRetrieve();
+
 //------------------------------------------------------------------------------
-  /**
-   * Will call TapeserverProxy::tapeMountedForRead,
-   */
-  void tapeMountedForRead();
-  
-  void tapeMountedForWrite();
-  
-  //The following function could be split into 2 parts 
-  /**
-   * Notify the client we got the fseq of the first file to transfer we get in
-   * exchange return the number of files on the tape according to the VMGR
-   * @return the number of files on the tape according to the VMGR
-   */
-  void gotWriteMountDetailsFromClient();
-  
   //start and wait for thread to finish
   void startThreads();
   void waitThreads();
@@ -113,22 +107,25 @@ private:
     virtual ~Report(){}
     virtual void execute(TapeServerReporter&)=0;
   };
-
-  class ReportGotReadDetailsFromClient : public Report {
+  
+  class ReportStateChange: public Report {
   public:
-    virtual void execute(TapeServerReporter&);
+    ReportStateChange(cta::tape::session::SessionState state, 
+      cta::tape::session::SessionType type);
+    void execute(TapeServerReporter&) override;
+  private:
+    cta::tape::session::SessionState m_state;
+    cta::tape::session::SessionType m_type;
   };
-  class ReportTapeMountedForRead : public Report {
+  
+  class ReportTapeUnmountedForRetrieve: public Report {
   public:
-    virtual void execute(TapeServerReporter&);
+    void execute(TapeServerReporter&) override;
   };
-  class ReportTapeUnmounted : public Report {
+  
+  class ReportDiskCompleteForRetrieve: public Report {
   public:
-    virtual void execute(TapeServerReporter&);
-  };
-  class ReportTapeMountedForWrite : public Report {
-  public:
-    virtual void execute(TapeServerReporter&);
+    void execute(TapeServerReporter&) override;
   };
   /**
    * Inherited from Thread, it will do the job : pop a request, execute it 
@@ -151,6 +148,18 @@ private:
    * Log context, copied because it is in a separated thread
    */
   log::LogContext m_lc;
+  
+  /**
+   * Boolean allowing the management of the special case of recall where
+   * end of tape and disk threads can happen in any order (tape side)
+   */
+  bool m_tapeUnmountedForRecall = false;
+  
+  /**
+   * Boolean allowing the management of the special case of recall where
+   * end of tape and disk threads can happen in any order (disk side)
+   */
+  bool m_diskCompleteForRecall = false;
 
   const std::string m_server;
   const std::string m_unitName;

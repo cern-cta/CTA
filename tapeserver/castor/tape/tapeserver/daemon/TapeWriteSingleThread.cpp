@@ -223,7 +223,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         }
       }
 
-      m_initialProcess.tapeMountedForWrite();
+      m_initialProcess.reportState(cta::tape::session::SessionState::Running,
+        cta::tape::session::SessionType::Archive);
       uint64_t bytes=0;
       uint64_t files=0;
       m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);

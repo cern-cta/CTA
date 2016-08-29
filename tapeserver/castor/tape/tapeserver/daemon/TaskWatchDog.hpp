@@ -224,7 +224,7 @@ protected:
         castor::server::MutexLocker locker(&m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_reportTimer.reset();
-        m_initialProcess.notifyHeartbeat(m_driveUnitName, m_nbOfMemblocksMoved);
+        m_initialProcess.reportHeartbeat(m_nbOfMemblocksMoved, 0);
         reportStats();
         m_nbOfMemblocksMoved=0;
       } 

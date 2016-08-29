@@ -34,6 +34,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+
 //-----------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------  
@@ -58,119 +59,112 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------
-  void TapeServerReporter::finish(){
-    m_fifo.push(NULL);
-  }
+void TapeServerReporter::finish(){
+  m_fifo.push(NULL);
+}
+
 //------------------------------------------------------------------------------
 //startThreads
 //------------------------------------------------------------------------------   
-  void TapeServerReporter::startThreads(){
-    start();
-    m_threadRunnig=true;
-  }
+void TapeServerReporter::startThreads(){
+  start();
+  m_threadRunnig=true;
+}
+
 //------------------------------------------------------------------------------
 //waitThreads
 //------------------------------------------------------------------------------     
-  void TapeServerReporter::waitThreads(){
-    try{
-      wait();
-      m_threadRunnig=false;
-    }catch(const std::exception& e){
-        log::ScopedParamContainer sp(m_lc);
-        sp.add("what",e.what());
-        m_lc.log(LOG_ERR,"error caught while waiting");
-      }catch(...){
-        m_lc.log(LOG_ERR,"unknown error while waiting");
-      }
-  }
+void TapeServerReporter::waitThreads(){
+  try{
+    wait();
+    m_threadRunnig=false;
+  }catch(const std::exception& e){
+      log::ScopedParamContainer sp(m_lc);
+      sp.add("what",e.what());
+      m_lc.log(LOG_ERR,"error caught while waiting");
+    }catch(...){
+      m_lc.log(LOG_ERR,"unknown error while waiting");
+    }
+}
+
 //------------------------------------------------------------------------------
-//tapeMountedForWrite
-//------------------------------------------------------------------------------    
-  void TapeServerReporter::tapeMountedForWrite(){
-    m_fifo.push(
-    new ReportTapeMountedForWrite()
-    );
-  }
-//------------------------------------------------------------------------------
-//gotWriteMountDetailsFromClient
-//------------------------------------------------------------------------------    
-  void TapeServerReporter::gotWriteMountDetailsFromClient(){
-    m_tapeserverProxy.reportState(cta::tape::session::SessionState::Mounting, 
-      cta::tape::session::SessionType::Archive, m_volume.vid);
-  }
-//------------------------------------------------------------------------------
-//gotReadMountDetailsFromClient
+//reportState
 //------------------------------------------------------------------------------  
-   void TapeServerReporter::gotReadMountDetailsFromClient(){
-     m_fifo.push(
-     new ReportGotReadDetailsFromClient()
-     );
-   }
+void TapeServerReporter::reportState(cta::tape::session::SessionState state,
+  cta::tape::session::SessionType type) {
+  m_fifo.push(new ReportStateChange(state, type));
+}
+
 //------------------------------------------------------------------------------
-//tapeMountedForRead
-//------------------------------------------------------------------------------  
-   void TapeServerReporter::tapeMountedForRead(){
-     m_fifo.push(new ReportTapeMountedForRead());
-   }
+//reportTapeUnmountedForRetrieve
+//------------------------------------------------------------------------------ 
+void TapeServerReporter::reportTapeUnmountedForRetrieve() {
+  m_fifo.push(new ReportTapeUnmountedForRetrieve());
+}
+
 //------------------------------------------------------------------------------
-//tapeUnmounted
-//------------------------------------------------------------------------------     
-   void TapeServerReporter::tapeUnmounted(){
-     m_fifo.push(new ReportTapeUnmounted());
-   }
+//reportDiskCompleteForRetrieve
+//------------------------------------------------------------------------------ 
+void TapeServerReporter::reportDiskCompleteForRetrieve() {
+  m_fifo.push(new ReportDiskCompleteForRetrieve());
+}
+
 //------------------------------------------------------------------------------
 //run
 //------------------------------------------------------------------------------  
-  void TapeServerReporter::run(){
-    while(1){
-      std::unique_ptr<Report> currentReport(m_fifo.pop());
-      if(NULL==currentReport.get()) {
-        break;
-      }
-      try{
-        currentReport->execute(*this); 
-      }catch(const std::exception& e){
-        log::ScopedParamContainer sp(m_lc);
-        sp.add("what",e.what());
-        m_lc.log(LOG_ERR,"TapeServerReporter error caught");
-      }
+void TapeServerReporter::run(){
+  while(1){
+    std::unique_ptr<Report> currentReport(m_fifo.pop());
+    if(NULL==currentReport.get()) {
+      break;
+    }
+    try{
+      currentReport->execute(*this); 
+    }catch(const std::exception& e){
+      log::ScopedParamContainer sp(m_lc);
+      sp.add("what",e.what());
+      m_lc.log(LOG_ERR,"TapeServerReporter error caught");
     }
   }
-//------------------------------------------------------------------------------
-// ReportGotReadDetailsFromClient::execute
-//------------------------------------------------------------------------------
-    void TapeServerReporter::ReportGotReadDetailsFromClient::execute(
-    TapeServerReporter& parent){
-      log::ScopedParamContainer sp(parent.m_lc);
-      sp.add("unitName", parent.m_unitName)
-        .add("TPVID", parent.m_volume.vid);
+}
 
-      return parent.m_tapeserverProxy.gotRetrieveJobFromCTA(parent.m_volume.vid, parent.m_unitName);
-    }
 //------------------------------------------------------------------------------
-// ReportTapeMountedForRead::execute
-//------------------------------------------------------------------------------        
-    void TapeServerReporter::ReportTapeMountedForRead::
-    execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeMountedForRecall(parent.m_volume.vid,
-        parent.m_unitName);
-    }
-//------------------------------------------------------------------------------
-// ReportTapeUnmounted::execute
-//------------------------------------------------------------------------------        
-    void TapeServerReporter::ReportTapeUnmounted::
-    execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeUnmounted(parent.m_volume.vid,
-        parent.m_unitName);
-    }
-//------------------------------------------------------------------------------
-// ReportTapeMounterForWrite::execute
-//------------------------------------------------------------------------------         
-    void TapeServerReporter::ReportTapeMountedForWrite::
-    execute(TapeServerReporter& parent){
-      parent.m_tapeserverProxy.tapeMountedForMigration(parent.m_volume.vid,
-        parent.m_unitName);
-    }
-}}}}
+// ReportStateChange::ReportStateChange())
+//------------------------------------------------------------------------------   
+TapeServerReporter::ReportStateChange::ReportStateChange(cta::tape::session::SessionState state,
+  cta::tape::session::SessionType type): m_state(state), m_type(type) { }
 
+//------------------------------------------------------------------------------
+// ReportStateChange::execute())
+//------------------------------------------------------------------------------  
+void TapeServerReporter::ReportStateChange::execute(TapeServerReporter& parent) {
+  parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
+}
+
+//------------------------------------------------------------------------------
+// ReportTapeUnmountedForRetrieve::execute())
+//------------------------------------------------------------------------------  
+void TapeServerReporter::ReportTapeUnmountedForRetrieve::execute(TapeServerReporter& parent) {
+  parent.m_tapeUnmountedForRecall=true;
+  if (parent.m_diskCompleteForRecall) {
+    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::Shutdown, 
+      cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
+  } else {
+    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::DrainingToDisk, 
+      cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
+  }
+}
+
+//------------------------------------------------------------------------------
+// ReportDiskCompleteForRetrieve::execute())
+//------------------------------------------------------------------------------ 
+void TapeServerReporter::ReportDiskCompleteForRetrieve::execute(TapeServerReporter& parent) {
+  parent.m_diskCompleteForRecall=true;
+  if (parent.m_tapeUnmountedForRecall) {
+    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::Shutdown, 
+      cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
+  }
+}
+
+}}}} // namespace castor::tape::tapeserver::daemon
 

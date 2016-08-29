@@ -62,6 +62,7 @@ target_link_libraries(ctamessages
   castorlog
   ctamediachanger
   ctautils
+  ctatapesession
   protobuf
   ssl
   zmq)
