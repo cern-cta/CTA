@@ -58,7 +58,7 @@ namespace unitTests {
     } catch (cta::exception::Exception & e) {
       std::string bt = e.backtrace();
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
-      ASSERT_NE(std::string::npos, bt.find("castor::exception::Backtrace::Backtrace"));
+      ASSERT_NE(std::string::npos, bt.find("cta::exception::Backtrace::Backtrace"));
       ASSERT_EQ("Throwing in Nested's constructor", std::string(e.getMessageValue()));
       std::string fullWhat(e.what());
       ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
