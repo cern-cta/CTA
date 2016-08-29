@@ -19,7 +19,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/BadAlloc.hpp"
+#include "common/exception/BadAlloc.hpp"
 #include "castor/tape/reactor/PollReactorImpl.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
@@ -125,7 +125,7 @@ struct pollfd *castor::tape::reactor::PollReactorImpl::buildPollFds(
   try {
     fds.reset(new struct pollfd[nfds]);
   } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
+    cta::exception::BadAlloc ex;
     ex.getMessage() <<
       "Failed to allocate memory for the file-descriptors of poll()"
       ": " << ba.what();

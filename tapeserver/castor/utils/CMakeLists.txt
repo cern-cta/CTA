@@ -34,7 +34,6 @@ set (UTILS_LIB_SRC_FILES
   ../exception/InvalidArgument.cpp
   ../exception/Errnum.cpp
   ../exception/NotAnOwner.cpp
-  ../exception/BadAlloc.cpp
   ../exception/InvalidConfigEntry.cpp
   ../exception/MissingOperand.cpp
   ../exception/NoPortInRange.cpp

@@ -23,7 +23,7 @@
  
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/BadAlloc.hpp"
+#include "common/exception/BadAlloc.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -556,7 +556,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       handler.reset(new ProcessForkerConnectionHandler(reaperSocket, m_reactor,
         m_log, *m_catalogue));
     } catch(std::bad_alloc &ba) {
-      castor::exception::BadAlloc ex;
+      cta::exception::BadAlloc ex;
       ex.getMessage() <<
         "Failed to create event handler for communicating with the"
         " ProcessForker: " << ba.what();
@@ -584,7 +584,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
       handler.reset(new TapeMessageHandler(m_tapeDaemonConfig.internalPort,
         m_reactor, m_log, *m_catalogue, m_hostName, m_zmqContext));
     } catch(std::bad_alloc &ba) {
-      castor::exception::BadAlloc ex;
+      cta::exception::BadAlloc ex;
       ex.getMessage() <<
         "Failed to create event handler for communicating with forked sessions"
         ": " << ba.what();

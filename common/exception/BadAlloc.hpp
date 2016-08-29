@@ -16,17 +16,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
+ *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/BadAlloc.hpp"
+#pragma once
 
+#include "common/exception/Exception.hpp"
 
-// -----------------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------------
-castor::exception::BadAlloc::BadAlloc():
-  cta::exception::Exception() {
-}
+namespace cta { namespace exception {
+
+    /**
+     * BadAlloc.
+     */
+    class BadAlloc : public cta::exception::Exception {
+      
+    public:
+      
+      /**
+       * Constructor
+       */
+      BadAlloc();
+
+    }; // class BadAlloc
+
+} } // namespace cta exception
+
