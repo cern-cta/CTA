@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/SErrnum.hpp"
 #include "castor/server/MutexLocker.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>

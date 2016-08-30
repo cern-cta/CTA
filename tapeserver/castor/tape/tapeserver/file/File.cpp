@@ -23,7 +23,6 @@
 
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/SErrnum.hpp"
 #include "common/exception/InvalidArgument.hpp"
 #include <sstream>
 #include <iomanip>
