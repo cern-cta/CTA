@@ -26,7 +26,7 @@
 #include "common/exception/Exception.hpp"
 #include <string>
 
-namespace castor { 
+namespace cta { 
 namespace exception {
   
   class EndOfFile: public cta::exception::Exception {

@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/exception/MemException.hpp"
-#include "castor/exception/EndOfFile.hpp"
+#include "common/exception/EndOfFile.hpp"
 #pragma once 
 
 namespace castor {
@@ -110,7 +110,7 @@ public:
     try {
       readSize = from.read(m_data + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile&) {
-      throw castor::exception::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+      throw cta::exception::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
     m_size += readSize;
     return  from.getBlockSize() <= remainingFreeSpace();
