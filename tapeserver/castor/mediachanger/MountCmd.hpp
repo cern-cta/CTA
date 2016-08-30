@@ -25,7 +25,6 @@
 
 #include "common/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
-#include "castor/exception/MountFailed.hpp"
 #include "castor/mediachanger/CmdLineTool.hpp"
 #include "castor/mediachanger/MountCmdLine.hpp"
 
