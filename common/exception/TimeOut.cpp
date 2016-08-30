@@ -22,10 +22,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/TimeOut.hpp"
+#include "common/exception/TimeOut.hpp"
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::exception::TimeOut::TimeOut() :
+cta::exception::TimeOut::TimeOut() :
   cta::exception::Exception() {}

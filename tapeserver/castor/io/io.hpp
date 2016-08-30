@@ -27,7 +27,7 @@
 #include "common/exception/AcceptConnectionInterrupted.hpp"
 #include "common/exception/InvalidArgument.hpp"
 #include "common/exception/NoPortInRange.hpp"
-#include "castor/exception/TimeOut.hpp"
+#include "common/exception/TimeOut.hpp"
 #include "castor/io/Constants.hpp"
 #include "castor/io/IpAndPort.hpp"
 #include "common/exception/Exception.hpp"
@@ -207,7 +207,7 @@ int acceptConnection(const int listenSockFd)
 int acceptConnection(
   const int    listenSockFd,
   const time_t timeout)
-  throw(castor::exception::TimeOut,
+  throw(cta::exception::TimeOut,
     cta::exception::AcceptConnectionInterrupted,
     cta::exception::Exception);
 
@@ -363,7 +363,7 @@ int connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
   const int            timeout)
-  throw(castor::exception::TimeOut, cta::exception::Exception);
+  throw(cta::exception::TimeOut, cta::exception::Exception);
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -395,7 +395,7 @@ int connectWithTimeout(
   const struct sockaddr *address,
   const socklen_t       address_len,
   const int             timeout)
-  throw(castor::exception::TimeOut, cta::exception::Exception);
+  throw(cta::exception::TimeOut, cta::exception::Exception);
 
 /**
  * Marshals the specified src value into the specified destination buffer.

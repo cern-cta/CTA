@@ -31,7 +31,6 @@ set (UTILS_LIB_SRC_FILES
   utils.cpp
   ../common/CastorConfiguration.cpp
   ../exception/Errnum.cpp
-  ../exception/TimeOut.cpp
   ../BaseObject.cpp
   ../Services.cpp
   ../Factories.cpp

@@ -291,7 +291,7 @@ int castor::io::acceptConnection(const int listenSocketFd)
 //------------------------------------------------------------------------------
 int castor::io::acceptConnection(const int listenSocketFd,
   const time_t timeout) throw(
-    castor::exception::TimeOut,
+    cta::exception::TimeOut,
     cta::exception::AcceptConnectionInterrupted,
     cta::exception::Exception) {
 
@@ -317,7 +317,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
   switch(pollRc) {
   case 0: // poll() timed out
     {
-      castor::exception::TimeOut ex;
+      cta::exception::TimeOut ex;
       ex.getMessage() <<
            "Failed to accept connection: poll() timed out after " << timeout
         << " seconds whilst trying to accept a connection";
@@ -843,7 +843,7 @@ int castor::io::connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
   const int            timeout)
-  throw(castor::exception::TimeOut, cta::exception::Exception) {
+  throw(cta::exception::TimeOut, cta::exception::Exception) {
   try {
     std::ostringstream portStream;
     portStream << port;
@@ -906,7 +906,7 @@ int castor::io::connectWithTimeout(
   const struct sockaddr *address,
   const socklen_t       address_len,
   const int             timeout)
-  throw(castor::exception::TimeOut, cta::exception::Exception) {
+  throw(cta::exception::TimeOut, cta::exception::Exception) {
 
   // Create the socket for the new connection
   utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
@@ -980,7 +980,7 @@ int castor::io::connectWithTimeout(
 
   // Throw a timed-out exception if poll() timed-out
   if(0 == pollRc) {
-    castor::exception::TimeOut ex;
+    cta::exception::TimeOut ex;
     ex.getMessage() <<
       "Failed to connect"
       ": poll() timed out after " << timeout << " seconds";
