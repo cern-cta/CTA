@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/NoEntry.hpp"
+#include "common/exception/NoEntry.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/utils/utils.hpp"
 #include "common/exception/Exception.hpp"

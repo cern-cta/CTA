@@ -27,7 +27,7 @@
 // Include Files
 #include "common/exception/Exception.hpp"
 
-namespace castor {
+namespace cta {
 
   namespace exception {
 
@@ -47,5 +47,5 @@ namespace castor {
       
   } // end of namespace exception
 
-} // end of namespace castor
+} // end of namespace cta
 

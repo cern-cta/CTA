@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/NoEntry.hpp"
+#include "common/exception/NoEntry.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -220,7 +220,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     std::map<std::string, ConfCategory>::const_iterator catIt =
       m_config.find(category);
     if (m_config.end() == catIt) {
-      castor::exception::NoEntry e;
+      cta::exception::NoEntry e;
       e.getMessage() << "Failed to get configuration entry " << category << ":"
         << key << ": Failed to find " << category << " category";
       throw e;
@@ -228,7 +228,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
     // get the entry
     ConfCategory::const_iterator entIt = catIt->second.find(key);
     if (catIt->second.end() == entIt) {
-      castor::exception::NoEntry e;
+      cta::exception::NoEntry e;
       e.getMessage() << "Failed to get configuration entry " << category << ":"
         << key << ": Failed to find " << key << " key";
       throw e;

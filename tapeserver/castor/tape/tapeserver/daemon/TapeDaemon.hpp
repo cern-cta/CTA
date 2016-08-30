@@ -25,7 +25,7 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "common/exception/InvalidConfigEntry.hpp"
-#include "castor/exception/NoEntry.hpp"
+#include "common/exception/NoEntry.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"

@@ -24,11 +24,11 @@
 
 // Include Files
 #include <errno.h>
-#include "castor/exception/NoEntry.hpp"
+#include "common/exception/NoEntry.hpp"
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::exception::NoEntry::NoEntry() :
+cta::exception::NoEntry::NoEntry() :
   // No backtrace for this exception
   cta::exception::Exception("", false) {}
