@@ -26,7 +26,6 @@
 
 #include "common/exception/InvalidArgument.hpp"
 #include "common/exception/InvalidConfigEntry.hpp"
-#include "castor/exception/InvalidConfiguration.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <ostream>
