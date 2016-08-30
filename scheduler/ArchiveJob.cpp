@@ -54,7 +54,11 @@ void cta::ArchiveJob::complete() {
   // And matches
   if (archiveFile.checksumType != tapeFile.checksumType || 
       archiveFile.checksumValue != tapeFile.checksumValue)
-    throw ChecksumMismatch("In cta::ArchiveJob::complete(): checksum mismatch");
+    throw ChecksumMismatch(std::string("In cta::ArchiveJob::complete(): checksum mismatch!")
+            +" Archive file checksum type: "+archiveFile.checksumType
+            +" Archive file checksum value: "+archiveFile.checksumValue
+            +" Tape file checksum type: "+tapeFile.checksumType
+            +" Tape file checksum value: "+tapeFile.checksumValue);
   // We are good to go to record the data in the persistent storage.
   // Record the data in the archiveNS. The checksum will be validated if already
   // present, of inserted if not.

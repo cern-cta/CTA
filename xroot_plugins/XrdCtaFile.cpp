@@ -87,7 +87,7 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
       m_cmdlineOutput += "\n";
     }
   }
-  if(!m_missingOptionalOptions.empty() && m_optionalOptions.empty()) {
+  if(!m_missingOptionalOptions.empty() && m_optionalOptions.empty() && !m_suppressOptionalOptionsWarning) {
     m_cmdlineOutput += "At least one of the following options is required:\n";
     for(auto it=m_missingOptionalOptions.cbegin(); it!=m_missingOptionalOptions.cend(); it++) {
       m_cmdlineOutput += "Missing option: ";
@@ -364,7 +364,8 @@ XrdCtaFile::XrdCtaFile(
   m_scheduler(scheduler),
   m_log(*log),
   m_cmdlineOutput(""),
-  m_cmdlineReturnCode(cta::common::dataStructures::FrontendReturnCode::ok) {  
+  m_cmdlineReturnCode(cta::common::dataStructures::FrontendReturnCode::ok),
+  m_suppressOptionalOptionsWarning(false){  
 }
 
 //------------------------------------------------------------------------------
@@ -618,6 +619,27 @@ time_t XrdCtaFile::stringParameterToTime(const std::string &parameterName, const
             ") could not be interpreted as a time, the allowed format is: <DD/MM/YYYY>");
   }
   return mktime(&time);
+}
+
+//------------------------------------------------------------------------------
+// EOS2CTAChecksumType
+//------------------------------------------------------------------------------
+optional<std::string> XrdCtaFile::EOS2CTAChecksumType(const optional<std::string> &EOSChecksumType) {
+  if(EOSChecksumType && EOSChecksumType.value()=="adler") return optional<std::string>("ADLER32");
+  return nullopt;
+}
+
+//------------------------------------------------------------------------------
+// EOS2CTAChecksumValue
+//------------------------------------------------------------------------------
+optional<std::string> XrdCtaFile::EOS2CTAChecksumValue(const optional<std::string> &EOSChecksumValue) {
+  if(EOSChecksumValue) {
+    std::string CTAChecksumValue("0X");  
+    CTAChecksumValue += EOSChecksumValue.value();
+    cta::utils::toUpper(CTAChecksumValue);
+    return optional<std::string>(CTAChecksumValue);
+  }
+  return nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -1019,6 +1041,9 @@ void XrdCtaFile::xCom_tape() {
       searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
       searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false);
       searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false);
+    }
+    else {
+      m_suppressOptionalOptionsWarning=true;
     }
     checkOptions(help.str());
     std::list<cta::common::dataStructures::Tape> list= m_catalogue->getTapes(searchCriteria);
@@ -1574,6 +1599,7 @@ void XrdCtaFile::xCom_archivefile() {
   if("ls" == m_requestTokens.at(2)) { //ls
     bool summary = hasOption("-S", "--summary");
     bool all = hasOption("-a", "--all");
+    if(all) m_suppressOptionalOptionsWarning=true;
     cta::catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = getOptionUint64Value("-I", "--id", false, false);
     searchCriteria.diskFileGroup = getOptionStringValue("-g", "--group", false, false);
@@ -1592,7 +1618,7 @@ void XrdCtaFile::xCom_archivefile() {
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = {"id","copy no","vid","fseq","block id","disk id","size","checksum type","checksum value","storage class","owner","group","instance","path","creation time"};
+        std::vector<std::string> header = {"id","copy no","vid","fseq","block id","instance","disk id","size","checksum type","checksum value","storage class","owner","group","path","creation time"};
         if(hasOption("-h", "--header")) responseTable.push_back(header);    
         while(itor->hasMore()) {
           const cta::common::dataStructures::ArchiveFile archiveFile = itor->next();
@@ -1603,8 +1629,8 @@ void XrdCtaFile::xCom_archivefile() {
             currentRow.push_back(jt->second.vid);
             currentRow.push_back(std::to_string((unsigned long long)jt->second.fSeq));
             currentRow.push_back(std::to_string((unsigned long long)jt->second.blockId));
-            currentRow.push_back(archiveFile.diskFileId);
             currentRow.push_back(archiveFile.diskInstance);
+            currentRow.push_back(archiveFile.diskFileId);
             currentRow.push_back(std::to_string((unsigned long long)archiveFile.fileSize));
             currentRow.push_back(archiveFile.checksumType);
             currentRow.push_back(archiveFile.checksumValue);
@@ -1941,8 +1967,8 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> diskid = getOptionStringValue("", "--diskid", true, false);
   optional<std::string> srcurl = getOptionStringValue("", "--srcurl", true, false);
   optional<uint64_t> size = getOptionUint64Value("", "--size", true, false);
-  optional<std::string> checksumtype = getOptionStringValue("", "--checksumtype", true, false);
-  optional<std::string> checksumvalue = getOptionStringValue("", "--checksumvalue", true, false);
+  optional<std::string> checksumtype = EOS2CTAChecksumType(getOptionStringValue("", "--checksumtype", true, false));
+  optional<std::string> checksumvalue = EOS2CTAChecksumValue(getOptionStringValue("", "--checksumvalue", true, false));
   optional<std::string> storageclass = getOptionStringValue("", "--storageclass", true, false);
   optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);

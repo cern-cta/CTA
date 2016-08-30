@@ -118,6 +118,11 @@ protected:
   std::vector<std::string> m_optionalOptions;
   
   /**
+   * Flag used to suppress missing optional options. Set to false by default (used only in file and tape listings)
+   */
+  bool m_suppressOptionalOptionsWarning;
+  
+  /**
    * Decodes a string in base 64
    * 
    * @param msg string to decode
@@ -295,6 +300,22 @@ protected:
    * @param  helpString The help string to be included in the exception message
    */
   void checkOptions(const std::string &helpString);
+  
+  /**
+   * Converts the checksum type string format from EOS to CTA
+   * 
+   * @param EOSChecksumType Original EOS checksum type
+   * @return the checksum type string converted to CTA format
+   */
+  optional<std::string> EOS2CTAChecksumType(const optional<std::string> &EOSChecksumType);
+  
+  /**
+   * Converts the checksum value string format from EOS to CTA
+   * 
+   * @param EOSChecksumValue Original EOS checksum value
+   * @return the checksum value string converted to CTA format
+   */
+  optional<std::string> EOS2CTAChecksumValue(const optional<std::string> &EOSChecksumValue);
 };
 
 }}
