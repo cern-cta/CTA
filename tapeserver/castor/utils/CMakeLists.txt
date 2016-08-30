@@ -32,7 +32,6 @@ set (UTILS_LIB_SRC_FILES
   ../common/CastorConfiguration.cpp
   ../exception/Errnum.cpp
   ../exception/TimeOut.cpp
-  ../exception/OutOfMemory.cpp
   ../BaseObject.cpp
   ../Services.cpp
   ../Factories.cpp

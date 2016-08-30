@@ -80,6 +80,7 @@ set (COMMON_LIB_SRC_FILES
   exception/NoEntry.cpp
   exception/NoPortInRange.cpp
   exception/NotAnOwner.cpp
+  exception/OutOfMemory.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

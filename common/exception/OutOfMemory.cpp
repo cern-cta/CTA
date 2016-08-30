@@ -22,30 +22,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
-
 // Include Files
-#include "common/exception/Exception.hpp"
+#include <errno.h>
+#include "common/exception/OutOfMemory.hpp"
 
-namespace castor {
-
-  namespace exception {
-
-    /**
-     * Invalid argument exception
-     */
-    class OutOfMemory : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * default constructor
-       */
-      OutOfMemory();
-
-    };
-      
-  } // end of namespace exception
-
-} // end of namespace castor
-
+// -----------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------
+cta::exception::OutOfMemory::OutOfMemory() :
+  cta::exception::Exception() {}

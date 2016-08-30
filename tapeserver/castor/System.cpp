@@ -34,7 +34,7 @@
 
 // Local includes
 #include "System.hpp"
-#include "castor/exception/OutOfMemory.hpp"
+#include "common/exception/OutOfMemory.hpp"
 
 #define STAGERSUPERGROUP "st"
 #define STAGERSUPERUSER "stage"
@@ -50,7 +50,7 @@ std::string castor::System::getHostName()
   char* hostname;
   hostname = (char*) calloc(len, 1);
   if (0 == hostname) {
-    castor::exception::OutOfMemory ex;
+    cta::exception::OutOfMemory ex;
     ex.getMessage() << "Could not allocate hostname with length " << len;
     throw ex;
   }
