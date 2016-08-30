@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/MissingOperand.hpp"
+#include "common/exception/MissingOperand.hpp"
 #include "castor/mediachanger/DismountCmdLine.hpp"
 #include "castor/mediachanger/LibrarySlotParser.hpp"
 #include "common/exception/Exception.hpp"
@@ -74,7 +74,7 @@ castor::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
 
   // Check that both VID and DRIVE_SLOT has been specified
   if(nbArgs < 2) {
-    castor::exception::MissingOperand ex;
+    cta::exception::MissingOperand ex;
     ex.getMessage() << "Both VID and DRIVE_SLOT must be specified";
     throw ex;
   }

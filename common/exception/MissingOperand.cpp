@@ -16,30 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
+ * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "common/exception/MissingOperand.hpp"
 
-#include "common/exception/Exception.hpp"
 
-namespace castor { namespace exception {
-
-    /**
-     * Missing operand.
-     */
-    class MissingOperand : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * Constructor
-       */
-      MissingOperand();
-
-    }; // class MissingOperand
-
-} } // namespace castor exception
-
+// -----------------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------------
+cta::exception::MissingOperand::MissingOperand():
+  cta::exception::Exception() {
+}

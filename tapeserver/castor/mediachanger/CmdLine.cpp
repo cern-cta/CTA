@@ -23,14 +23,14 @@
 
 #include "castor/mediachanger/CmdLine.hpp"
 #include "common/exception/InvalidArgument.hpp"
-#include "castor/exception/MissingOperand.hpp"
+#include "common/exception/MissingOperand.hpp"
 #include <getopt.h>
 
 //------------------------------------------------------------------------------
 // handleMissingParameter
 //------------------------------------------------------------------------------
 void castor::mediachanger::CmdLine::handleMissingParameter(const int opt) {
-  castor::exception::MissingOperand ex;
+  cta::exception::MissingOperand ex;
   ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
  throw ex;
 }

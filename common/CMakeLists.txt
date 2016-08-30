@@ -76,6 +76,7 @@ set (COMMON_LIB_SRC_FILES
   exception/CommandLineNotParsed.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
+  exception/MissingOperand.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
