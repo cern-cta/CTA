@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/NotAnOwner.hpp"
+#include "common/exception/NotAnOwner.hpp"
 
 #include <errno.h>
 #include <stdio.h>
@@ -119,7 +119,7 @@ public:
   T *release()  {
     // If this smart pointer does not own a pointer
     if(NULL == m_arrayPtr) {
-      castor::exception::NotAnOwner ex;
+      cta::exception::NotAnOwner ex;
       ex.getMessage() << "Smart pointer does not own a pointer";
       throw(ex);
     }

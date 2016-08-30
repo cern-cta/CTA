@@ -25,7 +25,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace castor { namespace exception {
+namespace cta { namespace exception {
 
     /**
      * Not an owner.
@@ -41,5 +41,5 @@ namespace castor { namespace exception {
 
     }; // class NotAnOwner
 
-} } // namespace castor exception
+} } // namespace cta exception
 

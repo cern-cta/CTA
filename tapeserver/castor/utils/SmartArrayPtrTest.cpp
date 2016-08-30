@@ -77,7 +77,7 @@ TEST_F(castor_utils_SmartArrayPtrTest, assignment) {
 
 TEST_F(castor_utils_SmartArrayPtrTest, releaseNull) {
   castor::utils::SmartArrayPtr<char> smartPtr;
-  ASSERT_THROW(smartPtr.release(), castor::exception::NotAnOwner);
+  ASSERT_THROW(smartPtr.release(), cta::exception::NotAnOwner);
 }
 
 TEST_F(castor_utils_SmartArrayPtrTest, subscriptRead) {

@@ -87,7 +87,7 @@ FILE *castor::utils::SmartFILEPtr::get() const throw() {
 FILE *castor::utils::SmartFILEPtr::release() {
   // If this smart pointer does not own a pointer
   if(NULL == m_file) {
-    castor::exception::NotAnOwner ex;
+    cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart pointer does not own a FILE pointer";
     throw ex;
   }

@@ -94,7 +94,7 @@ void *castor::messages::SmartZmqContext::get() const throw() {
 void *castor::messages::SmartZmqContext::release() {
   // If this smart pointer does not own a ZMQ context
   if(NULL == m_zmqContext) {
-    castor::exception::NotAnOwner ex;
+    cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart pointer does not own a ZMQ context";
     throw ex;
   }

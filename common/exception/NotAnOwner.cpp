@@ -21,12 +21,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/NotAnOwner.hpp"
+#include "common/exception/NotAnOwner.hpp"
 
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-castor::exception::NotAnOwner::NotAnOwner():
+cta::exception::NotAnOwner::NotAnOwner():
   cta::exception::Exception() {
 }

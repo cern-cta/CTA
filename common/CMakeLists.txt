@@ -79,6 +79,7 @@ set (COMMON_LIB_SRC_FILES
   exception/MissingOperand.cpp
   exception/NoEntry.cpp
   exception/NoPortInRange.cpp
+  exception/NotAnOwner.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

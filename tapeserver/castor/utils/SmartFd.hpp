@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/NotAnOwner.hpp"
+#include "common/exception/NotAnOwner.hpp"
 
 namespace castor {
 namespace utils  {

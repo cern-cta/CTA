@@ -104,7 +104,7 @@ int castor::utils::SmartFd::get() const throw() {
 int castor::utils::SmartFd::release()  {
   // If this SmartFd does not own a file descriptor
   if(m_fd < 0) {
-    castor::exception::NotAnOwner ex;
+    cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart file-descriptor does not own a file-descriptor";
     throw ex;
   }
