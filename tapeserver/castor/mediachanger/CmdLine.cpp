@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/mediachanger/CmdLine.hpp"
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include <getopt.h>
 
@@ -39,7 +39,7 @@ void castor::mediachanger::CmdLine::handleMissingParameter(const int opt) {
 // handleUnknownOption
 //------------------------------------------------------------------------------
 void castor::mediachanger::CmdLine::handleUnknownOption(const int opt) {
-  castor::exception::InvalidArgument ex;
+  cta::exception::InvalidArgument ex;
   if(0 == optopt) {
     ex.getMessage() << "Unknown command-line option";
   } else {

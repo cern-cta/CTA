@@ -24,10 +24,10 @@
 
 // Include Files
 #include <errno.h>
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::exception::InvalidArgument::InvalidArgument(const std::string& what) :
+cta::exception::InvalidArgument::InvalidArgument(const std::string& what) :
   cta::exception::Exception(what) {}

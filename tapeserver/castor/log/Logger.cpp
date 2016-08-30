@@ -27,7 +27,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::log::Logger::Logger(const std::string &programName)
-  throw(cta::exception::Exception, castor::exception::InvalidArgument):
+  throw(cta::exception::Exception, cta::exception::InvalidArgument):
   m_programName(programName) {
 }
 

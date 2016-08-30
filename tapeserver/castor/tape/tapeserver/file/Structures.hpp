@@ -106,10 +106,10 @@ namespace tape {
         try {
           hexValue = std::stoi(LBPMethod, 0, 16);
         } catch (std::invalid_argument &) {
-          throw exception::InvalidArgument(
+          throw cta::exception::InvalidArgument(
             std::string("In VOL1::getLBPMethod(): syntax error for numeric value: ") + LBPMethod);
         } catch (std::out_of_range &) {
-          throw exception::InvalidArgument(
+          throw cta::exception::InvalidArgument(
             std::string("In VOL1::getLBPMethod(): out of range value: ") + LBPMethod);
         }
         switch (hexValue) {
@@ -118,7 +118,7 @@ namespace tape {
           case SCSI::logicBlockProtectionMethod::ReedSolomon:
             return hexValue;
           default:
-            throw exception::InvalidArgument(
+            throw cta::exception::InvalidArgument(
               std::string("In VOL1::getLBPMethod(): unexpected value: ") + LBPMethod);
         }
       }

@@ -25,7 +25,7 @@
 #pragma once
 
 // Include Files
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/log/Param.hpp"
 
 #include <list>
@@ -95,7 +95,7 @@ public:
    * message.
    */
   Logger(const std::string &programName)
-    throw(cta::exception::Exception, castor::exception::InvalidArgument);
+    throw(cta::exception::Exception, cta::exception::InvalidArgument);
 
   /**
    * Destructor.

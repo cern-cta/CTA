@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
@@ -110,19 +110,19 @@ int castor::io::createListenerSock(
 
   // Check range validity
   if(lowPort < 1) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<  "lowPort must be greater than 0"
       ": lowPort=" << lowPort;
     throw ex;
   }
   if(highPort < 1) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << "highPort must be greater than 0"
       ": highPort=" << lowPort;
     throw ex;
   }
   if(lowPort > highPort) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<  "lowPort must be less than or equal to highPort"
       ": lowPort=" << lowPort << " highPort=" << highPort;
     throw ex;
@@ -251,7 +251,7 @@ int castor::io::acceptConnection(const int listenSocketFd)
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
-    exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       ": Invalid listen socket file-descriptor"
       ": listenSocketFd=" << listenSocketFd;
@@ -297,7 +297,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid listen socket file-descriptor"
       ": listenSocketFd=" << listenSocketFd;
@@ -402,7 +402,7 @@ castor::io::IpAndPort castor::io::getSockIpPort(
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -431,7 +431,7 @@ castor::io::IpAndPort  castor::io::getPeerIpPort(
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -459,7 +459,7 @@ std::string castor::io::getSockHostName(const int socketFd) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << "Failed to get socket hostname"
       ": Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -506,7 +506,7 @@ void castor::io::getSockIpHostnamePort(
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -550,7 +550,7 @@ void castor::io::getSockIpHostnamePort(
 std::string castor::io::getPeerHostName(const int socketFd) {
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -611,7 +611,7 @@ void castor::io::writeSockDescription(
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -653,7 +653,7 @@ void castor::io::readBytes(
   char *const buf) {
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "In io::readBytes: Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -661,7 +661,7 @@ void castor::io::readBytes(
   }
 
   if (timeout < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "In io::readBytes: Invalid timeout value: " << timeout;
     throw ex;
@@ -718,7 +718,7 @@ void castor::io::writeBytes(
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "In io::writeBytes: Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
@@ -726,7 +726,7 @@ void castor::io::writeBytes(
   }
   
   if (timeout < 0) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "In io::writeBytes: Invalid timeout value: " << timeout;
     throw ex;

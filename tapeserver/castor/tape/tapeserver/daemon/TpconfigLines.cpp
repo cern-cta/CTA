@@ -103,7 +103,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
 
       // Throw an exception if the number of data-columns is invalid
       if(columns.size() != expectedNbOfColumns) {
-        castor::exception::InvalidArgument ex;
+        cta::exception::InvalidArgument ex;
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
           ": Invalid number of data columns in TPCONFIG line"
@@ -123,7 +123,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
       );
 
       if(CA_MAXUNMLEN < configLine.unitName.length()) {
-        castor::exception::InvalidArgument ex;
+        cta::exception::InvalidArgument ex;
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
           ": Tape-drive unit-name is too long"
@@ -136,7 +136,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
       }
 
       if(CA_MAXDGNLEN < configLine.logicalLibrary.length()) {
-        castor::exception::InvalidArgument ex;
+        cta::exception::InvalidArgument ex;
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
           ": logical library is too long"

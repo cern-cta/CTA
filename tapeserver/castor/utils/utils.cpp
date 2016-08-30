@@ -323,7 +323,7 @@ static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
   // Check the length of the identifier string
   const size_t len   = strlen(id);
   if(len > maxLen) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << idTypeName << " exceeds maximum length: actual=" << len
       << " max=" << maxLen;
     throw ex;
@@ -338,7 +338,7 @@ static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
       (c >= 'A' && c <= 'Z') || c == '_';
 
     if(!valid) {
-      castor::exception::InvalidArgument ex;
+      cta::exception::InvalidArgument ex;
       ex.getMessage() << idTypeName << " contains the invalid character '" << c
         << "'";
       throw ex;

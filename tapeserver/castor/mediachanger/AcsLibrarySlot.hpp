@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/mediachanger/LibrarySlot.hpp"
 
 #include <stdint.h>

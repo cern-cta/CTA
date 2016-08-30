@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 castor::log::StringLogger::StringLogger(
   const std::string &programName)
-  throw(cta::exception::Exception, castor::exception::InvalidArgument):
+  throw(cta::exception::Exception, cta::exception::InvalidArgument):
   Logger(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_priorityToText(generatePriorityToTextMap()) {

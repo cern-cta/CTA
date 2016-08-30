@@ -25,7 +25,7 @@
 #pragma once
 
 #include "common/exception/AcceptConnectionInterrupted.hpp"
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/exception/NoPortInRange.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/io/Constants.hpp"

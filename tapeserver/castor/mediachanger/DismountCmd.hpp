@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/mediachanger/CmdLineTool.hpp"
 #include "castor/mediachanger/DismountCmdLine.hpp"

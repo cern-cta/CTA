@@ -118,7 +118,7 @@ castor::mediachanger::AcsLibrarySlot *castor::mediachanger::LibrarySlotParser::
   std::vector<std::string> components;
   castor::utils::splitString(str, ',', components);
   if(4 != components.size()) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid number of components"
       ": expected=4, actual=" << components.size();
     throw ex;
@@ -127,7 +127,7 @@ castor::mediachanger::AcsLibrarySlot *castor::mediachanger::LibrarySlotParser::
   // check for acs in the beginning 
   const std::string &acsWithACS_NUMBERStr = components[0];
   if(0 != acsWithACS_NUMBERStr.find("acs")) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid tape library-slot format"
       ": expected=acsACS_NUMBER, actual=" << acsWithACS_NUMBERStr;
     throw ex;   
@@ -141,50 +141,50 @@ castor::mediachanger::AcsLibrarySlot *castor::mediachanger::LibrarySlotParser::
 
   // Each of the 4 components must be between 1 and than 3 characters long
   if(1 > acsStr.length() ||  3 < acsStr.length()) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid ACS_NUMBER string length"
       ": expected=1..3, actual=" << acsStr.length();
     throw ex;
   }
   if(1 > lsmStr.length() || 3 < lsmStr.length()) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid LSM_NUMBER string length"
       ": expected=1..3, actual=" << lsmStr.length();
     throw ex;
   }
   if(1 > panStr.length() || 3 < panStr.length()) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid PANEL_NUMBER string length"
       ": expected=1..3, actual=" << panStr.length();
     throw ex;
   }
   if(1 > drvStr.length() || 3 < drvStr.length()) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid TRANSPORT_NUMBER string length"
       ": expected=1..3, actual=" << drvStr.length();
     throw ex;
   }
 
   if(!utils::isValidUInt(acsStr)) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": ACS_NUMBER must be an unsigned integer:"
       " value=" << acsStr;
     throw ex;
   }
   if(!utils::isValidUInt(lsmStr)) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": LSM_NUMBER must be an unsigned integer:"
       " value=" << lsmStr;
     throw ex;
   }
   if(!utils::isValidUInt(panStr)) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": PANEL_NUMBER must be an unsigned integer:"
       " value=" << panStr;
     throw ex;
   }
   if(!utils::isValidUInt(drvStr)) {
-    castor::exception::InvalidArgument ex;
+    cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": TRANSPORT_NUMBER must be an unsigned"
       " integer: value=" << drvStr;
     throw ex;

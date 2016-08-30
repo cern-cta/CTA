@@ -25,7 +25,7 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/SErrnum.hpp"
 #include "castor/exception/Mismatch.hpp"
-#include "castor/exception/InvalidArgument.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include <sstream>
 #include <iomanip>
 #include <unistd.h>
@@ -63,7 +63,7 @@ namespace castor {
       m_detectedLbp(false) { 
 
         if(!m_vid.compare("")) {
-          throw castor::exception::InvalidArgument();
+          throw cta::exception::InvalidArgument();
         }
         
         if(m_drive.isTapeBlank()) {
@@ -136,7 +136,7 @@ namespace castor {
             field_converter >> std::hex >> res;
             break;
           default:
-            throw castor::exception::InvalidArgument("Unrecognised base in HeaderChecker::checkHeaderNumericalField");
+            throw cta::exception::InvalidArgument("Unrecognised base in HeaderChecker::checkHeaderNumericalField");
         }
         return value==res;
       }
@@ -218,7 +218,7 @@ namespace castor {
           std::stringstream err;
           err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
                   << fileToRecall.selectedTapeFile().fSeq << ")";
-          throw castor::exception::InvalidArgument(err.str());
+          throw cta::exception::InvalidArgument(err.str());
         }
         
         int64_t fSeq_delta = fileToRecall.selectedTapeFile().fSeq 
@@ -396,7 +396,7 @@ namespace castor {
               m_volInfo(volInfo), m_detectedLbp(false) {
 
         if(!m_vid.compare("")) {
-          throw castor::exception::InvalidArgument();
+          throw cta::exception::InvalidArgument();
         }
         
         if(m_drive.isTapeBlank()) {
@@ -536,7 +536,7 @@ namespace castor {
           err << "Unexpected fileId in WriteFile::WriteFile (expected != 0, got: "
               << m_fileToMigrate.archiveFile.archiveFileID << ") or fSeq (expected >=1, got: "
               << m_fileToMigrate.tapeFile.fSeq << ")";
-          throw castor::exception::InvalidArgument(err.str());
+          throw cta::exception::InvalidArgument(err.str());
         }
         if(m_session->isCorrupted()) {
           throw SessionCorrupted();

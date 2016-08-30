@@ -332,7 +332,7 @@ TEST_F(castor_utils, testCheckDgnSyntaxTooLong) {
   }
 
   ASSERT_THROW(checkDgnSyntax(dgn.str().c_str()),
-    castor::exception::InvalidArgument);
+    cta::exception::InvalidArgument);
 }
 
 TEST_F(castor_utils, testCheckDgnSyntaxInvalidCharacter) {
@@ -344,7 +344,7 @@ TEST_F(castor_utils, testCheckDgnSyntaxInvalidCharacter) {
   }
 
   ASSERT_THROW(checkDgnSyntax(dgn.str().c_str()),
-    castor::exception::InvalidArgument);
+    cta::exception::InvalidArgument);
 }
 
 TEST_F(castor_utils, testCheckVidSyntaxGoodDay) {
@@ -367,7 +367,7 @@ TEST_F(castor_utils, testCheckVidSyntaxTooLong) {
   }
 
   ASSERT_THROW(checkVidSyntax(vid.str().c_str()),
-    castor::exception::InvalidArgument);
+    cta::exception::InvalidArgument);
 }
 
 TEST_F(castor_utils, testCheckVidSyntaxInvalidCharacter) {
@@ -379,7 +379,7 @@ TEST_F(castor_utils, testCheckVidSyntaxInvalidCharacter) {
   }
 
   ASSERT_THROW(checkVidSyntax(vid.str().c_str()),
-    castor::exception::InvalidArgument);
+    cta::exception::InvalidArgument);
 }
 
 TEST_F(castor_utils, testErrnoToString) {

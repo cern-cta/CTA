@@ -31,7 +31,6 @@ set (UTILS_LIB_SRC_FILES
   utils.cpp
   ../common/CastorConfiguration.cpp
   ../exception/NoEntry.cpp
-  ../exception/InvalidArgument.cpp
   ../exception/Errnum.cpp
   ../exception/NotAnOwner.cpp
   ../exception/InvalidConfigEntry.cpp

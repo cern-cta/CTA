@@ -54,7 +54,7 @@ public:
    * message.
    */
   SyslogLogger(const std::string &programName)
-    throw(cta::exception::Exception, castor::exception::InvalidArgument);
+    throw(cta::exception::Exception, cta::exception::InvalidArgument);
 
   /**
    * Destructor.

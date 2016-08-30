@@ -74,6 +74,7 @@ set (COMMON_LIB_SRC_FILES
   exception/AcceptConnectionInterrupted.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
+  exception/InvalidArgument.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
