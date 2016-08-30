@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/InvalidConfigEntry.hpp"
+#include "common/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ProcessCap.hpp"

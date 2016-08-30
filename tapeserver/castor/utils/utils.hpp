@@ -25,7 +25,7 @@
 #pragma once
 
 #include "common/exception/InvalidArgument.hpp"
-#include "castor/exception/InvalidConfigEntry.hpp"
+#include "common/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/InvalidConfiguration.hpp"
 #include "common/exception/Exception.hpp"
 

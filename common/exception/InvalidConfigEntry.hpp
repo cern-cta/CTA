@@ -28,7 +28,7 @@
 #include <string>
 
 
-namespace castor { namespace exception {
+namespace cta { namespace exception {
 
     /**
      * Invalid configuration entry exception.
@@ -88,5 +88,5 @@ namespace castor { namespace exception {
 
     }; // class InvalidConfigEntry
 
-} } // namespace castor exception
+} } // namespace cta exception
 

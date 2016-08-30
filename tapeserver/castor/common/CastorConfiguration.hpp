@@ -154,7 +154,7 @@ namespace castor {
         }
 
         if (!castor::utils::isValidUInt(strValue.c_str())) {
-          castor::exception::InvalidConfigEntry ex(category.c_str(),
+          cta::exception::InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<
             ":" << key << ": Value is not a valid unsigned integer: value=" <<
@@ -196,7 +196,7 @@ namespace castor {
         const std::string strValue = getConfEntString(category, key);
 
         if (!castor::utils::isValidUInt(strValue.c_str())) {
-          castor::exception::InvalidConfigEntry ex(category.c_str(),
+          cta::exception::InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<
             ":" << key << ": Value is not a valid unsigned integer: value=" <<

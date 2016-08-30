@@ -33,7 +33,6 @@ set (UTILS_LIB_SRC_FILES
   ../exception/NoEntry.cpp
   ../exception/Errnum.cpp
   ../exception/NotAnOwner.cpp
-  ../exception/InvalidConfigEntry.cpp
   ../exception/MissingOperand.cpp
   ../exception/NoPortInRange.cpp
   ../exception/TimeOut.cpp

@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/InvalidConfigEntry.hpp"
+#include "common/exception/InvalidConfigEntry.hpp"
 
 #include <errno.h>
 
@@ -29,7 +29,7 @@
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-castor::exception::InvalidConfigEntry::InvalidConfigEntry(
+cta::exception::InvalidConfigEntry::InvalidConfigEntry(
   const char *const entryCategory, const char *const entryName,
   const char *const entryValue) :
   cta::exception::Exception(), m_entryCategory(entryCategory),
@@ -40,7 +40,7 @@ castor::exception::InvalidConfigEntry::InvalidConfigEntry(
 // -----------------------------------------------------------------------------
 // getEntryCategory()
 // -----------------------------------------------------------------------------
-const std::string &castor::exception::InvalidConfigEntry::getEntryCategory() {
+const std::string &cta::exception::InvalidConfigEntry::getEntryCategory() {
   return m_entryCategory;
 }
 
@@ -48,7 +48,7 @@ const std::string &castor::exception::InvalidConfigEntry::getEntryCategory() {
 // -----------------------------------------------------------------------------
 // getEntryName()
 // -----------------------------------------------------------------------------
-const std::string &castor::exception::InvalidConfigEntry::getEntryName() {
+const std::string &cta::exception::InvalidConfigEntry::getEntryName() {
   return m_entryName;
 }
 
@@ -56,7 +56,7 @@ const std::string &castor::exception::InvalidConfigEntry::getEntryName() {
 // -----------------------------------------------------------------------------
 // getEntryValue()
 // -----------------------------------------------------------------------------
-const std::string &castor::exception::InvalidConfigEntry::getEntryValue()
+const std::string &cta::exception::InvalidConfigEntry::getEntryValue()
 {
   return m_entryValue;
 }
