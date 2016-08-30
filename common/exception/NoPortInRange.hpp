@@ -28,7 +28,7 @@
 #include <string>
 
 
-namespace castor    {
+namespace cta    {
 namespace exception {
 
 /**
@@ -79,5 +79,5 @@ private:
 }; // class NoPortInRange
 
 } // namespace exception
-} // namespace castor
+} // namespace cta
 

@@ -211,7 +211,7 @@ int castor::io::createListenerSock(
   // If this line is reached then all ports in the specified range are in use
 
   // Throw an exception
-  castor::exception::NoPortInRange ex(lowPort, highPort);
+  cta::exception::NoPortInRange ex(lowPort, highPort);
   ex.getMessage() <<
     "All ports within the specified range are in use"
     ": listenSocketFd=" << sock.get() <<

@@ -78,6 +78,7 @@ set (COMMON_LIB_SRC_FILES
   exception/InvalidConfigEntry.cpp
   exception/MissingOperand.cpp
   exception/NoEntry.cpp
+  exception/NoPortInRange.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

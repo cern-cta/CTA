@@ -21,13 +21,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/NoPortInRange.hpp"
+#include "common/exception/NoPortInRange.hpp"
 
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::exception::NoPortInRange::NoPortInRange(
+cta::exception::NoPortInRange::NoPortInRange(
   const unsigned short lowPort,
   const unsigned short highPort) throw() :
   cta::exception::Exception(),
@@ -41,7 +41,7 @@ castor::exception::NoPortInRange::NoPortInRange(
 //------------------------------------------------------------------------------
 // getLowPort()
 //------------------------------------------------------------------------------
-unsigned short castor::exception::NoPortInRange::getLowPort() throw() {
+unsigned short cta::exception::NoPortInRange::getLowPort() throw() {
   return m_lowPort;
 }
 
@@ -49,6 +49,6 @@ unsigned short castor::exception::NoPortInRange::getLowPort() throw() {
 //------------------------------------------------------------------------------
 // getHighPort()
 //------------------------------------------------------------------------------
-unsigned short castor::exception::NoPortInRange::getHighPort() throw() {
+unsigned short cta::exception::NoPortInRange::getHighPort() throw() {
   return m_highPort;
 }
