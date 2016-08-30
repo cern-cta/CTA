@@ -25,7 +25,7 @@
 #include "common/exception/Exception.hpp"
 #include <string>
 
-namespace castor {
+namespace cta {
 namespace exception {
 /**
  * A generic exception thrown when there is something wrong with the memory

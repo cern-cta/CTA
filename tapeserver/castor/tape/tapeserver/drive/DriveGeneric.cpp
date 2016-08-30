@@ -27,7 +27,7 @@
 
 #include "castor/utils/Timer.hpp"
 #include "castor/utils/CRC.hpp"
-#include "castor/exception/MemException.hpp"
+#include "common/exception/MemException.hpp"
 
 namespace castor {
 namespace tape {
@@ -698,7 +698,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
         if(NULL == dataWithCrc32c) {
-          throw castor::exception::MemException("Failed to allocate memory "
+          throw cta::exception::MemException("Failed to allocate memory "
             " for a new MemBlock in DriveGeneric::writeBlock!");
         }
         memcpy(dataWithCrc32c, data, count);
@@ -752,7 +752,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
         if(NULL == dataWithCrc32c) {
-          throw castor::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
+          throw cta::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
         }
         ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
           count+SCSI::logicBlockProtectionMethod::CRC32CLength);
@@ -812,7 +812,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
         if(NULL == dataWithCrc32c) {
-          throw castor::exception::MemException("Failed to allocate memory "
+          throw cta::exception::MemException("Failed to allocate memory "
             " for a new MemBlock in DriveGeneric::readBlock!");
         }
         ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,

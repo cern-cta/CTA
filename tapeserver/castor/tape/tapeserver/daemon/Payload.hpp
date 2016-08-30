@@ -23,7 +23,7 @@
 #include <zlib.h>
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/exception/MemException.hpp"
+#include "common/exception/MemException.hpp"
 #include "common/exception/EndOfFile.hpp"
 #pragma once 
 
@@ -45,7 +45,7 @@ public:
   Payload(size_t capacity):
   m_data(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
     if(NULL == m_data) {
-      throw castor::exception::MemException("Failed to allocate memory for a new MemBlock!");
+      throw cta::exception::MemException("Failed to allocate memory for a new MemBlock!");
     }
   }
   
@@ -104,7 +104,7 @@ public:
       err << "Trying to read a tape file block with too little space left: BlockSize="
        << from.getBlockSize() << " remainingFreeSpace=" << remainingFreeSpace()
               << " (totalSize=" << m_totalCapacity << ")"; 
-      throw castor::exception::MemException(err.str());
+      throw cta::exception::MemException(err.str());
     }
     size_t readSize;
     try {
