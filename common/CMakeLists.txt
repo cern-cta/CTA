@@ -21,6 +21,8 @@ find_package (libattr REQUIRED)
 find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
 
+add_subdirectory (exception)
+
 set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp

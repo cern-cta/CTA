@@ -52,7 +52,7 @@ namespace unitTests {
     f2();
   }
 
-  TEST(castor_exceptions, stacktrace_with_demangling) {
+  TEST(cta_exceptions, stacktrace_with_demangling) {
     try {
       Nested x;
     } catch (cta::exception::Exception & e) {
@@ -65,7 +65,7 @@ namespace unitTests {
     }
   }
   
-    TEST(castor_exceptions, stacktrace_in_std_exception) {
+    TEST(cta_exceptions, stacktrace_in_std_exception) {
     try {
       Nested x;
     } catch (std::exception & e) {
