@@ -66,9 +66,16 @@ void castor::messages::TapeserverProxyZmq::reportState(const cta::tape::session:
   } else if ((type == cta::tape::session::SessionType::Retrieve) 
       && (state == cta::tape::session::SessionState::Mounting)) {
     gotRetrieveJobFromCTA(vid, m_driveName);
+  } else if ((type == cta::tape::session::SessionType::Archive) 
+      && (state == cta::tape::session::SessionState::Running)) {
+    tapeMountedForMigration(vid, m_driveName);
   } else if ((type == cta::tape::session::SessionType::Retrieve) 
-      && (state == cta::tape::session::SessionState::Mounting)) {
-    gotRetrieveJobFromCTA(vid, m_driveName);
+      && (state == cta::tape::session::SessionState::Running)) {
+    tapeMountedForRecall(vid, m_driveName);
+  } else if (state == cta::tape::session::SessionState::Unmounting) {
+    tapeUnmountStarted(vid, m_driveName);
+  } else if (state == cta::tape::session::SessionState::Shutdown) {
+    tapeUnmounted(vid, m_driveName);
   } else {
     std::stringstream err;
     err << "In castor::messages::TapeserverProxyZmq::reportState(): "
