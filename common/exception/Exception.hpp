@@ -26,7 +26,7 @@
 namespace cta { namespace exception {
 /**
  * class Exception
- * A simple exception used for error handling in castor
+ * A simple exception used for error handling in cts
  */
 class Exception : public std::exception {
 public:
