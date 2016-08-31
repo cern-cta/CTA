@@ -62,7 +62,7 @@ private:
    * This permits a two step parsing strategy where the user can be given more
    * detailed syntax errors where necessary.
    *
-   * This method throws a castor::exception::Exception if the type of the
+   * This method throws a cta::exception::Exception if the type of the
    * library slot cannot be determined.
    *
    * @param str The string representation of the tape library slot.

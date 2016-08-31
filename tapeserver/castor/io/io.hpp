@@ -58,10 +58,10 @@ namespace io     {
  * listening port will accept connections on any of the hosts incomming
  * interfaces.
  *
- * This method raises a castor::exception::InvalidArgument exception if one or
+ * This method raises a cta::exception::InvalidArgument exception if one or
  * more of its input parameters are invalid.
  *
- * This method raises a castor::exception::NoPortInRange exception if the
+ * This method raises a cta::exception::NoPortInRange exception if the
  * specified port is not free.
  *
  * @param port The port number.
@@ -77,10 +77,10 @@ int createListenerSock(const unsigned short port)
  * listening port will accept connections on any of the hosts incomming
  * interfaces.
  *
- * This method raises a castor::exception::InvalidArgument exception if one or
+ * This method raises a cta::exception::InvalidArgument exception if one or
  * more of its input parameters are invalid.
  *
- * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * This method raises a cta::exception::NoPortInRange exception if it cannot
  * find a free port to bind to within the specified range.
  *
  * @param lowPort    The inclusive low port of the port number range.  This
@@ -102,10 +102,10 @@ int createListenerSock(
  *
  * This method creates the socket, binds it and marks it as a listener.
  *
- * This method raises a castor::exception::InvalidArgument exception if one or
+ * This method raises a cta::exception::InvalidArgument exception if one or
  * more of its input parameters are invalid.
  *
- * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * This method raises a cta::exception::NoPortInRange exception if it cannot
  * find a free port to bind to within the specified range.
  *
  * @param addr       The IP address as a string in dotted quad notation.
@@ -128,10 +128,10 @@ int createListenerSock(
  * Creates a listener socket with a port number within the specified range.
  * This method creates the socket, binds it and marks it as a listener.
  *
- * This method raises a castor::exception::InvalidArgument exception if one or
+ * This method raises a cta::exception::InvalidArgument exception if one or
  * more of its input parameters are invalid.
  *
- * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * This method raises a cta::exception::NoPortInRange exception if it cannot
  * find a free port to bind to within the specified range.
  *
  * @param addr       The IP address.
@@ -159,10 +159,10 @@ int createListenerSock(
  * listening port will accept connections on any of the hosts incomming
  * interfaces.
  *
- * This method raises a castor::exception::InvalidArgument exception if one or
+ * This method raises a cta::exception::InvalidArgument exception if one or
  * more of its input parameters are invalid.
  *
- * This method raises a castor::exception::NoPortInRange exception if the
+ * This method raises a cta::exception::NoPortInRange exception if the
  * specified port is not free.
  *
  * @param port The port number.
@@ -187,15 +187,15 @@ int acceptConnection(const int listenSockFd)
  * socket descriptor of the newly created and connected socket.
  *
  * This method accepts a timeout parameter.  If the timeout is exceeded, then
- * this method raises a castor::exception::TimeOut exception.  If this method
+ * this method raises a cta::exception::TimeOut exception.  If this method
  * is interrupted, then this method raises a
- * castor::exception::AcceptConnectionInterrupted exception which gives the
+ * cta::exception::AcceptConnectionInterrupted exception which gives the
  * number of remaining seconds when the interrupt occured.  All other errors
  * result in a cta::exception::Exception being raised.  Note that both
- * castor::exception::TimeOut and castor::exception::AcceptConnectionInterrupted
+ * cta::exception::TimeOut and cta::exception::AcceptConnectionInterrupted
  * inherit from cta::exception::Exception so callers of the this method must
- * catch castor::exception::TimeOut and
- * castor::exception::AcceptConnectionInterrupted before catching
+ * catch cta::exception::TimeOut and
+ * cta::exception::AcceptConnectionInterrupted before catching
  * cta::exception::Exception.
  *
  * @param listenSockFd The file descriptor of the listener socket.
@@ -346,7 +346,7 @@ void writeBytes(
  * Creates the specified socket and uses it to connect to the specified
  * address within the constraint of the specified timeout.
  *
- * This method throws a castor::exception::TimeOut exception if a timeout
+ * This method throws a cta::exception::TimeOut exception if a timeout
  * occurs.
  *
  * This method throws a cta::exception::Exception exception if an error
@@ -369,7 +369,7 @@ int connectWithTimeout(
  * Creates the specified socket and uses it to connect to the specified
  * address within the constraint of the specified timeout.
  *
- * This method throws a castor::exception::TimeOut exception if a timeout
+ * This method throws a cta::exception::TimeOut exception if a timeout
  * occurs.
  *
  * This method throws a cta::exception::Exception exception if an error

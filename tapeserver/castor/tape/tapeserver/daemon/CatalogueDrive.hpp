@@ -209,7 +209,7 @@ public:
   /** 
    * Returns the catalogue cleaner-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * cleaner session associated with the tape drive.
    */
   const CatalogueCleanerSession &getCleanerSession() const;
@@ -217,7 +217,7 @@ public:
   /**
    * Returns the catalogue cleaner-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * cleaner session associated with the tape drive.
    */ 
   CatalogueCleanerSession &getCleanerSession();
@@ -225,7 +225,7 @@ public:
   /**
    * Returns the catalogue label-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * label session associated with the tape drive.
    */
   const CatalogueLabelSession &getLabelSession() const;
@@ -233,7 +233,7 @@ public:
   /**
    * Returns the catalogue label-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * label session associated with the tape drive.
    */
   CatalogueLabelSession &getLabelSession();
@@ -241,7 +241,7 @@ public:
   /**
    * Returns the catalogue transfer-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * transfer session associated with the tape drive.
    */
   const CatalogueTransferSession &getTransferSession() const;
@@ -249,7 +249,7 @@ public:
   /**
    * Returns the catalogue transfer-session associated with the tape drive.
    *
-   * This method throws a castor::exception::Exception if there is no
+   * This method throws a cta::exception::Exception if there is no
    * transfer session associated with the tape drive.
    */
   CatalogueTransferSession &getTransferSession();
@@ -257,7 +257,7 @@ public:
   /**
    * Gets the session asscoiated with the tape drive.
    *
-   * This method throws castor::exception::Exception if there is no session
+   * This method throws cta::exception::Exception if there is no session
    * currently associated with the tape drive.
    *
    * Please use either getCleanerSession(), getLabelSession() or
@@ -368,7 +368,7 @@ private:
    * Checks that there is a tape session currently associated with the
    * tape drive.
    *
-   * This method throws castor::exception::Exception if there is no
+   * This method throws cta::exception::Exception if there is no
    * tape session associated with the tape drive.
    */
   void checkForSession() const;
@@ -377,7 +377,7 @@ private:
    * Checks that there is a cleaner session currently associated with the
    * tape drive.
    *
-   * This method throws castor::exception::Exception if there is no
+   * This method throws cta::exception::Exception if there is no
    * cleaner session associated with the tape drive.
    */
   void checkForCleanerSession() const;
@@ -386,7 +386,7 @@ private:
    * Checks that there is a label session currently associated with the
    * tape drive.
    *
-   * This method throws castor::exception::Exception if there is no
+   * This method throws cta::exception::Exception if there is no
    * label session associated with the tape drive.
    */
   void checkForLabelSession() const;
@@ -395,7 +395,7 @@ private:
    * Checks that there is a transfer session currently associated with the
    * tape drive.
    *
-   * This method throws castor::exception::Exception if there is no
+   * This method throws cta::exception::Exception if there is no
    * transfer session associated with the tape drive.
    */
   void checkForTransferSession() const;

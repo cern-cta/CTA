@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "castor/mediachanger/ManualLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
@@ -54,7 +54,7 @@ TEST_F(castor_mediachanger_ManualLibrarySlotTest, notmanual) {
 
   std::unique_ptr<ManualLibrarySlot> slot;
   ASSERT_THROW(slot.reset(new ManualLibrarySlot("notmanual")),
-    castor::exception::Exception);
+    cta::exception::Exception);
 }
 
 TEST_F(castor_mediachanger_ManualLibrarySlotTest, clone) {

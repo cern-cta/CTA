@@ -50,12 +50,15 @@ if(CMAKE_COMPILER_IS_GNUCC)
       PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
     set_property(SOURCE FileTest.cpp
       PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+    set_property(SOURCE CryptoPPTest.cpp
+      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
   endif(GCC_VERSION_GE_4_8_0)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp
-  FileTest.cpp)
+  FileTest.cpp
+  CryptoPPTest.cpp)
 
 target_link_libraries(ctatapeserverfileunittests
   File)

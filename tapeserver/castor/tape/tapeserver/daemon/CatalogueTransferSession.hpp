@@ -133,7 +133,7 @@ public:
    * Gets the access mode, either recall (WRITE_DISABLE) or migration
    * (WRITE_ENABLE).
    *
-   * This method throws a castor::exception::Exception if the access mode is
+   * This method throws a cta::exception::Exception if the access mode is
    * not yet nknown.
    *
    * @return The access mode.

@@ -107,7 +107,7 @@ namespace castor {
        * Retrieves a configuration entry.
        *
        * Besides other possible exceptions, this method throws a
-       * castor::exception::NoEntry exception if the specified configuration
+       * cta::exception::NoEntry exception if the specified configuration
        * entry is not in the configuration file.
        *
        * If this method is passed a logger object then this method will log the
@@ -183,7 +183,7 @@ namespace castor {
        * Retrieves a configuration entry as an integer.
        *
        * Besides other possible exceptions, this method throws a
-       * castor::exception::NoEntry exception if the specified configuration
+       * cta::exception::NoEntry exception if the specified configuration
        * entry is not in the configuration file.
        *
        * @param category category of the configuration parameter

@@ -201,7 +201,7 @@ private:
    * Determines whether or not the user of the label session has the access
    * rights to label the tape.
    *
-   * This method throws a castor::exception::Exception if the user does not
+   * This method throws a cta::exception::Exception if the user does not
    * have the necessary access rights or there is an error which prevents this
    * method for determining if they have such rights.
    *

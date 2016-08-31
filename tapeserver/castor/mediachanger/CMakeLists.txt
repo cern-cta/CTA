@@ -78,5 +78,11 @@ target_link_libraries (cta-mediachanger-dismount
   ctamessages
   ctautils
   ctaio)
+
+add_library (ctamediachangerunittests SHARED
+  LibrarySlotParserTest.cpp
+  ManualLibrarySlotTest.cpp)
+
+install(TARGETS ctamediachangerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install (TARGETS cta-mediachanger-dismount DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-dismount.1cta DESTINATION /usr/share/man/man1)

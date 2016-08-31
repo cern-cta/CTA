@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Exception.hpp"
+#include "common/exception/Exception.hpp"
 #include "castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <gtest/gtest.h>
@@ -71,7 +71,7 @@ TEST_F(castor_mediachanger_LibrarySlotParserTest, nonsense) {
 
   std::unique_ptr<LibrarySlot> slot;
   ASSERT_THROW(slot.reset(LibrarySlotParser::parse("nonsense")),
-    castor::exception::Exception);
+    cta::exception::Exception);
 }
 
 } // namespace unitTests

@@ -88,7 +88,7 @@ private:
    * Thread safe method that returns the type of the tape-library to which the
    * specified library slot refers.
    *
-   * This function throws a castor::exception::Exception if the type of the
+   * This function throws a cta::exception::Exception if the type of the
    * tape-library cannot be determined.
    *
    * @param slot The tape-library slot.

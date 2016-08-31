@@ -50,7 +50,7 @@ namespace unitTests{
   
   struct MockMigrationReportPacker : public MigrationReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {}
-    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const castor::exception::Exception& ex) {}
+    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex) {}
     void reportEndOfSession() {}
     void reportEndOfSessionWithErrors(const std::string msg, int error_code) {}
     void disableBulk() {}

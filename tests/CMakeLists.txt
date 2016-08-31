@@ -44,6 +44,7 @@ target_link_libraries(cta-unitTests
   ctaschedulerunittests
   ctaio
   ctadaemonunittests
+  ctamediachangerunittests
   ${GMOCK_LIB}
   gtest
   pthread)

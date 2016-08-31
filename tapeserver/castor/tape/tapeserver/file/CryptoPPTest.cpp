@@ -54,12 +54,12 @@ namespace unitTests {
       size_t pos1, pos2;
       pos1 = keyString.find(HEADER);
       if(pos1 == std::string::npos)
-          throw castor::exception::Exception(
+          throw cta::exception::Exception(
             "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
           
       pos2 = keyString.find(FOOTER, pos1+1);
       if(pos2 == std::string::npos)
-          throw castor::exception::Exception(
+          throw cta::exception::Exception(
             "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
           
       // Start position and length
@@ -81,13 +81,13 @@ namespace unitTests {
       // BERDecodePrivateKey is a void function. Here's the only check
       // we have regarding the DER bytes consumed.
       if(!queue.IsEmpty())
-        throw castor::exception::Exception(
+        throw cta::exception::Exception(
           "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
       
       CryptoPP::AutoSeededRandomPool prng;
       bool valid = m_key.Validate(prng, 3);
       if(!valid)
-        throw castor::exception::Exception(
+        throw cta::exception::Exception(
           "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
     }
     operator CryptoPP::RSA::PrivateKey() {
@@ -163,7 +163,7 @@ namespace unitTests {
     }
   private:
     virtual void run() {
-      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0);
+      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath);
       for (int i=0; i<5; i++) {
         // Read keys in parallel and in a loop to test MT protection of the
         // key reading, not protected here.
@@ -179,9 +179,9 @@ namespace unitTests {
       char path[100];
       strncpy(path, "/tmp/castorUnitTestPrivateKeyXXXXXX", 100);
       int tmpFileFd = mkstemp(path);
-      castor::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
+      cta::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
       m_path = path;
-      castor::exception::Errnum::throwOnMinusOne(write(tmpFileFd, content.c_str(), content.size()));
+      cta::exception::Errnum::throwOnMinusOne(write(tmpFileFd, content.c_str(), content.size()));
     }
     ~TempFileForXrootKey() {
       ::unlink(m_path.c_str());
