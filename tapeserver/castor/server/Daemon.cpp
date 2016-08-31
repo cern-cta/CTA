@@ -19,7 +19,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  ******************************************************************************/
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/System.hpp"
@@ -163,7 +163,7 @@ void castor::server::Daemon::daemonizeIfNotRunInForeground(
 
     {
       pid_t pid = 0;
-      castor::exception::Errnum::throwOnNegative(pid = fork(),
+      cta::exception::Errnum::throwOnNegative(pid = fork(),
         "Failed to daemonize: Failed to fork");
       // If we got a good PID, then we can exit the parent process
       if (0 < pid) {
@@ -179,17 +179,17 @@ void castor::server::Daemon::daemonizeIfNotRunInForeground(
     umask(0);
 
     // Run the daemon in a new session
-    castor::exception::Errnum::throwOnNegative(setsid(),
+    cta::exception::Errnum::throwOnNegative(setsid(),
       "Failed to daemonize: Failed to run daemon is a new session");
 
     // Redirect standard files to /dev/null
-    castor::exception::Errnum::throwOnNull(
+    cta::exception::Errnum::throwOnNull(
       freopen("/dev/null", "r", stdin),
       "Failed to daemonize: Falied to freopen stdin");
-    castor::exception::Errnum::throwOnNull(
+    cta::exception::Errnum::throwOnNull(
       freopen("/dev/null", "w", stdout),
       "Failed to daemonize: Failed to freopen stdout");
-    castor::exception::Errnum::throwOnNull(
+    cta::exception::Errnum::throwOnNull(
       freopen("/dev/null", "w", stderr),
       "Failed to daemonize: Failed to freopen stderr");
   } // if (!m_foreground)

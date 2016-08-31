@@ -22,7 +22,7 @@
  *****************************************************************************/
  
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
@@ -517,7 +517,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
   sigaddset(&sigs, SIGPOLL);
   sigaddset(&sigs, SIGURG);
   sigaddset(&sigs, SIGVTALRM);
-  castor::exception::Errnum::throwOnNonZero(
+  cta::exception::Errnum::throwOnNonZero(
     sigprocmask(SIG_BLOCK, &sigs, NULL),
     "Failed to block signals: sigprocmask() failed");
 }

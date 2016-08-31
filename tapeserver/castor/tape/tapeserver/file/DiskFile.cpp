@@ -25,7 +25,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/server/MutexLocker.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
@@ -71,7 +71,7 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     std::ifstream keyFile(m_xrootPrivateKeyFile.c_str());
     if (!keyFile) {
       // We should get the detailed error from errno.
-      throw castor::exception::Errnum(
+      throw cta::exception::Errnum(
         std::string("Failed to open xroot key file: ")+m_xrootPrivateKeyFile);
     }
     char buff[200];
@@ -228,7 +228,7 @@ LocalReadFile::LocalReadFile(const std::string &path)  {
   m_fd = ::open64((char *)path.c_str(), O_RDONLY);
   m_URL = "file://";
   m_URL += path;
-  castor::exception::Errnum::throwOnMinusOne(m_fd,
+  cta::exception::Errnum::throwOnMinusOne(m_fd,
     std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ")+m_URL);
 
 }
@@ -241,7 +241,7 @@ size_t LocalReadFile::size() const {
   //struct is mandatory here, because there is a function stat64 
   struct stat64 statbuf;        
   int ret = ::fstat64(m_fd,&statbuf);
-  castor::exception::Errnum::throwOnMinusOne(ret,
+  cta::exception::Errnum::throwOnMinusOne(ret,
     std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ")+m_URL);
   
   return statbuf.st_size;
@@ -259,7 +259,7 @@ LocalWriteFile::LocalWriteFile(const std::string &path): m_closeTried(false){
   m_fd = ::open64((char *)path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
   m_URL = "file://";
   m_URL += path;
-  castor::exception::Errnum::throwOnMinusOne(m_fd,
+  cta::exception::Errnum::throwOnMinusOne(m_fd,
       std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ")
       +m_URL);        
 
@@ -273,7 +273,7 @@ void LocalWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
   m_closeTried=true;
-  castor::exception::Errnum::throwOnMinusOne(::close(m_fd),
+  cta::exception::Errnum::throwOnMinusOne(::close(m_fd),
       std::string("In LocalWriteFile::close failed rfio_close() on ")+m_URL);        
 }
 

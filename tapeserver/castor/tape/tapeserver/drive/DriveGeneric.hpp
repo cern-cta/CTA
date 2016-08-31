@@ -168,7 +168,7 @@ namespace drive {
       struct mtget mtInfo;
 
       /* Read drive status */
-      castor::exception::Errnum::throwOnMinusOne(
+      cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
       std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
       return GMT_DR_OPEN(mtInfo.mt_gstat) == 0;
@@ -179,7 +179,7 @@ namespace drive {
       struct mtget mtInfo;
 
       /* Read drive status */
-      castor::exception::Errnum::throwOnMinusOne(
+      cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
       std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
       return GMT_WR_PROT(mtInfo.mt_gstat)!=0;
@@ -190,7 +190,7 @@ namespace drive {
       struct mtget mtInfo;
 
       /* Read drive status */
-      castor::exception::Errnum::throwOnMinusOne(
+      cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
       std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
 
@@ -202,7 +202,7 @@ namespace drive {
       struct mtget mtInfo;
 
       /* Read drive status */
-      castor::exception::Errnum::throwOnMinusOne(
+      cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
       std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
       return GMT_EOD(mtInfo.mt_gstat)!=0;

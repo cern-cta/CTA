@@ -156,7 +156,7 @@ void castor::tape::tapeserver::drive::FakeDrive::spaceFileMarksForward(size_t co
     if(!m_tape[i].data.compare(filemark)) countdown--;
   }
   if(countdown) {
-    throw castor::exception::Errnum(EIO, "Failed FakeDrive::spaceFileMarksForward");
+    throw cta::exception::Errnum(EIO, "Failed FakeDrive::spaceFileMarksForward");
   }
   m_currentPosition = i; //EOT side of the filemark
 }
@@ -165,7 +165,7 @@ void castor::tape::tapeserver::drive::FakeDrive::unloadTape(void)  {
 void castor::tape::tapeserver::drive::FakeDrive::flush(void)  {
   if (m_failureMoment == OnFlush) {
     if (m_tapeOverflow) {
-      throw castor::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::flush");
+      throw cta::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::flush");
     }
   }
 }
@@ -196,7 +196,7 @@ void castor::tape::tapeserver::drive::FakeDrive::writeBlock(const void * data, s
   uint64_t remainingSpaceAfterBlock;
   if (count > getRemaingSpace(m_currentPosition)) {
     if (m_failureMoment == OnWrite) {
-      throw castor::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::writeBlock");
+      throw cta::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::writeBlock");
     } else {
       remainingSpaceAfterBlock = 0;
       m_tapeOverflow = true;

@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/InvalidArgument.hpp"
 #include <sstream>
 #include <iomanip>
@@ -494,7 +494,7 @@ namespace castor {
       
       void WriteSession::setHostName()  {
         char hostname_cstr[max_unix_hostname_length];
-        castor::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, max_unix_hostname_length), "Failed gethostname() in WriteFile::setHostName");
+        cta::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, max_unix_hostname_length), "Failed gethostname() in WriteFile::setHostName");
         m_hostName = hostname_cstr;
         std::transform(m_hostName.begin(), m_hostName.end(), m_hostName.begin(), ::toupper);
         m_hostName = m_hostName.substr(0, m_hostName.find("."));

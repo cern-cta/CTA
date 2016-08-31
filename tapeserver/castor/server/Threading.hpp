@@ -25,7 +25,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/server/Mutex.hpp"
 #include "common/exception/Exception.hpp"
 

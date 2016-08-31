@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -241,7 +241,7 @@ namespace unitTests {
     TempFile() {
       char path[]="/tmp/testCTA-XXXXXX";
       int fd=::mkstemp(path);
-      castor::exception::Errnum::throwOnMinusOne(fd, "In TempFile::TempFile: failed to mkstemp: ");
+      cta::exception::Errnum::throwOnMinusOne(fd, "In TempFile::TempFile: failed to mkstemp: ");
       ::close(fd);
       m_path=path;
     }

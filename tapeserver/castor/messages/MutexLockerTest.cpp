@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/messages/MutexLocker.hpp"
 
 #include <gtest/gtest.h>
@@ -46,7 +46,7 @@ TEST(castor_messages_MutexLockerTest,
   {
     MutexLocker ml(&m);
     // This is a different flavour of duplicate locking
-    ASSERT_THROW(m.lock(),castor::exception::Errnum);
+    ASSERT_THROW(m.lock(),cta::exception::Errnum);
     ASSERT_NO_THROW(m.unlock());
     ASSERT_NO_THROW(m.lock());
   }

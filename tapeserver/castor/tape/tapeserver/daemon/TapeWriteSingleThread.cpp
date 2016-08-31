@@ -295,8 +295,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
-      const castor::exception::Errnum & en = 
-        dynamic_cast<const castor::exception::Errnum &>(e);
+      const cta::exception::Errnum & en = 
+        dynamic_cast<const cta::exception::Errnum &>(e);
       if(en.errorNumber()!= ENOSPC) {
         throw 0;
       }
@@ -326,8 +326,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // Override if we got en ENOSPC error (end of tape)
     // This is 
     try {
-      const castor::exception::Errnum & errnum = 
-          dynamic_cast<const castor::exception::Errnum &> (e);
+      const cta::exception::Errnum & errnum = 
+          dynamic_cast<const cta::exception::Errnum &> (e);
       if (ENOSPC == errnum.errorNumber()) {
         errorCode = ENOSPC;
         errorMessage = "End of migration due to tape full";

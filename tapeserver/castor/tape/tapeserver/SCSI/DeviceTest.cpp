@@ -25,7 +25,7 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Device.hpp"
 #include "../system/Wrapper.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -133,7 +133,7 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   ASSERT_NO_THROW(dl.findBySymlink("/dev/tape_T10D6116"));
   ASSERT_THROW(dl.findBySymlink("NoSuchPath"), 
-      castor::exception::Errnum);
+      cta::exception::Errnum);
   ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), 
       castor::tape::SCSI::DeviceVector::NotFound);
   castor::tape::SCSI::DeviceInfo & di = dl.findBySymlink("/dev/tape_T10D6116");

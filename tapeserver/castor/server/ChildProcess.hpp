@@ -22,7 +22,7 @@
  *****************************************************************************/
 #pragma once
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include <unistd.h>
 

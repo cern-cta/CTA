@@ -34,7 +34,7 @@
 //------------------------------------------------------------------------------
 void castor::server::Thread::start()
  {
-  castor::exception::Errnum::throwOnReturnedErrno(
+  cta::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
       "Error from pthread_create in castor::server::Thread::start()");
 }
@@ -43,7 +43,7 @@ void castor::server::Thread::start()
 //------------------------------------------------------------------------------
 void castor::server::Thread::wait()
  {
-  castor::exception::Errnum::throwOnReturnedErrno(
+  cta::exception::Errnum::throwOnReturnedErrno(
     pthread_join(m_thread, NULL),
       "Error from pthread_join in castor::server::Thread::wait()");
   if (m_hadException) {

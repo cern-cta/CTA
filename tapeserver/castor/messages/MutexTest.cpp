@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/messages/Mutex.hpp"
 
 #include <gtest/gtest.h>
@@ -46,11 +46,11 @@ TEST(castor_messages_MutexTest, Mutex_properly_throws_exceptions) {
   ASSERT_NO_THROW(m.lock());
 
   // Duplicate lock
-  ASSERT_THROW(m.lock(),castor::exception::Errnum);
+  ASSERT_THROW(m.lock(),cta::exception::Errnum);
   ASSERT_NO_THROW(m.unlock());
 
   // Duplicate release
-  ASSERT_THROW(m.unlock(),castor::exception::Errnum);
+  ASSERT_THROW(m.unlock(),cta::exception::Errnum);
 }
 
 } // namespace unitTests

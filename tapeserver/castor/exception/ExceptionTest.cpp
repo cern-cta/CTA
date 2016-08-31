@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "common/exception/Exception.hpp"
-#include "Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include <errno.h>
 
 #include <gtest/gtest.h>
@@ -75,51 +75,51 @@ namespace unitTests {
     }
   }
   
-  TEST(castor_exceptions, errnum_throwing) {
+  TEST(cta_exceptions, errnum_throwing) {
     /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
     errno = ENOENT;
     try {
-      throw castor::exception::Errnum("Test ENOENT");
+      throw cta::exception::Errnum("Test ENOENT");
     } catch (std::exception & e) {
       std::string temp = e.what();
       temp += " ";
     }
   }
 
-  TEST(castor_exceptions, Errnum_throwers) {
+  TEST(cta_exceptions, Errnum_throwers) {
     /* throwOnReturnedErrno */
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnReturnedErrno(0, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"),
-      castor::exception::Errnum);
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrno(0, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"),
+      cta::exception::Errnum);
     
     /* throwOnNonZero */
     errno = ENOENT;
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnNonZero(0, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnNonZero(-1, "Context"),
-      castor::exception::Errnum);
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnNonZero(0, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnNonZero(-1, "Context"),
+      cta::exception::Errnum);
     
     /* throwOnMinusOne */
     errno = ENOENT;
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnMinusOne(0, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnMinusOne(-1, "Context"),
-      castor::exception::Errnum);
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnMinusOne(0, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnMinusOne(-1, "Context"),
+      cta::exception::Errnum);
     
     /* throwOnNegative */
     errno = ENOENT;
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnNegative(0, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnNegative(-1, "Context"),
-      castor::exception::Errnum); 
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnNegative(0, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnNegative(-1, "Context"),
+      cta::exception::Errnum); 
 
     /* throwOnNull */
     errno = ENOENT;
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnNull(this, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnNull(NULL, "Context"),
-      castor::exception::Errnum);
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnNull(this, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnNull(NULL, "Context"),
+      cta::exception::Errnum);
 
     /* throwOnZero */
     errno = ENOENT;
-    ASSERT_NO_THROW(castor::exception::Errnum::throwOnZero(1, "Context"));
-    ASSERT_THROW(castor::exception::Errnum::throwOnZero(0, "Context"),
-      castor::exception::Errnum); 
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnZero(1, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnZero(0, "Context"),
+      cta::exception::Errnum); 
   }
 }

@@ -24,7 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/io/marshall.h"
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -82,7 +82,7 @@ protected:
       strncpy(listenAddr.sun_path, listenSockPath,
         sizeof(listenAddr.sun_path) - 1);
 
-      castor::exception::Errnum::throwOnNonZero(
+      cta::exception::Errnum::throwOnNonZero(
         bind(smartListenSock.get(), (const struct sockaddr *)&listenAddr,
         sizeof(listenAddr)), "Call to bind() failed: ");
     }

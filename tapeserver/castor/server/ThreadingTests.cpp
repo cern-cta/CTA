@@ -39,10 +39,10 @@ namespace unitTests {
     castor::server::Mutex m;
     ASSERT_NO_THROW(m.lock());
     /* Duplicate lock */
-    ASSERT_THROW(m.lock(),castor::exception::Errnum);
+    ASSERT_THROW(m.lock(),cta::exception::Errnum);
     ASSERT_NO_THROW(m.unlock());
     /* Duplicate release */
-    ASSERT_THROW(m.unlock(),castor::exception::Errnum);
+    ASSERT_THROW(m.unlock(),cta::exception::Errnum);
   }
   
   TEST(castor_tape_threading, MutexLocker_locks_and_properly_throws_exceptions) {
@@ -50,7 +50,7 @@ namespace unitTests {
     {
       castor::server::MutexLocker ml(&m);
       /* This is a different flavourr of duplicate locking */
-      ASSERT_THROW(m.lock(),castor::exception::Errnum);
+      ASSERT_THROW(m.lock(),cta::exception::Errnum);
       ASSERT_NO_THROW(m.unlock());
       ASSERT_NO_THROW(m.lock());
     }

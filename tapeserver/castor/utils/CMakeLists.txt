@@ -30,7 +30,6 @@ set (UTILS_LIB_SRC_FILES
   CRC.cpp
   utils.cpp
   ../common/CastorConfiguration.cpp
-  ../exception/Errnum.cpp
   ../BaseObject.cpp
   ../Services.cpp
   ../Factories.cpp

@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
@@ -166,8 +166,8 @@ namespace daemon {
         // If it's not the error we're looking for, we will go about our business
         // in the catch section. dynamic cast will throw, and we'll do ourselves
         // if the error code is not the one we want.
-        const castor::exception::Errnum & en = 
-          dynamic_cast<const castor::exception::Errnum &>(e);
+        const cta::exception::Errnum & en = 
+          dynamic_cast<const cta::exception::Errnum &>(e);
         if(en.errorNumber()!= ENOSPC) {
           throw 0;
         }
@@ -192,8 +192,8 @@ namespace daemon {
       int errorCode = 666; // TODO - Remove error code
       int errorLevel = LOG_ERR;
       try {
-        const castor::exception::Errnum & errnum = 
-            dynamic_cast<const castor::exception::Errnum &> (e);
+        const cta::exception::Errnum & errnum = 
+            dynamic_cast<const cta::exception::Errnum &> (e);
         if (ENOSPC == errnum.errorNumber()) {
           errorCode = ENOSPC;
           errorLevel = LOG_INFO;

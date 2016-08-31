@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/exception/Errnum.hpp"
+#include "common/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
