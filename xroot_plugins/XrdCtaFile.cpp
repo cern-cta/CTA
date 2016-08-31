@@ -399,8 +399,9 @@ std::string XrdCtaFile::getOption(const std::string& optionShortName, const std:
       }
       auto it_next=it+1;
       if(it_next!=m_requestTokens.cend()) {
-        if(!encoded) return *it_next;
-        else return decode(*it_next);
+        std::string value = *it_next;
+        if(!encoded) return value;
+        else return decode(value.erase(0,7)); //erasing the first 7 characters "base64:" and decoding the rest
       }
       else {
         return "";
