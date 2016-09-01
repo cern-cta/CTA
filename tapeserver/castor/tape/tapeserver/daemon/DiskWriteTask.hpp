@@ -107,7 +107,7 @@ private:
   /**
    * The fifo containing the memory blocks holding data to be written to disk
    */
-  castor::server::BlockingQueue<MemBlock *> m_fifo;
+  cta::threading::BlockingQueue<MemBlock *> m_fifo;
   
   /** 
    * All we need to know about the file we are currently recalling
@@ -122,7 +122,7 @@ private:
   /**
    * Mutex forcing serial access to the fifo
    */
-  castor::server::Mutex m_producerProtection;
+  cta::threading::Mutex m_producerProtection;
   
   /**
    * log into lc all m_stats parameters with the given message at the 

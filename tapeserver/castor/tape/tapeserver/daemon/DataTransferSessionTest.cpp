@@ -34,7 +34,7 @@
 #include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
-#include "castor/server/Threading.hpp"
+#include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"

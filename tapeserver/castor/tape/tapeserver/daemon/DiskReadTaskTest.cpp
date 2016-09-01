@@ -59,7 +59,7 @@ namespace unitTests{
   };
   
   class FakeTapeWriteTask : public  DataConsumer{
-    castor::server::BlockingQueue<MemBlock*> fifo;
+    cta::threading::BlockingQueue<MemBlock*> fifo;
     unsigned long m_checksum;
   public:
     FakeTapeWriteTask():m_checksum(Payload::zeroAdler32()){
@@ -110,7 +110,7 @@ namespace unitTests{
     std::string url("file://");
     url += path;
     std::ofstream out(path,std::ios::out | std::ios::binary);
-    castor::server::AtomicFlag flag;
+    cta::threading::AtomicFlag flag;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
     castor::log::LogContext lc(log);
 

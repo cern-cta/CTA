@@ -68,7 +68,7 @@ namespace castor {
       struct CryptoPPSigner {
         static std::string sign(const std::string msg, 
           const CryptoPP::RSA::PrivateKey  & privateKey);
-        static castor::server::Mutex s_mutex;
+        static cta::threading::Mutex s_mutex;
       };
       
       //==============================================================================

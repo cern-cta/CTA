@@ -57,7 +57,7 @@ MigrationMemoryManager::~MigrationMemoryManager() throw() {
   // castor::server::Thread::wait();
   // we expect to be called after all users are finished. Just "free"
   // the memory blocks we still have.
-  castor::server::BlockingQueue<MemBlock*>::valueRemainingPair ret;
+  cta::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
   do {
     ret = m_freeBlocks.popGetSize();
     delete ret.value;
@@ -70,7 +70,7 @@ MigrationMemoryManager::~MigrationMemoryManager() throw() {
 // MigrationMemoryManager::startThreads
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::startThreads()  {
-  castor::server::Thread::start();
+  cta::threading::Thread::start();
   m_lc.log(LOG_INFO, "MigrationMemoryManager starting thread");
 }
 
@@ -78,7 +78,7 @@ void MigrationMemoryManager::startThreads()  {
 // MigrationMemoryManager::waitThreads
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::waitThreads()  {
-  castor::server::Thread::wait();
+  cta::threading::Thread::wait();
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void MigrationMemoryManager::releaseBlock(MemBlock* mb)
   mb->reset();
   m_freeBlocks.push(mb);
   {
-    castor::server::MutexLocker ml(&m_countersMutex);
+    cta::threading::MutexLocker ml(m_countersMutex);
     m_blocksReturned++;
   }
 }
@@ -136,7 +136,7 @@ void MigrationMemoryManager::run()  {
     // Spin on the the client. We rely on the fact that he will want
     // at least one block (which is the case currently)
     while (c->provideBlock(m_freeBlocks.pop())) {
-      castor::server::MutexLocker ml(&m_countersMutex);
+      cta::threading::MutexLocker ml(m_countersMutex);
       m_blocksProvided++;
     }
   }

@@ -106,7 +106,7 @@ void DiskReadThreadPool::finish() {
 // DiskReadThreadPool::popAndRequestMore
 //------------------------------------------------------------------------------
 DiskReadTask* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc){
-  castor::server::BlockingQueue<DiskReadTask*>::valueRemainingPair 
+  cta::threading::BlockingQueue<DiskReadTask*>::valueRemainingPair 
   vrp = m_tasks.popGetSize();
   log::LogContext::ScopedParam sp(lc, log::Param("m_maxFilesReq", m_maxFilesReq));
   log::LogContext::ScopedParam sp0(lc, log::Param("m_maxBytesReq", m_maxBytesReq));
@@ -124,7 +124,7 @@ DiskReadTask* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc)
 //addThreadStats
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::addThreadStats(const DiskStats& other){
-  castor::server::MutexLocker lock(&m_statAddingProtection);
+  cta::threading::MutexLocker lock(m_statAddingProtection);
   m_pooldStat+=other;
 }
 //------------------------------------------------------------------------------

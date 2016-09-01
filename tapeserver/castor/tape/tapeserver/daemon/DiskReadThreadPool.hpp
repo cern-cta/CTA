@@ -26,9 +26,9 @@
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/server/BlockingQueue.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/AtomicCounter.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/utils/Timer.hpp"
 #include <vector>
@@ -127,7 +127,7 @@ private:
   /**
    To protect addThreadStats from concurrent calls
    */
-  castor::server::Mutex m_statAddingProtection;
+  cta::threading::Mutex m_statAddingProtection;
   
   /**
    * Aggregate all threads' stats 
@@ -148,15 +148,15 @@ private:
   /**
    * Subclass of the thread pool's worker thread.
    */
-  class DiskReadWorkerThread: private castor::server::Thread {
+  class DiskReadWorkerThread: private cta::threading::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc) {
        log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
        m_lc.log(LOG_INFO,"DisReadThread created");
     }
-    void start() { castor::server::Thread::start(); }
-    void wait() { castor::server::Thread::wait(); }
+    void start() { cta::threading::Thread::start(); }
+    void wait() { cta::threading::Thread::wait(); }
   private:
     void logWithStat(int level, const std::string& message);
     /*
@@ -186,7 +186,7 @@ private:
   
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
-  castor::server::BlockingQueue<DiskReadTask *> m_tasks;
+  cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
   
   /**
    * Reference to the watchdog, for error reporting.
@@ -212,7 +212,7 @@ private:
   
   /** An atomic (i.e. thread safe) counter of the current number of thread (they
    are counted up at creation time and down at completion time) */
-  castor::server::AtomicCounter<int> m_nbActiveThread;
+  cta::threading::AtomicCounter<int> m_nbActiveThread;
 };
 
 }}}}

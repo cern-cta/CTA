@@ -58,7 +58,7 @@ RecallMemoryManager::~RecallMemoryManager() {
   // we expect to be called after all users are finished. Just "free"
   // the memory blocks we still have.
 
-  castor::server::BlockingQueue<MemBlock*>::valueRemainingPair ret;
+  cta::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
   do {
     ret = m_freeBlocks.popGetSize();
     delete ret.value;

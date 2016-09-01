@@ -16,27 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #pragma once
 
-#include <pthread.h>
-#include <semaphore.h>
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Threading.hpp"
 
 namespace cta {
 namespace threading {
-    
-/**
-* A simple exception throwing wrapper for pthread mutexes.
-* Inspired from the interface of Qt.
-*/
-class Mutex {
-public:
-  Mutex() ;
-  ~Mutex();
-  void lock() ;
-  void unlock();
-private:
-  pthread_mutex_t m_mutex;
-};
   
+//A 1 way flag : Once set, it can be reset
+struct AtomicFlag{
+  AtomicFlag(): m_set(false) {};
+     void set()  {
+        MutexLocker ml(m_mutex);
+        m_set=true;
+      }
+     operator bool() const {
+        MutexLocker ml(m_mutex);
+        return m_set;
+      }
+    private:
+      bool m_set;
+      mutable Mutex m_mutex;
+};
+
 } // namespace threading
 } // namespace cta

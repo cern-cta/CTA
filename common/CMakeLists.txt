@@ -108,6 +108,7 @@ set (COMMON_LIB_SRC_FILES
   threading/SocketPair.cpp
   threading/System.cpp
   threading/Threading.cpp
+  threading/Semaphores.cpp
   utils/utils.cpp
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp

@@ -20,15 +20,15 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#include "BlockingQueue.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include <gtest/gtest.h>
 
 namespace threadedUnitTests {
 
-    typedef castor::server::BlockingQueue<int> QueueType;
+    typedef cta::threading::BlockingQueue<int> QueueType;
 
     const int numberOfElements = 10000;
-    class PingThread : public castor::server::Thread {
+    class PingThread : public cta::threading::Thread {
         QueueType& queue;
     protected :
         virtual void run()  //@override 
@@ -47,7 +47,7 @@ namespace threadedUnitTests {
         
 
     };
-    class PongThread : public castor::server::Thread {
+    class PongThread : public cta::threading::Thread {
         QueueType& queue;
     protected:
          virtual void run()  //@override 

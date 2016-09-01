@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/server/BlockingQueue.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -58,7 +58,7 @@ public:
   m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
   
   ~DataPipeline() throw() { 
-    castor::server::MutexLocker ml(&m_freeBlockProviderProtection); 
+    cta::threading::MutexLocker ml(m_freeBlockProviderProtection); 
   }
 
   /* 
@@ -68,9 +68,9 @@ public:
    */
   bool provideBlock(MemBlock *mb)  {
     bool ret;
-    castor::server::MutexLocker ml(&m_freeBlockProviderProtection);
+    cta::threading::MutexLocker ml(m_freeBlockProviderProtection);
     {
-      castor::server::MutexLocker ml(&m_countersMutex);
+      cta::threading::MutexLocker ml(m_countersMutex);
       if (m_freeBlocksProvided >= m_blocksNeeded) {
         throw cta::exception::MemException("DataFifo overflow on free blocks");
       }
@@ -104,13 +104,13 @@ public:
    */
   void pushDataBlock(MemBlock *mb)  {
     {
-      castor::server::MutexLocker ml(&m_countersMutex);
+      cta::threading::MutexLocker ml(m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
         throw cta::exception::MemException("DataFifo overflow on data blocks");
     }
     m_dataBlocks.push(mb);
     {
-        castor::server::MutexLocker ml(&m_countersMutex);
+        cta::threading::MutexLocker ml(m_countersMutex);
         m_dataBlocksPushed++;
     }
   }
@@ -123,7 +123,7 @@ public:
   MemBlock * popDataBlock() {
     MemBlock *ret = m_dataBlocks.pop();
     {
-      castor::server::MutexLocker ml(&m_countersMutex);
+      cta::threading::MutexLocker ml(m_countersMutex);
       m_dataBlocksPopped++;
     }
     return ret;
@@ -136,13 +136,13 @@ public:
   bool finished() {
     // No need to lock because only one int variable is read.
     //TODO : are we sure the operation is atomic ? It is plateform dependant
-    castor::server::MutexLocker ml(&m_countersMutex);
+    cta::threading::MutexLocker ml(m_countersMutex);
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
   
 private:
-  castor::server::Mutex m_countersMutex;
-  castor::server::Mutex m_freeBlockProviderProtection;
+  cta::threading::Mutex m_countersMutex;
+  cta::threading::Mutex m_freeBlockProviderProtection;
   
   ///the number of memory blocks we want to be provided to the object (its size).
   const int m_blocksNeeded;
@@ -157,10 +157,10 @@ private:
   volatile int m_dataBlocksPopped;
   
     ///thread sage storage of all free blocks
-  castor::server::BlockingQueue<MemBlock *> m_freeBlocks;
+  cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;
   
   ///thread sage storage of all blocks filled with data
-  castor::server::BlockingQueue<MemBlock *> m_dataBlocks;
+  cta::threading::BlockingQueue<MemBlock *> m_dataBlocks;
 };
 
 }

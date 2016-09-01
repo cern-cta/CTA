@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/server/AtomicFlag.hpp"
+#include "common/threading/AtomicFlag.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 
@@ -46,7 +46,7 @@ public:
    */
   DiskReadTask(DataConsumer & destination, 
           cta::ArchiveJob *archiveJob,size_t numberOfBlock,
-          castor::server::AtomicFlag& errorFlag);
+          cta::threading::AtomicFlag& errorFlag);
   
   void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
     MigrationWatchDog & watchdog);
@@ -112,7 +112,7 @@ private:
    */
   size_t m_numberOfBlock;
   
-  castor::server::AtomicFlag& m_errorFlag;
+  cta::threading::AtomicFlag& m_errorFlag;
 };
 
 }}}}

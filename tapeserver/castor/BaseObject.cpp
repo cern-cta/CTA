@@ -26,15 +26,15 @@
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/server/Mutex.hpp"
-#include "castor/server/MutexLocker.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // static values initialization
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::s_sharedServices(0);
-castor::server::Mutex s_sharedServicesMutex;
+cta::threading::Mutex s_sharedServicesMutex;
 castor::BaseObject::pthreadKey castor::BaseObject::s_servicesKey;
 
 //------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ castor::Services* castor::BaseObject::sharedServices()
   // since this is the shared version, the instantiation of the singleton
   // has to be thread-safe.
   if (0 == s_sharedServices) {
-    castor::server::MutexLocker ml(&s_sharedServicesMutex);
+    cta::threading::MutexLocker ml(s_sharedServicesMutex);
     if (0 == s_sharedServices) {
       s_sharedServices = new castor::Services();
     }

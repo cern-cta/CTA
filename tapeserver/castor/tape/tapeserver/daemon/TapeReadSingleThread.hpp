@@ -24,9 +24,9 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
-#include "castor/server/BlockingQueue.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
-#include "castor/server/Threading.hpp"
+#include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"

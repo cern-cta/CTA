@@ -1,29 +1,19 @@
-/****************************************************************************** 
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
-/* 
- * Author: dcome
- *
- * Created on March 5, 2014, 5:06 PM
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
@@ -31,12 +21,12 @@
 #include <queue>
 #include <exception>
 
-#include "castor/server/MutexLocker.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/Semaphores.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/Semaphores.hpp"
 
-namespace castor {
-namespace server {
+namespace cta {
+namespace threading {
       
 /***
  * This simple class provides a thread-safe blocking queue
@@ -61,7 +51,7 @@ public:
    */
   void push(const C& e) {
     {
-      MutexLocker ml(&m_mutex);
+      MutexLocker ml(m_mutex);
       m_queue.push(e);
     }
     m_sem.release();
@@ -92,7 +82,7 @@ public:
    * return the number of elements currently in the queue
    */
   size_t size() const { 
-    MutexLocker ml(&m_mutex);
+    MutexLocker ml(m_mutex);
     return m_queue.size();
   }
   
@@ -117,7 +107,7 @@ private:
    * of the queue after pop 
    */
   C popCriticalSection(size_t * sz = NULL) {
-    MutexLocker ml(&m_mutex);
+    MutexLocker ml(m_mutex);
     C ret = m_queue.front();
     m_queue.pop();
     if (sz)
@@ -127,4 +117,5 @@ private:
   
 };
 
-}}
+} // namespace threading
+} // namespace cta

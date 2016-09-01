@@ -16,35 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/******************************************************************************
- *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
- *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
-
 #include "ChildProcess.hpp"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
-void cta::threading::ChildProcess::start(Cleanup & cleanup)  {
+namespace cta {
+namespace threading {
+  
+void ChildProcess::start(Cleanup & cleanup)  {
   m_pid = fork();
   if (!m_pid) {
     /* We are the child process. Do our stuff and exit. */
@@ -58,7 +38,7 @@ void cta::threading::ChildProcess::start(Cleanup & cleanup)  {
   m_started = true;
 }
 
-void cta::threading::ChildProcess::parseStatus(int status) {
+void ChildProcess::parseStatus(int status) {
   if (WIFEXITED(status)) {
      m_finished = true;
      m_exited = true;
@@ -69,7 +49,7 @@ void cta::threading::ChildProcess::parseStatus(int status) {
   }
 }
 
-bool cta::threading::ChildProcess::running()  {
+bool ChildProcess::running()  {
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   /* If we are not aware of process exiting, let's check and collect exit code */
@@ -84,7 +64,7 @@ bool cta::threading::ChildProcess::running()  {
   return !m_finished;
 }
 
-void cta::threading::ChildProcess::wait()  {
+void ChildProcess::wait()  {
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   if (m_finished) return;
@@ -98,7 +78,7 @@ void cta::threading::ChildProcess::wait()  {
     throw cta::exception::Exception("Process did not exit after waitpid().");
 }
 
-int cta::threading::ChildProcess::exitCode()  {
+int ChildProcess::exitCode()  {
   if (!m_started) throw ProcessNeverStarted();
   if (!m_finished) {
     int status, ret;
@@ -117,7 +97,10 @@ int cta::threading::ChildProcess::exitCode()  {
   return m_exitCode;
 }
 
-void cta::threading::ChildProcess::kill()  {
+void ChildProcess::kill()  {
   if (!m_started) throw ProcessNeverStarted();
   ::kill(m_pid, SIGTERM);
 }
+
+} // namespace threading
+} // namespace cta

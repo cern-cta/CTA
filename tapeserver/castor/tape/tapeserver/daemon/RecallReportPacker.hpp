@@ -25,8 +25,8 @@
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/BlockingQueue.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 
@@ -184,19 +184,19 @@ private:
     bool goingToEnd() override;
   };
   
-  class WorkerThread: public castor::server::Thread {
+  class WorkerThread: public cta::threading::Thread {
     RecallReportPacker & m_parent;
   public:
     WorkerThread(RecallReportPacker& parent);
     void run() override;
   } m_workerThread;
   
-  castor::server::Mutex m_producterProtection;
+  cta::threading::Mutex m_producterProtection;
   
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  castor::server::BlockingQueue<Report*> m_fifo;
+  cta::threading::BlockingQueue<Report*> m_fifo;
   
   /**
    * Is set as true as soon as we process a reportFailedJob

@@ -93,7 +93,7 @@ namespace daemon {
 //requestInjection
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::requestInjection( bool lastCall) {
-    castor::server::MutexLocker ml(&m_producerProtection);
+    cta::threading::MutexLocker ml(m_producerProtection);
     m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
 
   }
@@ -137,7 +137,7 @@ namespace daemon {
 //finish
 //------------------------------------------------------------------------------ 
   void MigrationTaskInjector::finish(){
-    castor::server::MutexLocker ml(&m_producerProtection);
+    cta::threading::MutexLocker ml(m_producerProtection);
     m_queue.push(Request());
   }
 //------------------------------------------------------------------------------

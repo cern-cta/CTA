@@ -1,29 +1,21 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * @(#)BaseClient.cpp,v 1.37 $Release$ 2006/02/16 15:56:58 sponcec3
- *
- * A class with static methods for system level utilities.
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-// Include Files
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -160,7 +152,7 @@ void cta::System::switchToCtaSuperuser()
   if (stage_group->gr_gid != stage_passwd->pw_gid) {
     cta::exception::Exception e;
     e.getMessage() << "Inconsistent password file. The group of the "
-                   << "castor superuser " << STAGERSUPERUSER
+                   << "CTA superuser " << STAGERSUPERUSER
                    << " should be " << stage_group->gr_gid
                    << "(" << STAGERSUPERGROUP << "), but is "
                    << stage_passwd->pw_gid;

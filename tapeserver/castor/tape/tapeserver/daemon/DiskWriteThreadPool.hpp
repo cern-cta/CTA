@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "castor/server/BlockingQueue.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/AtomicCounter.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/AtomicCounter.hpp"
 
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
@@ -100,9 +100,9 @@ public:
 
 private:
   /** Running counter active threads, used to determine which thread is the last. */
-  castor::server::AtomicCounter<int> m_nbActiveThread;
+  cta::threading::AtomicCounter<int> m_nbActiveThread;
   /** Thread safe counter for failed tasks */
-  castor::server::AtomicCounter<int> m_failedWriteCount;
+  cta::threading::AtomicCounter<int> m_failedWriteCount;
   
   /**
    * A disk file factory, that will create the proper type of file access class,
@@ -113,7 +113,7 @@ private:
   /**
    * Private class implementing the worker threads.
    */
-  class DiskWriteWorkerThread: private castor::server::Thread {
+  class DiskWriteWorkerThread: private cta::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
     m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),m_lc(m_parentThreadPool.m_lc)
@@ -124,8 +124,8 @@ private:
       m_lc.log(LOG_INFO,"DiskWrite Thread created");
     }
       
-    void start() { castor::server::Thread::start(); }
-    void wait() { castor::server::Thread::wait(); }
+    void start() { cta::threading::Thread::start(); }
+    void wait() { cta::threading::Thread::wait(); }
   private:
     void logWithStat(int level, const std::string& message);
     /*
@@ -171,15 +171,15 @@ private:
   std::vector<DiskWriteWorkerThread *> m_threads;
   /** Mutex protecting the pushers of new tasks from having the object deleted
    * under their feet. */
-  castor::server::Mutex m_pusherProtection;
+  cta::threading::Mutex m_pusherProtection;
   
   /**
    To protect addThreadStats from concurrent calls
    */
-  castor::server::Mutex m_statAddingProtection;
+  cta::threading::Mutex m_statAddingProtection;
 protected:
   /** The (thread safe) queue of tasks */
-  castor::server::BlockingQueue<DiskWriteTask*> m_tasks;
+  cta::threading::BlockingQueue<DiskWriteTask*> m_tasks;
 private:
   /**
    * Aggregate all threads' stats 

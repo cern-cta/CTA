@@ -61,26 +61,26 @@ namespace unitTests
   
   struct MockRecallReportPacker : public RecallReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) {
-      castor::server::MutexLocker ml(&m_mutex);
+      cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
     void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob) {
-      castor::server::MutexLocker ml(&m_mutex);
+      cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
     void disableBulk() {}
     void reportEndOfSession() {
-      castor::server::MutexLocker ml(&m_mutex);
+      cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
     void reportEndOfSessionWithErrors(const std::string msg, int error_code) {
-      castor::server::MutexLocker ml(&m_mutex);
+      cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
     MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
-    castor::server::Mutex m_mutex;
+    cta::threading::Mutex m_mutex;
     int completeJobs;
     int failedJobs;
     int endSessions;

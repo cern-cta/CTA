@@ -20,10 +20,13 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 
+namespace cta {
+namespace threading {
+  
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-cta::threading::Mutex::Mutex()  {
+Mutex::Mutex()  {
   pthread_mutexattr_t attr;
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutexattr_init(&attr),
@@ -46,13 +49,13 @@ cta::threading::Mutex::Mutex()  {
 //------------------------------------------------------------------------------
 //destructor
 //------------------------------------------------------------------------------
-cta::threading::Mutex::~Mutex() {
+Mutex::~Mutex() {
   pthread_mutex_destroy(&m_mutex);
 }
 //------------------------------------------------------------------------------
 //lock
 //------------------------------------------------------------------------------
-void cta::threading::Mutex::lock()  {
+void Mutex::lock()  {
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in cta::threading::Mutex::lock()");
@@ -60,8 +63,11 @@ void cta::threading::Mutex::lock()  {
 //------------------------------------------------------------------------------
 //unlock
 //------------------------------------------------------------------------------
-void cta::threading::Mutex::unlock()  {
+void Mutex::unlock()  {
   cta::exception::Errnum::throwOnReturnedErrno(
   pthread_mutex_unlock(&m_mutex),
           "Error from pthread_mutex_unlock in cta::threading::Mutex::unlock()");
 }
+
+} // namespace threading
+} // namespace cta

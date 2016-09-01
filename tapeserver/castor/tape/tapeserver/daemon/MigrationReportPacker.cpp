@@ -54,7 +54,7 @@ m_workerThread(*this),m_errorHappened(false),m_continue(true), m_archiveMount(ar
 //Destructore
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
 }
 //------------------------------------------------------------------------------
 //reportCompletedJob
@@ -62,7 +62,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 void MigrationReportPacker::reportCompletedJob(
 std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
@@ -71,35 +71,35 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception &ex){
   std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),ex));
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFlush
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportFlush(drive::compressionStats compressStats){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportFlush(compressStats));
 }
 //------------------------------------------------------------------------------
 //reportTapeFull
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportTapeFull(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTapeFull());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSession() {
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
 
@@ -107,7 +107,7 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
 //reportTestGoingToEnd
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportTestGoingToEnd(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTestGoingToEnd());
 }
 
@@ -132,7 +132,7 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 //reportDriveStatus
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
 }
 

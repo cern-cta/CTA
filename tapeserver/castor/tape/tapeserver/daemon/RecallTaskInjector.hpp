@@ -25,8 +25,8 @@
 
 #include <stdint.h>
 #include "castor/log/LogContext.hpp"
-#include "castor/server/BlockingQueue.hpp"
-#include "castor/server/Threading.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Threading.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 
@@ -158,7 +158,7 @@ private:
     const bool end;
   };
   
-  class WorkerThread: public castor::server::Thread {
+  class WorkerThread: public cta::threading::Thread {
   public:
     WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
     virtual void run();
@@ -184,8 +184,8 @@ private:
    */
   castor::log::LogContext m_lc;
   
-  castor::server::Mutex m_producerProtection;
-  castor::server::BlockingQueue<Request> m_queue;
+  cta::threading::Mutex m_producerProtection;
+  cta::threading::BlockingQueue<Request> m_queue;
   
 
   //maximal number of files requested. at once

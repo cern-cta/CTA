@@ -16,29 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/******************************************************************************
- *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
- *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
-
 #include "Threading.hpp"
 #include <errno.h>
 #include <typeinfo>
@@ -46,11 +23,14 @@
 #include <cxxabi.h>
 #include <iostream>
 
+namespace cta { 
+namespace threading {
+  
 /* Implmentations of the threading primitives */
 //------------------------------------------------------------------------------
 //start
 //------------------------------------------------------------------------------
-void cta::threading::Thread::start()
+void Thread::start()
  {
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
@@ -61,7 +41,7 @@ void cta::threading::Thread::start()
 //------------------------------------------------------------------------------
 //wait
 //------------------------------------------------------------------------------
-void cta::threading::Thread::wait()
+void Thread::wait()
  {
   void *res;
   cta::exception::Errnum::throwOnReturnedErrno(
@@ -79,7 +59,7 @@ void cta::threading::Thread::wait()
 //------------------------------------------------------------------------------
 //cancel
 //------------------------------------------------------------------------------
-void cta::threading::Thread::kill()
+void Thread::kill()
  {
   if (!m_started) throw cta::exception::Exception("Trying to kill a non-started thread!");
   std::cout << "About to kill thread:" << m_thread << " (0x" << std::hex << m_thread << std::dec << ")" << std::endl;
@@ -90,7 +70,7 @@ void cta::threading::Thread::kill()
 //------------------------------------------------------------------------------
 //pthread_runner
 //------------------------------------------------------------------------------
-void * cta::threading::Thread::pthread_runner (void * arg) {
+void * Thread::pthread_runner (void * arg) {
 
   /* static_casting a pointer to and from void* preserves the address. 
    * See https://stackoverflow.com/questions/573294/when-to-use-reinterpret-cast
@@ -123,3 +103,6 @@ void * cta::threading::Thread::pthread_runner (void * arg) {
   }
   return NULL;
 }
+
+} // namespace threading
+} // namespace cta

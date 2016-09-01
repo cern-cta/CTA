@@ -24,8 +24,8 @@
 #pragma once 
 
 
-#include "castor/server/AtomicFlag.hpp"
-#include "castor/server/BlockingQueue.hpp"
+#include "common/threading/AtomicFlag.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include "castor/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
@@ -44,12 +44,12 @@ namespace daemon {
 /**
  * Virtual class for watching tape read or write operation (mostly complete)
  */
-class TaskWatchDog : private castor::server::Thread{
+class TaskWatchDog : private cta::threading::Thread{
 protected:
   /**
    * The mutex protecting updates and the worker thread from each other
    */
-  castor::server::Mutex m_mutex;
+  cta::threading::Mutex m_mutex;
   
   /**
    *  Number of blocks we moved since the last update. Has to be atomic because it is 
@@ -105,7 +105,7 @@ protected:
   /*
    *  Atomic flag to stop the thread's loop
    */
-  castor::server::AtomicFlag m_stopFlag;
+  cta::threading::AtomicFlag m_stopFlag;
   
   /*
    *  The proxy that will receive or heartbeat notifications
@@ -133,7 +133,7 @@ protected:
   /**
    * One offs parameters to be sent to the initial process
    */
-  castor::server::BlockingQueue<castor::log::Param> m_paramsQueue;
+  cta::threading::BlockingQueue<castor::log::Param> m_paramsQueue;
   
   /**
    * Map of all error counts
@@ -195,7 +195,7 @@ protected:
       
       // Critical section block for internal watchdog
       {
-        castor::server::MutexLocker locker(&m_mutex);
+        cta::threading::MutexLocker locker(m_mutex);
         //useful if we are stuck on a particular file
         if(m_fileBeingMoved && 
            m_blockMovementTimer.secs()>m_stuckPeriod &&
@@ -221,7 +221,7 @@ protected:
       //heartbeat to notify activity to the mother
       // and transmit statistics
       if(m_reportTimer.secs() > m_reportPeriod){
-        castor::server::MutexLocker locker(&m_mutex);
+        cta::threading::MutexLocker locker(m_mutex);
         m_lc.log(LOG_DEBUG,"going to report");
         m_reportTimer.reset();
         m_initialProcess.reportHeartbeat(m_nbOfMemblocksMoved, 0);
@@ -235,7 +235,7 @@ protected:
     // At the end of the run, make sure we push the last stats to the initial
     // process and that we process any remaining parameter.
     {
-      castor::server::MutexLocker locker(&m_mutex);
+      cta::threading::MutexLocker locker(m_mutex);
       reportStats();
       // Flush the one-of parameters one last time.
       std::list<Param> params;
@@ -279,7 +279,7 @@ protected:
    * notify the watchdog a mem block has been moved
    */
   void notify(){
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_blockMovementTimer.reset();
     m_nbOfMemblocksMoved++;
   }
@@ -289,7 +289,7 @@ protected:
    * @param stats the stats counters collection to push
    */
   void updateStats (const TapeSessionStats & stats) {
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_stats = stats;
     m_statsSet = true;
   }
@@ -301,7 +301,7 @@ protected:
    * @param tapeThreadTimer:  the start time of the tape thread
    */
   void updateThreadTimer(const castor::utils::Timer & timer) {
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_tapeThreadTimer = timer;
   }
   
@@ -318,7 +318,7 @@ protected:
   void addToErrorCount (const std::string & errorName) {
     uint32_t count;
     {
-      castor::server::MutexLocker locker(&m_mutex);
+      cta::threading::MutexLocker locker(m_mutex);
       // There is no default constructor for uint32_t (auto set to zero),
       // so we need to consider 2 cases.
       if(m_errorCounts.end() != m_errorCounts.find(errorName)) {
@@ -337,7 +337,7 @@ protected:
    */
   void setErrorCount (const std::string & errorName, uint32_t value) {
     {
-      castor::server::MutexLocker locker(&m_mutex);
+      cta::threading::MutexLocker locker(m_mutex);
       m_errorCounts[errorName] = value;
     }
     // We ship the new value ASAP to the main thread.
@@ -348,7 +348,7 @@ protected:
    * Test whether an error happened
    */
   bool errorHappened() {
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     return m_errorCounts.size();
   }
   
@@ -404,7 +404,7 @@ public:
    * @param file
    */
   void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq) {
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_fileId=fileId;
     m_fSeq=fSeq;
     m_fileBeingMoved=true;
@@ -414,7 +414,7 @@ public:
    * Notify the watchdog  we have finished operating on the current file
    */
   void fileFinished(){
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_fileBeingMoved=false;
     m_fileId=0;
     m_fSeq=0;
@@ -455,7 +455,7 @@ public:
    * @param file
    */
   void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq){
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_fileId=fileId;
     m_fSeq=fSeq;
     m_fileBeingMoved=true;
@@ -465,7 +465,7 @@ public:
    * Notify the watchdog  we have finished operating on the current file
    */
   void fileFinished(){
-    castor::server::MutexLocker locker(&m_mutex);
+    cta::threading::MutexLocker locker(m_mutex);
     m_fileBeingMoved=false;
     m_fileId=0;
     m_fSeq=0;

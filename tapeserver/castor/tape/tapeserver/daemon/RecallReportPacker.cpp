@@ -55,14 +55,14 @@ RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, log::L
 //Destructor
 //------------------------------------------------------------------------------
 RecallReportPacker::~RecallReportPacker(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
 }
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob){
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob)));
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
@@ -70,14 +70,14 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //------------------------------------------------------------------------------  
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob){
   std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob)));
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSession(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
 
@@ -85,7 +85,7 @@ void RecallReportPacker::reportEndOfSession(){
 //reportDriveStatus
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
 }
 
@@ -94,7 +94,7 @@ void RecallReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int error_code){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
 
@@ -103,7 +103,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
 //reportTestGoingToEnd
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportTestGoingToEnd(){
-  castor::server::MutexLocker ml(&m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTestGoingToEnd());
 }
 

@@ -33,9 +33,6 @@ set (UTILS_LIB_SRC_FILES
   ../Services.cpp
   ../Factories.cpp
   ../System.cpp
-  ../server/Semaphores.cpp
-  ../server/Mutex.cpp
-  ../server/Threading.cpp
   ../server/Daemon.cpp)
 
 add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})

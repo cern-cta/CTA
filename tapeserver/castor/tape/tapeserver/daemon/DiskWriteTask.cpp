@@ -177,7 +177,7 @@ MemBlock *DiskWriteTask::getFreeBlock() {
 // DiskWriteTask::pushDataBlock
 //------------------------------------------------------------------------------
 void DiskWriteTask::pushDataBlock(MemBlock *mb) {
-  castor::server::MutexLocker ml(&m_producerProtection);
+  cta::threading::MutexLocker ml(m_producerProtection);
   m_fifo.push(mb);
 }
 
@@ -185,7 +185,7 @@ void DiskWriteTask::pushDataBlock(MemBlock *mb) {
 // DiskWriteTask::~DiskWriteTask
 //------------------------------------------------------------------------------
 DiskWriteTask::~DiskWriteTask() { 
-  volatile castor::server::MutexLocker ml(&m_producerProtection); 
+  volatile cta::threading::MutexLocker ml(m_producerProtection); 
 }
 
 //------------------------------------------------------------------------------

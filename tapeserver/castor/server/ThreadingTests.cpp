@@ -21,10 +21,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/server/MutexLocker.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/ChildProcess.hpp"
-#include "castor/server/Semaphores.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/ChildProcess.hpp"
+#include "common/threading/Semaphores.hpp"
 
 #include <gtest/gtest.h>
 #include <time.h>
@@ -36,7 +36,7 @@ namespace unitTests {
   TEST(castor_tape_threading, Mutex_properly_throws_exceptions) {
     /* Check that we properly get exception when doing wrong semaphore 
      operations */
-    castor::server::Mutex m;
+    cta::threading::Mutex m;
     ASSERT_NO_THROW(m.lock());
     /* Duplicate lock */
     ASSERT_THROW(m.lock(),cta::exception::Errnum);
@@ -46,9 +46,9 @@ namespace unitTests {
   }
   
   TEST(castor_tape_threading, MutexLocker_locks_and_properly_throws_exceptions) {
-    castor::server::Mutex m;
+    cta::threading::Mutex m;
     {
-      castor::server::MutexLocker ml(&m);
+      cta::threading::MutexLocker ml(m);
       /* This is a different flavourr of duplicate locking */
       ASSERT_THROW(m.lock(),cta::exception::Errnum);
       ASSERT_NO_THROW(m.unlock());
@@ -61,27 +61,27 @@ namespace unitTests {
   }
 
   TEST(castor_tape_threading, PosixSemaphore_basic_counting) {
-    castor::server::PosixSemaphore s(2);
+    cta::threading::PosixSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_FALSE(s.tryAcquire());
   }
 
   TEST(castor_tape_threading, CondVarSemaphore_basic_counting) {
-    castor::server::CondVarSemaphore s(2);
+    cta::threading::CondVarSemaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_FALSE(s.tryAcquire());
   }
 
   TEST(castor_tape_threading, Semaphore_basic_counting) {
-    castor::server::Semaphore s(2);
+    cta::threading::Semaphore s(2);
     ASSERT_NO_THROW(s.acquire());
     ASSERT_EQ(true, s.tryAcquire());
     ASSERT_FALSE(s.tryAcquire());
   }
   
-  class Thread_exception_throwing: public castor::server::Thread {
+  class Thread_exception_throwing: public cta::threading::Thread {
   private:
     void run() {
       throw cta::exception::Exception("Exception in child thread");
@@ -91,7 +91,7 @@ namespace unitTests {
     Thread_exception_throwing t, t2;
     t.start();
     t2.start();
-    ASSERT_THROW(t.wait(), castor::server::UncaughtExceptionInThread);
+    ASSERT_THROW(t.wait(), cta::threading::UncaughtExceptionInThread);
     try {
       t2.wait();
     } catch (std::exception & e) {

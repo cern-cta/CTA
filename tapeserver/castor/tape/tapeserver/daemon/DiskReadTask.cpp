@@ -35,7 +35,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 DiskReadTask::DiskReadTask(DataConsumer & destination, 
         cta::ArchiveJob *archiveJob,
-        size_t numberOfBlock,castor::server::AtomicFlag& errorFlag):
+        size_t numberOfBlock,cta::threading::AtomicFlag& errorFlag):
 m_nextTask(destination),m_archiveJob(archiveJob),
         m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
 {

@@ -21,7 +21,6 @@
 
 #include "common/exception/Errnum.hpp"
 #include "castor/server/Daemon.hpp"
-#include "castor/server/ThreadNotification.hpp"
 #include "castor/System.hpp"
 #include <getopt.h>
 

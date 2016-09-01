@@ -30,9 +30,9 @@
 
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/server/BlockingQueue.hpp"
+#include "common/threading/BlockingQueue.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "castor/server/Threading.hpp"
+#include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
@@ -52,7 +52,7 @@ namespace daemon     {
    * task we are expecting : TapeReadTask or TapeWriteTask
    */
 template <class Task>
-class TapeSingleThreadInterface : private castor::server::Thread
+class TapeSingleThreadInterface : private cta::threading::Thread
 {
 private :
   /**
@@ -61,7 +61,7 @@ private :
   cta::server::ProcessCap &m_capUtils;
 protected:
   ///the queue of tasks 
-  castor::server::BlockingQueue<Task *> m_tasks;
+  cta::threading::BlockingQueue<Task *> m_tasks;
   
   /**
    * An interface to manipulate the drive to manipulate the tape

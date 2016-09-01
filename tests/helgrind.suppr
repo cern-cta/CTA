@@ -213,7 +213,7 @@
    Helgrind:Race
    obj:/usr/lib64/valgrind/vgpreload_helgrind-amd64-linux.so
    fun:pthread_mutex_destroy
-   fun:_ZN6castor6server5MutexD1Ev
+   fun:_ZN3cta9threading5MutexD1Ev
    ...
 }
 

@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/server/MutexLocker.hpp"
-#include "castor/server/Threading.hpp"
-#include "castor/server/Semaphores.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/threading/Semaphores.hpp"
 
 #include <gtest/gtest.h>
 
@@ -32,15 +32,15 @@
 
 namespace threadedUnitTests {
 
-  class Thread_and_basic_locking : public castor::server::Thread {
+  class Thread_and_basic_locking : public cta::threading::Thread {
   public:
     int counter;
-    castor::server::Mutex mutex;
+    cta::threading::Mutex mutex;
   private:
 
     void run() {
       for (int i = 0; i < 100; i++) {
-        castor::server::MutexLocker ml(&mutex);
+        cta::threading::MutexLocker ml(mutex);
         counter++;
       }
     }
@@ -52,7 +52,7 @@ namespace threadedUnitTests {
     mt.counter = 0;
     mt.start();
     for (int i = 0; i < 100; i++) {
-      castor::server::MutexLocker ml(&mt.mutex);
+      cta::threading::MutexLocker ml(mt.mutex);
       mt.counter--;
     }
     mt.wait();
@@ -60,7 +60,7 @@ namespace threadedUnitTests {
   }
 
   template <class S>
-  class Semaphore_ping_pong : public castor::server::Thread {
+  class Semaphore_ping_pong : public cta::threading::Thread {
   public:
 
     void thread0() {
@@ -85,20 +85,20 @@ namespace threadedUnitTests {
   };
 
   TEST(castor_tape_threading, PosixSemaphore_ping_pong) {
-    Semaphore_ping_pong<castor::server::PosixSemaphore> spp;
+    Semaphore_ping_pong<cta::threading::PosixSemaphore> spp;
     spp.start();
     spp.thread0();
     spp.wait();
   }
 
   TEST(castor_tape_threading, CondVarSemaphore_ping_pong) {
-    Semaphore_ping_pong<castor::server::CondVarSemaphore> spp;
+    Semaphore_ping_pong<cta::threading::CondVarSemaphore> spp;
     spp.start();
     spp.thread0();
     spp.wait();
   }
 
-  class Thread_exception_throwing : public castor::server::Thread {
+  class Thread_exception_throwing : public cta::threading::Thread {
   private:
 
     void run() {
@@ -110,7 +110,7 @@ namespace threadedUnitTests {
     Thread_exception_throwing t, t2;
     t.start();
     t2.start();
-    ASSERT_THROW(t.wait(), castor::server::UncaughtExceptionInThread);
+    ASSERT_THROW(t.wait(), cta::threading::UncaughtExceptionInThread);
     try {
       t2.wait();
     } catch (std::exception & e) {

@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/server/BlockingQueue.hpp"
-#include "castor/server/Threading.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Threading.hpp"
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
@@ -84,7 +84,7 @@ private:
   /**
    * Container for the free blocks
    */
-  castor::server::BlockingQueue<MemBlock*> m_freeBlocks;
+  cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
   
   /**
    * Logging. The class is not threaded, so it can be shared with its parent

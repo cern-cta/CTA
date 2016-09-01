@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "castor/server/Threading.hpp"
+#include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include <cryptopp/base64.h>
@@ -30,7 +30,7 @@
 
 
 namespace unitTests {
-  class CryptoPPThread: public castor::server::Thread {
+  class CryptoPPThread: public cta::threading::Thread {
   public:
     void setKey(const CryptoPP::RSA::PrivateKey & key) { m_key = key; }
   private:
@@ -132,7 +132,7 @@ namespace unitTests {
       i->wait();
   }
   
-  class CryptoPPKeyThread: public castor::server::Thread {
+  class CryptoPPKeyThread: public cta::threading::Thread {
   private:
     virtual void run() {
       for (int i=0; i<5; i++) {
@@ -156,7 +156,7 @@ namespace unitTests {
       i->wait();
   }
   
-  class castor_CryptoPPDiskFileFactory: public castor::server::Thread {
+  class castor_CryptoPPDiskFileFactory: public cta::threading::Thread {
   public:
     void setPath(const std::string & path) {
       m_keyPath = path;

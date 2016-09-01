@@ -130,7 +130,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadTask *
 castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
-  castor::server::BlockingQueue<TapeReadTask *>::valueRemainingPair 
+  cta::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair 
     vrp = m_tasks.popGetSize();
   // If we just passed (down) the half full limit, ask for more
   // (the remaining value is after pop)

@@ -22,7 +22,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-namespace cta { namespace threading {
+namespace cta { 
+namespace threading {
 
 /**
  * A simple scoped locker for mutexes. Highly recommended as
@@ -61,4 +62,5 @@ private:
 
 }; // class MutexLocker
   
-}} // namespace cta::threading
+} // namespace threading
+} // namespace cta

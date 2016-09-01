@@ -58,7 +58,7 @@ RecallTaskInjector::~RecallTaskInjector(){
 //------------------------------------------------------------------------------
 
 void RecallTaskInjector::finish(){
-  castor::server::MutexLocker ml(&m_producerProtection);
+  cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request());
 }
 //------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ void RecallTaskInjector::finish(){
 //------------------------------------------------------------------------------
 void RecallTaskInjector::requestInjection(bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
-  castor::server::MutexLocker ml(&m_producerProtection);
+  cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
 }
 //------------------------------------------------------------------------------

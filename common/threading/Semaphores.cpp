@@ -1,46 +1,67 @@
-#include "castor/server/MutexLocker.hpp"
-#include "castor/server/Semaphores.hpp"
-#include "castor/server/Threading.hpp"
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Semaphores.hpp"
+#include "common/threading/Threading.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include <errno.h>
 #include <sys/time.h>
 
+namespace cta { 
+namespace threading {
+  
 //------------------------------------------------------------------------------
 //PosixSemaphore constructor
 //------------------------------------------------------------------------------
-castor::server::PosixSemaphore::PosixSemaphore(int initial)
+PosixSemaphore::PosixSemaphore(int initial)
  {
   cta::exception::Errnum::throwOnReturnedErrno(
     sem_init(&m_sem, 0, initial),
-    "Error from sem_init in castor::server::PosixSemaphore::PosixSemaphore()");
+    "Error from sem_init in cta::threading::PosixSemaphore::PosixSemaphore()");
 }
 //------------------------------------------------------------------------------
 //PosixSemaphore destructor
 //------------------------------------------------------------------------------
-castor::server::PosixSemaphore::~PosixSemaphore() {
+PosixSemaphore::~PosixSemaphore() {
   /* There is a danger of destroying the semaphore in the consumer
      while the producer is still referring to the object.
      This mutex prevents this from happening. (The release method locks it). */
-  MutexLocker ml(&m_mutexPosterProtection);
+  MutexLocker ml(m_mutexPosterProtection);
   sem_destroy(&m_sem);
 }
 //------------------------------------------------------------------------------
 //acquire
 //------------------------------------------------------------------------------
-void castor::server::PosixSemaphore::acquire()
+void PosixSemaphore::acquire()
  {
   int ret;
   /* If we receive EINTR, we should just keep trying (signal interruption) */
   while((ret = sem_wait(&m_sem)) && EINTR == errno) {}
   /* If it was not EINTR, it's a failure */
   cta::exception::Errnum::throwOnNonZero(ret,
-    "Error from sem_wait in castor::server::PosixSemaphore::acquire()");
+    "Error from sem_wait in cta::threading::PosixSemaphore::acquire()");
 }
 //------------------------------------------------------------------------------
 //acquire
 //------------------------------------------------------------------------------
-void castor::server::PosixSemaphore::acquireWithTimeout(uint64_t timeout_us)
+void PosixSemaphore::acquireWithTimeout(uint64_t timeout_us)
  {
   int ret;
   struct timeval tv;
@@ -58,50 +79,49 @@ void castor::server::PosixSemaphore::acquireWithTimeout(uint64_t timeout_us)
   if (ret && ETIMEDOUT == errno) { throw Timeout(); }
   /* If it was not EINTR, it's a failure */
   cta::exception::Errnum::throwOnNonZero(ret,
-    "Error from sem_wait in castor::server::PosixSemaphore::acquireWithTimeout()");
+    "Error from sem_wait in cta::threading::PosixSemaphore::acquireWithTimeout()");
 }
 
 //------------------------------------------------------------------------------
 //tryAcquire
 //------------------------------------------------------------------------------
-bool castor::server::PosixSemaphore::tryAcquire()
+bool PosixSemaphore::tryAcquire()
  {
   int ret = sem_trywait(&m_sem);
   if (!ret) return true;
   if (ret && EAGAIN == errno) return false;
   cta::exception::Errnum::throwOnNonZero(ret,
-    "Error from sem_trywait in castor::server::PosixSemaphore::tryAcquire()");
+    "Error from sem_trywait in cta::threading::PosixSemaphore::tryAcquire()");
   /* unreacheable, just for compiler happiness */
   return false;
 }
 //------------------------------------------------------------------------------
 //release
 //------------------------------------------------------------------------------
-void castor::server::PosixSemaphore::release(int n)
+void PosixSemaphore::release(int n)
  {
   for (int i=0; i<n; i++) {
-    MutexLocker ml(&m_mutexPosterProtection);
+    MutexLocker ml(m_mutexPosterProtection);
     cta::exception::Errnum::throwOnNonZero(sem_post(&m_sem),
-      "Error from sem_post in castor::server::PosixSemaphore::release()");
+      "Error from sem_post in cta::threading::PosixSemaphore::release()");
   }
 }
 //------------------------------------------------------------------------------
 //CondVarSemaphore constructor
 //------------------------------------------------------------------------------
-castor::server::CondVarSemaphore::CondVarSemaphore(int initial)
-:m_value(initial) {
+CondVarSemaphore::CondVarSemaphore(int initial):m_value(initial) {
       cta::exception::Errnum::throwOnReturnedErrno(
         pthread_cond_init(&m_cond, NULL),
-        "Error from pthread_cond_init in castor::server::CondVarSemaphore::CondVarSemaphore()");
+        "Error from pthread_cond_init in cta::threading::CondVarSemaphore::CondVarSemaphore()");
       cta::exception::Errnum::throwOnReturnedErrno(
         pthread_mutex_init(&m_mutex, NULL),
-        "Error from pthread_mutex_init in castor::server::CondVarSemaphore::CondVarSemaphore()");
+        "Error from pthread_mutex_init in cta::threading::CondVarSemaphore::CondVarSemaphore()");
     }
 
 //------------------------------------------------------------------------------
 //CondVarSemaphore destructor
 //------------------------------------------------------------------------------
-castor::server::CondVarSemaphore::~CondVarSemaphore() {
+CondVarSemaphore::~CondVarSemaphore() {
       /* Barrier protecting the last user */
       pthread_mutex_lock(&m_mutex);
       pthread_mutex_unlock(&m_mutex);
@@ -113,30 +133,30 @@ castor::server::CondVarSemaphore::~CondVarSemaphore() {
 //------------------------------------------------------------------------------
 //acquire
 //------------------------------------------------------------------------------
-void castor::server::CondVarSemaphore::acquire()
+void CondVarSemaphore::acquire()
  {
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
-    "Error from pthread_mutex_lock in castor::server::CondVarSemaphore::acquire()");
+    "Error from pthread_mutex_lock in cta::threading::CondVarSemaphore::acquire()");
   while (m_value <= 0) {
     cta::exception::Errnum::throwOnReturnedErrno(
       pthread_cond_wait(&m_cond, &m_mutex),
-      "Error from pthread_cond_wait in castor::server::CondVarSemaphore::acquire()");
+      "Error from pthread_cond_wait in cta::threading::CondVarSemaphore::acquire()");
   }
   m_value--;
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_unlock(&m_mutex),
-    "Error from pthread_mutex_unlock in castor::server::CondVarSemaphore::acquire()");
+    "Error from pthread_mutex_unlock in cta::threading::CondVarSemaphore::acquire()");
 }
 //------------------------------------------------------------------------------
 //tryAcquire
 //------------------------------------------------------------------------------
-bool castor::server::CondVarSemaphore::tryAcquire()
+bool CondVarSemaphore::tryAcquire()
  {
   bool ret;
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
-      "Error from pthread_mutex_lock in castor::server::CondVarSemaphore::tryAcquire()");
+      "Error from pthread_mutex_lock in cta::threading::CondVarSemaphore::tryAcquire()");
   if (m_value > 0) {
     ret = true;
     m_value--;
@@ -145,24 +165,27 @@ bool castor::server::CondVarSemaphore::tryAcquire()
   }
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_unlock(&m_mutex),
-      "Error from pthread_mutex_unlock in castor::server::CondVarSemaphore::tryAcquire()");
+      "Error from pthread_mutex_unlock in cta::threading::CondVarSemaphore::tryAcquire()");
   return ret;
 }
 //------------------------------------------------------------------------------
 //release
 //------------------------------------------------------------------------------
-void castor::server::CondVarSemaphore::release(int n)
+void CondVarSemaphore::release(int n)
  {
   for (int i=0; i<n; i++) {
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
-      "Error from pthread_mutex_unlock in castor::server::CondVarSemaphore::release()");
+      "Error from pthread_mutex_unlock in cta::threading::CondVarSemaphore::release()");
     m_value++;
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_cond_signal(&m_cond),
-      "Error from pthread_cond_signal in castor::server::CondVarSemaphore::release()");
+      "Error from pthread_cond_signal in cta::threading::CondVarSemaphore::release()");
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_unlock(&m_mutex),
-      "Error from pthread_mutex_unlock in castor::server::CondVarSemaphore::release()");
+      "Error from pthread_mutex_unlock in cta::threading::CondVarSemaphore::release()");
   }
 }
+
+} // namespace threading
+} // namespace cta

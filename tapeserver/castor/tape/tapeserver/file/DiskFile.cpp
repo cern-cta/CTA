@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "common/exception/Errnum.hpp"
-#include "castor/server/MutexLocker.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
 #include <algorithm>
@@ -63,8 +63,8 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     // As this function portion of the code is called once per disk thread,
     // serialising them will have little effect in performance.
     // This is an experimental workaround.
-    static castor::server::Mutex mutex;
-    castor::server::MutexLocker ml(&mutex);
+    static cta::threading::Mutex mutex;
+    cta::threading::MutexLocker ml(mutex);
     // The loading of a PEM-style key is described in 
     // http://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
     std::string key;
@@ -219,7 +219,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
 }
 
-castor::server::Mutex DiskFileFactory::g_rfioOptionsLock;
+cta::threading::Mutex DiskFileFactory::g_rfioOptionsLock;
 
 //==============================================================================
 // LOCAL READ FILE
@@ -286,12 +286,12 @@ LocalWriteFile::~LocalWriteFile() throw() {
 //==============================================================================
 // CRYPTOPP SIGNER
 //==============================================================================
-castor::server::Mutex CryptoPPSigner::s_mutex;
+cta::threading::Mutex CryptoPPSigner::s_mutex;
 
 std::string CryptoPPSigner::sign(const std::string msg, 
   const CryptoPP::RSA::PrivateKey& privateKey) {
   // Global lock as Crypto++ seems not to be thread safe (helgrind complains)
-  castor::server::MutexLocker ml(&s_mutex);
+  cta::threading::MutexLocker ml(s_mutex);
   // Create a signer object
   CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
   // Return value
