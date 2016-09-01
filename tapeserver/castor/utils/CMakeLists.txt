@@ -24,7 +24,6 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 set (UTILS_LIB_SRC_FILES
-  SmartFd.cpp
   SmartFILEPtr.cpp
   Timer.cpp
   CRC.cpp
@@ -50,7 +49,6 @@ install(TARGETS ctautils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library (ctautilsunittests SHARED
   SmartArrayPtrTest.cpp
-  SmartFdTest.cpp
   UtilsTest.cpp)
 
 install(TARGETS ctautilsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

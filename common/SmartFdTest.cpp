@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/utils/SmartFd.hpp"
+#include "common/SmartFd.hpp"
 
 #include <gtest/gtest.h>
 #include <sys/types.h>
@@ -31,7 +31,7 @@
 
 namespace unitTests {
 
-class castor_utils_SmartFdTest : public ::testing::Test {
+class cta_SmartFdTest : public ::testing::Test {
 protected:
   static int s_fd;
   static bool s_closedCallbackWasCalled;
@@ -50,11 +50,11 @@ protected:
   }
 };
 
-int castor_utils_SmartFdTest::s_fd = -1;
-bool castor_utils_SmartFdTest::s_closedCallbackWasCalled = false;
+int cta_SmartFdTest::s_fd = -1;
+bool cta_SmartFdTest::s_closedCallbackWasCalled = false;
 
-TEST_F(castor_utils_SmartFdTest, testClosedCallback) {
-  using namespace castor::utils;
+TEST_F(cta_SmartFdTest, testClosedCallback) {
+  using namespace cta;
 
   ASSERT_EQ(-1, s_fd);
   ASSERT_FALSE(s_closedCallbackWasCalled);

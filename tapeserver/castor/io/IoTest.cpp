@@ -22,9 +22,9 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/utils/SmartFd.hpp"
 #include "castor/io/marshall.h"
 #include "common/exception/Errnum.hpp"
+#include "common/SmartFd.hpp"
 
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -58,7 +58,7 @@ protected:
     unlink(listenSockPath);
 
     // Create the socket
-    castor::utils::SmartFd smartListenSock(socket(PF_LOCAL, SOCK_STREAM, 0));
+    cta::SmartFd smartListenSock(socket(PF_LOCAL, SOCK_STREAM, 0));
     if(-1 == smartListenSock.get()) {
       char strErrBuf[256];
       if(0 != strerror_r(errno, strErrBuf, sizeof(strErrBuf))) {
@@ -112,11 +112,11 @@ protected:
 }; // class castor_io_IoTest
 
 TEST_F(castor_io_IoTest, connectWithTimeout) {
-  castor::utils::SmartFd smartListenSock;
+  cta::SmartFd smartListenSock;
   ASSERT_NO_THROW(smartListenSock.reset(
     createLocalListenSocket(m_listenSockPath)));
 
-  castor::utils::SmartFd smartClientConnectionSock;
+  cta::SmartFd smartClientConnectionSock;
   {
     const int             sockDomain   = PF_LOCAL;
     const int             sockType     = SOCK_STREAM;
@@ -138,7 +138,7 @@ TEST_F(castor_io_IoTest, connectWithTimeout) {
         timeout)));
   }
 
-  castor::utils::SmartFd smartServerConnectionSock;
+  cta::SmartFd smartServerConnectionSock;
   {
     const time_t acceptTimeout = 10; // Timeout is in seconds
     ASSERT_NO_THROW(smartServerConnectionSock.reset(

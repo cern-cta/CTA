@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/utils/SmartFd.hpp"
+#include "common/SmartFd.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -30,21 +30,21 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFd::SmartFd() throw():
+cta::SmartFd::SmartFd() throw():
   m_fd(-1), m_closedCallback(NULL) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFd::SmartFd(const int fd) throw():
+cta::SmartFd::SmartFd(const int fd) throw():
   m_fd(fd), m_closedCallback(NULL) {
 }
 
 //-----------------------------------------------------------------------------
 // setClosedCallback
 //-----------------------------------------------------------------------------
-void castor::utils::SmartFd::setClosedCallback(ClosedCallback closedCallback)
+void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback)
   throw() {
   m_closedCallback = closedCallback;
 }
@@ -52,7 +52,7 @@ void castor::utils::SmartFd::setClosedCallback(ClosedCallback closedCallback)
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::utils::SmartFd::reset(const int fd = -1) throw() {
+void cta::SmartFd::reset(const int fd = -1) throw() {
   // If the new file descriptor is not the one already owned
   if(fd != m_fd) {
 
@@ -78,8 +78,7 @@ void castor::utils::SmartFd::reset(const int fd = -1) throw() {
 //-----------------------------------------------------------------------------
 // SmartFd assignment operator
 //-----------------------------------------------------------------------------
-castor::utils::SmartFd &castor::utils::SmartFd::operator=(SmartFd& obj)
-   {
+cta::SmartFd &cta::SmartFd::operator=(SmartFd& obj) {
   reset(obj.release());
   return *this;
 }
@@ -87,21 +86,21 @@ castor::utils::SmartFd &castor::utils::SmartFd::operator=(SmartFd& obj)
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFd::~SmartFd() {
+cta::SmartFd::~SmartFd() {
   reset();
 }
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::utils::SmartFd::get() const throw() {
+int cta::SmartFd::get() const throw() {
   return m_fd;
 }
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::utils::SmartFd::release()  {
+int cta::SmartFd::release()  {
   // If this SmartFd does not own a file descriptor
   if(m_fd < 0) {
     cta::exception::NotAnOwner ex;

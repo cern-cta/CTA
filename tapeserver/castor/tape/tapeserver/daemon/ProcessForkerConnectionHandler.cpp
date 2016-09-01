@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForkerConnectionHandler.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
-#include "castor/utils/SmartFd.hpp"
+#include "common/SmartFd.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

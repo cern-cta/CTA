@@ -26,8 +26,8 @@
 #include "castor/legacymsg/RmcMountMsgBody.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
-#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/SmartFd.hpp"
 #include "h/rmc_constants.h"
 
 #include <unistd.h>
@@ -240,7 +240,7 @@ protected:
   template<typename T> int rmcSendRecv(const T &rqstBody,
     std::ostringstream &rmcErrorStream) {
     // Connect to rmcd and send request
-    castor::utils::SmartFd fd(connectToRmc());
+    cta::SmartFd fd(connectToRmc());
     {
       char buf[RMC_MSGBUFSIZ];
       const size_t len = marshal(buf, rqstBody);

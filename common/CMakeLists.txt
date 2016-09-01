@@ -100,6 +100,7 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
+  SmartFd.cpp
   threading/ChildProcess.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
@@ -136,6 +137,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
+  SmartFdTest.cpp
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp
   utils/UtilsTest.cpp

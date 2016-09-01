@@ -24,7 +24,7 @@
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
-#include "castor/utils/SmartFd.hpp"
+#include "common/SmartFd.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -48,13 +48,13 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, constructor) {
 
   int cmdPair[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, cmdPair));
-  castor::utils::SmartFd cmdSenderSocket(cmdPair[0]);
-  castor::utils::SmartFd cmdReceiverSocket(cmdPair[1]);
+  cta::SmartFd cmdSenderSocket(cmdPair[0]);
+  cta::SmartFd cmdReceiverSocket(cmdPair[1]);
 
   int reaperPair[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, reaperPair));
-  castor::utils::SmartFd reaperSenderSocket(reaperPair[0]);
-  castor::utils::SmartFd reaperReceiverSocket(reaperPair[1]);
+  cta::SmartFd reaperSenderSocket(reaperPair[0]);
+  cta::SmartFd reaperReceiverSocket(reaperPair[1]);
 
   const std::string programName = "unittests";
   const std::string hostName = "hostName";
@@ -73,13 +73,13 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, socketproxy) {
 
   int cmdPair[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, cmdPair));
-  castor::utils::SmartFd cmdSenderSocket(cmdPair[0]);
-  castor::utils::SmartFd cmdReceiverSocket(cmdPair[1]);
+  cta::SmartFd cmdSenderSocket(cmdPair[0]);
+  cta::SmartFd cmdReceiverSocket(cmdPair[1]);
 
   int reaperPair[2] = {-1, -1};
   ASSERT_EQ(0, socketpair(AF_UNIX, SOCK_STREAM, 0, reaperPair));
-  castor::utils::SmartFd reaperSenderSocket(reaperPair[0]);
-  castor::utils::SmartFd reaperReceiverSocket(reaperPair[1]);
+  cta::SmartFd reaperSenderSocket(reaperPair[0]);
+  cta::SmartFd reaperReceiverSocket(reaperPair[1]);
   
   const std::string programName = "unittests";
   const std::string hostName = "hostName";

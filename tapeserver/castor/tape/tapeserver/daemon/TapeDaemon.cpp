@@ -39,8 +39,8 @@
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
-#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
+#include "common/SmartFd.hpp"
 #include "rmc_constants.h"
 
 #include <algorithm>

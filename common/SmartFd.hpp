@@ -25,8 +25,7 @@
 
 #include "common/exception/NotAnOwner.hpp"
 
-namespace castor {
-namespace utils  {
+namespace cta {
 
 /**
  * A smart file descriptor that owns a basic file descriptor.  When the smart
@@ -149,6 +148,4 @@ private:
 
 }; // class SmartFd
 
-} // namespace utils
-} // namespace castor
-
+} // namespace cta

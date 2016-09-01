@@ -23,9 +23,9 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "Castor_limits.h"
+#include "common/SmartFd.hpp"
 #include "rmc_constants.h"
 
 //------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ void castor::legacymsg::RmcProxyTcpIp::forceDismountTape(const std::string &vid,
 int castor::legacymsg::RmcProxyTcpIp::connectToRmc()
   const {
   const std::string rmcHost = "localhost";
-  castor::utils::SmartFd smartConnectSock;
+  cta::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(rmcHost, m_rmcPort,
       m_netTimeout));

@@ -24,9 +24,9 @@
 
 #include "common/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
-#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/SmartFd.hpp"
 #include "common/utils/utils.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
@@ -129,7 +129,7 @@ int castor::io::createListenerSock(
   }
 
   // Create a socket
-  utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
+  cta::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
   if(sock.get() < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << ": Failed to create socket: " 
@@ -909,7 +909,7 @@ int castor::io::connectWithTimeout(
   throw(cta::exception::TimeOut, cta::exception::Exception) {
 
   // Create the socket for the new connection
-  utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
+  cta::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
   if(-1 == smartSock.get()) {
     cta::exception::Exception ex;
     ex.getMessage() <<
