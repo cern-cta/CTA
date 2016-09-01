@@ -33,7 +33,7 @@
 #include "castor/mediachanger/MmcProxyDummy.hpp"
 #include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "castor/server/ProcessCapDummy.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
@@ -434,7 +434,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -607,7 +607,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -749,7 +749,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
-  castor::server::ProcessCapDummy capUtils;
+  cta::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
@@ -887,7 +887,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -934,7 +934,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -1043,7 +1043,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
@@ -1163,7 +1163,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
@@ -1276,7 +1276,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
@@ -1403,7 +1403,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castor::mediachanger::MmcProxyDummy mmc;
   castor::legacymsg::RmcProxyDummy rmc;
   castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();

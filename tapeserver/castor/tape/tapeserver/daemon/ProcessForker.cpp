@@ -472,7 +472,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runCleanerSession(
   const messages::ForkCleaner &rqst) {
   try {
-    castor::server::ProcessCap capUtils;
+    cta::server::ProcessCap capUtils;
 
     const DriveConfig driveConfig = getDriveConfig(rqst);
     std::list<log::Param> params;
@@ -535,7 +535,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   params.push_back(log::Param("unitName", driveConfig.getUnitName()));
   m_log(LOG_INFO, "Data-transfer child-process started", params);
 
-  server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
@@ -827,7 +827,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::ProcessForker::runLabelSession(
   const messages::ForkLabel &rqst) {
   try {
-    server::ProcessCap capUtils;
+    cta::server::ProcessCap capUtils;
 
     const DriveConfig &driveConfig = getDriveConfig(rqst);
     const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);

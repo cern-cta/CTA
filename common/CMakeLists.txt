@@ -96,6 +96,7 @@ set (COMMON_LIB_SRC_FILES
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
   processCap/ProcessCap.cpp
+  processCap/ProcessCapDummy.cpp
   processCap/SmartCap.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
@@ -132,6 +133,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/StorageClassTest.cpp
+  processCap/SmartCapTest.cpp
   log/LogContextTest.cpp
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp
@@ -148,3 +150,4 @@ add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+

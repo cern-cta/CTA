@@ -28,7 +28,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
@@ -69,7 +69,7 @@ public:
    *            castor-tape-label command line tool.
    */
   LabelSession(
-    server::ProcessCap &capUtils,
+    cta::server::ProcessCap &capUtils,
     cta::tape::daemon::TapedProxy &tapeserver,
     mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
@@ -94,7 +94,7 @@ private:
   /**
    * Object providing support for UNIX capabilities.
    */
-  server::ProcessCap &m_capUtils;
+  cta::server::ProcessCap &m_capUtils;
 
   /**
    * Proxy object representing the tapeserverd daemon.

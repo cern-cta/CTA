@@ -26,7 +26,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -61,7 +61,7 @@ namespace daemon {
      * the media to be ready for operations inside the drive.
      */
     CleanerSession(
-      server::ProcessCap &capUtils,
+      cta::server::ProcessCap &capUtils,
       mediachanger::MediaChangerFacade &mc,
       castor::log::Logger &log,
       const DriveConfig &driveConfig,
@@ -84,7 +84,7 @@ namespace daemon {
     /**
      * Object providing support for UNIX capabilities.
      */
-    server::ProcessCap &m_capUtils;
+    cta::server::ProcessCap &m_capUtils;
 
     /**
      * The object representing the media changer.

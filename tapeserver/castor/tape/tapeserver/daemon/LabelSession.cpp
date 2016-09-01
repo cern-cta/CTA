@@ -40,7 +40,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
-  server::ProcessCap &capUtils,
+  cta::server::ProcessCap &capUtils,
   cta::tape::daemon::TapedProxy &tapeserver,
   mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,

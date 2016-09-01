@@ -17,7 +17,6 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 add_library (ctaserverunittests SHARED
   AtomicCounterTest.cpp
   DaemonTest.cpp
-  SmartCapTest.cpp
   ThreadingBlockingQTests.cpp
 # ThreadingMPTests.cpp is commented out because of errors caused by libust
   ThreadingMTTests.cpp

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
@@ -67,7 +67,7 @@ public:
     const VolumeInfo& volInfo,
     castor::log::LogContext & lc,
     MigrationReportPacker & repPacker,
-    castor::server::ProcessCap &capUtils,
+    cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp);
   
   /**

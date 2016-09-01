@@ -27,7 +27,7 @@
 #include "common/exception/InvalidConfigEntry.hpp"
 #include "common/exception/NoEntry.hpp"
 #include "castor/server/Daemon.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
@@ -82,7 +82,7 @@ public:
     const int netTimeout,
     const DriveConfigMap &driveConfigs,
     reactor::ZMQReactor &reactor,
-    castor::server::ProcessCap &capUtils,
+    cta::server::ProcessCap &capUtils,
     const TapeDaemonConfig &tapeDaemonConfig);
 
   /**
@@ -484,7 +484,7 @@ protected:
   /**
    * Object providing utilities for working UNIX capabilities.
    */
-  castor::server::ProcessCap &m_capUtils;
+  cta::server::ProcessCap &m_capUtils;
 
   /**
    * The CASTOR configuration parameters to be used by the tape daemon.

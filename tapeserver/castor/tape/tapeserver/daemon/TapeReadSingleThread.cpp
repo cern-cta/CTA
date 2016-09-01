@@ -31,7 +31,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   TapeServerReporter& initialProcess,
   const VolumeInfo& volInfo,
   uint64_t maxFilesRequest,
-  castor::server::ProcessCap& capUtils,
+  cta::server::ProcessCap& capUtils,
   RecallWatchDog& watchdog,
   castor::log::LogContext& lc,
   RecallReportPacker &rrp,

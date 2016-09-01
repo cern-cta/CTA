@@ -66,7 +66,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   const int netTimeout,
   const DriveConfigMap &driveConfigs,
   reactor::ZMQReactor &reactor,
-  castor::server::ProcessCap &capUtils,
+  cta::server::ProcessCap &capUtils,
   const TapeDaemonConfig &tapeDaemonConfig):
   castor::server::Daemon(stdOut, stdErr, log),
   m_state(TAPEDAEMON_STATE_RUNNING),

@@ -35,7 +35,7 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         const VolumeInfo& volInfo,
         castor::log::LogContext & lc,
         MigrationReportPacker & repPacker,
-        castor::server::ProcessCap &capUtils,
+        cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
         const bool useLbp): 
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo,capUtils, lc),

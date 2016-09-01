@@ -27,7 +27,7 @@
 #include "castor/mediachanger/MmcProxyDummy.hpp"
 #include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "castor/server/ProcessCapDummy.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
@@ -107,7 +107,7 @@ namespace unitTests
       castor::mediachanger::MediaChangerFacade & mc,
       tapeserver::daemon::TapeServerReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo, 
-      castor::server::ProcessCap& cap,
+      cta::server::ProcessCap& cap,
       castor::log::LogContext & lc):
     TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc){}
 
@@ -163,7 +163,7 @@ namespace unitTests
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
     castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);
-    castor::server::ProcessCapDummy cap;
+    cta::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
@@ -224,7 +224,7 @@ namespace unitTests
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::MountType::RETRIEVE;
-    castor::server::ProcessCapDummy cap;
+    cta::server::ProcessCapDummy cap;
     castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);  
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, lc);
 

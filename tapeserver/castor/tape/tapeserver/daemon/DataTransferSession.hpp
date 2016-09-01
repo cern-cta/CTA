@@ -27,7 +27,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
@@ -65,7 +65,7 @@ namespace daemon {
       const DriveConfig & driveConfig,
       castor::mediachanger::MediaChangerFacade & mc,
       cta::tape::daemon::TapedProxy & initialProcess,
-      castor::server::ProcessCap &capUtils,
+      cta::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
       cta::Scheduler &scheduler);
 
@@ -128,7 +128,7 @@ namespace daemon {
     /** Reference to the tape server's parent process to report detailed status */
     cta::tape::daemon::TapedProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
-    castor::server::ProcessCap &m_capUtils;
+    cta::server::ProcessCap &m_capUtils;
     /** hostname, used to report status of the drive */
     const std::string m_hostname;
     /**

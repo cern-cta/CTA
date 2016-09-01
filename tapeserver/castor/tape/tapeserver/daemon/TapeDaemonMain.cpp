@@ -23,7 +23,7 @@
 
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/log/SyslogLogger.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -146,7 +146,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   tape::reactor::ZMQReactor reactor(log);
 
   // Create the object providing utilities for working with UNIX capabilities
-  castor::server::ProcessCap capUtils;
+  cta::server::ProcessCap capUtils;
 
   // Create the main tapeserverd object
   tape::tapeserver::daemon::TapeDaemon daemon(

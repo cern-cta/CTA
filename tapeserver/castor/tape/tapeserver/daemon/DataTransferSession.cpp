@@ -53,7 +53,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const DriveConfig & driveConfig,
     castor::mediachanger::MediaChangerFacade & mc,
     cta::tape::daemon::TapedProxy & initialProcess,
-    castor::server::ProcessCap & capUtils,
+    cta::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf,
     cta::Scheduler & scheduler): 
     m_log(log),

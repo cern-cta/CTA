@@ -27,7 +27,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
-  server::ProcessCap &capUtils,
+  cta::server::ProcessCap &capUtils,
   mediachanger::MediaChangerFacade &mc,
   castor::log::Logger &log,
   const DriveConfig &driveConfig,

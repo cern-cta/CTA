@@ -31,7 +31,7 @@
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/server/BlockingQueue.hpp"
-#include "castor/server/ProcessCap.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "castor/server/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
@@ -58,7 +58,7 @@ private :
   /**
    * Utility to change the capabilities of the current tape thread
    */
-  castor::server::ProcessCap &m_capUtils;
+  cta::server::ProcessCap &m_capUtils;
 protected:
   ///the queue of tasks 
   castor::server::BlockingQueue<Task *> m_tasks;
@@ -262,7 +262,7 @@ public:
     mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
-    castor::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
+    cta::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}
 }; // class TapeSingleThreadInterface

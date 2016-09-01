@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/log/DummyLogger.hpp"
-#include "castor/server/ProcessCapDummy.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
@@ -72,7 +72,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   const int netTimeout = 1;
   DriveConfigMap driveConfigs;
   castor::tape::reactor::ZMQReactor reactor(log);
-  castor::server::ProcessCapDummy capUtils;
+  cta::server::ProcessCapDummy capUtils;
   TapeDaemonConfig tapeDaemonConfig;
   std::unique_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
