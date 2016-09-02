@@ -1998,7 +1998,7 @@ void XrdCtaFile::xCom_archive() {
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request);
-  cmdlineOutput << "<eos::wfe::fxattr:archiveFileId>" << archiveFileId << std::endl;
+  cmdlineOutput << "<eos::wfe::path::fxattr:sys.archiveFileId>=" << archiveFileId << std::endl;
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
