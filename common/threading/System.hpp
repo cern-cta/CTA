@@ -60,5 +60,5 @@ namespace cta {
      
   };
 
-} // end of namespace castor
+} // end of namespace cta
 

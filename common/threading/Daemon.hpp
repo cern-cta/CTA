@@ -112,5 +112,5 @@ private:
 }; // class Daemon
 
 } // namespace server
-} // namespace castor
+} // namespace cta
 
