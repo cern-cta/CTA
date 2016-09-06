@@ -15,12 +15,7 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 #target_link_libraries(ctaserverutils cap ctautils)
 
 add_library (ctaserverunittests SHARED
-  AtomicCounterTest.cpp
-  DaemonTest.cpp
-  ThreadingBlockingQTests.cpp
-# ThreadingMPTests.cpp is commented out because of errors caused by libust
-  ThreadingMTTests.cpp
-  ThreadingTests.cpp)
+  DaemonTest.cpp)
 
 target_link_libraries (ctaserverunittests ctautils)
 

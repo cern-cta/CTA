@@ -11,7 +11,7 @@
    Helgrind:Misc
    fun:pthread_mutex_*
    ...
-   fun:*unitTests*castor_tape_threading*
+   fun:*unitTests*cta_threading*
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8internal12TestInfoImpl3RunEv
    fun:_ZN7testing8TestCase3RunEv
@@ -24,7 +24,7 @@
    Helgrind:UnlockUnlocked
    fun:pthread_mutex_*
    ...
-   fun:*unitTests*castor_tape_threading*
+   fun:*unitTests*cta_threading*
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8internal12TestInfoImpl3RunEv
    fun:_ZN7testing8TestCase3RunEv
@@ -37,7 +37,7 @@
    Helgrind:PthAPIerror
    fun:pthread_mutex_*
    ...
-   fun:*unitTests*castor_tape_threading*
+   fun:*unitTests*cta_threading*
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8internal12TestInfoImpl3RunEv
    fun:_ZN7testing8TestCase3RunEv
@@ -89,7 +89,7 @@
    Helgrind:Misc
    fun:pthread_cond_*
    ...
-   fun:_ZN9unitTests*castor_tape_threading_*
+   fun:_ZN9unitTests*cta_threading_*
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8internal12TestInfoImpl3RunEv
    fun:_ZN7testing8TestCase3RunEv
@@ -102,7 +102,7 @@
    Helgrind:Misc
    fun:pthread_mutex_*
    ...
-   fun:_ZN9unitTests*castor_tape_threading_*
+   fun:_ZN9unitTests*cta_threading_*
    ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
@@ -119,7 +119,7 @@
    Helgrind:PthAPIerror
    fun:pthread_mutex_*
    ...
-   fun:_ZN9unitTests*castor_tape_threading_*
+   fun:_ZN9unitTests*cta_threading_*
    ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
@@ -136,7 +136,7 @@
    Helgrind:UnlockUnlocked
    fun:pthread_mutex_*
    ...
-   fun:_ZN9unitTests*castor_tape_threading_*
+   fun:_ZN9unitTests*cta_threading_*
    ...
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv

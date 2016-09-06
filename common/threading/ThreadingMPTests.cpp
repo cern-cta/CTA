@@ -1,25 +1,20 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <gtest/gtest.h>
 #include "Threading.hpp"
@@ -30,13 +25,13 @@
  many memory leaks in the child process. */
 
 namespace threadedUnitTests {
-  class emptyCleanup : public castor::server::ChildProcess::Cleanup {
+  class emptyCleanup : public cta::threading::ChildProcess::Cleanup {
   public:
 
     virtual void operator ()() { };
   };
 
-  class myOtherProcess : public castor::server::ChildProcess {
+  class myOtherProcess : public cta::threading::ChildProcess {
   private:
 
     int run() {
@@ -49,17 +44,17 @@ namespace threadedUnitTests {
     }
   };
 
-  TEST(castor_tape_threading, ChildProcess_return_value) {
+  TEST(cta_threading, ChildProcess_return_value) {
     myOtherProcess cp;
     emptyCleanup cleanup;
-    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessNeverStarted);
+    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessNeverStarted);
     EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessStillRunning);
+    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
     EXPECT_NO_THROW(cp.wait());
     ASSERT_EQ(123, cp.exitCode());
   }
 
-  class myInfiniteSpinner : public castor::server::ChildProcess {
+  class myInfiniteSpinner : public cta::threading::ChildProcess {
   private:
 
     int run() {
@@ -74,12 +69,12 @@ namespace threadedUnitTests {
     }
   };
 
-  TEST(castor_tape_threading, ChildProcess_killing) {
+  TEST(cta_threading, ChildProcess_killing) {
     myInfiniteSpinner cp;
     emptyCleanup cleanup;
-    EXPECT_THROW(cp.kill(), castor::server::ChildProcess::ProcessNeverStarted);
+    EXPECT_THROW(cp.kill(), cta::threading::ChildProcess::ProcessNeverStarted);
     EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessStillRunning);
+    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
     ASSERT_EQ(true, cp.running());
     EXPECT_NO_THROW(cp.kill());
     /* The effect is not immediate, wait a bit. */
@@ -88,6 +83,6 @@ namespace threadedUnitTests {
     ts.tv_nsec = 100*1000*1000;
     nanosleep(&ts, NULL);
     ASSERT_FALSE(cp.running());
-    EXPECT_THROW(cp.exitCode(), castor::server::ChildProcess::ProcessWasKilled);
+    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessWasKilled);
   }
 } // namespace threadedUnitTests

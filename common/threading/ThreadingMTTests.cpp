@@ -1,25 +1,20 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/Threading.hpp"
@@ -46,7 +41,7 @@ namespace threadedUnitTests {
     }
   };
 
-  TEST(castor_tape_threading, Thread_and_basic_locking) {
+  TEST(cta_threading, Thread_and_basic_locking) {
     /* If we have race conditions here, helgrind will trigger. */
     Thread_and_basic_locking mt;
     mt.counter = 0;
@@ -84,14 +79,14 @@ namespace threadedUnitTests {
     }
   };
 
-  TEST(castor_tape_threading, PosixSemaphore_ping_pong) {
+  TEST(cta_threading, PosixSemaphore_ping_pong) {
     Semaphore_ping_pong<cta::threading::PosixSemaphore> spp;
     spp.start();
     spp.thread0();
     spp.wait();
   }
 
-  TEST(castor_tape_threading, CondVarSemaphore_ping_pong) {
+  TEST(cta_threading, CondVarSemaphore_ping_pong) {
     Semaphore_ping_pong<cta::threading::CondVarSemaphore> spp;
     spp.start();
     spp.thread0();
@@ -106,7 +101,7 @@ namespace threadedUnitTests {
     }
   };
 
-  TEST(castor_tape_threading, Thread_exception_throwing) {
+  TEST(cta_threading, Thread_exception_throwing) {
     Thread_exception_throwing t, t2;
     t.start();
     t2.start();

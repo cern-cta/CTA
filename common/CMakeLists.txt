@@ -143,6 +143,11 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   SmartFdTest.cpp
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp
+  threading/ThreadingBlockingQTests.cpp
+# threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
+  threading/ThreadingMTTests.cpp
+  threading/ThreadingTests.cpp
+  threading/AtomicCounterTest.cpp
   utils/UtilsTest.cpp
   UserIdentityTest.cpp
   optionalTest.cpp)
