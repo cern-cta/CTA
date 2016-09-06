@@ -104,6 +104,7 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
   SmartFd.cpp
+  SmartFILEPtr.cpp
   CRC.cpp
   threading/ChildProcess.cpp
   threading/Daemon.cpp

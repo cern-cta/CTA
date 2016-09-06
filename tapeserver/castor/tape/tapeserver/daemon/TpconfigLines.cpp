@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
-#include "castor/utils/SmartFILEPtr.hpp"
+#include "common/SmartFILEPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 
@@ -37,7 +37,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
   TpconfigLines lines;
 
   // Open the TPCONFIG file for reading
-  castor::utils::SmartFILEPtr file(fopen(filename.c_str(), "r"));
+  cta::SmartFILEPtr file(fopen(filename.c_str(), "r"));
   {
     const int savedErrno = errno;
 

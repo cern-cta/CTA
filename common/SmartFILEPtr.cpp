@@ -1,50 +1,46 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *
- *
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include "castor/utils/SmartFILEPtr.hpp"
+#include "common/SmartFILEPtr.hpp"
 
 #include <errno.h>
 #include <unistd.h>
 
+namespace cta {
+  
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::SmartFILEPtr() throw() :
+SmartFILEPtr::SmartFILEPtr() throw() :
   m_file(NULL) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
+SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
   m_file(file) {
 }
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::utils::SmartFILEPtr::reset(FILE *const file) throw() {
+void SmartFILEPtr::reset(FILE *const file) throw() {
   // If the new pointer is not the one already owned
   if(file != m_file) {
 
@@ -61,7 +57,7 @@ void castor::utils::SmartFILEPtr::reset(FILE *const file) throw() {
 //-----------------------------------------------------------------------------
 // SmartFILEPtr assignment operator
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr &castor::utils::SmartFILEPtr::operator=(
+SmartFILEPtr &SmartFILEPtr::operator=(
   SmartFILEPtr& obj) {
   reset(obj.release());
   return *this;
@@ -70,21 +66,21 @@ castor::utils::SmartFILEPtr &castor::utils::SmartFILEPtr::operator=(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::utils::SmartFILEPtr::~SmartFILEPtr() throw() {
+SmartFILEPtr::~SmartFILEPtr() throw() {
   reset();
 }
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *castor::utils::SmartFILEPtr::get() const throw() {
+FILE *SmartFILEPtr::get() const throw() {
   return m_file;
 }
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-FILE *castor::utils::SmartFILEPtr::release() {
+FILE *SmartFILEPtr::release() {
   // If this smart pointer does not own a pointer
   if(NULL == m_file) {
     cta::exception::NotAnOwner ex;
@@ -99,3 +95,5 @@ FILE *castor::utils::SmartFILEPtr::release() {
 
   return tmp;
 }
+
+} // namespace cta

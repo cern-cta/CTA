@@ -23,7 +23,6 @@ include_directories(/usr/include/shift)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 set (UTILS_LIB_SRC_FILES
-  SmartFILEPtr.cpp
   utils.cpp
   ../common/CastorConfiguration.cpp
   ../System.cpp
